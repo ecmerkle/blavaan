@@ -1,0 +1,52 @@
+importFrom("methods", 
+           "is", "new")
+
+importFrom("utils", 
+           # "sessionInfo",
+           "packageDescription", "str", "write.table")
+
+importFrom("stats", 
+           "approx", "density", "pnorm", "rgamma", "rnorm",
+           "quantile", "rWishart", "cov",
+           "coef", "logLik",
+           "residuals", "resid",
+           "fitted.values", "fitted",
+           "predict",
+           "update",
+           "anova",
+           "vcov")
+
+importFrom("graphics", 
+           "plot")
+
+importFrom("lavaan",
+           "lavaan", "logLik",
+           "fitMeasures", "fitmeasures",
+           "inspect", "lavInspect", "lavTech", "lavNames", 
+           "lavParseModelString", 
+           "lav_func_jacobian_complex", "lav_func_jacobian_simple", 
+           "lav_partable_labels", "lavaanify", 
+           "lav_model_get_parameters", "lav_model_implied", 
+           "lav_model_set_parameters", "lav_model_vcov_se", 
+           "lav_partable_attributes",
+           "modificationIndices", "parTable", "parameterEstimates")
+
+importFrom("runjags",
+           "run.jags", "runjags.options")
+
+importFrom("MCMCpack",
+           "dwish")
+
+importFrom("mnormt",
+           "dmnorm")
+
+importFrom("nonnest2",
+           "llcont")
+
+importFrom("loo",
+           "loo",
+           "waic")
+
+export("blavaan", "bcfa", "bsem", "bgrowth", "dpriors", "BF")
+
+S3method(plot, blavaan)

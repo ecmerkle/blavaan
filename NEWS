@@ -1,0 +1,20 @@
+Changes in Version 0.1-1
+    o Added plot method related to plot.runjags().
+
+    o Added argument jagextra for supplying extra code to JAGS.
+
+    o Changes to summary():
+      Improving look and operability with lavaan
+      Posterior medians/modes now available
+
+    o runjags slot in blavaan objects is moved to 
+      @external$runjags.
+
+    o fitMeasures() now includes BIC and loglik (at posterior means).
+
+    o do.fit=FALSE now works, returns only JAGS syntax.
+
+    o Random initial values less likely to fail.
+
+    o Bug fixes related to equality constraints on mv variances +
+      std.lv=T vs TRUE.
