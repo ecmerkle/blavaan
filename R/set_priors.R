@@ -476,9 +476,21 @@ set_priors <- function(priorres, partable, i, varnames, ngroups, type="int", dp,
                                                 partable$plabel[c.idx], dp[["ibpsi"]])
           }
           else if(partable$free[c.idx] == 0){
-            TXT2 <- paste(TXT2, t1, partable$id[c.idx],
-                          " <- ", partable$ustart[c.idx], "\n",
-                          sep="")
+            if((partable$lhs[c.idx] %in% varnames[1:nov] &
+                ov.cp=="srs") |
+               (partable$lhs[c.idx] %in% varnames[(nov+1):length(varnames)] &
+                lv.cp=="srs")){
+              ## define rstar to make initial values easier
+              tmprc <- strsplit(partable$id[c.idx], "\\[")[[1]][2]
+              TXT2 <- paste(TXT2, t1, partable$id[c.idx],
+                            " <- -1 + 2*rstar[", tmprc, "\n", sep="")
+              TXT2 <- paste(TXT2, t1, "rstar[", tmprc, " <- ",
+                            (as.numeric(partable$ustart[c.idx])+1)/2, "\n", sep="")
+            } else {
+              TXT2 <- paste(TXT2, t1, partable$id[c.idx],
+                            " <- ", partable$ustart[c.idx], "\n",
+                            sep="")
+            }
           }
           else if(any(partable$op == "==" &
                       partable$rhs == partable$rhs[c.idx])){

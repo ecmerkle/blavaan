@@ -144,9 +144,10 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
              !(partable$lhs %in% orig.lv.names.x) &
              !(partable$rhs %in% orig.lv.names.x))
   }
-  ##cov.eq <- which(partable$op == "==" & partable$rhs %in% partable$plabel[covs])
+  cov.eq <- which(covs & partable$free == 0) #partable$op == "==" & partable$rhs %in% partable$plabel[covs])
   ##partable$prior[covs & partable$prior==""] <- dp[["rho"]]
-  covdim <- sum(covs)/ngroups #(length(covs) - length(cov.eq))/ngroups
+  covdim <- sum(covs)/ngroups
+  #covdim <- (sum(covs) - length(cov.eq))/ngroups
   matdims[3,] <- c(covdim, ngroups)
 
   eqlabs <- partable$rhs[partable$op == "=="]
