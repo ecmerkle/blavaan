@@ -350,7 +350,15 @@ blavaan <- function(...,  # default lavaan arguments
                              x           = x,
                              VCOV        = VCOV,
                              TEST        = TEST)
+    ## add SE and SD-Bayes factor to lavpartable
+    ## (code around line 270 of blav_object_methods
+    ##  can be removed with this addition near line 923
+    ##  of lav_object_methods:
+    ## if(object@Options$estimator == "Bayes") {
+    ##    LIST$logBF <- PARTABLE$logBF
+    ## }
     lavpartable$se <- lavfit@se[lavpartable$id]
+    lavpartable$logBF <- SDBF(lavpartable)
     timing$total <- (proc.time()[3] - start.time0)
 
     ## remove rhos from partable + ses, so lavaan built-ins work
