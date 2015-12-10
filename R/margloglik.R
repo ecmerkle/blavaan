@@ -142,18 +142,15 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
       if(length(trun) > 0){
         ## FIXME deal with censored priors
         ## warning("blavaan WARNING: Cannot yet handle censored priors in marginal log-likelihood computation.\nMarginal log-likelihood and Bayes factor approximations may be poor.\n")
+        cdf.fun <- gsub("^d", "p", pricom[[i]][1])
+        if(trunend - trun == 1){
+          ## FIXME assumes truncation from below, cannot
+          ## handle truncation from above (without below)
+          support.prob <- 1 - do.call(cdf.fun, c(as.numeric(pricom[[i]][trunend]), as.list(dpars)))
         } else {
-          cdf.fun <- gsub("^d", "p", pricom[[i]][1])
-          if(trunend - trun == 1){
-            ## FIXME assumes truncation from below, cannot
-            ## handle truncation from above (without below)
-            support.prob <- 1 - do.call(cdf.fun, c(as.numeric(pricom[[i]][trunend]), as.list(dpars)))
-          } else {
-            support.prob <- do.call(cdf.fun, c(as.numeric(pricom[[i]][trunend]), as.list(dpars))) - do.call(cdf.fun, c(as.numeric(pricom[[i]][(trun+1)]), as.list(dpars)))
-          }
+          support.prob <- do.call(cdf.fun, c(as.numeric(pricom[[i]][trunend]), as.list(dpars))) - do.call(cdf.fun, c(as.numeric(pricom[[i]][(trun+1)]), as.list(dpars)))
         }
-      }
-      
+      }      
       tmpdens <- do.call(pricom[[i]][1], c(thetstar[i], as.list(dpars), log=TRUE)) - log(support.prob)
     }
     priloglik <- priloglik + tmpdens
