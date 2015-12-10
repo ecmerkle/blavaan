@@ -444,16 +444,11 @@ SDBF <- function(PE) {
 
   postdens <- dnorm(0, mean=PE$est[tmprow], sd=PE$se[tmprow], log=TRUE)
 
-  pricom <- strsplit(PE$prior[tmprow], "[, ()]+")
+  pricom <- jagsdist2r(PE$prior[tmprow])
   pridens <- rep(NA, length(tmprow))
   for(i in 1:length(tmprow)){
-      tmppri <- pricom[[i]]
-      if(length(tmppri) == 0) next
-
-      par1 <- as.numeric(tmppri[2])
-      par2 <- as.numeric(tmppri[3])
-      if(tmppri[1] == "dnorm") par2 <- sqrt(1/par2)
-      tmpdens <- try(do.call(tmppri[1], list(0, par1, par2, log=TRUE)), silent=TRUE)
+      tmpdens <- try(eval_prior(pricom[[i]], 0, ""), silent=TRUE)
+      
       if(!inherits(tmpdens, "try-error")) pridens[i] <- tmpdens
   }
 

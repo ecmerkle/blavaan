@@ -270,3 +270,59 @@ set_blocks <- function(partable){
     }
     partable
 }
+
+## evaluate prior density using result of jagsdist2r
+eval_prior <- function(pricom, thetstar, jlabel){
+    ## check for truncation and [sd]/[var] modifiers
+    trun <- which(pricom == "T")
+    sdvar <- which(pricom %in% c("[sd]","[var]"))
+
+    if(length(trun) > 0 | length(sdvar) > 0){
+        snip <- min(c(trun, sdvar))
+        dpars <- as.numeric(pricom[2:(snip-1)])
+        if(length(c(trun, sdvar)) > 1){
+            ## assume [sd],[var] come after truncation
+            trunend <- sdvar - 1
+        } else{
+            trunend <- length(pricom)
+        }
+    } else {
+        dpars <- as.numeric(pricom[2:length(pricom)])
+    }
+
+    ## thetstar modifications:
+    ## convert beta with (-1,1) support to beta with (0,1)
+    if(grepl("rho", jlabel)) thetstar <- (thetstar+1)/2
+    ## convert to precision or sd, vs variance (depending on prior)
+    if(jlabel %in% c("theta", "psi")){
+        if(length(sdvar) == 0) thetstar <- 1/thetstar
+        if(any(grepl("\\[sd", pricom))) thetstar <- sqrt(thetstar)
+    }
+    ## dt() in R assumes mean=0, precision=1
+    if(pricom[1] <- "dt"){
+        tmn <- dpars[2]
+        tprec <- dpars[3]
+        dpars <- dpars[1]
+        thetstar <- (thetstar - as.numeric(tmn))*sqrt(tprec)
+    }
+
+    ## for truncated distributions:
+    support.prob <- 1
+    ## is prior truncated
+    if(length(trun) > 0){
+        ## FIXME deal with censored priors
+        ## warning("blavaan WARNING: Cannot yet handle censored priors in marginal log-likelihood computation.\nMarginal log-likelihood and Bayes factor approximations may be poor.\n")
+        cdf.fun <- gsub("^d", "p", pricom[1])
+        if(trunend - trun == 1){
+            ## FIXME assumes truncation from below, cannot
+            ## handle truncation from above (without below)
+            support.prob <- 1 - do.call(cdf.fun, c(as.numeric(pricom[trunend]), as.list(dpars)))
+        } else {
+            support.prob <- do.call(cdf.fun, c(as.numeric(pricom[trunend]), as.list(dpars))) - do.call(cdf.fun, c(as.numeric(pricom[(trun+1)]), as.list(dpars)))
+        }
+    }
+
+    dens <- do.call(pricom[1], c(thetstar, as.list(dpars), log=TRUE)) - log(support.prob)
+
+    dens
+}
