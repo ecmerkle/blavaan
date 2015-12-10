@@ -36,7 +36,7 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
 
   ## convert prior strings to commands + parameters
   pri <- lavpartable$prior[urows]
-  pricom <- strsplit(pri, "[, ()]+")
+  pricom <- jagsdist2r(pri)
 
   ## warn about fa priors
   if(any((sapply(pricom, length) == 0) & grepl("cov", lavpartable$jlabel[urows]))) warning("blavaan WARNING: marginal log-likelihoods under ov.cp=fa or lv.cp=fa may be unstable.")
@@ -113,36 +113,48 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
     } else {
       ## we have an explicit prior;
       ## convert to R parameterization of distributions
-      par1 <- as.numeric(pricom[[i]][2])
-      par2 <- as.numeric(pricom[[i]][3])
-      ## sd parameterization of dnorm
-      if(pricom[[i]][1] == "dnorm") par2 <- sqrt(1/par2)
+
+      ## check for truncation
+      trun <- which(pricom[[i]] == "T")
+      sdvar <- which(pricom[[i]] %in% c("[sd]","[var]"))
+      if(length(trun) > 0 | length(sdvar) > 0){
+        snip <- min(c(trun, sdvar))
+        dpars <- as.numeric(pricom[[i]][2:(snip-1)])
+        if(length(c(trun, sdvar)) > 1){
+          ## assume [sd],[var] come after truncation
+          trunend <- sdvar - 1
+        } else{
+          trunend <- length(pricom[[i]])
+        }
+      } else {
+        dpars <- as.numeric(pricom[[i]][2:length(pricom[[i]])])
+      }
       ## convert beta with (-1,1) support to beta with (0,1)
       if(grepl("rho", lavpartable$jlabel[urows][i])) thetstar[i] <- (thetstar[i]+1)/2
-      ## convert to precision, vs variance (priors are on precisions)
-      if(grepl("theta", lavpartable$jlabel[urows][i]) | grepl("psi", lavpartable$jlabel[urows][i])) thetstar[i] <- 1/thetstar[i]
+      ## convert to precision or sd, vs variance (depending on prior)
+      if(lavpartable$jlabel[urows][i] %in% c("theta", "psi")){
+        if(length(sdvar) == 0) thetstar[i] <- 1/thetstar[i]
+        if(any(grepl("\\[sd", pricom[[i]]))) thetstar[i] <- sqrt(thetstar[i])
+      }
       ## for truncated/censored distributions:
       support.prob <- 1
-      ## is prior on sd or variance, is it truncated
-      if(length(pricom[[i]]) > 3){
-        prisd <- grepl("sd", pricom[[i]][4])
-        privar <- grepl("var", pricom[[i]][4])
-        if(prisd | privar){
-          thetstar[i] <- 1/thetstar[i]
-          if(prisd) thetstar[i] <- sqrt(thetstar[i])
-        } else if(pricom[[i]][4] != "T"){
-          warning("blavaan WARNING: Cannot yet handle censored priors in marginal log-likelihood computation.\nMarginal log-likelihood and Bayes factor approximations may be poor.\n")
+      ## is prior truncated
+      if(length(trun) > 0){
+        ## FIXME deal with censored priors
+        ## warning("blavaan WARNING: Cannot yet handle censored priors in marginal log-likelihood computation.\nMarginal log-likelihood and Bayes factor approximations may be poor.\n")
         } else {
           cdf.fun <- gsub("^d", "p", pricom[[i]][1])
-          if(length(pricom[[i]]) == 5){
-            support.prob <- 1 - do.call(cdf.fun, list(as.numeric(pricom[[i]][5]), par1, par2))
+          if(trunend - trun == 1){
+            ## FIXME assumes truncation from below, cannot
+            ## handle truncation from above (without below)
+            support.prob <- 1 - do.call(cdf.fun, c(as.numeric(pricom[[i]][trunend]), as.list(dpars)))
           } else {
-            support.prob <- do.call(cdf.fun, list(as.numeric(pricom[[i]][6]), par1, par2)) - do.call(cdf.fun, list(as.numeric(pricom[[i]][5]), par1, par2))
+            support.prob <- do.call(cdf.fun, c(as.numeric(pricom[[i]][trunend]), as.list(dpars))) - do.call(cdf.fun, c(as.numeric(pricom[[i]][(trun+1)]), as.list(dpars)))
           }
         }
       }
       
-      tmpdens <- do.call(pricom[[i]][1], list(thetstar[i], par1, par2, log=TRUE)) - log(support.prob)
+      tmpdens <- do.call(pricom[[i]][1], c(thetstar[i], as.list(dpars), log=TRUE)) - log(support.prob)
     }
     priloglik <- priloglik + tmpdens
   }
