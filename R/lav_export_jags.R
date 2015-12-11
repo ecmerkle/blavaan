@@ -46,7 +46,13 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
   vnames <- pta$vnames; nvar <- pta$nvar; nfac <- pta$nfac
   ov.names.nox <- vnames$ov.nox[[1]]; nov.nox <- length(ov.names.nox)
   ov.names.x <- vnames$ov.x[[1]]; nov.x <- length(ov.names.x)
-
+  ov.ord <- vnames$ov.ord[[1]]
+  if(length(ov.ord) > 0){
+    ## figure out how many categories are in the ordered variables
+    ## TODO seems like this is already hidden somewhere in lavaan...
+    ncats <- sapply(ov.ord, function(x) length(grep(x, vnames$th[[1]])) + 1)
+  }
+    
   lv.nox <- vnames$lv.nox[[1]]
   lv.names <- vnames$lv[[1]]
   ## ensure that lv.x names always come first (so we can possibly use dmnorm)
@@ -151,7 +157,9 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
   matdims[3,] <- c(covdim, ngroups)
 
   eqlabs <- partable$rhs[partable$op == "=="]
-    
+
+  ## TODO add thresholds here
+  ##      we only need scale factors ~*~ in delta parameterization...
   ovi <- (partable$op == "~1" & partable$lhs %in% ov.names)
   ovifree <- (ovi & (partable$label == "" | !duplicated(partable$label)) &
               partable$free > 0 & !(partable$label %in% eqlabs))
@@ -197,12 +205,40 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
   }
   
   ## Define univariate distributions of each observed variable
-  TXT <- paste(TXT, t2,
-               "for(j in 1:", nmvs, ") {\n", sep="")
-  TXT <- paste(TXT, t3,
-               "y[i,j] ~ dnorm(mu[i,j],", tvname, "[j,g[i]])\n", sep="")
+  ## Loop if everything is continuous
+  if(length(ov.ord) == 0){
+    TXT <- paste(TXT, t2,
+                 "for(j in 1:", nmvs, ") {\n", sep="")
+    TXT <- paste(TXT, t3,
+                 "y[i,j] ~ dnorm(mu[i,j],", tvname, "[j,g[i]])\n", sep="")
   
-  TXT <- paste(TXT, t2, "}\n", sep="")
+    TXT <- paste(TXT, t2, "}\n", sep="")
+  } else {
+    for(j in 1:nmvs){
+      if(ov.names[j] %in% ov.ord){
+        ord.num <- match(ov.names[j], ov.ord)
+        TXT <- paste(TXT, t2, "ones[i,", ord.num, "] ~ dbern(probs[i,", ord.num,
+                     ",y[i,", j, "]])\n", sep="")
+
+        ## category probs from pnorm
+        TXT <- paste(TXT, t2, "probs[i,", ord.num, ",1] <- pnorm(tau[", ord.num,
+                     ",1,g[i]], mu[i,", j, "], invthetstar[", j, ",g[i]])\n", sep="")
+        if(ncats[ord.num] > 2){
+          for(k in 2:(ncats[ord.num] - 1)){
+            TXT <- paste(TXT, t2, "probs[i,", ord.num, ",", k, "] <- pnorm(tau[",
+                         ord.num, ",", k, ",g[i]], mu[i,", j, "], invthetstar[",
+                         j, ",g[i]]) - sum(probs[i,", ord.num, ",1:", (k-1), "])\n",
+                         sep="")
+          }
+        }
+        TXT <- paste(TXT, t2, "probs[i,", ord.num, ",", ncats[ord.num],
+                     "] <- 1 - sum(probs[i,", ord.num, ",1:", ncats[ord.num]-1, "])\n",
+                     sep="")
+      } else {
+        TXT <- paste(TXT, t2, "y[i,j] ~ dnorm(mu[i,j],", tvname, "[j,g[i]])\n", sep="")
+      }
+    }
+  }
 
   ## Define mean of each observed variable
   ## This assumes that the data matrix passed to jags
@@ -297,6 +333,11 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
         }
         TXT3 <- paste(TXT3, ")\n", sep="")
       }
+    }
+
+    ## 5. TODO thresholds
+    if(length(ov.ord) > 0){
+
     }
   }
   TXT3 <- paste(TXT3, "\n", sep="")
@@ -517,11 +558,6 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
     } # end j
   } # end if
 
-  ## defined variables
-  ## FIXME? rewrite lav_partable_constraints to work on mcmc output?
-  ## current method works on point estimate + posterior sd
-  defvs <- partable[partable$op == ":=",]
-  
   ## end of model
   TXT <- paste(TXT, "\n\n", t1, "# Priors/constraints", priorres$TXT2, sep="")
   TXT <- paste(TXT, TXT3, sep="")
