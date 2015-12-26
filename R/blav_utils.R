@@ -299,7 +299,7 @@ eval_prior <- function(pricom, thetstar, jlabel){
         if(any(grepl("\\[sd", pricom))) thetstar <- sqrt(thetstar)
     }
     ## dt() in R assumes mean=0, precision=1
-    if(pricom[1] <- "dt"){
+    if(pricom[1] == "dt"){
         tmn <- dpars[2]
         tprec <- dpars[3]
         dpars <- dpars[1]

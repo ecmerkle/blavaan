@@ -13,6 +13,8 @@ jagsdist2r <- function(priors, direction = 'jags2r'){
         rnum <- match(x[1], disttrans[,1])
         if(length(x) == 0){
             res <- ""
+        } else if(grepl("dwish", x[1])){
+            res <- x
         } else {
             trun <- which(x == "T")
             sdvar <- grep("\\[", x)

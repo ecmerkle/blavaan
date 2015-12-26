@@ -118,11 +118,12 @@ blavaan <- function(...,  # default lavaan arguments
     ov.noy <- LAV@pta$vnames$ov.nox[[1]]
     ov.noy <- ov.noy[!(ov.noy %in% LAV@pta$vnames$ov.y)]
     prispec <- "prior" %in% names(LAV@ParTable)
+    ndpriors <- rep(FALSE, length(LAV@ParTable$lhs))
+    if(prispec) ndpriors <- LAV@ParTable$prior != ""
     con.cov <- any(LAV@ParTable$lhs %in% c(lv.x, ov.noy) &
                    LAV@ParTable$op == "~~" &
                    (LAV@ParTable$free == 0 |
-                    ifelse(prispec, LAV@ParTable$prior != "",
-                           rep(FALSE, length(LAV@ParTable$lhs)))))
+                    ndpriors))
     if(con.cov) LAV@Options$auto.cov.lv.x <- FALSE
 
     # if std.lv, truncate the prior of each lv's first loading
