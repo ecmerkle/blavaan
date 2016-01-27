@@ -6,8 +6,8 @@ importFrom("utils",
            "packageDescription", "str", "write.table")
 
 importFrom("stats", 
-           "approx", "density", "pnorm", "rgamma", "rnorm",
-           "quantile", "rWishart", "cov",
+           "approx", "density", "dnorm", "pnorm", "rgamma", "rnorm",
+           "runif", "quantile", "rWishart", "cov",
            "coef", "logLik",
            "residuals", "resid",
            "fitted.values", "fitted",
