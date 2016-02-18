@@ -23,7 +23,6 @@ blavaan <- function(...,  # default lavaan arguments
 
     # store original call
     mc  <- match.call()
-
     # catch dot dot dot
     dotdotdot <- list(...); dotNames <- names(dotdotdot)
 
@@ -52,7 +51,7 @@ blavaan <- function(...,  # default lavaan arguments
             mc$sample <- 1000
         }
     }
-    jarg <- c("n.chains", "burnin", "sample", "adapt")
+    jarg <- c("burnin", "sample", "adapt")
     mcj <- match(jarg, names(mc), 0L)
     if(any(mcj > 0)){
         mfj <- as.list(mc[mcj])
@@ -62,6 +61,7 @@ blavaan <- function(...,  # default lavaan arguments
     } else {
         mfj <- list()
     }
+    mfj <- c(mfj, list(n.chains = n.chains))
 
     # which argument do we remove/ignore?
     lavArgsRemove <- c("likelihood", "information", "se", "bootstrap",
@@ -146,10 +146,21 @@ blavaan <- function(...,  # default lavaan arguments
         }
     }
 
-    # if jagfile is a directory, vs logical
+    # if jagfile is a directory, vs logical, vs rda file
+    trans.exists <- FALSE
     if(class(jagfile)=="character"){
-        jagdir <- jagfile
-        jagfile <- TRUE
+        if(file.exists(jagfile) & grepl(".rda",jagfile)){
+            trans.exists <- TRUE
+            ## load, then make sure we don't rewrite the file:
+            load(jagfile)
+            jagfile <- FALSE
+            ## we have no idea what they did, so don't do anything with priors
+            jagtrans$coefvec$prior <- ""
+            jagdir <- "lavExport"
+        } else {
+            jagdir <- jagfile
+            jagfile <- TRUE
+        }
     }  else {
         jagdir <- "lavExport"
     }
@@ -190,12 +201,14 @@ blavaan <- function(...,  # default lavaan arguments
     start.time <- proc.time()[3]
     x <- NULL
     if(lavmodel@nx.free > 0L) {
-        ## convert partable to jags, then run
-        jagtrans <- try(lav2jags(model = lavpartable, lavdata = lavdata, 
-                                 ov.cp = ov.cp, lv.cp = lv.cp,
-                                 lv.x.wish = lavoptions$auto.cov.lv.x,
-                                 dp = dp, n.chains = n.chains, jagextra = jagextra, inits = inits),
-                        silent = TRUE)
+        if(!trans.exists){
+            ## convert partable to jags, then run
+            jagtrans <- try(lav2jags(model = lavpartable, lavdata = lavdata, 
+                                     ov.cp = ov.cp, lv.cp = lv.cp,
+                                     lv.x.wish = lavoptions$auto.cov.lv.x,
+                                     dp = dp, n.chains = n.chains, jagextra = jagextra, inits = inits),
+                            silent = TRUE)
+        }
 
         if(!inherits(jagtrans, "try-error")){
             if(jagfile){
@@ -410,6 +423,7 @@ bcfa <- bsem <- function(..., ov.cp = "srs", lv.cp = "srs", dp = dpriors(),
     mc <- match.call()  
     mc$model.type      = as.character( mc[[1L]] )
     if(length(mc$model.type) == 3L) mc$model.type <- mc$model.type[3L]
+    mc$n.chains        = n.chains
     mc$int.ov.free     = TRUE
     mc$int.lv.free     = FALSE
     mc$auto.fix.first  = !std.lv
