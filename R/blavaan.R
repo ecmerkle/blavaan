@@ -87,10 +87,11 @@ blavaan <- function(...,  # default lavaan arguments
         stop("blavaan ERROR: full data are required. consider using kd() from package semTools.")
     }
 
-    ineq <- which(LAV@ParTable$op %in% c("<",">",":="))
-    if(length(ineq) > 0) {
+    ineq <- which(LAV@ParTable$op %in% c("<",">"))
+    defp <- which(LAV@ParTable$op == ":=")
+    if(length(ineq) > 0 | length(defp) > 0) {
         LAV@ParTable <- lapply(LAV@ParTable, function(x) x[-ineq])
-        if(jagfile==FALSE) jagfile <- TRUE
+        if(class(jagfile) == "logical") jagfile <- TRUE
         warning("blavaan WARNING: blavaan does not currently handle inequality constraints or defined parameters.\ntry modifying the exported JAGS code.")
     }
 
