@@ -87,11 +87,11 @@ blavaan <- function(...,  # default lavaan arguments
         stop("blavaan ERROR: full data are required. consider using kd() from package semTools.")
     }
 
-    ineq <- which(LAV@ParTable$op %in% c("<",">"))
+    ineq <- which(LAV@ParTable$op %in% c("<",">",":="))
     if(length(ineq) > 0) {
         LAV@ParTable <- lapply(LAV@ParTable, function(x) x[-ineq])
         if(jagfile==FALSE) jagfile <- TRUE
-        warning("blavaan WARNING: blavaan does not handle inequality constraints.\ntry modifying the exported JAGS code.")
+        warning("blavaan WARNING: blavaan does not currently handle inequality constraints or defined parameters.\ntry modifying the exported JAGS code.")
     }
 
     eqs <- (LAV@Model@ceq.JAC == -1 | LAV@Model@ceq.JAC == 1)
@@ -146,21 +146,24 @@ blavaan <- function(...,  # default lavaan arguments
         }
     }
 
-    # if jagfile is a directory, vs logical, vs rda file
+    # if jagfile is a directory, vs list, vs logical
     trans.exists <- FALSE
     if(class(jagfile)=="character"){
-        if(file.exists(jagfile) & grepl(".rda",jagfile)){
-            trans.exists <- TRUE
-            ## load, then make sure we don't rewrite the file:
-            load(jagfile)
-            jagfile <- FALSE
-            ## we have no idea what they did, so don't do anything with priors
-            jagtrans$coefvec$prior <- ""
-            jagdir <- "lavExport"
-        } else {
-            jagdir <- jagfile
-            jagfile <- TRUE
-        }
+        jagdir <- jagfile
+        jagfile <- TRUE
+    } else if(class(jagfile)=="list"){
+        trans.exists <- TRUE
+        ## read syntax file
+        jagsyn <- readLines(jagfile$syntax)
+        ## load jagtrans object
+        load(jagfile$jagtrans)
+        ## add new syntax
+        jagtrans$model <- paste(jagsyn, collapse="\n")
+        ## make sure we don't rewrite the file:
+        jagfile <- FALSE
+        ## we have no idea what they did, so wipe out the priors
+        jagtrans$coefvec$prior <- ""
+        jagdir <- "lavExport"
     }  else {
         jagdir <- "lavExport"
     }
@@ -246,11 +249,13 @@ blavaan <- function(...,  # default lavaan arguments
             }
 
             if(inherits(res, "try-error")) {
-                dir.create(path=jagdir, showWarnings=FALSE)
-                cat(jagtrans$model, file = paste(jagdir, "/sem.jag",
-                                                 sep=""))
-                save(jagtrans, file = paste(jagdir, "/semjags.rda",
-                                            sep=""))
+                if(!trans.exists){
+                    dir.create(path=jagdir, showWarnings=FALSE)
+                    cat(jagtrans$model, file = paste(jagdir, "/sem.jag",
+                                                     sep=""))
+                    save(jagtrans, file = paste(jagdir, "/semjags.rda",
+                                                sep=""))
+                }
                 stop("blavaan ERROR: problem with jags estimation.  The jags model and data have been exported.")
             }
         } else {
