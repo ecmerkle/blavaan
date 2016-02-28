@@ -88,13 +88,16 @@ blavaan <- function(...,  # default lavaan arguments
     }
 
     ineq <- which(LAV@ParTable$op %in% c("<",">"))
-    defp <- which(LAV@ParTable$op == ":=")
-    if(length(ineq) > 0 | length(defp) > 0) {
+    if(length(ineq) > 0) {
         LAV@ParTable <- lapply(LAV@ParTable, function(x) x[-ineq])
         if(class(jagfile) == "logical") jagfile <- TRUE
-        warning("blavaan WARNING: blavaan does not currently handle inequality constraints or defined parameters.\ntry modifying the exported JAGS code.")
+        warning("blavaan WARNING: blavaan does not currently handle inequality constraints.\ntry modifying the exported JAGS code.")
+    }  
+    defp <- which(LAV@ParTable$op == ":=")
+    if(length(defp) > 0) {
+        if(class(jagfile) == "logical") jagfile <- TRUE
+        warning("blavaan WARNING: blavaan does not currently handle defined parameters.\ntry modifying the exported JAGS code.")
     }
-
     eqs <- (LAV@Model@ceq.JAC == -1 | LAV@Model@ceq.JAC == 1)
     if(length(dim(eqs)) > 0) {
         compeq <- which(LAV@Model@ceq.rhs != 0 |
