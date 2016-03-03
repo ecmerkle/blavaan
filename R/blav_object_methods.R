@@ -243,6 +243,8 @@ function(object, header       = TRUE,
         PE$ci.upper[PE$ci.upper == PE$est] <- ""
         PE$ci.upper <- sprintf(char.format, PE$ci.upper)
 
+        ## FIXME defined parameters never get psrf + others;
+        ## see line 200 of lav_print.R
         if(psrf){
           PE$psrf <- rep(NA, nrow(PE))
           PE$psrf[peentry] <- object@external$runjags$psrf$psrf[!is.na(ptentry),'Point est.']

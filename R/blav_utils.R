@@ -326,3 +326,37 @@ eval_prior <- function(pricom, thetstar, jlabel){
 
     dens
 }
+
+## add extra monitors from jagextra to parameter table as defined parameters
+add_monitors <- function(lavpartable, lavjags, jagextra){
+    monres <- vector("list", length(jagextra$monitor))
+    for(i in 1:length(jagextra$monitor)){
+        tmploc <- grep(paste("^", jagextra$monitor[i], sep=""), rownames(lavjags$summaries))
+        monres[[i]] <- list(xlocs = tmploc, xnms = rownames(lavjags$summaries)[tmploc],
+                            nvars = length(tmploc))
+    }
+    xlocs <- sapply(monres, function(x) x$xlocs)
+    xnms <- sapply(monres, function(x) x$xnms)
+    nvars <- sapply(monres, function(x) x$nvars)
+        
+    nrs <- length(lavpartable$id)
+    lavpartable$id <- c(lavpartable$id, (nrs + 1):(nrs + sum(nvars)))
+    lavpartable$lhs <- c(lavpartable$lhs, xnms)
+    lavpartable$op <- c(lavpartable$op, rep(":=", sum(nvars)))
+    lavpartable$rhs <- c(lavpartable$rhs, rep("", sum(nvars)))
+    lavpartable$user <- c(lavpartable$user, rep(2, sum(nvars)))
+    lavpartable$group <- c(lavpartable$group, rep(1, sum(nvars)))
+    lavpartable$free <- c(lavpartable$free, rep(0, sum(nvars)))
+    lavpartable$ustart <- c(lavpartable$ustart, rep(NA, sum(nvars)))
+    lavpartable$exo <- c(lavpartable$exo, rep(0, sum(nvars)))
+    lavpartable$label <- c(lavpartable$label, rep("", sum(nvars)))
+    lavpartable$plabel <- c(lavpartable$plabel, rep("", sum(nvars)))
+    lavpartable$start <- c(lavpartable$start, rep(0, sum(nvars)))
+    lavpartable$est <- c(lavpartable$est, lavjags$summaries[xlocs,'Mean'])
+    lavpartable$se <- c(lavpartable$se, lavjags$summaries[xlocs,'SD'])
+    lavpartable$prior <- c(lavpartable$prior, rep("", sum(nvars)))
+    lavpartable$jlabel <- c(lavpartable$jlabel, xnms)
+    lavpartable$logBF <- c(lavpartable$logBF, rep(NA, sum(nvars)))
+
+    lavpartable
+}

@@ -308,6 +308,7 @@ blavaan <- function(...,  # default lavaan arguments
     ## compute/store some model-implied statistics
     lavimplied <- lav_model_implied(lavmodel)
     if(jag.do.fit){
+      ## this also checks convergence of monitors from jagextra, which may not be optimal
       if(any(res$psrf$psrf[parrows[!rhorows],1] > 1.2)) attr(x, "converged") <- FALSE
 
       ## warn if psrf is large
@@ -384,6 +385,7 @@ blavaan <- function(...,  # default lavaan arguments
     lavpartable$logBF <- SDBF(lavpartable)
     timing$total <- (proc.time()[3] - start.time0)
 
+    ## 9b. misc blavaan changes to partable
     ## remove rhos from partable + ses, so lavaan built-ins work
     rhos <- grep("rho", lavpartable$jlabel)
     lavjags <- c(lavjags, list(origpt=lavpartable))
@@ -393,7 +395,12 @@ blavaan <- function(...,  # default lavaan arguments
         lavfit@se <- lavfit@se[-rhos]
     }
 
-    # 10. construct lavaan object
+    ## add monitors in jagextra as defined variables
+    if(length(jagextra$monitor) > 0){
+      lavpartable <- add_monitors(lavpartable, lavjags, jagextra)
+    }
+
+    # 10. construct blavaan object
     blavaan <- new("blavaan",
                    call         = mc,                  # match.call
                    timing       = timing,              # list
