@@ -65,10 +65,14 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
       stop("blavaan ERROR: observed variables are not the same in each group.")
     }
     if(!identical(lv.names, vnames$lv[[g]])){
-      stop("blavaan ERROR: latent variables are not the same in each group.")
+      if(all(lv.names %in% vnames$lv[[g]]) & length(lv.names) == length(vnames$lv[[g]])){
+        next
+      } else {
+        stop("blavaan ERROR: latent variables are not the same in each group.")
+      }
     }
   }
-  
+
   ## add phantom lvs if not already there
   phnames <- unique(partable$lhs[grep(".phant", partable$lhs)])
   lv.names <- c(lv.names, phnames[!(phnames %in% lv.names)])
@@ -435,27 +439,30 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
         TXT <- paste(TXT, "0", sep="")
       }
 
+      ## FIXME!! Possibility of loadings here
       if(lv.names[j] %in% lv.nox){
         ## 2. regressions?
         rhs.idx <- which(regressions$lhs == lv.names[j] &
                          regressions$group == 1)
         np <- length(rhs.idx)
-        for(p in 1:np) {
-          TXT <- paste(TXT, " + ",
-                       "beta[", rhs.idx[p], ",g[i]]", sep="")
+        if(np > 0){ # there could be none if we have higher-order factors
+          for(p in 1:np){
+            TXT <- paste(TXT, " + ",
+                         "beta[", rhs.idx[p], ",g[i]]", sep="")
 
-          ## Is the rhs an lv or ov?
-          lvmatch <- match(regressions$rhs[rhs.idx[p]], lv.names)
-          if(is.na(lvmatch)){
-            TXT <- paste(TXT, "*y[i,", match(regressions$rhs[rhs.idx[p]], orig.ov.names), "]", sep="")
-          } else {
-            TXT <- paste(TXT, "*eta[i,", lvmatch, "]", sep="")
-          }
+            ## Is the rhs an lv or ov?
+            lvmatch <- match(regressions$rhs[rhs.idx[p]], lv.names)
+            if(is.na(lvmatch)){
+              TXT <- paste(TXT, "*y[i,", match(regressions$rhs[rhs.idx[p]], orig.ov.names), "]", sep="")
+            } else {
+              TXT <- paste(TXT, "*eta[i,", lvmatch, "]", sep="")
+            }
 
-          ## Now assign priors/constraints
-          priorres <- set_priors(priorres, regressions, i, lv.names, ngroups, "lv.nox.reg",
-                                 dp, is.na(regressions$blk[rhs.idx[p]]), j=lv.names[j], p=rhs.idx[p])
-        } # end p loop
+            ## Now assign priors/constraints
+            priorres <- set_priors(priorres, regressions, i, lv.names, ngroups, "lv.nox.reg",
+                                   dp, is.na(regressions$blk[rhs.idx[p]]), j=lv.names[j], p=rhs.idx[p])
+          } # end p loop
+        } # end if np
       } # end if
 
       ## 3. lv variances (with phantoms)
