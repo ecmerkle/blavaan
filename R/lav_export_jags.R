@@ -61,11 +61,11 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
 
   ## check that variables are the same in all groups:
   for(g in 1:ngroups){
-    if(!all.equal(orig.ov.names, old.vnames$ov[[g]])){
-      stop("ERROR: observed variables are not the same in each group.")
+    if(!identical(orig.ov.names, old.vnames$ov[[g]])){
+      stop("blavaan ERROR: observed variables are not the same in each group.")
     }
-    if(!all.equal(lv.names, vnames$lv[[g]])){
-      stop("ERROR: latent variables are not the same in each group.")
+    if(!identical(lv.names, vnames$lv[[g]])){
+      stop("blavaan ERROR: latent variables are not the same in each group.")
     }
   }
   
