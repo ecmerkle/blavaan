@@ -441,7 +441,26 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
 
       ## FIXME!! Possibility of loadings here
       if(lv.names[j] %in% lv.nox){
-        ## 2. regressions?
+        ## 2. loadings?
+        lam.idx <- which(loadings$op == "=~" &
+                         loadings$rhs == lv.names[j] &
+                         loadings$group == 1)
+        if(length(lam.idx) > 0){
+          for(k in 1:length(lam.idx)){
+            TXT <- paste(TXT, " + lambda[", lam.idx[k],
+                         ",g[i]]*eta[i,",
+                         match(loadings$lhs[lam.idx[k]], lv.names),
+                         "]", sep="")
+
+            ## priors/constraints
+            priorres <- set_priors(priorres, loadings, j, lv.names,
+                                   ngroups, "loadings", dp,
+                                   is.na(loadings$blk[lam.idx[k]]),
+                                   j=k)
+          } # end k loop
+        }                         
+        
+        ## 3. regressions?
         rhs.idx <- which(regressions$lhs == lv.names[j] &
                          regressions$group == 1)
         np <- length(rhs.idx)
@@ -465,7 +484,7 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
         } # end if np
       } # end if
 
-      ## 3. lv variances (with phantoms)
+      ## 4. lv variances (with phantoms)
       p.idx <- which(regressions$lhs == lv.names[j] &
                      regressions$op == "~" &
                      grepl(".phant", regressions$rhs) &
