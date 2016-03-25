@@ -18,6 +18,9 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
   nparam <- sum(partable$free > 0)
   orig.ov.names <- old.vnames$ov[[1]]; nov <- length(orig.ov.names)
   orig.lv.names <- old.vnames$lv[[1]]; orig.lv.names.x <- old.vnames$lv.x[[1]]
+  ## so ordering stays consistent:
+  orig.lv.names <- c(orig.lv.names[orig.lv.names %in% orig.lv.names.x],
+                     orig.lv.names[!(orig.lv.names %in% orig.lv.names.x)])
   orig.ov.names.x <- old.vnames$ov.x[[1]]
   nlvx <- length(orig.lv.names.x)
   
@@ -389,10 +392,22 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
           lv.ind <- rbind(lv.ind, c(j, lv.ind[nrow(lv.ind),2] + 1))
           mu.ind <- lv.ind[nrow(lv.ind),2]
           ## TODO see whether we need invpsistar?
-          TXT <- paste(TXT, "\n", t2,
-                       ## TODO check for alternative distribution?
-                       "eta[i,", j, "] ~ dnorm(mu.eta[i,", 
-                       mu.ind, "], invpsistar[", mu.ind, ",g[i]])", sep="")
+          
+          lv.var <- which(partable$lhs == lv.names[mu.ind] &
+                          partable$rhs == lv.names[mu.ind] &
+                          partable$op == "~~")
+          ## if lv variance is 0, don't assign a distribution!
+          if(partable$free[lv.var] == 0 & partable$ustart[lv.var] == 0){
+            TXT <- paste(TXT, "\n", t2,
+                         "eta[i,", j, "] <- mu.eta[i,", mu.ind, "]", sep="")
+            ## now change ustart to 1000 so no divide by 0 in jags
+            partable$ustart[lv.var] <- 1000
+          } else {
+            TXT <- paste(TXT, "\n", t2,
+                         ## TODO check for alternative distribution?
+                         "eta[i,", j, "] ~ dnorm(mu.eta[i,", 
+                         mu.ind, "], invpsistar[", mu.ind, ",g[i]])", sep="")
+          }
         } else {
           ## latent interaction:
           eta.eq[j] <- tmp.eq

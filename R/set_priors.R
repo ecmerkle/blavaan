@@ -342,6 +342,8 @@ set_priors <- function(priorres, partable, i, varnames, ngroups, type="int", dp,
                         partable$lhs == partable$rhs &
                         partable$group == 1)
         lvpt <- partable[ptrows,]
+        ## ensure ordering of lvpt corresponds to varnames
+        lvpt <- lvpt[match(lvpt$lhs, varnames[(nov + lvstart):(nov + nlv)]),]
         for(i in lvstart:nlv){
           tmp.eq <- which(partable$op == "==" &
                           partable$lhs == varnames[(nov+i)] &
