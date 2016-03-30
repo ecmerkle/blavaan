@@ -1,10 +1,17 @@
+Changes in Version 0.1-3
+    o Improved support for growth models, including latent variances
+      fixed to 0.
+
+    o Extra monitors supplied via jagextra become defined parameters
+      in summary().
+
 Changes in Version 0.1-2
     o Bayes factors for loadings/regressions now available from
       summary() via argument bf=TRUE. These are computed via
       the Savage-Dickey density ratio (assuming normal posterior).
 
     o Bug fix in generation of random initial values when some
-      covariance parameters are fixed to 0 (and we use srs priors)
+      covariance parameters are fixed to 0 (and we use srs priors).
 
     o Explicit translations from JAGS parameterizations to R
       parameterizations. This leads to the availability of
