@@ -247,6 +247,7 @@ blavaan <- function(...,  # default lavaan arguments
             if(suppressMessages(requireNamespace("modeest"))) runjags.options(mode.continuous=TRUE)
 
             if(jag.do.fit){
+              runjags.options(force.summary = TRUE)
               res <- try(do.call("run.jags", rjarg))
             } else {
               res <- NULL
