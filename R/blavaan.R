@@ -72,11 +72,16 @@ blavaan <- function(...,  # default lavaan arguments
     if(length(warn.idx) > 0L) {
         warning("blavaan WARNING: the following arguments are ignored:\n",
                 "                   ",
-                paste(lavArgsRemove[warn.idx], collapse = " "))
+                paste(lavArgsRemove[warn.idx], collapse = " "), "\n")
     }
 
     # call lavaan
-    LAV <- do.call("lavaan", dotdotdot)
+    LAV <- try(do.call("lavaan", dotdotdot), silent = TRUE)
+    if(inherits(LAV, "try-error")){
+        warning("blavaan WARNING: could not compute EM covariance matrix from missing data; fitMeasures may be incorrect.\n")
+        dotdotdot$missing <- "listwise"
+        LAV <- do.call("lavaan", dotdotdot)
+    }
 
     # check for ordered data
     if(lavInspect(LAV, "categorical")) {
