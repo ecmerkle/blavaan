@@ -249,7 +249,7 @@ blavaan <- function(...,  # default lavaan arguments
             ## user-supplied jags params
             rjarg <- c(rjarg, mfj, jagcontrol)
             ## obtain posterior modes
-            if(suppressMessages(requireNamespace("modeest"))) runjags.options(mode.continuous=TRUE)
+            if(suppressMessages(requireNamespace("modeest", quietly = TRUE))) runjags.options(mode.continuous = TRUE)
 
             if(jag.do.fit){
               runjags.options(force.summary = TRUE)
