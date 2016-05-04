@@ -265,7 +265,7 @@ function(object, header       = TRUE,
         if(postmode){
           PE$Post.Mode <- rep(NA, nrow(PE))
           PE$Post.Mode[peentry] <- object@external$runjags$summaries[!is.na(ptentry),'Mode']
-          if(all(is.na(PE$Post.Mode))) warning("blavaan WARNING: Posterior modes require installtion of the modeest package.")
+          if(all(is.na(PE$Post.Mode))) warning("blavaan WARNING: Posterior modes require installation of the modeest package.")
         }
         if(bf){
           ## we don't know whether priors=TRUE:
