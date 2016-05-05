@@ -15,6 +15,7 @@ blavaan <- function(...,  # default lavaan arguments
                     jagfile            = FALSE,
                     jagextra           = list(),
                     inits              = "prior",
+                    convergence        = "manual",
                     jagcontrol         = list()
                    )
 {
@@ -55,6 +56,10 @@ blavaan <- function(...,  # default lavaan arguments
     mcj <- match(jarg, names(mc), 0L)
     if(any(mcj > 0)){
         mfj <- as.list(mc[mcj])
+        if(convergence == "auto"){
+            jarg <- c("startburnin", "startsample", "adapt")
+            names(mfj) <- jarg[mcj > 0]
+        }
         if("sample" %in% names(mc)){
             if(mc$sample*n.chains/5 < 1000) warning("blavaan WARNING: small sample drawn, proceed with caution.\n")
         }
@@ -253,7 +258,9 @@ blavaan <- function(...,  # default lavaan arguments
 
             if(jag.do.fit){
               runjags.options(force.summary = TRUE)
-              res <- try(do.call("run.jags", rjarg))
+              rjcall <- "run.jags"
+              if(convergence == "auto") rjcall <- "autorun.jags"
+              res <- try(do.call(rjcall, rjarg))
             } else {
               res <- NULL
             }
@@ -437,7 +444,8 @@ blavaan <- function(...,  # default lavaan arguments
 ## cfa + sem
 bcfa <- bsem <- function(..., ov.cp = "srs", lv.cp = "srs", dp = dpriors(),
     n.chains = 3, burnin, sample, adapt,
-    jagfile = FALSE, jagextra = list(), inits = "prior", jagcontrol = list()) {
+    jagfile = FALSE, jagextra = list(), inits = "prior", convergence = "manual",
+    jagcontrol = list()) {
 
     dotdotdot <- list(...)
     std.lv <- ifelse(any(names(dotdotdot) == "std.lv"), dotdotdot$std.lv, FALSE)
@@ -463,7 +471,8 @@ bcfa <- bsem <- function(..., ov.cp = "srs", lv.cp = "srs", dp = dpriors(),
 # simple growth models
 bgrowth <- function(..., ov.cp = "srs", lv.cp = "srs", dp = dpriors(),
     n.chains = 3, burnin, sample, adapt,
-    jagfile = FALSE, jagextra = list(), inits = "prior", jagcontrol = list()) {
+    jagfile = FALSE, jagextra = list(), inits = "prior", convergence = "manual",
+    jagcontrol = list()) {
 
     dotdotdot <- list(...)
     std.lv <- ifelse(any(names(dotdotdot) == "std.lv"), dotdotdot$std.lv, FALSE)

@@ -6,7 +6,7 @@ Fit a Growth Curve model.}
 \usage{
 bgrowth(..., ov.cp = "srs", lv.cp = "srs", dp = dpriors(), n.chains = 3,
 burnin, sample, adapt, jagfile = FALSE, jagextra = list(), 
-inits = "prior", jagcontrol = list())
+inits = "prior", convergence = "manual", jagcontrol = list())
 }
 \arguments{
 \item{...}{Default lavaan arguments.  See \code{\link{lavaan}}.}
@@ -50,8 +50,14 @@ inits = "prior", jagcontrol = list())
     for example the output of the \code{paramaterEstimates()} function, 
     the values of the \code{est} or \code{start} or \code{ustart} column 
     (whichever is found first) will be extracted.}
+\item{convergence}{If \code{"auto"}, parameters will be
+  sampled until convergence is achieved (via \code{autorun.jags}). In
+  this case, the arguments \code{burnin} and \code{sample} are passed to
+  \code{autorun.jags} as \code{startburnin} and \code{startsample},
+  respectively. Otherwise, parameters
+  are sampled as specified by the user (or by the \code{run.jags} defaults).}
 \item{jagcontrol}{A list containing additional parameters passed to
-    \code{"run.jags"}.  See the manpage of \code{\link{run.jags}} for an
+    \code{run.jags} (or \code{autorun.jags}).  See the manpage of those functions for an
     overview of the additional parameters that can be set.  No other
     model estimation functions are currently available.}
 }
