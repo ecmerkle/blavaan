@@ -210,7 +210,7 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
   if(lv.x.wish & nlvx > 1){
     matdims[8,] <- c(nlvx, ngroups)
   }
-  
+
   ## Define univariate distributions of each observed variable
   ## Loop if everything is continuous
   if(length(ov.ord) == 0){
@@ -242,7 +242,7 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
                      "] <- 1 - sum(probs[i,", ord.num, ",1:", ncats[ord.num]-1, "])\n",
                      sep="")
       } else {
-        TXT <- paste(TXT, t2, "y[i,j] ~ dnorm(mu[i,j],", tvname, "[j,g[i]])\n", sep="")
+        TXT <- paste(TXT, t2, "y[i,", j, "] ~ dnorm(mu[i,", j, "],", tvname, "[", j, ",g[i]])\n", sep="")
       }
     }
   }
