@@ -15,7 +15,7 @@ blavaan <- function(...,  # default lavaan arguments
                     jagfile            = FALSE,
                     jagextra           = list(),
                     inits              = "prior",
-                    convergence        = "manual",
+                    convergence        = "auto",
                     jagcontrol         = list()
                    )
 {
@@ -67,7 +67,11 @@ blavaan <- function(...,  # default lavaan arguments
         mfj <- list()
     }
     mfj <- c(mfj, list(n.chains = n.chains))
-
+    if(convergence == "auto" & !("startsample" %in% names(mfj))){
+        ## bump down default
+        mfj$startsample <- 4000
+    }
+                                             
     # which argument do we remove/ignore?
     lavArgsRemove <- c("likelihood", "information", "se", "bootstrap",
                        "wls.v", "nacov", "zero.add", "zero.keep.margins",
@@ -259,7 +263,21 @@ blavaan <- function(...,  # default lavaan arguments
             if(jag.do.fit){
               runjags.options(force.summary = TRUE)
               rjcall <- "run.jags"
-              if(convergence == "auto") rjcall <- "autorun.jags"
+              if(convergence == "auto"){
+                  rjcall <- "autorun.jags"
+                  if("raftery.options" %in% names(rjarg)){
+                      ## autorun defaults
+                      if(!("r" %in% names(rjarg$raftery.options))){
+                          rjarg$raftery.options$r <- .01
+                      }
+                      if(!("converge.eps" %in% names(rjarg$raftery.options))){
+                          rjarg$raftery.options$converge.eps <- .01
+                      }
+                  } else {
+                      rjarg$raftery.options <- list(r=.01, converge.eps=.01)
+                  }
+                  if(!("max.time" %in% names(rjarg))) rjarg$max.time <- "5m"
+              }
               res <- try(do.call(rjcall, rjarg))
             } else {
               res <- NULL
@@ -444,7 +462,7 @@ blavaan <- function(...,  # default lavaan arguments
 ## cfa + sem
 bcfa <- bsem <- function(..., ov.cp = "srs", lv.cp = "srs", dp = dpriors(),
     n.chains = 3, burnin, sample, adapt,
-    jagfile = FALSE, jagextra = list(), inits = "prior", convergence = "manual",
+    jagfile = FALSE, jagextra = list(), inits = "prior", convergence = "auto",
     jagcontrol = list()) {
 
     dotdotdot <- list(...)
@@ -471,7 +489,7 @@ bcfa <- bsem <- function(..., ov.cp = "srs", lv.cp = "srs", dp = dpriors(),
 # simple growth models
 bgrowth <- function(..., ov.cp = "srs", lv.cp = "srs", dp = dpriors(),
     n.chains = 3, burnin, sample, adapt,
-    jagfile = FALSE, jagextra = list(), inits = "prior", convergence = "manual",
+    jagfile = FALSE, jagextra = list(), inits = "prior", convergence = "auto",
     jagcontrol = list()) {
 
     dotdotdot <- list(...)

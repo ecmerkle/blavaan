@@ -6,7 +6,7 @@ Fit a Growth Curve model.}
 \usage{
 bgrowth(..., ov.cp = "srs", lv.cp = "srs", dp = dpriors(), n.chains = 3,
 burnin, sample, adapt, jagfile = FALSE, jagextra = list(), 
-inits = "prior", convergence = "manual", jagcontrol = list())
+inits = "prior", convergence = "auto", jagcontrol = list())
 }
 \arguments{
 \item{...}{Default lavaan arguments.  See \code{\link{lavaan}}.}
