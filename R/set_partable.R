@@ -225,3 +225,66 @@ set_phantoms <- function(partable, ov.names, lv.names, ov.names.x, lv.names.x, o
 
   partable
 }
+
+set_mv0 <- function(partable, ov.names, ngroups) {
+    ## If any mvs have fixed 0 variance (single indicator lv),
+    ## move the fixed 0 variance to the lv
+    mv0 <- which(partable$op == "~~" &
+                 partable$lhs %in% ov.names &
+                 partable$rhs == partable$lhs &
+                 partable$group == 1 &
+                 partable$free == 0 &
+                 partable$ustart == 0)
+
+    if(length(mv0) > 0){
+        ovn <- partable$lhs[mv0]
+    
+        for(i in 1:length(ovn)){
+            for(j in 1:ngroups){
+                mvloc <- which(partable$op == "~~" &
+                               partable$lhs == ovn[i] &
+                               partable$rhs == partable$lhs &
+                               partable$group == j &
+                               partable$free == 0 &
+                               partable$ustart == 0)
+                
+                lvloc <- which(partable$op == "=~" &
+                               partable$rhs == ovn[i] &
+                               partable$group == j)
+
+                ## This should always be length 1 because, if it is also
+                ## an indicator of another lv (with other mvs), then
+                ## we can estimate the variance
+                if(length(lvloc) > 1){
+                    stop(paste("blavaan ERROR: Problem with", ovn[i],
+                               "as a single indicator of a latent variable.\n"))
+                }
+
+                lvname <- partable$lhs[lvloc]
+
+                ## TODO? check for covariances with the lv?
+                lvvar <- which(partable$lhs == lvname &
+                               partable$rhs == lvname &
+                               partable$op == "~~" &
+                               partable$group == j)
+
+                tmpfree <- partable$free[lvvar]
+                tmpustart <- partable$ustart[lvvar]
+                tmpplabel <- partable$plabel[lvvar]
+                tmpstart <- partable$start[lvvar]
+
+                partable$free[lvvar] <- partable$free[mvloc]
+                partable$ustart[lvvar] <- partable$ustart[mvloc]
+                partable$plabel[lvvar] <- partable$plabel[mvloc]
+                partable$start[lvvar] <- partable$plabel[mvloc]
+
+                partable$free[mvloc] <- tmpfree
+                partable$ustart[mvloc] <- tmpustart
+                partable$plabel[mvloc] <- tmpplabel
+                partable$start[mvloc] <- tmpstart
+            }
+        }
+    }
+
+    partable
+}

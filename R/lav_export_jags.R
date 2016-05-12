@@ -40,6 +40,8 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
                           partable$rhs %in% orig.ov.names)))
   tvname <- ifelse(mvcovs > 0, "invthetstar", "invtheta")
 
+  ## set up mvs with fixed 0 variances (single indicators of lvs)
+  partable <- set_mv0(partable, orig.ov.names, ngroups)
   ## add necessary phantom lvs/mvs to model:
   partable <- set_phantoms(partable, orig.ov.names, orig.lv.names, orig.ov.names.x, orig.lv.names.x, ov.cp, lv.cp, lv.x.wish, ngroups)
   ## ensure group parameters are in order, for parameter indexing:
