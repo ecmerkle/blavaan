@@ -104,7 +104,7 @@ set_inits <- function(partable, coefvec, matdims, ov.cp, lv.cp, n.chains, inits)
       if(inherits(ivs, "try-error")) ivs <- rep(NA, n.chains)
     } else {
       ptrow <- which(partable$plabel == coefvec[i,2])[1]
-      ivs <- jitter(rep(partable$start[ptrow], n.chains), amount = 1)
+      ivs <- rep(partable$start[ptrow], n.chains)
 
       ## now (try to) ensure the jittered values won't crash on us
       if(grepl("thet", coefvec[i,1]) | grepl("psi", coefvec[i,1])){
