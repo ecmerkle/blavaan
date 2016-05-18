@@ -15,7 +15,7 @@ blavaan <- function(...,  # default lavaan arguments
                     jagfile            = FALSE,
                     jagextra           = list(),
                     inits              = "prior",
-                    convergence        = "auto",
+                    convergence        = "manual",
                     jagcontrol         = list()
                    )
 {
@@ -67,9 +67,16 @@ blavaan <- function(...,  # default lavaan arguments
         mfj <- list()
     }
     mfj <- c(mfj, list(n.chains = n.chains))
-    if(convergence == "auto" & !("startsample" %in% names(mfj))){
-        ## bump down default
-        mfj$startsample <- 4000
+    if(convergence == "auto"){
+        if(!("startsample" %in% names(mfj))){
+            ## bump down default
+            mfj$startsample <- 4000
+        } else {
+            if(mfj$startsample < 4000){
+                cat("blavaan NOTE: starting sample was increased to 4000 for auto-convergence\n")
+                mfj$startsample <- 4000 # needed for runjags
+            }
+        }
     }
                                              
     # which argument do we remove/ignore?
@@ -457,7 +464,7 @@ blavaan <- function(...,  # default lavaan arguments
 ## cfa + sem
 bcfa <- bsem <- function(..., ov.cp = "srs", lv.cp = "srs", dp = dpriors(),
     n.chains = 3, burnin, sample, adapt,
-    jagfile = FALSE, jagextra = list(), inits = "prior", convergence = "auto",
+    jagfile = FALSE, jagextra = list(), inits = "prior", convergence = "manual",
     jagcontrol = list()) {
 
     dotdotdot <- list(...)
@@ -484,7 +491,7 @@ bcfa <- bsem <- function(..., ov.cp = "srs", lv.cp = "srs", dp = dpriors(),
 # simple growth models
 bgrowth <- function(..., ov.cp = "srs", lv.cp = "srs", dp = dpriors(),
     n.chains = 3, burnin, sample, adapt,
-    jagfile = FALSE, jagextra = list(), inits = "prior", convergence = "auto",
+    jagfile = FALSE, jagextra = list(), inits = "prior", convergence = "manual",
     jagcontrol = list()) {
 
     dotdotdot <- list(...)
