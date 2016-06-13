@@ -117,7 +117,7 @@ blavaan <- function(...,  # default lavaan arguments
         if(length(compeq) > 0) {
             eqpars <- which(LAV@ParTable$op == "==")
             LAV@ParTable <- lapply(LAV@ParTable, function(x) x[-eqpars[compeq]])
-            warning("blavaan WARNING: blavaan does not currently handle complex equality constraints.\ntry modifying the exported JAGS code.")
+            warning("blavaan WARNING: blavaan does not currently handle complex equality constraints.\n  try modifying the exported JAGS code.")
         }
     }
     
@@ -135,10 +135,11 @@ blavaan <- function(...,  # default lavaan arguments
     prispec <- "prior" %in% names(LAV@ParTable)
     ndpriors <- rep(FALSE, length(LAV@ParTable$lhs))
     if(prispec) ndpriors <- LAV@ParTable$prior != ""
-    con.cov <- any(LAV@ParTable$lhs %in% c(lv.x, ov.noy) &
-                   LAV@ParTable$op == "~~" &
-                   (LAV@ParTable$free == 0 |
-                    ndpriors))
+    cov.pars <- (LAV@ParTable$lhs %in% c(lv.x, ov.noy)) & LAV@ParTable$op == "~~"
+    con.cov <- any((cov.pars & (LAV@ParTable$free == 0 | ndpriors)) |
+                   ((LAV@ParTable$lhs %in% LAV@ParTable$plabel[cov.pars] |
+                     LAV@ParTable$rhs %in% LAV@ParTable$plabel[cov.pars]) &
+                     LAV@ParTable$op == "=="))
     if(con.cov) LAV@Options$auto.cov.lv.x <- FALSE
 
     # if std.lv, truncate the prior of each lv's first loading

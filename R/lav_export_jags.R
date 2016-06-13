@@ -398,8 +398,7 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
           lv.var <- which(partable$lhs == lv.names[mu.ind] &
                           partable$rhs == lv.names[mu.ind] &
                           partable$op == "~~")
-          ## if lv variance is 0, don't assign a distribution!
-          if(partable$free[lv.var] == 0 & partable$ustart[lv.var] == 0){
+          if(any(partable$free[lv.var] == 0 & partable$ustart[lv.var] == 0)){
             TXT <- paste(TXT, "\n", t2,
                          "eta[i,", j, "] <- mu.eta[i,", mu.ind, "]", sep="")
             ## now change ustart to 1000 so no divide by 0 in jags
