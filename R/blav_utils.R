@@ -223,8 +223,10 @@ fill_params <- function(postsamp      = NULL,
 rearr_params <- function(mcmc         = NULL,
                          lavpartable  = NULL){
     fullmat <- mcmc[[1]]
-    for(i in 2:length(mcmc)){
-        fullmat <- rbind(fullmat, mcmc[[i]])
+    if(length(mcmc) > 1){
+        for(i in 2:length(mcmc)){
+            fullmat <- rbind(fullmat, mcmc[[i]])
+        }
     }
     
     cnames <- lavpartable$jlabel

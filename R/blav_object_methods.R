@@ -245,7 +245,7 @@ function(object, header       = TRUE,
 
         ## FIXME defined parameters never get psrf + others;
         ## see line 200 of lav_print.R
-        if(psrf){
+        if(psrf & class(object@external$runjags$psrf) != "character"){
           PE$psrf <- rep(NA, nrow(PE))
           PE$psrf[peentry] <- object@external$runjags$psrf$psrf[!is.na(ptentry),'Point est.']
         }

@@ -335,7 +335,7 @@ blavaan <- function(...,  # default lavaan arguments
     lavimplied <- NULL
     ## compute/store some model-implied statistics
     lavimplied <- lav_model_implied(lavmodel)
-    if(jag.do.fit){
+    if(jag.do.fit & n.chains > 1){
       ## this also checks convergence of monitors from jagextra, which may not be optimal
       if(any(res$psrf$psrf[parrows[!rhorows],1] > 1.2)) attr(x, "converged") <- FALSE
 
