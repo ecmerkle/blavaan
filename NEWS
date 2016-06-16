@@ -1,3 +1,9 @@
+Changes in Version 0.1-4
+    o New convergence="auto" option to run chains until convergence.
+
+    o Bug fixes in model estimation: single-indicator lvs, equality constraints
+      on exogenous lvs, models with n.chains=1, force runjags parameter summary.
+
 Changes in Version 0.1-3
     o Improved support for growth models, including latent variances
       fixed to 0.
