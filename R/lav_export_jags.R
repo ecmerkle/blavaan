@@ -10,7 +10,7 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
         partable <- as.data.frame(partable, stringsAsFactors = FALSE)
     }
   }    
-
+  
   ## get names of ovs before we add phantom variables
   old.pta <- lav_partable_attributes(partable = partable, pta = pta)
   old.vnames <- old.pta$vnames
@@ -28,6 +28,14 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
   if(lv.x.wish & nlvx > 1 & dp[["ibpsi"]] == dpriors()[["ibpsi"]]){
     dp[["ibpsi"]] <- paste("dwish(iden,", length(orig.lv.names.x) + 1, ")", sep="")
   }
+
+  ## parameter matrices + indexing
+  parvec <- lavaan:::representation.LISREL(partable, target = NULL,
+                                           extra = TRUE)
+  ## add to partable!
+  partable$mat <- parvec$mat
+  partable$row <- parvec$row
+  partable$col <- parvec$col
   
   ## add prior column if it doesn't exist
   if(is.na(match("prior", names(partable)))) partable$prior <- rep("", length(partable$id))
@@ -43,7 +51,9 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
   ## set up mvs with fixed 0 variances (single indicators of lvs)
   partable <- set_mv0(partable, orig.ov.names, ngroups)
   ## add necessary phantom lvs/mvs to model:
-  partable <- set_phantoms(partable, orig.ov.names, orig.lv.names, orig.ov.names.x, orig.lv.names.x, ov.cp, lv.cp, lv.x.wish, ngroups)
+  partable <- set_phantoms(partable, parvec, orig.ov.names, orig.lv.names, orig.ov.names.x, orig.lv.names.x, ov.cp, lv.cp, lv.x.wish, ngroups)
+  parvec <- partable$parvec
+  partable <- partable$partable
   ## ensure group parameters are in order, for parameter indexing:
   partable <- partable[order(partable$group),]
   ## get parameter table attributes 
