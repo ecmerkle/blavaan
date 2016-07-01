@@ -145,10 +145,12 @@ nlvcovs)
           tbcs <- tbcs + 1
           partable$row[tmprows[1]] <- tbcs
           partable$col[tmprows[1]] <- match(partable$lhs[covpars[i]],
-                                            patts$mmDimNames[[k]]$psi[[1]])
-          tmpv1 <- paste("psi[", match(partable$lhs[covpars[i]], patts$mmDimNames[[k]]$psi[[1]]), ",", k, "]", sep="")
+                                            lv.names) # FIXME here and below will be patts$mmDimNames[[k]]$psi[[1]])
+          tmpv1 <- paste("psi[", match(partable$lhs[covpars[i]], lv.names), #patts$mmDimNames[[k]]$psi[[1]]),
+                                       ",", k, "]", sep="")
           if(eq.const){
-            oldv1 <- paste("psi[", match(partable$lhs[full.idx], patts$mmDimNames[[k]]$psi[[1]]), ",", grp.idx, "]", sep="")
+            oldv1 <- paste("psi[", match(partable$lhs[full.idx], lv.names), #patts$mmDimNames[[k]]$psi[[1]]),
+                                         ",", grp.idx, "]", sep="")
           }
           ctype <- "lv"
         }
@@ -174,9 +176,11 @@ nlvcovs)
           partable$row[tmprows[2]] <- tbcs
           partable$col[tmprows[2]] <- match(partable$rhs[covpars[i]],
                                             patts$mmDimNames[[k]]$psi[[1]])
-          tmpv2 <- paste("psi[", match(partable$rhs[covpars[i]], patts$mmDimNames[[k]]$psi[[1]]), ",", k, "]", sep="")
+          tmpv2 <- paste("psi[", match(partable$rhs[covpars[i]], lv.names), #patts$mmDimNames[[k]]$psi[[1]]),
+                                       ",", k, "]", sep="")
           if(eq.const){
-            oldv2 <- paste("psi[", match(partable$rhs[full.idx], patts$mmDimNames[[k]]$psi[[1]]), ",", grp.idx, "]", sep="")
+            oldv2 <- paste("psi[", match(partable$rhs[full.idx], lv.names), #patts$mmDimNames[[k]]$psi[[1]]),
+                                         ",", grp.idx, "]", sep="")
           }
         }
 

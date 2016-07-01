@@ -228,7 +228,7 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
   if(length(ov.ord) == 0){
     for(j in 1:nmvs){
       TXT <- paste(TXT, t2, ov.names[j], 
-                   "[i] ~ dnorm(mu[i,", j, "],", tvname, "[", j, ",g[i]])\n",
+                   "[i] ~ dnorm(mu[i,", j, "], ", tvname, "[", j, ",g[i]])\n",
                    sep="")
     }
   } else {
@@ -312,8 +312,7 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
         RHS <- paste("eta[i,",
                      match(rhs, lv.names), "]", sep="")
       } else if(rhs %in% orig.ov.names) {
-        RHS <- paste("y[i,",
-                     match(rhs, orig.ov.names), "]", sep="")
+        RHS <- paste(rhs, "[i]", sep="")
       }
       
       ## deal with fixed later
@@ -403,7 +402,6 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
           lv.ind <- rbind(lv.ind, c(j, lv.ind[nrow(lv.ind),2] + 1))
           mu.ind <- lv.ind[nrow(lv.ind),2]
           ## TODO see whether we need invpsistar?
-          
           lv.var <- which(partable$lhs == lv.names[mu.ind] &
                           partable$rhs == lv.names[mu.ind] &
                           partable$op == "~~")
@@ -497,7 +495,7 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
             ## Is the rhs an lv or ov?
             lvmatch <- match(regressions$rhs[rhs.idx[p]], lv.names)
             if(is.na(lvmatch)){
-              TXT <- paste(TXT, "*y[i,", match(regressions$rhs[rhs.idx[p]], orig.ov.names), "]", sep="")
+              TXT <- paste(TXT, "*", regressions$rhs[rhs.idx[p]], "[i]", sep="")
             } else {
               TXT <- paste(TXT, "*eta[i,", lvmatch, "]", sep="")
             }
@@ -638,6 +636,7 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
   if(!is.null(lavdata) | class(model)=="lavaan"){
     if(class(model) == "lavaan") lavdata <- model@Data
     ntot <- sum(unlist(lavdata@norig))
+    nmvs <- length(orig.ov.names)
     y <- lapply(1:nmvs, function(x) rep(NA,ntot))
     g <- rep(NA, ntot)
     for(k in 1:ngroups){
@@ -646,7 +645,7 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
         }
         g[lavdata@case.idx[[k]]] <- k
     }
-    names(y) <- ov.names
+    names(y) <- orig.ov.names
     ## remove deleted rows
     ymat <- matrix(unlist(y), ntot, nmvs)
     nas <- which(apply(is.na(ymat), 1, sum) == nmvs)
