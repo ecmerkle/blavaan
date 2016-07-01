@@ -362,3 +362,17 @@ add_monitors <- function(lavpartable, lavjags, jagextra){
 
     lavpartable
 }
+
+## forbidden variable names (don't confuse with parameter names)
+namecheck <- function(ov.names){
+    forbidden <- c("mu", "invthetstar", "invtheta", "nu", "lambda", "eta",
+                   "mu.eta", "invpsistar", "invpsi", "alpha", "beta",
+                   "rho", "theta", "psi", "rstar", "cov", "ibpsi", "bpsi")
+
+    forbid.idx <- which(ov.names %in% forbidden)
+    
+    if(length(forbid.idx) > 0L){
+        stop("blavaan ERROR: the following variable names must be changed:\n",
+             "                   ", paste(forbidden[forbid.idx], collapse = " "))
+    }
+}

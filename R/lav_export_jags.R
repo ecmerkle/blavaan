@@ -226,12 +226,11 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
   ## Define univariate distributions of each observed variable
   ## Loop if everything is continuous
   if(length(ov.ord) == 0){
-    TXT <- paste(TXT, t2,
-                 "for(j in 1:", nmvs, ") {\n", sep="")
-    TXT <- paste(TXT, t3,
-                 "y[i,j] ~ dnorm(mu[i,j],", tvname, "[j,g[i]])\n", sep="")
-  
-    TXT <- paste(TXT, t2, "}\n", sep="")
+    for(j in 1:nmvs){
+      TXT <- paste(TXT, t2, ov.names[j], 
+                   "[i] ~ dnorm(mu[i,", j, "],", tvname, "[", j, ",g[i]])\n",
+                   sep="")
+    }
   } else {
     for(j in 1:nmvs){
       if(ov.names[j] %in% ov.ord){
@@ -254,7 +253,7 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
                      "] <- 1 - sum(probs[i,", ord.num, ",1:", ncats[ord.num]-1, "])\n",
                      sep="")
       } else {
-        TXT <- paste(TXT, t2, "y[i,", j, "] ~ dnorm(mu[i,", j, "],", tvname, "[", j, ",g[i]])\n", sep="")
+        TXT <- paste(TXT, t2, ov.names[j], "[i,", j, "] ~ dnorm(mu[i,", j, "],", tvname, "[", j, ",g[i]])\n", sep="")
       }
     }
   }
@@ -639,18 +638,23 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
   if(!is.null(lavdata) | class(model)=="lavaan"){
     if(class(model) == "lavaan") lavdata <- model@Data
     ntot <- sum(unlist(lavdata@norig))
-    y <- matrix(NA, ntot, length(orig.ov.names))
+    y <- lapply(1:nmvs, function(x) rep(NA,ntot))
     g <- rep(NA, ntot)
     for(k in 1:ngroups){
-      y[lavdata@case.idx[[k]],] <- lavdata@X[[k]]
-      g[lavdata@case.idx[[k]]] <- k
+        for(j in 1:nmvs){
+            y[[j]][lavdata@case.idx[[k]]] <- lavdata@X[[k]][,j]
+        }
+        g[lavdata@case.idx[[k]]] <- k
     }
+    names(y) <- ov.names
     ## remove deleted rows
-    nas <- which(apply(is.na(y), 1, sum) == length(orig.ov.names))
+    ymat <- matrix(unlist(y), ntot, nmvs)
+    nas <- which(apply(is.na(ymat), 1, sum) == nmvs)
     if(length(nas) > 0){
-        jagsdata <- list(y=y[-nas,], g=g[-nas], N=sum(unlist(lavdata@nobs)))
+        y <- lapply(y, function(x) x[-nas])
+        jagsdata <- c(y, list(g=g[-nas], N=sum(unlist(lavdata@nobs))))
     } else {
-        jagsdata <- list(y=y, g=g, N=ntot)
+        jagsdata <- c(y, list(g=g, N=ntot))
     }
 
     ## identity matrix for wishart prior
