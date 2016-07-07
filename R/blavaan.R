@@ -27,6 +27,15 @@ blavaan <- function(...,  # default lavaan arguments
     # catch dot dot dot
     dotdotdot <- list(...); dotNames <- names(dotdotdot)
 
+    # capture data augmentation/full information options
+    blavmis <- "da"
+    if("missing" %in% dotNames) {
+        if(dotdotdot$missing %in% c("da", "fi")) {
+            blavmis <- dotdotdot$missing
+            misloc <- which(dotNames == "missing")
+            dotdotdot <- dotdotdot[-misloc]; dotNames <- dotNames[-misloc]
+        }
+    }
     # which arguments do we override?
     lavArgsOverride <- c("meanstructure", "missing", "estimator")
     # always warn?
@@ -228,7 +237,9 @@ blavaan <- function(...,  # default lavaan arguments
             jagtrans <- try(lav2jags(model = lavpartable, lavdata = lavdata, 
                                      ov.cp = ov.cp, lv.cp = lv.cp,
                                      lv.x.wish = lavoptions$auto.cov.lv.x,
-                                     dp = dp, n.chains = n.chains, jagextra = jagextra, inits = inits),
+                                     dp = dp, n.chains = n.chains,
+                                     jagextra = jagextra, inits = inits,
+                                     blavmis = blavmis),
                             silent = TRUE)
         }
 

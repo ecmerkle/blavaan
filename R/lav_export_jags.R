@@ -1,4 +1,4 @@
-lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.wish = FALSE, dp = dpriors(), n.chains = 1, jagextra = "", inits = "prior", pta = NULL) {
+lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.wish = FALSE, dp = dpriors(), n.chains = 1, jagextra = "", inits = "prior", blavmis = blavmis, pta = NULL) {
   ## lots of code is taken from lav_export_bugs.R
 
   if(class(model)[1]=="lavaan"){
@@ -101,8 +101,12 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
   ## TXT header
   TXT <- paste("model {\n", sep="")
 
-  TXT <- paste(TXT, t1,
-               "for(i in 1:N) {\n", sep="")
+  if(blavmis == "da"){
+    TXT <- paste(TXT, t1,
+                 "for(i in 1:N) {\n", sep="")
+  } else {
+    TXT <- paste(TXT, t1, "for(i in 1:nrows) {\n", sep="")
+  }
 
   ## Second object for priors/constraints
   TXT2 <- "\n"
@@ -223,15 +227,38 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
     matdims[8,] <- c(nlvx, ngroups)
   }
 
+  ## for missing=="fi", to model variables on rhs of regression
+  ovreg <- unique(regressions$rhs[regressions$rhs %in% ov.names])
+  ovcol <- which(ov.names %in% ovreg)
+
   ## Define univariate distributions of each observed variable
   ## Loop if everything is continuous
   if(length(ov.ord) == 0){
-    for(j in 1:nmvs){
-      TXT <- paste(TXT, t2, ov.names[j], 
-                   "[i] ~ dnorm(mu[i,", j, "], ", tvname, "[", j, ",g[i]])\n",
-                   sep="")
+    if(blavmis == "da"){
+      for(j in 1:nmvs){
+        TXT <- paste(TXT, t2, ov.names[j], 
+                     "[i] ~ dnorm(mu[i,", j, "], ", tvname, "[", j, ",g[i]])\n",
+                     sep="")
+      }
+    } else {
+      TXT <- paste(TXT, t2, "yvec[i] ~ dnorm(mu[sub[i], mv[i]], ",
+                   tvname, "[mv[i], g[i]])\n", sep="")
+      # now close this loop and start the usual one
+      TXT <- paste(TXT, t1, "}\n\n", sep="")
+      TXT <- paste(TXT, t1, "for(i in 1:N) {\n", sep="")
+      # now model regressions on rhs
+      if(length(ovreg) > 0){
+        colidx <- match(ovreg, ov.names)
+        for(j in 1:length(ovreg)){
+          TXT <- paste(TXT, t2, ovreg[j],
+                       "[i] ~ dnorm(mu[i,", colidx[j], "], ", tvname,
+                       "[", colidx[j], ",g[i]])\n", sep="")
+        }
+      }
     }
   } else {
+    # TODO revisit "fi" approach to missing data
+    if(blavmis == "fi") stop("blavaan ERROR: missing='fi' not yet supported for ordinal data")
     for(j in 1:nmvs){
       if(ov.names[j] %in% ov.ord){
         ord.num <- match(ov.names[j], ov.ord)
@@ -636,24 +663,57 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
   if(!is.null(lavdata) | class(model)=="lavaan"){
     if(class(model) == "lavaan") lavdata <- model@Data
     ntot <- sum(unlist(lavdata@norig))
-    nmvs <- length(orig.ov.names)
-    y <- lapply(1:nmvs, function(x) rep(NA,ntot))
+    ## pick up exogenous x's
+    tmpnmvs <- length(orig.ov.names)
+
+    y <- lapply(1:tmpnmvs, function(x) rep(NA,ntot))
     g <- rep(NA, ntot)
     for(k in 1:ngroups){
-        for(j in 1:nmvs){
-            y[[j]][lavdata@case.idx[[k]]] <- lavdata@X[[k]][,j]
-        }
-        g[lavdata@case.idx[[k]]] <- k
+      for(j in 1:tmpnmvs){
+        y[[j]][lavdata@case.idx[[k]]] <- lavdata@X[[k]][,j]
+      }
+      g[lavdata@case.idx[[k]]] <- k
     }
     names(y) <- orig.ov.names
-    ## remove deleted rows
-    ymat <- matrix(unlist(y), ntot, nmvs)
-    nas <- which(apply(is.na(ymat), 1, sum) == nmvs)
+    
+    ## remove fully deleted rows
+    ymat <- matrix(unlist(y), ntot, tmpnmvs)
+    nas <- which(apply(is.na(ymat), 1, sum) == tmpnmvs)
+
     if(length(nas) > 0){
-        y <- lapply(y, function(x) x[-nas])
-        jagsdata <- c(y, list(g=g[-nas], N=sum(unlist(lavdata@nobs))))
-    } else {
-        jagsdata <- c(y, list(g=g, N=ntot))
+      y <- lapply(y, function(x) x[-nas])
+      g <- g[-nas]
+      ntot <- sum(unlist(lavdata@nobs))
+      ymat <- ymat[-nas,]
+    }
+    
+    if(blavmis == "fi"){
+      ## variables on rhs of regression, in case missing
+      y <- y[names(y) %in% ovreg]
+    }
+
+    jagsdata <- c(y, list(g=g, N=ntot))
+
+    if(blavmis == "fi"){
+      ## keep only modeled y's not on rhs of regression
+      matvars <- which(orig.ov.names %in% ov.names &
+                       !(orig.ov.names %in% ovreg))
+      ymat <- ymat[,matvars]
+      nmvs <- length(matvars)
+  
+      ydf <- data.frame(y=as.numeric(ymat),
+                        g=rep(g, nmvs),
+                        sub=rep(1:ntot, nmvs),
+                        mv=rep(matvars, each=ntot))
+      
+      ydf <- subset(ydf, !is.na(ydf$y) & !(ydf$mv %in% ovcol))
+      ## sub index excluding completely missing observations
+      ydf$sub <- as.numeric(as.factor(ydf$sub))
+
+      jagsdata <- c(jagsdata, list(yvec=ydf$y, sub=ydf$sub,
+                                   mv=ydf$mv, nrows=nrow(ydf)))
+      jagsdata$g <- ydf$g
+      jagsdata$N <- max(ydf$sub)
     }
 
     ## identity matrix for wishart prior
