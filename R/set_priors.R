@@ -592,3 +592,51 @@ block_priors <- function(priorres, partable) {
 
     list(TXT2=TXT2, coefvec=coefvec)
 }
+
+set_parvec <- function(TXT2, partable, dp){
+    ## tabs
+    t1 <- paste(rep(" ", 2L), collapse="")
+    t2 <- paste(rep(" ", 4L), collapse="")
+    t3 <- paste(rep(" ", 6L), collapse="")
+
+    parnums <- rep(NA, nrow(partable))
+    parrows <- which(partable$op != "==")
+    parnums[parrows] <- 1:length(parrows)
+  
+    for(i in 1:nrow(partable)){
+        if(partable$mat[i] != ""){
+            ## to find complex equality constraints
+            eqpar <- which(partable$lhs == partable$plabel[i] &
+                           partable$op == "==")
+            TXT2 <- paste(TXT2, "\n", t1, "parvec[",
+                          parnums[i], "]", sep="")
+
+            if(partable$free[i] == 0){
+                TXT2 <- paste(TXT2, " <- ", partable$ustart[i],
+                              sep="")
+            } else if(length(eqpar) > 0){
+                # FIXME! Figure out functions for complex equality constraints
+                eqpar <- which(partable$plabel == partable$rhs[eqpar])
+                TXT2 <- paste(TXT2, " <- parvec[", parnums[eqpar],
+                              "]", sep="")
+            } else {
+                ## needs a prior
+                if(partable$prior[i] == ""){
+                    partype <- grep(partable$mat[i], names(dp))
+                    partable$prior[i] <- dp[partype]
+                }
+                ## FIXME! check for [sd]/[var] modifier
+                ## also need invtheta/invthetastar/etc
+                ## also need to convert back to inferential model
+                TXT2 <- paste(TXT2, " ~ ", partable$prior[i], sep="")
+            }
+
+            TXT2 <- paste(TXT2, "\n", t1, partable$mat[i], "[",
+                          partable$row[i], ",", partable$col[i],
+                          ",", partable$group[i], "] <- parvec[",
+                          parnums[i], "]", sep="")
+        }
+    }
+
+    TXT2
+}
