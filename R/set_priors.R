@@ -605,9 +605,12 @@ set_parvec <- function(TXT2, partable, dp){
   
     for(i in 1:nrow(partable)){
         if(partable$mat[i] != ""){
-            ## to find complex equality constraints
+            ## to find equality constraints
             eqpar <- which(partable$lhs == partable$plabel[i] &
                            partable$op == "==")
+            compeq <- which(partable$lhs == partable$label[i] &
+                            partable$op == "==")
+
             TXT2 <- paste(TXT2, "\n", t1, "parvec[",
                           parnums[i], "]", sep="")
 
@@ -615,10 +618,26 @@ set_parvec <- function(TXT2, partable, dp){
                 TXT2 <- paste(TXT2, " <- ", partable$ustart[i],
                               sep="")
             } else if(length(eqpar) > 0){
-                # FIXME! Figure out functions for complex equality constraints
                 eqpar <- which(partable$plabel == partable$rhs[eqpar])
                 TXT2 <- paste(TXT2, " <- parvec[", parnums[eqpar],
                               "]", sep="")
+            } else if(length(compeq) > 0){
+                ## constraints with one parameter label on lhs
+                ## FIXME? cannot handle, e.g., b1 + b2 == 2
+                ## see lav_partable_constraints.R
+                rhsvars <- all.vars(parse(file="",
+                                          text=partable$rhs[compeq]))
+                pvnum <- match(rhsvars, partable$label)
+
+                rhstrans <- paste("parvec[", parnums[pvnum], "]",
+                                  sep="")
+
+                jageq <- partable$rhs[compeq]
+                for(j in 1:length(rhsvars)){
+                    jageq <- gsub(rhsvars[j], rhstrans[j], jageq)
+                }
+
+                TXT2 <- paste(TXT2, " <- ", jageq, sep="")
             } else {
                 ## needs a prior
                 if(partable$prior[i] == ""){

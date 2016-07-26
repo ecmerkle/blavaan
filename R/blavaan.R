@@ -123,6 +123,8 @@ blavaan <- function(...,  # default lavaan arguments
     }
     eqs <- (LAV@Model@ceq.JAC == -1 | LAV@Model@ceq.JAC == 1)
     if(length(dim(eqs)) > 0) {
+        ## TODO when handle complex equality constraints:
+        ##      remove below, replace with check for one var on lhs
         compeq <- which(LAV@Model@ceq.rhs != 0 |
                         rowSums(LAV@Model@ceq.JAC != 0) != 2 |
                         rowSums(eqs) != 2)
