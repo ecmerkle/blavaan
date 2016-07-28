@@ -29,13 +29,18 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
     dp[["ibpsi"]] <- paste("dwish(iden,", length(orig.lv.names.x) + 1, ")", sep="")
   }
 
-  ## decide whether we need px on ovs by searching
-  ## for covariances among mvs:
+  ## decide whether we need px on ovs/lvs by searching
+  ## for covariances:
   mvcovs <- length(which(partable$lhs != partable$rhs &
                          partable$op == "~~" &
                          (partable$lhs %in% orig.ov.names |
                           partable$rhs %in% orig.ov.names)))
-  tvname <- ifelse(mvcovs > 0, "invthetstar", "invtheta")
+  tvname <- ifelse(mvcovs > 0, "thetastar", "theta")
+  lvcovs <- length(which(partable$lhs != partable$rhs &
+                         partable$op == "~~" &
+                         (partable$lhs %in% orig.lv.names |
+                          partable$rhs %in% orig.lv.names)))
+  pvname <- ifelse(lvcovs > 0, "psistar", "psi")
 
   ## set up mvs with fixed 0 variances (single indicators of lvs)
   partable <- set_mv0(partable, orig.ov.names, ngroups)
@@ -81,7 +86,7 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
   ## add phantom lvs if not already there
   phnames <- unique(partable$lhs[grep(".phant", partable$lhs)])
   lv.names <- c(lv.names, phnames[!(phnames %in% lv.names)])
-browser()
+
   ## tabs
   t1 <- paste(rep(" ", 2L), collapse="")
   t2 <- paste(rep(" ", 4L), collapse="")
@@ -105,10 +110,6 @@ browser()
   coefvec <- matrix(NA, nparam, 3)
   ## Combine these to be passed to set_priors()
   priorres <- list(TXT2=TXT2, coefvec=coefvec)
-
-  ## Third object for variance/covariance parameters
-  ## (taking into account phantoms)
-  TXT3 <- paste("\n", t1, "# variances & covariances\n", sep="")
 
   ## Decide whether we need to model exogenous x's
   if(length(ov.names.x) > 0){ # & !is.na(ov.names.x)){
@@ -134,41 +135,6 @@ browser()
     #ov.names <- ov.names.nox
   }
 
-  ## Keep track of jags matrix dimensions
-  ## (for initial values)
-  matdims <- matrix(NA, 8, 2)
-  rownames(matdims) <- c("invthet", "invpsi", "rstar",
-                         "nu", "alpha", "lambda", "beta", "ibpsi")
-  ## NB: don't add priors on precisions here because they mess up initial values,
-  ##     and they wouldn't be included in blocks anyway
-  mvv <- (partable$lhs == partable$rhs &
-          partable$op == "~~" &
-          partable$lhs %in% ov.names)
-  #partable$prior[mvv & partable$prior == ""] <- dp[["itheta"]]
-  mvvdim <- sum(mvv)/ngroups
-  matdims[1,] <- c(mvvdim, ngroups)
-  lvv <- (partable$lhs == partable$rhs &
-          partable$op == "~~" &
-          partable$lhs %in% lv.names)
-  #partable$prior[lvv & partable$prior == ""] <- dp[["ipsi"]]
-  lvvdim <- sum(lvv)/ngroups
-  matdims[2,] <- c(lvvdim, ngroups)
-  ## only find covariances under srs; fa parameterization
-  ## is covered by the phantom variables and wishart is covered separately:
-  if(!lv.x.wish){
-    covs <- (partable$lhs != partable$rhs & partable$op == "~~")
-  } else {
-    covs <- (partable$lhs != partable$rhs &
-             partable$op == "~~" &
-             !(partable$lhs %in% orig.lv.names.x) &
-             !(partable$rhs %in% orig.lv.names.x))
-  }
-  cov.eq <- which(covs & partable$free == 0) #partable$op == "==" & partable$rhs %in% partable$plabel[covs])
-  ##partable$prior[covs & partable$prior==""] <- dp[["rho"]]
-  covdim <- sum(covs)/ngroups
-  #covdim <- (sum(covs) - length(cov.eq))/ngroups
-  matdims[3,] <- c(covdim, ngroups)
-
   eqlabs <- partable$rhs[partable$op == "=="]
 
   ## TODO add thresholds here
@@ -193,29 +159,18 @@ browser()
               partable$free > 0 & !(partable$label %in% eqlabs))
   partable$prior[regfree & partable$prior==""] <- dp[["beta"]]
 
-  ## block mvn priors for efficiency
-  #partable <- set_blocks(partable)
-  partable$blk <- rep(NA, length(partable$lhs))
-
   ## TODO We now attach equality constraints to these tables, could
   ##      also deal with inequality constraints.
   ## Smaller partables for different parameter types +
   ## dimensions of parameter matrices (for initial values)
   ovintercepts <- partable[ovi,]
-  matdims[4,] <- c(nrow(ovintercepts)/ngroups, ngroups)
   ovintercepts <- rbind(ovintercepts, partable[which(partable$op == "=="),])
   lvintercepts <- partable[lvi,]
-  matdims[5,] <- c(nrow(lvintercepts)/ngroups, ngroups)
   lvintercepts <- rbind(lvintercepts, partable[which(partable$op == "=="),])
   loadings <- partable[load,]
-  matdims[6,] <- c(nrow(loadings)/ngroups, ngroups)
   loadings <- rbind(loadings, partable[which(partable$op == "=="),])
   regressions <- partable[reg,]
-  matdims[7,] <- c(nrow(regressions)/ngroups, ngroups)
   regressions <- rbind(regressions, partable[which(partable$op == "=="),])
-  if(lv.x.wish & nlvx > 1){
-    matdims[8,] <- c(nlvx, ngroups)
-  }
 
   ## for missing=="fi", to model variables on rhs of regression
   ovreg <- unique(regressions$rhs[regressions$rhs %in% ov.names])
@@ -227,11 +182,11 @@ browser()
     if(blavmis == "da"){
       for(j in 1:nmvs){
         TXT <- paste(TXT, t2, ov.names[j], 
-                     "[i] ~ dnorm(mu[i,", j, "], ", tvname, "[", j, ",g[i]])\n",
+                     "[i] ~ dnorm(mu[i,", j, "], 1/", tvname, "[", j, ",g[i]])\n",
                      sep="")
       }
     } else {
-      TXT <- paste(TXT, t2, "yvec[i] ~ dnorm(mu[sub[i], mv[i]], ",
+      TXT <- paste(TXT, t2, "yvec[i] ~ dnorm(mu[sub[i], mv[i]], 1/",
                    tvname, "[mv[i], g[i]])\n", sep="")
       # now close this loop and start the usual one
       TXT <- paste(TXT, t1, "}\n\n", sep="")
@@ -241,7 +196,7 @@ browser()
         colidx <- match(ovreg, ov.names)
         for(j in 1:length(ovreg)){
           TXT <- paste(TXT, t2, ovreg[j],
-                       "[i] ~ dnorm(mu[i,", colidx[j], "], ", tvname,
+                       "[i] ~ dnorm(mu[i,", colidx[j], "], 1/", tvname,
                        "[", colidx[j], ",g[i]])\n", sep="")
         }
       }
@@ -289,18 +244,16 @@ browser()
     
     ## Always include intercept parameters, fix to zero
     ## if they are not desired
-    TXT <- paste(TXT, "nu[", ov.idx, ",g[i]]", sep="")
     int.idx <- which(partable$op == "~1" &
                      partable$lhs == ov.names[i] &
                      partable$group == 1)
 
     ## Now deal with intercept constraints/priors:
     if(length(int.idx) == 0L) {
-      for(j in 1:ngroups){
-        priorres$TXT2 <- paste(priorres$TXT2, t1, "nu[", ov.idx, ",", j, "] <- 0\n", sep="")
-      }
+        TXT <- paste(TXT, "nu[", ov.idx, ",1,g[i]]", sep="")
     } else {
-      priorres <- set_priors(priorres, ovintercepts, ov.idx, ov.names, ngroups, "int", dp, is.na(partable$blk[int.idx]))
+        TXT <- paste(TXT, partable$mat[int.idx], "[", partable$row[int.idx], ",",
+                     partable$col[int.idx], ",g[i]]", sep="")
     }
 
     ## 2. factor loading? 
@@ -309,13 +262,10 @@ browser()
                      loadings$group == 1)
     if(length(lam.idx) > 0){
       for(j in 1:length(lam.idx)) {
-        TXT <- paste(TXT, " + ",
-                     "lambda[", lam.idx[j], ",g[i]]*eta[i,", 
-                     match(loadings$lhs[lam.idx[j]], lv.names)
+        TXT <- paste(TXT, " + ", loadings$mat[lam.idx[j]], "[",
+                     loadings$row[lam.idx[j]], ",", loadings$col[lam.idx[j]],
+                     ",g[i]]*eta[i,", match(loadings$lhs[lam.idx[j]], lv.names)
                      , "]", sep="")
-
-        ## Now assign priors/constraints
-        priorres <- set_priors(priorres, loadings, i, ov.names, ngroups, "loadings", dp, is.na(loadings$blk[lam.idx[j]]), j=j)
       } # end j loop
     }
 
@@ -326,55 +276,24 @@ browser()
       ## what is the rhs?
       rhs <- regressions$rhs[j]
       if(rhs %in% lv.names) {
-        RHS <- paste("eta[i,",
-                     match(rhs, lv.names), "]", sep="")
+        RHS <- paste("eta[i,", match(rhs, lv.names), "]", sep="")
       } else if(rhs %in% orig.ov.names) {
         RHS <- paste(rhs, "[i]", sep="")
       }
       
       ## deal with fixed later
-      TXT <- paste(TXT, " + ",
-                   "beta[", j, ",g[i]]*", RHS, sep="")
-      ## 25Sept15 was orig.ov.names; changed to ov.names
-      priorres <- set_priors(priorres, regressions, i, ov.names, ngroups, "regressions", dp, is.na(regressions$blk[j]), j=j)
+      TXT <- paste(TXT, " + ", regressions$mat[j], "[",
+                   regressions$row[j], ",", regressions$col[j],
+                   ",g[i]]*", RHS, sep="")
     }
 
-    ## 4. residual variance (with phantoms)
-    p.idx <- which(loadings$rhs == ov.names[i] &
-                   loadings$op == "=~" &
-                   grepl(".phant", loadings$lhs) &
-                   loadings$group == 1)
-    for(k in 1:ngroups){
-      if(ov.cp == "srs" & mvcovs > 0){
-        TXT3 <- paste(TXT3, t1, "invthetstar[", i, ",", k,
-                      "] <- 1/(theta[", i, ",", k, "]", sep="")
-        for(j in p.idx){
-          var.idx <- match(loadings$lhs[j], lv.names)
-          TXT3 <- paste(TXT3,
-                        " - (lambda[", j, ",", k, "]^2/invpsi[",
-                        var.idx, ",", k, "])", sep="")
-        }
-        TXT3 <- paste(TXT3, ")\n", sep="")
-      } else if (mvcovs > 0){
-        TXT3 <- paste(TXT3, t1, "invtheta[", i, ",", k,
-                      "] <- 1/(1/invthetstar[", i, ",", k,
-                      "]", sep="")
-        for(j in p.idx){
-          var.idx <- match(loadings$lhs[j], lv.names)
-          TXT3 <- paste(TXT3,
-                        " + (lambda[", j, ",", k, "]^2/invpsi[",
-                        var.idx, ",", k, "])", sep="")
-        }
-        TXT3 <- paste(TXT3, ")\n", sep="")
-      }
-    }
+    ## 4. residual variances now handled separately
 
     ## 5. TODO thresholds
     if(length(ov.ord) > 0){
 
     }
   }
-  TXT3 <- paste(TXT3, "\n", sep="")
 
   ## lvs
   if(length(lv.names) > 0L) {
@@ -382,18 +301,15 @@ browser()
                  "# lvs", sep="")
     TXT2 <- paste(TXT2, "\n", sep="")
 
-    ## for skipping over interactions in mu.eta and invpsi:
-    lv.ind <- rbind(c(0,0))
-
     lvstart <- 1
-    if(lv.x.wish & nlvx > 1){
-      lvstart <- nlvx + 1
-      lv.ind <- rbind(lv.ind, cbind(1:nlvx, 1:nlvx))
+    ## if(lv.x.wish & nlvx > 1){
+    ##   lvstart <- nlvx + 1
+    ##   lv.ind <- rbind(lv.ind, cbind(1:nlvx, 1:nlvx))
 
-      TXT <- paste(TXT, "\n", t2,
-                   "eta[i,1:", nlvx, "] ~ dmnorm(mu.eta[i,1:",
-                   nlvx, "], ibpsi[1:", nlvx,",1:", nlvx, ",g[i]])", sep="")
-    }
+    ##   TXT <- paste(TXT, "\n", t2,
+    ##                "eta[i,1:", nlvx, "] ~ dmnorm(mu.eta[i,1:",
+    ##                nlvx, "], ibpsi[1:", nlvx,",1:", nlvx, ",g[i]])", sep="")
+    ## }
     
     nlv <- length(lv.names)
 
@@ -411,59 +327,31 @@ browser()
                lv.names[j], " not found")
         }
 
-        ## check for latent interaction
-        tmp.eq <- which(partable$op == "==" &
-                        partable$lhs == lv.names[j] &
-                        grepl(":", partable$rhs))
-        if(length(tmp.eq) == 0L){
-          lv.ind <- rbind(lv.ind, c(j, lv.ind[nrow(lv.ind),2] + 1))
-          mu.ind <- lv.ind[nrow(lv.ind),2]
-          ## TODO see whether we need invpsistar?
-          lv.var <- which(partable$lhs == lv.names[mu.ind] &
-                          partable$rhs == lv.names[mu.ind] &
-                          partable$op == "~~")
-          if(any(partable$free[lv.var] == 0 & partable$ustart[lv.var] == 0)){
+        lv.var <- which(partable$lhs == lv.names[j] &
+                        partable$rhs == lv.names[j] &
+                        partable$op == "~~")
+        if(any(partable$free[lv.var] == 0 & partable$ustart[lv.var] == 0)){
             TXT <- paste(TXT, "\n", t2,
-                         "eta[i,", j, "] <- mu.eta[i,", mu.ind, "]", sep="")
+                         "eta[i,", j, "] <- mu.eta[i,", psi.free.idx, "]", sep="")
             ## now change ustart to 1000 so no divide by 0 in jags
             partable$ustart[lv.var] <- 1000
-          } else {
-            TXT <- paste(TXT, "\n", t2,
-                         ## TODO check for alternative distribution?
-                         "eta[i,", j, "] ~ dnorm(mu.eta[i,", 
-                         mu.ind, "], invpsistar[", mu.ind, ",g[i]])", sep="")
-          }
         } else {
-          ## latent interaction:
-          eta.eq[j] <- tmp.eq
-          lv.terms <- strsplit(partable$rhs[tmp.eq], ":")[[1]]
-          lvs <- match(lv.terms, lv.names)
-          lvs <- lvs[!is.na(lvs)]
-          ## in case there is interaction with exogenous mv
-          mvs <- match(lv.terms, orig.ov.names)
-          mvs <- mvs[!is.na(mvs)]
-          TXT <- paste(TXT, "\n", t2,
-                       "eta[i,", j, "] <- eta[i,", lvs[1], "]*",
-                       sep="")
-          if(length(lvs) == 2){
-            TXT <- paste(TXT, "eta[i,", lvs[2], "]", sep="")
-          } else {
-            if(length(mvs) == 0) stop("Problem with lv interaction")
-            TXT <- paste(TXT, "y[i,", mvs, "]", sep="")
-          }
+              TXT <- paste(TXT, "\n", t2,
+                           ## TODO check for alternative distribution?
+                           "eta[i,", j, "] ~ dnorm(mu.eta[i,", 
+                           psi.free.idx, "], 1/", pvname, "[",
+                           partable$row[psi.free.idx], ",", partable$col[psi.free.idx],
+                           ",g[i]])", sep="")
         }
       } # j
     } # if
 
     ## After lv distributions are defined, now define means/regressions:
     for(j in 1:nlv) {
-      ## this is for latent interactions
-      if(!is.na(eta.eq[j])) next
-      mu.ind <- lv.ind[which(lv.ind[,1]==j),2]
       TXT <- paste(TXT, "\n", t2,
                    ## TODO check for alternative distribution
                    ## in parameter table.
-                   "mu.eta[i,", mu.ind, "] <- ", sep="")
+                   "mu.eta[i,", j, "] <- ", sep="")
 
       ## lhs elements regression
       ## 1. intercept? (even exogenous can have an intercept)
@@ -472,91 +360,47 @@ browser()
                        lvintercepts$lhs == lv.names[j])
       if(length(int.idx) == 1L) {
         ## fixed or free?
-        TXT <- paste(TXT, "alpha[", mu.ind, ",", "g[i]]", sep="")
-
-        priorres <- set_priors(priorres, lvintercepts, i, lv.names, ngroups, "lv.nox.int", dp, is.na(lvintercepts$blk[int.idx]), j=mu.ind)
+        TXT <- paste(TXT, intercepts$mat[int.idx], "[", intercepts$row[int.idx],
+                     ",", intercepts$col[int.idx], ",g[i]]", sep="")
       } else { # no intercept, say '0', so we always have rhs
         TXT <- paste(TXT, "0", sep="")
       }
 
-      ## FIXME!! Possibility of loadings here
       if(lv.names[j] %in% lv.nox){
         ## 2. loadings?
         lam.idx <- which(loadings$op == "=~" &
                          loadings$rhs == lv.names[j] &
                          loadings$group == 1)
         if(length(lam.idx) > 0){
-          for(k in 1:length(lam.idx)){
-            TXT <- paste(TXT, " + lambda[", lam.idx[k],
-                         ",g[i]]*eta[i,",
-                         match(loadings$lhs[lam.idx[k]], lv.names),
-                         "]", sep="")
-
-            ## priors/constraints
-            priorres <- set_priors(priorres, loadings, j, lv.names,
-                                   ngroups, "loadings", dp,
-                                   is.na(loadings$blk[lam.idx[k]]),
-                                   j=k)
+          for(k in lam.idx){
+            TXT <- paste(TXT, " + ", loadings$mat[k], "[", loadings$row[k],
+                         ",", loadings$col[k], ",g[i]]*eta[i,",
+                         match(loadings$lhs[k], lv.names), "]", sep="")
           } # end k loop
         }                         
         
         ## 3. regressions?
         rhs.idx <- which(regressions$lhs == lv.names[j] &
+                         regressions$op == "~" &
                          regressions$group == 1)
         np <- length(rhs.idx)
         if(np > 0){ # there could be none if we have higher-order factors
-          for(p in 1:np){
-            TXT <- paste(TXT, " + ",
-                         "beta[", rhs.idx[p], ",g[i]]", sep="")
+          for(p in rhs.idx){
+            TXT <- paste(TXT, " + ", regressions$mat[p], "[", regressions$row[p],
+                         ",", regressions$col[p], ",g[i]]", sep="")
 
             ## Is the rhs an lv or ov?
-            lvmatch <- match(regressions$rhs[rhs.idx[p]], lv.names)
+            lvmatch <- match(regressions$rhs[p], lv.names)
             if(is.na(lvmatch)){
-              TXT <- paste(TXT, "*", regressions$rhs[rhs.idx[p]], "[i]", sep="")
+              TXT <- paste(TXT, "*", regressions$rhs[p], "[i]", sep="")
             } else {
               TXT <- paste(TXT, "*eta[i,", lvmatch, "]", sep="")
             }
-
-            ## Now assign priors/constraints
-            priorres <- set_priors(priorres, regressions, i, lv.names, ngroups, "lv.nox.reg",
-                                   dp, is.na(regressions$blk[rhs.idx[p]]), j=lv.names[j], p=rhs.idx[p])
           } # end p loop
         } # end if np
       } # end if
 
-      ## 4. lv variances (with phantoms)
-      p.idx <- which(regressions$lhs == lv.names[j] &
-                     regressions$op == "~" &
-                     grepl(".phant", regressions$rhs) &
-                     regressions$group == 1)
-      ## TODO decide whether we need invpsistar?
-      for(k in 1:ngroups){
-        if(lv.cp == "srs"){
-          TXT3 <- paste(TXT3, t1, "invpsistar[", mu.ind, ",", k,
-                        "] <- 1/(psi[", mu.ind, ",", k, "]", sep="")
-          for(p in p.idx){
-            tmp.idx <- match(regressions$rhs[p], lv.names)
-            var.idx <- lv.ind[which(lv.ind[,1]==tmp.idx),2]
-
-            TXT3 <- paste(TXT3,
-                          " - (beta[", p, ",", k, "]^2/invpsi[",
-                          var.idx, ",", k, "])", sep="")
-          }
-        } else {
-          TXT3 <- paste(TXT3, t1, "invpsi[", mu.ind, ",", k,
-                        "] <- 1/(1/invpsistar[", mu.ind, ",", k,
-                        "]", sep="")
-          for(p in p.idx){
-            tmp.idx <- match(regressions$rhs[p], lv.names)
-            var.idx <- lv.ind[which(lv.ind[,1]==tmp.idx),2]
-
-            TXT3 <- paste(TXT3,
-                          " + (beta[", p, ",", k, "]^2/invpsi[",
-                          var.idx, ",", k, "])", sep="")
-          }
-        }
-        TXT3 <- paste(TXT3, ")\n", sep="")
-      } # k
+      ## 4. lv variances now handled separately
     } # end j loop
     if(any(lv.names %in% lv.nox)) TXT2 <- paste(TXT2, "\n", sep="")
   } # end if length(lv.names)
@@ -565,6 +409,7 @@ browser()
   TXT <- paste(TXT, "\n", t1,
                "}", sep="")
 
+  ## TODO 28Jul2016 modify here and below these for use with new parvecs
   ## now get priors for residual variance parameters of non-exo mvs and lvs
   priorres <- set_priors(priorres, partable, 1, c(ov.names, lv.names), ngroups,
                          type="vars", dp=dp, blk=TRUE, nov=nmvs, lv.names.x=orig.lv.names.x, ov.cp=ov.cp, lv.cp=lv.cp, lv.x.wish=lv.x.wish, mvcovs=mvcovs)
@@ -574,7 +419,7 @@ browser()
 
   ## and for blocked multivariate normal parameters, now that
   ## priorres$coefvec should have all the jags labels
-  if(any(!is.na(partable$blk))) priorres <- block_priors(priorres, partable)
+  ##if(any(!is.na(partable$blk))) priorres <- block_priors(priorres, partable)
     
   ## covariances resulting from phantoms go in TXT3
   TXT3 <- paste(TXT3, "\n", sep="")
