@@ -121,41 +121,40 @@ blavaan <- function(...,  # default lavaan arguments
         if(class(jagfile) == "logical") jagfile <- TRUE
         warning("blavaan WARNING: blavaan does not currently handle inequality constraints.\ntry modifying the exported JAGS code.")
     }
-    eqs <- (LAV@Model@ceq.JAC == -1 | LAV@Model@ceq.JAC == 1)
-    if(length(dim(eqs)) > 0) {
-        ## TODO when handle complex equality constraints:
-        ##      remove below, replace with check for one var on lhs
-        compeq <- which(LAV@Model@ceq.rhs != 0 |
-                        rowSums(LAV@Model@ceq.JAC != 0) != 2 |
-                        rowSums(eqs) != 2)
-        if(length(compeq) > 0) {
-            eqpars <- which(LAV@ParTable$op == "==")
-            LAV@ParTable <- lapply(LAV@ParTable, function(x) x[-eqpars[compeq]])
-            warning("blavaan WARNING: blavaan does not currently handle complex equality constraints.\n  try modifying the exported JAGS code.")
+    eqs <- which(LAV@ParTable$op == "==")
+    if(length(eqs) > 0) {
+        lhsvars <- rep(NA, length(eqs))
+        for(i in 1:length(eqs)){
+            lhsvars[i] <- length(all.vars(parse(file="", text=LAV@ParTable$lhs[eqs[i]])))
+        }
+        if(any(lhsvars > 1)) {
+            stop("blavaan ERROR: blavaan does not handle equality constraints with more than 1 variable on the lhs.\n  try modifying the constraints.")
         }
     }
-    
-    # cannot currently use wishart prior with std.lv=TRUE
-    if(LAV@Options$auto.cov.lv.x & LAV@Options$std.lv){
-        #warning("blavaan WARNING: cannot use Wishart prior with std.lv=TRUE. Reverting to 'srs' priors.")
-        LAV@Options$auto.cov.lv.x <- FALSE
-    }
-    # Check whether there are user-specified priors or equality
-    # constraints on lv.x or ov.x. If so, set auto.cov.lv.x = FALSE.
-    lv.x <- LAV@pta$vnames$lv.x[[1]]
-    ## catch some regressions without fixed x:
-    ov.noy <- LAV@pta$vnames$ov.nox[[1]]
-    ov.noy <- ov.noy[!(ov.noy %in% LAV@pta$vnames$ov.y)]
-    prispec <- "prior" %in% names(LAV@ParTable)
-    ndpriors <- rep(FALSE, length(LAV@ParTable$lhs))
-    if(prispec) ndpriors <- LAV@ParTable$prior != ""
-    cov.pars <- (LAV@ParTable$lhs %in% c(lv.x, ov.noy)) & LAV@ParTable$op == "~~"
-    con.cov <- any((cov.pars & (LAV@ParTable$free == 0 | ndpriors)) |
-                   ((LAV@ParTable$lhs %in% LAV@ParTable$plabel[cov.pars] |
-                     LAV@ParTable$rhs %in% LAV@ParTable$plabel[cov.pars]) &
-                     LAV@ParTable$op == "=="))
-    if(con.cov) LAV@Options$auto.cov.lv.x <- FALSE
 
+    # block priors off for now
+    LAV@Options$auto.cov.lv.x <- FALSE
+    ## # cannot currently use wishart prior with std.lv=TRUE
+    ## if(LAV@Options$auto.cov.lv.x & LAV@Options$std.lv){
+    ##     #warning("blavaan WARNING: cannot use Wishart prior with std.lv=TRUE. Reverting to 'srs' priors.")
+    ##     LAV@Options$auto.cov.lv.x <- FALSE
+    ## }
+    ## # Check whether there are user-specified priors or equality
+    ## # constraints on lv.x or ov.x. If so, set auto.cov.lv.x = FALSE.
+    ## lv.x <- LAV@pta$vnames$lv.x[[1]]
+    ## ## catch some regressions without fixed x:
+    ## ov.noy <- LAV@pta$vnames$ov.nox[[1]]
+    ## ov.noy <- ov.noy[!(ov.noy %in% LAV@pta$vnames$ov.y)]
+    ## prispec <- "prior" %in% names(LAV@ParTable)
+    ## ndpriors <- rep(FALSE, length(LAV@ParTable$lhs))
+    ## if(prispec) ndpriors <- LAV@ParTable$prior != ""
+    ## cov.pars <- (LAV@ParTable$lhs %in% c(lv.x, ov.noy)) & LAV@ParTable$op == "~~"
+    ## con.cov <- any((cov.pars & (LAV@ParTable$free == 0 | ndpriors)) |
+    ##                ((LAV@ParTable$lhs %in% LAV@ParTable$plabel[cov.pars] |
+    ##                  LAV@ParTable$rhs %in% LAV@ParTable$plabel[cov.pars]) &
+    ##                  LAV@ParTable$op == "=="))
+    ## if(con.cov) LAV@Options$auto.cov.lv.x <- FALSE
+    
     # if std.lv, truncate the prior of each lv's first loading
     if(LAV@Options$std.lv){
         if(ov.cp == "fa" | lv.cp == "fa") stop("blavaan ERROR: ov.cp='fa' and lv.cp='fa' cannot be used with std.lv=TRUE.")

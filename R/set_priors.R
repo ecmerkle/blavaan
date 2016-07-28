@@ -593,33 +593,32 @@ block_priors <- function(priorres, partable) {
     list(TXT2=TXT2, coefvec=coefvec)
 }
 
-set_parvec <- function(TXT2, partable, dp){
+set_parvec <- function(TXT2, partable, dp, lv.x.wish, lv.names.x){
     ## tabs
     t1 <- paste(rep(" ", 2L), collapse="")
     t2 <- paste(rep(" ", 4L), collapse="")
     t3 <- paste(rep(" ", 6L), collapse="")
-
-    parnums <- rep(NA, nrow(partable))
-    parrows <- which(partable$op != "==")
-    parnums[parrows] <- 1:length(parrows)
   
     for(i in 1:nrow(partable)){
         if(partable$mat[i] != ""){
             ## to find equality constraints
-            eqpar <- which(partable$lhs == partable$plabel[i] &
+            eqpar <- which(partable$rhs == partable$plabel[i] &
                            partable$op == "==")
             compeq <- which(partable$lhs == partable$label[i] &
                             partable$op == "==")
+            ## TODO block prior associated with lv.x.wish
+            ##      put entries of parvec in matrix for dwish?
+            ## TODO check for inequality constraints here?
 
             TXT2 <- paste(TXT2, "\n", t1, "parvec[",
-                          parnums[i], "]", sep="")
+                          partable$parnums[i], "]", sep="")
 
             if(partable$free[i] == 0){
                 TXT2 <- paste(TXT2, " <- ", partable$ustart[i],
                               sep="")
             } else if(length(eqpar) > 0){
-                eqpar <- which(partable$plabel == partable$rhs[eqpar])
-                TXT2 <- paste(TXT2, " <- parvec[", parnums[eqpar],
+                eqpar <- which(partable$plabel == partable$lhs[eqpar])
+                TXT2 <- paste(TXT2, " <- parvec[", partable$parnums[eqpar],
                               "]", sep="")
             } else if(length(compeq) > 0){
                 ## constraints with one parameter label on lhs
@@ -629,7 +628,7 @@ set_parvec <- function(TXT2, partable, dp){
                                           text=partable$rhs[compeq]))
                 pvnum <- match(rhsvars, partable$label)
 
-                rhstrans <- paste("parvec[", parnums[pvnum], "]",
+                rhstrans <- paste("parvec[", partable$parnums[pvnum], "]",
                                   sep="")
 
                 jageq <- partable$rhs[compeq]
@@ -640,20 +639,40 @@ set_parvec <- function(TXT2, partable, dp){
                 TXT2 <- paste(TXT2, " <- ", jageq, sep="")
             } else {
                 ## needs a prior
+                ## correlation parameter under srs
+                if(grepl("rho", partable$id[i])){
+                    rhoinf <- strsplit(partable$id[i], "[, \\[^\\]]+", perl=TRUE)
+                    partable$mat[i] <- rhoinf[[1]][1]
+                    partable$row[i] <- rhoinf[[1]][2]
+                    partable$col[i] <- rhoinf[[1]][3]
+                }
                 if(partable$prior[i] == ""){
                     partype <- grep(partable$mat[i], names(dp))
+                    if(length(partype) > 1) partype <- partype[1] # due to psi and ibpsi
                     partable$prior[i] <- dp[partype]
                 }
-                ## FIXME! check for [sd]/[var] modifier
-                ## also need invtheta/invthetastar/etc
-                ## also need to convert back to inferential model
-                TXT2 <- paste(TXT2, " ~ ", partable$prior[i], sep="")
+                vpri <- grepl("\\[var\\]", partable$prior[i])
+                spri <- grepl("\\[sd\\]", partable$prior[i])
+                if(vpri | spri){
+                    txtmod <- ifelse(vpri, "var", "sd")
+                    sq <- ifelse(vpri, "", "^2")
+
+
+                    TXT2 <- paste(TXT2, " <- 1/pvec", partable$parnums[i], sq, "\n", sep="")
+                    TXT2 <- paste(TXT2, t1, "pvec", partable$parnums[i], " ~ ",
+                                  strsplit(partable$prior[i], "\\[")[[1]][1], sep="")
+                } else {
+                    ## also need invtheta/invthetastar/etc
+                    ## also need to convert back to inferential model
+                    TXT2 <- paste(TXT2, " ~ ", partable$prior[i], sep="")
+                }
             }
 
             TXT2 <- paste(TXT2, "\n", t1, partable$mat[i], "[",
                           partable$row[i], ",", partable$col[i],
-                          ",", partable$group[i], "] <- parvec[",
-                          parnums[i], "]", sep="")
+                          ",", partable$group[i], "] <- ", sep="")
+            if(grepl("rho", partable$id[i])) TXT2 <- paste(TXT2, "-1 + 2*", sep="")
+            TXT2 <- paste(TXT2, "parvec[", partable$parnums[i], "]", sep="")
         }
     }
 
