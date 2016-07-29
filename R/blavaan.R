@@ -307,7 +307,7 @@ blavaan <- function(...,  # default lavaan arguments
                 stop("blavaan ERROR: problem with jags estimation.  The jags model and data have been exported.")
             }
         } else {
-            #print(jagtrans)
+            print(jagtrans)
             stop("blavaan ERROR: problem with translation from lavaan to jags.")
         }
         parests <- coeffun(lavpartable, res)

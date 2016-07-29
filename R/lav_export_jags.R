@@ -104,7 +104,7 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
   }
 
   ## Second object for priors/constraints
-  TXT2 <- "\n"
+  TXT2 <- ""
   ## Matrix that keeps track of parameter ordering, priors,
   ## and starting values
   coefvec <- matrix(NA, nparam, 3)
@@ -299,7 +299,6 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
   if(length(lv.names) > 0L) {
     TXT <- paste(TXT, "\n\n", t2,
                  "# lvs", sep="")
-    TXT2 <- paste(TXT2, "\n", sep="")
 
     lvstart <- 1
     ## if(lv.x.wish & nlvx > 1){
@@ -331,15 +330,15 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
                         partable$rhs == lv.names[j] &
                         partable$op == "~~")
         if(any(partable$free[lv.var] == 0 & partable$ustart[lv.var] == 0)){
-            TXT <- paste(TXT, "\n", t2,
-                         "eta[i,", j, "] <- mu.eta[i,", psi.free.idx, "]", sep="")
+            TXT <- paste(TXT, "\n", t2, "eta[i,", j, "] <- mu.eta[i,",
+                         partable$row[psi.free.idx], "]", sep="")
             ## now change ustart to 1000 so no divide by 0 in jags
             partable$ustart[lv.var] <- 1000
         } else {
               TXT <- paste(TXT, "\n", t2,
                            ## TODO check for alternative distribution?
                            "eta[i,", j, "] ~ dnorm(mu.eta[i,", 
-                           psi.free.idx, "], 1/", pvname, "[",
+                           partable$row[psi.free.idx], "], 1/", pvname, "[",
                            partable$row[psi.free.idx], ",", partable$col[psi.free.idx],
                            ",g[i]])", sep="")
         }
@@ -360,8 +359,8 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
                        lvintercepts$lhs == lv.names[j])
       if(length(int.idx) == 1L) {
         ## fixed or free?
-        TXT <- paste(TXT, intercepts$mat[int.idx], "[", intercepts$row[int.idx],
-                     ",", intercepts$col[int.idx], ",g[i]]", sep="")
+        TXT <- paste(TXT, lvintercepts$mat[int.idx], "[", lvintercepts$row[int.idx],
+                     ",", lvintercepts$col[int.idx], ",g[i]]", sep="")
       } else { # no intercept, say '0', so we always have rhs
         TXT <- paste(TXT, "0", sep="")
       }
@@ -402,76 +401,21 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
 
       ## 4. lv variances now handled separately
     } # end j loop
-    if(any(lv.names %in% lv.nox)) TXT2 <- paste(TXT2, "\n", sep="")
   } # end if length(lv.names)
-  
-  ## end of main model specification (still need priors + equality constraints)
-  TXT <- paste(TXT, "\n", t1,
-               "}", sep="")
 
-  ## TODO 28Jul2016 modify here and below these for use with new parvecs
-  ## now get priors for residual variance parameters of non-exo mvs and lvs
-  priorres <- set_priors(priorres, partable, 1, c(ov.names, lv.names), ngroups,
-                         type="vars", dp=dp, blk=TRUE, nov=nmvs, lv.names.x=orig.lv.names.x, ov.cp=ov.cp, lv.cp=lv.cp, lv.x.wish=lv.x.wish, mvcovs=mvcovs)
-  ## and for correlation parameters
-  priorres <- set_priors(priorres, partable, 1, c(ov.names, lv.names), ngroups,
-                         type="covs", dp=dp, blk=TRUE, nov=nmvs, lv.names.x=orig.lv.names.x, ov.cp=ov.cp, lv.cp=lv.cp, lv.x.wish=lv.x.wish)
+  ## end of main model specification (still need priors + equality constraints)
+  TXT <- paste(TXT, "\n", t1, "}", sep="")
 
   ## and for blocked multivariate normal parameters, now that
   ## priorres$coefvec should have all the jags labels
   ##if(any(!is.na(partable$blk))) priorres <- block_priors(priorres, partable)
-    
-  ## covariances resulting from phantoms go in TXT3
-  TXT3 <- paste(TXT3, "\n", sep="")
-  covtable <- partable[which(partable$op == "~~" &
-                             partable$lhs %in% phnames &
-                             partable$group == 1),]
-  if(nrow(covtable) > 0){
-    for(j in 1:nrow(covtable)){
-      phname <- covtable$lhs[j]
-      tmp.ind <- match(phname, lv.names)
-      var.ind <- lv.ind[which(lv.ind[,1]==tmp.ind),2]
-      for(k in 1:ngroups){
-        TXT3 <- paste(TXT3, t1, "cov[", j, ",", k, "] <- ",
-                      "psi[", var.ind, ",", k, "]", sep="")
-      
-        tmp.ov <- partable$rhs[partable$lhs == phname &
-                               partable$op == "=~" &
-                               partable$group == k]
-        ## find parameters from loadings, multiply by
-        ## 1/invtheta
-        if(length(tmp.ov) > 0L){
-          for(p in 1:length(tmp.ov)){
-            lam.idx <- which(loadings$op == "=~" &
-                             loadings$lhs == phname &
-                             loadings$rhs == tmp.ov[p] &
-                             loadings$group == 1)
-            TXT3 <- paste(TXT3, "*lambda[", lam.idx, ",", k, "]", sep="")
-          }
-        }
-      
-        tmp.lv <- partable$lhs[partable$rhs == phname &
-                               partable$op == "~" &
-                               partable$group == k]
-        ## find parameters from regressions, multiply by
-        ## 1/invpsi
-        if(length(tmp.lv) > 0L){
-          for(p in 1:length(tmp.lv)){
-            bet.idx <- which(regressions$op == "~" &
-                             regressions$lhs == tmp.lv[p] &
-                             regressions$rhs == phname &
-                             regressions$group == 1)
-            TXT3 <- paste(TXT3, "*beta[", bet.idx, ",", k, "]", sep="")
-          }
-        }
-        TXT3 <- paste(TXT3, "\n", sep="")
-      } # end k
-    } # end j
-  } # end if
+
+  ## priors/constraints
+  TXT2 <- set_parvec(TXT2, partable, dp, lv.x.wish, lv.names.x)
 
   ## end of model
-  TXT <- paste(TXT, "\n\n", t1, "# Priors/constraints", priorres$TXT2, sep="")
-  TXT <- paste(TXT, TXT3, sep="")
+  TXT <- paste(TXT, "\n\n", t1, "# Assignments from parameter vector", TXT2, sep="")
+
   ## extra stuff from the user, formatted to look nice-ish
   if("syntax" %in% names(jagextra)){
     jagextra <- unlist(strsplit(jagextra$syntax, "\n"))
@@ -483,7 +427,7 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
 
   out <- TXT
   class(out) <- c("lavaan.character", "character")
-
+browser()
   priorres$coefvec <- data.frame(priorres$coefvec, stringsAsFactors = FALSE)
   names(priorres$coefvec) <- c("jlabel", "plabel", "prior")
   out <- list(model = out, coefvec = priorres$coefvec, inits = NA)

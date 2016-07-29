@@ -598,7 +598,9 @@ set_parvec <- function(TXT2, partable, dp, lv.x.wish, lv.names.x){
     t1 <- paste(rep(" ", 2L), collapse="")
     t2 <- paste(rep(" ", 4L), collapse="")
     t3 <- paste(rep(" ", 6L), collapse="")
-  
+
+    ## parameter assignments separate from priors
+    TXT3 <- paste("\n\n", t1, "# Priors/constraints", sep="")
     for(i in 1:nrow(partable)){
         if(partable$mat[i] != ""){
             ## to find equality constraints
@@ -610,15 +612,15 @@ set_parvec <- function(TXT2, partable, dp, lv.x.wish, lv.names.x){
             ##      put entries of parvec in matrix for dwish?
             ## TODO check for inequality constraints here?
 
-            TXT2 <- paste(TXT2, "\n", t1, "parvec[",
+            TXT3 <- paste(TXT3, "\n", t1, "parvec[",
                           partable$parnums[i], "]", sep="")
 
             if(partable$free[i] == 0){
-                TXT2 <- paste(TXT2, " <- ", partable$ustart[i],
+                TXT3 <- paste(TXT3, " <- ", partable$ustart[i],
                               sep="")
             } else if(length(eqpar) > 0){
                 eqpar <- which(partable$plabel == partable$lhs[eqpar])
-                TXT2 <- paste(TXT2, " <- parvec[", partable$parnums[eqpar],
+                TXT3 <- paste(TXT3, " <- parvec[", partable$parnums[eqpar],
                               "]", sep="")
             } else if(length(compeq) > 0){
                 ## constraints with one parameter label on lhs
@@ -636,7 +638,7 @@ set_parvec <- function(TXT2, partable, dp, lv.x.wish, lv.names.x){
                     jageq <- gsub(rhsvars[j], rhstrans[j], jageq)
                 }
 
-                TXT2 <- paste(TXT2, " <- ", jageq, sep="")
+                TXT3 <- paste(TXT3, " <- ", jageq, sep="")
             } else {
                 ## needs a prior
                 ## correlation parameter under srs
@@ -647,24 +649,24 @@ set_parvec <- function(TXT2, partable, dp, lv.x.wish, lv.names.x){
                     partable$col[i] <- rhoinf[[1]][3]
                 }
                 if(partable$prior[i] == ""){
-                    partype <- grep(partable$mat[i], names(dp))
+                    if(grepl("star", partable$mat[i])){
+                        partype <- grep(strsplit(partable$mat[i], "star")[[1]][1], names(dp))
+                    } else {
+                        partype <- grep(partable$mat[i], names(dp))
+                    }
                     if(length(partype) > 1) partype <- partype[1] # due to psi and ibpsi
                     partable$prior[i] <- dp[partype]
                 }
                 vpri <- grepl("\\[var\\]", partable$prior[i])
                 spri <- grepl("\\[sd\\]", partable$prior[i])
-                if(vpri | spri){
-                    txtmod <- ifelse(vpri, "var", "sd")
-                    sq <- ifelse(vpri, "", "^2")
-
-
-                    TXT2 <- paste(TXT2, " <- 1/pvec", partable$parnums[i], sq, "\n", sep="")
-                    TXT2 <- paste(TXT2, t1, "pvec", partable$parnums[i], " ~ ",
-                                  strsplit(partable$prior[i], "\\[")[[1]][1], sep="")
+                if(!vpri){
+                    sq <- ifelse(spri, "2", "-1")
+                    TXT3 <- paste(TXT3, " <- pow(pvec", partable$parnums[i], ",", sq,
+                                  ")\n", sep="")
+                    TXT3 <- paste(TXT3, t1, "pvec", partable$parnums[i], " ~ ",
+                                  partable$prior[i], sep="")
                 } else {
-                    ## also need invtheta/invthetastar/etc
-                    ## also need to convert back to inferential model
-                    TXT2 <- paste(TXT2, " ~ ", partable$prior[i], sep="")
+                    TXT3 <- paste(TXT3, " ~ ", partable$prior[i], sep="")
                 }
             }
 
@@ -676,5 +678,58 @@ set_parvec <- function(TXT2, partable, dp, lv.x.wish, lv.names.x){
         }
     }
 
+    ## add priors/constraints after model parameter declarations
+    TXT2 <- paste(TXT2, TXT3, sep="")
+    
+    ## now define inferential covariances and priors for inferential
+    ## variances, if needed
+    ## FIXME: this does not find the covariances, need new approach
+    ##        the inferential variances are not addressed
+    mvcovs <- which(partable$mat == "thetastar" &
+                    partable$row != partable$col)
+
+    lvcovs <- which(partable$mat == "psistar" &
+                    partable$row != partable$col) # TODO revisit for block prior
+
+    if((length(mvcovs) + length(lvcovs)) > 0){
+        TXT2 <- paste(TXT2, "\n\n", t1, "# Inferential covariances", sep="")
+
+        if(length(mvcovs) > 0){
+            for(i in 1:length(mvcovs)){
+                var1 <- which(partable$lhs == partable$lhs[mvcovs[i]] &
+                              partable$lhs == partable$rhs &
+                              partable$group == partable$group[mvcovs[i]])
+                var2 <- which(partable$lhs == partable$rhs[mvcovs[i]] &
+                              partable$lhs == partable$rhs &
+                              partable$group == partable$group[mvcovs[i]])
+                TXT2 <- paste(TXT2, "\n", t1, "theta[", partable$row[mvcovs[i]],
+                              ",", partable$col[mvcovs[i]], ",",
+                              partable$group[mvcovs[i]], "] <- ",
+                              partable$id[mvcovs[i]], "*", partable$mat[var1], "[",
+                              partable$row[var1], ",", partable$col[var1], ",",
+                              partable$group[var1], "]*", partable$mat[var2], "[",
+                              partable$row[var2], ",", partable$col[var2], ",",
+                              partable$group[var2], "]", sep="")
+            }
+        }
+        if(length(lvcovs) > 0){
+            for(i in 1:length(lvcovs)){
+                var1 <- which(partable$lhs == partable$lhs[lvcovs[i]] &
+                              partable$lhs == partable$rhs &
+                              partable$group == partable$group[lvcovs[i]])
+                var2 <- which(partable$lhs == partable$rhs[lvcovs[i]] &
+                              partable$lhs == partable$rhs &
+                              partable$group == partable$group[lvcovs[i]])                
+                TXT2 <- paste(TXT2, "\n", t1, "psi[", partable$row[lvcovs[i]],
+                              ",", partable$col[lvcovs[i]], ",",
+                              partable$group[lvcovs[i]], "] <- ",
+                              partable$id[lvcovs[i]], "*", partable$mat[var1], "[",
+                              partable$row[var1], ",", partable$col[var1], ",",
+                              partable$group[var1], "]*", partable$mat[var2], "[",
+                              partable$row[var2], ",", partable$col[var2], ",",
+                              partable$group[var2], "]", sep="")
+            }
+        }
+    }
     TXT2
 }
