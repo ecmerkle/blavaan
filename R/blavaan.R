@@ -262,7 +262,7 @@ blavaan <- function(...,  # default lavaan arguments
             lavpartable <- mergejag(lavpartable, jagtrans$coefvec)
 
             ## add extras to monitor, if specified
-            sampparms <- jagtrans$coefvec[,1]
+            sampparms <- jagtrans$monitors
             if("monitor" %in% names(jagextra)){
                 sampparms <- c(sampparms, jagextra$monitor)
             }
@@ -315,6 +315,8 @@ blavaan <- function(...,  # default lavaan arguments
             print(jagtrans)
             stop("blavaan ERROR: problem with translation from lavaan to jags.")
         }
+browser()
+        ## NEXT: fix up summaries
         parests <- coeffun(lavpartable, res)
         x <- parests$x
 

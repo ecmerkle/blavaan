@@ -658,9 +658,10 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x){
                     if(length(partype) > 1) partype <- partype[1] # due to psi and ibpsi
                     partable$prior[i] <- dp[partype]
                 }
+
                 vpri <- grepl("\\[var\\]", partable$prior[i])
                 spri <- grepl("\\[sd\\]", partable$prior[i])
-                if(!vpri){
+                if(!vpri & (grepl("theta", partable$mat[i]) | grepl("psi", partable$mat[i]))){
                     sq <- ifelse(spri, "2", "-1")
                     TXT3 <- paste(TXT3, " <- pow(pvec", partable$parnums[i], ",", sq,
                                   ")\n", sep="")

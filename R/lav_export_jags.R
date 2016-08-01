@@ -29,19 +29,6 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     dp[["ibpsi"]] <- paste("dwish(iden,", length(orig.lv.names.x) + 1, ")", sep="")
   }
 
-  ## decide whether we need px on ovs/lvs by searching
-  ## for covariances:
-  mvcovs <- length(which(partable$lhs != partable$rhs &
-                         partable$op == "~~" &
-                         (partable$lhs %in% orig.ov.names |
-                          partable$rhs %in% orig.ov.names)))
-  tvname <- ifelse(mvcovs > 0, "thetastar", "theta")
-  lvcovs <- length(which(partable$lhs != partable$rhs &
-                         partable$op == "~~" &
-                         (partable$lhs %in% orig.lv.names |
-                          partable$rhs %in% orig.lv.names)))
-  pvname <- ifelse(lvcovs > 0, "psistar", "psi")
-
   ## set up mvs with fixed 0 variances (single indicators of lvs)
   partable <- set_mv0(partable, orig.ov.names, ngroups)
   ## add necessary phantom lvs/mvs to model:
@@ -181,13 +168,21 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
   if(length(ov.ord) == 0){
     if(blavmis == "da"){
       for(j in 1:nmvs){
+        ## decide whether we need px on ovs/lvs by searching
+        ## for covariances:
+        mvcovs <- length(which(partable$lhs != partable$rhs &
+                               partable$op == "~~" &
+                               (partable$lhs == ov.names[j] |
+                                partable$rhs == ov.names[j])))
+        tvname <- ifelse(mvcovs > 0, "thetastar", "theta")
+          
         TXT <- paste(TXT, t2, ov.names[j], 
-                     "[i] ~ dnorm(mu[i,", j, "], 1/", tvname, "[", j, ",g[i]])\n",
+                     "[i] ~ dnorm(mu[i,", j, "], 1/", tvname, "[", j, ",", j, ",g[i]])\n",
                      sep="")
       }
     } else {
       TXT <- paste(TXT, t2, "yvec[i] ~ dnorm(mu[sub[i], mv[i]], 1/",
-                   tvname, "[mv[i], g[i]])\n", sep="")
+                   tvname, "[mv[i], mv[i], g[i]])\n", sep="")
       # now close this loop and start the usual one
       TXT <- paste(TXT, t1, "}\n\n", sep="")
       TXT <- paste(TXT, t1, "for(i in 1:N) {\n", sep="")
@@ -335,12 +330,18 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
             ## now change ustart to 1000 so no divide by 0 in jags
             partable$ustart[lv.var] <- 1000
         } else {
-              TXT <- paste(TXT, "\n", t2,
-                           ## TODO check for alternative distribution?
-                           "eta[i,", j, "] ~ dnorm(mu.eta[i,", 
-                           partable$row[psi.free.idx], "], 1/", pvname, "[",
-                           partable$row[psi.free.idx], ",", partable$col[psi.free.idx],
-                           ",g[i]])", sep="")
+            lvcovs <- length(which(partable$lhs != partable$rhs &
+                                   partable$op == "~~" &
+                                   (partable$lhs == lv.names[j] |
+                                    partable$rhs == lv.names[j])))
+            pvname <- ifelse(lvcovs > 0, "psistar", "psi")
+            
+            TXT <- paste(TXT, "\n", t2,
+                         ## TODO check for alternative distribution?
+                         "eta[i,", j, "] ~ dnorm(mu.eta[i,", 
+                         partable$row[psi.free.idx], "], 1/", pvname, "[",
+                         partable$row[psi.free.idx], ",", partable$col[psi.free.idx],
+                         ",g[i]])", sep="")
         }
       } # j
     } # if
@@ -424,13 +425,13 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     TXT <- paste(TXT, "\n", jagextra, "\n", sep="")
   }
   TXT <- paste(TXT, "\n", "} # End of model\n", sep="")
-browser()
+
   out <- TXT
   class(out) <- c("lavaan.character", "character")
   out <- list(model = out, inits = NA)
     
   ## Initial values
-  if(inits != "jags"){
+  if(FALSE){ ## FIXME! inits != "jags"){
       inits <- set_inits(partable, priorres$coefvec, matdims, cp, cp, n.chains, inits)
       out$inits <- inits
   }
@@ -492,6 +493,52 @@ browser()
       jagsdata$N <- max(ydf$sub)
     }
 
+    ## parameter matrices/vectors
+    matrows <- with(subset(partable, mat != ""), tapply(row, mat, max, na.rm=TRUE))
+    matcols <- with(subset(partable, mat != ""), tapply(col, mat, max, na.rm=TRUE))
+    ngrp <- max(partable$group, na.rm=TRUE)
+
+    pmats <- vector("list", length(matrows))
+    for(i in 1:length(pmats)){
+        pmats[[i]] <- array(0, c(matrows[i], matcols[i], ngrp))
+    }
+    names(pmats) <- names(matrows)
+
+    ## replace parameter entries with NA
+    for(i in 1:nrow(partable)){
+        if(partable$mat[i] == "") next
+
+        wmat <- match(partable$mat[i], names(pmats))
+        pmats[[wmat]][partable$row[i], partable$col[i], partable$group[i]] <- NA
+    }
+
+    ## monitored parameters
+    monitors <- with(subset(partable, mat != ""),
+                     paste(mat, "[", row, ",", col, ",", group, "]",
+                           sep=""))
+    
+    ## inferential covariances under fa priors
+    if(cp == "fa"){
+        facovs <- unique(partable$lhs[grep(".phant", partable$lhs)])
+        if(length(facovs) > 0){
+            for(i in 1:length(facovs)){
+                crows <- which((partable$lhs == facovs[i] | partable$rhs == facovs[i]) &
+                               partable$op %in% c("=~", "~"))
+
+                wmat <- match("theta", names(pmats))
+
+                pmats[[wmat]][partable$row[crows[1]], partable$row[crows[2]],
+                              partable$group[crows[1]]] <- NA
+
+                monitors <- c(monitors, paste("theta[", partable$row[crows[1]], ",",
+                                              partable$row[crows[2]], ",",
+                                              partable$group[crows[1]], "]", sep=""))
+            }
+        }
+    }
+
+    jagsdata <- c(jagsdata, pmats)
+    
     ## identity matrix for wishart prior
     ## TODO allow user to specify this matrix
     if(lv.x.wish & length(orig.lv.names.x) > 1){
@@ -501,7 +548,9 @@ browser()
     
     out <- c(out, list(data=jagsdata))
   }
-  
+
+  out <- c(out, list(monitors = monitors))
+    
   out
 }
 
