@@ -593,7 +593,7 @@ block_priors <- function(priorres, partable) {
     list(TXT2=TXT2, coefvec=coefvec)
 }
 
-set_parvec <- function(TXT2, partable, dp, lv.x.wish, lv.names.x){
+set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x){
     ## tabs
     t1 <- paste(rep(" ", 2L), collapse="")
     t2 <- paste(rep(" ", 4L), collapse="")
@@ -650,7 +650,8 @@ set_parvec <- function(TXT2, partable, dp, lv.x.wish, lv.names.x){
                 }
                 if(partable$prior[i] == ""){
                     if(grepl("star", partable$mat[i])){
-                        partype <- grep(strsplit(partable$mat[i], "star")[[1]][1], names(dp))
+                        pname <- paste("i", strsplit(partable$mat[i], "star")[[1]][1], sep="")
+                        partype <- grep(pname, names(dp))
                     } else {
                         partype <- grep(partable$mat[i], names(dp))
                     }
@@ -683,52 +684,38 @@ set_parvec <- function(TXT2, partable, dp, lv.x.wish, lv.names.x){
     
     ## now define inferential covariances and priors for inferential
     ## variances, if needed
-    ## FIXME: this does not find the covariances, need new approach
-    ##        the inferential variances are not addressed
-    mvcovs <- which(partable$mat == "thetastar" &
-                    partable$row != partable$col)
-
-    lvcovs <- which(partable$mat == "psistar" &
-                    partable$row != partable$col) # TODO revisit for block prior
-
-    if((length(mvcovs) + length(lvcovs)) > 0){
+    covs <- unique(partable$lhs[grep(".phant", partable$lhs)])
+    
+    if(length(covs) > 0){
         TXT2 <- paste(TXT2, "\n\n", t1, "# Inferential covariances", sep="")
 
-        if(length(mvcovs) > 0){
-            for(i in 1:length(mvcovs)){
-                var1 <- which(partable$lhs == partable$lhs[mvcovs[i]] &
-                              partable$lhs == partable$rhs &
-                              partable$group == partable$group[mvcovs[i]])
-                var2 <- which(partable$lhs == partable$rhs[mvcovs[i]] &
-                              partable$lhs == partable$rhs &
-                              partable$group == partable$group[mvcovs[i]])
-                TXT2 <- paste(TXT2, "\n", t1, "theta[", partable$row[mvcovs[i]],
-                              ",", partable$col[mvcovs[i]], ",",
-                              partable$group[mvcovs[i]], "] <- ",
-                              partable$id[mvcovs[i]], "*", partable$mat[var1], "[",
-                              partable$row[var1], ",", partable$col[var1], ",",
-                              partable$group[var1], "]*", partable$mat[var2], "[",
-                              partable$row[var2], ",", partable$col[var2], ",",
-                              partable$group[var2], "]", sep="")
-            }
-        }
-        if(length(lvcovs) > 0){
-            for(i in 1:length(lvcovs)){
-                var1 <- which(partable$lhs == partable$lhs[lvcovs[i]] &
-                              partable$lhs == partable$rhs &
-                              partable$group == partable$group[lvcovs[i]])
-                var2 <- which(partable$lhs == partable$rhs[lvcovs[i]] &
-                              partable$lhs == partable$rhs &
-                              partable$group == partable$group[lvcovs[i]])                
-                TXT2 <- paste(TXT2, "\n", t1, "psi[", partable$row[lvcovs[i]],
-                              ",", partable$col[lvcovs[i]], ",",
-                              partable$group[lvcovs[i]], "] <- ",
-                              partable$id[lvcovs[i]], "*", partable$mat[var1], "[",
-                              partable$row[var1], ",", partable$col[var1], ",",
-                              partable$group[var1], "]*", partable$mat[var2], "[",
-                              partable$row[var2], ",", partable$col[var2], ",",
-                              partable$group[var2], "]", sep="")
-            }
+        for(i in 1:length(covs)){
+            varlocs <- which(partable$lhs == covs[i] &
+                             partable$op == "=~")
+            vars <- partable$rhs[varlocs]
+            var1 <- which(partable$lhs == vars[1] &
+                          partable$lhs == partable$rhs &
+                          partable$group == partable$group[varlocs[1]] &
+                          grepl("star", partable$mat))
+            var2 <- which(partable$lhs == vars[2] &
+                          partable$lhs == partable$rhs &
+                          partable$group == partable$group[varlocs[1]] &
+                          grepl("star", partable$mat))
+
+            matname <- ifelse(grepl("theta", partable$mat[var1]), "theta", "psi")
+            phpars <- which(partable$lhs == covs[i])
+
+            ## covariances
+            TXT2 <- paste(TXT2, "\n", t1, matname, "[", partable$row[var1],
+                          ",", partable$row[var2], ",", partable$group[varlocs[1]], "] <- ",
+                          partable$mat[phpars[1]], "[", partable$row[phpars[1]], ",",
+                          partable$col[phpars[1]], ",", partable$group[phpars[1]], "]*",
+                          partable$mat[phpars[2]], "[", partable$row[phpars[2]], ",",
+                          partable$col[phpars[2]], ",", partable$group[phpars[2]], "]*",
+                          partable$mat[phpars[3]], "[", partable$row[phpars[3]], ",",
+                          partable$col[phpars[3]], ",", partable$group[phpars[3]], "]",
+                          sep="")
+
         }
     }
     TXT2

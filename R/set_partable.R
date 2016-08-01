@@ -369,101 +369,62 @@ set_mv0 <- function(partable, ov.names, ngroups) {
 set_phanvars <- function(partable, ov.names, lv.names, ov.cp, lv.cp, ngroups){
     ## once we have defined all phantoms, go back to set equality
     ## constraints on phantom variances
-    
-    for(i in 1:length(ov.names)){
-        for(k in 1:ngroups){
-            phanlvs <- which(partable$rhs == ov.names[i] &
-                             grepl(".phant", partable$lhs) &
-                             partable$op == "=~" &
-                             partable$group == k)
-            if(length(phanlvs) > 0){
-                ovvar <- which(partable$lhs == ov.names[i] &
-                               partable$lhs == partable$rhs &
-                               partable$op == "~~" &
-                               partable$group == k)
 
-                eqconst <- paste(partable$mat[ovvar], "[", partable$row[ovvar],
-                                 ",", partable$col[ovvar], ",", k, "]", sep="")
+    vnames <- c(ov.names, lv.names)
+    for(i in 1:length(vnames)){
+        for(k in 1:ngroups){
+            if(vnames[i] %in% ov.names){
+                phanlvs <- which(partable$rhs == vnames[i] &
+                                 grepl(".phant", partable$lhs) &
+                                 partable$op == "=~" &
+                                 partable$group == k)
+            } else {
+                phanlvs <- which(partable$lhs == vnames[i] &
+                                 grepl(".phant", partable$rhs) &
+                                 partable$op == "~" &
+                                 partable$group == k)
+            }
+            if(length(phanlvs) > 0){
+                vvar <- which(partable$lhs == vnames[i] &
+                              partable$lhs == partable$rhs &
+                              partable$op == "~~" &
+                              partable$group == k)
+
                 if(ov.cp == "srs"){
+                    eqconst <- paste(partable$mat[vvar], "[", partable$row[vvar],
+                                     ",", partable$col[vvar], ",", k, "]", sep="")
                     for(j in 1:length(phanlvs)){
                         eqconst <- paste(eqconst, " - (", partable$ustart[phanlvs[j]],
                                          ")^2", sep="")
                     }
+                    partable <- rbind(partable, partable[vvar,])
+                    partable$parnums[nrow(partable)] <- max(partable$parnums, na.rm=TRUE) + 1
+                    partable$mat[vvar] <- paste(partable$mat[vvar], "star", sep="")
                 } else {
-                    ## fa priors
+                    ## fa priors TODO change around so it is faster
+                    eqconst <- paste(partable$mat[vvar], "star[", partable$row[vvar],
+                                     ",", partable$col[vvar], ",", k, "]", sep="")
                     for(j in 1:length(phanlvs)){
                         phanvar <- which(partable$lhs == partable$lhs[phanlvs[j]] &
                                      partable$lhs == partable$rhs &
                                      partable$op == "~~" &
                                      partable$group == k)
-                        eqconst <- paste(eqconst, " - (", partable$mat[phanlvs[j]], "[",
+                        eqconst <- paste(eqconst, " + (", partable$mat[phanlvs[j]], "[",
                                          partable$row[phanlvs[j]], ",",
                                          partable$col[phanlvs[j]], ",", k, "]^2*",
                                          partable$mat[phanvar], "[",
                                          partable$row[phanvar], ",", partable$col[phanvar],
                                          ",", k, "])", sep="")
                     }
+                    partable <- rbind(partable, partable[vvar,])
+                    partable$mat[nrow(partable)] <- paste(partable$mat[vvar], "star",
+                                                          sep="")
+                    partable$parnums[nrow(partable)] <- max(partable$parnums, na.rm=TRUE) + 1
                 }
-                partable$free[ovvar] <- 0
-                partable$ustart[ovvar] <- eqconst
+                partable$free[vvar] <- 0
+                partable$ustart[vvar] <- eqconst
             }
         }
-    }
-
-    ## now lvs
-    for(i in 1:length(lv.names)){
-        for(k in 1:ngroups){
-            phanlvs <- which(partable$lhs == lv.names[i] &
-                             grepl(".phant", partable$rhs) &
-                             partable$op == "~" &
-                             partable$group == k)
-            if(length(phanlvs) > 0){
-                lvvar <- which(partable$lhs == lv.names[i] &
-                               partable$lhs == partable$rhs &
-                               partable$op == "~~" &
-                               partable$group == k)
-
-                eqconst <- paste(partable$mat[lvvar], "[", partable$row[lvvar],
-                                 ",", partable$col[lvvar], ",", k, "]", sep="")
-                if(lv.cp == "srs"){
-                    for(j in 1:length(phanlvs)){
-                        eqconst <- paste(eqconst, " - (", partable$ustart[phanlvs[j]],
-                                         ")^2", sep="")
-                    }
-                } else {
-                    ## fa priors
-                    for(j in 1:length(phanlvs)){
-                        phanvar <- which(partable$lhs == partable$lhs[phanlvs[j]] &
-                                         partable$lhs == partable$rhs &
-                                         partable$op == "~~" &
-                                         partable$group == k)
-                        eqconst <- paste(eqconst, " - (", partable$mat[phanlvs[j]], "[",
-                                         partable$row[phanlvs[j]], ",",
-                                         partable$col[phanlvs[j]], ",", k, "]^2*",
-                                         partable$mat[phanvar], "[",
-                                         partable$row[phanvar], ",", partable$col[phanvar],
-                                         ",", k, "])", sep="")
-                    }
-                }
-                partable$free[lvvar] <- 0
-                partable$ustart[lvvar] <- eqconst
-            }
-        }
-    }
-
-    ## now put stars on parameter names if doing px
-    ovpx <- which(partable$rhs %in% ov.names &
-                  grepl(".phant", partable$lhs) &
-                  partable$op == "=~")
-    lvpx <- which(partable$lhs %in% lv.names &
-                  grepl(".phant", partable$rhs) &
-                  partable$op == "~")
-    if(length(ovpx) > 0){
-        partable$mat[partable$mat == "theta"] <- "thetastar"
-    }
-    if(length(lvpx) > 0){
-        partable$mat[partable$mat == "psi"] <- "psistar"
-    }
-    
+    }    
     partable
 }

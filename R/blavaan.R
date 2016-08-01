@@ -132,6 +132,13 @@ blavaan <- function(...,  # default lavaan arguments
         }
     }
 
+    # covariance priors are now all srs or fa
+    cp <- "srs"
+    if(ov.cp == "fa" | lv.cp == "fa"){
+        cp <- "fa"
+        cat("blavaan NOTE: covariance priors can no longer be set separately for ov and lv.\n Using 'fa' approach for all covariances.\n")
+    }
+    
     # block priors off for now
     LAV@Options$auto.cov.lv.x <- FALSE
     ## # cannot currently use wishart prior with std.lv=TRUE
@@ -157,7 +164,7 @@ blavaan <- function(...,  # default lavaan arguments
     
     # if std.lv, truncate the prior of each lv's first loading
     if(LAV@Options$std.lv){
-        if(ov.cp == "fa" | lv.cp == "fa") stop("blavaan ERROR: ov.cp='fa' and lv.cp='fa' cannot be used with std.lv=TRUE.")
+        if(cp == "fa" | lv.cp == "fa") stop("blavaan ERROR: 'fa' prior strategy cannot be used with std.lv=TRUE.")
         if(!prispec){
             LAV@ParTable$prior <- rep("", length(LAV@ParTable$id))
         }
@@ -223,8 +230,7 @@ blavaan <- function(...,  # default lavaan arguments
       lavoptions$se <- "none"
     }
     lavoptions$missing   <- "ml"
-    lavoptions$ov.cp     <- ov.cp
-    lavoptions$lv.cp     <- lv.cp
+    lavoptions$cp        <- cp
 
     verbose <- lavoptions$verbose
 
@@ -235,9 +241,8 @@ blavaan <- function(...,  # default lavaan arguments
     if(lavmodel@nx.free > 0L) {
         if(!trans.exists){
             ## convert partable to jags, then run
-            jagtrans <- try(lav2jags(model = lavpartable, lavdata = lavdata, 
-                                     ov.cp = ov.cp, lv.cp = lv.cp,
-                                     lv.x.wish = lavoptions$auto.cov.lv.x,
+            jagtrans <- try(lav2jags(model = lavpartable, lavdata = lavdata,
+                                     cp = cp, lv.x.wish = lavoptions$auto.cov.lv.x,
                                      dp = dp, n.chains = n.chains,
                                      jagextra = jagextra, inits = inits,
                                      blavmis = blavmis),

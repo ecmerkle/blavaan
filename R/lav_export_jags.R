@@ -1,4 +1,4 @@
-lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.wish = FALSE, dp = dpriors(), n.chains = 1, jagextra = "", inits = "prior", blavmis = blavmis, pta = NULL) {
+lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = dpriors(), n.chains = 1, jagextra = "", inits = "prior", blavmis = blavmis, pta = NULL) {
   ## lots of code is taken from lav_export_bugs.R
 
   if(class(model)[1]=="lavaan"){
@@ -45,10 +45,10 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
   ## set up mvs with fixed 0 variances (single indicators of lvs)
   partable <- set_mv0(partable, orig.ov.names, ngroups)
   ## add necessary phantom lvs/mvs to model:
-  partable <- set_phantoms(partable, orig.ov.names, orig.lv.names, orig.ov.names.x, orig.lv.names.x, ov.cp, lv.cp, lv.x.wish, ngroups)
+  partable <- set_phantoms(partable, orig.ov.names, orig.lv.names, orig.ov.names.x, orig.lv.names.x, cp, cp, lv.x.wish, ngroups)
   partable <- partable$partable
   ## set equality constraints for phantom variances
-  partable <- set_phanvars(partable, orig.ov.names, orig.lv.names, ov.cp, lv.cp, ngroups)
+  partable <- set_phanvars(partable, orig.ov.names, orig.lv.names, cp, cp, ngroups)
   ## ensure group parameters are in order, for parameter indexing:
   partable <- partable[order(partable$group),]
   ## get parameter table attributes 
@@ -411,7 +411,7 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
   ##if(any(!is.na(partable$blk))) priorres <- block_priors(priorres, partable)
 
   ## priors/constraints
-  TXT2 <- set_parvec(TXT2, partable, dp, lv.x.wish, lv.names.x)
+  TXT2 <- set_parvec(TXT2, partable, dp, cp, lv.x.wish, lv.names.x)
 
   ## end of model
   TXT <- paste(TXT, "\n\n", t1, "# Assignments from parameter vector", TXT2, sep="")
@@ -424,17 +424,14 @@ lav2jags <- function(model, lavdata = NULL, ov.cp = "srs", lv.cp = "srs", lv.x.w
     TXT <- paste(TXT, "\n", jagextra, "\n", sep="")
   }
   TXT <- paste(TXT, "\n", "} # End of model\n", sep="")
-
+browser()
   out <- TXT
   class(out) <- c("lavaan.character", "character")
-browser()
-  priorres$coefvec <- data.frame(priorres$coefvec, stringsAsFactors = FALSE)
-  names(priorres$coefvec) <- c("jlabel", "plabel", "prior")
-  out <- list(model = out, coefvec = priorres$coefvec, inits = NA)
+  out <- list(model = out, inits = NA)
     
   ## Initial values
   if(inits != "jags"){
-      inits <- set_inits(partable, priorres$coefvec, matdims, ov.cp, lv.cp, n.chains, inits)
+      inits <- set_inits(partable, priorres$coefvec, matdims, cp, cp, n.chains, inits)
       out$inits <- inits
   }
         

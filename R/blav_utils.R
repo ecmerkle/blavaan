@@ -367,7 +367,8 @@ add_monitors <- function(lavpartable, lavjags, jagextra){
 namecheck <- function(ov.names){
     forbidden <- c("mu", "invthetstar", "invtheta", "nu", "lambda", "eta",
                    "mu.eta", "invpsistar", "invpsi", "alpha", "beta",
-                   "rho", "theta", "psi", "rstar", "cov", "ibpsi", "bpsi", "iden", "yvec")
+                   "rho", "theta", "psi", "rstar", "cov", "ibpsi", "bpsi", "iden", "yvec",
+                   paste(".phant", 1:100, sep=""))
 
     forbid.idx <- which(ov.names %in% forbidden)
     
