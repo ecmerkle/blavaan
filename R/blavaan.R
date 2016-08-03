@@ -445,6 +445,12 @@ blavaan <- function(...,  # default lavaan arguments
       lavpartable <- add_monitors(lavpartable, lavjags, jagextra)
     }
 
+    ## 9c. move some stuff from lavfit to optim, for lavaan 0.5-21
+    optnames <- c('x','npar','iterations','converged','fx','fx.group','logl.group',
+                  'logl','control')
+    lavoptim <- lapply(optnames, function(x) slot(lavfit, x))
+    names(lavoptim) <- optnames   
+    
     # 10. construct blavaan object
     blavaan <- new("blavaan",
                    call         = mc,                  # match.call
@@ -458,7 +464,7 @@ blavaan <- function(...,  # default lavaan arguments
                    Cache        = lavcache,            # list
                    Fit          = lavfit,              # S4 class
                    boot         = list(),
-                   optim        = list(),
+                   optim        = lavoptim,
                    implied      = lavimplied,          # list
                    vcov         = lavvcov,
                    external     = list(runjags = lavjags), # runjags
