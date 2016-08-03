@@ -170,10 +170,9 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
       for(j in 1:nmvs){
         ## decide whether we need px on ovs/lvs by searching
         ## for covariances:
-        mvcovs <- length(which(partable$lhs != partable$rhs &
-                               partable$op == "~~" &
-                               (partable$lhs == ov.names[j] |
-                                partable$rhs == ov.names[j])))
+        mvcovs <- length(which(grepl(".phant", partable$lhs) &
+                               partable$op == "=~" &
+                               partable$rhs == ov.names[j]))
         tvname <- ifelse(mvcovs > 0, "thetastar", "theta")
           
         TXT <- paste(TXT, t2, ov.names[j], 
