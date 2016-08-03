@@ -33,6 +33,7 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
   partable <- set_mv0(partable, orig.ov.names, ngroups)
   ## add necessary phantom lvs/mvs to model:
   partable <- set_phantoms(partable, orig.ov.names, orig.lv.names, orig.ov.names.x, orig.lv.names.x, cp, cp, lv.x.wish, ngroups)
+  facovs <- partable$facovs
   partable <- partable$partable
   ## set equality constraints for phantom variances
   partable <- set_phanvars(partable, orig.ov.names, orig.lv.names, cp, cp, ngroups)
@@ -518,21 +519,19 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     
     ## inferential covariances under fa priors
     if(cp == "fa"){
-        facovs <- unique(partable$lhs[grep(".phant", partable$lhs)])
-        if(length(facovs) > 0){
-            for(i in 1:length(facovs)){
-                crows <- which((partable$lhs == facovs[i] | partable$rhs == facovs[i]) &
-                               partable$op %in% c("=~", "~"))
-
+        if(nrow(facovs) > 0){
+            for(i in 1:nrow(facovs)){
                 wmat <- match("theta", names(pmats))
 
-                pmats[[wmat]][partable$row[crows[1]], partable$row[crows[2]],
-                              partable$group[crows[1]]] <- NA
+                pmats[[wmat]][facovs$row[i], facovs$col[i], facovs$group[i]] <- NA
 
-                monitors <- c(monitors, paste("theta[", partable$row[crows[1]], ",",
-                                              partable$row[crows[2]], ",",
-                                              partable$group[crows[1]], "]", sep=""))
+                monitors <- c(monitors, paste("theta[", facovs$row[i], ",",
+                                              facovs$col[i], ",",
+                                              facovs$group[i], "]", sep=""))
             }
+            ## re-add fa covariances, for sending back to lavaan
+            partable <- partable[,match(names(partable), names(facovs), nomatch=0)]
+            partable <- rbind(partable, facovs)
         }
     }
 
@@ -547,25 +546,22 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     
     out <- c(out, list(data=jagsdata))
   }
-
-  out <- c(out, list(monitors = monitors))
+    
+  out <- c(out, list(monitors = monitors, pxpartable = partable))
     
   out
 }
 
-coeffun <- function(lavpartable, rjob, fun = "mean") {
+coeffun <- function(lavpartable, pxpartable, rjob, fun = "mean") {
   ## Extract posterior means from coda.samples() object.
   ## jagmod is the result of lav2jags;
   ## rjob is the result of run.jags() applied to
   ## the jags model.
 
   ## remove any rhos or unnamed parameters
-  cnames <- lavpartable$jlabel
-  rhos <- grep("rho", cnames)
-  nn <- c(rhos, which(cnames == ""))
-  if(length(nn) > 0) {
-      cnames <- cnames[-nn]
-  }
+  pxpartable <- subset(pxpartable, !is.na(id) & op != "==")
+  pxnames <- paste(pxpartable$mat, "[", pxpartable$row, ",", pxpartable$col,
+                   ",", pxpartable$group, "]", sep="")
 
   ## posterior means:
   if(fun == "mean"){
@@ -574,11 +570,14 @@ coeffun <- function(lavpartable, rjob, fun = "mean") {
     b.est <- rjob$hpd[,"Median"]
   }
 
-  cmatch <- match(cnames, names(b.est), nomatch=0)
-  ptmatch <- match(names(b.est), lavpartable$jlabel, nomatch=0)
-  lavpartable$est[ptmatch[ptmatch != 0]] <- b.est[ptmatch != 0]
+  cmatch <- match(names(b.est), pxnames, nomatch=0)
+  pxpartable$est <- b.est[cmatch]
+  b.est <- b.est[cmatch]
+  ptmatch <- match(pxpartable$free[pxpartable$free > 0], lavpartable$free, nomatch=0)
+  lavpartable$est[lavpartable$free > 0] <- b.est[ptmatch]
 
-  list(x = b.est[cmatch], lavpartable = lavpartable,
-       vcorr = rjob$crosscorr[cmatch,cmatch],
-       sd = rjob$summary$statistics[cmatch,2])
+  list(x = b.est[ptmatch], lavpartable = lavpartable,
+       ## NB this automatically removes fixed parameters:
+       vcorr = rjob$crosscorr[cmatch,cmatch][order(ptmatch),order(ptmatch)],
+       sd = rjob$summary$statistics[cmatch,"SD"][ptmatch])
 }

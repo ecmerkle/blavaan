@@ -315,9 +315,8 @@ blavaan <- function(...,  # default lavaan arguments
             print(jagtrans)
             stop("blavaan ERROR: problem with translation from lavaan to jags.")
         }
-browser()
-        ## NEXT: fix up summaries
-        parests <- coeffun(lavpartable, res)
+
+        parests <- coeffun(lavpartable, jagtrans$pxpartable, res)
         x <- parests$x
 
         lavpartable <- parests$lavpartable
@@ -332,7 +331,7 @@ browser()
           attr(x, "converged") <- TRUE
 
           attr(x, "control") <- jagcontrol
-
+browser()
           attr(x, "fx") <- get_ll(lavmodel = lavmodel, lavpartable = lavpartable,
                                   lavsamplestats = lavsamplestats, lavoptions = lavoptions,
                                   lavcache = lavcache, lavdata = lavdata)[1]

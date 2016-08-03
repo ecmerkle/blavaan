@@ -281,7 +281,10 @@ nlvcovs)
       }
     }
     ## Now remove rows of fa covariance parameters
-    if(!is.null(cprm)) partable <- partable[-cprm,]
+    if(!is.null(cprm)){
+        facovs <- partable[cprm,]
+        partable <- partable[-cprm,]
+    }
   }
 
   ## FIXME?
@@ -300,7 +303,7 @@ nlvcovs)
   parnums[parrows] <- 1:length(parrows)
   partable$parnums <- parnums    
     
-  list(partable = partable, parvec = parvec)
+  list(partable = partable, parvec = parvec, facovs = facovs)
 }
 
 set_mv0 <- function(partable, ov.names, ngroups) {
