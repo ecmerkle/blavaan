@@ -282,8 +282,10 @@ nlvcovs)
     }
     ## Now remove rows of fa covariance parameters
     if(!is.null(cprm)){
-        facovs <- partable[cprm,]
-        partable <- partable[-cprm,]
+      facovs <- partable[cprm,]
+      partable <- partable[-cprm,]
+    } else {
+      facovs <- NULL
     }
   }
 

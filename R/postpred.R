@@ -24,7 +24,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
             implied <- lav_model_implied(lavmodel)
             Sigma.hat <- implied$cov
             Mu.hat <- implied$mean
-
+if(any(eigen(Sigma.hat[[1]])$values < 0)) browser()
             dataeXo <- lavdata@eXo
 
             ## TODO? this generates complete cases; maybe we want missing

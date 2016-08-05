@@ -79,7 +79,7 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
             ## logl + baseline logl
             ll.samp <- c(0,0)
         }
-        
+
         for(g in 1:length(implied$cov)){
             mnvec <- as.numeric(implied$mean[[g]])
             ## ensure symmetric:
@@ -207,16 +207,8 @@ case_lls <- function(lavjags        = NULL,
 fill_params <- function(postsamp      = NULL,
                         lavmodel      = NULL,
                         lavpartable   = NULL){
-    ## this code related to coeffun():
-    cnames <- lavpartable$jlabel
-    rhos <- grep("rho", cnames)
-    nn <- c(rhos, which(cnames == ""))
-    if(length(nn) > 0) {
-        cnames <- cnames[-nn]
-    }
-    cmatch <- match(cnames, names(postsamp), nomatch=0)
-
-    lav_model_set_parameters(lavmodel, x = postsamp[cmatch])
+  lav_model_set_parameters(lavmodel,
+                           x = postsamp[lavpartable$jagpnum[!is.na(lavpartable$jagpnum)]])
 }
 
 ## re-arrange columns of parameter samples to match that of blavaan object
@@ -229,15 +221,7 @@ rearr_params <- function(mcmc         = NULL,
         }
     }
     
-    cnames <- lavpartable$jlabel
-    rhos <- grep("rho", cnames)
-    nn <- c(rhos, which(cnames == ""))
-    if(length(nn) > 0) {
-        cnames <- cnames[-nn]
-    }
-    cmatch <- match(cnames, colnames(fullmat), nomatch=0)
-
-    fullmat[,cmatch]
+    fullmat[,lavpartable$jagpnum[lavpartable$free > 0]]
 }   
 
 ## iteration numbers for samp_lls and postpred

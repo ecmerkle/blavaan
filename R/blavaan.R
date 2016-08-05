@@ -258,7 +258,7 @@ blavaan <- function(...,  # default lavaan arguments
                                             sep=""))
             }
 
-            ## merge coefvec with lavpartable
+            ## TODO fix; put in coeffun?
             lavpartable <- mergejag(lavpartable, jagtrans$coefvec)
 
             ## add extras to monitor, if specified
@@ -323,6 +323,7 @@ blavaan <- function(...,  # default lavaan arguments
         if(jag.do.fit){
           lavmodel <- lav_model_set_parameters(lavmodel, x = x)
 
+          ## TODO: needed??
           # overwrite lavpartable$est to include def/con values
           lavpartable$est <- lav_model_get_parameters(lavmodel = lavmodel,
                                                       type = "user", extra = TRUE)
@@ -331,7 +332,7 @@ blavaan <- function(...,  # default lavaan arguments
           attr(x, "converged") <- TRUE
 
           attr(x, "control") <- jagcontrol
-browser()
+
           attr(x, "fx") <- get_ll(lavmodel = lavmodel, lavpartable = lavpartable,
                                   lavsamplestats = lavsamplestats, lavoptions = lavoptions,
                                   lavcache = lavcache, lavdata = lavdata)[1]
@@ -352,14 +353,12 @@ browser()
     }
 
     ## parameter convergence + implied moments:
-    rhorows <- grepl("rho", jagtrans$coefvec[,1])
-    parrows <- 1:nrow(jagtrans$coefvec)
     lavimplied <- NULL
     ## compute/store some model-implied statistics
     lavimplied <- lav_model_implied(lavmodel)
     if(jag.do.fit & n.chains > 1){
       ## this also checks convergence of monitors from jagextra, which may not be optimal
-      if(any(res$psrf$psrf[parrows[!rhorows],1] > 1.2)) attr(x, "converged") <- FALSE
+      if(any(lavpartable$psrf[!is.na(lavpartable$psrf)] > 1.2)) attr(x, "converged") <- FALSE
 
       ## warn if psrf is large
       if(!attr(x, "converged") && lavoptions$warn) {
@@ -375,7 +374,7 @@ browser()
     } else {
       res$samplls <- NULL
     }
-    
+
     ## put runjags output in new blavaan slot
     lavjags <- res
     timing$Estimate <- (proc.time()[3] - start.time)
