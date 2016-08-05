@@ -138,7 +138,8 @@ blavaan <- function(...,  # default lavaan arguments
         cp <- "fa"
         cat("blavaan NOTE: covariance priors can no longer be set separately for ov and lv.\n Using 'fa' approach for all covariances.\n")
     }
-    
+
+    prispec <- "prior" %in% names(LAV@ParTable)
     # block priors off for now
     LAV@Options$auto.cov.lv.x <- FALSE
     ## # cannot currently use wishart prior with std.lv=TRUE
@@ -152,7 +153,6 @@ blavaan <- function(...,  # default lavaan arguments
     ## ## catch some regressions without fixed x:
     ## ov.noy <- LAV@pta$vnames$ov.nox[[1]]
     ## ov.noy <- ov.noy[!(ov.noy %in% LAV@pta$vnames$ov.y)]
-    ## prispec <- "prior" %in% names(LAV@ParTable)
     ## ndpriors <- rep(FALSE, length(LAV@ParTable$lhs))
     ## if(prispec) ndpriors <- LAV@ParTable$prior != ""
     ## cov.pars <- (LAV@ParTable$lhs %in% c(lv.x, ov.noy)) & LAV@ParTable$op == "~~"

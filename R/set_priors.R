@@ -20,6 +20,17 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x){
             TXT3 <- paste(TXT3, "\n", t1, "parvec[",
                           partable$parnums[i], "]", sep="")
 
+            ## correlation parameter under srs
+            if(grepl("rho", partable$id[i])){
+                rhoinf <- strsplit(partable$id[i], "[, \\[^\\]]+", perl=TRUE)
+                partable$mat[i] <- rhoinf[[1]][1]
+                partable$row[i] <- rhoinf[[1]][2]
+                partable$col[i] <- rhoinf[[1]][3]
+                if(partable$free[i] == 0){
+                    partable$ustart[i] <- (as.numeric(partable$ustart[i]) + 1)/2
+                }
+            }
+          
             if(partable$free[i] == 0){
                 TXT3 <- paste(TXT3, " <- ", partable$ustart[i],
                               sep="")
@@ -46,13 +57,6 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x){
                 TXT3 <- paste(TXT3, " <- ", jageq, sep="")
             } else {
                 ## needs a prior
-                ## correlation parameter under srs
-                if(grepl("rho", partable$id[i])){
-                    rhoinf <- strsplit(partable$id[i], "[, \\[^\\]]+", perl=TRUE)
-                    partable$mat[i] <- rhoinf[[1]][1]
-                    partable$row[i] <- rhoinf[[1]][2]
-                    partable$col[i] <- rhoinf[[1]][3]
-                }
                 if(partable$prior[i] == ""){
                     if(grepl("star", partable$mat[i])){
                         pname <- paste("i", strsplit(partable$mat[i], "star")[[1]][1], sep="")

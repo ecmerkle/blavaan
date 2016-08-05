@@ -120,7 +120,6 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     ov.names <- orig.ov.names[orig.ov.names %in% ov.names.nox]
     #ov.names <- ov.names.nox
   }
-
   eqlabs <- partable$rhs[partable$op == "=="]
 
   ## TODO add thresholds here
@@ -169,10 +168,19 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
       for(j in 1:nmvs){
         ## decide whether we need px on ovs/lvs by searching
         ## for covariances:
+        mvvar <- which(partable$op == "~~" &
+                       partable$lhs == ov.names[j] &
+                       partable$lhs == partable$rhs &
+                       !(grepl("star", partable$mat)) &
+                       partable$group == 1)
+        tvname <- partable$mat[mvvar]
         mvcovs <- length(which(grepl(".phant", partable$lhs) &
                                partable$op == "=~" &
                                partable$rhs == ov.names[j]))
-        tvname <- ifelse(mvcovs > 0, "thetastar", "theta")
+
+        if(mvcovs > 0){
+          tvname <- paste(tvname, "star", sep="")
+        }
           
         TXT <- paste(TXT, t2, ov.names[j], 
                      "[i] ~ dnorm(mu[i,", j, "], 1/", tvname, "[", j, ",", j, ",g[i]])\n",
@@ -324,7 +332,7 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
                         partable$op == "~~")
         if(any(partable$free[lv.var] == 0 & partable$ustart[lv.var] == 0)){
             TXT <- paste(TXT, "\n", t2, "eta[i,", j, "] <- mu.eta[i,",
-                         partable$row[psi.free.idx], "]", sep="")
+                         j, "]", sep="")
             ## now change ustart to 1000 so no divide by 0 in jags
             partable$ustart[lv.var] <- 1000
         } else {
@@ -337,7 +345,7 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
             TXT <- paste(TXT, "\n", t2,
                          ## TODO check for alternative distribution?
                          "eta[i,", j, "] ~ dnorm(mu.eta[i,", 
-                         partable$row[psi.free.idx], "], 1/", pvname, "[",
+                         j, "], 1/", pvname, "[",
                          partable$row[psi.free.idx], ",", partable$col[psi.free.idx],
                          ",g[i]])", sep="")
         }
@@ -521,11 +529,11 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     if(cp == "fa"){
         if(nrow(facovs) > 0){
             for(i in 1:nrow(facovs)){
-                wmat <- match("theta", names(pmats))
+                wmat <- match(facovs$mat[i], names(pmats))
 
                 pmats[[wmat]][facovs$row[i], facovs$col[i], facovs$group[i]] <- NA
 
-                monitors <- c(monitors, paste("theta[", facovs$row[i], ",",
+                monitors <- c(monitors, paste(facovs$mat[i], "[", facovs$row[i], ",",
                                               facovs$col[i], ",",
                                               facovs$group[i], "]", sep=""))
             }
@@ -611,8 +619,8 @@ coeffun <- function(lavpartable, pxpartable, rjob, fun = "mean") {
 
   ## NB this automatically removes fixed parameters, just
   ##    like the psrf
-  vcorr <- rjob$crosscorr[psrfmatch[psrfmatch != 0],
-                          psrfmatch[psrfmatch != 0]]
+  vcorr <- rjob$crosscorr[order(psrfmatch[psrfmatch != 0]),
+                          order(psrfmatch[psrfmatch != 0])]
   vcorr <- vcorr[ptmatch, ptmatch]
 
   list(x = lavpartable$est[lavpartable$free > 0],

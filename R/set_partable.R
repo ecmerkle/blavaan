@@ -141,11 +141,11 @@ nlvcovs)
                          partable$rhs == partable$lhs[covpars[i]] &
                          partable$group == k &
                          partable$op == "~~")
-          tmpv1 <- paste("theta[", partable$row[v1var], ",", partable$col[v1var], ",", k,
+          tmpv1 <- paste(partable$mat[v1var], "[", partable$row[v1var], ",", partable$col[v1var], ",", k,
                          "]", sep="")
           if(eq.const){
             oldr <- match(partable$lhs[full.idx], patts$mmDimNames[[k]]$lambda[[1]])
-            oldv1 <- paste("theta[", oldr , ",", oldr, ",", grp.idx, "]", sep="")
+            oldv1 <- paste(partable$mat[v1var], "[", oldr , ",", oldr, ",", grp.idx, "]", sep="")
           }
           ctype <- "ov"
         } else {
@@ -178,10 +178,10 @@ nlvcovs)
                          partable$rhs == partable$rhs[covpars[i]] &
                          partable$group == k &
                          partable$op == "~~")
-          tmpv2 <- paste("theta[", partable$row[v2var], ",", partable$col[v2var], ",", k, "]", sep="")
+          tmpv2 <- paste(partable$mat[v2var], "[", partable$row[v2var], ",", partable$col[v2var], ",", k, "]", sep="")
           if(eq.const){
             oldr <- match(partable$rhs[full.idx], patts$mmDimNames[[k]]$lambda[[1]])
-            oldv2 <- paste("theta[", oldr, ",", oldr, ",", grp.idx, "]", sep="")
+            oldv2 <- paste(partable$mat[v2var], "[", oldr, ",", oldr, ",", grp.idx, "]", sep="")
           }
         } else {
           partable$lhs[tmprows[2]] <- partable$rhs[covpars[i]]
