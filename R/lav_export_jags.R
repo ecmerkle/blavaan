@@ -96,8 +96,6 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
   ## Matrix that keeps track of parameter ordering, priors,
   ## and starting values
   coefvec <- matrix(NA, nparam, 3)
-  ## Combine these to be passed to set_priors()
-  priorres <- list(TXT2=TXT2, coefvec=coefvec)
 
   ## Decide whether we need to model exogenous x's
   if(length(ov.names.x) > 0){ # & !is.na(ov.names.x)){
@@ -413,6 +411,8 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
 
   ## priors/constraints
   TXT2 <- set_parvec(TXT2, partable, dp, cp, lv.x.wish, lv.names.x)
+  partable$prior <- TXT2$partable$prior
+  TXT2 <- TXT2$TXT2
 
   ## end of model
   TXT <- paste(TXT, "\n\n", t1, "# Assignments from parameter vector", TXT2, sep="")
@@ -600,7 +600,8 @@ coeffun <- function(lavpartable, pxpartable, rjob, fun = "mean") {
   lavpartable$est[ptmatch] <- pxpartable$est[pxpartable$free > 0]
   lavpartable$psrf <- rep(NA, length(lavpartable$free))
   lavpartable$psrf[ptmatch] <- pxpartable$psrf[pxpartable$free > 0]
-
+  lavpartable$prior[ptmatch] <- pxpartable$prior[pxpartable$free > 0]
+  
   ## from lavpartable to jags
   xmatch <- match(lavpartable$free[lavpartable$free > 0],
                   pxpartable$free)
