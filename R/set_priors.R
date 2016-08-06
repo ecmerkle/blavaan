@@ -98,22 +98,32 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x){
     
     if(length(covs) > 0){
         TXT2 <- paste(TXT2, "\n\n", t1, "# Inferential covariances", sep="")
-
         for(i in 1:length(covs)){
             varlocs <- which(partable$lhs == covs[i] &
                              partable$op == "=~")
+            vartxt <- "star"
             vars <- partable$rhs[varlocs]
+            if(length(varlocs) == 0){
+              ## lv
+              varlocs <- which(partable$rhs == covs[i] &
+                               partable$op == "~")
+              vars <- partable$lhs[varlocs]
+            }
+
             var1 <- which(partable$lhs == vars[1] &
                           partable$lhs == partable$rhs &
                           partable$group == partable$group[varlocs[1]] &
-                          grepl("star", partable$mat))
+                          grepl(vartxt, partable$mat))
             var2 <- which(partable$lhs == vars[2] &
                           partable$lhs == partable$rhs &
                           partable$group == partable$group[varlocs[1]] &
-                          grepl("star", partable$mat))
+                          grepl(vartxt, partable$mat))
 
             matname <- ifelse(grepl("theta", partable$mat[var1]), "theta", "psi")
             phpars <- which(partable$lhs == covs[i])
+            if(length(phpars) == 1){
+              phpars <- which(partable$rhs == covs[i])
+            }
 
             ## covariances
             TXT2 <- paste(TXT2, "\n", t1, matname, "[", partable$row[var1],

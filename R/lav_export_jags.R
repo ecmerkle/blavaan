@@ -320,10 +320,12 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
         psi.free.idx <- which(partable$group == 1 &
                               partable$op == "~~" &
                               partable$lhs == partable$rhs &
-                              partable$lhs == lv.names[j])
+                              partable$lhs == lv.names[j] &
+                              !grepl("star", partable$mat))
 
         if(length(psi.free.idx) != 1L) {
-          stop("lavaan ERROR: parameter for residual variance ",
+          browser()
+          stop("blavaan ERROR: parameter for residual variance ",
                lv.names[j], " not found")
         }
 
@@ -336,10 +338,10 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
             ## now change ustart to 1000 so no divide by 0 in jags
             partable$ustart[lv.var] <- 1000
         } else {
-            lvcovs <- length(which(partable$lhs != partable$rhs &
-                                   partable$op == "~~" &
-                                   (partable$lhs == lv.names[j] |
-                                    partable$rhs == lv.names[j])))
+            lvcovs <- length(which(partable$lhs == lv.names[j] &
+                                   grepl(".phant", partable$rhs) &
+                                   partable$op == "~"))
+
             pvname <- ifelse(lvcovs > 0, "psistar", "psi")
             
             TXT <- paste(TXT, "\n", t2,

@@ -417,7 +417,7 @@ set_phanvars <- function(partable, ov.names, lv.names, ov.cp, lv.cp, ngroups){
                         eqconst <- paste(eqconst, " + (", partable$mat[phanlvs[j]], "[",
                                          partable$row[phanlvs[j]], ",",
                                          partable$col[phanlvs[j]], ",", k, "]^2*",
-                                         partable$mat[phanvar], "[",
+                                         partable$mat[phanvar], "star[",
                                          partable$row[phanvar], ",", partable$col[phanvar],
                                          ",", k, "])", sep="")
                     }
