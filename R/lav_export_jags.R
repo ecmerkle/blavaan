@@ -572,6 +572,7 @@ coeffun <- function(lavpartable, pxpartable, rjob, fun = "mean") {
   pxpartable <- subset(pxpartable, !is.na(id) & op != "==")
   pxnames <- paste(pxpartable$mat, "[", pxpartable$row, ",", pxpartable$col,
                    ",", pxpartable$group, "]", sep="")
+  pxpartable$pxnames <- pxnames
 
   ## posterior means:
   if(fun == "mean"){
@@ -581,11 +582,12 @@ coeffun <- function(lavpartable, pxpartable, rjob, fun = "mean") {
   }
 
   ## from jags to pxpartable
-  cmatch <- match(names(b.est), pxnames, nomatch=0)
-  pxpartable$est[cmatch[cmatch != 0]] <- b.est[cmatch != 0]
-  psrfmatch <- match(rownames(rjob$psrf$psrf), pxnames, nomatch=0)
+  cmatch <- match(pxnames, names(b.est), nomatch=0)
+  pxpartable$est <- b.est[cmatch]
+  psrfmatch <- match(pxnames, rownames(rjob$psrf$psrf))
   pxpartable$psrf <- rep(NA, length(pxpartable$free))
-  pxpartable$psrf[psrfmatch[psrfmatch != 0]] <- rjob$psrf$psrf[psrfmatch != 0,1]
+  pxpartable$psrf <- rjob$psrf$psrf[psrfmatch,1]
+  pxpartable$jagpnum <- cmatch
 
   ## from pxpartable to lavpartable
   ## first check for px parameters with "free" labels (fa priors)
@@ -605,29 +607,27 @@ coeffun <- function(lavpartable, pxpartable, rjob, fun = "mean") {
       }
     }
   }
-  
-  ptmatch <- match(pxpartable$free[pxpartable$free > 0], lavpartable$free, nomatch=0)
-  lavpartable$est[ptmatch] <- pxpartable$est[pxpartable$free > 0]
-  lavpartable$psrf <- rep(NA, length(lavpartable$free))
-  lavpartable$psrf[ptmatch] <- pxpartable$psrf[pxpartable$free > 0]
-  lavpartable$prior[ptmatch] <- pxpartable$prior[pxpartable$free > 0]
-  
-  ## from lavpartable to jags
-  xmatch <- match(lavpartable$free[lavpartable$free > 0],
-                  pxpartable$free)
-  jmatch <- match(pxnames, names(b.est))
-  lavpartable$jagpnum <- rep(NA, length(lavpartable$free))
-  lavpartable$jagpnum[lavpartable$free > 0] <- jmatch[xmatch]
 
+  ptmatch <- match(lavpartable$free[lavpartable$free > 0], pxpartable$free)
+  lavpartable$est[lavpartable$free > 0] <- pxpartable$est[ptmatch]
+  lavpartable$psrf <- rep(NA, length(lavpartable$free))
+  lavpartable$psrf[lavpartable$free > 0] <- pxpartable$psrf[ptmatch]
+  lavpartable$prior[lavpartable$free > 0] <- pxpartable$prior[ptmatch]
+  lavpartable$pxnames[lavpartable$free > 0] <- pxpartable$pxnames[ptmatch]
+  lavpartable$jagpnum[lavpartable$free > 0] <- pxpartable$jagpnum[ptmatch]
+  
   ## NB this automatically removes fixed parameters, just
   ##    like the psrf
-  vcorr <- rjob$crosscorr[order(psrfmatch[psrfmatch != 0]),
-                          order(psrfmatch[psrfmatch != 0])]
-  vcorr <- vcorr[ptmatch, ptmatch]
+  lmatch <- match(lavpartable$pxnames[lavpartable$free > 0],
+                  rownames(rjob$crosscorr))
+  vcorr <- rjob$crosscorr[lmatch, lmatch]
+  smatch <- match(lavpartable$pxnames[lavpartable$free > 0],
+                  rownames(rjob$summary$statistics),
+                  nomatch=0)
+  sdvec <- rjob$summary$statistics[smatch, "SD"]
 
   list(x = lavpartable$est[lavpartable$free > 0],
        lavpartable = lavpartable,
        vcorr = vcorr,
-       sd = rjob$summary$statistics[
-         lavpartable$jagpnum[lavpartable$free > 0],"SD"])
+       sd = sdvec)
 }
