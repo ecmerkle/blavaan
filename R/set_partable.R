@@ -410,14 +410,19 @@ set_phanvars <- function(partable, ov.names, lv.names, ov.cp, lv.cp, ngroups){
                     eqconst <- paste(partable$mat[vvar], "star[", partable$row[vvar],
                                      ",", partable$col[vvar], ",", k, "]", sep="")
                     for(j in 1:length(phanlvs)){
-                        phanvar <- which(partable$lhs == partable$lhs[phanlvs[j]] &
+                        if(vnames[i] %in% ov.names){
+                          phname <- partable$lhs[phanlvs[j]]
+                        } else {
+                          phname <- partable$rhs[phanlvs[j]]
+                        }
+                        phanvar <- which(partable$lhs == phname &
                                      partable$lhs == partable$rhs &
                                      partable$op == "~~" &
                                      partable$group == k)
                         eqconst <- paste(eqconst, " + (", partable$mat[phanlvs[j]], "[",
                                          partable$row[phanlvs[j]], ",",
                                          partable$col[phanlvs[j]], ",", k, "]^2*",
-                                         partable$mat[phanvar], "star[",
+                                         partable$mat[phanvar], "[",
                                          partable$row[phanvar], ",", partable$col[phanvar],
                                          ",", k, "])", sep="")
                     }
