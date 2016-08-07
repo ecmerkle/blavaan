@@ -45,6 +45,7 @@ set_phantoms <- function(partable, ov.names, lv.names, ov.names.x, lv.names.x, o
   ##   covpars <- covpars[-fcovs[zcovs]]
   ## }
   blkrow <- rep(NA, length(partable$id))
+  facovs <- NULL
 
   ## Only do this if covpars exist
   if(length(covpars) > 0){
@@ -259,6 +260,7 @@ nlvcovs)
           partable$lhs[(nr-1):nr] <- partable$plabel[old.labels[1:2]]
           partable$op[(nr-1):nr] <- "=="
           partable$rhs[(nr-1):nr] <- partable$plabel[tmprows[1:2]]
+          partable$mat[(nr-1):nr] <- ""
           partable$user[(nr-1):nr] <- 2
           partable$free[(nr-1):nr] <- 0
           partable$group[(nr-1):nr] <- 0
@@ -273,6 +275,7 @@ nlvcovs)
             partable$lhs[nr] <- partable$plabel[old.label]
             partable$op[nr] <- "=="
             partable$rhs[nr] <- partable$plabel[tmprows[3]]
+            partable$mat[(nr-1):nr] <- ""
             partable$user[nr] <- 2
             partable$free[nr] <- 0
             partable$group[nr] <- 0
@@ -284,8 +287,6 @@ nlvcovs)
     if(!is.null(cprm)){
       facovs <- partable[cprm,]
       partable <- partable[-cprm,]
-    } else {
-      facovs <- NULL
     }
   }
 
