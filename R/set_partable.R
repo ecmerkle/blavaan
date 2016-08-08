@@ -204,18 +204,20 @@ nlvcovs)
         ## Decide what priors to use
         tpcs <- tpcs + 1
         if((ctype == "ov" & ov.cp == "srs") | (ctype == "lv" & lv.cp == "srs")){
+          rhomat <- "rho"
+          if(ctype == "lv") rhomat <- "lvrho"
           rhoind <- paste(partable$row[covpars[i]], ",", partable$col[covpars[i]], sep="")
           ## srs priors
           partable$free[tmprows[1:3]] <- 0
           partable$exo[tmprows[1:3]] <- 0
-          partable$ustart[tmprows[1]] <- paste("sqrt(abs(rho[", rhoind, ",", k, "])*", tmpv1, ")", sep="")
-          partable$ustart[tmprows[2]] <- paste("(-1 + 2*step(rho[", rhoind, ",", k,
-                                             "]))*sqrt(abs(rho[", rhoind, ",", k, "])*", tmpv2, ")", sep="")
+          partable$ustart[tmprows[1]] <- paste("sqrt(abs(", rhomat, "[", rhoind, ",", k, "])*", tmpv1, ")", sep="")
+          partable$ustart[tmprows[2]] <- paste("(-1 + 2*step(", rhomat, "[", rhoind, ",", k,
+                                             "]))*sqrt(abs(", rhomat, "[", rhoind, ",", k, "])*", tmpv2, ")", sep="")
           partable$ustart[tmprows[3]] <- 1
           partable$mat[tmprows[3]] <- "psi"
           partable$row[tmprows[3]] <- partable$col[tmprows[3]] <- tpcs
 
-          partable$id[covparg] <- paste("rho[", rhoind, ",", k, "]", sep="")
+          partable$id[covparg] <- paste(rhomat, "[", rhoind, ",", k, "]", sep="")
           partable$plabel[tmprows] <- paste(".p", tmprows,
                                                    ".", sep="")
 
