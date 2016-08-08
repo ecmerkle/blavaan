@@ -157,11 +157,11 @@ nlvcovs)
           tbcs <- tbcs + 1
           partable$row[tmprows[1]] <- tbcs
           partable$col[tmprows[1]] <- match(partable$lhs[covpars[i]],
-                                            lv.names) # FIXME here and below will be patts$mmDimNames[[k]]$psi[[1]])
+                                            patts$mmDimNames[[k]]$psi[[1]])
           tmpv1 <- paste("psi[", partable$col[tmprows[1]], ",", partable$col[tmprows[1]],
                                        ",", k, "]", sep="")
           if(eq.const){
-            oldr <- match(partable$lhs[full.idx], lv.names) #patts$mmDimNames[[k]]$psi[[1]])
+            oldr <- match(partable$lhs[full.idx], patts$mmDimNames[[k]]$psi[[1]])
             oldv1 <- paste("psi[", oldr, ",", oldr, ",", grp.idx, "]", sep="")
           }
           ctype <- "lv"
@@ -192,11 +192,11 @@ nlvcovs)
           tbcs <- tbcs + 1
           partable$row[tmprows[2]] <- tbcs
           partable$col[tmprows[2]] <- match(partable$rhs[covpars[i]],
-                                            lv.names) #patts$mmDimNames[[k]]$psi[[1]])
+                                            patts$mmDimNames[[k]]$psi[[1]])
           tmpv2 <- paste("psi[", partable$col[tmprows[2]], ",", partable$col[tmprows[2]],
                                        ",", k, "]", sep="")
           if(eq.const){
-            oldr <- match(partable$lhs[full.idx], lv.names) #patts$mmDimNames[[k]]$psi[[1]])
+            oldr <- match(partable$lhs[full.idx], patts$mmDimNames[[k]]$psi[[1]])
             oldv2 <- paste("psi[", oldr, ",", oldr, ",", grp.idx, "]", sep="")
           }
         }
@@ -205,7 +205,7 @@ nlvcovs)
         tpcs <- tpcs + 1
         if((ctype == "ov" & ov.cp == "srs") | (ctype == "lv" & lv.cp == "srs")){
           rhomat <- "rho"
-          if(partable$mat[i] == "psi") rhomat <- "lvrho"
+          if(partable$mat[covpars[i]] == "psi") rhomat <- "lvrho"
           rhoind <- paste(partable$row[covpars[i]], ",", partable$col[covpars[i]], sep="")
           ## srs priors
           partable$free[tmprows[1:3]] <- 0
