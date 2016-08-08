@@ -183,7 +183,7 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
         }
           
         TXT <- paste(TXT, t2, ov.names[j], 
-                     "[i] ~ dnorm(mu[i,", j, "], 1/", tvname, "[", j, ",", j, ",g[i]])\n",
+                     "[i] ~ dnorm(mu[i,", j, "], 1/", tvname, "[", partable$row[mvvar], ",", partable$col[mvvar], ",g[i]])\n",
                      sep="")
       }
     } else {

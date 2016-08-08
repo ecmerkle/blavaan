@@ -32,8 +32,13 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x){
             }
           
             if(partable$free[i] == 0){
-                TXT3 <- paste(TXT3, " <- ", partable$ustart[i],
-                              sep="")
+                TXT3 <- paste(TXT3, " <- ", sep="")
+                if(is.na(partable$ustart[i])){
+                    ## exo
+                    TXT3 <- paste(TXT3, partable$start[i], sep="")
+                } else {
+                    TXT3 <- paste(TXT3, partable$ustart[i], sep="")
+                }
             } else if(length(eqpar) > 0){
                 eqpar <- which(partable$plabel == partable$lhs[eqpar])
                 TXT3 <- paste(TXT3, " <- parvec[", partable$parnums[eqpar],

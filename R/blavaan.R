@@ -1,7 +1,3 @@
-# blavaan2
-#
-# different strategy: call lavaan() first, without fitting
-
 blavaan <- function(...,  # default lavaan arguments
  
                     # bayes-specific stuff

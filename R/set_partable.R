@@ -436,6 +436,6 @@ set_phanvars <- function(partable, ov.names, lv.names, ov.cp, lv.cp, ngroups){
                 partable$ustart[vvar] <- eqconst
             }
         }
-    }    
+    }
     partable
 }
