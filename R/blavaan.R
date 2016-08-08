@@ -167,7 +167,14 @@ blavaan <- function(...,  # default lavaan arguments
         ## first loading for each lv
         loadpt <- LAV@ParTable$op == "=~"
         lvs <- unique(LAV@ParTable$lhs[loadpt])
-        fload <- sapply(lvs, function(x) which(LAV@ParTable$lhs[loadpt] == x)[1])
+        fload <- NULL
+        for(i in 1:length(lvs)){
+            for(k in 1:max(LAV@ParTable$group)){
+                fload <- c(fload, which(LAV@ParTable$lhs == lvs[i] &
+                                        LAV@ParTable$op == "=~" &
+                                        LAV@ParTable$group == k)[1])
+            }
+        }
 
         for(i in 1:length(fload)){
             if(LAV@ParTable$prior[fload[i]] != ""){

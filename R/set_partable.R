@@ -205,7 +205,7 @@ nlvcovs)
         tpcs <- tpcs + 1
         if((ctype == "ov" & ov.cp == "srs") | (ctype == "lv" & lv.cp == "srs")){
           rhomat <- "rho"
-          if(ctype == "lv") rhomat <- "lvrho"
+          if(partable$mat[i] == "psi") rhomat <- "lvrho"
           rhoind <- paste(partable$row[covpars[i]], ",", partable$col[covpars[i]], sep="")
           ## srs priors
           partable$free[tmprows[1:3]] <- 0

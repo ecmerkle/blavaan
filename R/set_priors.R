@@ -63,7 +63,9 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x){
             } else {
                 ## needs a prior
                 if(partable$prior[i] == ""){
-                    if(grepl("star", partable$mat[i])){
+                    if(partable$mat[i] == "lvrho"){
+                        partype <- grep("rho", names(dp))
+                    } else if(grepl("star", partable$mat[i])){
                         pname <- paste("i", strsplit(partable$mat[i], "star")[[1]][1], sep="")
                         partype <- grep(pname, names(dp))
                     } else {
