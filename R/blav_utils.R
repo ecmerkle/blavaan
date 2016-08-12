@@ -258,7 +258,7 @@ set_blocks <- function(partable){
 }
 
 ## evaluate prior density using result of jagsdist2r
-eval_prior <- function(pricom, thetstar, jlabel){
+eval_prior <- function(pricom, thetstar, pxname){
     ## check for truncation and [sd]/[var] modifiers
     trun <- which(pricom == "T")
     sdvar <- which(pricom %in% c("[sd]","[var]"))
@@ -277,11 +277,10 @@ eval_prior <- function(pricom, thetstar, jlabel){
     }
 
     ## thetstar modifications:
-    ## convert beta with (-1,1) support to beta with (0,1)
-    if(grepl("rho", jlabel)) thetstar <- (thetstar+1)/2
     ## convert to precision or sd, vs variance (depending on prior)
-    if(jlabel %in% c("theta", "psi")){
-        if(length(sdvar) == 0) thetstar <- 1/thetstar
+    if(grepl("theta", pxname) | grepl("psi", pxname)){
+        ## FIXME assumes correlation prior under srs is dbeta
+        if(length(sdvar) == 0 & pricom[1] != "dbeta") thetstar <- 1/thetstar
         if(any(grepl("\\[sd", pricom))) thetstar <- sqrt(thetstar)
     }
     ## dt() in R assumes mean=0, precision=1

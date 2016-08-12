@@ -2,31 +2,27 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
                        lavsamplestats, lavdata, lavcache, lavjags) {
   ## compute marginal log-likelihood given model output
   ## the lavs are created via blavaan()
-
   bayesout <- lavjags
-  
+
   ## unique parameters (remove equality constraints and
   ## cov parameters under srs priors)
-  urows <- 1:length(lavpartable$jlabel)
-  ## FIXME If there are inequality constraints or complex
-  ##       equality constraints, we may have problems here:
   eqpars <- lavpartable$rhs[lavpartable$op == "=="]
-  urows <- urows[!(lavpartable$plabel %in% eqpars) &
-                 !grepl("@", lavpartable$plabel) &
-                 !lavpartable$jlabel == ""]
+  urows <- 1:length(lavpartable$pxnames)
+  urows <- urows[!is.na(lavpartable$pxnames) &
+                 !(lavpartable$plabel %in% eqpars)]
 
   q <- length(urows)
 
   ## re-arrange crosscorr rows/columns to match partable,
   ## then remove redundant rows/columns
-  rearr <- match(lavpartable$jlabel[urows], rownames(bayesout$crosscorr))
-  rearr <- rearr[!is.na(rearr)] # assume NAs only come at end (for deviance, etc)
+  rearr <- match(lavpartable$pxnames[urows], rownames(bayesout$crosscorr))
+  rearr2 <- match(lavpartable$pxnames[urows], rownames(bayesout$summary$statistics))
 
-  Jinv <- diag(bayesout$summary$statistics[rearr,"SD"]) %*%
+  Jinv <- diag(bayesout$summary$statistics[rearr2,"SD"]) %*%
           bayesout$crosscorr[rearr,rearr] %*%
-          diag(bayesout$summary$statistics[rearr,"SD"])
+          diag(bayesout$summary$statistics[rearr2,"SD"])
 
-  cmatch <- match(lavpartable$jlabel[urows],
+  cmatch <- match(lavpartable$pxnames[urows],
                   rownames(bayesout$summary$statistics),
                   nomatch=0)
 
@@ -40,7 +36,7 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
   pricom <- jagsdist2r(pri)
 
   ## warn about fa priors
-  if(any((sapply(pricom, length) == 0) & grepl("cov", lavpartable$jlabel[urows]))) warning("blavaan WARNING: marginal log-likelihoods under ov.cp=fa or lv.cp=fa may be unstable.")
+  if(lavoptions$cp == "fa") warning("blavaan WARNING: marginal log-likelihoods under ov.cp=fa or lv.cp=fa may be unstable.")
 
   ## evaluate each prior
   priloglik <- 0
@@ -74,35 +70,54 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
     wps <- 0
   }
 
-  ## pick out variance parameters under fa priors
-  if(lavoptions$ov.cp == "fa"){
-    ocpcovs <- which(lavpartable$lhs[urows] %in% lavdata@ov.names &
-                     lavpartable$rhs[urows] %in% lavdata@ov.names &
-                     lavpartable$op[urows] == "~~" &
-                     lavpartable$lhs[urows] != lavpartable$rhs[urows])
+  ## pick out var/cov parameters under fa priors
+  ocpcovs <- which(lavpartable$lhs[urows] %in% unlist(lavdata@ov.names) &
+                   lavpartable$rhs[urows] %in% unlist(lavdata@ov.names) &
+                   lavpartable$op[urows] == "~~" &
+                   lavpartable$lhs[urows] != lavpartable$rhs[urows])
+
+  lv.names <- lav_partable_attributes(partable = lavpartable, pta = NULL)$vnames$lv
+  lcpcovs <- which(!(lavpartable$lhs[urows] %in% unlist(lv.names)) &
+                   !(lavpartable$rhs[urows] %in% unlist(lv.names)) &
+                   lavpartable$op[urows] == "~~" &
+                   lavpartable$lhs[urows] != lavpartable$rhs[urows])
+  
+  if(lavoptions$cp == "fa"){
     ocpvars <- unique(c(lavpartable$lhs[urows][ocpcovs], lavpartable$rhs[urows][ocpcovs]))
-  } else {
-    ocpvars <- ""
-  }
-  if(lavoptions$lv.cp == "fa"){
-    lcpcovs <- which(!(lavpartable$lhs[urows] %in% lavdata@ov.names) &
-                     !(lavpartable$rhs[urows] %in% lavdata@ov.names) &
-                     lavpartable$op[urows] == "~~" &
-                     lavpartable$lhs[urows] != lavpartable$rhs[urows])
+
     lcpvars <- unique(c(lavpartable$lhs[urows][lcpcovs], lavpartable$rhs[urows][lcpcovs]))
   } else {
+    ocpvars <- ""
     lcpvars <- ""
   }
 
   for(i in 1:q){
     if(i %in% wps) next # already got it above
-    ## TODO do we need to use dp in kernel density to get correct priors?
-    if(length(pricom[[i]])==0 & grepl("cov", lavpartable$jlabel[urows][i])){
-      ## deal with covariances under fa parameterization using
-      ## kernel density estimation of covariance parameter's prior
-      tmpdist <- rnorm(1e5,sd=sqrt(1/1e-4))*rnorm(1e5,sd=sqrt(1/1e-4))/rgamma(1e5,1,.5)
-      tmpkd <- density(tmpdist)
-      tmpdens <- log(approx(tmpkd$x, tmpkd$y, thetstar[i])$y)
+
+    if(i %in% c(ocpcovs, lcpcovs)){
+      if(lavoptions$cp == "srs"){
+        ## for srs, convert to correlation and use eval_prior()
+        var1 <- which(lavpartable$lhs == lavpartable$lhs[urows][i] &
+                      lavpartable$lhs == lavpartable$rhs &
+                      lavpartable$op == "~~" &
+                      lavpartable$group == lavpartable$group[urows][i])
+        var2 <- which(lavpartable$lhs == lavpartable$rhs[urows][i] &
+                      lavpartable$lhs == lavpartable$rhs &
+                      lavpartable$op == "~~" &
+                      lavpartable$group == lavpartable$group[urows][i])
+        tstar <- thetstar[i]/sqrt(lavpartable$est[var1] * lavpartable$est[var2])
+        # convert to support on 0,1
+        tstar <- (tstar + 1)/2
+
+        tmpdens <- eval_prior(pricom[[i]], tstar, lavpartable$pxnames[urows][i])
+      } else {
+        ## fa; TODO? use dp in kernel density to get correct priors?
+        ## deal with covariances under fa parameterization using
+        ## kernel density estimation of covariance parameter's prior
+        tmpdist <- rnorm(1e5,sd=sqrt(1/1e-4))*rnorm(1e5,sd=sqrt(1/1e-4))/rgamma(1e5,1,.5)
+        tmpkd <- density(tmpdist)
+        tmpdens <- log(approx(tmpkd$x, tmpkd$y, thetstar[i])$y)
+      }
     } else if(lavpartable$lhs[urows][i] %in% c(ocpvars, lcpvars) &
               lavpartable$op[urows][i] == "~~" &
               lavpartable$rhs[urows][i] == lavpartable$lhs[urows][i]){
@@ -127,12 +142,6 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
   ## control() is part of lavmodel (for now)
   lavmodel@control <- list(optim.method="none")
 
-  ## to compute likelihood, we need to remove the rho rows
-  ## from lavpartable
-  rhos <- grep("rho", lavpartable$jlabel)
-  if(length(rhos) > 0) lavpartable <- lapply(lavpartable, function(x) x[-rhos])
-  lavpartable$plabel <- sapply(lavpartable$plabel, function(x) strsplit(x, "@")[[1]][1])
-
   fit.new <- try(lavaan(slotParTable = lavpartable,
                         slotModel = lavmodel,
                         slotOptions = lavoptions,
@@ -145,7 +154,7 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
   } else {
     loglik <- NA
   }
-  ##print(c(priloglik, loglik, log(det(Jinv))))
+  print(c(priloglik, loglik, log(det(Jinv))))
   margloglik <- (q/2)*log(2*pi) + log(det(Jinv))/2 +
                 priloglik + loglik
   names(margloglik) <- ""
