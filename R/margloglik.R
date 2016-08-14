@@ -154,7 +154,7 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
   } else {
     loglik <- NA
   }
-  print(c(priloglik, loglik, log(det(Jinv))))
+  #print(c(priloglik, loglik, log(det(Jinv))))
   margloglik <- (q/2)*log(2*pi) + log(det(Jinv))/2 +
                 priloglik + loglik
   names(margloglik) <- ""
