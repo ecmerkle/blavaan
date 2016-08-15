@@ -12,5 +12,5 @@ Description: Fit a variety of Bayesian latent variable models, including confirm
    factor analysis, structural equation models, and latent growth curve models.
 Depends: R(>= 3.2.0), methods, runjags, lavaan(>= 0.5-20)
 Imports: stats, utils, graphics, MASS, MCMCpack, mnormt, nonnest2, loo
-Suggests: modeest, rjags, semTools
+Suggests: modeest, rjags, semTools, parallel
 License: GPL (>= 2)

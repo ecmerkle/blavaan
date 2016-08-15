@@ -13,7 +13,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
     ncores <- NA
     loop.comm <- "lapply"
     if(requireNamespace("parallel", quietly = TRUE)){
-      ncores <- min(n.chains, detectCores())
+      ncores <- min(n.chains, parallel::detectCores())
       loop.comm <- "mclapply"
     }
   
@@ -132,9 +132,13 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
       list(ind = ind, csdist = csdist)
     })
 
-    if(loop.comm == "mclapply") loop.args <- c(loop.args, list(mc.cores = ncores))
+    if(loop.comm == "mclapply"){
+        loop.args <- c(loop.args, list(mc.cores = ncores))
+        res <- do.call(parallel::mclapply, loop.args)
+    } else {
+        res <- do.call(lapply, loop.args)
+    }
 
-    res <- do.call(loop.comm, args = loop.args)
     ind <- unlist(lapply(res, function(x) x$ind))
     csdist <- unlist(lapply(res, function(x) x$csdist))
 
