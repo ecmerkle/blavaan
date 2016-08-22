@@ -441,8 +441,8 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
   out <- list(model = out, inits = NA)
     
   ## Initial values
-  if(FALSE){ ## FIXME! inits != "jags"){
-      inits <- set_inits(partable, priorres$coefvec, matdims, cp, cp, n.chains, inits)
+  if(inits != "jags"){
+      inits <- set_inits(partable, cp, cp, n.chains, inits)
       out$inits <- inits
   }
         
