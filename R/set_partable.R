@@ -201,6 +201,9 @@ nlvcovs)
           }
         }
 
+        ## TODO tmprows[3] should get some prior associated with covariance param for fa priors?
+        partable$prior[tmprows[1:3]] <- ""
+        
         ## Decide what priors to use
         tpcs <- tpcs + 1
         if((ctype == "ov" & ov.cp == "srs") | (ctype == "lv" & lv.cp == "srs")){
@@ -239,8 +242,6 @@ nlvcovs)
             partable$plabel[tmprows[1:2]] <- paste(".p", tmprows[1:2], ".", sep="")
             partable$free[tmprows[1:2]] <- tmprows[1:2]
           }
-          ## TODO tmprows[3] should get some prior associated with covariance param.
-          partable$prior[tmprows[1:3]] <- ""
           cprm <- c(cprm, covparg)
 
           partable$lhs[tmprows[3]] <- partable$rhs[tmprows[3]] <- phname

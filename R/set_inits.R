@@ -1,7 +1,6 @@
 set_inits <- function(partable, ov.cp, lv.cp, n.chains, inits){
   ## Generate initial values for each chain
   ## TODO write start values to new columns of coefvec, so can include in partable
-browser()    
   initvals <- vector("list", n.chains)
   names(initvals) <- paste("c", 1:n.chains, sep="")
   pveclen <- max(partable$parnums, na.rm = TRUE)
@@ -9,12 +8,12 @@ browser()
   for(i in 1:n.chains){
     initvals[[i]] <- list(parvec = rep(NA, pveclen))
   }
-    
+
   ## find parameters arising from wishart
   ## TODO this currently skips over priors that have been placed on
   ## variances/sds; could instead set them with some extra handling
   wps <- grep("dwish", partable$prior)
-
+  
   ## handle wishart inits separately
   if(length(wps) > 0){
     wdimen <- sum(grepl("dwish", coefvec[,3]) & grepl("invpsi", coefvec[,1]) & grepl(",1]", coefvec[,1]))
@@ -29,7 +28,9 @@ browser()
   }
 
   for(i in 1:nrow(partable)){
-    if((i %in% wps) | partable$free[i] == 0 | partable$prior[i] == "") next
+    eqcons <- which(partable$lhs == partable$label[i] &
+                    partable$op %in% c("==", ">", "<"))
+    if((i %in% wps) | partable$free[i] == 0 | partable$prior[i] == "" | length(eqcons > 0)) next
 
     tmppri <- partable$prior[i]
       
@@ -76,7 +77,15 @@ browser()
 
     ## extract matrix, dimensions
     for(j in 1:n.chains){
-      initvals[[j]][["parvec"]][partable$parnums[i]] <- ivs[j]
+      varparm <- (partable$lhs[i] == partable$rhs[i]) &
+                 (partable$op[i] == "~~")                 
+      if(varparm & !grepl("[var]", partable$prior[i], fixed = TRUE)){
+        initvals[[j]] <- c(initvals[[j]], ivs[j])
+        tmpname <- paste("pvec", partable$parnums[i], sep="")
+        names(initvals[[j]])[length(initvals[[j]])] <- tmpname
+      } else {
+        initvals[[j]][["parvec"]][partable$parnums[i]] <- ivs[j]
+      }
     }
   }
 
@@ -91,6 +100,5 @@ browser()
       initvals[[j]][["parvec"]] <- NULL
     }
   }
-
   initvals
 }

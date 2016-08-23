@@ -121,6 +121,9 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     #ov.names <- ov.names.nox
   }
   eqlabs <- partable$rhs[partable$op == "=="]
+  eqplabs <- partable$lhs[partable$op == "=="]
+  eqplabs <- eqplabs[eqplabs %in% partable$label]
+  eqlabs <- c(eqlabs, eqplabs)
 
   ## TODO add thresholds here
   ##      we only need scale factors ~*~ in delta parameterization...
