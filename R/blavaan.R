@@ -136,27 +136,25 @@ blavaan <- function(...,  # default lavaan arguments
     }
 
     prispec <- "prior" %in% names(LAV@ParTable)
-    # block priors off for now
-    LAV@Options$auto.cov.lv.x <- FALSE
-    ## # cannot currently use wishart prior with std.lv=TRUE
-    ## if(LAV@Options$auto.cov.lv.x & LAV@Options$std.lv){
-    ##     #warning("blavaan WARNING: cannot use Wishart prior with std.lv=TRUE. Reverting to 'srs' priors.")
-    ##     LAV@Options$auto.cov.lv.x <- FALSE
-    ## }
-    ## # Check whether there are user-specified priors or equality
-    ## # constraints on lv.x or ov.x. If so, set auto.cov.lv.x = FALSE.
-    ## lv.x <- LAV@pta$vnames$lv.x[[1]]
-    ## ## catch some regressions without fixed x:
-    ## ov.noy <- LAV@pta$vnames$ov.nox[[1]]
-    ## ov.noy <- ov.noy[!(ov.noy %in% LAV@pta$vnames$ov.y)]
-    ## ndpriors <- rep(FALSE, length(LAV@ParTable$lhs))
-    ## if(prispec) ndpriors <- LAV@ParTable$prior != ""
-    ## cov.pars <- (LAV@ParTable$lhs %in% c(lv.x, ov.noy)) & LAV@ParTable$op == "~~"
-    ## con.cov <- any((cov.pars & (LAV@ParTable$free == 0 | ndpriors)) |
-    ##                ((LAV@ParTable$lhs %in% LAV@ParTable$plabel[cov.pars] |
-    ##                  LAV@ParTable$rhs %in% LAV@ParTable$plabel[cov.pars]) &
-    ##                  LAV@ParTable$op == "=="))
-    ## if(con.cov) LAV@Options$auto.cov.lv.x <- FALSE
+    # cannot currently use wishart prior with std.lv=TRUE
+    if(LAV@Options$auto.cov.lv.x & LAV@Options$std.lv){
+        #warning("blavaan WARNING: cannot use Wishart prior with std.lv=TRUE. Reverting to 'srs' priors.")
+        LAV@Options$auto.cov.lv.x <- FALSE
+    }
+    # Check whether there are user-specified priors or equality
+    # constraints on lv.x or ov.x. If so, set auto.cov.lv.x = FALSE.
+    lv.x <- LAV@pta$vnames$lv.x[[1]]
+    ## catch some regressions without fixed x:
+    ov.noy <- LAV@pta$vnames$ov.nox[[1]]
+    ov.noy <- ov.noy[!(ov.noy %in% LAV@pta$vnames$ov.y)]
+    ndpriors <- rep(FALSE, length(LAV@ParTable$lhs))
+    if(prispec) ndpriors <- LAV@ParTable$prior != ""
+    cov.pars <- (LAV@ParTable$lhs %in% c(lv.x, ov.noy)) & LAV@ParTable$op == "~~"
+    con.cov <- any((cov.pars & (LAV@ParTable$free == 0 | ndpriors)) |
+                   ((LAV@ParTable$lhs %in% LAV@ParTable$plabel[cov.pars] |
+                     LAV@ParTable$rhs %in% LAV@ParTable$plabel[cov.pars]) &
+                     LAV@ParTable$op == "=="))
+    if(con.cov) LAV@Options$auto.cov.lv.x <- FALSE
     
     # if std.lv, truncate the prior of each lv's first loading
     if(LAV@Options$std.lv){

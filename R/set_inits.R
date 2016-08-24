@@ -13,17 +13,19 @@ set_inits <- function(partable, ov.cp, lv.cp, n.chains, inits){
   ## TODO this currently skips over priors that have been placed on
   ## variances/sds; could instead set them with some extra handling
   wps <- grep("dwish", partable$prior)
-  
+
   ## handle wishart inits separately
   if(length(wps) > 0){
-    wdimen <- sum(grepl("dwish", coefvec[,3]) & grepl("invpsi", coefvec[,1]) & grepl(",1]", coefvec[,1]))
+    wdimen <- sum(grepl("dwish", partable$prior) &
+                  partable$group == 1 &
+                  partable$lhs == partable$rhs)
     ngroups <- length(wps)/(wdimen*(wdimen+1)/2)
     ## generate values
     for(i in 1:n.chains){
       ## get something close to an identity matrix, otherwise
       ## the chains can go crazy places
       wvals <- rWishart(ngroups, wdimen*500, diag(wdimen))/(wdimen*500)
-      initvals[[i]][["ibpsi"]] <- wvals
+      initvals[[i]] <- c(initvals[[i]], list(ibpsi = wvals))
     }
   }
 

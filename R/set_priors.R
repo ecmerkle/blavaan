@@ -6,8 +6,17 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x){
 
     ## parameter assignments separate from priors
     TXT3 <- paste("\n\n", t1, "# Priors/constraints", sep="")
+
+    ## find parameters with wishart priors
+    wishpars <- 0
+    if(lv.x.wish){
+      wishpars <- which(partable$lhs %in% lv.names.x &
+                        partable$rhs %in% lv.names.x &
+                        partable$op == "~~")
+    }
+      
     for(i in 1:nrow(partable)){
-        if(partable$mat[i] != ""){
+        if(partable$mat[i] != "" & !(i %in% wishpars)){
             ## to find equality constraints
             eqpar <- which(partable$rhs == partable$plabel[i] &
                            partable$op == "==")
@@ -96,6 +105,33 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x){
         }
     }
 
+    ## deal with wishart priors
+    if(lv.x.wish & length(lv.names.x) > 1){
+      nlvx <- length(lv.names.x)
+      ngroups <- max(partable$group, na.rm = TRUE)
+
+      TXT3 <- paste(TXT3, t1, "for(k in 1:", ngroups, ") {\n", t2,
+                    "ibpsi[1:", nlvx, ",1:", nlvx, ",k] ~ dwish(iden,", nlvx+1, ")\n",
+                    sep="")
+      
+      TXT3 <- paste(TXT3, t2, "bpsi[1:", nlvx, ",1:", nlvx, ",k] <- inverse(ibpsi[1:",
+                    nlvx, ",1:", nlvx, ",k])\n", t1, "}\n", sep="")
+
+      for(i in 1:length(wishpars)){
+        tmppar <- wishpars[i]
+        wishrow <- which(lv.names.x == partable$lhs[tmppar])
+        wishcol <- which(lv.names.x == partable$rhs[tmppar])
+
+        partable$prior[tmppar] <- dp[["ibpsi"]]
+        
+        TXT2 <- paste(TXT2, "\n", t1, partable$mat[tmppar], "[",
+                      partable$row[tmppar], ",", partable$col[tmppar],
+                      ",", partable$group[tmppar], "] <- bpsi[",
+                      wishrow, ",", wishcol, ",",
+                      partable$group[tmppar], "]", sep="")
+      }
+    }
+  
     ## add priors/constraints after model parameter declarations
     TXT2 <- paste(TXT2, TXT3, sep="")
     

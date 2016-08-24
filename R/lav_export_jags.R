@@ -305,14 +305,13 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
                  "# lvs", sep="")
 
     lvstart <- 1
-    ## if(lv.x.wish & nlvx > 1){
-    ##   lvstart <- nlvx + 1
-    ##   lv.ind <- rbind(lv.ind, cbind(1:nlvx, 1:nlvx))
+    if(lv.x.wish & nlvx > 1){
+      lvstart <- nlvx + 1
 
-    ##   TXT <- paste(TXT, "\n", t2,
-    ##                "eta[i,1:", nlvx, "] ~ dmnorm(mu.eta[i,1:",
-    ##                nlvx, "], ibpsi[1:", nlvx,",1:", nlvx, ",g[i]])", sep="")
-    ## }
+      TXT <- paste(TXT, "\n", t2,
+                   "eta[i,1:", nlvx, "] ~ dmnorm(mu.eta[i,1:",
+                   nlvx, "], ibpsi[1:", nlvx,",1:", nlvx, ",g[i]])", sep="")
+    }
     
     nlv <- length(lv.names)
 
@@ -418,12 +417,8 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
   ## end of main model specification (still need priors + equality constraints)
   TXT <- paste(TXT, "\n", t1, "}", sep="")
 
-  ## and for blocked multivariate normal parameters, now that
-  ## priorres$coefvec should have all the jags labels
-  ##if(any(!is.na(partable$blk))) priorres <- block_priors(priorres, partable)
-
   ## priors/constraints
-  TXT2 <- set_parvec(TXT2, partable, dp, cp, lv.x.wish, lv.names.x)
+  TXT2 <- set_parvec(TXT2, partable, dp, cp, lv.x.wish, orig.lv.names.x)
   partable$prior <- TXT2$partable$prior
   TXT2 <- TXT2$TXT2
 
@@ -552,6 +547,7 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     
     ## identity matrix for wishart prior
     ## TODO allow user to specify this matrix
+    ## or could be specified via jagextra argument?
     if(lv.x.wish & length(orig.lv.names.x) > 1){
       iden <- diag(length(orig.lv.names.x))
       jagsdata <- c(jagsdata, list(iden=iden))
