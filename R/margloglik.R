@@ -45,17 +45,18 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
   wps <- which(sapply(pricom, function(x) x[1] == "dwish"))
   if(length(wps) > 0){
     ngroups <- max(lavpartable$group)
-    dimen <- sum(grepl("dwish", lavpartable$prior) &
-                 grepl("psi", lavpartable$jlabel) &
-                 grepl(",1]", lavpartable$jlabel))
     for(k in 1:ngroups){
-      tmpmat <- diag(lavpartable$est[grepl("psi", lavpartable$jlabel) &
-                                     grepl(paste(",", ngroups, "]", sep=""), lavpartable$jlabel)])
-      covlocs <- grepl("cov", lavpartable$jlabel) &
-                                                   grepl("dwish", lavpartable$prior) &
-                                                   grepl(paste(",", ngroups, "]", sep=""), lavpartable$jlabel)
-      if(sum(covlocs) > 0){
-        tmpmat[lower.tri(tmpmat)] <- lavpartable$est[covlocs]
+      varpars <- which(grepl("dwish", lavpartable$prior) &
+                       lavpartable$group == k &
+                       lavpartable$lhs == lavpartable$rhs)
+      dimen <- length(varpars)
+      tmpmat <- diag(lavpartable$est[varpars])
+      ## TODO? ensure that covpars are ordered the same as varpars?
+      covpars <- which(grepl("dwish", lavpartable$prior) &
+                       lavpartable$group == k &
+                       lavpartable$lhs != lavpartable$rhs)
+      if(length(covpars) > 0){
+        tmpmat[lower.tri(tmpmat)] <- lavpartable$est[covpars]
       }
       tmpmat <- tmpmat + t(tmpmat)
       diag(tmpmat) <- diag(tmpmat)/2

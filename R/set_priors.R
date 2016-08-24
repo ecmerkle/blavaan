@@ -8,13 +8,13 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x){
     TXT3 <- paste("\n\n", t1, "# Priors/constraints", sep="")
 
     ## find parameters with wishart priors
-    wishpars <- 0
-    if(lv.x.wish){
+    wishpars <- NULL
+    if(lv.x.wish & length(lv.names.x) > 1){
       wishpars <- which(partable$lhs %in% lv.names.x &
                         partable$rhs %in% lv.names.x &
                         partable$op == "~~")
     }
-      
+
     for(i in 1:nrow(partable)){
         if(partable$mat[i] != "" & !(i %in% wishpars)){
             ## to find equality constraints
@@ -110,9 +110,9 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x){
       nlvx <- length(lv.names.x)
       ngroups <- max(partable$group, na.rm = TRUE)
 
-      TXT3 <- paste(TXT3, t1, "for(k in 1:", ngroups, ") {\n", t2,
-                    "ibpsi[1:", nlvx, ",1:", nlvx, ",k] ~ dwish(iden,", nlvx+1, ")\n",
-                    sep="")
+      TXT3 <- paste(TXT3, "\n", t1, "for(k in 1:", ngroups,
+                    ") {\n", t2, "ibpsi[1:", nlvx, ",1:", nlvx,
+                    ",k] ~ dwish(iden,", nlvx+1, ")\n", sep="")
       
       TXT3 <- paste(TXT3, t2, "bpsi[1:", nlvx, ",1:", nlvx, ",k] <- inverse(ibpsi[1:",
                     nlvx, ",1:", nlvx, ",k])\n", t1, "}\n", sep="")
