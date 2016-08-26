@@ -1,5 +1,5 @@
 importFrom("methods", 
-           "is", "new")
+           "is", "new", "slot")
 
 importFrom("utils", 
            # "sessionInfo",

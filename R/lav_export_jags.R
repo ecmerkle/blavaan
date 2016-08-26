@@ -502,8 +502,8 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     }
 
     ## parameter matrices/vectors
-    matrows <- with(subset(partable, mat != ""), tapply(row, mat, max, na.rm=TRUE))
-    matcols <- with(subset(partable, mat != ""), tapply(col, mat, max, na.rm=TRUE))
+    matrows <- with(partable[partable$mat != "",], tapply(row, mat, max, na.rm=TRUE))
+    matcols <- with(partable[partable$mat != "",], tapply(col, mat, max, na.rm=TRUE))
     ngrp <- max(partable$group, na.rm=TRUE)
 
     pmats <- vector("list", length(matrows))
@@ -521,7 +521,7 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     }
 
     ## monitored parameters
-    monitors <- with(subset(partable, mat != ""),
+    monitors <- with(partable[partable$mat != "",],
                      paste(mat, "[", row, ",", col, ",", group, "]",
                            sep=""))
     
@@ -568,7 +568,7 @@ coeffun <- function(lavpartable, pxpartable, rjob, fun = "mean") {
   ## the jags model.
 
   ## remove any rhos or unnamed parameters
-  pxpartable <- subset(pxpartable, !is.na(id) & op != "==")
+  pxpartable <- pxpartable[!is.na(pxpartable$id) & pxpartable$op != "==",]
   pxnames <- paste(pxpartable$mat, "[", pxpartable$row, ",", pxpartable$col,
                    ",", pxpartable$group, "]", sep="")
   pxpartable$pxnames <- pxnames
