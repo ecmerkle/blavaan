@@ -209,28 +209,16 @@ function(object, header       = TRUE,
         ## 95% HPD; FIXME display blanks for equality-constrained parameters
         ##                (like Std.Err column)
 
-        ## remove rho parameters from PE
-        rhos <- grep("rho", object@ParTable$jlabel[object@ParTable$op != "=="])
-        if(length(rhos) > 0) PE <- PE[-rhos,]
-        ## move rho priors to covariance rows
-        rhos <- grep("rho", object@external$runjags$origpt$jlabel)
-        covrhos <- grep("@rho", object@external$runjags$origpt$plabel)
-        object@ParTable$prior[covrhos] <- object@external$runjags$origpt$prior[rhos]
-        ## remove equality constraints from ParTable (rhos removed in blavaan())
-        eqc <- which(object@ParTable$op == "==")
-        if(length(eqc) > 0){
-            newpt <- lapply(object@ParTable, function(x) x[-eqc])
-        } else {
-            newpt <- object@ParTable
-        }
+        ## TODO put parameter priors in partable
+
+        newpt <- object@ParTable
 
         ## match jags names to partable, then partable to PE
-        ptentry <- match(rownames(object@external$runjags$HPD), newpt$jlabel) #object@ParTable$jlabel)
-        pte2 <- ptentry[!is.na(ptentry)]
+        pte2 <- which(!is.na(newpt$jagpnum))
         peentry <- match(with(newpt, paste(lhs[pte2], op[pte2], rhs[pte2], group[pte2], sep="")),
                          paste(PE$lhs, PE$op, PE$rhs, PE$group, sep=""))
-        PE$ci.lower[peentry] <- object@external$runjags$HPD[!is.na(ptentry),'Lower95']
-        PE$ci.upper[peentry] <- object@external$runjags$HPD[!is.na(ptentry),'Upper95']
+        PE$ci.lower[peentry] <- object@external$runjags$HPD[newpt$jagpnum[pte2],'Lower95']
+        PE$ci.upper[peentry] <- object@external$runjags$HPD[newpt$jagpnum[pte2],'Upper95']
 
         ## NB This is done so that we can remove fixed parameter hpd intervals without
         ##    making changes to lavaan's print.lavaan.parameterEstimates(). But maybe
@@ -245,13 +233,13 @@ function(object, header       = TRUE,
 
         ## FIXME defined parameters never get psrf + others;
         ## see line 200 of lav_print.R
-        if(psrf & class(object@external$runjags$psrf) != "character"){
+        if(psrf){
           PE$psrf <- rep(NA, nrow(PE))
-          PE$psrf[peentry] <- object@external$runjags$psrf$psrf[!is.na(ptentry),'Point est.']
+          PE$psrf[peentry] <- newpt$psrf[pte2]
         }
         if(neff){
           PE$neff <- rep(NA, nrow(PE))
-          PE$neff[peentry] <- object@external$runjags$summaries[!is.na(ptentry),'SSeff']
+          PE$neff[peentry] <- object@external$runjags$summaries[newpt$jagpnum[pte2],'SSeff']
         }
         if(priors){
           PE$prior <- rep(NA, nrow(PE))
@@ -260,11 +248,11 @@ function(object, header       = TRUE,
         }
         if(postmedian){
           PE$Post.Med <- rep(NA, nrow(PE))
-          PE$Post.Med[peentry] <- object@external$runjags$summaries[!is.na(ptentry),'Median']
+          PE$Post.Med[peentry] <- object@external$runjags$summaries[newpt$jagpnum[pte2],'Median']
         }
         if(postmode){
           PE$Post.Mode <- rep(NA, nrow(PE))
-          PE$Post.Mode[peentry] <- object@external$runjags$summaries[!is.na(ptentry),'Mode']
+          PE$Post.Mode[peentry] <- object@external$runjags$summaries[newpt$jagpnum[pte2],'Mode']
           if(all(is.na(PE$Post.Mode))) warning("blavaan WARNING: Posterior modes require installation of the modeest package.")
         }
         if(bf){

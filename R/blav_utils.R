@@ -79,7 +79,7 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
             ## logl + baseline logl
             ll.samp <- c(0,0)
         }
-        
+
         for(g in 1:length(implied$cov)){
             mnvec <- as.numeric(implied$mean[[g]])
             ## ensure symmetric:
@@ -207,16 +207,8 @@ case_lls <- function(lavjags        = NULL,
 fill_params <- function(postsamp      = NULL,
                         lavmodel      = NULL,
                         lavpartable   = NULL){
-    ## this code related to coeffun():
-    cnames <- lavpartable$jlabel
-    rhos <- grep("rho", cnames)
-    nn <- c(rhos, which(cnames == ""))
-    if(length(nn) > 0) {
-        cnames <- cnames[-nn]
-    }
-    cmatch <- match(cnames, names(postsamp), nomatch=0)
-
-    lav_model_set_parameters(lavmodel, x = postsamp[cmatch])
+  lav_model_set_parameters(lavmodel,
+                           x = postsamp[lavpartable$jagpnum[!is.na(lavpartable$jagpnum)]])
 }
 
 ## re-arrange columns of parameter samples to match that of blavaan object
@@ -229,15 +221,7 @@ rearr_params <- function(mcmc         = NULL,
         }
     }
     
-    cnames <- lavpartable$jlabel
-    rhos <- grep("rho", cnames)
-    nn <- c(rhos, which(cnames == ""))
-    if(length(nn) > 0) {
-        cnames <- cnames[-nn]
-    }
-    cmatch <- match(cnames, colnames(fullmat), nomatch=0)
-
-    fullmat[,cmatch]
+    fullmat[,lavpartable$jagpnum[lavpartable$free > 0]]
 }   
 
 ## iteration numbers for samp_lls and postpred
@@ -274,7 +258,7 @@ set_blocks <- function(partable){
 }
 
 ## evaluate prior density using result of jagsdist2r
-eval_prior <- function(pricom, thetstar, jlabel){
+eval_prior <- function(pricom, thetstar, pxname){
     ## check for truncation and [sd]/[var] modifiers
     trun <- which(pricom == "T")
     sdvar <- which(pricom %in% c("[sd]","[var]"))
@@ -293,11 +277,10 @@ eval_prior <- function(pricom, thetstar, jlabel){
     }
 
     ## thetstar modifications:
-    ## convert beta with (-1,1) support to beta with (0,1)
-    if(grepl("rho", jlabel)) thetstar <- (thetstar+1)/2
     ## convert to precision or sd, vs variance (depending on prior)
-    if(jlabel %in% c("theta", "psi")){
-        if(length(sdvar) == 0) thetstar <- 1/thetstar
+    if(grepl("theta", pxname) | grepl("psi", pxname)){
+        ## FIXME assumes correlation prior under srs is dbeta
+        if(length(sdvar) == 0 & pricom[1] != "dbeta") thetstar <- 1/thetstar
         if(any(grepl("\\[sd", pricom))) thetstar <- sqrt(thetstar)
     }
     ## dt() in R assumes mean=0, precision=1
@@ -367,7 +350,8 @@ add_monitors <- function(lavpartable, lavjags, jagextra){
 namecheck <- function(ov.names){
     forbidden <- c("mu", "invthetstar", "invtheta", "nu", "lambda", "eta",
                    "mu.eta", "invpsistar", "invpsi", "alpha", "beta",
-                   "rho", "theta", "psi", "rstar", "cov", "ibpsi", "bpsi", "iden", "yvec")
+                   "rho", "theta", "psi", "rstar", "cov", "ibpsi", "bpsi", "iden", "yvec",
+                   paste(".phant", 1:100, sep=""))
 
     forbid.idx <- which(ov.names %in% forbidden)
     

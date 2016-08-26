@@ -1,6 +1,16 @@
-set_phantoms <- function(partable, parvec, ov.names, lv.names, ov.names.x, lv.names.x, ov.cp, lv.cp, lv.x.wish, ngroups) {
+set_phantoms <- function(partable, ov.names, lv.names, ov.names.x, lv.names.x, ov.cp, lv.cp, lv.x.wish, ngroups) {
   ## Add phantom lvs for covariance parameters
 
+  ## first: parameter matrices + indexing
+  parvec <- lavaan:::representation.LISREL(partable, target = NULL, extra = TRUE)
+  ## add this info to partable!
+  partable$mat <- parvec$mat
+  partable$row <- parvec$row
+  partable$col <- parvec$col
+
+  ## add prior column if it doesn't exist
+  if(is.na(match("prior", names(partable)))) partable$prior <- rep("", length(partable$id))
+    
   ## exclude lv.x if we are using dmnorm/dwish:
   if(lv.x.wish){
     covpars <- which(partable$op == "~~" &
@@ -34,12 +44,8 @@ set_phantoms <- function(partable, parvec, ov.names, lv.names, ov.names.x, lv.na
   ##   zcovs <- which(partable$ustart[covpars][fcovs] == 0)
   ##   covpars <- covpars[-fcovs[zcovs]]
   ## }
-
   blkrow <- rep(NA, length(partable$id))
-
-  ## Hold jags code to convert phantom parameters back to
-  ## the original error variances & covariances
-  TXT <- ""
+  facovs <- NULL
 
   ## Only do this if covpars exist
   if(length(covpars) > 0){
@@ -70,13 +76,14 @@ nlvcovs)
         attributes(parvec)$mmRows[[k]]["beta"] <- patts$mmRows[[k]]["beta"] + nlvcovs
         attributes(parvec)$mmCols[[k]]["beta"] <- patts$mmCols[[k]]["beta"] + nlvcovs
       }
+
       if(!("psi" %in% patts$mmNames[[k]])){
-        thetcolstart <- 0
+        psicolstart <- 0
         attributes(parvec)$mmNames[[k]] <- c(patts$mmNames[[k]], "psi")
         attributes(parvec)$mmRows[[k]] <- c(patts$mmRows[[k]], psi=length(covpars))
         attributes(parvec)$mmCols[[k]] <- c(patts$mmCols[[k]], psi=length(covpars))
       } else {
-        thetcolstart <- patts$mmCols[[k]]["psi"]
+        psicolstart <- patts$mmCols[[k]]["psi"]
         attributes(parvec)$mmRows[[k]]["psi"] <- patts$mmRows[[k]]["psi"] + length(covpars)
         attributes(parvec)$mmCols[[k]]["psi"] <- patts$mmCols[[k]]["psi"] + length(covpars)
       }
@@ -86,12 +93,11 @@ nlvcovs)
 
     ## which covariances are under srs?
     ridx <- 1:length(covpars)
-        
+
     for(k in 1:ngroups){
-      rhoind <- 1
       tlcs <- lcolstart
       tbcs <- bcolstart
-      ttcs <- thetcolstart
+      tpcs <- psicolstart
       for(i in 1:length(covpars)){
         ## Find the row for group k (needed for multiple groups)
         covparg <- which(partable$op == "~~" &
@@ -132,9 +138,15 @@ nlvcovs)
                                             patts$mmDimNames[[k]]$lambda[[1]])
           tlcs <- tlcs + 1
           partable$col[tmprows[1]] <- tlcs
-          tmpv1 <- paste("theta[", match(partable$lhs[covpars[i]], patts$mmDimNames[[k]]$lambda[[1]]), ",", k, "]", sep="")
+          v1var <- which(partable$lhs == partable$lhs[covpars[i]] &
+                         partable$rhs == partable$lhs[covpars[i]] &
+                         partable$group == k &
+                         partable$op == "~~")
+          tmpv1 <- paste(partable$mat[v1var], "[", partable$row[v1var], ",", partable$col[v1var], ",", k,
+                         "]", sep="")
           if(eq.const){
-            oldv1 <- paste("theta[", match(partable$lhs[full.idx], patts$mmDimNames[[k]]$lambda[[1]]), ",", grp.idx, "]", sep="")
+            oldr <- match(partable$lhs[full.idx], patts$mmDimNames[[k]]$lambda[[1]])
+            oldv1 <- paste(partable$mat[v1var], "[", oldr , ",", oldr, ",", grp.idx, "]", sep="")
           }
           ctype <- "ov"
         } else {
@@ -145,12 +157,12 @@ nlvcovs)
           tbcs <- tbcs + 1
           partable$row[tmprows[1]] <- tbcs
           partable$col[tmprows[1]] <- match(partable$lhs[covpars[i]],
-                                            lv.names) # FIXME here and below will be patts$mmDimNames[[k]]$psi[[1]])
-          tmpv1 <- paste("psi[", match(partable$lhs[covpars[i]], lv.names), #patts$mmDimNames[[k]]$psi[[1]]),
+                                            patts$mmDimNames[[k]]$psi[[1]])
+          tmpv1 <- paste("psi[", partable$col[tmprows[1]], ",", partable$col[tmprows[1]],
                                        ",", k, "]", sep="")
           if(eq.const){
-            oldv1 <- paste("psi[", match(partable$lhs[full.idx], lv.names), #patts$mmDimNames[[k]]$psi[[1]]),
-                                         ",", grp.idx, "]", sep="")
+            oldr <- match(partable$lhs[full.idx], patts$mmDimNames[[k]]$psi[[1]])
+            oldv1 <- paste("psi[", oldr, ",", oldr, ",", grp.idx, "]", sep="")
           }
           ctype <- "lv"
         }
@@ -163,9 +175,14 @@ nlvcovs)
                                             patts$mmDimNames[[k]]$lambda[[1]])
           tlcs <- tlcs + 1
           partable$col[tmprows[2]] <- tlcs
-          tmpv2 <- paste("theta[", match(partable$rhs[covpars[i]], ov.names), ",", k, "]", sep="")
+          v2var <- which(partable$lhs == partable$rhs[covpars[i]] &
+                         partable$rhs == partable$rhs[covpars[i]] &
+                         partable$group == k &
+                         partable$op == "~~")
+          tmpv2 <- paste(partable$mat[v2var], "[", partable$row[v2var], ",", partable$col[v2var], ",", k, "]", sep="")
           if(eq.const){
-            oldv2 <- paste("theta[", match(partable$rhs[full.idx], ov.names), ",", grp.idx, "]", sep="")
+            oldr <- match(partable$rhs[full.idx], patts$mmDimNames[[k]]$lambda[[1]])
+            oldv2 <- paste(partable$mat[v2var], "[", oldr, ",", oldr, ",", grp.idx, "]", sep="")
           }
         } else {
           partable$lhs[tmprows[2]] <- partable$rhs[covpars[i]]
@@ -176,40 +193,43 @@ nlvcovs)
           partable$row[tmprows[2]] <- tbcs
           partable$col[tmprows[2]] <- match(partable$rhs[covpars[i]],
                                             patts$mmDimNames[[k]]$psi[[1]])
-          tmpv2 <- paste("psi[", match(partable$rhs[covpars[i]], lv.names), #patts$mmDimNames[[k]]$psi[[1]]),
+          tmpv2 <- paste("psi[", partable$col[tmprows[2]], ",", partable$col[tmprows[2]],
                                        ",", k, "]", sep="")
           if(eq.const){
-            oldv2 <- paste("psi[", match(partable$rhs[full.idx], lv.names), #patts$mmDimNames[[k]]$psi[[1]]),
-                                         ",", grp.idx, "]", sep="")
+            oldr <- match(partable$lhs[full.idx], patts$mmDimNames[[k]]$psi[[1]])
+            oldv2 <- paste("psi[", oldr, ",", oldr, ",", grp.idx, "]", sep="")
           }
         }
 
+        ## TODO tmprows[3] should get some prior associated with covariance param for fa priors?
+        partable$prior[tmprows[1:3]] <- ""
+        
         ## Decide what priors to use
-        ttcs <- ttcs + 1
+        tpcs <- tpcs + 1
         if((ctype == "ov" & ov.cp == "srs") | (ctype == "lv" & lv.cp == "srs")){
+          rhomat <- "rho"
+          if(partable$mat[covpars[i]] == "psi") rhomat <- "lvrho"
+          rhoind <- paste(partable$row[covpars[i]], ",", partable$col[covpars[i]], sep="")
           ## srs priors
           partable$free[tmprows[1:3]] <- 0
           partable$exo[tmprows[1:3]] <- 0
-          partable$ustart[tmprows[1]] <- paste("sqrt(abs(rho[", rhoind, ",", k, "])*", tmpv1, ")", sep="")
-          partable$ustart[tmprows[2]] <- paste("(-1 + 2*step(rho[", rhoind, ",", k,
-                                             "]))*sqrt(abs(rho[", rhoind, ",", k, "])*", tmpv2, ")", sep="")
+          partable$ustart[tmprows[1]] <- paste("sqrt(abs(", rhomat, "[", rhoind, ",", k, "])*", tmpv1, ")", sep="")
+          partable$ustart[tmprows[2]] <- paste("(-1 + 2*step(", rhomat, "[", rhoind, ",", k,
+                                             "]))*sqrt(abs(", rhomat, "[", rhoind, ",", k, "])*", tmpv2, ")", sep="")
           partable$ustart[tmprows[3]] <- 1
-          partable$mat[tmprows[3]] <- "theta"
-          partable$row[tmprows[3]] <- partable$col[tmprows[3]] <- ttcs
+          partable$mat[tmprows[3]] <- "psi"
+          partable$row[tmprows[3]] <- partable$col[tmprows[3]] <- tpcs
 
-          partable$id[covparg] <- paste("rho[", rhoind, ",", k, "]", sep="")
+          partable$id[covparg] <- paste(rhomat, "[", rhoind, ",", k, "]", sep="")
           partable$plabel[tmprows] <- paste(".p", tmprows,
                                                    ".", sep="")
 
           partable$lhs[tmprows[3]] <- partable$rhs[tmprows[3]] <- phname
           partable$op[tmprows[3]] <- "~~"
-
-          ## add to rho index
-          rhoind <- rhoind + 1
         } else {
           ## factor analysis priors
-          partable$mat[tmprows[3]] <- "theta"
-          partable$row[tmprows[3]] <- partable$col[tmprows[3]] <- ttcs
+          partable$mat[tmprows[3]] <- "psi"
+          partable$row[tmprows[3]] <- partable$col[tmprows[3]] <- tpcs
           if(partable$free[covparg] == 0){
             if(partable$ustart[covparg] != 0) stop("blavaan ERROR: Cannot fix covariances to nonzero values under fa priors.\n")
             partable$free[tmprows[1:3]] <- 0
@@ -222,8 +242,6 @@ nlvcovs)
             partable$plabel[tmprows[1:2]] <- paste(".p", tmprows[1:2], ".", sep="")
             partable$free[tmprows[1:2]] <- tmprows[1:2]
           }
-          ## TODO tmprows[3] should get some prior associated with covariance param.
-          partable$prior[tmprows[1:3]] <- ""
           cprm <- c(cprm, covparg)
 
           partable$lhs[tmprows[3]] <- partable$rhs[tmprows[3]] <- phname
@@ -245,6 +263,7 @@ nlvcovs)
           partable$lhs[(nr-1):nr] <- partable$plabel[old.labels[1:2]]
           partable$op[(nr-1):nr] <- "=="
           partable$rhs[(nr-1):nr] <- partable$plabel[tmprows[1:2]]
+          partable$mat[(nr-1):nr] <- ""
           partable$user[(nr-1):nr] <- 2
           partable$free[(nr-1):nr] <- 0
           partable$group[(nr-1):nr] <- 0
@@ -259,6 +278,7 @@ nlvcovs)
             partable$lhs[nr] <- partable$plabel[old.label]
             partable$op[nr] <- "=="
             partable$rhs[nr] <- partable$plabel[tmprows[3]]
+            partable$mat[(nr-1):nr] <- ""
             partable$user[nr] <- 2
             partable$free[nr] <- 0
             partable$group[nr] <- 0
@@ -267,7 +287,10 @@ nlvcovs)
       }
     }
     ## Now remove rows of fa covariance parameters
-    if(!is.null(cprm)) partable <- partable[-cprm,]
+    if(!is.null(cprm)){
+      facovs <- partable[cprm,]
+      partable <- partable[-cprm,]
+    }
   }
 
   ## FIXME?
@@ -280,7 +303,13 @@ nlvcovs)
 
   if(length(covpars) > 0) partable <- partable[-covpars,]
 
-  list(partable = partable, parvec = parvec)
+  ## Add parameter numbers now that we have phantoms
+  parnums <- rep(NA, nrow(partable))
+  parrows <- which(partable$op != "==")
+  parnums[parrows] <- 1:length(parrows)
+  partable$parnums <- parnums    
+    
+  list(partable = partable, parvec = parvec, facovs = facovs)
 }
 
 set_mv0 <- function(partable, ov.names, ngroups) {
@@ -343,5 +372,73 @@ set_mv0 <- function(partable, ov.names, ngroups) {
         }
     }
 
+    partable
+}
+
+set_phanvars <- function(partable, ov.names, lv.names, ov.cp, lv.cp, ngroups){
+    ## once we have defined all phantoms, go back to set equality
+    ## constraints on phantom variances
+
+    vnames <- c(ov.names, lv.names)
+    for(i in 1:length(vnames)){
+        for(k in 1:ngroups){
+            if(vnames[i] %in% ov.names){
+                phanlvs <- which(partable$rhs == vnames[i] &
+                                 grepl(".phant", partable$lhs) &
+                                 partable$op == "=~" &
+                                 partable$group == k)
+            } else {
+                phanlvs <- which(partable$lhs == vnames[i] &
+                                 grepl(".phant", partable$rhs) &
+                                 partable$op == "~" &
+                                 partable$group == k)
+            }
+            if(length(phanlvs) > 0){
+                vvar <- which(partable$lhs == vnames[i] &
+                              partable$lhs == partable$rhs &
+                              partable$op == "~~" &
+                              partable$group == k)
+
+                if(ov.cp == "srs"){
+                    eqconst <- paste(partable$mat[vvar], "[", partable$row[vvar],
+                                     ",", partable$col[vvar], ",", k, "]", sep="")
+                    for(j in 1:length(phanlvs)){
+                        eqconst <- paste(eqconst, " - (", partable$ustart[phanlvs[j]],
+                                         ")^2", sep="")
+                    }
+                    partable <- rbind(partable, partable[vvar,])
+                    partable$parnums[nrow(partable)] <- max(partable$parnums, na.rm=TRUE) + 1
+                    partable$mat[vvar] <- paste(partable$mat[vvar], "star", sep="")
+                } else {
+                    ## fa priors TODO change around so it is faster
+                    eqconst <- paste(partable$mat[vvar], "star[", partable$row[vvar],
+                                     ",", partable$col[vvar], ",", k, "]", sep="")
+                    for(j in 1:length(phanlvs)){
+                        if(vnames[i] %in% ov.names){
+                          phname <- partable$lhs[phanlvs[j]]
+                        } else {
+                          phname <- partable$rhs[phanlvs[j]]
+                        }
+                        phanvar <- which(partable$lhs == phname &
+                                     partable$lhs == partable$rhs &
+                                     partable$op == "~~" &
+                                     partable$group == k)
+                        eqconst <- paste(eqconst, " + (", partable$mat[phanlvs[j]], "[",
+                                         partable$row[phanlvs[j]], ",",
+                                         partable$col[phanlvs[j]], ",", k, "]^2*",
+                                         partable$mat[phanvar], "[",
+                                         partable$row[phanvar], ",", partable$col[phanvar],
+                                         ",", k, "])", sep="")
+                    }
+                    partable <- rbind(partable, partable[vvar,])
+                    partable$mat[nrow(partable)] <- paste(partable$mat[vvar], "star",
+                                                          sep="")
+                    partable$parnums[nrow(partable)] <- max(partable$parnums, na.rm=TRUE) + 1
+                }
+                partable$free[vvar] <- 0
+                partable$ustart[vvar] <- eqconst
+            }
+        }
+    }
     partable
 }

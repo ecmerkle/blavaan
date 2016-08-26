@@ -1,7 +1,3 @@
-# blavaan2
-#
-# different strategy: call lavaan() first, without fitting
-
 blavaan <- function(...,  # default lavaan arguments
  
                     # bayes-specific stuff
@@ -121,20 +117,25 @@ blavaan <- function(...,  # default lavaan arguments
         if(class(jagfile) == "logical") jagfile <- TRUE
         warning("blavaan WARNING: blavaan does not currently handle inequality constraints.\ntry modifying the exported JAGS code.")
     }
-    eqs <- (LAV@Model@ceq.JAC == -1 | LAV@Model@ceq.JAC == 1)
-    if(length(dim(eqs)) > 0) {
-        ## TODO when handle complex equality constraints:
-        ##      remove below, replace with check for one var on lhs
-        compeq <- which(LAV@Model@ceq.rhs != 0 |
-                        rowSums(LAV@Model@ceq.JAC != 0) != 2 |
-                        rowSums(eqs) != 2)
-        if(length(compeq) > 0) {
-            eqpars <- which(LAV@ParTable$op == "==")
-            LAV@ParTable <- lapply(LAV@ParTable, function(x) x[-eqpars[compeq]])
-            warning("blavaan WARNING: blavaan does not currently handle complex equality constraints.\n  try modifying the exported JAGS code.")
+    eqs <- which(LAV@ParTable$op == "==")
+    if(length(eqs) > 0) {
+        lhsvars <- rep(NA, length(eqs))
+        for(i in 1:length(eqs)){
+            lhsvars[i] <- length(all.vars(parse(file="", text=LAV@ParTable$lhs[eqs[i]])))
+        }
+        if(any(lhsvars > 1)) {
+            stop("blavaan ERROR: blavaan does not handle equality constraints with more than 1 variable on the lhs.\n  try modifying the constraints.")
         }
     }
-    
+
+    # covariance priors are now all srs or fa
+    cp <- "srs"
+    if(ov.cp == "fa" | lv.cp == "fa"){
+        cp <- "fa"
+        cat("blavaan NOTE: covariance priors can no longer be set separately for ov and lv.\n Using 'fa' approach for all covariances.\n")
+    }
+
+    prispec <- "prior" %in% names(LAV@ParTable)
     # cannot currently use wishart prior with std.lv=TRUE
     if(LAV@Options$auto.cov.lv.x & LAV@Options$std.lv){
         #warning("blavaan WARNING: cannot use Wishart prior with std.lv=TRUE. Reverting to 'srs' priors.")
@@ -146,7 +147,6 @@ blavaan <- function(...,  # default lavaan arguments
     ## catch some regressions without fixed x:
     ov.noy <- LAV@pta$vnames$ov.nox[[1]]
     ov.noy <- ov.noy[!(ov.noy %in% LAV@pta$vnames$ov.y)]
-    prispec <- "prior" %in% names(LAV@ParTable)
     ndpriors <- rep(FALSE, length(LAV@ParTable$lhs))
     if(prispec) ndpriors <- LAV@ParTable$prior != ""
     cov.pars <- (LAV@ParTable$lhs %in% c(lv.x, ov.noy)) & LAV@ParTable$op == "~~"
@@ -155,17 +155,24 @@ blavaan <- function(...,  # default lavaan arguments
                      LAV@ParTable$rhs %in% LAV@ParTable$plabel[cov.pars]) &
                      LAV@ParTable$op == "=="))
     if(con.cov) LAV@Options$auto.cov.lv.x <- FALSE
-
+    
     # if std.lv, truncate the prior of each lv's first loading
     if(LAV@Options$std.lv){
-        if(ov.cp == "fa" | lv.cp == "fa") stop("blavaan ERROR: ov.cp='fa' and lv.cp='fa' cannot be used with std.lv=TRUE.")
+        if(cp == "fa" | lv.cp == "fa") stop("blavaan ERROR: 'fa' prior strategy cannot be used with std.lv=TRUE.")
         if(!prispec){
             LAV@ParTable$prior <- rep("", length(LAV@ParTable$id))
         }
         ## first loading for each lv
         loadpt <- LAV@ParTable$op == "=~"
         lvs <- unique(LAV@ParTable$lhs[loadpt])
-        fload <- sapply(lvs, function(x) which(LAV@ParTable$lhs[loadpt] == x)[1])
+        fload <- NULL
+        for(i in 1:length(lvs)){
+            for(k in 1:max(LAV@ParTable$group)){
+                fload <- c(fload, which(LAV@ParTable$lhs == lvs[i] &
+                                        LAV@ParTable$op == "=~" &
+                                        LAV@ParTable$group == k)[1])
+            }
+        }
 
         for(i in 1:length(fload)){
             if(LAV@ParTable$prior[fload[i]] != ""){
@@ -224,8 +231,7 @@ blavaan <- function(...,  # default lavaan arguments
       lavoptions$se <- "none"
     }
     lavoptions$missing   <- "ml"
-    lavoptions$ov.cp     <- ov.cp
-    lavoptions$lv.cp     <- lv.cp
+    lavoptions$cp        <- cp
 
     verbose <- lavoptions$verbose
 
@@ -236,9 +242,8 @@ blavaan <- function(...,  # default lavaan arguments
     if(lavmodel@nx.free > 0L) {
         if(!trans.exists){
             ## convert partable to jags, then run
-            jagtrans <- try(lav2jags(model = lavpartable, lavdata = lavdata, 
-                                     ov.cp = ov.cp, lv.cp = lv.cp,
-                                     lv.x.wish = lavoptions$auto.cov.lv.x,
+            jagtrans <- try(lav2jags(model = lavpartable, lavdata = lavdata,
+                                     cp = cp, lv.x.wish = lavoptions$auto.cov.lv.x,
                                      dp = dp, n.chains = n.chains,
                                      jagextra = jagextra, inits = inits,
                                      blavmis = blavmis),
@@ -254,11 +259,11 @@ blavaan <- function(...,  # default lavaan arguments
                                             sep=""))
             }
 
-            ## merge coefvec with lavpartable
+            ## TODO fix; put in coeffun?
             lavpartable <- mergejag(lavpartable, jagtrans$coefvec)
 
             ## add extras to monitor, if specified
-            sampparms <- jagtrans$coefvec[,1]
+            sampparms <- jagtrans$monitors
             if("monitor" %in% names(jagextra)){
                 sampparms <- c(sampparms, jagextra$monitor)
             }
@@ -308,16 +313,18 @@ blavaan <- function(...,  # default lavaan arguments
                 stop("blavaan ERROR: problem with jags estimation.  The jags model and data have been exported.")
             }
         } else {
-            #print(jagtrans)
+            print(jagtrans)
             stop("blavaan ERROR: problem with translation from lavaan to jags.")
         }
-        parests <- coeffun(lavpartable, res)
+
+        parests <- coeffun(lavpartable, jagtrans$pxpartable, res)
         x <- parests$x
 
         lavpartable <- parests$lavpartable
         if(jag.do.fit){
           lavmodel <- lav_model_set_parameters(lavmodel, x = x)
 
+          ## TODO: needed??
           # overwrite lavpartable$est to include def/con values
           lavpartable$est <- lav_model_get_parameters(lavmodel = lavmodel,
                                                       type = "user", extra = TRUE)
@@ -347,14 +354,12 @@ blavaan <- function(...,  # default lavaan arguments
     }
 
     ## parameter convergence + implied moments:
-    rhorows <- grepl("rho", jagtrans$coefvec[,1])
-    parrows <- 1:nrow(jagtrans$coefvec)
     lavimplied <- NULL
     ## compute/store some model-implied statistics
     lavimplied <- lav_model_implied(lavmodel)
     if(jag.do.fit & n.chains > 1){
       ## this also checks convergence of monitors from jagextra, which may not be optimal
-      if(any(res$psrf$psrf[parrows[!rhorows],1] > 1.2)) attr(x, "converged") <- FALSE
+      if(any(lavpartable$psrf[!is.na(lavpartable$psrf)] > 1.2)) attr(x, "converged") <- FALSE
 
       ## warn if psrf is large
       if(!attr(x, "converged") && lavoptions$warn) {
@@ -370,7 +375,7 @@ blavaan <- function(...,  # default lavaan arguments
     } else {
       res$samplls <- NULL
     }
-    
+
     ## put runjags output in new blavaan slot
     lavjags <- res
     timing$Estimate <- (proc.time()[3] - start.time)
@@ -450,6 +455,7 @@ blavaan <- function(...,  # default lavaan arguments
                   'logl','control')
     lavoptim <- lapply(optnames, function(x) slot(lavfit, x))
     names(lavoptim) <- optnames   
+    names(lavoptim) <- optnames
     
     # 10. construct blavaan object
     blavaan <- new("blavaan",
@@ -530,4 +536,3 @@ bgrowth <- function(..., ov.cp = "srs", lv.cp = "srs", dp = dpriors(),
 
     eval(mc, parent.frame())
 }
-
