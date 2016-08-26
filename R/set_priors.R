@@ -20,8 +20,10 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x){
             ## to find equality constraints
             eqpar <- which(partable$rhs == partable$plabel[i] &
                            partable$op == "==")
+            ## only complex equality constraints; rhs needs math expression
             compeq <- which(partable$lhs == partable$label[i] &
-                            partable$op == "==")
+                            partable$op == "==" &
+                            grepl("\\+|-|/|\\*|\\(|\\)|\\^", partable$rhs))
             ## TODO block prior associated with lv.x.wish
             ##      put entries of parvec in matrix for dwish?
             ## TODO check for inequality constraints here?
