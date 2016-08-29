@@ -66,15 +66,18 @@ set_inits <- function(partable, ov.cp, lv.cp, n.chains, inits){
       if(inherits(ivs, "try-error")) ivs <- rep(NA, n.chains)
     } else {
       ivs <- rep(partable$start[i], n.chains)
+    }
 
-      ## now (try to) ensure the jittered values won't crash on us
-      if(grepl("[sd]", partable$prior[i]) | grepl("[var]", partable$prior[i])){
-        ivs <- 1/ivs
-        ivs[ivs <= 0] <- -ivs[ivs <= 0]
-      }
-      if(grepl("dbeta", partable$prior[i])){
-        ivs <- rep(.5, n.chains)
-      }
+    ## now (try to) ensure the jittered values won't crash on us
+    ## and converge
+    if(grepl("\\[sd\\]", partable$prior[i]) |
+       grepl("\\[var\\]", partable$prior[i])){
+      powval <- ifelse(grepl("\\[sd\\]", partable$prior[i]), -.5, -1)
+      ivs <- ivs^powval
+      ivs[ivs <= 0] <- -ivs[ivs <= 0]
+    }
+    if(grepl("dbeta", partable$prior[i])){
+      ivs <- rep(.5, n.chains)
     }
 
     ## extract matrix, dimensions
