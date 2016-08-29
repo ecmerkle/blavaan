@@ -7,9 +7,11 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
   ## unique parameters (remove equality constraints and
   ## cov parameters under srs priors)
   eqpars <- lavpartable$rhs[lavpartable$op == "=="]
+  fixpars <- which(lavpartable$free == 0)
   urows <- 1:length(lavpartable$pxnames)
   urows <- urows[!is.na(lavpartable$pxnames) &
-                 !(lavpartable$plabel %in% eqpars)]
+                 !(lavpartable$plabel %in% eqpars) &
+                 !(urows %in% fixpars)]
 
   q <- length(urows)
 
@@ -78,15 +80,21 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
                    lavpartable$lhs[urows] != lavpartable$rhs[urows])
 
   lv.names <- lav_partable_attributes(partable = lavpartable, pta = NULL)$vnames$lv
-  lcpcovs <- which(!(lavpartable$lhs[urows] %in% unlist(lv.names)) &
-                   !(lavpartable$rhs[urows] %in% unlist(lv.names)) &
+  lcpcovs <- which(lavpartable$lhs[urows] %in% unlist(lv.names) &
+                   lavpartable$rhs[urows] %in% unlist(lv.names) &
                    lavpartable$op[urows] == "~~" &
                    lavpartable$lhs[urows] != lavpartable$rhs[urows])
   
   if(lavoptions$cp == "fa"){
-    ocpvars <- unique(c(lavpartable$lhs[urows][ocpcovs], lavpartable$rhs[urows][ocpcovs]))
+    ocpvars <- which(lavpartable$lhs[urows] %in% unlist(lavdata@ov.names) &
+                     lavpartable$rhs[urows] %in% unlist(lavdata@ov.names) &
+                     lavpartable$op[urows] == "~~" &
+                     lavpartable$lhs[urows] == lavpartable$rhs[urows])
 
-    lcpvars <- unique(c(lavpartable$lhs[urows][lcpcovs], lavpartable$rhs[urows][lcpcovs]))
+    lcpvars <- which(lavpartable$lhs[urows] %in% unlist(lv.names) &
+                     lavpartable$rhs[urows] %in% unlist(lv.names) &
+                     lavpartable$op[urows] == "~~" &
+                     lavpartable$lhs[urows] == lavpartable$rhs[urows])
   } else {
     ocpvars <- ""
     lcpvars <- ""
@@ -119,9 +127,7 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
         tmpkd <- density(tmpdist)
         tmpdens <- log(approx(tmpkd$x, tmpkd$y, thetstar[i])$y)
       }
-    } else if(lavpartable$lhs[urows][i] %in% c(ocpvars, lcpvars) &
-              lavpartable$op[urows][i] == "~~" &
-              lavpartable$rhs[urows][i] == lavpartable$lhs[urows][i]){
+    } else if(i %in% c(ocpvars, lcpvars)){
       ## kernel density estimation of fa variance's prior
       tmpdist <- (rnorm(1e5,sd=sqrt(1/1e-4))*rnorm(1e5,sd=sqrt(1/1e-4)))/rgamma(1e5,1,.5) +
                  1/rgamma(1e5, as.numeric(pricom[[i]][2]), as.numeric(pricom[[i]][3]))
