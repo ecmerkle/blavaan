@@ -370,7 +370,7 @@ function(object, header       = TRUE,
 
 plot.blavaan <- function(x, pars, plot.type="trace", ...){
     # NB: arguments go to plot.runjags()
-    parnames <- rownames(x@external$runjags$summaries)[pars]
+    parnames <- x@ParTable$pxnames[match(pars, x@ParTable$free)]
     plot(x@external$runjags, plot.type=plot.type, vars=parnames, ...)
 }
     
