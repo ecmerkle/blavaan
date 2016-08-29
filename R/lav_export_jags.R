@@ -526,7 +526,7 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
                            sep=""))
     
     ## inferential covariances under fa priors
-    if(cp == "fa"){
+    if(cp == "fa" & length(facovs) > 0){
         if(nrow(facovs) > 0){
             for(i in 1:nrow(facovs)){
                 wmat <- match(facovs$mat[i], names(pmats))
