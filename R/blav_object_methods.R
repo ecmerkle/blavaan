@@ -269,8 +269,8 @@ function(object, header       = TRUE,
         }
         ## alternative names because this is not ML
         penames <- names(PE)
-        ## FIXME we need an est column for print.lavaan if we have constraints
         names(PE)[penames == "est"] <- "Post.Mean"
+        PE$est <- PE$Post.Mean
         names(PE)[penames == "se"] <- "Post.SD"
         names(PE)[penames == "ci.lower"] <- "HPD.025"
         names(PE)[penames == "ci.upper"] <- "HPD.975"
