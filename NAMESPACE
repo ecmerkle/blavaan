@@ -37,6 +37,11 @@ importFrom("runjags",
 importFrom("MCMCpack",
            "dwish")
 
+importFrom("coda",
+           "mcmc.list",
+           "mcmc",
+           "HPDinterval")
+
 importFrom("mnormt",
            "dmnorm")
 
