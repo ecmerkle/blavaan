@@ -583,9 +583,11 @@ coeffun <- function(lavpartable, pxpartable, rjob, fun = "mean") {
   ## from jags to pxpartable
   cmatch <- match(pxnames, names(b.est), nomatch=0)
   pxpartable$est <- b.est[cmatch]
-  psrfmatch <- match(pxnames, rownames(rjob$psrf$psrf))
   pxpartable$psrf <- rep(NA, length(pxpartable$free))
-  pxpartable$psrf <- rjob$psrf$psrf[psrfmatch,1]
+  if(length(rjob$mcmc) > 1){
+    psrfmatch <- match(pxnames, rownames(rjob$psrf$psrf))
+    pxpartable$psrf <- rjob$psrf$psrf[psrfmatch,1]
+  }
   pxpartable$jagpnum <- cmatch
 
   ## from pxpartable to lavpartable

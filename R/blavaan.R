@@ -207,6 +207,7 @@ blavaan <- function(...,  # default lavaan arguments
   
     # extract slots from dummy lavaan object
     lavpartable    <- LAV@ParTable
+    if(!("prior" %in% names(lavpartable))) lavpartable$prior <- rep("", length(lavpartable$lhs))
     lavmodel       <- LAV@Model
     lavdata        <- LAV@Data
     lavoptions     <- LAV@Options
@@ -232,6 +233,7 @@ blavaan <- function(...,  # default lavaan arguments
     }
     lavoptions$missing   <- "ml"
     lavoptions$cp        <- cp
+    lavoptions$dp        <- dp
 
     verbose <- lavoptions$verbose
 
@@ -258,9 +260,6 @@ blavaan <- function(...,  # default lavaan arguments
                 save(jagtrans, file = paste(jagdir, "/semjags.rda",
                                             sep=""))
             }
-
-            ## TODO fix; put in coeffun?
-            lavpartable <- mergejag(lavpartable, jagtrans$coefvec)
 
             ## add extras to monitor, if specified
             sampparms <- jagtrans$monitors
@@ -438,7 +437,8 @@ blavaan <- function(...,  # default lavaan arguments
     ## 9b. misc blavaan changes to partable
     ## remove rhos from partable + ses, so lavaan built-ins work
     rhos <- grep("rho", lavpartable$jlabel)
-    lavjags <- c(lavjags, list(origpt=lavpartable))
+    lavjags <- c(lavjags, list(origpt = lavpartable,
+                               inits = jagtrans$inits))
     class(lavjags) <- "runjags"
     if(length(rhos) > 0){
         lavpartable <- lapply(lavpartable, function(x) x[-rhos])
