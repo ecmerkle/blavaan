@@ -165,7 +165,6 @@ function(object, header       = TRUE,
                  standardized = FALSE,
                  rsquare      = FALSE,
                  std.nox      = FALSE,
-                 modindices   = FALSE,
                  psrf         = TRUE,
                  neff         = FALSE,
                  postmedian   = FALSE,
@@ -280,15 +279,6 @@ function(object, header       = TRUE,
         print(PE, nd = nd)
 
     } # parameter estimates
-
-    # modification indices?
-    if(modindices) {
-        cat("Modification Indices:\n\n")
-        object@Options$estimator <- "ML"
-        object@Fit@test[[2]] <- NULL
-        print( modificationIndices(object, standardized=TRUE) )
-    }
-
 })
 
 
