@@ -8,7 +8,7 @@ blavTech <- function(blavobject,
                      drop.list.single.group = FALSE,
                      ...) {
 
-    blavInspect(blavobject = lavobject, what = what,
+    blavInspect(blavobject = blavobject, what = what,
                 add.labels = add.labels, add.class = add.class,
                 list.by.group = list.by.group,
                 drop.list.single.group =  drop.list.single.group,
@@ -65,12 +65,12 @@ blavInspect <- function(blavobject,
         } else if(what %in% c("mcmc", "draws", "samples", "hpd")){
             draws <- blavobject@external$runjags$mcmc
             draws <- lapply(draws, function(x) x[,idx])
-            draws <- coda::mcmc.list(draws)
+            draws <- mcmc.list(draws)
             if(what == "hpd"){
                 pct <- .95
                 if("level" %in% names(dotdotdot)) pct <- dotdotdot$level
-                draws <- coda::mcmc(do.call("rbind", draws))
-                draws <- coda::HPDinterval(draws, pct)
+                draws <- mcmc(do.call("rbind", draws))
+                draws <- HPDinterval(draws, pct)
                 if(add.labels) rownames(draws) <- labs
             }
             draws
