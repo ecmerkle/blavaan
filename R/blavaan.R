@@ -316,6 +316,9 @@ blavaan <- function(...,  # default lavaan arguments
             stop("blavaan ERROR: problem with translation from lavaan to jags.")
         }
 
+        timing$Estimate <- (proc.time()[3] - start.time)
+        start.time <- proc.time()[3]
+        
         parests <- coeffun(lavpartable, jagtrans$pxpartable, res)
         x <- parests$x
 
@@ -375,10 +378,11 @@ blavaan <- function(...,  # default lavaan arguments
       res$samplls <- NULL
     }
 
+    timing$PostPred <- (proc.time()[3] - start.time)
+    start.time <- proc.time()[3]
+  
     ## put runjags output in new blavaan slot
     lavjags <- res
-    timing$Estimate <- (proc.time()[3] - start.time)
-    start.time <- proc.time()[3]
 
     ## 7. VCOV is now simple
     lavvcov <- list()
@@ -432,7 +436,6 @@ blavaan <- function(...,  # default lavaan arguments
     ## }
     lavpartable$se <- lavfit@se[lavpartable$id]
     lavpartable$logBF <- SDBF(lavpartable)
-    timing$total <- (proc.time()[3] - start.time0)
 
     ## 9b. misc blavaan changes to partable
     ## remove rhos from partable + ses, so lavaan built-ins work
@@ -456,7 +459,13 @@ blavaan <- function(...,  # default lavaan arguments
     lavoptim <- lapply(optnames, function(x) slot(lavfit, x))
     names(lavoptim) <- optnames   
     names(lavoptim) <- optnames
-    
+
+    ## move total to the end
+    timing$total <- (proc.time()[3] - start.time0)
+    tt <- timing$total
+    timing <- timing[names(timing) != "total"]
+    timing <- c(timing, list(total = tt))
+ 
     # 10. construct blavaan object
     blavaan <- new("blavaan",
                    call         = mc,                  # match.call
