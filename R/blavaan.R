@@ -436,14 +436,9 @@ blavaan <- function(...,  # default lavaan arguments
 
     ## 9b. misc blavaan changes to partable
     ## remove rhos from partable + ses, so lavaan built-ins work
-    rhos <- grep("rho", lavpartable$jlabel)
     lavjags <- c(lavjags, list(origpt = lavpartable,
                                inits = jagtrans$inits))
     class(lavjags) <- "runjags"
-    if(length(rhos) > 0){
-        lavpartable <- lapply(lavpartable, function(x) x[-rhos])
-        lavfit@se <- lavfit@se[-rhos]
-    }
 
     ## add monitors in jagextra as defined variables
     if(length(jagextra$monitor) > 0){

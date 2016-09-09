@@ -136,7 +136,7 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
     } else {
       ## we have an explicit prior;
       ## convert to R parameterization of distributions & evaluate
-      tmpdens <- eval_prior(pricom[[i]], thetstar[i], lavpartable$jlabel[urows][i])
+      tmpdens <- eval_prior(pricom[[i]], thetstar[i], lavpartable$pxnames[urows][i])
     }
     priloglik <- priloglik + tmpdens
   }

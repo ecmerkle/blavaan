@@ -1,54 +1,4 @@
 ## utility functions for blavaan
-mergejag <- function(lavpartable, coefvec){
-    ## add results of jags translation to the partable
-    ## TODO plus starting values
-    plmatch <- sapply(coefvec$plabel, function(x) strsplit(x, "@")[[1]][1])
-    pldups <- duplicated(plmatch)
-
-    ## distinguish rhos from others
-    rhos <- grepl("rho", coefvec$jlabel)
-
-    ## match existing parameters with partable
-    parlocs <- match(plmatch[!rhos & !pldups], lavpartable$plabel)
-    lavpartable$plabel[parlocs] <- coefvec$plabel[!rhos & !pldups]
-
-    ## add priors to partable
-    nrlpt <- length(lavpartable$plabel)
-    if(!("prior" %in% names(lavpartable))) lavpartable$prior <- rep("", nrlpt)
-    lavpartable$prior[parlocs] <- coefvec$prior[!rhos & !pldups]
-
-    ## add jags labels (jlabel)
-    lavpartable$jlabel <- rep("", nrlpt)
-    lavpartable$jlabel[parlocs] <- coefvec$jlabel[!rhos & !pldups]
-
-    ## create new rho rows (that's a pun!) if needed and add info
-    nrhos <- sum(rhos)
-    if(nrhos > 0){
-        lavpartable <- lapply(lavpartable, function(x) c(x, rep(NA, nrhos)))
-        rhof <- nrlpt + 1
-        rhol <- nrlpt + nrhos
-
-        ## fill in most stuff the same as covariances
-        covpars <- which(grepl("cov", lavpartable$jlabel) & !(grepl("dwish", lavpartable$prior)) & grepl("@", lavpartable$plabel))
-
-        samevals <- c("id", "lhs", "op", "rhs", "user", "group", "ustart",
-                      "exo", "label", "prior")
-
-        for(i in 1:length(samevals)){
-            nameloc <- which(names(lavpartable) == samevals[i])
-            lavpartable[[nameloc]][rhof:rhol] <- lavpartable[[nameloc]][covpars]
-        }
-
-        ## remove priors from covariance parameters, because they technically have none?
-        lavpartable$prior[covpars] <- ""
-        lavpartable$free[rhof:rhol] <- 0L # so that parameterEstimates() works
-
-        lavpartable$plabel[rhof:rhol] <- coefvec$plabel[rhos]
-        lavpartable$jlabel[rhof:rhol] <- coefvec$jlabel[rhos]
-    }
-    
-    lavpartable
-}
 
 ## calculate model log-likelihood given some sampled parameter
 ## values (with lvs integrated out)
@@ -317,10 +267,13 @@ add_monitors <- function(lavpartable, lavjags, jagextra){
     monres <- vector("list", length(jagextra$monitor))
     for(i in 1:length(jagextra$monitor)){
         tmploc <- grep(paste("^", jagextra$monitor[i], sep=""), rownames(lavjags$summaries))
-        monres[[i]] <- list(xlocs = tmploc, xnms = rownames(lavjags$summaries)[tmploc],
+        tmploc2 <- grep(paste("^", jagextra$monitor[i], sep=""), rownames(lavjags$psrf$psrf))
+        monres[[i]] <- list(xlocs = tmploc, psrfloc = tmploc2,
+                            xnms = rownames(lavjags$summaries)[tmploc],
                             nvars = length(tmploc))
     }
     xlocs <- sapply(monres, function(x) x$xlocs)
+    psrflocs <- sapply(monres, function(x) x$psrfloc)
     xnms <- sapply(monres, function(x) x$xnms)
     nvars <- sapply(monres, function(x) x$nvars)
         
@@ -340,7 +293,9 @@ add_monitors <- function(lavpartable, lavjags, jagextra){
     lavpartable$est <- c(lavpartable$est, lavjags$summaries[xlocs,'Mean'])
     lavpartable$se <- c(lavpartable$se, lavjags$summaries[xlocs,'SD'])
     lavpartable$prior <- c(lavpartable$prior, rep("", sum(nvars)))
-    lavpartable$jlabel <- c(lavpartable$jlabel, xnms)
+    lavpartable$psrf <- c(lavpartable$psrf, lavjags$psrf$psrf[psrflocs,1])
+    lavpartable$pxnames <- c(lavpartable$pxnames, xnms)
+    lavpartable$jagpnum <- c(lavpartable$jagpnum, xlocs)
     lavpartable$logBF <- c(lavpartable$logBF, rep(NA, sum(nvars)))
 
     lavpartable
