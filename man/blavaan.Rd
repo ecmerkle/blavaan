@@ -7,7 +7,7 @@ Fit a Bayesian latent variable model.}
 blavaan(..., ov.cp = "srs", lv.cp = "srs",
     dp = dpriors(), n.chains = 3, burnin, sample,
     adapt, jagfile = FALSE, jagextra = list(), inits = "prior",
-    convergence = "auto", jagcontrol = list())
+    convergence = "manual", jagcontrol = list())
 }
 \arguments{
 \item{...}{Default lavaan arguments.  See \code{\link{lavaan}}.}
