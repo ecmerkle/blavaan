@@ -2,11 +2,7 @@ set_phantoms <- function(partable, ov.names, lv.names, ov.names.x, lv.names.x, o
   ## Add phantom lvs for covariance parameters
 
   ## first: parameter matrices + indexing
-  parvec <- lavaan:::representation.LISREL(partable, target = NULL, extra = TRUE)
-  ## add this info to partable!
-  partable$mat <- parvec$mat
-  partable$row <- parvec$row
-  partable$col <- parvec$col
+  partable <- lavMatrixRepresentation(partable, add.attributes = TRUE)
 
   ## add prior column if it doesn't exist
   if(is.na(match("prior", names(partable)))) partable$prior <- rep("", length(partable$id))
@@ -53,39 +49,39 @@ set_phantoms <- function(partable, ov.names, lv.names, ov.names.x, lv.names.x, o
     ## added entries in lambda vs in beta
     nmvcovs <- sum(partable$lhs[covpars] %in% ov.names)
     nlvcovs <- length(covpars) - nmvcovs
-    patts <- attributes(parvec)
+    patts <- attributes(partable)
     for(k in 1:ngroups){
       if(!("lambda" %in% patts$mmNames[[k]]) & nmvcovs > 0){
         lcolstart <- 0
-        attributes(parvec)$mmNames[[k]] <- c(patts$mmNames[[k]],
+        attributes(partable)$mmNames[[k]] <- c(patts$mmNames[[k]],
                                              "lambda")
-        attributes(parvec)$mmRows[[k]] <- c(patts$mmRows[[k]], lambda=length(ov.names))
-        attributes(parvec)$mmCols[[k]] <- c(patts$mmCols[[k]], lambda=nmvcovs)
+        attributes(partable)$mmRows[[k]] <- c(patts$mmRows[[k]], lambda=length(ov.names))
+        attributes(partable)$mmCols[[k]] <- c(patts$mmCols[[k]], lambda=nmvcovs)
       } else {
         lcolstart <- patts$mmCols[[k]]["lambda"]
-        attributes(parvec)$mmCols[[k]]["lambda"] <- patts$mmCols[[k]]["lambda"] + nmvcovs
+        attributes(partable)$mmCols[[k]]["lambda"] <- patts$mmCols[[k]]["lambda"] + nmvcovs
       }
       if(!("beta" %in% patts$mmNames[[k]]) & nlvcovs > 0){
         bcolstart <- 0
-        attributes(parvec)$mmNames[[k]] <- c(patts$mmNames[[k]], "beta")
-        attributes(parvec)$mmRows[[k]] <- c(patts$mmRows[[k]], beta=
+        attributes(partable)$mmNames[[k]] <- c(patts$mmNames[[k]], "beta")
+        attributes(partable)$mmRows[[k]] <- c(patts$mmRows[[k]], beta=
 nlvcovs)
-        attributes(parvec)$mmCols[[k]] <- c(patts$mmCols[[k]], beta=nlvcovs)
+        attributes(partable)$mmCols[[k]] <- c(patts$mmCols[[k]], beta=nlvcovs)
       } else {
         bcolstart <- patts$mmCols[[k]]["beta"]
-        attributes(parvec)$mmRows[[k]]["beta"] <- patts$mmRows[[k]]["beta"] + nlvcovs
-        attributes(parvec)$mmCols[[k]]["beta"] <- patts$mmCols[[k]]["beta"] + nlvcovs
+        attributes(partable)$mmRows[[k]]["beta"] <- patts$mmRows[[k]]["beta"] + nlvcovs
+        attributes(partable)$mmCols[[k]]["beta"] <- patts$mmCols[[k]]["beta"] + nlvcovs
       }
 
       if(!("psi" %in% patts$mmNames[[k]])){
         psicolstart <- 0
-        attributes(parvec)$mmNames[[k]] <- c(patts$mmNames[[k]], "psi")
-        attributes(parvec)$mmRows[[k]] <- c(patts$mmRows[[k]], psi=length(covpars))
-        attributes(parvec)$mmCols[[k]] <- c(patts$mmCols[[k]], psi=length(covpars))
+        attributes(partable)$mmNames[[k]] <- c(patts$mmNames[[k]], "psi")
+        attributes(partable)$mmRows[[k]] <- c(patts$mmRows[[k]], psi=length(covpars))
+        attributes(partable)$mmCols[[k]] <- c(patts$mmCols[[k]], psi=length(covpars))
       } else {
         psicolstart <- patts$mmCols[[k]]["psi"]
-        attributes(parvec)$mmRows[[k]]["psi"] <- patts$mmRows[[k]]["psi"] + length(covpars)
-        attributes(parvec)$mmCols[[k]]["psi"] <- patts$mmCols[[k]]["psi"] + length(covpars)
+        attributes(partable)$mmRows[[k]]["psi"] <- patts$mmRows[[k]]["psi"] + length(covpars)
+        attributes(partable)$mmCols[[k]]["psi"] <- patts$mmCols[[k]]["psi"] + length(covpars)
       }
     }
     
@@ -309,7 +305,7 @@ nlvcovs)
   parnums[parrows] <- 1:length(parrows)
   partable$parnums <- parnums    
     
-  list(partable = partable, parvec = parvec, facovs = facovs)
+  list(partable = partable, facovs = facovs)
 }
 
 set_mv0 <- function(partable, ov.names, ngroups) {
