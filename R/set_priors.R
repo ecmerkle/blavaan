@@ -88,14 +88,15 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x){
 
                 vpri <- grepl("\\[var\\]", partable$prior[i])
                 spri <- grepl("\\[sd\\]", partable$prior[i])
+                jagpri <- strsplit(partable$prior[i], "\\[")[[1]][1]
                 if(!vpri & (grepl("theta", partable$mat[i]) | grepl("psi", partable$mat[i]))){
                     sq <- ifelse(spri, "2", "-1")
                     TXT3 <- paste(TXT3, " <- pow(pvec", partable$parnums[i], ",", sq,
                                   ")\n", sep="")
                     TXT3 <- paste(TXT3, t1, "pvec", partable$parnums[i], " ~ ",
-                                  partable$prior[i], sep="")
+                                  jagpri, sep="")
                 } else {
-                    TXT3 <- paste(TXT3, " ~ ", partable$prior[i], sep="")
+                    TXT3 <- paste(TXT3, " ~ ", jagpri, sep="")
                 }
             }
 
