@@ -78,6 +78,7 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
                                slotSampleStats = lavsamplestats,
                                slotData = lavdata,
                                slotCache = lavcache), silent=TRUE)
+        fit.samp@Options$se <- "standard" # for nonnest2
 
         if(casewise){
             ll.samp <- llcont(fit.samp)
