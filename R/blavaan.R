@@ -204,6 +204,10 @@ blavaan <- function(...,  # default lavaan arguments
     }  else {
         jagdir <- "lavExport"
     }
+
+    # if inits is list
+    initsin <- inits
+    if(class(inits) == "list") initsin <- "jags"
   
     # extract slots from dummy lavaan object
     lavpartable    <- LAV@ParTable
@@ -247,7 +251,7 @@ blavaan <- function(...,  # default lavaan arguments
             jagtrans <- try(lav2jags(model = lavpartable, lavdata = lavdata,
                                      cp = cp, lv.x.wish = lavoptions$auto.cov.lv.x,
                                      dp = dp, n.chains = n.chains,
-                                     jagextra = jagextra, inits = inits,
+                                     jagextra = jagextra, inits = initsin,
                                      blavmis = blavmis),
                             silent = TRUE)
         }
@@ -268,7 +272,8 @@ blavaan <- function(...,  # default lavaan arguments
             }
             
             ## let jags set inits; helpful for debugging
-            if(inits == "jags") jagtrans$inits <- NA
+            if(initsin == "jags") jagtrans$inits <- NA
+            if(class(inits) == "list") jagtrans$inits <- inits
             rjarg <- with(jagtrans, list(model = paste(model),
                           monitor = sampparms, # "dic", "deviance"),
                           data = data, inits = inits))
