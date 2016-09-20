@@ -1,3 +1,18 @@
+Changes in Version 0.2-1
+    o Major update to internals: Model matrices/parameters now correspond to the Lisrel representation used in lavaan.
+
+    o General parameter equality constraints using '==' are now available (with one parameter on the lhs).
+
+    o New function blavInspect() for extracting various pieces of the MCMC run, including HPDs using an optional 'level' argument.
+
+    o JAGS syntax now uses the original observed variable names. It also assigns all prior/constraints to a single parameter vector, then defines model matrices based on this parameter vector.
+
+    o A list of user-defined initial values can be supplied via the inits argument.
+
+    o Posterior predictive computations are parallelized, if package parallel is installed.
+
+    o Improved timings for various parts of the model estimation.
+
 Changes in Version 0.1-4
     o New convergence="auto" option to run chains until convergence.
 
