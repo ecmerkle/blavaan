@@ -16,7 +16,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
                               baseline.model = NULL) {
 
     # has the model converged?
-    if(object@Fit@npar > 0L && !object@Fit@converged) {
+    if(object@Fit@npar > 0L && !object@optim$converged) {
         warning("blavaan WARNING: the chains may not have converged.")
     }
 
