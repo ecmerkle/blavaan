@@ -34,7 +34,8 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
             mnvec <- as.numeric(implied$mean[[g]])
             ## ensure symmetric:
             cmat <- (implied$cov[[g]] + t(implied$cov[[g]]))/2
-            tmpll <- dmnorm(lavdata@X[[g]], mnvec, cmat, log=TRUE)
+            tmpll <- try(dmnorm(lavdata@X[[g]], mnvec, cmat, log=TRUE))
+            if(inherits(tmpll, "try-error")) tmpll <- NA
 
             sampmn <- apply(lavdata@X[[g]], 2, mean, na.rm=TRUE)
             sampcov <- ((lavdata@nobs[[g]]-1)/(lavdata@nobs[[g]]))*cov(lavdata@X[[g]])
