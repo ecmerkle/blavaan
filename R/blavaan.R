@@ -169,7 +169,7 @@ blavaan <- function(...,  # default lavaan arguments
     
     # if std.lv, truncate the prior of each lv's first loading
     if(LAV@Options$std.lv){
-        if(cp == "fa" | lv.cp == "fa") stop("blavaan ERROR: 'fa' prior strategy cannot be used with std.lv=TRUE.")
+        if(cp == "fa") stop("blavaan ERROR: 'fa' prior strategy cannot be used with std.lv=TRUE.")
         if(!prispec){
             LAV@ParTable$prior <- rep("", length(LAV@ParTable$id))
         }
