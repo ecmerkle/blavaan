@@ -78,15 +78,19 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
                                slotSampleStats = lavsamplestats,
                                slotData = lavdata,
                                slotCache = lavcache), silent=TRUE)
-        fit.samp@Options$se <- "standard" # for nonnest2
+        if(!inherits(fit.samp, "try-error")){
+            fit.samp@Options$se <- "standard" # for nonnest2
 
-        if(casewise){
-            ll.samp <- llcont(fit.samp)
-        } else if(measure == "logl"){
-            ll.samp <- c(fitMeasures(fit.samp, "logl"),
-                         fitMeasures(fit.samp, "unrestricted.logl"))
+            if(casewise){
+                ll.samp <- llcont(fit.samp)
+            } else if(measure == "logl"){
+                ll.samp <- c(fitMeasures(fit.samp, "logl"),
+                             fitMeasures(fit.samp, "unrestricted.logl"))
+            } else {
+                ll.samp <- fitMeasures(fit.samp, measure)
+            }
         } else {
-            ll.samp <- fitMeasures(fit.samp, measure)
+            ll.samp <- NA
         }
     }
 
