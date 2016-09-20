@@ -610,7 +610,10 @@ coeffun <- function(lavpartable, pxpartable, rjob, fun = "mean") {
   }
 
   ptmatch <- match(lavpartable$free[lavpartable$free > 0], pxpartable$free)
-  lavpartable$est[lavpartable$free > 0] <- pxpartable$est[ptmatch]
+  if("est" %in% names(pxpartable)){
+    ## to handle do.fit = FALSE
+    lavpartable$est[lavpartable$free > 0] <- pxpartable$est[ptmatch]
+  }
   lavpartable$psrf <- rep(NA, length(lavpartable$free))
   lavpartable$psrf[lavpartable$free > 0] <- pxpartable$psrf[ptmatch]
   lavpartable$prior[lavpartable$free > 0] <- pxpartable$prior[ptmatch]
