@@ -1,8 +1,7 @@
 blavaan <- function(...,  # default lavaan arguments
  
                     # bayes-specific stuff
-                    ov.cp              = "srs",
-                    lv.cp              = "srs",
+                    cp                 = "srs",
                     dp                 = dpriors(),
                     n.chains           = 3,
                     burnin             ,
@@ -32,6 +31,25 @@ blavaan <- function(...,  # default lavaan arguments
             dotdotdot <- dotdotdot[-misloc]; dotNames <- dotNames[-misloc]
         }
     }
+
+    # covariance priors are now all srs or fa
+    cplocs <- match(c("ov.cp", "lv.cp"), dotNames, nomatch = 0)
+    if(any(cplocs > 0)){
+      cat("blavaan NOTE: Arguments ov.cp and lv.cp are deprecated. Use cp instead. ")
+      if(any(dotdotdot[cplocs] == "fa")){
+        cp <- "fa"
+        cat("Using 'fa' approach for all covariances.\n")
+      } else {
+        cat("\n")
+      }
+      if(!all(dotdotdot[cplocs] %in% c("srs", "fa"))){
+        stop("blavaan ERROR: unknown argument to cp.")
+      }
+      dotdotdot <- dotdotdot[-cplocs]; dotNames <- dotNames[-cplocs]
+    }
+    ## cannot use lavaan inits with fa priors; FIXME?
+    if(cp == "fa" & inits %in% c("simple", "default")) inits <- "jags"
+  
     # which arguments do we override?
     lavArgsOverride <- c("meanstructure", "missing", "estimator")
     # always warn?
@@ -126,13 +144,6 @@ blavaan <- function(...,  # default lavaan arguments
         if(any(lhsvars > 1)) {
             stop("blavaan ERROR: blavaan does not handle equality constraints with more than 1 variable on the lhs.\n  try modifying the constraints.")
         }
-    }
-
-    # covariance priors are now all srs or fa
-    cp <- "srs"
-    if(ov.cp == "fa" | lv.cp == "fa"){
-        cp <- "fa"
-        cat("blavaan NOTE: covariance priors can no longer be set separately for ov and lv.\n Using 'fa' approach for all covariances.\n")
     }
 
     prispec <- "prior" %in% names(LAV@ParTable)
@@ -495,7 +506,7 @@ blavaan <- function(...,  # default lavaan arguments
 }
 
 ## cfa + sem
-bcfa <- bsem <- function(..., ov.cp = "srs", lv.cp = "srs", dp = dpriors(),
+bcfa <- bsem <- function(..., cp = "srs", dp = dpriors(),
     n.chains = 3, burnin, sample, adapt,
     jagfile = FALSE, jagextra = list(), inits = "simple", convergence = "manual",
     jagcontrol = list()) {
@@ -522,7 +533,7 @@ bcfa <- bsem <- function(..., ov.cp = "srs", lv.cp = "srs", dp = dpriors(),
 }
 
 # simple growth models
-bgrowth <- function(..., ov.cp = "srs", lv.cp = "srs", dp = dpriors(),
+bgrowth <- function(..., cp = "srs", dp = dpriors(),
     n.chains = 3, burnin, sample, adapt,
     jagfile = FALSE, jagextra = list(), inits = "simple", convergence = "manual",
     jagcontrol = list()) {

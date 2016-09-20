@@ -38,7 +38,7 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
   pricom <- jagsdist2r(pri)
 
   ## warn about fa priors
-  if(lavoptions$cp == "fa") warning("blavaan WARNING: marginal log-likelihoods under ov.cp=fa or lv.cp=fa may be unstable.")
+  if(lavoptions$cp == "fa") warning("blavaan WARNING: marginal log-likelihoods under cp='fa' may be unstable.")
 
   ## evaluate each prior
   priloglik <- 0

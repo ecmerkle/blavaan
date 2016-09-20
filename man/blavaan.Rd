@@ -4,19 +4,16 @@
 \description{
 Fit a Bayesian latent variable model.}
 \usage{
-blavaan(..., ov.cp = "srs", lv.cp = "srs",
+blavaan(..., cp = "srs", 
     dp = dpriors(), n.chains = 3, burnin, sample,
     adapt, jagfile = FALSE, jagextra = list(), inits = "simple",
     convergence = "manual", jagcontrol = list())
 }
 \arguments{
 \item{...}{Default lavaan arguments.  See \code{\link{lavaan}}.}
-\item{ov.cp}{Handling of prior distributions on covariance parameters
-    associated with observed variables: possible values are \code{"srs"} or
+\item{cp}{Handling of prior distributions on covariance parameters: possible values are \code{"srs"} or
     \code{"fa"}.  Option \code{"srs"} is more flexible and better from a
     theoretical standpoint, but it is also slower.}
-\item{lv.cp}{Handling of prior distributions on covariance parameters
-    associated with latent variables; see the \code{ov.cp} argument.}
 \item{dp}{Default prior distributions on different types of
     parameters, typically the result of a call to \code{dpriors()}.
     See the \code{dpriors()} help file for more information.}
