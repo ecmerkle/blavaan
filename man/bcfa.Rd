@@ -6,7 +6,7 @@ Fit a Confirmatory Factor Analysis (CFA) model.}
 \usage{
 bcfa(..., ov.cp = "srs", lv.cp = "srs",
      dp = dpriors(), n.chains = 3, burnin, sample,
-     adapt, jagfile = FALSE, jagextra = list(), inits = "prior",
+     adapt, jagfile = FALSE, jagextra = list(), inits = "simple",
      convergence = "manual", jagcontrol = list())
 }
 \arguments{
@@ -34,7 +34,7 @@ bcfa(..., ov.cp = "srs", lv.cp = "srs",
   code to insert in the JAGS model syntax, and the \code{monitor} object
   is a character vector containing extra JAGS parameters to sample.}
 \item{inits}{If it is a character string, the options are currently
-    \code{"simple"}, \code{"Mplus"}, \code{"prior"} (default), and
+    \code{"simple"} (default), \code{"Mplus"}, \code{"prior"}, and
     \code{"jags"}.  In the first two 
     cases, parameter values are set as though they will be estimated via
     ML (see \code{\link{lavaan}}).  The starting parameter value for

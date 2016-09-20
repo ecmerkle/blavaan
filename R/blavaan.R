@@ -10,7 +10,7 @@ blavaan <- function(...,  # default lavaan arguments
                     adapt              ,
                     jagfile            = FALSE,
                     jagextra           = list(),
-                    inits              = "prior",
+                    inits              = "simple",
                     convergence        = "manual",
                     jagcontrol         = list()
                    )
@@ -497,7 +497,7 @@ blavaan <- function(...,  # default lavaan arguments
 ## cfa + sem
 bcfa <- bsem <- function(..., ov.cp = "srs", lv.cp = "srs", dp = dpriors(),
     n.chains = 3, burnin, sample, adapt,
-    jagfile = FALSE, jagextra = list(), inits = "prior", convergence = "manual",
+    jagfile = FALSE, jagextra = list(), inits = "simple", convergence = "manual",
     jagcontrol = list()) {
 
     dotdotdot <- list(...)
@@ -524,7 +524,7 @@ bcfa <- bsem <- function(..., ov.cp = "srs", lv.cp = "srs", dp = dpriors(),
 # simple growth models
 bgrowth <- function(..., ov.cp = "srs", lv.cp = "srs", dp = dpriors(),
     n.chains = 3, burnin, sample, adapt,
-    jagfile = FALSE, jagextra = list(), inits = "prior", convergence = "manual",
+    jagfile = FALSE, jagextra = list(), inits = "simple", convergence = "manual",
     jagcontrol = list()) {
 
     dotdotdot <- list(...)

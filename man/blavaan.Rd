@@ -6,7 +6,7 @@ Fit a Bayesian latent variable model.}
 \usage{
 blavaan(..., ov.cp = "srs", lv.cp = "srs",
     dp = dpriors(), n.chains = 3, burnin, sample,
-    adapt, jagfile = FALSE, jagextra = list(), inits = "prior",
+    adapt, jagfile = FALSE, jagextra = list(), inits = "simple",
     convergence = "manual", jagcontrol = list())
 }
 \arguments{
@@ -34,7 +34,7 @@ blavaan(..., ov.cp = "srs", lv.cp = "srs",
   code to insert in the JAGS model syntax, and the \code{monitor} object
   is a character vector containing extra JAGS parameters to sample.}
 \item{inits}{If it is a character string, the options are currently
-    \code{"simple"}, \code{"Mplus"}, \code{"prior"} (default), or \code{"jags"}.  In the first two
+    \code{"simple"} (default), \code{"Mplus"}, \code{"prior"}, or \code{"jags"}.  In the first two
     cases, parameter values are set as though they will be estimated via
     ML (see \code{\link{lavaan}}).  The starting parameter value for
     each chain is then perturbed from the original values through the
