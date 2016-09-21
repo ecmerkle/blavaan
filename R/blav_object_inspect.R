@@ -1,47 +1,27 @@
 ## inspect blavaan object (wrapper around lavInspect with
 ## some additions)
-blavTech <- function(blavobject,
-                     what                   = "free",
-                     add.labels             = FALSE,
-                     add.class              = FALSE,
-                     list.by.group          = FALSE,  
-                     drop.list.single.group = FALSE,
-                     ...) {
+blavTech <- function(blavobject, what, ...) {
 
-    blavInspect(blavobject = blavobject, what = what,
-                add.labels = add.labels, add.class = add.class,
-                list.by.group = list.by.group,
-                drop.list.single.group =  drop.list.single.group,
-                ...)
+    blavInspect(blavobject, what, ...)
 }
 
 ## use lavInspect everywhere we can:
-blavInspect <- function(blavobject,
-                        what                   = "free",
-                        add.labels             = TRUE,
-                        add.class              = TRUE,
-                        list.by.group          = TRUE,
-                        drop.list.single.group = TRUE,
-                        ...) {
+blavInspect <- function(blavobject, what, ...) {
 
     stopifnot(inherits(blavobject, "blavaan"))
+  
     dotdotdot <- list(...)
-
-    ## only a single argument
-    if(length(what) > 1) {
-        stop("`what' arguments contains multiple arguments; only one is allowed")
-    }
-
-    ## be case insensitive
-    what <- tolower(what)
-
+    dotNames <- names(dotdotdot)
+    add.labels <- TRUE
+    if(any(dotNames == "add.labels")) add.labels <- dotdotdot$add.labels
+  
     ## whats unique to blavaan
     blavwhats <- c("start", "starting.values", "inits", "psrf",
                    "ac.10", "neff", "mcmc", "draws", "samples",
                    "n.chains", "cp", "dp", "postmode", "postmean",
                    "postmedian", "hpd")
 
-    ## whats that are not handled (or modified handling)
+    ## whats that are not handled
     nowhats <- c("mi", "modindices", "modification.indices",
                  "wls.est", "wls.obs", "wls.v")
 
@@ -96,10 +76,7 @@ blavInspect <- function(blavobject,
                    "not available for Bayesian models."))
     } else {
         ## we can use lavInspect
-        lavInspect(lavobject = blavobject,
-                   what = what, add.labels = add.labels,
-                   add.class = add.class,
-                   list.by.group = list.by.group,
-                   drop.list.single.group = drop.list.single.group)
+        lavargs <- c(dotdotdot, list(lavobject = blavobject, what = what))
+        do.call("lavInspect", lavargs)
     }
 }
