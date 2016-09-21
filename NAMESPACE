@@ -52,6 +52,7 @@ importFrom("loo",
            "loo",
            "waic")
 
-export("blavaan", "bcfa", "bsem", "bgrowth", "dpriors", "BF")
+export("blavaan", "bcfa", "bsem", "bgrowth", "dpriors", "BF",
+       "blavTech", "blavInspect")
 
 S3method(plot, blavaan)
