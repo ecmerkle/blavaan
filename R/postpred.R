@@ -12,7 +12,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
     ## parallel across chains if we can
     ncores <- NA
     loop.comm <- "lapply"
-    if(requireNamespace("parallel", quietly = TRUE)){
+    if(.Platform$OS.type != "windows" & requireNamespace("parallel", quietly = TRUE)){
       ncores <- min(n.chains, parallel::detectCores())
       loop.comm <- "mclapply"
     }
