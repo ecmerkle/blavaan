@@ -16,13 +16,15 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x){
     }
 
     for(i in 1:nrow(partable)){
-        if(partable$mat[i] != "" & !(i %in% wishpars)){
+        if((partable$mat[i] != "" & !(i %in% wishpars)) | partable$op[i] == ":="){
             ## to find equality constraints
             eqpar <- which(partable$rhs == partable$plabel[i] &
                            partable$op == "==")
-            ## only complex equality constraints; rhs needs math expression
+
+            ## only complex equality constraints and defined parameters;
+            ## rhs needs math expression
             compeq <- which(partable$lhs == partable$label[i] &
-                            partable$op == "==" &
+                            partable$op %in% c("==", ":=") &
                             grepl("\\+|-|/|\\*|\\(|\\)|\\^", partable$rhs))
             ## TODO block prior associated with lv.x.wish
             ##      put entries of parvec in matrix for dwish?
@@ -42,7 +44,7 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x){
                 }
             }
           
-            if(partable$free[i] == 0){
+            if(partable$free[i] == 0 & partable$op[i] != ":="){
                 TXT3 <- paste(TXT3, " <- ", sep="")
                 if(is.na(partable$ustart[i])){
                     ## exo
@@ -62,13 +64,14 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x){
                                           text=partable$rhs[compeq]))
                 pvnum <- match(rhsvars, partable$label)
 
-                rhstrans <- paste("parvec[", partable$parnums[pvnum], "]",
+                rhstrans <- paste("[", partable$parnums[pvnum], "]",
                                   sep="")
 
                 jageq <- partable$rhs[compeq]
                 for(j in 1:length(rhsvars)){
                     jageq <- gsub(rhsvars[j], rhstrans[j], jageq)
                 }
+                jageq <- gsub("[", "parvec[", jageq, fixed = TRUE)
 
                 TXT3 <- paste(TXT3, " <- ", jageq, sep="")
             } else {

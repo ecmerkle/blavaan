@@ -211,6 +211,7 @@ function(object, header       = TRUE,
         ## TODO put parameter priors in partable
 
         newpt <- object@ParTable
+        newpt$group[newpt$group == 0] <- 1 # for defined parameters
 
         ## match jags names to partable, then partable to PE
         pte2 <- which(!is.na(newpt$jagpnum))

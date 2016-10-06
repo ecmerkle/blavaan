@@ -568,7 +568,7 @@ coeffun <- function(lavpartable, pxpartable, rjob, fun = "mean") {
   ## the jags model.
 
   ## remove any rhos or unnamed parameters
-  pxpartable <- pxpartable[!is.na(pxpartable$id) & !(pxpartable$op %in% c("==", ":=")),]
+  pxpartable <- pxpartable[!is.na(pxpartable$id) & pxpartable$op != "==",]
   pxnames <- paste(pxpartable$mat, "[", pxpartable$row, ",", pxpartable$col,
                    ",", pxpartable$group, "]", sep="")
   pxpartable$pxnames <- pxnames
@@ -619,13 +619,22 @@ coeffun <- function(lavpartable, pxpartable, rjob, fun = "mean") {
   lavpartable$prior[lavpartable$free > 0] <- pxpartable$prior[ptmatch]
   lavpartable$pxnames[lavpartable$free > 0] <- pxpartable$pxnames[ptmatch]
   lavpartable$jagpnum[lavpartable$free > 0] <- pxpartable$jagpnum[ptmatch]
+
+  ## defined variables
+  defmatch <- which(pxpartable$op == ":=")
+  if(length(defmatch) > 0){
+    lavpartable$est[lavpartable$op == ":="] <- pxpartable$est[defmatch]
+    lavpartable$psrf[lavpartable$op == ":="] <- pxpartable$psrf[defmatch]
+    lavpartable$pxnames[lavpartable$op == ":="] <- pxpartable$pxnames[defmatch]
+    lavpartable$jagpnum[lavpartable$op == ":="] <- pxpartable$jagpnum[defmatch]
+  }
   
   ## NB this automatically removes fixed parameters, just
   ##    like the psrf
   lmatch <- match(lavpartable$pxnames[lavpartable$free > 0],
                   rownames(rjob$crosscorr))
   vcorr <- rjob$crosscorr[lmatch, lmatch]
-  smatch <- match(lavpartable$pxnames[lavpartable$free > 0],
+  smatch <- match(lavpartable$pxnames[lavpartable$free > 0 | lavpartable$op == ":="],
                   rownames(rjob$summary$statistics),
                   nomatch=0)
   sdvec <- rjob$summary$statistics[smatch, "SD"]

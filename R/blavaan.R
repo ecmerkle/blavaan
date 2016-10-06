@@ -334,7 +334,7 @@ blavaan <- function(...,  # default lavaan arguments
 
         timing$Estimate <- (proc.time()[3] - start.time)
         start.time <- proc.time()[3]
-        
+
         parests <- coeffun(lavpartable, jagtrans$pxpartable, res)
         x <- parests$x
 
@@ -344,8 +344,8 @@ blavaan <- function(...,  # default lavaan arguments
 
           ## TODO: needed??
           # overwrite lavpartable$est to include def/con values
-          lavpartable$est <- lav_model_get_parameters(lavmodel = lavmodel,
-                                                      type = "user", extra = TRUE)
+          #lavpartable$est <- lav_model_get_parameters(lavmodel = lavmodel,
+          #                                            type = "user", extra = TRUE)
 
           attr(x, "iterations") <- res$sample
           attr(x, "converged") <- TRUE
@@ -404,7 +404,8 @@ blavaan <- function(...,  # default lavaan arguments
     lavvcov <- list()
     VCOV <- NULL
     if(jag.do.fit){
-      VCOV <- diag(parests$sd) %*% parests$vcorr %*% diag(parests$sd)
+      dsd <- diag(parests$sd[names(parests$sd) %in% colnames(parests$vcorr)])
+      VCOV <- dsd %*% parests$vcorr %*% dsd
       lavjags <- c(lavjags, list(vcov = VCOV))
 
       # store vcov in new @vcov slot
