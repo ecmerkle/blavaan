@@ -120,8 +120,8 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     ov.names <- orig.ov.names[orig.ov.names %in% ov.names.nox]
     #ov.names <- ov.names.nox
   }
-  eqlabs <- partable$rhs[partable$op == "=="]
-  eqplabs <- partable$lhs[partable$op == "=="]
+  eqlabs <- partable$rhs[partable$op %in% c("==", ":=")]
+  eqplabs <- partable$lhs[partable$op %in% c("==", ":=")]
   eqplabs <- eqplabs[eqplabs %in% partable$label]
   eqlabs <- c(eqlabs, eqplabs)
 
@@ -152,13 +152,13 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
   ## Smaller partables for different parameter types +
   ## dimensions of parameter matrices (for initial values)
   ovintercepts <- partable[ovi,]
-  ovintercepts <- rbind(ovintercepts, partable[which(partable$op == "=="),])
+  ovintercepts <- rbind(ovintercepts, partable[which(partable$op %in% c("==", ":=")),])
   lvintercepts <- partable[lvi,]
-  lvintercepts <- rbind(lvintercepts, partable[which(partable$op == "=="),])
+  lvintercepts <- rbind(lvintercepts, partable[which(partable$op %in% c("==", ":=")),])
   loadings <- partable[load,]
-  loadings <- rbind(loadings, partable[which(partable$op == "=="),])
+  loadings <- rbind(loadings, partable[which(partable$op %in% c("==", ":=")),])
   regressions <- partable[reg,]
-  regressions <- rbind(regressions, partable[which(partable$op == "=="),])
+  regressions <- rbind(regressions, partable[which(partable$op %in% c("==", ":=")),])
 
   ## for missing=="fi", to model variables on rhs of regression
   ovreg <- unique(regressions$rhs[regressions$rhs %in% ov.names])
@@ -568,7 +568,7 @@ coeffun <- function(lavpartable, pxpartable, rjob, fun = "mean") {
   ## the jags model.
 
   ## remove any rhos or unnamed parameters
-  pxpartable <- pxpartable[!is.na(pxpartable$id) & pxpartable$op != "==",]
+  pxpartable <- pxpartable[!is.na(pxpartable$id) & !(pxpartable$op %in% c("==", ":=")),]
   pxnames <- paste(pxpartable$mat, "[", pxpartable$row, ",", pxpartable$col,
                    ",", pxpartable$group, "]", sep="")
   pxpartable$pxnames <- pxnames

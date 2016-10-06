@@ -3,8 +3,8 @@ set_inits <- function(partable, ov.cp, lv.cp, n.chains, inits){
   ## TODO write start values to new columns of coefvec, so can include in partable
   initvals <- vector("list", n.chains)
   names(initvals) <- paste("c", 1:n.chains, sep="")
-  pveclen <- max(partable$parnums, na.rm = TRUE)
-    
+  pveclen <- max(partable$parnums[partable$mat != ""], na.rm = TRUE)
+
   for(i in 1:n.chains){
     initvals[[i]] <- list(parvec = rep(NA, pveclen))
   }
@@ -31,7 +31,7 @@ set_inits <- function(partable, ov.cp, lv.cp, n.chains, inits){
 
   for(i in 1:nrow(partable)){
     eqcons <- which(partable$lhs == partable$label[i] &
-                    partable$op %in% c("==", ">", "<"))
+                    partable$op %in% c("==", ":=", ">", "<"))
     if((i %in% wps) | partable$free[i] == 0 | partable$prior[i] == "" | length(eqcons > 0)) next
 
     tmppri <- partable$prior[i]
