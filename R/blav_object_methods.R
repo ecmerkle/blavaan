@@ -212,6 +212,7 @@ function(object, header       = TRUE,
 
         newpt <- object@ParTable
         newpt$group[newpt$group == 0] <- 1 # for defined parameters
+        PE$group[PE$group == 0] <- 1
 
         ## match jags names to partable, then partable to PE
         pte2 <- which(!is.na(newpt$jagpnum))
