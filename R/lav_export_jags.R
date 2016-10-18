@@ -210,17 +210,20 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     if(blavmis == "fi") stop("blavaan ERROR: missing='fi' not yet supported for ordinal data")
     for(j in 1:nmvs){
       if(ov.names[j] %in% ov.ord){
+        tvname <- "theta"
         ord.num <- match(ov.names[j], ov.ord)
         TXT <- paste(TXT, t2, "ones[i,", ord.num, "] ~ dbern(probs[i,", ord.num,
-                     ",y[i,", j, "]])\n", sep="")
+                     ",", ov.names[j], "[i]])\n", sep="")
 
         ## category probs from pnorm
-        TXT <- paste(TXT, t2, "probs[i,", ord.num, ",1] <- pnorm(tau[", ord.num,
-                     ",1,g[i]], mu[i,", j, "], invthetstar[", j, ",g[i]])\n", sep="")
+        taus <- which(partable$lhs == ov.names[j] &
+                      partable$op == "|")
+        TXT <- paste(TXT, t2, "probs[i,", ord.num, ",1] <- pnorm(tau[", partable$row[taus[1]],
+                     ",", partable$col[taus[1]], ",g[i]], mu[i,", j, "], 1/", tvname, "[", j, ",", j, ",g[i]])\n", sep="")
         if(ncats[ord.num] > 2){
           for(k in 2:(ncats[ord.num] - 1)){
             TXT <- paste(TXT, t2, "probs[i,", ord.num, ",", k, "] <- pnorm(tau[",
-                         ord.num, ",", k, ",g[i]], mu[i,", j, "], invthetstar[",
+                         partable$row[taus[k]], ",", partable$col[taus[k]], ",g[i]], mu[i,", j, "], 1/", tvname, "[", j, ",",
                          j, ",g[i]]) - sum(probs[i,", ord.num, ",1:", (k-1), "])\n",
                          sep="")
           }

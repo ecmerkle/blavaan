@@ -114,13 +114,14 @@ blavaan <- function(...,  # default lavaan arguments
                 paste(lavArgsRemove[warn.idx], collapse = " "), "\n")
     }
 
+    # check for ordered data
+    if("ordered" %in% dotNames) {
+        dotdotdot$missing <- "default"
+        dotdotdot$test <- "none"
+    }
+  
     # call lavaan
     LAV <- do.call("lavaan", dotdotdot)
-
-    # check for ordered data
-    if(lavInspect(LAV, "categorical")) {
-        stop("blavaan ERROR: ordered data is not supported yet.")
-    }
 
     if(LAV@Data@data.type == "moment") {
         stop("blavaan ERROR: full data are required. consider using kd() from package semTools.")
