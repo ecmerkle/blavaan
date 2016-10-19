@@ -1,3 +1,6 @@
+Changes in Version 0.2-2
+    o Fix bug in 0.2-1 causing model estimation to crash on Windows only.
+
 Changes in Version 0.2-1
     o Major update to internals: Model matrices/parameters now correspond to the Lisrel representation used in lavaan.
 
