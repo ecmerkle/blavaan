@@ -474,13 +474,16 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
       ntot <- sum(unlist(lavdata@nobs))
       ymat <- ymat[-nas,]
     }
-    
+
     if(blavmis == "fi"){
       ## variables on rhs of regression, in case missing
       y <- y[names(y) %in% ovreg]
     }
 
     jagsdata <- c(y, list(g=g, N=ntot))
+    if(any(partable$op == "|")){
+      jagsdata <- c(jagsdata, list(ones = matrix(1, ntot, tmpnmvs)))
+    }
 
     if(blavmis == "fi"){
       ## keep only modeled y's not on rhs of regression

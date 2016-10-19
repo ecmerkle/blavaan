@@ -32,6 +32,10 @@ blavaan <- function(...,  # default lavaan arguments
         }
     }
 
+    if(blavmis == "fi" & "ordered" %in% dotNames){
+      stop("blavaan ERROR: missing='fi' cannot be used with ordinal data.")
+    }
+
     # covariance priors are now all srs or fa
     cplocs <- match(c("ov.cp", "lv.cp"), dotNames, nomatch = 0)
     if(any(cplocs > 0)){
@@ -118,6 +122,7 @@ blavaan <- function(...,  # default lavaan arguments
     if("ordered" %in% dotNames) {
         dotdotdot$missing <- "default"
         dotdotdot$test <- "none"
+        dotNames <- names(dotdotdot)
     }
   
     # call lavaan
