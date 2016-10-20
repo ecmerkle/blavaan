@@ -210,14 +210,18 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     if(blavmis == "fi") stop("blavaan ERROR: missing='fi' not yet supported for ordinal data")
     for(j in 1:nmvs){
       if(ov.names[j] %in% ov.ord){
-        tvname <- "theta"
+        tvname <- partable$mat[partable$lhs == ov.names[j] &
+                               partable$lhs == partable$rhs &
+                               partable$op == "~~" &
+                               partable$group == 1]
         ord.num <- match(ov.names[j], ov.ord)
         TXT <- paste(TXT, t2, "ones[i,", ord.num, "] ~ dbern(probs[i,", ord.num,
                      ",", ov.names[j], "[i]])\n", sep="")
 
         ## category probs from pnorm
         taus <- which(partable$lhs == ov.names[j] &
-                      partable$op == "|")
+                      partable$op == "|" &
+                      partable$group == 1)
         TXT <- paste(TXT, t2, "probs[i,", ord.num, ",1] <- pnorm(tau[", partable$row[taus[1]],
                      ",", partable$col[taus[1]], ",g[i]], mu[i,", j, "], 1/", tvname, "[", j, ",", j, ",g[i]])\n", sep="")
         if(ncats[ord.num] > 2){
@@ -456,9 +460,15 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
 
     y <- lapply(1:tmpnmvs, function(x) rep(NA,ntot))
     g <- rep(NA, ntot)
+    nX <- ncol(lavdata@X[[1]])
     for(k in 1:ngroups){
-      for(j in 1:tmpnmvs){
+      for(j in 1:nX){
         y[[j]][lavdata@case.idx[[k]]] <- lavdata@X[[k]][,j]
+      }
+      if(tmpnmvs > nX){
+        for(j in 1:(tmpnmvs - nX)){
+          y[[j + nX]][lavdata@case.idx[[k]]] <- lavdata@eXo[[k]][,j]
+        }
       }
       g[lavdata@case.idx[[k]]] <- k
     }
