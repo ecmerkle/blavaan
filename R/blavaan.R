@@ -301,26 +301,26 @@ blavaan <- function(...,  # default lavaan arguments
             if(suppressMessages(requireNamespace("modeest", quietly = TRUE))) runjags.options(mode.continuous = TRUE)
 
             if(jag.do.fit){
-              runjags.options(force.summary = TRUE)
-              rjcall <- "run.jags"
-              if(convergence == "auto"){
-                  rjcall <- "autorun.jags"
-                  if("raftery.options" %in% names(rjarg)){
-                      ## autorun defaults
-                      if(!("r" %in% names(rjarg$raftery.options))){
-                          rjarg$raftery.options$r <- .01
-                      }
-                      if(!("converge.eps" %in% names(rjarg$raftery.options))){
-                          rjarg$raftery.options$converge.eps <- .01
-                      }
-                  } else {
-                      rjarg$raftery.options <- list(r=.01, converge.eps=.01)
-                  }
-                  if(!("max.time" %in% names(rjarg))) rjarg$max.time <- "5m"
-              }
-              res <- try(do.call(rjcall, rjarg))
+                runjags.options(force.summary = TRUE)
+                rjcall <- "run.jags"
+                if(convergence == "auto"){
+                    rjcall <- "autorun.jags"
+                    if("raftery.options" %in% names(rjarg)){
+                        ## autorun defaults
+                        if(!("r" %in% names(rjarg$raftery.options))){
+                            rjarg$raftery.options$r <- .01
+                        }
+                        if(!("converge.eps" %in% names(rjarg$raftery.options))){
+                            rjarg$raftery.options$converge.eps <- .01
+                        }
+                    } else {
+                        rjarg$raftery.options <- list(r=.01, converge.eps=.01)
+                    }
+                    if(!("max.time" %in% names(rjarg))) rjarg$max.time <- "5m"
+                }
+                res <- try(do.call(rjcall, rjarg))
             } else {
-              res <- NULL
+                res <- NULL
             }
 
             if(inherits(res, "try-error")) {
@@ -346,34 +346,23 @@ blavaan <- function(...,  # default lavaan arguments
 
         lavpartable <- parests$lavpartable
         if(jag.do.fit){
-          lavmodel <- lav_model_set_parameters(lavmodel, x = x)
-
-          ## TODO: needed??
-          # overwrite lavpartable$est to include def/con values
-          #lavpartable$est <- lav_model_get_parameters(lavmodel = lavmodel,
-          #                                            type = "user", extra = TRUE)
-
-          attr(x, "iterations") <- res$sample
-          attr(x, "converged") <- TRUE
-
-          attr(x, "control") <- jagcontrol
-
-          attr(x, "fx") <- get_ll(lavmodel = lavmodel, lavpartable = lavpartable,
-                                  lavsamplestats = lavsamplestats, lavoptions = lavoptions,
-                                  lavcache = lavcache, lavdata = lavdata)[1]
-
+            lavmodel <- lav_model_set_parameters(lavmodel, x = x)
+            attr(x, "iterations") <- res$sample
+            attr(x, "converged") <- TRUE
         } else {
-          x <- numeric(0L)
-          attr(x, "iterations") <- 0L; attr(x, "converged") <- FALSE
-          attr(x, "control") <- jagcontrol
-          attr(x, "fx") <- get_ll(lavmodel = lavmodel, 
-                                  lavpartable = lavpartable,
-                                  lavsamplestats = lavsamplestats,
-                                  lavoptions = lavoptions,
-                                  lavcache = lavcache,
-                                  lavdata = lavdata)[1]
-          
-          lavpartable$est <- lavpartable$start
+            x <- numeric(0L)
+            attr(x, "iterations") <- 0L
+            attr(x, "converged") <- FALSE          
+            lavpartable$est <- lavpartable$start
+        }
+        attr(x, "control") <- jagcontrol
+
+        if(!("ordered" %in% dotNames)) {
+            attr(x, "fx") <- get_ll(lavmodel = lavmodel, lavpartable = lavpartable,
+                                    lavsamplestats = lavsamplestats, lavoptions = lavoptions,
+                                    lavcache = lavcache, lavdata = lavdata)[1]
+        } else {
+            attr(x, "fx") <- as.numeric(NA)
         }
     }
 
