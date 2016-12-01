@@ -66,7 +66,10 @@ blavaan <- function(...,  # default lavaan arguments
     # if do.fit supplied, save it for jags stuff
     jag.do.fit <- TRUE
     if("do.fit" %in% dotNames) jag.do.fit <- dotdotdot$do.fit
-    dotdotdot$do.fit <- FALSE        # implies se="none" and test="none"
+    dotdotdot$do.fit <- TRUE
+    dotdotdot$se <- "none"; dotdotdot$test <- "none"
+    # run for 1 iteration to obtain info about equality constraints, for npar
+    dotdotdot$control <- list(iter.max = 1); dotdotdot$warn <- FALSE
     dotdotdot$meanstructure <- TRUE
     dotdotdot$missing <- "direct"   # direct/ml creates error? (bug in lavaan?)
     dotdotdot$estimator <- "default" # until 'Bayes' is accepted by lavaan()
@@ -124,7 +127,7 @@ blavaan <- function(...,  # default lavaan arguments
         dotdotdot$test <- "none"
         dotNames <- names(dotdotdot)
     }
-  
+
     # call lavaan
     LAV <- do.call("lavaan", dotdotdot)
 
@@ -225,7 +228,7 @@ blavaan <- function(...,  # default lavaan arguments
     # if inits is list
     initsin <- inits
     if(class(inits) == "list") initsin <- "jags"
-  
+
     # extract slots from dummy lavaan object
     lavpartable    <- LAV@ParTable
     if(!("prior" %in% names(lavpartable))) lavpartable$prior <- rep("", length(lavpartable$lhs))
@@ -343,8 +346,9 @@ blavaan <- function(...,  # default lavaan arguments
 
         parests <- coeffun(lavpartable, jagtrans$pxpartable, res)
         x <- parests$x
-
         lavpartable <- parests$lavpartable
+        
+        attr(x, "control") <- jagcontrol
         if(jag.do.fit){
             lavmodel <- lav_model_set_parameters(lavmodel, x = x)
             attr(x, "iterations") <- res$sample
@@ -355,7 +359,6 @@ blavaan <- function(...,  # default lavaan arguments
             attr(x, "converged") <- FALSE          
             lavpartable$est <- lavpartable$start
         }
-        attr(x, "control") <- jagcontrol
 
         if(!("ordered" %in% dotNames)) {
             attr(x, "fx") <- get_ll(lavmodel = lavmodel, lavpartable = lavpartable,
