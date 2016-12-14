@@ -5,8 +5,12 @@ Authors@R: c(person(given = "Edgar", family = "Merkle",
                     role = c("aut", "cre"),
                     email = "merklee@missouri.edu"),
              person(given = "Yves", family = "Rosseel",
-                    role  = c("aut"),
-                    email = "Yves.Rosseel@UGent.be")
+                    role  = "aut",
+                    email = "Yves.Rosseel@UGent.be"),
+             person(given = "Mauricio",
+                    family = "Garnier-Villarreal",
+                    role = "ctb",
+                    email = "maugavilla@gmail.com")
             )
 Description: Fit a variety of Bayesian latent variable models, including confirmatory
    factor analysis, structural equation models, and latent growth curve models.

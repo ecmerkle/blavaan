@@ -407,22 +407,6 @@ plot.blavaan <- function(x, pars, plot.type="trace", ...){
 #})
 
 
-BF <- function(object1, object2, ...) {
-
-    # NB Assumes test slot instead of Fit@test slot
-    # Bayes factor approximation based on marginal log-likelihoods
-    bf <- object1@test[[1]]$stat - object2@test[[1]]$stat
-
-    cat("Laplace approximation to the log-Bayes factor (experimental):\n",
-        sprintf("%8.3f", bf), "\n\n")
-
-    res <- c(bf, object1@test[[1]]$stat, object2@test[[1]]$stat)
-    names(res) <- c("bf", "mll1", "mll2")
-
-    invisible(res)
-}
-
-
 SDBF <- function(PE) {
   tmprow <- which(PE$op %in% c("~", "=~"))
 

@@ -49,10 +49,9 @@ importFrom("nonnest2",
            "llcont")
 
 importFrom("loo",
-           "loo",
-           "waic")
+           "loo", "waic", "compare")
 
-export("blavaan", "bcfa", "bsem", "bgrowth", "dpriors", "BF",
+export("blavaan", "bcfa", "bsem", "bgrowth", "dpriors", "BF", "blavCompare",
        "blavTech", "blavInspect")
 
 S3method(plot, blavaan)

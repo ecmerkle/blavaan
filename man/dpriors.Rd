@@ -8,7 +8,8 @@ Specify "default" prior distributions for classes of model parameters.
 dpriors(nu = "dnorm(0,1e-3)", alpha = "dnorm(0,1e-2)", 
         lambda = "dnorm(0,1e-2)", beta = "dnorm(0,1e-2)", 
         itheta = "dgamma(1,.5)", ipsi = "dgamma(1,.5)", 
-        rho = "dbeta(1,1)", ibpsi = "dwish(iden,3)")
+        rho = "dbeta(1,1)", ibpsi = "dwish(iden,3)",
+        tau="dnorm(0,.1)", delta="dgamma(1,.5)")
 }
 \arguments{
   \item{nu}{Prior distribution for nu (observed variable intercept) parameters.}
@@ -20,6 +21,8 @@ dpriors(nu = "dnorm(0,1e-3)", alpha = "dnorm(0,1e-2)",
   \item{rho}{Prior distribution for correlation parameters (only used under srs approach).}
   \item{ibpsi}{Prior distribution for inverse covariance matrix of
     blocks of latent variables.}
+  \item{tau}{Prior distribution for threshold parameters (ordinal data only).}
+  \item{delta}{Prior distribution for delta parameters (ordinal data only).}
 }
 \details{User-specified prior distributions for specific parameters
   (using the \code{prior()} operator within the model syntax) always
