@@ -455,7 +455,8 @@ blavaan <- function(...,  # default lavaan arguments
     ## 9b. misc blavaan changes to partable
     ## remove rhos from partable + ses, so lavaan built-ins work
     lavjags <- c(lavjags, list(origpt = lavpartable,
-                               inits = jagtrans$inits))
+                               inits = jagtrans$inits,
+                               pxpt = jagtrans$pxpartable))
     class(lavjags) <- "runjags"
 
     ## add monitors in jagextra as defined variables
