@@ -1,13 +1,14 @@
-\name{BF}
+\name{blavCompare}
+\alias{blavCompare}
 \alias{BF}
 \title{
-log-Bayes factor approximation
+Bayesian model comparisons.
 }
 \description{
-log-Bayes factor approximation.
+Bayesian model comparisons, including WAIC, LOO, and Bayes factor approximation.
 }
 \usage{
-BF(object1, object2, ...)
+blavCompare(object1, object2, ...)
 }
 \arguments{
   \item{object1}{An object of class \code{blavaan}.}
@@ -37,6 +38,6 @@ hsm2 <- ' visual  =~ x1 + x2 + x3
 
 fit2 <- bcfa(hsm2, data=HolzingerSwineford1939)
 
-BF(fit1, fit2)
+blavCompare(fit1, fit2)
 }
 }
