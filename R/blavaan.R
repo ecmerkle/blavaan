@@ -123,6 +123,7 @@ blavaan <- function(...,  # default lavaan arguments
 
     # check for ordered data
     if("ordered" %in% dotNames) {
+        stop("blavaan ERROR: ordinal variables are not yet supported.")
         dotdotdot$missing <- "default"
         dotdotdot$test <- "none"
         dotNames <- names(dotdotdot)
