@@ -129,8 +129,10 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
       }
     } else if(i %in% c(ocpvars, lcpvars)){
       ## kernel density estimation of fa variance's prior
+      partype <- ifelse(i %in% ocpvars, "itheta", "ipsi")
+      varpri <- jagsdist2r(dpriors()[[partype]])
       tmpdist <- (rnorm(1e5,sd=sqrt(1/1e-4))*rnorm(1e5,sd=sqrt(1/1e-4)))/rgamma(1e5,1,.5) +
-                 1/rgamma(1e5, as.numeric(pricom[[i]][2]), as.numeric(pricom[[i]][3]))
+                 1/rgamma(1e5, as.numeric(varpri[[1]][2]), as.numeric(varpri[[1]][3]))
       tmpkd <- density(tmpdist)
       tmpdens <- log(approx(tmpkd$x, tmpkd$y, thetstar[i])$y)
     } else {
