@@ -29,15 +29,15 @@ blavCompare <- function(object1, object2, ...) {
   diff_loo <- compare(loo1, loo2)
   diff_waic <- compare(waic1, waic2)
 
-  cat("\nWAIC difference & SE: \n",
+  cat("\nWAIC difference & SE (positive values favor object2): \n",
       sprintf("%8.3f", diff_waic[1]),
       sprintf("%8.3f", diff_waic[2]), "\n\n")
 
-  cat("LOO difference & SE: \n",
+  cat("LOO difference & SE (positive values favor object2): \n",
       sprintf("%8.3f", diff_loo[1]),
       sprintf("%8.3f", diff_loo[2]), "\n\n")
 
-  cat("Laplace approximation to the log-Bayes factor (experimental):\n",
+  cat("Laplace approximation to the log-Bayes factor\n(experimental; positive values favor object1):",
       sprintf("%8.3f", bf), "\n\n")
   
   res <- list(bf = res, loo = rbind(loo1[1:6], loo2[1:6]),
