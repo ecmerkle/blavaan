@@ -1,0 +1,16 @@
+citHeader("To cite blavaan in publications, please use:")
+
+citEntry(entry = "Article",
+  title        = "blavaan: Bayesian structural equation models via parameter expansion",
+  author       = personList(as.person("Edgar C. Merkle"),
+                            as.person("Yves Rosseel")),
+  journal      = "arXiv 1511.05604",
+  year         = "2016",
+  url          = "https://arxiv.org/abs/1511.05604",
+
+  textVersion =
+  paste("Edgar C. Merkle and Yves Rosseel (2016).",
+        "blavaan: Bayesian structural equation models via parameter expansion.",
+        "arXiv 1511.05604.",
+        "URL https://arxiv.org/abs/1511.05604")
+)
