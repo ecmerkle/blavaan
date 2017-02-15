@@ -1,7 +1,7 @@
 ## utility functions for blavaan
 
 ## calculate model log-likelihood given some sampled parameter
-## values (with lvs integrated out)
+## values (with lvs integrated out by default)
 get_ll <- function(postsamp       = NULL, # one posterior sample
                    lavmodel       = NULL, 
                    lavpartable    = NULL, 
@@ -10,13 +10,36 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
                    lavcache       = NULL,
                    lavdata        = NULL,
                    measure        = "logl",
-                   casewise       = FALSE){
+                   casewise       = FALSE,
+                   conditional    = FALSE){
 
     if(length(postsamp) > 0){
         lavmodel <- fill_params(postsamp, lavmodel, lavpartable)
     }
 
-    implied <- lav_model_implied(lavmodel)
+    if(conditional){
+      nlv <- length(lav_partable_attributes(lavpartable)$vnames$lv[[1]])
+      ## arrange eta in a matrix:
+      etapars <- grepl("^eta", names(postsamp))
+      etamat <- matrix(postsamp[etapars], lavsamplestats@ntotal, nlv)
+      ngroups <- lavsamplestats@ngroups
+      eta <- vector("list", ngroups)
+      for(g in 1:ngroups){
+        eta[[g]] <- etamat[lavdata@case.idx[[g]], , drop = FALSE]
+      }
+
+      ## implied meanvec + covmat
+      mnvec <- lavaan:::computeYHAT(lavmodel, lavmodel@GLIST,
+                                    fit@SampleStats, ETA = eta)
+      covmat <- lavaan:::computeTHETA(lavmodel, lavmodel@GLIST)
+
+      implied <- list(cov = covmat, mean = mnvec,
+                      slopes = vector("list", ngroups),
+                      th = vector("list", ngroups),
+                      group.w = vector("list", ngroups))
+    } else {
+      implied <- lav_model_implied(lavmodel)
+    }
 
     ## check for missing, to see if we can easily get baseline ll for chisq
     mis <- FALSE
@@ -25,25 +48,36 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
     if(measure %in% c("logl", "chisq") & !mis){
         if(casewise){
             ll.samp <- rep(NA, sum(unlist(lavdata@nobs)))
+        } else if(conditional){
+            ll.samp <- 0
         } else {
             ## logl + baseline logl
             ll.samp <- c(0,0)
         }
 
         for(g in 1:length(implied$cov)){
-            mnvec <- as.numeric(implied$mean[[g]])
+            if(conditional){
+              mnvec <- implied$mean[[g]]
+            } else {
+              mnvec <- as.numeric(implied$mean[[g]])
+            }
+
             ## ensure symmetric:
             cmat <- (implied$cov[[g]] + t(implied$cov[[g]]))/2
             tmpll <- try(dmnorm(lavdata@X[[g]], mnvec, cmat, log=TRUE))
             if(inherits(tmpll, "try-error")) tmpll <- NA
+            
+            if(!conditional){
+                sampmn <- apply(lavdata@X[[g]], 2, mean, na.rm=TRUE)
+                sampcov <- ((lavdata@nobs[[g]]-1)/(lavdata@nobs[[g]]))*cov(lavdata@X[[g]])
 
-            sampmn <- apply(lavdata@X[[g]], 2, mean, na.rm=TRUE)
-            sampcov <- ((lavdata@nobs[[g]]-1)/(lavdata@nobs[[g]]))*cov(lavdata@X[[g]])
-
-            basell <- dmnorm(lavdata@X[[g]], sampmn, sampcov, log=TRUE)
+                basell <- dmnorm(lavdata@X[[g]], sampmn, sampcov, log=TRUE)
+            }
 
             if(casewise){
                 ll.samp[lavdata@case.idx[[g]]] <- tmpll
+            } else if(conditional){
+                ll.samp <- ll.samp + sum(tmpll)
             } else {
                 tmpll <- c(sum(tmpll), sum(basell))
                 #tmpll <- -2*(sum(tmpll) - sum(basell))
