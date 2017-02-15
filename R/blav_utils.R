@@ -30,7 +30,7 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
 
       ## implied meanvec + covmat
       mnvec <- lavaan:::computeYHAT(lavmodel, lavmodel@GLIST,
-                                    fit@SampleStats, ETA = eta)
+                                    lavsamplestats, ETA = eta)
       covmat <- lavaan:::computeTHETA(lavmodel, lavmodel@GLIST)
 
       implied <- list(cov = covmat, mean = mnvec,
@@ -140,8 +140,9 @@ samp_lls <- function(lavjags        = NULL,
                      lavoptions     = NULL, 
                      lavcache       = NULL,
                      lavdata        = NULL,
-                     thin           = 5){
-    itnums <- sampnums(lavjags, thin=5)
+                     thin           = 5,
+                     conditional    = FALSE){
+    itnums <- sampnums(lavjags, thin = thin)
     nsamps <- length(itnums)
     nchain <- length(lavjags$mcmc)
     llmat <- array(NA, c(nsamps, nchain, 2)) ## logl + baseline logl
@@ -154,7 +155,8 @@ samp_lls <- function(lavjags        = NULL,
                                      lavsamplestats, 
                                      lavoptions, 
                                      lavcache,
-                                     lavdata)
+                                     lavdata,
+                                     conditional = conditional)
         }
     }
 
