@@ -18,6 +18,7 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
     }
 
     if(conditional){
+      ## FIXME: deal with phantom lvs?
       nlv <- length(lav_partable_attributes(lavpartable)$vnames$lv[[1]])
       ## arrange eta in a matrix:
       etapars <- grepl("^eta", names(postsamp))
@@ -66,10 +67,10 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
             cmat <- (implied$cov[[g]] + t(implied$cov[[g]]))/2
             tmpll <- try(dmnorm(lavdata@X[[g]], mnvec, cmat, log=TRUE))
             if(inherits(tmpll, "try-error")) tmpll <- NA
-            
+
             if(!conditional){
-                sampmn <- apply(lavdata@X[[g]], 2, mean, na.rm=TRUE)
-                sampcov <- ((lavdata@nobs[[g]]-1)/(lavdata@nobs[[g]]))*cov(lavdata@X[[g]])
+                sampmn <- lavsamplestats@mean[[g]]
+                sampcov <- lavsamplestats@cov[[g]] #((lavdata@nobs[[g]]-1)/(lavdata@nobs[[g]]))*cov(lavdata@X[[g]])
 
                 basell <- dmnorm(lavdata@X[[g]], sampmn, sampcov, log=TRUE)
             }
