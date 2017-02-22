@@ -30,6 +30,8 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
       }
 
       ## implied meanvec + covmat
+      ## TODO replace with lav_predict_yhat and lavInspect?
+      ## (lav_predict_yhat unavailable from lavPredict with custom ETA)
       mnvec <- lavaan:::computeYHAT(lavmodel, lavmodel@GLIST,
                                     lavsamplestats, ETA = eta)
       covmat <- lavaan:::computeTHETA(lavmodel, lavmodel@GLIST)

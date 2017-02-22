@@ -63,8 +63,9 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
 
         if(!mis){
           lavdata@X <- dataX
-          
+
           chisq.boot <- 2*diff(get_ll(lavmodel = lavmodel,
+                                      lavsamplestats = lavsamplestats,
                                       lavdata = lavdata,
                                       measure = measure))
         } else {
