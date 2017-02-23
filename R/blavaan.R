@@ -66,6 +66,11 @@ blavaan <- function(...,  # default lavaan arguments
     # if do.fit supplied, save it for jags stuff
     jag.do.fit <- TRUE
     if("do.fit" %in% dotNames) jag.do.fit <- dotdotdot$do.fit
+    if("warn" %in% dotNames){
+        origwarn <- dotdotdot$warn
+    } else {
+        origwarn <- TRUE
+    }
     dotdotdot$do.fit <- TRUE
     dotdotdot$se <- "none"; dotdotdot$test <- "none"
     # run for 1 iteration to obtain info about equality constraints, for npar
@@ -136,6 +141,9 @@ blavaan <- function(...,  # default lavaan arguments
         stop("blavaan ERROR: full data are required. consider using kd() from package semTools.")
     }
 
+    # turn warnings back on by default
+    LAV@Options$warn <- origwarn
+  
     # check for conflicting mv names
     namecheck(LAV@Data@ov.names[[1]])
     
