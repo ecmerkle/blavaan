@@ -5,8 +5,8 @@ short.summary <- function(object) {
 
     # catch FAKE run
     FAKE <- FALSE
-    if(!is.null(object@Model@control$optim.method)) {
-        if(tolower(object@Model@control$optim.method) == "none") {
+    if(!is.null(object@Options$optim.method)) {
+        if(tolower(object@Options$optim.method) == "none") {
             FAKE <- TRUE
         }
     }
@@ -192,7 +192,8 @@ function(object, header       = TRUE,
 
 
     if(estimates) {
-        PE <- parameterEstimates(object, zstat = FALSE, ci = TRUE,
+        PE <- parameterEstimates(object, se = TRUE, zstat = FALSE,
+                                 ci = TRUE,
                                  standardized = standardized,
                                  rsquare = rsquare,
                                  remove.eq = FALSE, remove.system.eq = TRUE,

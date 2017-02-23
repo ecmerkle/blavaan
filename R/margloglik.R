@@ -149,7 +149,10 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
   lavoptions$test <- "standard"
   lavoptions$estimator <- "ML"
   ## control() is part of lavmodel (for now)
-  lavmodel@control <- list(optim.method="none")
+  lavoptions$optim.method <- "none"
+  if("control" %in% slotNames(lavmodel)){
+    lavmodel@control <- list(optim.method="none")
+  }
 
   fit.new <- try(lavaan(slotParTable = lavpartable,
                         slotModel = lavmodel,

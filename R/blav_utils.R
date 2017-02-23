@@ -108,7 +108,10 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
         lavoptions$test <- "standard"
         lavoptions$estimator <- "ML"
         ## control() is part of lavmodel (for now)
-        lavmodel@control <- list(optim.method="none")
+        lavoptions$optim.method <- "none"
+        if("control" %in% slotNames(lavmodel)){
+            lavmodel@control <- list(optim.method="none")
+        }
 
         fit.samp <- try(lavaan(slotParTable = lavpartable,
                                slotModel = lavmodel,
