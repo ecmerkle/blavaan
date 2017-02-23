@@ -71,8 +71,8 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
             if(inherits(tmpll, "try-error")) tmpll <- NA
 
             if(!conditional){
-                sampmn <- lavsamplestats@mean[[g]]
-                sampcov <- lavsamplestats@cov[[g]] #((lavdata@nobs[[g]]-1)/(lavdata@nobs[[g]]))*cov(lavdata@X[[g]])
+                sampmn <- apply(lavdata@X[[g]], 2, mean, na.rm=TRUE)
+                sampcov <- ((lavdata@nobs[[g]]-1)/(lavdata@nobs[[g]]))*cov(lavdata@X[[g]])
 
                 basell <- dmnorm(lavdata@X[[g]], sampmn, sampcov, log=TRUE)
             }
