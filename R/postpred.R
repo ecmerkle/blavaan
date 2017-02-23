@@ -91,8 +91,11 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
           lavoptions2$estimator <- "ML"
           lavoptions2$se <- "none"
           lavoptions2$test <- "standard"
+          lavoptions2$optim.method <- "none"
           lavmodel2 <- lavmodel
-          lavmodel2@control <- list(optim.method="none")
+          if("control" %in% slotNames(lavmodel2)){
+            lavmodel2@control <- list(optim.method="none")
+          }
           if(lavsamplestats@ngroups > 1L) {
             DATA$.g. <- rep(1:lavdata@ngroups, 
                             times = unlist(lavdata@nobs))

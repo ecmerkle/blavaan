@@ -71,8 +71,8 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
             if(inherits(tmpll, "try-error")) tmpll <- NA
 
             if(!conditional){
-                sampmn <- lavsamplestats@mean[[g]]
-                sampcov <- lavsamplestats@cov[[g]] #((lavdata@nobs[[g]]-1)/(lavdata@nobs[[g]]))*cov(lavdata@X[[g]])
+                sampmn <- apply(lavdata@X[[g]], 2, mean, na.rm=TRUE)
+                sampcov <- ((lavdata@nobs[[g]]-1)/(lavdata@nobs[[g]]))*cov(lavdata@X[[g]])
 
                 basell <- dmnorm(lavdata@X[[g]], sampmn, sampcov, log=TRUE)
             }
@@ -108,7 +108,10 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
         lavoptions$test <- "standard"
         lavoptions$estimator <- "ML"
         ## control() is part of lavmodel (for now)
-        lavmodel@control <- list(optim.method="none")
+        lavoptions$optim.method <- "none"
+        if("control" %in% slotNames(lavmodel)){
+            lavmodel@control <- list(optim.method="none")
+        }
 
         fit.samp <- try(lavaan(slotParTable = lavpartable,
                                slotModel = lavmodel,

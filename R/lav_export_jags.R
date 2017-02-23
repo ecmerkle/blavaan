@@ -50,7 +50,7 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     ## TODO seems like this is already hidden somewhere in lavaan...
     ncats <- sapply(ov.ord, function(x) length(grep(x, vnames$th[[1]])) + 1)
   }
-    
+
   lv.nox <- vnames$lv.nox[[1]]
   lv.names <- vnames$lv[[1]]
   ## ensure that lv.x names always come first (so we can possibly use dmnorm)

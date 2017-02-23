@@ -128,7 +128,8 @@ nlvcovs)
         phname <- paste(".phant", i, sep="")
         partable <- rbind(partable, blkrow, blkrow, blkrow)
 
-        partable$group[tmprows] <- k
+        ## TODO? should 'block' ever differ from 'group'?
+        partable$group[tmprows] <- partable$block[tmprows] <- k
 
         partable$rhs[tmprows[1]] <- partable$lhs[covpars[i]]
         partable$rhs[tmprows[2]] <- partable$rhs[covpars[i]]
