@@ -18,7 +18,6 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
     }
 
     if(conditional){
-      stop("blavaan ERROR: conditional likelihoods not yet available.")
       ## FIXME: deal with phantom lvs?
       nlv <- length(lav_partable_attributes(lavpartable)$vnames$lv[[1]])
       ## arrange eta in a matrix:
@@ -33,14 +32,14 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
       ## implied meanvec + covmat
       ## TODO replace with lav_predict_yhat and lavInspect?
       ## (lav_predict_yhat unavailable from lavPredict with custom ETA)
-      #mnvec <- lavaan:::computeYHAT(lavmodel, lavmodel@GLIST,
-      #                              lavsamplestats, ETA = eta)
-      #covmat <- lavaan:::computeTHETA(lavmodel, lavmodel@GLIST)
+      mnvec <- lavaan:::computeYHAT(lavmodel, lavmodel@GLIST,
+                                    lavsamplestats, ETA = eta)
+      covmat <- lavaan:::computeTHETA(lavmodel, lavmodel@GLIST)
 
-      #implied <- list(cov = covmat, mean = mnvec,
-      #                slopes = vector("list", ngroups),
-      #                th = vector("list", ngroups),
-      #                group.w = vector("list", ngroups))
+      implied <- list(cov = covmat, mean = mnvec,
+                      slopes = vector("list", ngroups),
+                      th = vector("list", ngroups),
+                      group.w = vector("list", ngroups))
     } else {
       implied <- lav_model_implied(lavmodel)
     }
