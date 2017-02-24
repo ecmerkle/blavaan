@@ -43,6 +43,10 @@ blavInspect <- function(blavobject, what, ...) {
             if(add.labels) names(OUT) <- labs
             OUT
         } else if(what %in% c("mcmc", "draws", "samples", "hpd")){
+            ## add defined parameters to labels
+            pt <- blavobject@ParTable
+            pt$free[pt$op == ":="] <- max(pt$free, na.rm = TRUE) + 1:sum(pt$op == ":=")
+            labs <- lav_partable_labels(pt, type = "free")
             draws <- blavobject@external$runjags$mcmc
             draws <- lapply(draws, function(x) x[,idx])
             draws <- mcmc.list(draws)

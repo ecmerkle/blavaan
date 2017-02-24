@@ -5,7 +5,7 @@ Changes in Version 0.2-3
 
     o blavInspect() gains 'jagnames' option, showing correspondence between blavaan parameter names and JAGS parameter names.
 
-    o Fix bugs in (i) marginal log-lik computation under cp='fa', and (ii) number of parameters under complex equality constraints.
+    o Fix bugs in (i) marginal log-lik computation under cp='fa', and (ii) calculated number of parameters under complex equality constraints.
 
 Changes in Version 0.2-2
     o Fix bug in 0.2-1 causing model estimation to crash on Windows only.
