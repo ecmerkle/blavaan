@@ -1,11 +1,11 @@
 postpred <- function(lavpartable, lavmodel, lavoptions, 
                      lavsamplestats, lavdata, lavcache, lavjags,
-                     measure = "logl") {
+                     measure = "logl", thin = 5) {
 
     ## run through lavjags$mcmc, generate data from various posterior
     ## samples. thin like we do in samp_lls
 
-    samp.indices <- sampnums(lavjags, thin=5)
+    samp.indices <- sampnums(lavjags, thin=thin)
     n.chains <- length(lavjags$mcmc)
     psamp <- length(samp.indices)
   
