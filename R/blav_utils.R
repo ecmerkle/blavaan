@@ -18,16 +18,7 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
     }
 
     if(conditional){
-      ## FIXME: deal with phantom lvs?
-      nlv <- length(lav_partable_attributes(lavpartable)$vnames$lv[[1]])
-      ## arrange eta in a matrix:
-      etapars <- grepl("^eta", names(postsamp))
-      etamat <- matrix(postsamp[etapars], lavsamplestats@ntotal, nlv)
-      ngroups <- lavsamplestats@ngroups
-      eta <- vector("list", ngroups)
-      for(g in 1:ngroups){
-        eta[[g]] <- etamat[lavdata@case.idx[[g]], , drop = FALSE]
-      }
+      eta <- fill_eta(postsamp, lavpartable, lavsamplestats, lavdata)
 
       ## implied meanvec + covmat
       ## TODO replace with lav_predict_yhat and lavInspect?
@@ -36,6 +27,7 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
                                     lavsamplestats, ETA = eta)
       covmat <- lavaan:::computeTHETA(lavmodel, lavmodel@GLIST)
 
+      ngroups <- lavsamplestats@ngroups
       implied <- list(cov = covmat, mean = mnvec,
                       slopes = vector("list", ngroups),
                       th = vector("list", ngroups),
@@ -363,4 +355,123 @@ namecheck <- function(ov.names){
         stop("blavaan ERROR: the following variable names must be changed:\n",
              "                   ", paste(forbidden[forbid.idx], collapse = " "))
     }
+}
+
+## compute undirected K-L divergence across all draws
+## (each draw paired with one from another chain)
+samp_kls <- function(draws          = NULL, # all chains in 1 matrix
+                     lavmodel       = NULL, 
+                     lavpartable    = NULL, 
+                     lavsamplestats = NULL, 
+                     lavoptions     = NULL, 
+                     lavcache       = NULL,
+                     lavdata        = NULL,
+                     conditional    = FALSE){
+
+    ## need to implement plummer's approach of generating y_rep
+    ##mis <- FALSE
+    ##if(any(is.na(unlist(lavdata@X)))) mis <- TRUE
+    ##if(mis | lavoptions$categorical) stop("blavaan ERROR: K-L divergence not implemented for missing data or ordinal variables.")
+  
+    ndraws <- nrow(draws)
+    halfdraws <- floor(ndraws/2)
+    ngroups <- lavsamplestats@ngroups
+
+    klres <- rep(NA, halfdraws)
+    for(i in 1:halfdraws){
+        lavmodel0 <- fill_params(draws[i,], lavmodel, lavpartable)
+        lavmodel1 <- fill_params(draws[(halfdraws + i),], lavmodel,
+                                 lavpartable)
+
+        if(conditional){
+            eta0 <- fill_eta(draws[i,], lavpartable, lavsamplestats,
+                             lavdata)
+            eta1 <- fill_eta(draws[(halfdraws + i),], lavpartable,
+                             lavsamplestats, lavdata)
+
+            mnvec0 <- lavaan:::computeYHAT(lavmodel0,
+                                           lavmodel0@GLIST,
+                                           lavsamplestats,
+                                           ETA = eta0)
+            cmat0 <- lavaan:::computeTHETA(lavmodel0,
+                                           lavmodel0@GLIST)
+            mnvec1 <- lavaan:::computeYHAT(lavmodel1,
+                                           lavmodel1@GLIST,
+                                           lavsamplestats,
+                                           ETA = eta1)
+            cmat1 <- lavaan:::computeTHETA(lavmodel1,
+                                           lavmodel1@GLIST)
+            implied0 <- list(cov = cmat0, mean = mnvec0,
+                             slopes = vector("list", ngroups),
+                             th = vector("list", ngroups),
+                             group.w = vector("list", ngroups))
+            implied1 <- list(cov = cmat1, mean = mnvec1,
+                             slopes = vector("list", ngroups),
+                             th = vector("list", ngroups),
+                             group.w = vector("list", ngroups))
+        } else {
+            implied0 <- lav_model_implied(lavmodel0)
+            implied1 <- lav_model_implied(lavmodel1)
+        }
+
+        tmpkl <- 0
+        for(g in 1:lavsamplestats@ngroups){
+            ## ensure symmetric:
+            cmat0 <- (implied0$cov[[g]] + t(implied0$cov[[g]]))/2
+            cmat1 <- (implied1$cov[[g]] + t(implied1$cov[[g]]))/2
+            if(conditional){
+                mnvec0 <- implied0$mean[[g]]
+                mnvec1 <- implied1$mean[[g]]
+
+                for(j in 1:nrow(mnvec0)){
+                  tmpkl <- tmpkl + kl_und(mnvec0[j,], mnvec1[j,],
+                                          cmat0, cmat1)
+                }
+            } else {
+                mnvec0 <- as.numeric(implied0$mean[[g]])
+                mnvec1 <- as.numeric(implied1$mean[[g]])
+
+                tmpkl <- tmpkl + lavsamplestats@nobs[[g]] *
+                         kl_und(mnvec0, mnvec1, cmat0, cmat1)
+            }
+        }
+        klres[i] <- tmpkl
+    }
+    klres
+}        
+
+## fill in eta matrices (1 per group, in list)
+fill_eta <- function(postsamp, lavpartable, lavsamplestats, lavdata){
+    ## FIXME: deal with phantom lvs
+    nlv <- length(lav_partable_attributes(lavpartable)$vnames$lv[[1]])
+    etapars <- grepl("^eta", names(postsamp))
+    etamat <- matrix(postsamp[etapars], lavsamplestats@ntotal, nlv)
+    ngroups <- lavsamplestats@ngroups
+
+    eta <- vector("list", ngroups)
+    for(g in 1:ngroups){
+        eta[[g]] <- etamat[lavdata@case.idx[[g]], , drop = FALSE]
+    }
+
+    eta
+}
+        
+## compute undirected K-L divergence between two normal distributions
+kl_und <- function(mn0, mn1, cov0, cov1){
+  invcov0 <- solve(cov0) #lavaan:::lav_matrix_symmetric_inverse(S = cov0)
+  invcov1 <- solve(cov1) #lavaan:::lav_matrix_symmetric_inverse(S = cov1)
+  k <- nrow(cov0)
+
+  det0 <- det(cov0)
+  det1 <- det(cov1)
+
+  kl01 <- sum(diag(invcov1 %*% cov0)) +
+    t(mn1 - mn0) %*% invcov1 %*% (mn1 - mn0) -
+    k + log(det1/det0)
+
+  kl10 <- sum(diag(invcov0 %*% cov1)) +
+    t(mn0 - mn1) %*% invcov0 %*% (mn0 - mn1) -
+    k + log(det0/det1)
+
+  (1/2) * (kl01 + kl10)
 }
