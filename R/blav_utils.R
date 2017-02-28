@@ -332,6 +332,7 @@ add_monitors <- function(lavpartable, lavjags, jagextra){
     lavpartable$rhs <- c(lavpartable$rhs, rep("", sum(nvars)))
     lavpartable$user <- c(lavpartable$user, rep(2, sum(nvars)))
     lavpartable$group <- c(lavpartable$group, rep(1, sum(nvars)))
+    lavpartable$block <- c(lavpartable$block, rep(1, sum(nvars)))
     lavpartable$free <- c(lavpartable$free, rep(0, sum(nvars)))
     lavpartable$ustart <- c(lavpartable$ustart, rep(NA, sum(nvars)))
     lavpartable$exo <- c(lavpartable$exo, rep(0, sum(nvars)))
