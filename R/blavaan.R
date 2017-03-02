@@ -355,16 +355,16 @@ blavaan <- function(...,  # default lavaan arguments
         parests <- coeffun(lavpartable, jagtrans$pxpartable, res)
         x <- parests$x
         lavpartable <- parests$lavpartable
-        
+
         attr(x, "control") <- jagcontrol
         if(jag.do.fit){
             lavmodel <- lav_model_set_parameters(lavmodel, x = x)
             attr(x, "iterations") <- res$sample
             attr(x, "converged") <- TRUE
         } else {
-            x <- numeric(0L)
+            #x <- numeric(0L)
             attr(x, "iterations") <- 0L
-            attr(x, "converged") <- FALSE          
+            attr(x, "converged") <- FALSE
             lavpartable$est <- lavpartable$start
         }
 
