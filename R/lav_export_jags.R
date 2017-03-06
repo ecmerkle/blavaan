@@ -427,6 +427,7 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
   ## priors/constraints
   TXT2 <- set_parvec(TXT2, partable, dp, cp, lv.x.wish, orig.lv.names.x)
   partable$prior <- TXT2$partable$prior
+  partable$freeparnums <- TXT2$partable$freeparnums
   TXT2 <- TXT2$TXT2
 
   ## end of model

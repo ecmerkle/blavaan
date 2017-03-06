@@ -3,7 +3,7 @@ set_inits <- function(partable, ov.cp, lv.cp, n.chains, inits){
   ## TODO write start values to new columns of coefvec, so can include in partable
   initvals <- vector("list", n.chains)
   names(initvals) <- paste("c", 1:n.chains, sep="")
-  pveclen <- max(partable$parnums[partable$mat != ""], na.rm = TRUE)
+  pveclen <- max(partable$freeparnums[partable$mat != ""], na.rm = TRUE)
 
   for(i in 1:n.chains){
     initvals[[i]] <- list(parvec = rep(NA, pveclen))
@@ -82,15 +82,7 @@ set_inits <- function(partable, ov.cp, lv.cp, n.chains, inits){
 
     ## extract matrix, dimensions
     for(j in 1:n.chains){
-      varparm <- (partable$lhs[i] == partable$rhs[i]) &
-                 (partable$op[i] == "~~")                 
-      if(varparm & !grepl("[var]", partable$prior[i], fixed = TRUE)){
-        initvals[[j]] <- c(initvals[[j]], ivs[j])
-        tmpname <- paste("pvec", partable$parnums[i], sep="")
-        names(initvals[[j]])[length(initvals[[j]])] <- tmpname
-      } else {
-        initvals[[j]][["parvec"]][partable$parnums[i]] <- ivs[j]
-      }
+      initvals[[j]][["parvec"]][partable$freeparnums[i]] <- ivs[j]
     }
   }
 
