@@ -276,11 +276,11 @@ blavaan <- function(...,  # default lavaan arguments
     if(lavmodel@nx.free > 0L) {
         if(!trans.exists){
             ## convert partable to jags, then run
-            jagtrans <- try(lav2jags(model = lavpartable, lavdata = lavdata,
+            jagtrans <- try(lav2mcmc(model = lavpartable, lavdata = lavdata,
                                      cp = cp, lv.x.wish = lavoptions$auto.cov.lv.x,
                                      dp = dp, n.chains = n.chains,
-                                     jagextra = jagextra, inits = initsin,
-                                     blavmis = blavmis),
+                                     mcmcextra = jagextra, inits = initsin,
+                                     blavmis = blavmis, target="jags"),
                             silent = TRUE)
         }
 

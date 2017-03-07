@@ -1,4 +1,4 @@
-lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = dpriors(), n.chains = 1, jagextra = "", inits = "prior", blavmis = blavmis, pta = NULL) {
+lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = dpriors(), n.chains = 1, mcmcextra = "", inits = "prior", blavmis = "da", pta = NULL, target = "stan") {
   ## lots of code is taken from lav_export_bugs.R
 
   if(class(model)[1]=="lavaan"){
@@ -9,13 +9,16 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     if(!is.data.frame(partable)) {
         partable <- as.data.frame(partable, stringsAsFactors = FALSE)
     }
-  }    
+  }
+
+  eqop <- ifelse(target == "stan", "=", "<-")
+  commop <- ifelse(target == "stan", "// ", "# ")
+  eolop <- ifelse(target == "stan", ";", "")
   
   ## get names of ovs before we add phantom variables
   old.pta <- lav_partable_attributes(partable = partable, pta = pta)
   old.vnames <- old.pta$vnames
   ngroups <- old.pta$ngroups
-  nparam <- sum(partable$free > 0)
   orig.ov.names <- old.vnames$ov[[1]]; nov <- length(orig.ov.names)
   orig.lv.names <- old.vnames$lv[[1]]; orig.lv.names.x <- old.vnames$lv.x[[1]]
   ## so ordering stays consistent:
@@ -83,6 +86,7 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
   
   ## TXT header
   TXT <- paste("model {\n", sep="")
+  TPS <- ""
 
   if(blavmis == "da"){
     TXT <- paste(TXT, t1,
@@ -93,9 +97,6 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
 
   ## Second object for priors/constraints
   TXT2 <- ""
-  ## Matrix that keeps track of parameter ordering, priors,
-  ## and starting values
-  coefvec <- matrix(NA, nparam, 3)
 
   ## Decide whether we need to model exogenous x's
   if(length(ov.names.x) > 0){ # & !is.na(ov.names.x)){
@@ -185,11 +186,23 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
           tvname <- paste(tvname, "star", sep="")
         }
           
-        TXT <- paste(TXT, t2, ov.names[j], 
-                     "[i] ~ dnorm(mu[i,", j, "], 1/", tvname, "[", partable$row[mvvar], ",", partable$col[mvvar], ",g[i]])\n",
-                     sep="")
+        TXT <- paste(TXT, t2, ov.names[j], sep="")
+        if(target == "stan"){
+          TXT <- paste(TXT, "[i] ~ normal(mu[i,", j, "], sqrt(",
+                       sep="")
+        } else {
+          TXT <- paste(TXT, "[i] ~ dnorm(mu[i,", j, "], 1/",
+                       sep="")
+        }
+        TXT <- paste(TXT, tvname, "[", partable$row[mvvar], ",",
+                     partable$col[mvvar], ",g[i]])", sep="")
+        if(target == "stan"){
+          TXT <- paste(TXT, ")", sep="")
+        }
+        TXT <- paste(TXT, eolop, "\n", sep="")
       }
     } else {
+      if(target == "stan") stop("blavaan ERROR: missing data in stan not yet available.")
       TXT <- paste(TXT, t2, "yvec[i] ~ dnorm(mu[sub[i], mv[i]], 1/",
                    tvname, "[mv[i], mv[i], g[i]])\n", sep="")
       # now close this loop and start the usual one
@@ -201,11 +214,12 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
         for(j in 1:length(ovreg)){
           TXT <- paste(TXT, t2, ovreg[j],
                        "[i] ~ dnorm(mu[i,", colidx[j], "], 1/", tvname,
-                       "[", colidx[j], ",g[i]])\n", sep="")
+                       "[", colidx[j], ",g[i]])", eolop, "\n", sep="")
         }
       }
     }
   } else {
+    if(target == "stan") stop("blavaan ERROR: ordinal models cannot yet be exported to stan")
     # TODO revisit "fi" approach to missing data
     if(blavmis == "fi") stop("blavaan ERROR: missing='fi' not yet supported for ordinal data")
     for(j in 1:nmvs){
@@ -222,18 +236,20 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
         taus <- which(partable$lhs == ov.names[j] &
                       partable$op == "|" &
                       partable$group == 1)
-        TXT <- paste(TXT, t2, "probs[i,", ord.num, ",1] <- pnorm(tau[", partable$row[taus[1]],
+        TXT <- paste(TXT, t2, "probs[i,", ord.num, ",1] ", eqop,
+                     " pnorm(tau[", partable$row[taus[1]],
                      ",", partable$col[taus[1]], ",g[i]], mu[i,", j, "], 1/", tvname, "[", j, ",", j, ",g[i]])\n", sep="")
         if(ncats[ord.num] > 2){
           for(k in 2:(ncats[ord.num] - 1)){
-            TXT <- paste(TXT, t2, "probs[i,", ord.num, ",", k, "] <- pnorm(tau[",
+            TXT <- paste(TXT, t2, "probs[i,", ord.num, ",", k, "] ",
+                         eqop, " pnorm(tau[",
                          partable$row[taus[k]], ",", partable$col[taus[k]], ",g[i]], mu[i,", j, "], 1/", tvname, "[", j, ",",
                          j, ",g[i]]) - sum(probs[i,", ord.num, ",1:", (k-1), "])\n",
                          sep="")
           }
         }
         TXT <- paste(TXT, t2, "probs[i,", ord.num, ",", ncats[ord.num],
-                     "] <- 1 - sum(probs[i,", ord.num, ",1:", ncats[ord.num]-1, "])\n",
+                     "] ", eqop, " 1 - sum(probs[i,", ord.num, ",1:", ncats[ord.num]-1, "])\n",
                      sep="")
       } else {
         TXT <- paste(TXT, t2, ov.names[j], "[i,", j, "] ~ dnorm(mu[i,", j, "],", tvname, "[", j, ",g[i]])\n", sep="")
@@ -245,10 +261,13 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
   ## This assumes that the data matrix passed to jags
   ## is ordered in the same way as ov.names.nox.
   ## data would be cbind(ov.names.nox, ov.names.x)
+  TPS <- paste(TPS, t1, commop, "mu definitions\n", t1,
+               "for(i in 1:N) {", sep="")
   for(i in 1:nmvs) {
     ov.idx <- i
-    TXT <- paste(TXT, "\n", t2,
-                 "mu[i,", ov.idx, "] <- ", sep="")
+    if(i > 1) TPS <- paste(TPS, eolop, sep="")
+    TPS <- paste(TPS, "\n", t2, "mu[i,", ov.idx, "] ", eqop, " ",
+                 sep="")
 
     ## find rhs for this observed variable
     ## 1. intercept?
@@ -261,9 +280,9 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
 
     ## Now deal with intercept constraints/priors:
     if(length(int.idx) == 0L) {
-        TXT <- paste(TXT, "nu[", ov.idx, ",1,g[i]]", sep="")
+        TPS <- paste(TPS, "nu[", ov.idx, ",1,g[i]]", sep="")
     } else {
-        TXT <- paste(TXT, partable$mat[int.idx], "[", partable$row[int.idx], ",",
+        TPS <- paste(TPS, partable$mat[int.idx], "[", partable$row[int.idx], ",",
                      partable$col[int.idx], ",g[i]]", sep="")
     }
 
@@ -273,7 +292,7 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
                      loadings$group == 1)
     if(length(lam.idx) > 0){
       for(j in 1:length(lam.idx)) {
-        TXT <- paste(TXT, " + ", loadings$mat[lam.idx[j]], "[",
+        TPS <- paste(TPS, " + ", loadings$mat[lam.idx[j]], "[",
                      loadings$row[lam.idx[j]], ",", loadings$col[lam.idx[j]],
                      ",g[i]]*eta[i,", match(loadings$lhs[lam.idx[j]], lv.names)
                      , "]", sep="")
@@ -293,7 +312,7 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
       }
       
       ## deal with fixed later
-      TXT <- paste(TXT, " + ", regressions$mat[j], "[",
+      TPS <- paste(TPS, " + ", regressions$mat[j], "[",
                    regressions$row[j], ",", regressions$col[j],
                    ",g[i]]*", RHS, sep="")
     }
@@ -305,19 +324,26 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
 
     }
   }
+  TPS <- paste(TPS, eolop, "\n", sep="")
 
   ## lvs
   if(length(lv.names) > 0L) {
-    TXT <- paste(TXT, "\n\n", t2,
-                 "# lvs", sep="")
+    TXT <- paste(TXT, "\n", t2,
+                 commop, "lvs", sep="")
 
     lvstart <- 1
     if(lv.x.wish & nlvx > 1){
       lvstart <- nlvx + 1
 
       TXT <- paste(TXT, "\n", t2,
-                   "eta[i,1:", nlvx, "] ~ dmnorm(mu.eta[i,1:",
-                   nlvx, "], ibpsi[1:", nlvx,",1:", nlvx, ",g[i]])", sep="")
+                   "eta[i,1:", nlvx, "] ~ ", sep="")
+      if(target == "stan"){
+        TXT <- paste(TXT, "multi_normal_prec(", sep="")
+      } else {
+        TXT <- paste(TXT, "dmnorm(", sep="")
+      }
+      TXT <- paste(TXT, "mu.eta[i,1:", nlvx, "], ibpsi[1:",
+                   nlvx,",1:", nlvx, ",g[i]])", eolop, sep="")
     }
     
     nlv <- length(lv.names)
@@ -342,33 +368,44 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
                         partable$rhs == lv.names[j] &
                         partable$op == "~~")
         if(any(partable$free[lv.var] == 0 & partable$ustart[lv.var] == 0)){
-            TXT <- paste(TXT, "\n", t2, "eta[i,", j, "] <- mu.eta[i,",
-                         j, "]", sep="")
-            ## now change ustart to 1000 so no divide by 0 in jags
-            partable$ustart[lv.var] <- 1000
+          TXT <- paste(TXT, "\n", t2, "eta[i,", j, "] ", eqop,
+                       " mu.eta[i,", j, "]", eolop, sep="")
+          ## now change ustart to 1000 so no divide by 0 in jags
+          partable$ustart[lv.var] <- 1000
         } else {
-            lvcovs <- length(which(partable$lhs == lv.names[j] &
-                                   grepl(".phant", partable$rhs) &
-                                   partable$op == "~"))
+          lvcovs <- length(which(partable$lhs == lv.names[j] &
+                                 grepl(".phant", partable$rhs) &
+                                 partable$op == "~"))
 
-            pvname <- ifelse(lvcovs > 0, "psistar", "psi")
+          pvname <- ifelse(lvcovs > 0, "psistar", "psi")
             
-            TXT <- paste(TXT, "\n", t2,
-                         ## TODO check for alternative distribution?
-                         "eta[i,", j, "] ~ dnorm(mu.eta[i,", 
-                         j, "], 1/", pvname, "[",
-                         partable$row[psi.free.idx], ",", partable$col[psi.free.idx],
-                         ",g[i]])", sep="")
+          TXT <- paste(TXT, "\n", t2,
+                       ## TODO check for alternative distribution?
+                       "eta[i,", j, "] ~ ", sep="")
+          if(target == "stan"){
+            TXT <- paste(TXT, "normal(mu.eta[i,", j, "], sqrt(",
+                         sep="")
+          } else {
+            TXT <- paste(TXT, "dnorm(mu.eta[i,", j, "], 1/", sep="")
+          }
+          TXT <- paste(TXT, pvname, "[",
+                       partable$row[psi.free.idx], ",", partable$col[psi.free.idx],
+                       ",g[i]])", sep="")
+          if(target == "stan"){
+            TXT <- paste(TXT, ")", eolop, sep="")
+          }
         }
       } # j
     } # if
 
     ## After lv distributions are defined, now define means/regressions:
     for(j in 1:nlv) {
-      TXT <- paste(TXT, "\n", t2,
+      if(j > 1) TPS <- paste(TPS, eolop, sep="")
+
+      TPS <- paste(TPS, "\n", t2,
                    ## TODO check for alternative distribution
                    ## in parameter table.
-                   "mu.eta[i,", j, "] <- ", sep="")
+                   "mu.eta[i,", j, "] ", eqop, " ", sep="")
 
       ## lhs elements regression
       ## 1. intercept? (even exogenous can have an intercept)
@@ -377,10 +414,10 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
                        lvintercepts$lhs == lv.names[j])
       if(length(int.idx) == 1L) {
         ## fixed or free?
-        TXT <- paste(TXT, lvintercepts$mat[int.idx], "[", lvintercepts$row[int.idx],
+        TPS <- paste(TPS, lvintercepts$mat[int.idx], "[", lvintercepts$row[int.idx],
                      ",", lvintercepts$col[int.idx], ",g[i]]", sep="")
       } else { # no intercept, say '0', so we always have rhs
-        TXT <- paste(TXT, "0", sep="")
+        TPS <- paste(TPS, "0", sep="")
       }
 
       if(lv.names[j] %in% lv.nox){
@@ -390,7 +427,7 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
                          loadings$group == 1)
         if(length(lam.idx) > 0){
           for(k in lam.idx){
-            TXT <- paste(TXT, " + ", loadings$mat[k], "[", loadings$row[k],
+            TPS <- paste(TPS, " + ", loadings$mat[k], "[", loadings$row[k],
                          ",", loadings$col[k], ",g[i]]*eta[i,",
                          match(loadings$lhs[k], lv.names), "]", sep="")
           } # end k loop
@@ -403,15 +440,15 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
         np <- length(rhs.idx)
         if(np > 0){ # there could be none if we have higher-order factors
           for(p in rhs.idx){
-            TXT <- paste(TXT, " + ", regressions$mat[p], "[", regressions$row[p],
+            TPS <- paste(TPS, " + ", regressions$mat[p], "[", regressions$row[p],
                          ",", regressions$col[p], ",g[i]]", sep="")
 
             ## Is the rhs an lv or ov?
             lvmatch <- match(regressions$rhs[p], lv.names)
             if(is.na(lvmatch)){
-              TXT <- paste(TXT, "*", regressions$rhs[p], "[i]", sep="")
+              TPS <- paste(TPS, "*", regressions$rhs[p], "[i]", sep="")
             } else {
-              TXT <- paste(TXT, "*eta[i,", lvmatch, "]", sep="")
+              TPS <- paste(TPS, "*eta[i,", lvmatch, "]", sep="")
             }
           } # end p loop
         } # end if np
@@ -419,42 +456,51 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
 
       ## 4. lv variances now handled separately
     } # end j loop
+    TPS <- paste(TPS, eolop, sep="")
   } # end if length(lv.names)
 
   ## end of main model specification (still need priors + equality constraints)
   TXT <- paste(TXT, "\n", t1, "}", sep="")
+  TPS <- paste(TPS, "\n", t1, "}", sep="")
 
   ## priors/constraints
-  TXT2 <- set_parvec(TXT2, partable, dp, cp, lv.x.wish, orig.lv.names.x)
+  TXT2 <- set_parvec(TXT2, partable, dp, cp, lv.x.wish, orig.lv.names.x, target)
   partable$prior <- TXT2$partable$prior
   partable$freeparnums <- TXT2$partable$freeparnums
+  TXT3 <- TXT2$TXT3
   TXT2 <- TXT2$TXT2
 
   ## end of model
-  TXT <- paste(TXT, "\n\n", t1, "# Assignments from parameter vector", TXT2, sep="")
+  if(target == "jags"){
+    TXT <- paste(TXT, "\n\n", TPS, "\n\n", t1, "# Assignments from parameter vector & equality constraints", TXT2, TXT3, sep="")
+  }
 
   ## extra stuff from the user, formatted to look nice-ish
-  if("syntax" %in% names(jagextra)){
-    jagextra <- unlist(strsplit(jagextra$syntax, "\n"))
-    jagextra <- gsub("^\\s+|\\s+$", "", jagextra)
-    jagextra <- paste(t1, jagextra, sep="", collapse="\n")
-    TXT <- paste(TXT, "\n", jagextra, "\n", sep="")
+  if("syntax" %in% names(mcmcextra)){
+    mcmcextra <- unlist(strsplit(mcmcextra$syntax, "\n"))
+    mcmcextra <- gsub("^\\s+|\\s+$", "", mcmcextra)
+    mcmcextra <- paste(t1, mcmcextra, sep="", collapse="\n")
+    TXT <- paste(TXT, "\n", mcmcextra, "\n", sep="")
   }
-  TXT <- paste(TXT, "\n", "} # End of model\n", sep="")
-
+  TXT <- paste(TXT, "\n", sep="")
+  if(target == "jags") TXT <- paste0(TXT, "}\n")
+  
   out <- TXT
+  if(target == "stan") out <- paste0(out, TXT3, "\n}")
   class(out) <- c("lavaan.character", "character")
   out <- list(model = out, inits = NA)
     
   ## Initial values
   if(inits != "jags"){
+      if(target == "stan") stop("blavaan ERROR: random inits not yet available for stan")
       inits <- set_inits(partable, cp, cp, n.chains, inits)
       out$inits <- inits
   }
         
   ## Now add data for jags if we have it
-  if(!is.null(lavdata) | class(model)=="lavaan"){
-    if(class(model) == "lavaan") lavdata <- model@Data
+  datablk <- paste0("data{\n", t1, "int N;\n", t1, "int g[N];\n")
+  if(!is.null(lavdata) | class(model)[1]=="lavaan"){
+    if(class(model)[1] == "lavaan") lavdata <- model@Data
     ntot <- sum(unlist(lavdata@norig))
     ## pick up exogenous x's
     tmpnmvs <- length(orig.ov.names)
@@ -474,6 +520,12 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
       g[lavdata@case.idx[[k]]] <- k
     }
     names(y) <- orig.ov.names
+
+    ## stan data block
+    for(j in 1:tmpnmvs){
+      datablk <- paste0(datablk, t1, "vector[N] ",
+                        orig.ov.names[j], ";\n")
+    }
     
     ## remove fully deleted rows
     ymat <- matrix(unlist(y), ntot, tmpnmvs)
@@ -560,11 +612,38 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
         }
     }
 
+    ## these are passed in as data in stan, so are the "frames"
+    if(target == "stan"){
+      tpnames <- names(pmats)
+      names(pmats) <- paste0(names(pmats), "frame")
+
+      ## declare data variables and defined params
+      datdecs <- tpdecs <- tpeqs <- ""
+      for(i in 1:length(tpnames)){
+        tmpdim <- dim(pmats[[i]])
+        datdecs <- paste0(datdecs, t1, "real ",
+                          names(pmats)[i], "[", tmpdim[1],
+                          ",", tmpdim[2], ",", tmpdim[3], "];\n")
+        tpdecs <- paste0(tpdecs, t1, "real ",
+                         tpnames[i], "[", tmpdim[1],
+                          ",", tmpdim[2], ",", tmpdim[3], "];\n")
+        tpeqs <- paste0(tpeqs, t1, tpnames[i], " = ",
+                        names(pmats)[i], ";\n")
+      }
+    }
+
+    if(target == "stan"){
+      TPS <- paste0("transformed parameters{\n", tpdecs, "\n",
+                    tpeqs, TXT2, "\n\n", TPS,
+                    "\n}\n\n")
+      datablk <- paste0(datablk, datdecs, "}\n\n")
+    }
+
     jagsdata <- c(jagsdata, pmats)
     
     ## identity matrix for wishart prior
     ## TODO allow user to specify this matrix
-    ## or could be specified via jagextra argument?
+    ## or could be specified via mcmcextra argument?
     if(lv.x.wish & length(orig.lv.names.x) > 1){
       iden <- diag(length(orig.lv.names.x))
       jagsdata <- c(jagsdata, list(iden=iden))
@@ -572,7 +651,14 @@ lav2jags <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     
     out <- c(out, list(data=jagsdata))
   }
-    
+
+  if(target == "stan"){
+    nparms <- max(partable$freeparnums, na.rm = TRUE)
+    parmblk <- paste0("parameters{\n", t1, "vector[",
+                      nparms, "] parvec;\n}\n\n")
+    out$model <- paste0(datablk, parmblk, TPS, out$model)
+  }
+  
   out <- c(out, list(monitors = monitors, pxpartable = partable))
     
   out

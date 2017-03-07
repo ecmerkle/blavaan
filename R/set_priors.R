@@ -1,11 +1,15 @@
-set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x){
+set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x, target="jags"){
     ## tabs
     t1 <- paste(rep(" ", 2L), collapse="")
     t2 <- paste(rep(" ", 4L), collapse="")
     t3 <- paste(rep(" ", 6L), collapse="")
 
+    eqop <- ifelse(target == "stan", "=", "<-")
+    commop <- ifelse(target == "stan", "// ", "# ")
+    eolop <- ifelse(target == "stan", ";", "")
+  
     ## parameter assignments separate from priors
-    TXT3 <- paste("\n\n", t1, "# Priors/constraints", sep="")
+    TXT3 <- paste("\n", t1, commop, "Priors", sep="")
 
     ## find parameters with wishart priors
     wishpars <- NULL
@@ -65,15 +69,18 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x){
             ## start parameter assignment
             TXT2 <- paste(TXT2, "\n", t1, partable$mat[i], "[",
                           partable$row[i], ",", partable$col[i],
-                          ",", partable$group[i], "] <- ", sep="")
+                          ",", partable$group[i], "] ", eqop,
+                          " ", sep="")
             if(grepl("rho", partable$id[i])) TXT2 <- paste(TXT2, "-1 + 2*", sep="")
           
             if(partable$free[i] == 0 & partable$op[i] != ":="){
                 if(is.na(partable$ustart[i])){
                     ## exo
-                    TXT2 <- paste(TXT2, partable$start[i], sep="")
+                    TXT2 <- paste(TXT2, partable$start[i], eolop,
+                                  sep="")
                 } else {
-                    TXT2 <- paste(TXT2, partable$ustart[i], sep="")
+                    TXT2 <- paste(TXT2, partable$ustart[i], eolop,
+                                  sep="")
                 }
             } else if(length(eqpar) > 0){
                 eqpar <- which(partable$plabel == partable$lhs[eqpar])
@@ -81,11 +88,12 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x){
                     eqtxt <- paste(partable$mat[eqpar], "[",
                                    partable$row[eqpar], ",",
                                    partable$col[eqpar], ",",
-                                   partable$group[eqpar], "]", sep="")
+                                   partable$group[eqpar], "]",
+                                   eolop, sep="")
                 } else {
                     eqtxt <- paste("parvec[",
                                    partable$freeparnums[eqpar],
-                                   "]", sep="")
+                                   "]", eolop, sep="")
                 }
 
                 vpri <- grepl("\\[var\\]", partable$prior[eqpar])
@@ -93,7 +101,7 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x){
                 if(!vpri & (grepl("theta", partable$mat[i]) | grepl("psi", partable$mat[i]))){
                     sq <- ifelse(spri, "2", "-1")
                     TXT2 <- paste(TXT2, "pow(", eqtxt, ",", sq,
-                                  ")", sep="")
+                                  ")", eolop, sep="")
                 } else {
                     TXT2 <- paste(TXT2, eqtxt, sep="")
                 }
@@ -114,7 +122,7 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x){
                 }
                 jageq <- gsub("[", "parvec[", jageq, fixed = TRUE)
 
-                TXT2 <- paste(TXT2, jageq, sep="")
+                TXT2 <- paste(TXT2, jageq, eolop, sep="")
             } else {
                 ## needs a prior
                 TXT3 <- paste(TXT3, "\n", t1, "parvec[",
@@ -138,13 +146,13 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x){
                     sq <- ifelse(spri, "2", "-1")
                     TXT2 <- paste(TXT2, "pow(parvec[",
                                   partable$freeparnums[i], "],", sq,
-                                  ")", sep="")
+                                  ")", eolop, sep="")
                 } else {
                     TXT2 <- paste(TXT2, "parvec[",
                                   partable$freeparnums[i],
-                                  "]", sep="")
+                                  "]", eolop, sep="")
                 }
-                TXT3 <- paste(TXT3, " ~ ", jagpri, sep="")
+                TXT3 <- paste(TXT3, " ~ ", jagpri, eolop, sep="")
             }
         }
     }
@@ -170,21 +178,18 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x){
         
         TXT2 <- paste(TXT2, "\n", t1, partable$mat[tmppar], "[",
                       partable$row[tmppar], ",", partable$col[tmppar],
-                      ",", partable$group[tmppar], "] <- bpsi[",
-                      wishrow, ",", wishcol, ",",
-                      partable$group[tmppar], "]", sep="")
+                      ",", partable$group[tmppar], "] ", eqop,
+                      " bpsi[", wishrow, ",", wishcol, ",",
+                      partable$group[tmppar], "]", eolop, sep="")
       }
     }
-  
-    ## add priors/constraints after model parameter declarations
-    TXT2 <- paste(TXT2, TXT3, sep="")
-    
+      
     ## now define inferential covariances and priors for inferential
     ## variances, if needed
     covs <- unique(partable$lhs[grep(".phant", partable$lhs)])
     
     if(length(covs) > 0){
-        TXT2 <- paste(TXT2, "\n\n", t1, "# Inferential covariances", sep="")
+        TXT2 <- paste(TXT2, "\n\n", t1, commop, "Inferential covariances", sep="")
         for(i in 1:length(covs)){
             for(k in 1:max(partable$group)){
                 varlocs <- which(partable$lhs == covs[i] &
@@ -219,17 +224,18 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x){
 
                 ## covariances
                 TXT2 <- paste(TXT2, "\n", t1, matname, "[", partable$row[var1],
-                              ",", partable$row[var2], ",", partable$group[varlocs[1]], "] <- ",
+                              ",", partable$row[var2], ",", partable$group[varlocs[1]], "] ", eqop, " ",
                               partable$mat[phpars[1]], "[", partable$row[phpars[1]], ",",
                               partable$col[phpars[1]], ",", partable$group[phpars[1]], "]*",
                               partable$mat[phpars[2]], "[", partable$row[phpars[2]], ",",
                               partable$col[phpars[2]], ",", partable$group[phpars[2]], "]*",
                               partable$mat[phpars[3]], "[", partable$row[phpars[3]], ",",
                               partable$col[phpars[3]], ",", partable$group[phpars[3]], "]",
-                              sep="")
+                              eolop, sep="")
             }
 
         }
+        TXT2 <- paste(TXT2, "\n", sep="")
     }
-    list(TXT2 = TXT2, partable = partable)
+    list(TXT2 = TXT2, TXT3 = TXT3, partable = partable)
 }
