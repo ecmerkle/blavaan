@@ -85,5 +85,6 @@ fit <- blavaan(HS.model, data=HolzingerSwineford1939,
                auto.cov.lv.x=TRUE,
                jagcontrol=list(method="rjparallel"))
 summary(fit)
+coef(fit)
 }
 }
