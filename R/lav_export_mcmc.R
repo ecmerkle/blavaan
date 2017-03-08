@@ -1,4 +1,4 @@
-lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = dpriors(), n.chains = 1, mcmcextra = "", inits = "prior", blavmis = "da", pta = NULL, target = "stan") {
+lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = NULL, n.chains = 1, mcmcextra = "", inits = "prior", blavmis = "da", pta = NULL, target = "stan") {
   ## lots of code is taken from lav_export_bugs.R
 
   if(class(model)[1]=="lavaan"){
@@ -10,10 +10,11 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
         partable <- as.data.frame(partable, stringsAsFactors = FALSE)
     }
   }
-
+  
   eqop <- ifelse(target == "stan", "=", "<-")
   commop <- ifelse(target == "stan", "// ", "# ")
   eolop <- ifelse(target == "stan", ";", "")
+  if(length(dp) == 0) dp <- dpriors(target = target)
   
   ## get names of ovs before we add phantom variables
   old.pta <- lav_partable_attributes(partable = partable, pta = pta)
@@ -28,8 +29,14 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
   nlvx <- length(orig.lv.names.x)
   
   ## if lv.x.wish and default prior, change df parameter for this model
-  if(lv.x.wish & nlvx > 1 & dp[["ibpsi"]] == dpriors()[["ibpsi"]]){
-    dp[["ibpsi"]] <- paste("dwish(iden,", length(orig.lv.names.x) + 1, ")", sep="")
+  if(lv.x.wish & nlvx > 1 & dp[["ibpsi"]] == dpriors(target = target)[["ibpsi"]]){
+    if(target == "jags"){
+      dp[["ibpsi"]] <- paste("dwish(iden,", length(orig.lv.names.x) + 1, ")", sep="")
+    } else {
+      dp[["ibpsi"]] <- paste("wishart(",
+                             length(orig.lv.names.x) + 1,
+                             ",iden)", sep="")
+    }
   }
 
   ## set up mvs with fixed 0 variances (single indicators of lvs)
@@ -342,7 +349,7 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
       } else {
         TXT <- paste(TXT, "dmnorm(", sep="")
       }
-      TXT <- paste(TXT, "mu.eta[i,1:", nlvx, "], ibpsi[1:",
+      TXT <- paste(TXT, "mu_eta[i,1:", nlvx, "], ibpsi[1:",
                    nlvx,",1:", nlvx, ",g[i]])", eolop, sep="")
     }
     
@@ -369,7 +376,7 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
                         partable$op == "~~")
         if(any(partable$free[lv.var] == 0 & partable$ustart[lv.var] == 0)){
           TXT <- paste(TXT, "\n", t2, "eta[i,", j, "] ", eqop,
-                       " mu.eta[i,", j, "]", eolop, sep="")
+                       " mu_eta[i,", j, "]", eolop, sep="")
           ## now change ustart to 1000 so no divide by 0 in jags
           partable$ustart[lv.var] <- 1000
         } else {
@@ -383,10 +390,10 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
                        ## TODO check for alternative distribution?
                        "eta[i,", j, "] ~ ", sep="")
           if(target == "stan"){
-            TXT <- paste(TXT, "normal(mu.eta[i,", j, "], sqrt(",
+            TXT <- paste(TXT, "normal(mu_eta[i,", j, "], sqrt(",
                          sep="")
           } else {
-            TXT <- paste(TXT, "dnorm(mu.eta[i,", j, "], 1/", sep="")
+            TXT <- paste(TXT, "dnorm(mu_eta[i,", j, "], 1/", sep="")
           }
           TXT <- paste(TXT, pvname, "[",
                        partable$row[psi.free.idx], ",", partable$col[psi.free.idx],
@@ -405,7 +412,7 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
       TPS <- paste(TPS, "\n", t2,
                    ## TODO check for alternative distribution
                    ## in parameter table.
-                   "mu.eta[i,", j, "] ", eqop, " ", sep="")
+                   "mu_eta[i,", j, "] ", eqop, " ", sep="")
 
       ## lhs elements regression
       ## 1. intercept? (even exogenous can have an intercept)
@@ -581,12 +588,14 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     }
     names(pmats) <- names(matrows)
 
-    ## replace parameter entries with NA
-    for(i in 1:nrow(partable)){
+    ## replace parameter entries with NA to please jags
+    if(target == "jags"){
+      for(i in 1:nrow(partable)){
         if(partable$mat[i] == "") next
 
         wmat <- match(partable$mat[i], names(pmats))
         pmats[[wmat]][partable$row[i], partable$col[i], partable$group[i]] <- NA
+      }
     }
 
     ## monitored parameters
@@ -600,7 +609,9 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
             for(i in 1:nrow(facovs)){
                 wmat <- match(facovs$mat[i], names(pmats))
 
-                pmats[[wmat]][facovs$row[i], facovs$col[i], facovs$group[i]] <- NA
+                if(target == "jags"){
+                  pmats[[wmat]][facovs$row[i], facovs$col[i], facovs$group[i]] <- NA
+                }
 
                 monitors <- c(monitors, paste(facovs$mat[i], "[", facovs$row[i], ",",
                                               facovs$col[i], ",",
@@ -630,9 +641,41 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
         tpeqs <- paste0(tpeqs, t1, tpnames[i], " = ",
                         names(pmats)[i], ";\n")
       }
-    }
+      tpdecs <- paste0(tpdecs, t1, "real mu[N,", tmpnmvs, "];\n")
+      if(length(lv.names) > 0){
+        tpdecs <- paste0(tpdecs, t1, "real mu_eta[N,",
+                         length(lv.names), "];\n")
+      }
 
-    if(target == "stan"){
+      ## define rho matrices as needed
+      if(any(grepl("thetastar", tpnames))){
+        thetloc <- which(names(pmats) == "thetastarframe")
+        thetdim <- dim(pmats[[thetloc]])
+        rhoframe <- array(0, thetdim)
+        pmats <- c(pmats, list(rhoframe = rhoframe))
+        datdecs <- paste0(datdecs, t1, "real ",
+                          "rhoframe[", thetdim[1], ",",
+                          thetdim[2], ",", thetdim[3], "];\n")
+        tpdecs <- paste0(tpdecs, t1, "real ",
+                          "rho[", thetdim[1], ",",
+                          thetdim[2], ",", thetdim[3], "];\n")
+        tpeqs <- paste0(tpeqs, t1, "rho = rhoframe;\n")
+      }
+
+      if(any(grepl("psistar", tpnames))){
+        psiloc <- which(names(pmats) == "psistarframe")
+        psidim <- dim(pmats[[psiloc]])
+        lvrhoframe <- array(0, psidim)
+        pmats <- c(pmats, list(lvrhoframe = lvrhoframe))
+        datdecs <- paste0(datdecs, t1, "real ",
+                          "lvrhoframe[", psidim[1], ",",
+                          psidim[2], ",", psidim[3], "];\n")
+        tpdecs <- paste0(tpdecs, t1, "real ",
+                          "lvrho[", psidim[1], ",",
+                          psidim[2], ",", psidim[3], "];\n")
+        tpeqs <- paste0(tpeqs, t1, "lvrho = lvrhoframe;\n")
+      }
+
       TPS <- paste0("transformed parameters{\n", tpdecs, "\n",
                     tpeqs, TXT2, "\n\n", TPS,
                     "\n}\n\n")
@@ -655,7 +698,13 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
   if(target == "stan"){
     nparms <- max(partable$freeparnums, na.rm = TRUE)
     parmblk <- paste0("parameters{\n", t1, "vector[",
-                      nparms, "] parvec;\n}\n\n")
+                      nparms, "] parvec;\n")
+    if(length(lv.names) > 0){
+      parmblk <- paste0(parmblk, t1,
+                      "real eta[N,", length(lv.names),
+                      "];\n")
+    }
+    parmblk <- paste0(parmblk, "}\n\n")    
     out$model <- paste0(datablk, parmblk, TPS, out$model)
   }
   

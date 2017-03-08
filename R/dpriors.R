@@ -26,8 +26,9 @@ jagpriors <- function(nu="dnorm(0,1e-3)", alpha="dnorm(0,1e-2)",
 ## see ?stan::expose_stan_functions for obtaining margloglik info
 stanpriors <- function(nu="normal(0,sqrt(1000))",
                        alpha="normal(0,10)", lambda="normal(0,10)",
-                       itheta="gamma(1,.5)", ipsi="gamma(1,.5)",
-                       rho="beta(1,1)", ibpsi="wishart(3,iden)",
+                       beta="normal(0,10)", itheta="gamma(1,.5)",
+                       ipsi="gamma(1,.5)", rho="beta(1,1)",
+                       ibpsi="wishart(3,iden)",
                        tau="normal(0,sqrt(10))",
                        delta="gamma(1,.5)"){
 
