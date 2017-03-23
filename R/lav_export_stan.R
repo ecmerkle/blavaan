@@ -381,15 +381,12 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     names(pmats) <- names(matrows)
 
     ## monitored parameters
-    monitors <- with(partable[partable$mat != "",],
-                     paste(mat, "[", row, ",", col, ",", group, "]",
-                           sep=""))
+    monitors <- with(partable[partable$mat != "",], unique(mat))
 
     ## these are passed in as data in stan, so are the "frames"
     tpnames <- names(pmats)
     names(pmats) <- paste0(names(pmats), "frame")
 
-    ## FIXME: these need to be modified
     ## declare data variables and defined params
     datdecs <- tpdecs <- tpeqs <- ""
     for(i in 1:length(tpnames)){
@@ -431,12 +428,17 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     out <- c(out, list(data=standata))
   }
 
-  ## TODO put function within blavaan
-  funblk <- readLines("/home/merkle/Projects/lav_to_bayes/sem_lv.stan")
-  funblk <- paste(funblk, collapse="\n")
-  funblk <- paste0(funblk, "\n\n")
-  
-  out$model <- paste0(funblk, datablk, parblk, TPS, out$model)
+  funblk <- paste0("functions{\n", t1, "#include 'sem_lv.stan' \n")
+  ## could insert other functions as needed
+  funblk <- paste0(funblk, "}\n\n")
+
+  fullmodel <- paste0(funblk, datablk, parblk, TPS, out$model, "\n")
+  ## insert function files, similar to brms approach:
+  tmp <- tempfile(fileext = ".stan")
+  cat(fullmodel, file = tmp)
+  isystem <- system.file("stanfuns", package = "blavaan")
+  out$model <- rstan::stanc_builder(file = tmp, isystem = isystem,
+                                    obfuscate_model_name = TRUE)$model_code
   
   out <- c(out, list(monitors = monitors, pxpartable = partable))
 
