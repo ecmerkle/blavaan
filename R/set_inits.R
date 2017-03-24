@@ -120,12 +120,15 @@ set_inits_stan <- function(partable, n.chains, inits){
   freepartable <- partable[partable$freeparnums > 0,]
   ## TODO need exported, or reverse rstan::lookup()
   rosetta <- rstan:::rosetta
-  
+  ## alternate way to possibly get around export
+  ##rloc <- paste0(system.file("R", package="rstan"), "/sysdata")
+  ##lazyLoad(rloc)
+
   for(i in 1:nrow(freepartable)){
     tmppri <- freepartable$prior[i]
-      
+
     pricom <- unlist(strsplit(tmppri, "[, ()]+"))
-    
+
     if(inits == "prior"){
       pricom[1] <- rosetta$RFunction[rosetta$StanFunction == pricom[1]]
 
@@ -153,7 +156,7 @@ set_inits_stan <- function(partable, n.chains, inits){
       ## FIXME do something smarter upon failure
       ivs <- try(do.call(pricom[1], list(n.chains, as.numeric(pricom[2]),
                                      as.numeric(pricom[3]))), silent = TRUE)
-      if(inherits(ivs, "try-error")) ivs <- rep(NA, n.chains)
+      if(inherits(ivs, "try-error")) ivs <- rep(1, n.chains)
     } else {
       ivs <- rep(freepartable$start[i], n.chains)
     }
@@ -166,7 +169,7 @@ set_inits_stan <- function(partable, n.chains, inits){
     ##   ivs <- ivs^powval
     ##   ivs[ivs <= 0] <- -ivs[ivs <= 0]
     ## }
-    if(grepl("dbeta", freepartable$prior[i])){
+    if(grepl("beta", freepartable$prior[i])){
       ivs <- rep(.5, n.chains)
     }
 

@@ -185,7 +185,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   }
   parblk <- paste0(parblk, "}\n\n")                     
 
-  if(model@SampleStats@missing.flag){
+  if(any(grepl("0", model@Data@Mp[[1]]$id))){
     stop("blavaan ERROR: missing data not yet handled in stan.")
     ## start off as if blavmis=="fi"
     TXT <- paste(TXT, t1, "for(i in 1:nrows) {\n", sep="")
@@ -474,7 +474,7 @@ coeffun_stan <- function(lavpartable, rsob, fun = "mean") {
       lavpartable$free[newidx] <- tmpfree
     }
   }
-  
+
   ## order lavpartable by free column
   lavpartable <- lavpartable[order(lavpartable$free),]
   
