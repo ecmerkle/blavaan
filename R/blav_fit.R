@@ -51,7 +51,7 @@ blav_model_fit <- function(lavpartable = NULL,
     }
 
     new("Fit",
-        npar       = max(lavpartable$free),
+        npar       = as.integer(max(lavpartable$free)),
         x          = x.copy,
         partrace   = PARTRACE,
         start      = lavpartable$start, # needed?
@@ -61,7 +61,7 @@ blav_model_fit <- function(lavpartable = NULL,
         fx.group   = fx.group,
         logl       = logl,
         logl.group = logl.group,
-        iterations = iterations,
+        iterations = as.integer(iterations),
         converged  = converged,
         control    = control,
         Sigma.hat  = implied$cov,

@@ -204,19 +204,25 @@ fill_params <- function(postsamp      = NULL,
 ## re-arrange columns of parameter samples to match that of blavaan object
 rearr_params <- function(mcmc         = NULL,
                          lavpartable  = NULL){
+    if(class(mcmc) == "list" & length(mcmc) > 1){
+        fullmat <- do.call("rbind", mcmc)
+    }
     fullmat <- mcmc[[1]]
     if(length(mcmc) > 1){
         for(i in 2:length(mcmc)){
             fullmat <- rbind(fullmat, mcmc[[i]])
         }
-    }
-    
+    }    
     fullmat[,lavpartable$jagpnum[lavpartable$free > 0]]
 }   
 
 ## iteration numbers for samp_lls and postpred
-sampnums <- function(lavjags, thin){
-    niter <- nrow(lavjags$mcmc[[1]])
+sampnums <- function(lavmcmc, thin){
+    if(class(lavmcmc) == "runjags"){
+        niter <- nrow(lavmcmc$mcmc[[1]])
+    } else {
+        ndraws <- dim(as.array(lavmcmc))[1]
+    }
     nsamps <- min(1000,floor(niter/thin))
     psamp <- seq(1, niter, length.out=nsamps)
 

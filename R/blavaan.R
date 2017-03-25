@@ -443,10 +443,10 @@ blavaan <- function(...,  # default lavaan arguments
     ## fx is mean ll, where ll is marginal log-likelihood (integrate out lvs)
     if(lavoptions$test != "none") {
       cat("Computing posterior predictives...\n")
-      res$samplls <- samp_lls(res, lavmodel, lavpartable, lavsamplestats,
+      samplls <- samp_lls(res, lavmodel, lavpartable, lavsamplestats,
                               lavoptions, lavcache, lavdata)
     } else {
-      res$samplls <- NULL
+      samplls <- NULL
     }
 
     timing$PostPred <- (proc.time()[3] - start.time)
@@ -507,21 +507,18 @@ blavaan <- function(...,  # default lavaan arguments
     ##    LIST$logBF <- PARTABLE$logBF
     ## }
     lavpartable$se <- lavfit@se[lavpartable$id]
-    lavpartable$logBF <- SDBF(lavpartable)
-
-    ## 9b. misc blavaan changes to partable
-    ## remove rhos from partable + ses, so lavaan built-ins work
-    lavjags <- c(lavjags, list(origpt = lavpartable,
-                               inits = jagtrans$inits,
-                               pxpt = jagtrans$pxpartable))
-    class(lavjags) <- "runjags"
+    ## TODO fix this for stan
+    lavpartable$logBF <- rep(NA, length(lavpartable$se))
+    if(target == "jags"){
+        lavpartable$logBF <- SDBF(lavpartable)
+    }
 
     ## add monitors in jagextra as defined variables
     if(length(jagextra$monitor) > 0){
       lavpartable <- add_monitors(lavpartable, lavjags, jagextra)
     }
 
-    ## 9c. move some stuff from lavfit to optim, for lavaan 0.5-21
+    ## 9b. move some stuff from lavfit to optim, for lavaan 0.5-21
     optnames <- c('x','npar','iterations','converged','fx','fx.group','logl.group',
                   'logl','control')
     lavoptim <- lapply(optnames, function(x) slot(lavfit, x))
@@ -550,10 +547,14 @@ blavaan <- function(...,  # default lavaan arguments
                    optim        = lavoptim,
                    implied      = lavimplied,          # list
                    vcov         = lavvcov,
-                   external     = list(runjags = lavjags), # runjags
+                   external     = list(runjags = lavjags, # mcmc stuff
+                                       samplls = samplls,
+                                       origpt = lavpartable,
+                                       inits = inits,
+                                       pxpt = jagtrans$pxpartable),
                    test         = TEST                 # copied for now
                   )
-
+  
     # post-fitting check
     if(attr(x, "converged")) {
         lavInspect(blavaan, "post.check")

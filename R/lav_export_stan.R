@@ -493,6 +493,9 @@ coeffun_stan <- function(lavpartable, rsob, fun = "mean") {
   cmatch <- match(ptnames[lavpartable$free > 0], colnames(draw_mat))
   vcorr <- cor(draw_mat[,cmatch])
 
+  ## convert to list
+  lavpartable <- as.list(lavpartable, seq(ncol(lavpartable)))
+
   list(x = lavpartable$est[lavpartable$free > 0],
        lavpartable = lavpartable,
        vcorr = vcorr,
