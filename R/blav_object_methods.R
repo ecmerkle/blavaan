@@ -284,6 +284,13 @@ function(object, header       = TRUE,
     } # parameter estimates
 })
 
+# NB not absolutely necessary, except for
+# bug in lavaan 0.5-23.1097
+setMethod("coef", "blavaan",
+  function(object, type="free", labels=TRUE) {
+    class(object) <- "lavaan"
+    callNextMethod(object, type, labels)
+  })
 
 # setMethod("vcov", "blavaan",
 # function(object, labels=TRUE) {
@@ -366,6 +373,9 @@ function(object, header       = TRUE,
 plot.blavaan <- function(x, pars, plot.type="trace", ...){
     # NB: arguments go to plot.runjags()
     parnames <- x@ParTable$pxnames[match(pars, x@ParTable$free)]
+    # TODO get lavaan parameter names to show up. Tougher than
+    # expected... see line 216 of runjags::summary.R;
+    # checkvalidrunjagsobject somehow destroys name changes.
     plot(x@external$runjags, plot.type=plot.type, vars=parnames, ...)
 }
     
