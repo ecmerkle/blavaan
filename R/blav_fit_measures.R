@@ -126,7 +126,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
         indices["ppp"] <- object@Fit@test[[2]]$stat
     }
     if(any(c("bic", "dic", "p_dic") %in% fit.measures)) {
-        df <- 2*(object@Fit@fx - mean(as.numeric(object@external$runjags$samplls[,,1])))
+        df <- 2*(object@Fit@fx - mean(as.numeric(object@external$samplls[,,1])))
         indices["bic"] <- -2*object@Fit@fx + npar*log(N)
         indices["dic"] <- -2*object@Fit@fx + 2*df
         indices["p_dic"] <- df

@@ -7,7 +7,8 @@ Fit a Confirmatory Factor Analysis (CFA) model.}
 bcfa(..., cp = "srs",
      dp = dpriors(), n.chains = 3, burnin, sample,
      adapt, jagfile = FALSE, jagextra = list(), inits = "simple",
-     convergence = "manual", jagcontrol = list())
+     convergence = "manual", target = "jags", seed = NULL,
+     jagcontrol = list())
 }
 \arguments{
 \item{...}{Default lavaan arguments.  See \code{\link{lavaan}}.}
@@ -53,7 +54,12 @@ bcfa(..., cp = "srs",
   this case, the arguments \code{burnin} and \code{sample} are passed to
   \code{autorun.jags} as \code{startburnin} and \code{startsample},
   respectively. Otherwise, parameters
-  are sampled as specified by the user (or by the \code{run.jags} defaults).}
+  are sampled as specified by the user (or by the \code{run.jags}
+  defaults).}
+\item{target}{Desired MCMC package (currently, only \code{jags} is
+  available).}
+\item{seed}{A vector of length \code{n.chains} containing random
+  seeds for the MCMC run. If \code{NULL}, seeds will be chosen randomly.}
 \item{jagcontrol}{A list containing additional parameters passed to
     \code{run.jags} (or \code{autorun.jags}).  See the manpage of those functions for an
     overview of the additional parameters that can be set.  No other
