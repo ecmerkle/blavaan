@@ -12,6 +12,7 @@ blavaan <- function(...,  # default lavaan arguments
                     inits              = "simple",
                     convergence        = "manual",
                     target             = "jags",
+                    seed               = NULL,
                     jagcontrol         = list()
                    )
 {
@@ -25,6 +26,12 @@ blavaan <- function(...,  # default lavaan arguments
 
     # default priors
     if(length(dp) == 0) dp <- dpriors(target = target)
+
+    # if seed supplied, check that there is one per chain
+    seedlen <- length(seed)
+    if(seedlen > 0 & seedlen != n.chains){
+      stop("blavaan ERROR: number of seeds must equal n.chains.")
+    }
   
     # capture data augmentation/full information options
     blavmis <- "da"
@@ -325,10 +332,20 @@ blavaan <- function(...,  # default lavaan arguments
             if("monitor" %in% names(jagextra)){
                 sampparms <- c(sampparms, jagextra$monitor)
             }
-            
-            ## let jags set inits; helpful for debugging
-            if(initsin == "jags") jagtrans$inits <- NA
+
+            if(initsin == "jags"){
+                jagtrans$inits <- vector("list", n.chains)
+            }
             if(class(inits) == "list") jagtrans$inits <- inits
+
+            ## add seed to inits; FIXME only for jags?
+            if(seedlen > 0){
+                sdinit <- lapply(seed, function(x) list(.RNG.seed = x,
+                                                        .RNG.name = "base::Super-Duper"))
+                for(i in 1:n.chains){
+                    jagtrans$inits[[i]] <- c(jagtrans$inits[[i]], sdinit[[i]])
+                }
+            }
 
             if(target == "jags"){
               rjarg <- with(jagtrans, list(model = paste(model),
@@ -444,7 +461,7 @@ blavaan <- function(...,  # default lavaan arguments
     if(lavoptions$test != "none") {
       cat("Computing posterior predictives...\n")
       samplls <- samp_lls(res, lavmodel, lavpartable, lavsamplestats,
-                              lavoptions, lavcache, lavdata)
+                          lavoptions, lavcache, lavdata)
     } else {
       samplls <- NULL
     }
@@ -486,6 +503,7 @@ blavaan <- function(...,  # default lavaan arguments
                                 lavdata             = lavdata,
                                 lavcache            = lavcache,
                                 lavjags             = lavjags,
+                                samplls             = samplls,
                                 jagextra            = jagextra)
         if(verbose) cat(" done.\n")
     }
@@ -522,7 +540,6 @@ blavaan <- function(...,  # default lavaan arguments
     optnames <- c('x','npar','iterations','converged','fx','fx.group','logl.group',
                   'logl','control')
     lavoptim <- lapply(optnames, function(x) slot(lavfit, x))
-    names(lavoptim) <- optnames   
     names(lavoptim) <- optnames
 
     ## move total to the end
@@ -566,7 +583,8 @@ blavaan <- function(...,  # default lavaan arguments
 ## cfa + sem
 bcfa <- bsem <- function(..., cp = "srs", dp = NULL,
     n.chains = 3, burnin, sample, adapt,
-    jagfile = FALSE, jagextra = list(), inits = "simple", convergence = "manual",
+    jagfile = FALSE, jagextra = list(), inits = "simple",
+    convergence = "manual", target = "jags", seed = NULL,
     jagcontrol = list()) {
 
     dotdotdot <- list(...)
@@ -593,7 +611,8 @@ bcfa <- bsem <- function(..., cp = "srs", dp = NULL,
 # simple growth models
 bgrowth <- function(..., cp = "srs", dp = NULL,
     n.chains = 3, burnin, sample, adapt,
-    jagfile = FALSE, jagextra = list(), inits = "simple", convergence = "manual",
+    jagfile = FALSE, jagextra = list(), inits = "simple",
+    convergence = "manual", target = "jags", seed = NULL,
     jagcontrol = list()) {
 
     dotdotdot <- list(...)

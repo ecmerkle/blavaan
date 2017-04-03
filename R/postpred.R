@@ -1,6 +1,6 @@
 postpred <- function(lavpartable, lavmodel, lavoptions, 
                      lavsamplestats, lavdata, lavcache, lavjags,
-                     measure = "logl", thin = 5) {
+                     samplls, measure = "logl", thin = 5) {
 
     ## run through lavjags$mcmc, generate data from various posterior
     ## samples. thin like we do in samp_lls
@@ -47,8 +47,8 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
         ## compute (i) X2 of generated data and model-implied
         ## moments, along with (ii) X2 of real data and model-implied
         ## moments.
-        chisq.obs <- -2*(lavjags$samplls[i, j, 1] -
-                         lavjags$samplls[i, j, 2])
+        chisq.obs <- -2*(samplls[i, j, 1] -
+                         samplls[i, j, 2])
                              #get_ll(lavmodel = lavmodel,
                              #    lavpartable = lavpartable,
                              #    lavsamplestats = lavsamplestats,

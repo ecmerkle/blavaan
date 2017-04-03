@@ -218,7 +218,7 @@ rearr_params <- function(mcmc         = NULL,
 
 ## iteration numbers for samp_lls and postpred
 sampnums <- function(lavmcmc, thin){
-    if(class(lavmcmc) == "runjags"){
+    if("mcmc" %in% names(lavmcmc)){
         niter <- nrow(lavmcmc$mcmc[[1]])
     } else {
         ndraws <- dim(as.array(lavmcmc))[1]
