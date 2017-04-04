@@ -425,7 +425,16 @@ blavaan <- function(...,  # default lavaan arguments
         attr(x, "control") <- jagcontrol
         if(jag.do.fit){
             lavmodel <- lav_model_set_parameters(lavmodel, x = x)
-            attr(x, "iterations") <- ifelse(target == "jags", rjarg$sample, rjarg$iter - rjarg$warmup)
+            if(target == "jags"){
+                attr(x, "iterations") <- rjarg$sample
+            } else {
+                wrmup <- ifelse(length(rjarg$warmup) > 0,
+                                rjarg$warmup, floor(rjarg$iter/2))
+                attr(x, "iterations") <- wrmup
+                # saved in @external so summary() can use it:
+                burnin <- wrmup
+                sample <- sample - wrmup
+            }
             attr(x, "converged") <- TRUE
         } else {
             #x <- numeric(0L)
@@ -568,7 +577,9 @@ blavaan <- function(...,  # default lavaan arguments
                                        samplls = samplls,
                                        origpt = lavpartable,
                                        inits = inits,
-                                       pxpt = jagtrans$pxpartable),
+                                       pxpt = jagtrans$pxpartable,
+                                       burnin = burnin,
+                                       sample = sample),
                    test         = TEST                 # copied for now
                   )
   

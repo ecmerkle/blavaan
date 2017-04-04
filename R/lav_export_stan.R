@@ -477,6 +477,8 @@ coeffun_stan <- function(lavpartable, rsob, fun = "mean") {
   }
 
   ## order lavpartable by free column
+  ## FIXME this is necessary later but makes summary()
+  ## look bad
   lavpartable <- lavpartable[order(lavpartable$free),]
   
   ## from stan to partable
@@ -485,7 +487,11 @@ coeffun_stan <- function(lavpartable, rsob, fun = "mean") {
   cmatch <- match(ptnames, names(b.est), nomatch=0)
   lavpartable$est[cmatch > 0] <- b.est[cmatch]
   lavpartable$psrf[cmatch > 0] <- rssumm$summary[cmatch,"Rhat"]
+
+  ## NB: order of parameters in mcmc array differs from order
+  ##     of parameters in summary()
   lavpartable$stanpnum <- match(ptnames, names(rsmcmc[1,1,]), nomatch=0)
+  lavpartable$stansumnum <- match(ptnames, rownames(rssumm$summary), nomatch=0)
 
   sdvec <- rssumm$summary[cmatch, "sd"]
 

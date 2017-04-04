@@ -98,6 +98,7 @@ set_stancovs <- function(partable, ov.names, ov.names.x, dp) {
                                             " * ", tmpv2, ")")
 
       partable$plabel[tmprows] <- paste(".p", tmprows, ".", sep="")
+      partable$label[tmprows] <- ""
     }
 
     ## put covariances last, so that they appear last in

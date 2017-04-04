@@ -19,12 +19,12 @@ short.summary <- function(object) {
         if(object@Fit@converged) {
 	    cat(sprintf("blavaan (%s) results of %3i samples after %3i adapt+burnin iterations\n",
                     packageDescription("blavaan", fields="Version"),
-                    object@external$runjags$sample,
-                    object@external$runjags$burnin))
+                    object@external$sample,
+                    object@external$burnin))
         } else {
             cat(sprintf("** WARNING ** blavaan (%s) did NOT converge after %i adapt+burnin iterations\n", 
                 packageDescription("blavaan", fields="Version"),
-                object@external$runjags$burnin))
+                object@external$burnin))
             cat("** WARNING ** Proceed with caution\n")
         }
     } else {
@@ -216,11 +216,21 @@ function(object, header       = TRUE,
         PE$group[PE$group == 0] <- 1
 
         ## match jags names to partable, then partable to PE
-        pte2 <- which(!is.na(newpt$jagpnum))
+        if("jagpnum" %in% names(newpt)){
+            pte2 <- which(!is.na(newpt$jagpnum))
+        } else {
+            pte2 <- which(newpt$free > 0)
+        }
         peentry <- match(with(newpt, paste(lhs[pte2], op[pte2], rhs[pte2], group[pte2], sep="")),
                          paste(PE$lhs, PE$op, PE$rhs, PE$group, sep=""))
-        PE$ci.lower[peentry] <- object@external$runjags$HPD[newpt$jagpnum[pte2],'Lower95']
-        PE$ci.upper[peentry] <- object@external$runjags$HPD[newpt$jagpnum[pte2],'Upper95']
+        if(class(object@external$runjags) == "runjags"){
+            PE$ci.lower[peentry] <- object@external$runjags$HPD[newpt$jagpnum[pte2],'Lower95']
+            PE$ci.upper[peentry] <- object@external$runjags$HPD[newpt$jagpnum[pte2],'Upper95']
+        } else {
+            parsumm <- rstan::summary(object@external$runjags)
+            PE$ci.lower[peentry] <- parsumm$summary[newpt$stansumnum[pte2],'2.5%']
+            PE$ci.upper[peentry] <- parsumm$summary[newpt$stansumnum[pte2],'97.5%']
+        }
 
         ## NB This is done so that we can remove fixed parameter hpd intervals without
         ##    making changes to lavaan's print.lavaan.parameterEstimates(). But maybe
