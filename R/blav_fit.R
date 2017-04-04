@@ -7,7 +7,6 @@ blav_model_fit <- function(lavpartable = NULL,
 
     stopifnot(is.list(lavpartable), class(lavmodel) %in% c("Model",
                                                            "lavModel"))
-
     lavmcmc <- make_mcmc(lavjags)
       
     # extract information from 'x'

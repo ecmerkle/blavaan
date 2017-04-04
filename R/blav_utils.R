@@ -209,7 +209,7 @@ fill_params <- function(postsamp      = NULL,
                                        x = postsamp[lavpartable$jagpnum[!is.na(lavpartable$jagpnum)]])
   } else {
     filled <- lav_model_set_parameters(lavmodel,
-                                       x = postsamp[lavpartable$stanpnum[lavpartable$stanpnum > 0 & lavpartable$free > 0]])
+                                       x = postsamp[lavpartable$stanpnum[lavpartable$free > 0][order(lavpartable$free[lavpartable$free > 0])]])
   }
   filled
 }
@@ -225,8 +225,12 @@ rearr_params <- function(mcmc         = NULL,
         for(i in 2:length(mcmc)){
             fullmat <- rbind(fullmat, mcmc[[i]])
         }
-    }    
-    fullmat[,lavpartable$jagpnum[lavpartable$free > 0]]
+    }
+    if("jagpnum" %in% names(lavpartable)){
+        fullmat[,lavpartable$jagpnum[lavpartable$free > 0]]
+    } else {
+        fullmat[,lavpartable$stanpnum[lavpartable$free > 0][order(lavpartable$free[lavpartable$free > 0])]]
+    }
 }   
 
 ## iteration numbers for samp_lls and postpred

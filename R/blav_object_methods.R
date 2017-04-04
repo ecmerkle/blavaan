@@ -214,6 +214,8 @@ function(object, header       = TRUE,
         newpt <- object@ParTable
         newpt$group[newpt$group == 0] <- 1 # for defined parameters
         PE$group[PE$group == 0] <- 1
+        rhorows <- which(newpt$mat == "rho")
+        newpt <- lapply(newpt, function(x) x[-rhorows])
 
         ## match jags names to partable, then partable to PE
         if("jagpnum" %in% names(newpt)){
@@ -279,6 +281,7 @@ function(object, header       = TRUE,
           PE$logBF[is.na(PE$logBF)] <- ""
           PE$logBF <- sprintf(char.format, PE$logBF)
         }
+        
         ## alternative names because this is not ML
         penames <- names(PE)
         ## This could be called "Post.Mean" except constraints
@@ -289,8 +292,8 @@ function(object, header       = TRUE,
         names(PE)[penames == "ci.lower"] <- "HPD.025"
         names(PE)[penames == "ci.upper"] <- "HPD.975"
         names(PE)[penames == "psrf"] <- "PSRF"
-        print(PE, nd = nd)
 
+        print(PE, nd = nd)
     } # parameter estimates
 })
 

@@ -475,11 +475,8 @@ coeffun_stan <- function(lavpartable, rsob, fun = "mean") {
       lavpartable$free[newidx] <- tmpfree
     }
   }
-
-  ## order lavpartable by free column
-  ## FIXME this is necessary later but makes summary()
-  ## look bad
-  lavpartable <- lavpartable[order(lavpartable$free),]
+  lavord <- order(lavpartable$id)
+  lavpartable <- lapply(lavpartable, function(x) x[lavord])
   
   ## from stan to partable
   ptnames <- with(lavpartable, paste0(mat, "[", row, ",", col, ",",
@@ -497,13 +494,16 @@ coeffun_stan <- function(lavpartable, rsob, fun = "mean") {
 
   ## vcorr
   draw_mat <- as.matrix(rsob)
-  cmatch <- match(ptnames[lavpartable$free > 0], colnames(draw_mat))
+  cmatch <- match(ptnames[lavpartable$free > 0][order(lavpartable$free[lavpartable$free > 0])], colnames(draw_mat))
   vcorr <- cor(draw_mat[,cmatch])
 
+  svmatch <- match(colnames(vcorr), names(sdvec), nomatch = 0)
+  sdvec <- sdvec[svmatch]
+  
   ## convert to list
   lavpartable <- as.list(lavpartable, seq(ncol(lavpartable)))
 
-  list(x = lavpartable$est[lavpartable$free > 0],
+  list(x = lavpartable$est[lavpartable$free > 0][order(lavpartable$free[lavpartable$free > 0])],
        lavpartable = lavpartable,
        vcorr = vcorr,
        sd = sdvec)
