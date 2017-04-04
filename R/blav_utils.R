@@ -142,12 +142,15 @@ samp_lls <- function(lavjags        = NULL,
                      conditional    = FALSE){
     itnums <- sampnums(lavjags, thin = thin)
     nsamps <- length(itnums)
-    nchain <- length(lavjags$mcmc)
+
+    lavmcmc <- make_mcmc(lavjags)
+    
+    nchain <- length(lavmcmc)
     llmat <- array(NA, c(nsamps, nchain, 2)) ## logl + baseline logl
 
     for(i in 1:nsamps){
         for(j in 1:nchain){
-            llmat[i,j,1:2] <- get_ll(lavjags$mcmc[[j]][itnums[i],],
+            llmat[i,j,1:2] <- get_ll(lavmcmc[[j]][itnums[i],],
                                      lavmodel,
                                      lavpartable, 
                                      lavsamplestats, 
@@ -173,13 +176,17 @@ case_lls <- function(lavjags        = NULL,
 
     itnums <- sampnums(lavjags, thin=5)
     nsamps <- length(itnums)
-    nchain <- length(lavjags$mcmc)
+
+    ## mcmc draws always in list
+    lavmcmc <- make_mcmc(lavjags)
+  
+    nchain <- length(lavmcmc)
 
     llmat <- matrix(NA, nchain*nsamps, sum(unlist(lavdata@nobs)))
 
     for(i in 1:nsamps){
         for(j in 1:nchain){
-            llmat[(i-1)*nchain + j,] <- get_ll(lavjags$mcmc[[j]][itnums[i],],
+            llmat[(i-1)*nchain + j,] <- get_ll(lavmcmc[[j]][itnums[i],],
                                                lavmodel,
                                                lavpartable, 
                                                lavsamplestats, 
@@ -197,8 +204,14 @@ case_lls <- function(lavjags        = NULL,
 fill_params <- function(postsamp      = NULL,
                         lavmodel      = NULL,
                         lavpartable   = NULL){
-  lav_model_set_parameters(lavmodel,
-                           x = postsamp[lavpartable$jagpnum[!is.na(lavpartable$jagpnum)]])
+  if("jagpnum" %in% names(lavpartable)){
+    filled <- lav_model_set_parameters(lavmodel,
+                                       x = postsamp[lavpartable$jagpnum[!is.na(lavpartable$jagpnum)]])
+  } else {
+    filled <- lav_model_set_parameters(lavmodel,
+                                       x = postsamp[lavpartable$stanpnum[lavpartable$stanpnum > 0 & lavpartable$free > 0]])
+  }
+  filled
 }
 
 ## re-arrange columns of parameter samples to match that of blavaan object
@@ -221,7 +234,7 @@ sampnums <- function(lavmcmc, thin){
     if("mcmc" %in% names(lavmcmc)){
         niter <- nrow(lavmcmc$mcmc[[1]])
     } else {
-        ndraws <- dim(as.array(lavmcmc))[1]
+        niter <- dim(as.array(lavmcmc))[1]
     }
     nsamps <- min(1000,floor(niter/thin))
     psamp <- seq(1, niter, length.out=nsamps)
@@ -480,4 +493,15 @@ kl_und <- function(mn0, mn1, cov0, cov1){
     k + log(det0/det1)
 
   (1/2) * (kl01 + kl10)
+}
+
+make_mcmc <- function(mcmcout){
+  ## extract mcmc draws from jags/stan object
+  if(class(mcmcout) == "runjags"){
+    lavmcmc <- mcmcout$mcmc
+  } else {
+    lavmcmc <- as.array(mcmcout)
+    lavmcmc <- lapply(seq(dim(lavmcmc)[2]), function(x) lavmcmc[,x,])
+  }
+  lavmcmc
 }

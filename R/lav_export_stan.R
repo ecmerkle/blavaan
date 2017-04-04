@@ -449,6 +449,7 @@ coeffun_stan <- function(lavpartable, rsob, fun = "mean") {
   ## Extract posterior means from coda.samples() object.
   ## rsob is the result of rstan().
   rssumm <- rstan::summary(rsob)
+  rsmcmc <- as.array(rsob)
 
   ## posterior means:
   if(fun == "mean"){
@@ -484,7 +485,7 @@ coeffun_stan <- function(lavpartable, rsob, fun = "mean") {
   cmatch <- match(ptnames, names(b.est), nomatch=0)
   lavpartable$est[cmatch > 0] <- b.est[cmatch]
   lavpartable$psrf[cmatch > 0] <- rssumm$summary[cmatch,"Rhat"]
-  lavpartable$stanpnum <- cmatch
+  lavpartable$stanpnum <- match(ptnames, names(rsmcmc[1,1,]), nomatch=0)
 
   sdvec <- rssumm$summary[cmatch, "sd"]
 

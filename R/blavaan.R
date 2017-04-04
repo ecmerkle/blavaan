@@ -478,7 +478,7 @@ blavaan <- function(...,  # default lavaan arguments
     if(jag.do.fit){
       dsd <- diag(parests$sd[names(parests$sd) %in% colnames(parests$vcorr)])
       VCOV <- dsd %*% parests$vcorr %*% dsd
-      lavjags <- c(lavjags, list(vcov = VCOV))
+      #lavjags <- c(lavjags, list(vcov = VCOV))
 
       # store vcov in new @vcov slot
       # strip all attributes but 'dim'

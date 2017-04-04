@@ -4,15 +4,15 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
 
     ## run through lavjags$mcmc, generate data from various posterior
     ## samples. thin like we do in samp_lls
-
+    lavmcmc <- make_mcmc(lavjags)
     samp.indices <- sampnums(lavjags, thin=thin)
-    n.chains <- length(lavjags$mcmc)
+    n.chains <- length(lavmcmc)
     psamp <- length(samp.indices)
   
     ## parallel across chains if we can
     ncores <- NA
     loop.comm <- "lapply"
-    if(.Platform$OS.type != "windows" & requireNamespace("parallel", quietly = TRUE)){
+    if(FALSE){#.Platform$OS.type != "windows" & requireNamespace("parallel", quietly = TRUE)){
       ncores <- min(n.chains, parallel::detectCores())
       loop.comm <- "mclapply"
     }
@@ -25,7 +25,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
       for(i in 1:psamp){
         ## translate each posterior sample to a model-implied mean vector +
         ## cov matrix.
-        lavmodel <- fill_params(lavjags$mcmc[[j]][samp.indices[i],],
+        lavmodel <- fill_params(lavmcmc[[j]][samp.indices[i],],
                                 origlavmodel, lavpartable)
 
         ## generate data (some code from lav_bootstrap.R)
