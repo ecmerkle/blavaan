@@ -214,8 +214,10 @@ function(object, header       = TRUE,
         newpt <- object@ParTable
         newpt$group[newpt$group == 0] <- 1 # for defined parameters
         PE$group[PE$group == 0] <- 1
-        rhorows <- which(newpt$mat == "rho")
-        newpt <- lapply(newpt, function(x) x[-rhorows])
+        if(class(object@external$runjags) != "runjags"){
+            rhorows <- which(newpt$mat == "rho")
+            newpt <- lapply(newpt, function(x) x[-rhorows])
+        }
 
         ## match jags names to partable, then partable to PE
         if("jagpnum" %in% names(newpt)){
