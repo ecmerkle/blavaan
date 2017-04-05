@@ -150,6 +150,8 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   if(length(parconst) > 0){
     nfix <- sapply(parmats, sapply, function(x){
       sum(x %in% parconst$rhs)})
+  } else {
+    nfix <- 0
   }
   nfree <- apply(nfree - nfix, 1, sum)
 
@@ -176,7 +178,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     nlrho <- max(partable$rhoidx[partable$mat == "lvrho"], na.rm = TRUE)
     nfree <- c(nfree, lvrho = nlrho)
     parblk <- paste0(parblk, t1, "vector<lower=0,upper=1>[",
-                     nrho, "] lvrhofree;\n")
+                     nlrho, "] lvrhofree;\n")
   }
 
   if(nlv > 0){
