@@ -22,8 +22,11 @@
       }
     } else {
       for(j in 1:Ng){
-        siginv[j] = (iden - to_matrix(B[j])') * inverse_spd(to_matrix(psi[,,j])) * (iden - to_matrix(B[j]));
-        ldetcomp[j] = log_determinant(to_matrix(psi[,,j]));
+        psimatinv[j] = to_matrix(psi[,,j]);
+	ldetcomp[j] = log_determinant(psimatinv[j]);
+	psimatinv[j] = psimatinv[j] + psimatinv[j]' - diag_matrix(diagonal(psimatinv[j]));
+	psimatinv[j] = inverse_spd(psimatinv[j]);
+        siginv[j] = (iden - to_matrix(B[,,j])') * psimatinv[j] * (iden - to_matrix(B[,,j]));
       }
     }
 

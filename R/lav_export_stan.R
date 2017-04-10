@@ -388,7 +388,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     ## these are passed in as data in stan, so are the "frames"
     tpnames <- names(pmats)
     names(pmats) <- paste0(names(pmats), "frame")
-
+    
     ## declare data variables and defined params
     datdecs <- tpdecs <- tpeqs <- ""
     for(i in 1:length(tpnames)){
@@ -409,6 +409,18 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     }
     tpdecs <- paste0(tpdecs, t1, "real mu[N,", tmpnmvs, "];\n")
 
+    ## if no beta, define it as 0 matrix
+    if(!("beta" %in% tpnames)){
+        matrows <- c(matrows, beta = matrows[["psi"]])
+        matcols <- c(matcols, beta = matcols[["psi"]])
+        pmats <- c(pmats, list(beta = array(0, c(matrows[["psi"]],
+                                                 matcols[["psi"]],
+                                                 ngroups))))
+        datdecs <- paste0(datdecs, t1, "real beta[",
+                          matrows[["psi"]], ",", matcols[["psi"]],
+                          ",", ngroups, "];\n")
+    }
+    
     ## add cholesky decomp of theta matrix
     TPS <- paste0(TPS, t1, "}\n\n")
     TPS <- paste0(TPS, t1, "for(j in 1:", ngroups, "){\n")
@@ -417,8 +429,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
                   "thetld[j] = thetld[j] - ",
                   "diag_matrix(0.5 * diagonal(thetld[j]));\n")
     TPS <- paste0(TPS, t2, "thetld[j] = cholesky_decompose(",
-                  "thetld[j]);\n",
-                  t1, "}\n")
+                  "thetld[j]);\n", t1, "}\n")
     
     TPS <- paste0("transformed parameters{\n", tpdecs, "\n",
                   tpeqs, TXT2, "\n\n", TPS,
