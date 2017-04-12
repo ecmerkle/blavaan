@@ -546,17 +546,23 @@ blavaan <- function(...,  # default lavaan arguments
     }
 
     ## 9b. move some stuff from lavfit to optim, for lavaan 0.5-21
+    ##     also create external slot
     optnames <- c('x','npar','iterations','converged','fx','fx.group','logl.group',
                   'logl','control')
     lavoptim <- lapply(optnames, function(x) slot(lavfit, x))
     names(lavoptim) <- optnames
 
+    extslot <- list(mcmcout = lavjags, samplls = samplls,
+                    origpt = lavpartable, inits = jagtrans$inits,
+                    pxpt = jagtrans$pxpartable, burnin = burnin,
+                    sample = sample)
+    
     ## move total to the end
     timing$total <- (proc.time()[3] - start.time0)
     tt <- timing$total
     timing <- timing[names(timing) != "total"]
     timing <- c(timing, list(total = tt))
- 
+    
     # 10. construct blavaan object
     blavaan <- new("blavaan",
                    call         = mc,                  # match.call
@@ -573,13 +579,7 @@ blavaan <- function(...,  # default lavaan arguments
                    optim        = lavoptim,
                    implied      = lavimplied,          # list
                    vcov         = lavvcov,
-                   external     = list(runjags = lavjags, # mcmc stuff
-                                       samplls = samplls,
-                                       origpt = lavpartable,
-                                       inits = jagtrans$inits,
-                                       pxpt = jagtrans$pxpartable,
-                                       burnin = burnin,
-                                       sample = sample),
+                   external     = extslot,
                    test         = TEST                 # copied for now
                   )
   

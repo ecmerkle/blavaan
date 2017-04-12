@@ -424,10 +424,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     ## add cholesky decomp of theta matrix
     TPS <- paste0(TPS, t1, "}\n\n")
     TPS <- paste0(TPS, t1, "for(j in 1:", ngroups, "){\n")
-    TPS <- paste0(TPS, t2, "thetld[j] = to_matrix(theta[,,j]) + to_matrix(theta[,,j])';\n")
-    TPS <- paste0(TPS, t2,
-                  "thetld[j] = thetld[j] - ",
-                  "diag_matrix(0.5 * diagonal(thetld[j]));\n")
+    TPS <- paste0(TPS, t2, "thetld[j] = fill_lower(to_matrix(theta[,,j]));\n")
     TPS <- paste0(TPS, t2, "thetld[j] = cholesky_decompose(",
                   "thetld[j]);\n", t1, "}\n")
     
@@ -441,7 +438,8 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     out <- c(out, list(data=standata))
   }
 
-  funblk <- paste0("functions{\n", t1, "#include 'sem_lv.stan' \n")
+  funblk <- paste0("functions{\n", t1, "#include 'sem_lv.stan' \n",
+                   t1, "#include 'fill_lower.stan' \n")
   ## could insert other functions as needed
   funblk <- paste0(funblk, "}\n\n")
 

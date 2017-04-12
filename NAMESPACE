@@ -1,5 +1,5 @@
 importFrom("methods", 
-           "is", "new", "slot", "slotNames")
+           "is", "new", "slot", "slotNames", "callNextMethod")
 
 importFrom("utils", 
            # "sessionInfo",
@@ -7,7 +7,7 @@ importFrom("utils",
 
 importFrom("stats", 
            "approx", "density", "dnorm", "pnorm", "rgamma", "rnorm",
-           "runif", "quantile", "rWishart", "cov",
+           "runif", "quantile", "rWishart", "cov", "cor",
            "coef", "logLik",
            "residuals", "resid",
            "fitted.values", "fitted",

@@ -134,7 +134,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
     if(any(c("waic", "p_waic", "looic", "p_loo") %in% fit.measures)) {
         lavopt <- object@Options
         lavopt$estimator <- "ML"
-        casells <- case_lls(object@external$runjags, object@Model,
+        casells <- case_lls(object@external$mcmcout, object@Model,
                             object@ParTable, object@SampleStats,
                             lavopt, object@Cache,
                             object@Data)

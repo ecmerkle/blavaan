@@ -5,7 +5,7 @@
 Fit a Structural Equation Model (SEM).}
 \usage{
 bsem(..., cp = "srs",
-     dp = dpriors(), n.chains = 3, burnin, sample,
+     dp = NULL, n.chains = 3, burnin, sample,
      adapt, jagfile = FALSE, jagextra = list(), inits = "simple",
      convergence = "manual", target = "jags", seed = NULL,
      jagcontrol = list())

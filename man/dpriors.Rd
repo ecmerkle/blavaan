@@ -5,28 +5,37 @@
 Specify "default" prior distributions for classes of model parameters.
 }
 \usage{
-dpriors(nu = "dnorm(0,1e-3)", alpha = "dnorm(0,1e-2)", 
-        lambda = "dnorm(0,1e-2)", beta = "dnorm(0,1e-2)", 
-        itheta = "dgamma(1,.5)", ipsi = "dgamma(1,.5)", 
-        rho = "dbeta(1,1)", ibpsi = "dwish(iden,3)",
-        tau="dnorm(0,.1)", delta="dgamma(1,.5)")
+dpriors(..., target = "jags")
 }
 \arguments{
-  \item{nu}{Prior distribution for nu (observed variable intercept) parameters.}
-  \item{alpha}{Prior distribution for alpha (latent variable intercept) parameters.}
-  \item{lambda}{Prior distribution for lambda (loading) parameters.}
-  \item{beta}{Prior distribution for regression parameters.}
-  \item{itheta}{Prior distribution for observed variable precision parameters.}
-  \item{ipsi}{Prior distribution for latent variable precision parameters.}
-  \item{rho}{Prior distribution for correlation parameters (only used under srs approach).}
-  \item{ibpsi}{Prior distribution for inverse covariance matrix of
-    blocks of latent variables.}
-  \item{tau}{Prior distribution for threshold parameters (ordinal data only).}
-  \item{delta}{Prior distribution for delta parameters (ordinal data only).}
+  \item{...}{Parameter names paired with desired priors (see example
+    below).}
+  \item{target}{Are the priors for jags (default) or stan?}
 }
-\details{User-specified prior distributions for specific parameters
+\details{The prior distributions always use JAGS/Stan syntax and parameterizations. For
+  example, the normal distribution in JAGS is parameterized via the
+  precision, whereas the normal distribution in Stan is parameterized
+  via the standard deviation.
+
+  User-specified prior distributions for specific parameters
   (using the \code{prior()} operator within the model syntax) always
-  override prior distributions set using \code{dpriors()}.}
+  override prior distributions set using \code{dpriors()}.
+
+  The parameter names are:
+  \itemize{
+  \item{nu: Observed variable intercept parameters.}
+  \item{alpha: Latent variable intercept parameters.}
+  \item{lambda: Loading parameters.}
+  \item{beta: Regression parameters.}
+  \item{itheta: Observed variable precision parameters.}
+  \item{ipsi: Latent variable precision parameters.}
+  \item{rho: Correlation parameters (associated with covariance parameters).}
+  \item{ibpsi: Inverse covariance matrix of
+    blocks of latent variables (used for \code{target="jags"}).}
+  \item{tau: Threshold parameters (ordinal data only).}
+  \item{delta: Delta parameters (ordinal data only).}
+  }
+}
 \value{
 A character vector containing the prior distribution for each type of parameter.
 }

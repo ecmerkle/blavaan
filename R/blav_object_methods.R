@@ -214,24 +214,25 @@ function(object, header       = TRUE,
         newpt <- object@ParTable
         newpt$group[newpt$group == 0] <- 1 # for defined parameters
         PE$group[PE$group == 0] <- 1
-        if(class(object@external$runjags) != "runjags"){
+        jagtarget <- class(object@external$mcmcout) == "runjags"
+        if(!jagtarget){
             rhorows <- which(newpt$mat == "rho")
             newpt <- lapply(newpt, function(x) x[-rhorows])
         }
 
         ## match jags names to partable, then partable to PE
-        if("jagpnum" %in% names(newpt)){
+        if(jagtarget){
             pte2 <- which(!is.na(newpt$jagpnum))
         } else {
             pte2 <- which(newpt$free > 0)
         }
         peentry <- match(with(newpt, paste(lhs[pte2], op[pte2], rhs[pte2], group[pte2], sep="")),
                          paste(PE$lhs, PE$op, PE$rhs, PE$group, sep=""))
-        if(class(object@external$runjags) == "runjags"){
-            PE$ci.lower[peentry] <- object@external$runjags$HPD[newpt$jagpnum[pte2],'Lower95']
-            PE$ci.upper[peentry] <- object@external$runjags$HPD[newpt$jagpnum[pte2],'Upper95']
+        if(jagtarget){
+            PE$ci.lower[peentry] <- object@external$mcmcout$HPD[newpt$jagpnum[pte2],'Lower95']
+            PE$ci.upper[peentry] <- object@external$mcmcout$HPD[newpt$jagpnum[pte2],'Upper95']
         } else {
-            parsumm <- rstan::summary(object@external$runjags)
+            parsumm <- rstan::summary(object@external$mcmcout)
             PE$ci.lower[peentry] <- parsumm$summary[newpt$stansumnum[pte2],'2.5%']
             PE$ci.upper[peentry] <- parsumm$summary[newpt$stansumnum[pte2],'97.5%']
         }
@@ -255,7 +256,11 @@ function(object, header       = TRUE,
         }
         if(neff){
           PE$neff <- rep(NA, nrow(PE))
-          PE$neff[peentry] <- object@external$runjags$summaries[newpt$jagpnum[pte2],'SSeff']
+          if(jagtarget){
+            PE$neff[peentry] <- object@external$mcmcout$summaries[newpt$jagpnum[pte2],'SSeff']
+          } else {
+            PE$neff[peentry] <- parsumm$summary[newpt$stansumnum[pte2],'n_eff']
+          }
         }
         if(priors){
           PE$prior <- rep(NA, nrow(PE))
@@ -264,12 +269,20 @@ function(object, header       = TRUE,
         }
         if(postmedian){
           PE$Post.Med <- rep(NA, nrow(PE))
-          PE$Post.Med[peentry] <- object@external$runjags$summaries[newpt$jagpnum[pte2],'Median']
+          if(jagtarget){
+            PE$Post.Med[peentry] <- object@external$mcmcout$summaries[newpt$jagpnum[pte2],'Median']
+          } else {
+            PE$Post.Med[peentry] <- parsumm$summary[newpt$stansumnum[pte2],'50%']
+          }
         }
         if(postmode){
           PE$Post.Mode <- rep(NA, nrow(PE))
-          PE$Post.Mode[peentry] <- object@external$runjags$summaries[newpt$jagpnum[pte2],'Mode']
-          if(all(is.na(PE$Post.Mode))) warning("blavaan WARNING: Posterior modes require installation of the modeest package.")
+          if(jagtarget){
+            PE$Post.Mode[peentry] <- object@external$mcmcout$summaries[newpt$jagpnum[pte2],'Mode']
+            if(all(is.na(PE$Post.Mode))) warning("blavaan WARNING: Posterior modes require installation of the modeest package.")
+          } else {
+            warning("blavaan WARNING: Posterior modes not available for target='stan'.")
+          }
         }
         if(bf){
           ## we don't know whether priors=TRUE:
@@ -315,7 +328,7 @@ setMethod("coef", "blavaan",
 #    if(object@Fit@npar > 0L && !object@Fit@converged)
 #        warning("blavaan WARNING: chains may not have converged, proceed with caution.")
 #    
-#    VarCov <- object@external$runjags$vcov
+#    VarCov <- object@external$mcmcout$vcov
 #
 #    labs <- lav_partable_labels(object@ParTable, type="free")
 #    
@@ -391,7 +404,7 @@ plot.blavaan <- function(x, pars, plot.type="trace", ...){
     # TODO get lavaan parameter names to show up. Tougher than
     # expected... see line 216 of runjags::summary.R;
     # checkvalidrunjagsobject somehow destroys name changes.
-    plot(x@external$runjags, plot.type=plot.type, vars=parnames, ...)
+    plot(x@external$mcmcout, plot.type=plot.type, vars=parnames, ...)
 }
     
 #setMethod("anova", signature(object = "blavaan"),

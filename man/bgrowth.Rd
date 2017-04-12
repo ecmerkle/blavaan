@@ -4,7 +4,7 @@
 \description{
 Fit a Growth Curve model.}
 \usage{
-bgrowth(..., cp = "srs", dp = dpriors(), n.chains = 3,
+bgrowth(..., cp = "srs", dp = NULL, n.chains = 3,
 burnin, sample, adapt, jagfile = FALSE, jagextra = list(), 
 inits = "simple", convergence = "manual", target = "jags",
 seed = NULL, jagcontrol = list())
