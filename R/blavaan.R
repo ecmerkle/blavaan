@@ -576,7 +576,7 @@ blavaan <- function(...,  # default lavaan arguments
                    external     = list(runjags = lavjags, # mcmc stuff
                                        samplls = samplls,
                                        origpt = lavpartable,
-                                       inits = inits,
+                                       inits = jagtrans$inits,
                                        pxpt = jagtrans$pxpartable,
                                        burnin = burnin,
                                        sample = sample),
