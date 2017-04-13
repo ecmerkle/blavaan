@@ -14,31 +14,54 @@ blavInspect <- function(blavobject, what, ...) {
     dotNames <- names(dotdotdot)
     add.labels <- TRUE
     if(any(dotNames == "add.labels")) add.labels <- dotdotdot$add.labels
+
+    jagtarget <- class(blavobject@external$mcmcout) == "runjags"
   
     ## whats unique to blavaan
     blavwhats <- c("start", "starting.values", "inits", "psrf",
                    "ac.10", "neff", "mcmc", "draws", "samples",
                    "n.chains", "cp", "dp", "postmode", "postmean",
-                   "postmedian", "hpd", "jagnames")
+                   "postmedian", "hpd", "jagnames", "stannames")
 
     ## whats that are not handled
     nowhats <- c("mi", "modindices", "modification.indices",
                  "wls.est", "wls.obs", "wls.v")
 
     if(what %in% blavwhats){
-        idx <- blavobject@ParTable$jagpnum
-        idx <- idx[!is.na(idx)]
+        if(jagtarget){
+            idx <- blavobject@ParTable$jagpnum
+            idx <- idx[!is.na(idx)]
+        } else {
+            idx <- blavobject@ParTable$stansumnum
+            idx <- idx[blavobject@ParTable$free > 0]
+        }
         labs <- lav_partable_labels(blavobject@ParTable, type = "free")
         if(what %in% c("start", "starting.values", "inits")){
-            blavobject@external$runjags$inits
+            blavobject@external$mcmcout$inits
         } else if(what %in% c("psrf", "ac.10", "neff")){
+            if(jagtarget){
+                mcmcsumm <- blavobject@external$mcmcout$summaries
+            } else {
+                mcmcsumm <- rstan::summary(blavobject@external$mcmcout)$summary
+            }
             if(what == "psrf"){
-                OUT <- blavobject@external$runjags$summaries[idx,'psrf']
-                ## blavobject@ParTable$psrf[!is.na(blavobject@ParTable$psrf)]
+                if(jagtarget){
+                    OUT <- mcmcsumm[idx,'psrf']
+                } else {
+                    OUT <- mcmcsumm[idx,'Rhat']
+                }
             }else if(what == "ac.10"){
-                OUT <- blavobject@external$runjags$summaries[idx,'AC.10']
-            } else{
-                OUT <- blavobject@external$runjags$summaries[idx,'SSeff']
+                if(jagtarget){
+                    OUT <- mcmcsumm[idx,'AC.10']
+                } else {
+                    stop("blavaan ERROR: autocorrelation stat currently unavailable for stan.")
+                }
+            } else {
+                if(jagtarget){
+                    OUT <- mcmcsumm[idx,'SSeff']
+                } else {
+                    OUT <- mcmcsumm[idx,'n_eff']
+                }
             }
             if(add.labels) names(OUT) <- labs
             OUT
@@ -47,7 +70,7 @@ blavInspect <- function(blavobject, what, ...) {
             pt <- blavobject@ParTable
             pt$free[pt$op == ":="] <- max(pt$free, na.rm = TRUE) + 1:sum(pt$op == ":=")
             labs <- lav_partable_labels(pt, type = "free")
-            draws <- blavobject@external$runjags$mcmc
+            draws <- make_mcmc(blavobject@external$mcmcout)
             draws <- lapply(draws, function(x) x[,idx])
             draws <- mcmc.list(draws)
             if(what == "hpd"){
@@ -59,24 +82,48 @@ blavInspect <- function(blavobject, what, ...) {
             }
             draws
         } else if(what == "n.chains"){
-            length(blavobject@external$runjags$mcmc)
+            draws <- make_mcmc(blavobject@external$mcmcout)
+            length(draws)
         } else if(what == "cp"){
             blavobject@Options$cp
         } else if(what == "dp"){
             blavobject@Options$dp
         } else if(what %in% c("postmode", "postmean", "postmedian")){
+            if(jagtarget){
+                mcmcsumm <- blavobject@external$mcmcout$summaries
+            } else {
+                mcmcsumm <- rstan::summary(blavobject@external$mcmcout)$summary
+            }
+
             if(what == "postmean"){
-                OUT <- blavobject@external$runjags$summaries[idx,'Mean']
+                if(jagtarget){
+                    OUT <- mcmcsumm[idx,'Mean']
+                } else {
+                    OUT <- mcmcsumm[idx,'mean']
+                }
             }else if(what == "postmedian"){
-                OUT <- blavobject@external$runjags$summaries[idx,'Median']
-            } else{
-                OUT <- blavobject@external$runjags$summaries[idx,'Mode']
+                if(jagtarget){
+                    OUT <- mcmcsumm[idx,'Median']
+                } else {
+                    OUT <- mcmcsumm[idx,'50%']
+                }
+            } else {
+                if(jagtarget){
+                    OUT <- mcmcsumm[idx,'Mode']
+                } else {
+                    stop("blavaan ERROR: Modes unavailable for stan.")
+                }
             }
             if(add.labels) names(OUT) <- labs
             OUT
         } else if(what == "jagnames"){
             OUT <- blavobject@ParTable$pxnames[blavobject@ParTable$free > 0]
             OUT <- OUT[order(blavobject@ParTable$free[blavobject@ParTable$free > 0])]
+            if(add.labels) names(OUT) <- labs
+            OUT
+        } else if(what == "stannames"){
+            mcmcsumm <- rstan::summary(blavobject@external$mcmcout)$summary
+            OUT <- rownames(mcmcsumm)[idx]
             if(add.labels) names(OUT) <- labs
             OUT
         }
