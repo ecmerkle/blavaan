@@ -164,8 +164,8 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     if(parnm %in% c("theta", "psi")){
       parblk <- paste0(parblk, "<lower=0>")        
     }
-    parblk <- paste0(parblk, "[", nfree[i], "] ", parnm,
-                     "free", eolop, "\n")
+    parblk <- paste0(parblk, "[", nfree[i], "]")
+    parblk <- paste0(parblk, " ", parnm, "free", eolop, "\n")
   }
 
   if(any(partable$mat == "rho")){
@@ -444,6 +444,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   funblk <- paste0(funblk, "}\n\n")
 
   fullmodel <- paste0(funblk, datablk, parblk, TPS, out$model, "\n")
+
   ## insert function files, similar to brms approach:
   tmp <- tempfile(fileext = ".stan")
   cat(fullmodel, file = tmp)

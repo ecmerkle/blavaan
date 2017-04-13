@@ -72,11 +72,11 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
                                    partable$row[eqpar], ",",
                                    partable$col[eqpar], ",",
                                    partable$group[eqpar], "]",
-                                   eolop, sep="")
+                                   sep="")
                 } else {
                     eqtxt <- paste(partable$mat[eqpar], "free[",
                                    partable$freeparnums[eqpar],
-                                   "]", eolop, sep="")
+                                   "]", sep="")
                 }
 
                 vpri <- grepl("\\[var\\]", partable$prior[eqpar])
@@ -86,7 +86,7 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
                     TXT2 <- paste(TXT2, "pow(", eqtxt, ",", sq,
                                   ")", eolop, sep="")
                 } else {
-                    TXT2 <- paste(TXT2, eqtxt, sep="")
+                    TXT2 <- paste(TXT2, eqtxt, eolop, sep="")
                 }
             } else if(length(compeq) > 0){
                 ## constraints with one parameter label on lhs

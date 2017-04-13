@@ -109,7 +109,12 @@ set_inits_stan <- function(partable, n.chains, inits){
 
   initmats <- list()
   for(i in 1:length(pveclen)){
-    initmats <- c(initmats, list(rep(NA, pveclen[i])))
+    initmats <- c(initmats, list(array(NA, dim=pveclen[i])))
+    ## if(pveclen[i] == 1){
+    ##   initmats <- c(initmats, list(as.vector(NA)))
+    ## } else {
+    ##   initmats <- c(initmats, list(rep(NA, pveclen[i])))
+    ## }
   }
   names(initmats) <- paste0(names(pveclen), "free")
 
