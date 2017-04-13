@@ -217,7 +217,9 @@ function(object, header       = TRUE,
         jagtarget <- class(object@external$mcmcout) == "runjags"
         if(!jagtarget){
             rhorows <- which(newpt$mat == "rho")
-            newpt <- lapply(newpt, function(x) x[-rhorows])
+            if(length(rhorows) > 0){
+                newpt <- lapply(newpt, function(x) x[-rhorows])
+            }
         }
 
         ## match jags names to partable, then partable to PE

@@ -27,6 +27,16 @@ blavaan <- function(...,  # default lavaan arguments
     # default priors
     if(length(dp) == 0) dp <- dpriors(target = target)
 
+    # ensure stan is here
+    if(target == "stan"){
+      # could also use requireNamespace + attachNamespace
+      if(!(suppressMessages(require("rstan", quietly = TRUE)))){
+        stop("blavaan ERROR: rstan package is not installed.")
+      }
+      rstan_options(auto_write = TRUE)
+      options(mc.cores = min(n.chains, parallel::detectCores()))
+    }
+
     # if seed supplied, check that there is one per chain
     seedlen <- length(seed)
     if(seedlen > 0 & seedlen != n.chains){
