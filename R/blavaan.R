@@ -300,6 +300,7 @@ blavaan <- function(...,  # default lavaan arguments
     lavoptions$missing   <- "ml"
     lavoptions$cp        <- cp
     lavoptions$dp        <- dp
+    lavoptions$target    <- target
 
     verbose <- lavoptions$verbose
 

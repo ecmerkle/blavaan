@@ -401,12 +401,20 @@ setMethod("coef", "blavaan",
 ## })
 
 plot.blavaan <- function(x, pars, plot.type="trace", ...){
-    # NB: arguments go to plot.runjags()
-    parnames <- x@ParTable$pxnames[match(pars, x@ParTable$free)]
-    # TODO get lavaan parameter names to show up. Tougher than
-    # expected... see line 216 of runjags::summary.R;
-    # checkvalidrunjagsobject somehow destroys name changes.
-    plot(x@external$mcmcout, plot.type=plot.type, vars=parnames, ...)
+    # NB: arguments go to plot.runjags() or stan plot functions
+    if(x@Options$target == "jags"){
+        parnames <- x@ParTable$pxnames[match(pars, x@ParTable$free)]
+        ## TODO get lavaan parameter names to show up. Tougher than
+        ## expected... see line 216 of runjags::summary.R;
+        ## checkvalidrunjagsobject somehow destroys name changes.
+        plot(x@external$mcmcout, plot.type=plot.type, vars=parnames, ...)
+    } else {
+        allpars <- colnames(as.matrix(x@external$mcmcout))
+        parnums <- x@ParTable$stanpnum[match(pars, x@ParTable$free)]
+        parnames <- allpars[parnums]
+        rstan::plot(x@external$mcmcout, pars = parnames,
+                    plotfun = plot.type)
+    }
 }
     
 #setMethod("anova", signature(object = "blavaan"),
