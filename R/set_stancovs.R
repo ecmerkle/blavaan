@@ -90,13 +90,21 @@ set_stancovs <- function(partable, ov.names, ov.names.x, dp) {
 
       partable$free[tmprows] <- partable$free[covpars[i]]
       partable$free[covpars[i]] <- 0
-      partable$ustart[covpars[i]] <- paste0(partable$mat[tmprows],
-                                            "[", partable$row[tmprows],
-                                            ",", partable$col[tmprows],
-                                            ",", partable$group[tmprows],
-                                            "] * sqrt(", tmpv1,
-                                            " * ", tmpv2, ")")
-
+      if(eq.const){
+        partable$ustart[covpars[i]] <- paste0(partable$mat[full.idx],
+                                              "[",
+                                              partable$row[full.idx],
+                                              ",", partable$col[full.idx],
+                                              ",", partable$group[full.idx],
+                                              "]")
+      } else {
+        partable$ustart[covpars[i]] <- paste0(partable$mat[tmprows],
+                                              "[", partable$row[tmprows],
+                                              ",", partable$col[tmprows],
+                                              ",", partable$group[tmprows],
+                                              "] * sqrt(", tmpv1,
+                                              " * ", tmpv2, ")")
+      }
       partable$plabel[tmprows] <- paste(".p", tmprows, ".", sep="")
       partable$label[tmprows] <- ""
     }

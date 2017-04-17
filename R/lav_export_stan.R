@@ -149,7 +149,11 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     }})
   if(length(parconst) > 0){
     nfix <- sapply(parmats, sapply, function(x){
-      sum(x %in% parconst$rhs)})
+      if(class(x)[1] == "lavaan.matrix.symmetric"){
+        sum(diag(x) %in% parconst$rhs)
+      } else {
+        sum(x %in% parconst$rhs)
+      }})
   } else {
     nfix <- 0
   }
@@ -287,7 +291,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   out <- paste0(out, TXT3, "\n}")
   class(out) <- c("lavaan.character", "character")
   out <- list(model = out, inits = NA)
-    
+
   ## Initial values
   inits <- set_inits_stan(partable, n.chains, inits)
   out$inits <- inits
