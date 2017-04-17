@@ -127,6 +127,13 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
                 jagpri <- strsplit(partable$prior[i], "\\[")[[1]][1]
                 vpri <- grepl("\\[var\\]", partable$prior[i])
                 spri <- grepl("\\[sd\\]", partable$prior[i])
+                if(vpri){
+                    jagpri <- strsplit(partable$prior[i], "\\[var")[[1]][1]
+                } else if(spri){
+                    jagpri <- strsplit(partable$prior[i], "\\[sd")[[1]][1]
+                } else {
+                    jagpri <- partable$prior[i]
+                }
                 if(!vpri & (grepl("theta", partable$mat[i]) | grepl("psi", partable$mat[i]))){
                     sq <- ifelse(spri, "2", "-1")
                     TXT2 <- paste(TXT2, "pow(", partable$mat[i], "free[",

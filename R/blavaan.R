@@ -235,11 +235,12 @@ blavaan <- function(...,  # default lavaan arguments
             }
         }
 
+        trunop <- ifelse(target == "stan", " T[0,]", " T(0,)")
         for(i in 1:length(fload)){
             if(LAV@ParTable$prior[fload[i]] != ""){
-                LAV@ParTable$prior[fload[i]] <- paste(LAV@ParTable$prior[fload[i]], "T(0,)", sep="")
+                LAV@ParTable$prior[fload[i]] <- paste(LAV@ParTable$prior[fload[i]], trunop, sep="")
             } else {
-                LAV@ParTable$prior[fload[i]] <- paste(dp[["lambda"]], "T(0,)", sep="")
+                LAV@ParTable$prior[fload[i]] <- paste(dp[["lambda"]], trunop, sep="")
             }
         }
     }
