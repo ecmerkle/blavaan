@@ -441,21 +441,27 @@ samp_kls <- function(draws          = NULL, # all chains in 1 matrix
         for(g in 1:lavsamplestats@ngroups){
             ## ensure symmetric:
             cmat0 <- (implied0$cov[[g]] + t(implied0$cov[[g]]))/2
+            invcmat0 <- solve(cmat0)
+            det0 <- det(cmat0)
             cmat1 <- (implied1$cov[[g]] + t(implied1$cov[[g]]))/2
+            invcmat1 <- solve(cmat1)
+            det1 <- det(cmat1)
             if(conditional){
                 mnvec0 <- implied0$mean[[g]]
                 mnvec1 <- implied1$mean[[g]]
 
                 for(j in 1:nrow(mnvec0)){
                   tmpkl <- tmpkl + kl_und(mnvec0[j,], mnvec1[j,],
-                                          cmat0, cmat1)
+                                          cmat0, invcmat0, cmat1,
+                                          invcmat1, det0, det1)
                 }
             } else {
                 mnvec0 <- as.numeric(implied0$mean[[g]])
                 mnvec1 <- as.numeric(implied1$mean[[g]])
 
                 tmpkl <- tmpkl + lavsamplestats@nobs[[g]] *
-                         kl_und(mnvec0, mnvec1, cmat0, cmat1)
+                         kl_und(mnvec0, mnvec1, cmat0, invcmat0,
+                                cmat1, invcmat1, det0, det1)
             }
         }
         klres[i] <- tmpkl
@@ -480,13 +486,9 @@ fill_eta <- function(postsamp, lavpartable, lavsamplestats, lavdata){
 }
         
 ## compute undirected K-L divergence between two normal distributions
-kl_und <- function(mn0, mn1, cov0, cov1){
-  invcov0 <- solve(cov0) #lavaan:::lav_matrix_symmetric_inverse(S = cov0)
-  invcov1 <- solve(cov1) #lavaan:::lav_matrix_symmetric_inverse(S = cov1)
+kl_und <- function(mn0, mn1, cov0, invcov0, cov1, invcov1,
+                   det0, det1){
   k <- nrow(cov0)
-
-  det0 <- det(cov0)
-  det1 <- det(cov1)
 
   kl01 <- sum(diag(invcov1 %*% cov0)) +
     t(mn1 - mn0) %*% invcov1 %*% (mn1 - mn0) -
