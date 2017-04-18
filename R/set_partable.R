@@ -347,32 +347,33 @@ set_mv0 <- function(partable, ov.names, ngroups) {
                 ## an indicator of another lv (with other mvs), then
                 ## we can estimate the variance
                 if(length(lvloc) > 1){
-                    stop(paste("blavaan ERROR: Problem with", ovn[i],
-                               "as a single indicator of a latent variable.\n"))
+                    partable$ustart[mvloc] <- .001
+                    warning(paste("blavaan WARNING: The variance of variable", ovn[i],
+                               "in group", j, "has been fixed to .001 instead of 0 (necessary for JAGS).\n"))
+                } else {
+                    lvname <- partable$lhs[lvloc]
+
+                    ## TODO? check for covariances with the lv?
+                    lvvar <- which(partable$lhs == lvname &
+                                   partable$rhs == lvname &
+                                   partable$op == "~~" &
+                                   partable$group == j)
+
+                    tmpfree <- partable$free[lvvar]
+                    tmpustart <- partable$ustart[lvvar]
+                    tmpplabel <- partable$plabel[lvvar]
+                    tmpstart <- partable$start[lvvar]
+
+                    partable$free[lvvar] <- partable$free[mvloc]
+                    partable$ustart[lvvar] <- partable$ustart[mvloc]
+                    partable$plabel[lvvar] <- partable$plabel[mvloc]
+                    partable$start[lvvar] <- partable$plabel[mvloc]
+
+                    partable$free[mvloc] <- tmpfree
+                    partable$ustart[mvloc] <- tmpustart
+                    partable$plabel[mvloc] <- tmpplabel
+                    partable$start[mvloc] <- tmpstart
                 }
-
-                lvname <- partable$lhs[lvloc]
-
-                ## TODO? check for covariances with the lv?
-                lvvar <- which(partable$lhs == lvname &
-                               partable$rhs == lvname &
-                               partable$op == "~~" &
-                               partable$group == j)
-
-                tmpfree <- partable$free[lvvar]
-                tmpustart <- partable$ustart[lvvar]
-                tmpplabel <- partable$plabel[lvvar]
-                tmpstart <- partable$start[lvvar]
-
-                partable$free[lvvar] <- partable$free[mvloc]
-                partable$ustart[lvvar] <- partable$ustart[mvloc]
-                partable$plabel[lvvar] <- partable$plabel[mvloc]
-                partable$start[lvvar] <- partable$plabel[mvloc]
-
-                partable$free[mvloc] <- tmpfree
-                partable$ustart[mvloc] <- tmpustart
-                partable$plabel[mvloc] <- tmpplabel
-                partable$start[mvloc] <- tmpstart
             }
         }
     }
