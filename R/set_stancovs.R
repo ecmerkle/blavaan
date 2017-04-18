@@ -56,12 +56,16 @@ set_stancovs <- function(partable, ov.names, ov.names.x, dp) {
       
       ## Decide on =~ (ov) vs ~ (lv)
       if(partable$lhs[covpars[i]] %in% ov.names){
-        mvcov <- mvcov + 1
-        partable$rhoidx[tmprows] <- partable$rhoidx[covpars[i]] <- mvcov
+        if(!eq.const){
+          mvcov <- mvcov + 1
+          covidx <- mvcov
+        }
         partable$mat[tmprows] <- "rho"
       } else {
-        lvcov <- lvcov + 1
-        partable$rhoidx[tmprows] <- partable$rhoidx[covpars[i]] <- lvcov
+        if(!eq.const){
+          lvcov <- lvcov + 1
+          covidx <- lvcov
+        }
         partable$mat[tmprows] <- "lvrho"
       }
       partable$op[tmprows] <- "~~"
@@ -88,8 +92,6 @@ set_stancovs <- function(partable, ov.names, ov.names.x, dp) {
         partable$prior[tmprows] <- ""
       }
 
-      partable$free[tmprows] <- partable$free[covpars[i]]
-      partable$free[covpars[i]] <- 0
       if(eq.const){
         partable$ustart[covpars[i]] <- paste0(partable$mat[full.idx],
                                               "[",
@@ -97,7 +99,9 @@ set_stancovs <- function(partable, ov.names, ov.names.x, dp) {
                                               ",", partable$col[full.idx],
                                               ",", partable$group[full.idx],
                                               "]")
+        partable$ustart[tmprows] <- paste0(partable$ustart[covpars[i]], "/sqrt(", tmpv1, "*", tmpv2, ")")
       } else {
+        partable$rhoidx[tmprows] <- partable$rhoidx[covpars[i]] <- covidx
         partable$ustart[covpars[i]] <- paste0(partable$mat[tmprows],
                                               "[", partable$row[tmprows],
                                               ",", partable$col[tmprows],
@@ -105,6 +109,8 @@ set_stancovs <- function(partable, ov.names, ov.names.x, dp) {
                                               "] * sqrt(", tmpv1,
                                               " * ", tmpv2, ")")
       }
+      partable$free[tmprows] <- partable$free[covpars[i]]
+      partable$free[covpars[i]] <- 0
       partable$plabel[tmprows] <- paste(".p", tmprows, ".", sep="")
       partable$label[tmprows] <- ""
     }

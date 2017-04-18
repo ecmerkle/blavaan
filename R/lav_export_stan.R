@@ -173,13 +173,19 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   }
 
   if(any(partable$mat == "rho")){
-    nrho <- max(partable$rhoidx[partable$mat == "rho"], na.rm = TRUE)
+    #nrhofix <- sum(sapply(parmats, function(x){
+    #  sum(x$theta[lower.tri(x$theta)] %in% parconst$rhs)
+    #}))
+    nrho <- max(partable$rhoidx[partable$mat == "rho"], na.rm = TRUE)# - nrhofix
     nfree <- c(nfree, rho = nrho)
     parblk <- paste0(parblk, t1, "vector<lower=0,upper=1>[",
                      nrho, "] rhofree;\n")
   }
   if(any(partable$mat == "lvrho")){
-    nlrho <- max(partable$rhoidx[partable$mat == "lvrho"], na.rm = TRUE)
+    #nlrhofix <- sum(sapply(parmats, function(x){
+    #  sum(x$psi[lower.tri(x$psi)] %in% parconst$rhs)
+    #}))
+    nlrho <- max(partable$rhoidx[partable$mat == "lvrho"], na.rm = TRUE)# - nlrhofix
     nfree <- c(nfree, lvrho = nlrho)
     parblk <- paste0(parblk, t1, "vector<lower=0,upper=1>[",
                      nlrho, "] lvrhofree;\n")
@@ -293,7 +299,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   out <- list(model = out, inits = NA)
 
   ## Initial values
-  inits <- set_inits_stan(partable, n.chains, inits)
+  inits <- set_inits_stan(partable, nfree, n.chains, inits)
   out$inits <- inits
 
   ## Now add data if we have it

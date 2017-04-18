@@ -100,12 +100,11 @@ set_inits <- function(partable, ov.cp, lv.cp, n.chains, inits){
   initvals
 }
 
-set_inits_stan <- function(partable, n.chains, inits){
+set_inits_stan <- function(partable, nfree, n.chains, inits){
   ## Generate initial values for each chain
   initvals <- vector("list", n.chains)
   names(initvals) <- paste("c", 1:n.chains, sep="")
-  pveclen <- with(partable, tapply(freeparnums, mat, max, na.rm = TRUE))
-  pveclen <- pveclen[pveclen > 0]
+  pveclen <- nfree[nfree > 0]
 
   initmats <- list()
   for(i in 1:length(pveclen)){
@@ -122,6 +121,7 @@ set_inits_stan <- function(partable, n.chains, inits){
     initvals[[i]] <- initmats
   }
 
+  partable$freeparnums[is.na(partable$freeparnums)] <- 0
   freepartable <- partable[partable$freeparnums > 0,]
   ## TODO need exported, or reverse rstan::lookup()
   rosetta <- rstan:::rosetta

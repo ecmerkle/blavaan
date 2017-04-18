@@ -20,8 +20,10 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
     for(i in 1:nrow(partable)){
         miscignore <- partable$mat[i] == ""
 
-        eqpar <- which(partable$rhs == partable$plabel[i] &
-                       partable$op == "==")
+        eqpar <- which((partable$rhs == partable$plabel[i] &
+                       partable$op == "==") |
+                       (grepl("rho", partable$mat[i]) &
+                        is.na(partable$rhoidx[i])))
         compeq <- which(partable$lhs == partable$label[i] &
                         partable$op %in% c("==", ":=") &
                         grepl("\\+|-|/|\\*|\\(|\\)|\\^", partable$rhs))
@@ -54,9 +56,13 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
                           partable$row[i], ",", partable$col[i],
                           ",", partable$group[i], "] ", eqop,
                           " ", sep="")
-            if(grepl("rho", partable$mat[i])) TXT2 <- paste(TXT2, "-1 + 2*", sep="")
+
+            if(grepl("rho", partable$mat[i]) & is.na(partable$ustart[i])){
+                TXT2 <- paste(TXT2, "-1 + 2*", sep="")
+            }
           
-            if(partable$free[i] == 0 & partable$op[i] != ":="){
+            if((partable$free[i] == 0 & partable$op[i] != ":=") |
+               (grepl("rho", partable$mat[i]) & !is.na(partable$ustart[i]))){
                 if(is.na(partable$ustart[i])){
                     ## exo
                     TXT2 <- paste(TXT2, partable$start[i], eolop,

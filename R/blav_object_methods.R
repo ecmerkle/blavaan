@@ -400,7 +400,7 @@ setMethod("coef", "blavaan",
 ##     else call
 ## })
 
-plot.blavaan <- function(x, pars, plot.type="trace", ...){
+plot.blavaan <- function(x, pars=NULL, plot.type="trace", ...){
     # NB: arguments go to plot.runjags() or stan plot functions
     if(x@Options$target == "jags"){
         parnames <- x@ParTable$pxnames[match(pars, x@ParTable$free)]
@@ -409,11 +409,15 @@ plot.blavaan <- function(x, pars, plot.type="trace", ...){
         ## checkvalidrunjagsobject somehow destroys name changes.
         plot(x@external$mcmcout, plot.type=plot.type, vars=parnames, ...)
     } else {
-        allpars <- colnames(as.matrix(x@external$mcmcout))
-        parnums <- x@ParTable$stanpnum[match(pars, x@ParTable$free)]
-        parnames <- allpars[parnums]
-        rstan::plot(x@external$mcmcout, pars = parnames,
-                    plotfun = plot.type)
+        plargs <- list(x = x@external$mcmcout,
+                       plotfun = plot.type)
+        if(length(pars) > 0){
+            allpars <- colnames(as.matrix(x@external$mcmcout))
+            parnums <- x@ParTable$stanpnum[match(pars, x@ParTable$free)]
+            parnames <- allpars[parnums]
+            plargs <- c(plargs, list(pars = parnames))
+        }
+        do.call(rstan::plot, plargs)
     }
 }
     
