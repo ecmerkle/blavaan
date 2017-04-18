@@ -132,7 +132,7 @@ blavInspect <- function(blavobject, what, ...) {
                    "not available for Bayesian models."))
     } else {
         ## we can use lavInspect
-        lavargs <- c(dotdotdot, list(lavobject = blavobject, what = what))
+        lavargs <- c(dotdotdot, list(object = blavobject, what = what))
         do.call("lavInspect", lavargs)
     }
 }
