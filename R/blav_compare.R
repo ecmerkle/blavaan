@@ -15,14 +15,14 @@ blavCompare <- function(object1, object2, ...) {
   ## of that object can get much larger.
   lavopt1 <- object1@Options
   lavopt1$estimator <- "ML"
-  ll1 <- case_lls(object1@external$runjags, object1@Model,
+  ll1 <- case_lls(object1@external$mcmcout, object1@Model,
                   object1@ParTable, object1@SampleStats,
                   lavopt1, object1@Cache,
                   object1@Data)
 
   lavopt2 <- object2@Options
   lavopt2$estimator <- "ML"
-  ll2 <- case_lls(object2@external$runjags, object2@Model,
+  ll2 <- case_lls(object2@external$mcmcout, object2@Model,
                   object2@ParTable, object2@SampleStats,
                   lavopt2, object2@Cache,
                   object2@Data)
