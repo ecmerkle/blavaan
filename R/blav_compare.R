@@ -1,6 +1,10 @@
 blavCompare <- function(object1, object2, ...) {
   ## loo compare code from Mauricio Garnier-Villarreal + old BF() code
-
+  if(blavInspect(object1, "Options")$test == "none" |
+     blavInspect(object2, "Options")$test == "none"){
+    stop("blavaan ERROR: Models cannot be compared when test='none'")
+  }
+    
   ## Bayes factor approximation based on marginal log-likelihoods
   bf <- object1@test[[1]]$stat - object2@test[[1]]$stat
   res <- c(bf, object1@test[[1]]$stat, object2@test[[1]]$stat)

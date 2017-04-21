@@ -33,7 +33,7 @@ blavaan <- function(...,  # default lavaan arguments
       if(!(suppressMessages(require("rstan", quietly = TRUE)))){
         stop("blavaan ERROR: rstan package is not installed.")
       }
-      rstan_options(auto_write = TRUE)
+      rstan::rstan_options(auto_write = TRUE)
       options(mc.cores = min(n.chains, parallel::detectCores()))
     }
 
