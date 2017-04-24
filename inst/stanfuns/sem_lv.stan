@@ -23,8 +23,8 @@
     } else {
       for(j in 1:Ng){
         psimatinv[j] = to_matrix(psi[,,j]);
-	ldetcomp[j] = log_determinant(psimatinv[j]);
 	psimatinv[j] = psimatinv[j] + psimatinv[j]' - diag_matrix(diagonal(psimatinv[j]));
+	ldetcomp[j] = log_determinant(psimatinv[j]);
 	psimatinv[j] = inverse_spd(psimatinv[j]);
         siginv[j] = (iden - to_matrix(B[,,j])') * psimatinv[j] * (iden - to_matrix(B[,,j]));
       }
