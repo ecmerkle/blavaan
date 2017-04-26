@@ -1,3 +1,8 @@
+Changes in Version 0.2-4
+    o Add 'seed' argument for setting the random seeds in each JAGS chain.
+
+    o Bug fixes found in previous version.
+
 Changes in Version 0.2-3
     o New function blavCompare() for comparing models via ICs and BFs (code from Mauricio Garnier-Villarreal).
 
