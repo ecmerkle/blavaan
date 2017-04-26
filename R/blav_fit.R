@@ -7,7 +7,11 @@ blav_model_fit <- function(lavpartable = NULL,
 
     stopifnot(is.list(lavpartable), class(lavmodel) %in% c("Model",
                                                            "lavModel"))
-    lavmcmc <- make_mcmc(lavjags)
+    if(class(lavjags) != "NULL"){
+        lavmcmc <- make_mcmc(lavjags)
+    } else {
+        lavmcmc <- NULL
+    }
       
     # extract information from 'x'
     iterations <- attr(x, "iterations")

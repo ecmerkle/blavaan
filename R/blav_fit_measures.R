@@ -11,12 +11,12 @@ function(object, fit.measures = "all", baseline.model = NULL) {
 })
 
 
-#fitMeasures <- fitmeasures <- function(object, fit.measures="all") {
 blav_fit_measures <- function(object, fit.measures = "all", 
                               baseline.model = NULL) {
 
     # has the model converged?
-    if(object@Fit@npar > 0L && !object@optim$converged) {
+    if(object@Fit@npar > 0L && !object@optim$converged &&
+       class(object@external$mcmcout) != "NULL") {
         warning("blavaan WARNING: the chains may not have converged.")
     }
 

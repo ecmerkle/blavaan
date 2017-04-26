@@ -86,7 +86,11 @@ blavaan <- function(...,  # default lavaan arguments
     }
     # if do.fit supplied, save it for jags stuff
     jag.do.fit <- TRUE
-    if("do.fit" %in% dotNames) jag.do.fit <- dotdotdot$do.fit
+    if("do.fit" %in% dotNames){
+        jag.do.fit <- dotdotdot$do.fit
+        burnin <- 0
+        sample <- 0
+    }
     if("warn" %in% dotNames){
         origwarn <- dotdotdot$warn
     } else {
