@@ -145,6 +145,13 @@ blavaan <- function(...,  # default lavaan arguments
                 mfj$startsample <- 4000 # needed for runjags
             }
         }
+        sample <- mfj$startsample
+        if(!("startburnin" %in% names(mfj))){
+            mfj$startburnin <- 4000
+            burnin <- 4000
+        } else {
+            burnin <- mfj$startburnin
+        }
     }
                                              
     # which argument do we remove/ignore?
