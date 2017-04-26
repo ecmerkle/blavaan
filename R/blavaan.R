@@ -29,10 +29,11 @@ blavaan <- function(...,  # default lavaan arguments
 
     # ensure stan is here
     if(target == "stan"){
-      # could also use requireNamespace + attachNamespace
-      if(!(suppressMessages(require("rstan", quietly = TRUE)))){
+      stop("blavaan ERROR: stan export not yet available")
+      if(!(suppressMessages(requireNamespace("rstan", quietly = TRUE)))){
         stop("blavaan ERROR: rstan package is not installed.")
       }
+      attachNamespace("rstan")
       rstan::rstan_options(auto_write = TRUE)
       options(mc.cores = min(n.chains, parallel::detectCores()))
     }
