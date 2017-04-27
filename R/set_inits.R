@@ -124,8 +124,7 @@ set_inits_stan <- function(partable, nfree, n.chains, inits){
   partable$freeparnums[is.na(partable$freeparnums)] <- 0
   freepartable <- partable[partable$freeparnums > 0,]
   ## TODO need exported, or reverse rstan::lookup()
-  rosetta <- NULL
-  #rosetta <- rstan:::rosetta
+  rosetta <- rstan:::rosetta
   ## alternate way to possibly get around export
   ##rloc <- paste0(system.file("R", package="rstan"), "/sysdata")
   ##lazyLoad(rloc)
