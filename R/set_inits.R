@@ -129,14 +129,9 @@ set_inits_stan <- function(partable, nfree, n.chains, inits){
   ##rloc <- paste0(system.file("R", package="rstan"), "/sysdata")
   ##lazyLoad(rloc)
 
+  pricom <- dist2r(freepartable$prior, target = "stan")
   for(i in 1:nrow(freepartable)){
-    tmppri <- freepartable$prior[i]
-
-    pricom <- unlist(strsplit(tmppri, "[, ()]+"))
-
     if(inits == "prior"){
-      pricom[1] <- rosetta$RFunction[rosetta$StanFunction == pricom[1]]
-
       ## Try to set sensible starting values, using some of the
       ## prior information
       if(grepl("dnorm", pricom[1])){

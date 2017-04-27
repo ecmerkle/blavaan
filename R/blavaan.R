@@ -441,8 +441,10 @@ blavaan <- function(...,  # default lavaan arguments
         ## TODO S3 method for coeffun?
         if(target == "jags"){
             parests <- coeffun(lavpartable, jagtrans$pxpartable, res)
+            stansumm <- NA
         } else {
             parests <- coeffun_stan(jagtrans$pxpartable, res)
+            stansumm <- parests$stansumm
         }
         x <- parests$x
         lavpartable <- parests$lavpartable
@@ -518,6 +520,7 @@ blavaan <- function(...,  # default lavaan arguments
     if(jag.do.fit){
       dsd <- diag(parests$sd[names(parests$sd) %in% colnames(parests$vcorr)])
       VCOV <- dsd %*% parests$vcorr %*% dsd
+      rownames(VCOV) <- colnames(VCOV) <- colnames(parests$vcorr)
       #lavjags <- c(lavjags, list(vcov = VCOV))
 
       # store vcov in new @vcov slot
@@ -544,7 +547,8 @@ blavaan <- function(...,  # default lavaan arguments
                                 lavcache            = lavcache,
                                 lavjags             = lavjags,
                                 samplls             = samplls,
-                                jagextra            = jagextra)
+                                jagextra            = jagextra,
+                                stansumm            = stansumm)
         if(verbose) cat(" done.\n")
     }
     timing$TEST <- (proc.time()[3] - start.time)
@@ -587,6 +591,7 @@ blavaan <- function(...,  # default lavaan arguments
                     origpt = lavpartable, inits = jagtrans$inits,
                     pxpt = jagtrans$pxpartable, burnin = burnin,
                     sample = sample)
+    if(target == "stan") extslot <- c(extslot, list(stansumm = stansumm))
     
     ## move total to the end
     timing$total <- (proc.time()[3] - start.time0)

@@ -9,6 +9,7 @@ blav_model_test <- function(lavmodel       = NULL,
                             lavjags        = NULL,
                             samplls        = NULL,
                             jagextra       = NULL,
+                            stansumm       = NULL,
                             control        = list()) {
 
 
@@ -22,7 +23,8 @@ blav_model_test <- function(lavmodel       = NULL,
     } else {
         mll <- try(margloglik(lavpartable, lavmodel, lavoptions, 
                               lavsamplestats, lavdata, lavcache,
-                              lavjags), silent=TRUE)
+                              lavjags, VCOV, x, stansumm),
+                   silent=TRUE)
         if(inherits(mll, "try-error")) mll <- NA
     }
 

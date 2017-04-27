@@ -528,5 +528,5 @@ coeffun_stan <- function(lavpartable, rsob, fun = "mean") {
   list(x = lavpartable$est[lavpartable$free > 0][order(lavpartable$free[lavpartable$free > 0])],
        lavpartable = lavpartable,
        vcorr = vcorr,
-       sd = sdvec)
+       sd = sdvec, stansumm = rssumm$summary)
 }

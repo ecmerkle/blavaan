@@ -286,7 +286,14 @@ eval_prior <- function(pricom, thetstar, pxname){
             trunend <- length(pricom)
         }
     } else {
-        dpars <- as.numeric(pricom[2:length(pricom)])
+        dpars <- suppressWarnings(as.numeric(pricom[2:length(pricom)]))
+        ## handle text like sqrt, ^, etc
+        if(any(is.na(dpars))){
+            nas <- which(is.na(dpars))
+            for(i in nas){
+                dpars[i] <- eval(parse(text=pricom[i+1]))
+            }
+        }
     }
 
     ## thetstar modifications:
@@ -323,6 +330,36 @@ eval_prior <- function(pricom, thetstar, pxname){
     dens <- do.call(pricom[1], c(thetstar, as.list(dpars), log=TRUE)) - log(support.prob)
 
     dens
+}
+
+dist2r <- function(priors, target){
+    ## convert jags/stan priors to R distribution
+    ## return lists where distribution + parameters (+ truncation)
+    ## appear as character vectors.
+
+    ## explicitly change sqrt() to ^.5, because it may often be
+    ## used to express sd's
+    gsub("sqrt\\((.*)\\)\\).*", "\\1^.5\\)", priors)
+  
+    if(target == "jags"){
+        out <- jagsdist2r(priors)
+    } else if(target == "stan"){
+        ## TODO need exported, or reverse rstan::lookup()
+        rosetta <- rstan:::rosetta
+        ## alternate way to possibly get around export
+        ##rloc <- paste0(system.file("R", package="rstan"), "/sysdata")
+        ##lazyLoad(rloc)
+        prisplit <- strsplit(priors, "[, ()]+")
+        pridist <- sapply(prisplit, head, 1)
+        newdist <- rosetta$RFunction[match(pridist, rosetta$StanFunction)]
+        for(i in 1:length(newdist)){
+            prisplit[[i]][1] <- newdist[i]
+        }
+
+        out <- prisplit
+    }
+
+    out
 }
 
 ## add extra monitors from jagextra to parameter table as defined parameters

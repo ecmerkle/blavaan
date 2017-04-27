@@ -1,11 +1,19 @@
 margloglik <- function(lavpartable, lavmodel, lavoptions, 
-                       lavsamplestats, lavdata, lavcache, lavjags) {
+                       lavsamplestats, lavdata, lavcache, lavjags,
+                       VCOV, xest, stansumm) {
   ## compute marginal log-likelihood given model output
   ## the lavs are created via blavaan()
   bayesout <- lavjags
+  target <- lavoptions$target
 
   ## unique parameters (remove equality constraints and
   ## cov parameters under srs priors)
+  if(target == "stan"){
+    lavpartable$pxnames <- with(lavpartable, paste0(mat, "[", row,
+                                                    ",", col, ",",
+                                                    group, "]"))
+    lavpartable$pxnames[lavpartable$freeparnums == 0] <- NA
+  }
   eqpars <- lavpartable$rhs[lavpartable$op == "=="]
   fixpars <- which(lavpartable$free == 0)
   urows <- 1:length(lavpartable$pxnames)
@@ -17,25 +25,31 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
 
   ## re-arrange crosscorr rows/columns to match partable,
   ## then remove redundant rows/columns
-  rearr <- match(lavpartable$pxnames[urows], rownames(bayesout$crosscorr))
-  rearr2 <- match(lavpartable$pxnames[urows], rownames(bayesout$summary$statistics))
+  rearr <- match(lavpartable$pxnames[urows], rownames(VCOV))
 
-  Jinv <- diag(bayesout$summary$statistics[rearr2,"SD"]) %*%
-          bayesout$crosscorr[rearr,rearr] %*%
-          diag(bayesout$summary$statistics[rearr2,"SD"])
+  Jinv <- VCOV[rearr,rearr]
 
+  if(target == "jags"){
+    summstats <- bayesout$summary$statistics
+  } else if(target == "stan"){
+    summstats <- stansumm
+  }
   cmatch <- match(lavpartable$pxnames[urows],
-                  rownames(bayesout$summary$statistics),
+                  rownames(summstats),
                   nomatch=0)
 
   ## this is potentially under srs parameterization,
   ## need to change below to use lavaan's log-likelihood
-  thetstar <- bayesout$summary$statistics[cmatch,"Mean"]
+  if(target == "jags"){
+    thetstar <- summstats[cmatch,"Mean"]
+  } else if(target == "stan"){
+    thetstar <- summstats[cmatch,"mean"]
+  }
   names(thetstar) <- NULL
 
   ## convert prior strings to commands + parameters
   pri <- lavpartable$prior[urows]
-  pricom <- jagsdist2r(pri)
+  pricom <- dist2r(pri, target = target)
 
   ## warn about fa priors
   if(lavoptions$cp == "fa") warning("blavaan WARNING: marginal log-likelihoods under cp='fa' may be unstable.")
@@ -143,30 +157,32 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
     priloglik <- priloglik + tmpdens
   }
 
+  loglik <- attr(xest, "fx")
   ## have lavaan calculate the log-likelihood
   ## switch off se, force test = "standard"
-  lavoptions$se <- "none"
-  lavoptions$test <- "standard"
-  lavoptions$estimator <- "ML"
-  ## control() is part of lavmodel (for now)
-  lavoptions$optim.method <- "none"
-  if("control" %in% slotNames(lavmodel)){
-    lavmodel@control <- list(optim.method="none")
-  }
+  ## lavoptions$se <- "none"
+  ## lavoptions$test <- "standard"
+  ## lavoptions$estimator <- "ML"
+  ## ## control() is part of lavmodel (for now)
+  ## lavoptions$optim.method <- "none"
+  ## if("control" %in% slotNames(lavmodel)){
+  ##   lavmodel@control <- list(optim.method="none")
+  ## }
 
-  fit.new <- try(lavaan(slotParTable = lavpartable,
-                        slotModel = lavmodel,
-                        slotOptions = lavoptions,
-                        slotSampleStats = lavsamplestats,
-                        slotData = lavdata,
-                        slotCache = lavcache), silent=TRUE)
+  ## fit.new <- try(lavaan(slotParTable = lavpartable,
+  ##                       slotModel = lavmodel,
+  ##                       slotOptions = lavoptions,
+  ##                       slotSampleStats = lavsamplestats,
+  ##                       slotData = lavdata,
+  ##                       slotCache = lavcache), silent=TRUE)
 
-  if(!inherits(fit.new, "try-error")){
-    loglik <- fitMeasures(fit.new, "logl")
-  } else {
-    loglik <- NA
-  }
+  ## if(!inherits(fit.new, "try-error")){
+  ##   loglik <- fitMeasures(fit.new, "logl")
+  ## } else {
+  ##   loglik <- NA
+  ## }
   #print(c(priloglik, loglik, log(det(Jinv))))
+  
   margloglik <- (q/2)*log(2*pi) + log(det(Jinv))/2 +
                 priloglik + loglik
   names(margloglik) <- ""
