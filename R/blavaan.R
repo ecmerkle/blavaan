@@ -123,6 +123,8 @@ blavaan <- function(...,  # default lavaan arguments
         if(target == "stan"){
             jarg <- c("warmup", "iter", "adapt")
             names(mfj) <- jarg[mcj > 0]
+            ## stan iter argument includes warmup:
+            if(mcj[1] > 0 & mcj[2] > 0) mfj$iter <- mfj$iter + mfj$warmup
             if("adapt" %in% names(mfj)){
               mfj <- mfj[-which(names(mfj) == "adapt")]
             }
