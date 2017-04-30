@@ -343,12 +343,20 @@ set_mv0 <- function(partable, ov.names, ngroups) {
                                partable$rhs == ovn[i] &
                                partable$group == j)
 
-                ## This should always be length 1 because, if it is also
-                ## an indicator of another lv (with other mvs), then
-                ## we can estimate the variance
-                if(length(lvloc) > 1){
+                lvcov <- which(partable$op == "~~" &
+                               (partable$lhs %in% partable$lhs[lvloc]) |
+                               (partable$rhs %in% partable$lhs[lvloc]) &
+                               partable$lhs != partable$rhs)
+
+                ## If this is an indicator of multiple lvs or
+                ## has covariances attached, we cannot handle it
+                ## in conditional (on lv) form:
+                if(length(lvloc) > 1 | length(lvcov) > 0){
+                    if(length(mvloc) > 1){
+                        stop("blavaan ERROR: Problem with ov variances fixed to 0.")
+                    }
                     partable$ustart[mvloc] <- .001
-                    warning(paste("blavaan WARNING: The variance of variable", ovn[i],
+                    message(paste("blavaan NOTE: The variance of variable", ovn[i],
                                "in group", j, "has been fixed to .001 instead of 0 (necessary for JAGS).\n"))
                 } else {
                     lvname <- partable$lhs[lvloc]
