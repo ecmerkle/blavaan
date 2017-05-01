@@ -197,19 +197,24 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   }
   parblk <- paste0(parblk, "}\n\n")                     
 
-  if(any(grepl("0", model@Data@Mp[[1]]$id))){
-    stop("blavaan ERROR: missing data not yet handled in stan.")
-    ## start off as if blavmis=="fi"
-    TXT <- paste(TXT, t1, "for(i in 1:nrows) {\n", sep="")
+  missflag <- any(grepl("0", model@Data@Mp[[1]]$id))
+  if(missflag){
+    TXT <- paste0(TXT, t1, "for(i in 1:N) {\n", t2,
+                  "segment(y[i], 1, nseen[i]) ~ ",
+                  "multi_normal_cholesky(",
+                  "to_vector(mu[i])[obsvar[i,1:nseen[i]]],",
+                  "thetld[g[i],obsvar[i,1:nseen[i]],",
+                  "obsvar[i,1:nseen[i]]]);\n", t1, "}\n\n")
+    ## could also start off as if blavmis=="fi"?
+    ##TXT <- paste(TXT, t1, "for(i in 1:nrows) {\n", sep="")
   } else {
     TXT <- paste0(TXT, t1, "for(i in 1:N) {\n", t2,
                  "y[i] ~ multi_normal_cholesky(",
                  "to_vector(mu[i]), thetld[g[i]]);\n", t1,
-                 "}\n\n", t1,
-                 "eta ~ sem_lv_lpdf(alpha, beta, psi, g, ",
-                 nlv, ", N, ", ngroups, ", ", diagpsi, ");\n")
+                 "}\n\n")
   }
-
+  TXT <- paste0(TXT, t1, "eta ~ sem_lv_lpdf(alpha, beta, psi, g, ",
+                nlv, ", N, ", ngroups, ", ", diagpsi, ");\n")
   
   ## for missing=="fi", to model variables on rhs of regression
   ovreg <- unique(regressions$rhs[regressions$rhs %in% ov.names])
@@ -311,6 +316,10 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     tmpnmvs <- length(orig.ov.names)
 
     y <- matrix(NA, ntot, tmpnmvs) #lapply(1:tmpnmvs, function(x) rep(NA,ntot))
+    obsvar <- matrix(-999, ntot, tmpnmvs)
+    nseen <- rep(NA, ntot)
+    misvar <- matrix(-999, ntot, tmpnmvs)
+    nmis <- rep(NA, ntot)
     g <- rep(NA, ntot)
     nX <- ncol(lavdata@X[[1]])
     for(k in 1:ngroups){
@@ -324,12 +333,28 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
         }
       }
       g[lavdata@case.idx[[k]]] <- k
+      
+      ## missingness patterns
+      npatt <- lavdata@Mp[[k]]$npatterns
+      for(m in 1:npatt){
+        tmpobs <- which(lavdata@Mp[[k]]$pat[m,])
+        tmpmis <- which(!lavdata@Mp[[k]]$pat[m,])
+        tmpidx <- lavdata@Mp[[k]]$case.idx[[m]]
+        nseen[tmpidx] <- length(tmpobs)
+        if(length(tmpobs) > 0){
+          tmpobs <- matrix(tmpobs, length(tmpidx), length(tmpobs),
+                           byrow=TRUE)
+          obsvar[tmpidx,1:nseen[tmpidx[1]]] <- tmpobs
+        }
+        nmis[tmpidx] <- length(tmpmis)
+        if(length(tmpmis) > 0){
+          tmpmis <- matrix(tmpmis, length(tmpidx), length(tmpmis),
+                           byrow=TRUE)
+          misvar[tmpidx,1:nmis[tmpidx[1]]] <- tmpmis
+        }
+      }
     }
     colnames(y) <- orig.ov.names
-
-    ## stan data block
-    datablk <- paste0(datablk, t1, "vector[", tmpnmvs,
-                      "] y[N];\n")
     
     ## remove fully deleted rows
     nas <- which(apply(is.na(y), 1, sum) == tmpnmvs)
@@ -337,20 +362,50 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     if(length(nas) > 0){
       y <- y[-nas,]
       g <- g[-nas]
+      obsvar <- obsvar[-nas,]
+      misvar <- misvar[-nas,]
+      nseen <- nseen[-nas]
+      nmis <- nmis[-nas]
       ntot <- sum(unlist(lavdata@nobs))
     }
 
+    ## move observed variables all to the left, because stan only
+    ## allows segment() to be contiguous
+    if(missflag){
+      for(i in 1:nrow(y)){
+        y[i,1:nseen[i]] <- y[i,obsvar[i,1:nseen[i]]]
+        if(tmpnmvs - nseen[i] > 0){
+          y[i,(nseen[i]+1):tmpnmvs] <- -999
+        }
+      }
+    }
+    
     if(FALSE){ #blavmis == "fi"){
       ## variables on rhs of regression, in case missing
       y <- y[names(y) %in% ovreg]
     }
 
     standata <- list(y=y, g=g, N=ntot)
+    if(missflag){
+      standata <- c(standata, list(obsvar=obsvar, misvar=misvar,
+                                   nseen=nseen, nmis=nmis))
+      standata$y[is.na(standata$y)] <- -999
+    }
     ## TODO needed?
     if(any(partable$op == "|")){
       standata <- c(standata, list(ones = matrix(1, ntot, tmpnmvs)))
     }
 
+    ## stan data block
+    datablk <- paste0(datablk, t1, "vector[", tmpnmvs,
+                      "] y[N];\n")
+    if(missflag){
+      datablk <- paste0(datablk, t1, "int obsvar[N,", tmpnmvs,
+                        "];\n", t1, "int misvar[N,", tmpnmvs,
+                        "];\n", t1, "int nseen[N];\n",
+                        t1, "int nmis[N];\n")
+    }
+    
     if(FALSE){ #blavmis == "fi"){
       ## keep only modeled y's not on rhs of regression
       matvars <- which(orig.ov.names %in% ov.names &
