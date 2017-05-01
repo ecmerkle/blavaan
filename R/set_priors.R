@@ -113,14 +113,20 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x, target="ja
                                           text=partable$rhs[compeq]))
                 pvnum <- match(rhsvars, partable$label)
 
-                rhstrans <- paste("[", partable$freeparnums[pvnum], "]",
+                rhstrans <- paste(partable$mat[pvnum], "[",
+                                  partable$row[pvnum], ",",
+                                  partable$col[pvnum], ",",
+                                  partable$group[pvnum], "]",
                                   sep="")
 
-                jageq <- partable$rhs[compeq]
-                for(j in 1:length(rhsvars)){
-                    jageq <- gsub(rhsvars[j], rhstrans[j], jageq)
-                }
-                jageq <- gsub("[", "parvec[", jageq, fixed = TRUE)
+                oldjageq <- partable$rhs[compeq]
+                transtab <- as.list(rhstrans)
+                names(transtab) <- rhsvars
+                jagexpr <- parse(text=oldjageq)[[1]]
+                jageq <- do.call("substitute", list(jagexpr,
+                                                    transtab))
+
+                jageq <- gsub('\"', '', deparse(jageq))
 
                 TXT2 <- paste(TXT2, jageq, eolop, sep="")
             } else {

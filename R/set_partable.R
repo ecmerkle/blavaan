@@ -450,6 +450,7 @@ set_phanvars <- function(partable, ov.names, lv.names, ov.cp, lv.cp, ngroups){
                     partable$parnums[nrow(partable)] <- max(partable$parnums, na.rm=TRUE) + 1
                 }
                 partable$free[vvar] <- 0
+                partable$label[vvar] <- ""
                 partable$ustart[vvar] <- eqconst
             }
         }
