@@ -17,8 +17,8 @@ set_stancovs <- function(partable, ov.names, ov.names.x, dp) {
   
   covpars <- which(partable$op == "~~" &
                    partable$lhs != partable$rhs &
-                   !(partable$lhs %in% ov.names.x &
-                     partable$free == 0))
+                   partable$free > 0 &
+                   !(partable$lhs %in% ov.names.x))
 
   blkrow <- rep(NA, length(partable$id))
   partable$rhoidx <- rep(NA, length(partable$id))
@@ -108,6 +108,7 @@ set_stancovs <- function(partable, ov.names, ov.names.x, dp) {
                                               ",", partable$group[tmprows],
                                               "] * sqrt(", tmpv1,
                                               " * ", tmpv2, ")")
+        partable$start[tmprows] <- partable$start[covpars[i]]
       }
       partable$free[tmprows] <- partable$free[covpars[i]]
       partable$free[covpars[i]] <- 0

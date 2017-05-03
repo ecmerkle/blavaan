@@ -57,7 +57,7 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
                           ",", partable$group[i], "] ", eqop,
                           " ", sep="")
 
-            if(grepl("rho", partable$mat[i]) & is.na(partable$ustart[i])){
+            if(grepl("rho", partable$mat[i]) & is.na(partable$ustart[i]) & partable$free[i] > 0){
                 TXT2 <- paste(TXT2, "-1 + 2*", sep="")
             }
           

@@ -139,7 +139,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     tmppsi <- tmppsi[lower.tri(tmppsi)]
     if(all(tmppsi == 0)) diagpsi <- 1L
   }
-  
+
   nfree <- sapply(parmats, sapply, function(x){
     if(class(x)[1] == "lavaan.matrix.symmetric"){
       # off-diagonals handled via rho parameters!
@@ -176,7 +176,9 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     #nrhofix <- sum(sapply(parmats, function(x){
     #  sum(x$theta[lower.tri(x$theta)] %in% parconst$rhs)
     #}))
-    nrho <- max(partable$rhoidx[partable$mat == "rho"], na.rm = TRUE)# - nrhofix
+    nrho <- sum(partable$mat == "rho" &
+                partable$free > 0 &
+                !is.na(partable$rhoidx), na.rm = TRUE)# - nrhofix
     nfree <- c(nfree, rho = nrho)
     parblk <- paste0(parblk, t1, "vector<lower=0,upper=1>[",
                      nrho, "] rhofree;\n")
@@ -185,7 +187,9 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     #nlrhofix <- sum(sapply(parmats, function(x){
     #  sum(x$psi[lower.tri(x$psi)] %in% parconst$rhs)
     #}))
-    nlrho <- max(partable$rhoidx[partable$mat == "lvrho"], na.rm = TRUE)# - nlrhofix
+    nlrho <- sum(partable$mat == "lvrho" &
+                 partable$free > 0 &
+                 !is.na(partable$rhoidx), na.rm = TRUE)# - nlrhofix
     nfree <- c(nfree, lvrho = nlrho)
     parblk <- paste0(parblk, t1, "vector<lower=0,upper=1>[",
                      nlrho, "] lvrhofree;\n")
@@ -213,8 +217,11 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
                  "to_vector(mu[i]), thetld[g[i]]);\n", t1,
                  "}\n\n")
   }
-  TXT <- paste0(TXT, t1, "eta ~ sem_lv_lpdf(alpha, beta, psi, g, ",
-                nlv, ", N, ", ngroups, ", ", diagpsi, ");\n")
+
+  if(nlv > 0){
+      TXT <- paste0(TXT, t1, "eta ~ sem_lv_lpdf(alpha, beta, psi, g, ",
+                    nlv, ", N, ", ngroups, ", ", diagpsi, ");\n")
+  }
   
   ## for missing=="fi", to model variables on rhs of regression
   ovreg <- unique(regressions$rhs[regressions$rhs %in% ov.names])
@@ -271,7 +278,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       if(rhs %in% lv.names) {
         RHS <- paste("eta[i,", match(rhs, lv.names), "]", sep="")
       } else if(rhs %in% orig.ov.names) {
-        RHS <- paste(rhs, "[i]", sep="")
+        RHS <- paste("y[i,", match(rhs, ov.names), "]", sep="")
       }
       
       ## deal with fixed later
@@ -487,9 +494,15 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     }
     
     ## add cholesky decomp of theta matrix
+    ## FIXME if some ovs are in theta and others in psi
     TPS <- paste0(TPS, t1, "}\n\n")
     TPS <- paste0(TPS, t1, "for(j in 1:", ngroups, "){\n")
-    TPS <- paste0(TPS, t2, "thetld[j] = fill_lower(to_matrix(theta[,,j]));\n")
+    TPS <- paste0(TPS, t2, "thetld[j] = fill_lower(to_matrix(")
+    if(any(partable$mat == "theta")){
+        TPS <- paste0(TPS, "theta[,,j]));\n")
+    } else {
+        TPS <- paste0(TPS, "psi[,,j]));\n")
+    }
     TPS <- paste0(TPS, t2, "thetld[j] = cholesky_decompose(",
                   "thetld[j]);\n", t1, "}\n")
     
@@ -503,8 +516,11 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     out <- c(out, list(data=standata))
   }
 
-  funblk <- paste0("functions{\n", t1, "#include 'sem_lv.stan' \n",
-                   t1, "#include 'fill_lower.stan' \n")
+  funblk <- "functions{\n"
+  if(nlv > 0){
+      funblk <- paste0(funblk, t1, "#include 'sem_lv.stan' \n")
+  }
+  funblk <- paste0(funblk, t1, "#include 'fill_lower.stan' \n")
   ## could insert other functions as needed
   funblk <- paste0(funblk, "}\n\n")
 
@@ -516,7 +532,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   isystem <- system.file("stanfuns", package = "blavaan")
   out$model <- rstan::stanc_builder(file = tmp, isystem = isystem,
                                     obfuscate_model_name = TRUE)$model_code
-  
+
   out <- c(out, list(monitors = monitors, pxpartable = partable))
 
   out

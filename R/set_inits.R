@@ -123,6 +123,21 @@ set_inits_stan <- function(partable, nfree, n.chains, inits){
 
   partable$freeparnums[is.na(partable$freeparnums)] <- 0
   freepartable <- partable[partable$freeparnums > 0,]
+  if("rhoidx" %in% names(freepartable)){
+      rhorows <- which(!is.na(freepartable$rhoidx) &
+                       freepartable$free > 0 &
+                       freepartable$mat == "rho")
+      if(length(rhorows) > 0){
+          freepartable$freeparnums[rhorows] <- 1:length(rhorows)
+      }
+      lvrhorows <- which(!is.na(freepartable$rhoidx) &
+                         freepartable$free > 0 &
+                         freepartable$mat == "lvrho")
+      if(length(rhorows) > 0){
+          freepartable$freeparnums[lvrhorows] <- 1:length(lvrhorows)
+      }
+  }
+
   ## TODO need exported, or reverse rstan::lookup()
   rosetta <- rstan:::rosetta
   ## alternate way to possibly get around export
