@@ -455,11 +455,11 @@ blavaan <- function(...,  # default lavaan arguments
             if(target == "jags"){
                 if(convergence == "auto"){
                     attr(x, "iterations") <- res$sample
-                    sample <- res$sample
-                    burnin <- res$burnin
                 } else {
                     attr(x, "iterations") <- rjarg$sample
                 }
+                sample <- res$sample
+                burnin <- res$burnin
             } else {
                 wrmup <- ifelse(length(rjarg$warmup) > 0,
                                 rjarg$warmup, floor(rjarg$iter/2))
