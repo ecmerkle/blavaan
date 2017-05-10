@@ -1,4 +1,4 @@
-  real sem_lv_lpdf(matrix x, real[,,] alpha, real[,,] B, real[,,] psi, int[] g, int k, int N, int Ng, int diagpsi){
+  real sem_lv_lpdf(matrix x, real[,,] alpha, real[,,] B, real[,,] psi, int[] g, int k, int N, int Ng, int diagpsi, int fullbeta){
     real ldetcomp[Ng];
     matrix[k,k] iden;
     vector[k] psivecinv[Ng];
@@ -18,13 +18,24 @@
         psimatinv[j] = diag_matrix(psivecinv[j]);
 
         siginv[j] = (iden - to_matrix(B[,,j])') * psimatinv[j] * (iden - to_matrix(B[,,j]));
-        ldetcomp[j] = sum(log(diagonal(to_matrix(psi[,,j]))));
+
+	if(fullbeta){
+	  ldetcomp[j] = log_determinant(iden - to_matrix(B[,,j]));
+	  ldetcomp[j] = ldetcomp[j] + ldetcomp[j] + sum(log(diagonal(to_matrix(psi[,,j]))));
+	} else {
+          ldetcomp[j] = sum(log(diagonal(to_matrix(psi[,,j]))));
+  	}
       }
     } else {
       for(j in 1:Ng){
         psimatinv[j] = to_matrix(psi[,,j]);
 	psimatinv[j] = psimatinv[j] + psimatinv[j]' - diag_matrix(diagonal(psimatinv[j]));
+
 	ldetcomp[j] = log_determinant(psimatinv[j]);
+	if(fullbeta){
+	  ldetcomp[j] = ldetcomp[j] + 2 * log_determinant(iden - to_matrix(B[,,j]));
+	}
+
 	psimatinv[j] = inverse_spd(psimatinv[j]);
         siginv[j] = (iden - to_matrix(B[,,j])') * psimatinv[j] * (iden - to_matrix(B[,,j]));
       }

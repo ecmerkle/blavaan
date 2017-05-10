@@ -126,13 +126,12 @@ set_stancovs <- function(partable, ov.names, ov.names.x, dp) {
 
   ## FIXME?
   ## Remove covariances associated with fixed x
-  covpars <- which(partable$op == "~~" &
-                   partable$lhs != partable$rhs &
-                   partable$group == 1 &
-                   partable$lhs %in% ov.names.x &
-                   partable$free == 0)
-
-  if(length(covpars) > 0) partable <- partable[-covpars,]
+  ## covpars <- which(partable$op == "~~" &
+  ##                  partable$lhs != partable$rhs &
+  ##                  partable$group == 1 &
+  ##                  partable$lhs %in% ov.names.x &
+  ##                  partable$free == 0)
+  ## if(length(covpars) > 0) partable <- partable[-covpars,]
 
   partable
 }
