@@ -219,8 +219,25 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     psi.ov.names <- ""
     thet.ov.names <- ov.names
   }
+  yind <- which(ov.names %in% thet.ov.names)
+  xind <- which(ov.names %in% psi.ov.names)
 
-  if(nlv > 0 | n.psi.ov > 0){
+  ## missingness of ovs split by whether or not they appear
+  ## in psi
+  missflag <- FALSE
+  miss.psi <- FALSE
+  if(n.psi.ov > 0){
+    for(k in 1:ngroups){
+      miss.psi <- (miss.psi | any(is.na(lavdata@X[[k]][,xind])))
+    }
+  }
+  if(length(yind) > 0){
+    for(k in 1:ngroups){
+      missflag <- (missflag | any(is.na(lavdata@X[[k]][,yind])))
+    }
+  }
+  
+  if((nlv + n.psi.ov) > 0){
     TXT <- paste0(TXT, t1, "matrix[N,", (nlv + n.psi.ov), "] etamat;\n")
   }
   TXT <- paste0(TXT, t1, "for(i in 1:N) {\n")
@@ -250,11 +267,21 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   }
   TXT <- paste0(TXT, t1, "}\n\n")
 
-  if(nlv > 0){
+  if((nlv + n.psi.ov) > 0){
     TXT <- paste0(TXT, t1, "etamat ~ ")
-    TXT <- paste0(TXT, "sem_lv_lpdf(alpha, beta, psi, g, ",
+
+    if(miss.psi){
+      TXT <- paste0(TXT, "sem_lv_missing_lpdf(")
+    } else {
+      TXT <- paste0(TXT, "sem_lv_lpdf(")
+    }
+    TXT <- paste0(TXT, "alpha, beta, psi, g, ",
                   (nlv + n.psi.ov), ", N, ", ngroups, ", ",
-                  diagpsi, ",", fullbeta, ");\n")
+                  diagpsi, ", ", fullbeta)
+    if(miss.psi){
+      TXT <- paste0(TXT, ", nseenx, obsvarx, ", nlv)
+    }
+    TXT <- paste0(TXT, ");\n")
   }
   
   ## for missing=="fi", to model variables on rhs of regression
@@ -359,8 +386,6 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     ntot <- sum(unlist(lavdata@norig))
 
     ## exogenous x's go in their own matrix
-    yind <- which(ov.names %in% thet.ov.names)
-    xind <- which(ov.names %in% psi.ov.names)
     y <- matrix(NA, ntot, ny) #lapply(1:tmpnmvs, function(x) rep(NA,ntot))
     if(n.psi.ov > 0) x <- matrix(NA, ntot, n.psi.ov)
 
@@ -477,6 +502,8 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
           }
         }
       }
+    }
+    if(miss.psi){
       if(n.psi.ov > 0){
         for(i in 1:nrow(x)){
           x[i,1:nseenx[i]] <- x[i,obsvarx[i,1:nseenx[i]]]
@@ -496,6 +523,8 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
                                      nseen=nseen, nmis=nmis))
         standata$y[is.na(standata$y)] <- -999
       }
+    }
+    if(miss.psi){
       if(n.psi.ov > 0){
         standata <- c(standata, list(obsvarx=obsvarx,
                                      misvarx=misvarx,
@@ -523,6 +552,8 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
                           "];\n", t1, "int nseen[N];\n",
                           t1, "int nmis[N];\n")
       }
+    }
+    if(miss.psi){
       if(n.psi.ov > 0){
         datablk <- paste0(datablk, t1, "int obsvarx[N,", n.psi.ov,
                           "];\n", t1, "int misvarx[N,", n.psi.ov,
@@ -645,8 +676,12 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   }
 
   funblk <- "functions{\n"
-  if(nlv > 0){
+  if((nlv + n.psi.ov) > 0){
+    if(miss.psi){
+      funblk <- paste0(funblk, t1, "#include 'sem_lv_missing.stan' \n")
+    } else {
       funblk <- paste0(funblk, t1, "#include 'sem_lv.stan' \n")
+    }
   }
   funblk <- paste0(funblk, t1, "#include 'fill_lower.stan' \n")
   ## could insert other functions as needed
