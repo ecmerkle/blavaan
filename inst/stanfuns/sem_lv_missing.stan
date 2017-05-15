@@ -1,4 +1,4 @@
-  real sem_lv_missing_lpdf(matrix x, real[,,] alpha, real[,,] B, real[,,] psi, int[] g, int k, int N, int Ng, int diagpsi, int fullbeta, int[] nseen, int[,] obsvar, int nlv){
+  real sem_lv_missing_lpdf(matrix x, real[,,] alpha, real[,,] B, real[,,] psi, int[] g, int[] regind, int[] exoind, int k, int N, int Ng, int diagpsi, int fullbeta, int nlv, int nexo, int[] nseen, int[,] obsvar){
     real ldetcomp[Ng];
     matrix[k,k] iden;
     vector[k] psivecinv[Ng];

@@ -124,7 +124,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   ## (need separated so can use "lower" and "upper")
   parmats <- lavInspect(model)
   parconst <- attr(parmats, "header")
-  
+
   ## so it is always a list of lists
   if(model@Data@ngroups == 1) parmats <- list(g1 = parmats)
 
@@ -221,7 +221,18 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   }
   yind <- which(ov.names %in% thet.ov.names)
   xind <- which(ov.names %in% psi.ov.names)
-
+  if(nov.x > 0){
+    exoind <- which(ov.names[xind] %in% ov.names.x)
+    regind <- which(!(ov.names[xind] %in% ov.names.x))
+    if(nlv > 0){
+      regind <- c(1:nlv, (nlv+regind))
+      exoind <- nlv + exoind
+    }
+  } else {
+    exoind <- rep(0,length(xind))
+    regind <- xind
+  }
+  
   ## missingness of ovs split by whether or not they appear
   ## in psi
   missflag <- FALSE
@@ -275,11 +286,11 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     } else {
       TXT <- paste0(TXT, "sem_lv_lpdf(")
     }
-    TXT <- paste0(TXT, "alpha, beta, psi, g, ",
+    TXT <- paste0(TXT, "alpha, beta, psi, g, regind, exoind, ",
                   (nlv + n.psi.ov), ", N, ", ngroups, ", ",
-                  diagpsi, ", ", fullbeta)
+                  diagpsi, ", ", fullbeta, ", ", nlv, ", ", nov.x)
     if(miss.psi){
-      TXT <- paste0(TXT, ", nseenx, obsvarx, ", nlv)
+      TXT <- paste0(TXT, ", nseenx, obsvarx")
     }
     TXT <- paste0(TXT, ");\n")
   }
@@ -338,9 +349,9 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
         ## what is the rhs?
         rhs <- regressions$rhs[j]
         if(rhs %in% lv.names) {
-          RHS <- paste("eta[i,", match(rhs, lv.names), "]", sep="")
+          RHS <- paste("etamat[i,", match(rhs, lv.names), "]", sep="")
         } else if(rhs %in% thet.ov.names) {
-          RHS <- paste("y[i,", match(rhs, thet.ov.names), "]", sep="")
+          RHS <- paste("etamat[i,", nlv + match(rhs, thet.ov.names), "]", sep="")
         } else if(rhs %in% psi.ov.names) {
           RHS <- paste("x[i,", match(rhs, psi.ov.names), "]", sep="")
         }
@@ -380,7 +391,10 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   out$inits <- inits
 
   ## Now add data if we have it
-  datablk <- paste0("data{\n", t1, "int N;\n", t1, "int g[N];\n")
+  datablk <- paste0("data{\n", t1, "int N;\n", t1, "int g[N];\n",
+                    t1, "int regind[", length(regind), "];\n",
+                    t1, "int exoind[", length(exoind), "];\n")
+
   if(!is.null(lavdata) | class(model)[1]=="lavaan"){
     if(class(model)[1] == "lavaan") lavdata <- model@Data
     ntot <- sum(unlist(lavdata@norig))
@@ -514,7 +528,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       }
     }
     
-    standata <- list(g=g, N=ntot)
+    standata <- list(g=g, N=ntot, regind=regind, exoind=exoind)
     if(ny > 0) standata <- c(standata, list(y=y))
     if(n.psi.ov > 0) standata <- c(standata, list(x=x))
     if(missflag){
