@@ -54,11 +54,6 @@
     xvectm = 0;
     ldetsum = 0;
     for(i in 1:N){
-      //if(fullbeta){
-      //  evlv[g[i],1:3] = inverse(iden[1:3,1:3] - to_matrix(B[1:3,1:3,g[i]])) * (to_vector(alpha[1:3,1,g[i]]) + to_matrix(B[1:3,4:5,g[i]]) * to_vector(alpha[4:5,1,g[i]]));
-      //  evlv[g[i],4:5] = to_vector(alpha[4:5,1,g[i]]);
-      //}
-
       xvec = x[i,]';
       xvectm = xvectm + (xvec - evlv[g[i],])' * siginv[g[i]] * (xvec - evlv[g[i],]);
       ldetsum = ldetsum + ldetcomp[g[i]];

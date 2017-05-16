@@ -12,6 +12,7 @@
     iden = diag_matrix(rep_vector(1.0, k));
 
     // TODO speed up by using missingness patterns
+    // TODO handle nexo > 0
     xvectm = 0;
     ldetsum = 0;
     for(i in 1:N){

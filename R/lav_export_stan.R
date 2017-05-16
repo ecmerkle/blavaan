@@ -36,7 +36,18 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   pta <- lav_partable_attributes(partable = partable, pta = NULL)
   vnames <- pta$vnames; nvar <- pta$nvar; nfac <- pta$nfac
   ov.names.nox <- vnames$ov.nox[[1]]; nov.nox <- length(ov.names.nox)
-  ov.names.x <- vnames$ov.x[[1]]; nov.x <- length(ov.names.x)
+  ov.names.x <- vnames$ov.x[[1]]
+  ## lavaan FIXME? if no x, ov.names.x is sometimes length 0,
+  ## sometimes NA
+  if(length(ov.names.x) > 0){
+    if(is.na(ov.names.x)){
+      nov.x <- 0
+    } else {
+      nov.x <- length(ov.names.x)
+    }
+  } else {
+    nov.x <- 0
+  }
   ov.ord <- vnames$ov.ord[[1]]
   lv.nox <- vnames$lv.nox[[1]]
   lv.names <- vnames$lv[[1]]
@@ -252,7 +263,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     TXT <- paste0(TXT, t1, "matrix[N,", (nlv + n.psi.ov), "] etamat;\n")
   }
   TXT <- paste0(TXT, t1, "for(i in 1:N) {\n")
-  missflag <- any(grepl("0", model@Data@Mp[[1]]$id))
+
   if(ny > 0){
     if(missflag){
       TXT <- paste0(TXT, t2,
