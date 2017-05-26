@@ -17,7 +17,7 @@ set_stancovs <- function(partable, ov.names, ov.names.x, dp) {
   
   covpars <- which(partable$op == "~~" &
                    partable$lhs != partable$rhs &
-                   partable$free > 0 &
+                   partable$free > 0L &
                    !(partable$lhs %in% ov.names.x))
 
   blkrow <- rep(NA, length(partable$id))
@@ -110,10 +110,11 @@ set_stancovs <- function(partable, ov.names, ov.names.x, dp) {
                                               " * ", tmpv2, ")")
         partable$start[tmprows] <- partable$start[covpars[i]]
       }
-      partable$free[tmprows] <- partable$free[covpars[i]]
-      partable$free[covpars[i]] <- 0
+      partable$free[tmprows] <- as.integer(partable$free[covpars[i]])
+      partable$free[covpars[i]] <- 0L
       partable$plabel[tmprows] <- paste(".p", tmprows, ".", sep="")
       partable$label[tmprows] <- ""
+      partable$exo[tmprows] <- 0L
     }
 
     ## put covariances last, so that they appear last in

@@ -216,8 +216,8 @@ nlvcovs)
           if(partable$mat[covpars[i]] == "psi") rhomat <- "lvrho"
           rhoind <- paste(partable$row[covpars[i]], ",", partable$col[covpars[i]], sep="")
           ## srs priors
-          partable$free[tmprows[1:3]] <- 0
-          partable$exo[tmprows[1:3]] <- 0
+          partable$free[tmprows[1:3]] <- 0L
+          partable$exo[tmprows[1:3]] <- 0L
           partable$ustart[tmprows[1]] <- paste("sqrt(abs(", rhomat, "[", rhoind, ",", k, "])*", tmpv1, ")", sep="")
           partable$ustart[tmprows[2]] <- paste("(-1 + 2*step(", rhomat, "[", rhoind, ",", k,
                                              "]))*sqrt(abs(", rhomat, "[", rhoind, ",", k, "])*", tmpv2, ")", sep="")

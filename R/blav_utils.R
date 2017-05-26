@@ -538,6 +538,40 @@ kl_und <- function(mn0, mn1, cov0, invcov0, cov1, invcov1,
   (1/2) * (kl01 + kl10)
 }
 
+## get various fit metrics from a fitted model for each
+## posterior draw
+samp_idx <- function(lavjags        = NULL,
+                     lavmodel       = NULL, 
+                     lavpartable    = NULL, 
+                     lavsamplestats = NULL, 
+                     lavoptions     = NULL, 
+                     lavcache       = NULL,
+                     lavdata        = NULL,
+                     thin           = 5,
+                     measure        = "logl"){
+    itnums <- sampnums(lavjags, thin = thin)
+    nsamps <- length(itnums)
+
+    lavmcmc <- make_mcmc(lavjags)
+    nchain <- length(lavmcmc)
+    idxmat <- matrix(NA, nsamps, nchain)
+
+    for(i in 1:nsamps){
+        for(j in 1:nchain){
+            idxmat[i,j] <- get_ll(lavmcmc[[j]][itnums[i],],
+                                  lavmodel,
+                                  lavpartable, 
+                                  lavsamplestats, 
+                                  lavoptions, 
+                                  lavcache,
+                                  lavdata,
+                                  measure)[1]
+        }
+    }
+
+    idxmat
+}
+
 make_mcmc <- function(mcmcout){
   ## extract mcmc draws from jags/stan object
   if(class(mcmcout) == "runjags"){
