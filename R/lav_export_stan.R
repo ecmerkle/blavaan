@@ -40,7 +40,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   ## lavaan FIXME? if no x, ov.names.x is sometimes length 0,
   ## sometimes NA
   if(length(ov.names.x) > 0){
-    if(is.na(ov.names.x)){
+    if(all(is.na(ov.names.x))){
       nov.x <- 0
     } else {
       nov.x <- length(ov.names.x)
@@ -157,8 +157,17 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
 
   nfree <- sapply(parmats, sapply, function(x){
     if(class(x)[1] == "lavaan.matrix.symmetric"){
-      # off-diagonals handled via rho parameters!
-      sum(diag(x) > 0)
+      # off-diagonals handled via rho parameters, unless they
+      # are both ov.names.x
+      if(FALSE){ #rownames(x)[1] %in% c(lv.names, ov.names.x)){
+        covpars <- which(partable$op == "~~" &
+                         partable$lhs != partable$rhs &
+                         partable$free > 0L &
+                         partable$lhs %in% ov.names.x)
+        length(covpars) + sum(diag(x) > 0)
+      } else {
+        sum(diag(x) > 0)
+      }
     } else {
       sum(x > 0)
     }})
@@ -232,9 +241,12 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   }
   yind <- which(ov.names %in% thet.ov.names)
   xind <- which(ov.names %in% psi.ov.names)
-  if(nov.x > 0){
-    exoind <- which(ov.names[xind] %in% ov.names.x)
-    regind <- which(!(ov.names[xind] %in% ov.names.x))
+  ## FIXME? see .internal_get_ALPHA from lav_representation_lisrel.R
+  ## for alternative (better) way to handle this than eqs.x
+  if(nov.x > 0 | length(vnames$eqs.x[[1]]) > 0){
+    xnames <- c(ov.names.x, vnames$eqs.x[[1]])
+    exoind <- which(ov.names[xind] %in% xnames)
+    regind <- which(!(ov.names[xind] %in% xnames))
     if(nlv > 0){
       regind <- c(1:nlv, (nlv+regind))
       exoind <- nlv + exoind
@@ -301,7 +313,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
                   (nlv + n.psi.ov), ", N, ", ngroups, ", ",
                   diagpsi, ", ", fullbeta, ", ", nlv, ", ", nov.x)
     if(miss.psi){
-      TXT <- paste0(TXT, ", nseenx, obsvarx")
+      TXT <- paste0(TXT, ", nseenx, obsvarx, nseenexo, obsexo")
     }
     TXT <- paste0(TXT, ");\n")
   }
@@ -426,6 +438,14 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       misvarx <- matrix(-999, ntot, n.psi.ov)
       nmisx <- rep(NA, ntot)
     }
+    if(length(exoind) > 0){
+      obsexo <- matrix(-999, ntot, length(exoind))
+      nseenexo <- rep(NA, ntot)
+    } else {
+      obsexo <- matrix(1, ntot, 1)
+      nseenexo <- rep(1, ntot)
+    }
+    
     g <- rep(NA, ntot)
 
     for(k in 1:ngroups){
@@ -442,7 +462,6 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       g[lavdata@case.idx[[k]]] <- k
       
       ## missingness patterns
-      ## FIXME handle missing eXo
       npatt <- lavdata@Mp[[k]]$npatterns
       for(m in 1:npatt){
         if(ny > 0){
@@ -467,16 +486,23 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
 
         if(n.psi.ov > 0){
           ## now for x
-          tmpobs <- which(lavdata@Mp[[k]]$pat[m,])
-          tmpobs <- tmpobs[tmpobs %in% xind]
+          tmpobsx <- which(lavdata@Mp[[k]]$pat[m,])
+          tmpobs <- tmpobsx[tmpobsx %in% xind]
           tmpmis <- which(!lavdata@Mp[[k]]$pat[m,])
           tmpmis <- tmpmis[tmpmis %in% xind]
           tmpidx <- lavdata@Mp[[k]]$case.idx[[m]]
           nseenx[tmpidx] <- length(tmpobs)
+          tmpobsexo <- which(tmpobs %in% exoind)
+          nseenexo[tmpidx] <- length(tmpobsexo)
           if(length(tmpobs) > 0){
             tmpobs <- matrix(tmpobs, length(tmpidx), length(tmpobs),
                              byrow=TRUE)
             obsvarx[tmpidx,1:nseenx[tmpidx[1]]] <- tmpobs
+          }
+          if(length(tmpobsexo) > 0){
+            tmpobsexo <- matrix(tmpobsexo, length(tmpidx),
+                                length(tmpobsexo), byrow=TRUE)
+            obsexo[tmpidx,1:nseenexo[tmpidx[1]]] <- tmpobsexo
           }
           nmisx[tmpidx] <- length(tmpmis)
           if(length(tmpmis) > 0){
@@ -510,8 +536,10 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       if(n.psi.ov > 0){
         obsvarx <- obsvarx[-nas,]
         misvarx <- misvarx[-nas,]
+        obsexo <- obsexo[-nas,]
         nseenx <- nseenx[-nas]
         nmisx <- nmisx[-nas]
+        nseenexo <- nseenexo[-nas]
       }
       ntot <- sum(unlist(lavdata@nobs))
     }
@@ -538,8 +566,9 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
         }
       }
     }
-    
-    standata <- list(g=g, N=ntot, regind=regind, exoind=exoind)
+
+    standata <- list(g=g, N=ntot, regind=array(regind),
+                     exoind=array(exoind))
     if(ny > 0) standata <- c(standata, list(y=y))
     if(n.psi.ov > 0) standata <- c(standata, list(x=x))
     if(missflag){
@@ -553,7 +582,9 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       if(n.psi.ov > 0){
         standata <- c(standata, list(obsvarx=obsvarx,
                                      misvarx=misvarx,
-                                     nseenx=nseenx, nmisx=nmisx))
+                                     obsexo=obsexo,
+                                     nseenx=nseenx, nmisx=nmisx,
+                                     nseenexo=nseenexo))
         standata$x[is.na(standata$x)] <- -999
       }
     }
@@ -582,32 +613,12 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       if(n.psi.ov > 0){
         datablk <- paste0(datablk, t1, "int obsvarx[N,", n.psi.ov,
                           "];\n", t1, "int misvarx[N,", n.psi.ov,
-                          "];\n", t1, "int nseenx[N];\n",
-                          t1, "int nmisx[N];\n")
+                          "];\n", t1, "int obsexo[N,",
+                          ncol(obsexo), "];\n", t1,
+                          "int nseenx[N];\n", t1,
+                          "int nmisx[N];\n", t1,
+                          "int nseenexo[N];\n")
       }
-    }
-    
-    if(FALSE){ #blavmis == "fi"){
-      ## keep only modeled y's not on rhs of regression
-      matvars <- which(orig.ov.names %in% ov.names &
-                       !(orig.ov.names %in% ovreg))
-      ## NB y is now a matrix, so no need for ymat
-      ymat <- ymat[,matvars]
-      nmvs <- length(matvars)
-  
-      ydf <- data.frame(y=as.numeric(ymat),
-                        g=rep(g, nmvs),
-                        sub=rep(1:ntot, nmvs),
-                        mv=rep(matvars, each=ntot))
-      
-      ydf <- subset(ydf, !is.na(ydf$y) & !(ydf$mv %in% ovcol))
-      ## sub index excluding completely missing observations
-      ydf$sub <- as.numeric(as.factor(ydf$sub))
-
-      standata <- c(standata, list(yvec=ydf$y, sub=ydf$sub,
-                                   mv=ydf$mv, nrows=nrow(ydf)))
-      standata$g <- ydf$g
-      standata$N <- max(ydf$sub)
     }
 
     ## parameter matrices/vectors
@@ -752,7 +763,7 @@ coeffun_stan <- function(lavpartable, rsob, fun = "mean") {
 
       tmpfree <- lavpartable$free[idx]
 
-      lavpartable$free[idx] <- 0
+      lavpartable$free[idx] <- 0L
       lavpartable$free[newidx] <- tmpfree
     }
   }

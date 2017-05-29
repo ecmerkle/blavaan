@@ -17,8 +17,8 @@ set_stancovs <- function(partable, ov.names, ov.names.x, dp) {
   
   covpars <- which(partable$op == "~~" &
                    partable$lhs != partable$rhs &
-                   partable$free > 0L &
-                   !(partable$lhs %in% ov.names.x))
+                   partable$free > 0L)# &
+#                   !(partable$lhs %in% ov.names.x))
 
   blkrow <- rep(NA, length(partable$id))
   partable$rhoidx <- rep(NA, length(partable$id))
@@ -55,7 +55,8 @@ set_stancovs <- function(partable, ov.names, ov.names.x, dp) {
       partable$rhs[tmprows] <- partable$rhs[covpars[i]]
       
       ## Decide on =~ (ov) vs ~ (lv)
-      if(partable$lhs[covpars[i]] %in% ov.names){
+      if(partable$lhs[covpars[i]] %in% ov.names &
+         !(partable$lhs[covpars[i]] %in% ov.names.x)){
         if(!eq.const){
           mvcov <- mvcov + 1
           covidx <- mvcov
