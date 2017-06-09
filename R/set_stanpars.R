@@ -129,6 +129,17 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
                     }
                     if(length(partype) > 1) partype <- partype[1] # due to psi and ibpsi
                     partable$prior[i] <- dp[partype]
+
+                    ## if rho, re-add prior to cov row
+                    if(partable$mat[i] %in% c("rho", "lvrho")){
+                      browser()
+                        covr <- grep(paste0(partable$mat[i], "[",
+                                            partable$row[i], ",",
+                                            partable$col[i], ",",
+                                            partable$group[i], "]"),
+                                     partable$ustart, fixed = TRUE)
+                        partable$prior[covr] <- dp[partype]
+                    }
                 }
                 jagpri <- strsplit(partable$prior[i], "\\[")[[1]][1]
                 vpri <- grepl("\\[var\\]", partable$prior[i])

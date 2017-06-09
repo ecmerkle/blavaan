@@ -192,6 +192,17 @@ function(object, header       = TRUE,
 
 
     if(estimates) {
+        jagtarget <- class(object@external$mcmcout) == "runjags"
+        newpt <- object@ParTable
+        newpt$group[newpt$group == 0] <- 1 # for defined parameters
+
+        if(!jagtarget){
+            rhorows <- which(newpt$mat == "rho" | newpt$mat == "lvrho")
+            if(length(rhorows) > 0){
+                newpt <- lapply(newpt, function(x) x[-rhorows])
+                object@ParTable <- lapply(object@ParTable, function(x) x[-rhorows])
+            }
+        }
         PE <- parameterEstimates(object, se = TRUE, zstat = FALSE,
                                  ci = TRUE,
                                  standardized = standardized,
@@ -203,6 +214,7 @@ function(object, header       = TRUE,
         if(standardized && std.nox) {
             PE$std.all <- PE$std.nox
         }
+        PE$group[PE$group == 0] <- 1
 
         attributes(PE)$information <- "MCMC"
         attributes(PE)$se <- "MCMC"
@@ -210,17 +222,6 @@ function(object, header       = TRUE,
         ##                (like Std.Err column)
 
         ## TODO put parameter priors in partable
-
-        newpt <- object@ParTable
-        newpt$group[newpt$group == 0] <- 1 # for defined parameters
-        PE$group[PE$group == 0] <- 1
-        jagtarget <- class(object@external$mcmcout) == "runjags"
-        if(!jagtarget){
-            rhorows <- which(newpt$mat == "rho")
-            if(length(rhorows) > 0){
-                newpt <- lapply(newpt, function(x) x[-rhorows])
-            }
-        }
 
         ## match jags names to partable, then partable to PE
         if(jagtarget){
