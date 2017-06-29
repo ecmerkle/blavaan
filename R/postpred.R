@@ -34,13 +34,18 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
         Mu.hat <- implied$mean
         dataeXo <- lavdata@eXo
 
-        ## TODO? this generates complete cases; maybe we want missing
-        ## observations to stay missing in the generated data:
         dataX <- vector("list", length=lavdata@ngroups)
         for(g in 1:lavsamplestats@ngroups) {
           dataX[[g]] <- MASS::mvrnorm(n     = lavsamplestats@nobs[[g]],
                                       Sigma = Sigma.hat[[g]],
                                       mu    = Mu.hat[[g]])
+          ## get completely missing observations out, or there
+          ## will be problems
+          allmis <- apply(is.na(origlavdata@X[[g]]), 1, all)
+          if(sum(allmis) > 0){
+            origlavdata@X[[g]] <- origlavdata@X[[g]][-which(allmis),]
+          }
+          
           dataX[[g]][is.na(origlavdata@X[[g]])] <- NA
         }
 
