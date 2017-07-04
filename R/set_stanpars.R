@@ -132,7 +132,6 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
 
                     ## if rho, re-add prior to cov row
                     if(partable$mat[i] %in% c("rho", "lvrho")){
-                      browser()
                         covr <- grep(paste0(partable$mat[i], "[",
                                             partable$row[i], ",",
                                             partable$col[i], ",",
