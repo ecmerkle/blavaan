@@ -118,14 +118,6 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
               partable$free > 0 & !(partable$label %in% eqlabs))
   partable$prior[regfree & partable$prior==""] <- dp[["beta"]]
 
-  ## NOTE We attach equality constraints to these tables, could
-  ##      also deal with inequality constraints.
-  ## Smaller partables for different parameter types +
-  ## dimensions of parameter matrices (for initial values)
-  ovintercepts <- partable[ovi,]
-  ovintercepts <- rbind(ovintercepts, partable[which(partable$op %in% c("==", ":=")),])
-  lvintercepts <- partable[lvi,]
-  lvintercepts <- rbind(lvintercepts, partable[which(partable$op %in% c("==", ":=")),])
   loadings <- partable[load,]
   loadings <- rbind(loadings, partable[which(partable$op %in% c("==", ":=")),])
   regressions <- partable[reg,]
