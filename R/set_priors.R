@@ -71,7 +71,9 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x, target="ja
                           partable$row[i], ",", partable$col[i],
                           ",", partable$group[i], "] ", eqop,
                           " ", sep="")
-            if(grepl("rho", partable$id[i])) TXT2 <- paste(TXT2, "-1 + 2*", sep="")
+            if(grepl("rho", partable$id[i]) & partable$free[i] > 0){
+              TXT2 <- paste(TXT2, "-1 + 2*", sep="")
+            }
           
             if(partable$free[i] == 0 & partable$op[i] != ":="){
                 if(is.na(partable$ustart[i])){
