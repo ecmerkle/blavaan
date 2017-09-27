@@ -52,8 +52,8 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   lv.nox <- vnames$lv.nox[[1]]
   lv.names <- vnames$lv[[1]]
   ## ensure that lv.x names always come first (so we can possibly use dmnorm)
-  lv.names <- c(lv.names[lv.names %in% orig.lv.names.x],
-                lv.names[!(lv.names %in% orig.lv.names.x)])
+  #lv.names <- c(lv.names[lv.names %in% orig.lv.names.x],
+  #              lv.names[!(lv.names %in% orig.lv.names.x)])
   nlv <- length(lv.names)
   
   ## check that variables are the same in all groups:
@@ -81,6 +81,23 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   ## hold priors to put at bottom of model block
   TXT2 <- ""
   TXT <- paste("model {\n", sep="")
+
+  ## lvs with variances fixed to 0
+  lv0 <- which(partable$op == "~~" &
+               partable$lhs %in% lv.names &
+               partable$rhs == partable$lhs &
+               partable$group == 1 &
+               partable$free == 0 &
+               partable$ustart == 0)
+  if(length(lv0) > 0){
+    lv0.names <- partable$lhs[lv0]
+    lv0.idx <- which(lv.names %in% lv0.names)
+    nlvno0 <- nlv - length(lv0.idx)
+  } else {
+    lv0.names <- NULL
+    lv0.idx <- NULL
+    nlvno0 <- nlv
+  }
 
   ## TODO if nov.x > 0, find the submatrix of psi that
   ## contains the vars/covs associated with ov.names.x
@@ -211,9 +228,9 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
                      nlrho, "] lvrhofree;\n")
   }
 
-  if(nlv > 0){
-    parblk <- paste0(parblk, t1, "matrix[N, ", nlv, "] eta", eolop,
-                     "\n")
+  if(nlvno0 > 0){
+    parblk <- paste0(parblk, t1, "matrix[N, ", nlvno0, "] etavec",
+                     eolop, "\n")
   }
   parblk <- paste0(parblk, "}\n\n")                     
 
@@ -239,13 +256,34 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     xnames <- c(ov.names.x, vnames$eqs.x[[1]])
     exoind <- which(ov.names[xind] %in% xnames)
     regind <- which(!(ov.names[xind] %in% xnames))
-    if(nlv > 0){
-      regind <- c(1:nlv, (nlv+regind))
-      exoind <- nlv + exoind
+    etaind <- 1:nlv
+    if(nlv > 0 & length(lv0.idx) < nlv){
+      if(length(lv0.idx) > 0){
+        nlvno0 <- nlv - length(lv0.idx)
+        regind <- c((1:nlv)[-lv0.idx], (nlvno0+regind))
+        exoind <- nlvno0 + exoind
+        etaind <- etaind[-lv0.idx]
+      } else {
+        nlvno0 <- nlv
+        regind <- c(1:nlv, (nlv+regind))
+        exoind <- nlv + exoind
+      }
     }
+    lvindall <- c(regind, exoind)
   } else {
-    exoind <- rep(0,length(xind))
     regind <- xind
+    exoind <- rep(0,length(xind))
+    lvindall <- regind
+    etaind <- exoind
+    if(nlv > 0){
+      if(length(lv0.idx) < nlv & length(lv0.idx) > 0){
+        nlvno0 <- nlv - length(lv0.idx)
+        etaind <- (1:nlv)[-lv0.idx]
+      } else {
+        nlvno0 <- nlv
+        etaind <- 1:nlv
+      }
+    }
   }
   
   ## missingness of ovs split by whether or not they appear
@@ -263,9 +301,6 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     }
   }
   
-  if((nlv + n.psi.ov) > 0){
-    TXT <- paste0(TXT, t1, "matrix[N,", (nlv + n.psi.ov), "] etamat;\n")
-  }
   TXT <- paste0(TXT, t1, "for(i in 1:N) {\n")
 
   if(ny > 0){
@@ -284,42 +319,63 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     }
   }
 
-  if(nlv > 0){
-    TXT <- paste0(TXT, t2, "etamat[i,1:", nlv, "] = eta[i];\n")
-  }
-  if(n.psi.ov > 0){
-    TXT <- paste0(TXT, t2, "etamat[i,", (nlv+1), ":",
-                  (nlv + n.psi.ov), "] = x[i]';\n")
-  }
+
   TXT <- paste0(TXT, t1, "}\n\n")
 
   if((nlv + n.psi.ov) > 0){
-    TXT <- paste0(TXT, t1, "etamat ~ ")
+    TXT <- paste0(TXT, t1, "eta ~ ")
 
     if(miss.psi){
       TXT <- paste0(TXT, "sem_lv_missing_lpdf(")
     } else {
       TXT <- paste0(TXT, "sem_lv_lpdf(")
     }
-    TXT <- paste0(TXT, "alpha, beta, psi, g, regind, exoind, ",
+
+    TXT <- paste0(TXT, "alpha, beta, psi, ")
+    
+    TXT <- paste0(TXT, "g, regind, exoind, ",
                   (nlv + n.psi.ov), ", N, ", ngroups, ", ",
-                  diagpsi, ", ", fullbeta, ", ", nlv, ", ", nov.x)
+                  diagpsi, ", ", fullbeta, ", ", nlv, ", ", nov.x,
+                  ", etaind, ", nlvno0)
     if(miss.psi){
       TXT <- paste0(TXT, ", nseenx, obsvarx, nseenexo, obsexo")
     }
     TXT <- paste0(TXT, ");\n")
   }
-  
+
   ## for missing=="fi", to model variables on rhs of regression
   ovreg <- unique(regressions$rhs[regressions$rhs %in% ov.names])
   ovcol <- which(ov.names %in% ovreg)
 
+  if(nlvno0 < nlv){
+    TPS <- paste0(TPS, t1, "for(i in 1:N) {\n")
+    TPS <- paste0(TPS, t2, "eta[i,etaind] = etavec[i];\n", t1, "}\n")
+    
+    ## TODO alpha entries of non-fixed-zero lvs should be zeroed?
+    TPS <- paste0(TPS, t1, "mueta = sem_mean_eta(alpha, eta, ",
+                  "beta, g, regind, exoind, ", (nlv + n.psi.ov),
+                  ", N, ", nov.x, ", ", ngroups, ", lvind);\n")
+  }
+  
   ## Define mean of each observed variable
   ## This assumes that the data matrix passed to jags
   ## is ordered in the same way as ov.names.nox.
   ## data would be cbind(ov.names.nox, ov.names.x)
   TPS <- paste(TPS, t1, commop, "mu definitions\n", t1,
-               "for(i in 1:N) {", sep="")
+               "for(i in 1:N) {\n", sep="")
+
+  if(nlvno0 < nlv){
+    #TPS <- paste0(TPS, t2, "eta[i,etaind] = etavec[i];\n")
+    TPS <- paste0(TPS, t2, "eta[i,eta0ind] = mueta[i,eta0ind]';\n")
+  } else if(nlv > 0){
+    TPS <- paste0(TPS, t2, "eta[i,1:", nlv, "] = etavec[i];\n")
+  }
+
+  if(n.psi.ov > 0){
+    TPS <- paste0(TPS, t2, "eta[i,", (nlv+1), ":", (nlv + n.psi.ov),
+                  "] = x[i]';\n")
+  }
+  
   if(ny > 0) {
     for(i in 1:ny) {
       ov.idx <- i
@@ -408,7 +464,13 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   ## Now add data if we have it
   datablk <- paste0("data{\n", t1, "int N;\n", t1, "int g[N];\n",
                     t1, "int regind[", length(regind), "];\n",
-                    t1, "int exoind[", length(exoind), "];\n")
+                    t1, "int exoind[", length(exoind), "];\n",
+                    t1, "int lvind[", length(lvindall), "];\n",
+                    t1, "int etaind[", length(etaind), "];\n")
+  if(length(lv0.idx) > 0){
+    datablk <- paste0(datablk, t1, "int eta0ind[", length(lv0.idx),
+                      "];\n")
+  }
 
   if(!is.null(lavdata) | class(model)[1]=="lavaan"){
     if(class(model)[1] == "lavaan") lavdata <- model@Data
@@ -560,7 +622,11 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     }
 
     standata <- list(g=g, N=ntot, regind=array(regind),
-                     exoind=array(exoind))
+                     exoind=array(exoind), lvind=array(lvindall),
+                     etaind=array(etaind))
+    if(length(lv0.idx) > 0){
+      standata <- c(standata, list(eta0ind=array(lv0.idx)))
+    }
     if(ny > 0) standata <- c(standata, list(y=y))
     if(n.psi.ov > 0) standata <- c(standata, list(x=x))
     if(missflag){
@@ -658,6 +724,17 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     }
     tpdecs <- paste0(tpdecs, t1, "real mu[N,", nov, "];\n")
 
+    if(nlv + n.psi.ov > 0){
+      tpdecs <- paste0(tpdecs, t1, "matrix[N,", (nlv + n.psi.ov), "] eta;\n")
+      if(nlvno0 < nlv){
+        tpdecs <- paste0(tpdecs, t1, "vector[", (nlv + n.psi.ov),
+                         "] mueta[N];\n")
+      }
+      tpdecs <- paste0(tpdecs, "\n", t1,
+                       "eta = rep_matrix(0, N,", (nlv + n.psi.ov),
+                       ");\n")
+    }
+    
     ## if no beta, define it as 0 matrix
     if(!("beta" %in% tpnames)){
         matrows <- c(matrows, beta = matrows[["psi"]])
@@ -705,6 +782,10 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
 
   funblk <- "functions{\n"
   if((nlv + n.psi.ov) > 0){
+    funblk <- paste0(funblk, t1, "#include 'sem_mean.stan' \n")
+    if(nlvno0 < nlv){
+      funblk <- paste0(funblk, t1, "#include 'sem_mean_eta.stan' \n")
+    }
     if(miss.psi){
       funblk <- paste0(funblk, t1, "#include 'sem_lv_missing.stan' \n")
     } else {

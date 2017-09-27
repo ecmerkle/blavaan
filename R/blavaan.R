@@ -491,7 +491,10 @@ blavaan <- function(...,  # default lavaan arguments
     lavimplied <- lav_model_implied(lavmodel)
     if(jag.do.fit & n.chains > 1){
       ## this also checks convergence of monitors from jagextra, which may not be optimal
-      if(any(lavpartable$psrf[!is.na(lavpartable$psrf)] > 1.2)) attr(x, "converged") <- FALSE
+      psrfrows <- which(!is.na(lavpartable$psrf) &
+                        !is.na(lavpartable$free) &
+                        lavpartable$free > 0)
+      if(any(lavpartable$psrf[psrfrows] > 1.2)) attr(x, "converged") <- FALSE
 
       ## warn if psrf is large
       if(!attr(x, "converged") && lavoptions$warn) {
