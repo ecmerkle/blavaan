@@ -21,11 +21,13 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
       eta <- fill_eta(postsamp, lavpartable, lavsamplestats, lavdata)
 
       ## implied meanvec + covmat
-      ## TODO replace with lav_predict_yhat and lavInspect?
+      ## TODO replace with lav_predict_yhat?
       ## (lav_predict_yhat unavailable from lavPredict with custom ETA)
       mnvec <- lavaan:::computeYHAT(lavmodel, lavmodel@GLIST,
                                     lavsamplestats, ETA = eta)
-      covmat <- lavaan:::computeTHETA(lavmodel, lavmodel@GLIST)
+      thnames <- which(names(lavmodel@GLIST) == 'theta')
+      covmat <- lapply(thnames, function(i) lavmodel@GLIST[[i]])
+      ## covmat <- lavaan:::computeTHETA(lavmodel, lavmodel@GLIST)
 
       ngroups <- lavsamplestats@ngroups
       implied <- list(cov = covmat, mean = mnvec,
