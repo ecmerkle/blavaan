@@ -578,9 +578,16 @@ blavaan <- function(...,  # default lavaan arguments
         lavpartable$logBF <- SDBF(lavpartable)
     }
 
-    ## add monitors in jagextra as defined variables
+    ## add monitors in jagextra as defined variables (except reserved monitors)
     if(length(jagextra$monitor) > 0){
-      lavpartable <- add_monitors(lavpartable, lavjags, jagextra)
+        reservemons <- which(jagextra$monitor %in% c('deviance', 'pd', 'popt',
+                                                     'dic', 'ped', 'full.pd'))
+
+        if(length(reservemons) < length(jagextra$monitor)){
+            jecopy <- jagextra
+            jecopy$monitor <- jecopy$monitor[-reservemons]
+            lavpartable <- add_monitors(lavpartable, lavjags, jecopy)
+        }
     }
 
     ## 9b. move some stuff from lavfit to optim, for lavaan 0.5-21
