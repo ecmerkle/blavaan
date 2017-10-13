@@ -577,7 +577,7 @@ blavaan <- function(...,  # default lavaan arguments
     ## add monitors in jagextra as defined variables (except reserved monitors)
     if(length(jagextra$monitor) > 0){
         reservemons <- which(jagextra$monitor %in% c('deviance', 'pd', 'popt',
-                                                     'dic', 'ped', 'full.pd'))
+                                                     'dic', 'ped', 'full.pd', 'eta'))
 
         if(length(reservemons) < length(jagextra$monitor)){
             jecopy <- jagextra
