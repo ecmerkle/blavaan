@@ -27,6 +27,21 @@ blavaan <- function(...,  # default lavaan arguments
     # default priors
     if(length(dp) == 0) dp <- dpriors(target = target)
 
+    # burnin/sample/adapt if not supplied (should only occur for direct
+    # blavaan call
+    sampargs <- c("burnin", "sample", "adapt")
+    suppargs <- which(!(sampargs %in% names(mc)))
+    if(length(suppargs) > 0){
+        if(target == "jags"){
+            defiters <- c(4000L, 10000L, 1000L)
+        } else {
+            defiters <- c(500L, 1000L, 1000L)
+        }
+        for(i in 1:length(suppargs)){
+            assign(sampargs[suppargs[i]], defiters[suppargs[i]])
+        }
+    }
+
     # ensure stan is here
     if(target == "stan"){
       # could also use requireNamespace + attachNamespace
@@ -108,32 +123,23 @@ blavaan <- function(...,  # default lavaan arguments
     if("debug" %in% dotNames) {
         if(dotdotdot$debug)  {
             ## short burnin/sample
-            mc$burnin <- 1000
-            mc$sample <- 1000
+            burnin <- 1000
+            sample <- 1000
         }
     }
-    jarg <- c("burnin", "sample", "adapt")
-    mcj <- match(jarg, names(mc), 0L)
-    if(any(mcj > 0)){
-        mfj <- as.list(mc[mcj])
-        if(convergence == "auto"){
-            jarg <- c("startburnin", "startsample", "adapt")
-            names(mfj) <- jarg[mcj > 0]
-        }
-        if(target == "stan"){
-            jarg <- c("warmup", "iter", "adapt")
-            names(mfj) <- jarg[mcj > 0]
-            ## stan iter argument includes warmup:
-            if(mcj[1] > 0 & mcj[2] > 0) mfj$iter <- mfj$iter + mfj$warmup
-            if("adapt" %in% names(mfj)){
-              mfj <- mfj[-which(names(mfj) == "adapt")]
-            }
-        }
-        if("sample" %in% names(mc)){
-            if(mc$sample*n.chains/5 < 1000) warning("blavaan WARNING: small sample drawn, proceed with caution.\n")
-        }
-    } else {
-        mfj <- list()
+
+    mfj <- list(burnin = burnin, sample = sample, adapt = adapt)
+
+    if(mfj$sample*n.chains/5 < 1000) warning("blavaan WARNING: small sample drawn, proceed with caution.\n")
+    
+    if(convergence == "auto"){
+        names(mfj) <- c("startburnin", "startsample", "adapt")
+    }
+    if(target == "stan"){
+        names(mfj) <- c("warmup", "iter", "adapt")
+        ## stan iter argument includes warmup:
+        mfj$iter <- mfj$warmup + mfj$iter
+        mfj <- mfj[-which(names(mfj) == "adapt")]
     }
 
     if(target == "jags"){
@@ -658,6 +664,22 @@ bcfa <- bsem <- function(..., cp = "srs", dp = NULL,
     mc$auto.delta      = TRUE
     mc[[1L]] <- quote(blavaan)
 
+    ## change defaults depending on jags vs stan
+    sampargs <- c("burnin", "sample", "adapt")
+    if(target == "jags"){
+        defiters <- c(4000L, 10000L, 1000L)
+    } else {
+        defiters <- c(500L, 1000L, 1000L)
+    }
+    suppargs <- which(!(sampargs %in% names(mc)))
+
+    if(length(suppargs) > 0){
+        for(i in 1:length(suppargs)){
+            mc[[(length(mc)+1)]] <- defiters[suppargs[i]]
+            names(mc)[length(mc)] <- sampargs[suppargs[i]]
+        }
+    }
+
     eval(mc, parent.frame())
 }
 
@@ -684,5 +706,21 @@ bgrowth <- function(..., cp = "srs", dp = NULL,
     mc$auto.delta      = TRUE
     mc[[1L]] <- quote(blavaan)
 
+    ## change defaults depending on jags vs stan
+    sampargs <- c("burnin", "sample", "adapt")
+    if(target == "jags"){
+        defiters <- c(4000L, 10000L, 1000L)
+    } else {
+        defiters <- c(500L, 1000L, 1000L)
+    }
+    suppargs <- which(!(sampargs %in% names(mc)))
+
+    if(length(suppargs) > 0){
+        for(i in 1:length(suppargs)){
+            mc[[(length(mc)+1)]] <- defiters[suppargs[i]]
+            names(mc)[length(mc)] <- sampargs[suppargs[i]]
+        }
+    }
+    
     eval(mc, parent.frame())
 }
