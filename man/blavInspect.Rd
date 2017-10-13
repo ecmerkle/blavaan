@@ -33,6 +33,7 @@ documentation.
   \item{\code{"postmode"}:}{Estimated posterior mode of each free parameter.}
   \item{\code{"postmean"}:}{Estimated posterior mean of each free parameter.}
   \item{\code{"postmedian"}:}{Estimated posterior median of each free parameter.}
+  \item{\code{"lvs"}:}{An object of class \code{mcmc} containing latent variable (factor score) draws. An additional character argument \code{"means"} returns a matrix of mean factor scores.}
   \item{\code{"hpd"}:}{HPD interval of each free parameter. In this case, an additional argument \code{level} can be supplied to specify a number in (0,1) reflecting the percentage of the interval.}
 }
 }

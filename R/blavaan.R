@@ -12,6 +12,7 @@ blavaan <- function(...,  # default lavaan arguments
                     inits              = "simple",
                     convergence        = "manual",
                     target             = "jags",
+                    save.lvs           = FALSE,
                     seed               = NULL,
                     jagcontrol         = list()
                    )
@@ -363,6 +364,7 @@ blavaan <- function(...,  # default lavaan arguments
             if("monitor" %in% names(jagextra)){
                 sampparms <- c(sampparms, jagextra$monitor)
             }
+            if(save.lvs) sampparms <- c(sampparms, "eta")
 
             if(initsin == "jags"){
                 jagtrans$inits <- vector("list", n.chains)
@@ -643,8 +645,8 @@ blavaan <- function(...,  # default lavaan arguments
 bcfa <- bsem <- function(..., cp = "srs", dp = NULL,
     n.chains = 3, burnin, sample, adapt,
     jagfile = FALSE, jagextra = list(), inits = "simple",
-    convergence = "manual", target = "jags", seed = NULL,
-    jagcontrol = list()) {
+    convergence = "manual", target = "jags", save.lvs = FALSE,
+    seed = NULL, jagcontrol = list()) {
 
     dotdotdot <- list(...)
     std.lv <- ifelse(any(names(dotdotdot) == "std.lv"), dotdotdot$std.lv, FALSE)
@@ -687,8 +689,8 @@ bcfa <- bsem <- function(..., cp = "srs", dp = NULL,
 bgrowth <- function(..., cp = "srs", dp = NULL,
     n.chains = 3, burnin, sample, adapt,
     jagfile = FALSE, jagextra = list(), inits = "simple",
-    convergence = "manual", target = "jags", seed = NULL,
-    jagcontrol = list()) {
+    convergence = "manual", target = "jags", save.lvs = FALSE,
+    seed = NULL, jagcontrol = list()) {
 
     dotdotdot <- list(...)
     std.lv <- ifelse(any(names(dotdotdot) == "std.lv"), dotdotdot$std.lv, FALSE)
