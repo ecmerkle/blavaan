@@ -453,11 +453,7 @@ blavaan <- function(...,  # default lavaan arguments
         if(jag.do.fit){
             lavmodel <- lav_model_set_parameters(lavmodel, x = x)
             if(target == "jags"){
-                if(convergence == "auto"){
-                    attr(x, "iterations") <- res$sample
-                } else {
-                    attr(x, "iterations") <- rjarg$sample
-                }
+                attr(x, "iterations") <- res$sample
                 sample <- res$sample
                 burnin <- res$burnin
             } else {
