@@ -61,9 +61,6 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x, target="ja
                 partable$mat[i] <- rhoinf[[1]][1]
                 partable$row[i] <- rhoinf[[1]][2]
                 partable$col[i] <- rhoinf[[1]][3]
-                if(partable$free[i] == 0){
-                    partable$ustart[i] <- (as.numeric(partable$ustart[i]) + 1)/2
-                }
             }
           
             ## start parameter assignment
@@ -86,6 +83,11 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x, target="ja
                 }
             } else if(length(eqpar) > 0){
                 eqpar <- which(partable$plabel == partable$lhs[eqpar])
+                ## in case it is an "expanded" variance
+                if(length(eqpar) > 1){
+                    if(length(eqpar) > 2) stop("blavaan ERROR: problem with parameter equality constraints")
+                    eqpar <- eqpar[which(partable$freeparnums[eqpar] > 0)]
+                }
                 if(partable$freeparnums[eqpar] == 0){
                     eqtxt <- paste(partable$mat[eqpar], "[",
                                    partable$row[eqpar], ",",
