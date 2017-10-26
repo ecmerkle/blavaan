@@ -357,7 +357,7 @@ set_mv0 <- function(partable, ov.names, ngroups) {
                     }
                     partable$ustart[mvloc] <- .001
                     message(paste("blavaan NOTE: The variance of variable", ovn[i],
-                               "in group", j, "has been fixed to .001 instead of 0 (necessary for JAGS).\n"))
+                               "in group", j, "has been fixed to .001 instead of 0 (necessary for conditonal model specification).\n"))
                 } else {
                     lvname <- partable$lhs[lvloc]
 
