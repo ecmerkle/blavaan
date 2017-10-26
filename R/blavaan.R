@@ -131,7 +131,8 @@ blavaan <- function(...,  # default lavaan arguments
 
     mfj <- list(burnin = burnin, sample = sample, adapt = adapt)
 
-    if(mfj$sample*n.chains/5 < 1000) warning("blavaan WARNING: small sample drawn, proceed with caution.\n")
+    # now based on effective sample size
+    #if(mfj$sample*n.chains/5 < 1000) warning("blavaan WARNING: small sample drawn, proceed with caution.\n")
     
     if(convergence == "auto"){
         names(mfj) <- c("startburnin", "startsample", "adapt")
@@ -633,11 +634,15 @@ blavaan <- function(...,  # default lavaan arguments
                    test         = TEST                 # copied for now
                   )
   
-    # post-fitting check
+    # post-fitting checks
     if(attr(x, "converged")) {
         lavInspect(blavaan, "post.check")
     }
 
+    if(any(blavInspect(blavaan, 'neff') < 100) & lavoptions$warn){
+        warning("blavaan WARNING: Small effective sample sizes (< 100) for some parameters.")
+    }
+    
     blavaan
 }
 
