@@ -174,6 +174,7 @@ case_lls <- function(lavjags        = NULL,
                      lavoptions     = NULL, 
                      lavcache       = NULL,
                      lavdata        = NULL,
+                     conditional    = FALSE,
                      thin           = 5){
 
     itnums <- sampnums(lavjags, thin=5)
@@ -195,7 +196,8 @@ case_lls <- function(lavjags        = NULL,
                                                lavoptions, 
                                                lavcache,
                                                lavdata,
-                                               casewise = TRUE)
+                                               casewise = TRUE,
+                                               conditional = conditional)
         }
     }
 

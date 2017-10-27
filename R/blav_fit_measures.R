@@ -4,6 +4,7 @@ function(object, fit.measures = "all", baseline.model = NULL) {
                      baseline.model = baseline.model)
 })
 
+# lowercase 'm'
 setMethod("fitmeasures", signature(object = "blavaan"),
 function(object, fit.measures = "all", baseline.model = NULL) {
     blav_fit_measures(object = object, fit.measures = fit.measures,
