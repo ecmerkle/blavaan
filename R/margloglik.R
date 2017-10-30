@@ -15,7 +15,7 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
     lavpartable$pxnames[lavpartable$freeparnums == 0] <- NA
   }
   eqpars <- lavpartable$rhs[lavpartable$op == "=="]
-  fixpars <- which(lavpartable$free == 0)
+  fixpars <- which(lavpartable$free == 0 | lavpartable$prior == "")
   urows <- 1:length(lavpartable$pxnames)
   urows <- urows[!is.na(lavpartable$pxnames) &
                  !(lavpartable$plabel %in% eqpars) &
