@@ -13,6 +13,7 @@ blavaan <- function(...,  # default lavaan arguments
                     convergence        = "manual",
                     target             = "jags",
                     save.lvs           = FALSE,
+                    jags.ic            = FALSE,
                     seed               = NULL,
                     jagcontrol         = list()
                    )
@@ -485,6 +486,13 @@ blavaan <- function(...,  # default lavaan arguments
             attr(x, "fx") <- get_ll(lavmodel = lavmodel, lavpartable = lavpartable,
                                     lavsamplestats = lavsamplestats, lavoptions = lavoptions,
                                     lavcache = lavcache, lavdata = lavdata)[1]
+            if(save.lvs) {
+                fullpmeans <- summary(make_mcmc(res))[[1]][,"Mean"]
+                cfx <- get_ll(fullpmeans, lavmodel = lavmodel, lavpartable = lavpartable,
+                              lavsamplestats = lavsamplestats, lavoptions = lavoptions,
+                              lavcache = lavcache, lavdata = lavdata,
+                              conditional = TRUE)[1]
+            }
         } else {
             attr(x, "fx") <- as.numeric(NA)
         }
@@ -512,6 +520,26 @@ blavaan <- function(...,  # default lavaan arguments
       cat("Computing posterior predictives...\n")
       samplls <- samp_lls(res, lavmodel, lavpartable, lavsamplestats,
                           lavoptions, lavcache, lavdata)
+      if(jags.ic) {
+        sampkls <- samp_kls(res, lavmodel, lavpartable,
+                            lavsamplestats, lavoptions, lavcache,
+                            lavdata, conditional = FALSE)
+      } else {
+        sampkls <- NULL
+      }
+      
+      if(save.lvs) {
+        csamplls <- samp_lls(res, lavmodel, lavpartable,
+                             lavsamplestats, lavoptions, lavcache,
+                             lavdata, conditional = TRUE)
+        if(jags.ic) {
+          csampkls <- samp_kls(res, lavmodel, lavpartable,
+                              lavsamplestats, lavoptions, lavcache,
+                              lavdata, conditional = TRUE)
+        } else {
+          csampkls <- NULL
+        }
+      }
     } else {
       samplls <- NULL
     }
@@ -607,7 +635,12 @@ blavaan <- function(...,  # default lavaan arguments
                     pxpt = jagtrans$pxpartable, burnin = burnin,
                     sample = sample)
     if(target == "stan") extslot <- c(extslot, list(stansumm = stansumm))
-    
+    if(jags.ic) extslot <- c(extslot, list(sampkls = sampkls))
+    if(save.lvs) {
+      extslot <- c(extslot, list(cfx = cfx, csamplls = csamplls))
+      if(jags.ic) extslot <- c(extslot, list(csampkls = csampkls))
+    }
+  
     ## move total to the end
     timing$total <- (proc.time()[3] - start.time0)
     tt <- timing$total

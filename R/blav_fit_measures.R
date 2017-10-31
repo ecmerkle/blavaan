@@ -79,13 +79,16 @@ blav_fit_measures <- function(object, fit.measures = "all",
 
     # information criteria
     fit.ic <- c("bic", "dic", "p_dic")
-
-    # check if "loo" is loaded or not
-    # pkgs <- names(sessionInfo()[["otherPkgs"]])
-    # if( "loo" %in% pkgs ) {
-    #if(require("loo")) fit.ic <- c(fit.ic, "waic", "p_waic", "looic", "p_loo")
-        fit.ic <- c(fit.ic, "waic", "p_waic", "looic", "p_loo")
-    #}
+    if("sampkls" %in% names(object@external)){
+        fit.ic <- c(fit.ic, "dic_jags", "p_dic_jags")
+    }
+    if("csamplls" %in% names(object@external)){
+        fit.ic <- c(fit.ic, "dic_cond", "p_dic_cond")
+    }
+    if("csampkls" %in% names(object@external)){
+        fit.ic <- c(fit.ic, "dic_cond_j", "p_dic_cond_j")
+    }
+    fit.ic <- c(fit.ic, "waic", "p_waic", "looic", "p_loo")
 
     fit.rmsea <- "rmsea"
     
@@ -131,6 +134,25 @@ blav_fit_measures <- function(object, fit.measures = "all",
         indices["bic"] <- -2*object@Fit@fx + npar*log(N)
         indices["dic"] <- -2*object@Fit@fx + 2*df
         indices["p_dic"] <- df
+
+        if("sampkls" %in% names(object@external)){
+          dfj <- mean(object@external$sampkls)/2
+          indices["dic_jags"] <- -2*object@Fit@fx + 2*dfj
+          indices["p_dic_jags"] <- dfj
+        }
+
+        if("csamplls" %in% names(object@external)){
+          dfc <- 2*(object@external$cfx -
+                    mean(as.numeric(object@external$csamplls[,,1])))
+          indices["dic_cond"] <- -2*object@external$cfx + 2*dfc
+          indices["p_dic_cond"] <- dfc
+        }
+
+        if("csampkls" %in% names(object@external)){
+          dfjc <- mean(object@external$csampkls)/2
+          indices["dic_cond_j"] <- -2*object@external$cfx + 2*dfjc
+          indices["p_dic_cond_j"] <- dfjc
+        }
     }
     if(any(c("waic", "p_waic", "looic", "p_loo") %in% fit.measures)) {
         lavopt <- object@Options

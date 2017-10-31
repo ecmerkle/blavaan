@@ -144,9 +144,8 @@ samp_lls <- function(lavjags        = NULL,
                      conditional    = FALSE){
     itnums <- sampnums(lavjags, thin = thin)
     nsamps <- length(itnums)
-
     lavmcmc <- make_mcmc(lavjags)
-    
+  
     nchain <- length(lavmcmc)
     llmat <- array(NA, c(nsamps, nchain, 2)) ## logl + baseline logl
 
@@ -177,12 +176,11 @@ case_lls <- function(lavjags        = NULL,
                      conditional    = FALSE,
                      thin           = 5){
 
+    ## mcmc draws always in list
     itnums <- sampnums(lavjags, thin=5)
     nsamps <- length(itnums)
-
-    ## mcmc draws always in list
-    lavmcmc <- make_mcmc(lavjags)
   
+    lavmcmc <- make_mcmc(lavjags)
     nchain <- length(lavmcmc)
 
     llmat <- matrix(NA, nchain*nsamps, sum(unlist(lavdata@nobs)))
@@ -244,8 +242,8 @@ sampnums <- function(lavmcmc, thin){
     } else {
         niter <- dim(as.array(lavmcmc))[1]
     }
-    nsamps <- min(1000,floor(niter/thin))
-    psamp <- seq(1, niter, length.out=nsamps)
+    #nsamps <- min(1000,floor(niter/thin))
+    psamp <- seq(1, niter, thin)
 
     psamp
 }
@@ -423,19 +421,25 @@ namecheck <- function(ov.names){
 
 ## compute undirected K-L divergence across all draws
 ## (each draw paired with one from another chain)
-samp_kls <- function(draws          = NULL, # all chains in 1 matrix
+samp_kls <- function(lavjags        = NULL,
                      lavmodel       = NULL, 
                      lavpartable    = NULL, 
                      lavsamplestats = NULL, 
                      lavoptions     = NULL, 
                      lavcache       = NULL,
                      lavdata        = NULL,
+                     thin           = 5,
                      conditional    = FALSE){
 
     ## need to implement plummer's approach of generating y_rep
     ##mis <- FALSE
     ##if(any(is.na(unlist(lavdata@X)))) mis <- TRUE
     ##if(mis | lavoptions$categorical) stop("blavaan ERROR: K-L divergence not implemented for missing data or ordinal variables.")
+
+    itnums <- sampnums(lavjags, thin = thin)
+    lavmcmc <- make_mcmc(lavjags)
+    lavmcmc <- lapply(lavmcmc, function(x) x[itnums,])
+    draws <- do.call("rbind", lavmcmc)
   
     ndraws <- nrow(draws)
     halfdraws <- floor(ndraws/2)
@@ -512,7 +516,6 @@ samp_kls <- function(draws          = NULL, # all chains in 1 matrix
 
 ## fill in eta matrices (1 per group, in list)
 fill_eta <- function(postsamp, lavpartable, lavsamplestats, lavdata){
-    ## FIXME: deal with phantom lvs
     nlv <- length(lav_partable_attributes(lavpartable)$vnames$lv[[1]])
     etapars <- grepl("^eta", names(postsamp))
     etamat <- matrix(postsamp[etapars], lavsamplestats@ntotal, nlv)
@@ -555,8 +558,8 @@ samp_idx <- function(lavjags        = NULL,
                      measure        = "logl"){
     itnums <- sampnums(lavjags, thin = thin)
     nsamps <- length(itnums)
-
     lavmcmc <- make_mcmc(lavjags)
+
     nchain <- length(lavmcmc)
     idxmat <- matrix(NA, nsamps, nchain)
 
