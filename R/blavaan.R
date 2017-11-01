@@ -672,8 +672,10 @@ blavaan <- function(...,  # default lavaan arguments
         lavInspect(blavaan, "post.check")
     }
 
-    if(any(blavInspect(blavaan, 'neff') < 100) & lavoptions$warn){
-        warning("blavaan WARNING: Small effective sample sizes (< 100) for some parameters.")
+    if(jag.do.fit & lavoptions$warn){
+        if(any(blavInspect(blavaan, 'neff') < 100)){
+            warning("blavaan WARNING: Small effective sample sizes (< 100) for some parameters.")
+        }
     }
     
     blavaan
