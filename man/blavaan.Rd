@@ -8,7 +8,7 @@ blavaan(..., cp = "srs",
     dp = NULL, n.chains = 3, burnin, sample,
     adapt, jagfile = FALSE, jagextra = list(), inits = "simple",
     convergence = "manual", target = "jags", save.lvs = FALSE,
-    seed = NULL, jagcontrol = list())
+    jags.ic = FALSE, seed = NULL, jagcontrol = list())
 }
 \arguments{
 \item{...}{Default lavaan arguments.  See \code{\link{lavaan}}.}
@@ -58,6 +58,7 @@ blavaan(..., cp = "srs",
 \item{target}{Desired MCMC package (currently, only \code{jags} is
   available).}
 \item{save.lvs}{Should sample latent variables (factor scores) be saved? Logical; defaults to FALSE}
+\item{jags.ic}{Should DIC be computed the JAGS way, in addition to the BUGS way? Logical; defaults to FALSE}
 \item{seed}{A vector of length \code{n.chains} containing random
   seeds for the MCMC run. If \code{NULL}, seeds will be chosen randomly.}
 \item{jagcontrol}{A list containing additional parameters passed to

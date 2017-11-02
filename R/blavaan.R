@@ -686,7 +686,7 @@ bcfa <- bsem <- function(..., cp = "srs", dp = NULL,
     n.chains = 3, burnin, sample, adapt,
     jagfile = FALSE, jagextra = list(), inits = "simple",
     convergence = "manual", target = "jags", save.lvs = FALSE,
-    seed = NULL, jagcontrol = list()) {
+    jags.ic = FALSE, seed = NULL, jagcontrol = list()) {
 
     dotdotdot <- list(...)
     std.lv <- ifelse(any(names(dotdotdot) == "std.lv"), dotdotdot$std.lv, FALSE)
@@ -730,7 +730,7 @@ bgrowth <- function(..., cp = "srs", dp = NULL,
     n.chains = 3, burnin, sample, adapt,
     jagfile = FALSE, jagextra = list(), inits = "simple",
     convergence = "manual", target = "jags", save.lvs = FALSE,
-    seed = NULL, jagcontrol = list()) {
+    jags.ic = FALSE, seed = NULL, jagcontrol = list()) {
 
     dotdotdot <- list(...)
     std.lv <- ifelse(any(names(dotdotdot) == "std.lv"), dotdotdot$std.lv, FALSE)

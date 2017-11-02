@@ -352,7 +352,7 @@ dist2r <- function(priors, target){
         ##rloc <- paste0(system.file("R", package="rstan"), "/sysdata")
         ##lazyLoad(rloc)
         prisplit <- strsplit(priors, "[, ()]+")
-        pridist <- sapply(prisplit, head, 1)
+        pridist <- sapply(prisplit, function(x) x[1])
         newdist <- rosetta$RFunction[match(pridist, rosetta$StanFunction)]
         for(i in 1:length(newdist)){
             prisplit[[i]][1] <- newdist[i]
