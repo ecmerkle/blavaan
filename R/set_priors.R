@@ -129,8 +129,9 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x, target="ja
                 jagexpr <- parse(text=oldjageq)[[1]]
                 jageq <- do.call("substitute", list(jagexpr,
                                                     transtab))
+                jageq <- paste(deparse(jageq, width.cutoff = 500), collapse="")
 
-                jageq <- gsub('\"', '', deparse(jageq))
+                jageq <- gsub('\"', '', jageq)
 
                 TXT2 <- paste(TXT2, jageq, eolop, sep="")
             } else {
