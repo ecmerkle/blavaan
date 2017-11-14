@@ -99,16 +99,8 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     nlvno0 <- nlv
   }
 
-  ## TODO if nov.x > 0, find the submatrix of psi that
-  ## contains the vars/covs associated with ov.names.x
   nmvs <- nov
   ov.names <- orig.ov.names
-  if(nov.x > 0){
-    psients <- which(partable$lhs %in% ov.names.x &
-                     partable$op == "~~" &
-                     partable$group == 1)
-    x.psi.idx <- unique(partable$row[psients])
-  }
 
   eqlabs <- partable$rhs[partable$op %in% c("==", ":=")]
   eqplabs <- partable$lhs[partable$op %in% c("==", ":=")]
@@ -144,6 +136,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   ## (need separated so can use "lower" and "upper")
   parmats <- lavInspect(model)
   parconst <- attr(parmats, "header")
+  gamind <- "gamma" %in% names(parmats[[1]])
 
   ## so it is always a list of lists
   if(model@Data@ngroups == 1) parmats <- list(g1 = parmats)
@@ -250,8 +243,15 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   }
   yind <- which(ov.names %in% thet.ov.names)
   xind <- which(ov.names %in% psi.ov.names)
+  ov.dummy.idx <- c(model@Model@ov.y.dummy.ov.idx[[1]],
+                    model@Model@ov.x.dummy.ov.idx[[1]])
+  lv.dummy.idx <- c(model@Model@ov.y.dummy.lv.idx[[1]],
+                    model@Model@ov.x.dummy.lv.idx[[1]])
+  dumov <- 0L
+  if(length(ov.dummy.idx) > 0) dumov <- 1L
+
   ## FIXME? see .internal_get_ALPHA from lav_representation_lisrel.R
-  ## for alternative (better) way to handle this than eqs.x
+  ## for alternative (better) way to handle this than eqs.x  
   if(nov.x > 0 | length(vnames$eqs.x[[1]]) > 0){
     xnames <- c(ov.names.x, vnames$eqs.x[[1]])
     exoind <- which(ov.names[xind] %in% xnames)
@@ -328,14 +328,14 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     if(miss.psi){
       TXT <- paste0(TXT, "sem_lv_missing_lpdf(")
     } else {
-      TXT <- paste0(TXT, "sem_lv_lpdf(")
+      TXT <- paste0(TXT, "sem_lv2_lpdf(")
     }
 
-    TXT <- paste0(TXT, "alpha, beta, psi, ")
-    
-    TXT <- paste0(TXT, "g, regind, exoind, ",
-                  (nlv + n.psi.ov), ", N, ", ngroups, ", ",
-                  diagpsi, ", ", fullbeta, ", ", nlv, ", ", nov.x,
+    TXT <- paste0(TXT, "alpha, beta, psi, lambda, ")
+    TXT <- paste0(TXT, ifelse(gamind, "gamma", "beta"), ", ")
+    TXT <- paste0(TXT, as.numeric(gamind), ", sampmean, meanx, ")
+    TXT <- paste0(TXT, "g, ", (nlv + n.psi.ov), ", N, ",
+                  ngroups, ", ", diagpsi, ", ", fullbeta, ", ", nlv,
                   ", etaind, ", nlvno0)
     if(miss.psi){
       TXT <- paste0(TXT, ", nseenx, obsvarx, nseenexo, obsexo")
@@ -463,14 +463,33 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
 
   ## Now add data if we have it
   datablk <- paste0("data{\n", t1, "int N;\n", t1, "int g[N];\n",
-                    t1, "int regind[", length(regind), "];\n",
-                    t1, "int exoind[", length(exoind), "];\n",
                     t1, "int lvind[", length(lvindall), "];\n",
                     t1, "int etaind[", length(etaind), "];\n")
   if(length(lv0.idx) > 0){
     datablk <- paste0(datablk, t1, "int eta0ind[", length(lv0.idx),
                       "];\n")
   }
+
+  ## NB: if meanx is empty, we won't use it. so just
+  ## set meanx to smean for stan.
+  smean <- do.call("cbind", model@SampleStats@mean)
+  if(length(model@SampleStats@mean.x[[1]]) > 0){
+    meanx <- do.call("cbind", model@SampleStats@mean.x)
+  } else {
+    meanx <- smean
+  }
+  datablk <- paste0(datablk, t1, "real sampmean[", nrow(smean), ",",
+                    ncol(smean), "];\n", t1,
+                    "real meanx[", nrow(meanx), ",", ncol(meanx),
+                    "];\n")
+
+  if(length(ov.dummy.idx) == 0){
+    ov.dummy.idx <- rep(0,2)
+    lv.dummy.idx <- rep(0,2)
+  }
+  datablk <- paste0(datablk, t1, "int dummyov[",
+                    length(ov.dummy.idx), "];\n", t1,
+                    "int dummylv[", length(lv.dummy.idx), "];\n")
 
   if(!is.null(lavdata) | class(model)[1]=="lavaan"){
     if(class(model)[1] == "lavaan") lavdata <- model@Data
@@ -627,6 +646,11 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     if(length(lv0.idx) > 0){
       standata <- c(standata, list(eta0ind=array(lv0.idx)))
     }
+    standata <- c(standata, list(dummyov=array(ov.dummy.idx),
+                                 dummylv=array(lv.dummy.idx),
+                                 sampmean=smean,
+                                 meanx=meanx))
+
     if(ny > 0) standata <- c(standata, list(y=y))
     if(n.psi.ov > 0) standata <- c(standata, list(x=x))
     if(missflag){
@@ -693,7 +717,13 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
 
     pmats <- vector("list", length(matrows))
     for(i in 1:length(pmats)){
-        pmats[[i]] <- array(0, c(matrows[i], matcols[i], ngroups))
+        if(names(matrows)[i] == "lambda"){
+            tmpmat <- model@Model@GLIST$lambda
+            pmats[[i]] <- array(tmpmat,
+                                c(nrow(tmpmat), ncol(tmpmat), ngroups))
+        } else {
+            pmats[[i]] <- array(0, c(matrows[i], matcols[i], ngroups))
+        }
     }
     names(pmats) <- names(matrows)
 
@@ -750,6 +780,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     ## add cholesky decomp of theta matrix (and psi for nov.x);
     ## non-eXo ov vars sometimes show up in psi,
     ## so handle that as well.
+    ## TODO insert alpha2 thing here:::
     TPS <- paste0(TPS, t1, "}\n\n")
     TPS <- paste0(TPS, t1, "for(j in 1:", ngroups, "){\n")
     if(any(partable$mat == "theta")){
@@ -768,6 +799,10 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       TPS <- paste0(TPS, t2, "thetld[j] = cholesky_decompose(",
                     "thetld[j]);\n")
     }
+    if(dumov){
+      TPS <- paste0(TPS, t2, "alpha[dummylv,1,j] = to_array_1d(inverse(to_matrix(lambda[,,j]) * inverse(diag_matrix(rep_vector(1.0, ", (nlv + n.psi.ov), ")) - to_matrix(beta[,,j]))[dummyov,dummylv]) * to_vector(sampmean[dummyov,j]));\n")
+    }
+    
     TPS <- paste0(TPS, t1, "}\n")
 
     TPS <- paste0("transformed parameters{\n", tpdecs, "\n",
@@ -782,14 +817,14 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
 
   funblk <- "functions{\n"
   if((nlv + n.psi.ov) > 0){
-    funblk <- paste0(funblk, t1, "#include 'sem_mean.stan' \n")
+    funblk <- paste0(funblk, t1, "#include 'sem_mean2.stan' \n")
     if(nlvno0 < nlv){
       funblk <- paste0(funblk, t1, "#include 'sem_mean_eta.stan' \n")
     }
     if(miss.psi){
       funblk <- paste0(funblk, t1, "#include 'sem_lv_missing.stan' \n")
     } else {
-      funblk <- paste0(funblk, t1, "#include 'sem_lv.stan' \n")
+      funblk <- paste0(funblk, t1, "#include 'sem_lv2.stan' \n")
     }
   }
   funblk <- paste0(funblk, t1, "#include 'fill_lower.stan' \n")
