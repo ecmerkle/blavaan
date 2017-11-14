@@ -778,9 +778,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     }
 
     ## add cholesky decomp of theta matrix (and psi for nov.x);
-    ## non-eXo ov vars sometimes show up in psi,
-    ## so handle that as well.
-    ## TODO insert alpha2 thing here:::
+    ## non-eXo ov vars sometimes show up in psi, so handle that as well.
     TPS <- paste0(TPS, t1, "}\n\n")
     TPS <- paste0(TPS, t1, "for(j in 1:", ngroups, "){\n")
     if(any(partable$mat == "theta")){
@@ -800,7 +798,13 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
                     "thetld[j]);\n")
     }
     if(dumov){
-      TPS <- paste0(TPS, t2, "alpha[dummylv,1,j] = to_array_1d(inverse(to_matrix(lambda[,,j]) * inverse(diag_matrix(rep_vector(1.0, ", (nlv + n.psi.ov), ")) - to_matrix(beta[,,j]))[dummyov,dummylv]) * to_vector(sampmean[dummyov,j]));\n")
+      TPS <- paste0(TPS, t2, "alpha[dummylv,1,j] = to_array_1d(inverse((to_matrix(lambda[,,j]) * inverse(diag_matrix(rep_vector(1.0, ", (nlv + n.psi.ov), ")) - to_matrix(beta[,,j])))[dummyov,dummylv]) * to_vector(")
+      if(model@Options$fixed.x){
+        TPS <- paste0(TPS, "sampmean[dummyov,j]")
+      } else {
+        TPS <- paste0(TPS, "to_array_1d(alpha[dummylv,1,j])")
+      }
+      TPS <- paste0(TPS, "));\n")
     }
     
     TPS <- paste0(TPS, t1, "}\n")
