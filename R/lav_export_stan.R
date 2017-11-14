@@ -351,10 +351,10 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     TPS <- paste0(TPS, t1, "for(i in 1:N) {\n")
     TPS <- paste0(TPS, t2, "eta[i,etaind] = etavec[i];\n", t1, "}\n")
     
-    ## TODO alpha entries of non-fixed-zero lvs should be zeroed?
     TPS <- paste0(TPS, t1, "mueta = sem_mean_eta(alpha, eta, ",
-                  "beta, g, regind, exoind, ", (nlv + n.psi.ov),
-                  ", N, ", nov.x, ", ", ngroups, ", lvind);\n")
+                  "beta, ", ifelse(gamind, "gamma", "beta"),
+                  ", g, ", (nlv + n.psi.ov),
+                  ", N, ", ngroups, ", lvind);\n")
   }
   
   ## Define mean of each observed variable
