@@ -797,13 +797,8 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       TPS <- paste0(TPS, t2, "thetld[j] = cholesky_decompose(",
                     "thetld[j]);\n")
     }
-    if(dumov){
-      TPS <- paste0(TPS, t2, "alpha[dummylv,1,j] = to_array_1d(inverse((to_matrix(lambda[,,j]) * inverse(diag_matrix(rep_vector(1.0, ", (nlv + n.psi.ov), ")) - to_matrix(beta[,,j])))[dummyov,dummylv]) * to_vector(")
-      if(model@Options$fixed.x){
-        TPS <- paste0(TPS, "sampmean[dummyov,j]")
-      } else {
-        TPS <- paste0(TPS, "to_array_1d(alpha[dummylv,1,j])")
-      }
+    if(dumov & !model@Options$fixed.x){
+      TPS <- paste0(TPS, t2, "alpha[dummylv,1,j] = to_array_1d(inverse((to_matrix(lambda[,,j]) * inverse(diag_matrix(rep_vector(1.0, ", (nlv + n.psi.ov), ")) - to_matrix(beta[,,j])))[dummyov,dummylv]) * to_vector(to_array_1d(alpha[dummylv,1,j])")
       TPS <- paste0(TPS, "));\n")
     }
     
