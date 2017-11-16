@@ -27,8 +27,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   ## set up mvs with fixed 0 variances (single indicators of lvs)
   partable <- set_mv0(partable, orig.ov.names, ngroups)
   ## convert covariances to corr * sd1 * sd2
-  partable <- set_stancovs(partable, orig.ov.names, orig.ov.names.x,
-                           dp)
+  partable <- set_stancovs(partable)
 
   ## ensure group parameters are in order, for parameter indexing:
   partable <- partable[order(partable$group),]
@@ -135,24 +134,29 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   ## number of free parameters per type, for stan parameter vectors
   ## (need separated so can use "lower" and "upper")
   parmats <- lavInspect(model)
+  parmattable <- lavInspect(model, 'partable')
   parconst <- attr(parmats, "header")
   gamind <- "gamma" %in% names(parmats[[1]])
 
   ## so it is always a list of lists
-  if(model@Data@ngroups == 1) parmats <- list(g1 = parmats)
+  if(model@Data@ngroups == 1){
+    parmats <- list(g1 = parmats)
+    parmattable <- list(g1 = parmattable)
+  }
 
   ## decide whether psi is diagonal and whether beta is
   ## lower/upper triangular, for faster matrix computations
   ## in stan
   diagpsi <- 0L
-  if("psi" %in% names(parmats[[1]])){
-    tmppsi <- parmats[[1]]$psi
+  if("psi" %in% names(parmattable[[1]])){
+    tmppsi <- parmattable[[1]]$psi
     tmppsi <- tmppsi[lower.tri(tmppsi)]
     if(all(tmppsi == 0)) diagpsi <- 1L
   }
   fullbeta <- 1L
-  if("beta" %in% names(parmats[[1]])){
-    tmpbeta <- parmats[[1]]$beta
+
+  if("beta" %in% names(parmattable[[1]])){
+    tmpbeta <- parmattable[[1]]$beta
     if(all(tmpbeta[lower.tri(tmpbeta)] == 0) |
        all(tmpbeta[upper.tri(tmpbeta)] == 0)) fullbeta <- 0L
   }
@@ -797,7 +801,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       TPS <- paste0(TPS, t2, "thetld[j] = cholesky_decompose(",
                     "thetld[j]);\n")
     }
-    if(dumov & !model@Options$fixed.x){
+    if(dumov & !model@Options$fixed.x & !all(parmattable$lambda == 0)){
       TPS <- paste0(TPS, t2, "alpha[dummylv,1,j] = to_array_1d(inverse((to_matrix(lambda[,,j]) * inverse(diag_matrix(rep_vector(1.0, ", (nlv + n.psi.ov), ")) - to_matrix(beta[,,j])))[dummyov,dummylv]) * to_vector(to_array_1d(alpha[dummylv,1,j])")
       TPS <- paste0(TPS, "));\n")
     }

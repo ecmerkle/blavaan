@@ -1,4 +1,4 @@
-set_stancovs <- function(partable, ov.names, ov.names.x, dp) {
+set_stancovs <- function(partable) {
   ## Add phantom lvs for covariance parameters
 
   ## first: parameter matrices + indexing
@@ -17,18 +17,13 @@ set_stancovs <- function(partable, ov.names, ov.names.x, dp) {
   
   covpars <- which(partable$op == "~~" &
                    partable$lhs != partable$rhs &
-                   partable$free > 0L)# &
-#                   !(partable$lhs %in% ov.names.x))
+                   partable$free > 0L)
 
   blkrow <- rep(NA, length(partable$id))
   partable$rhoidx <- rep(NA, length(partable$id))
 
   ## Only do this if covpars exist
   if(length(covpars) > 0){
-    ## add to model matrices
-    nmvcovs <- sum(partable$lhs[covpars] %in% ov.names)
-    nlvcovs <- length(covpars) - nmvcovs
-
     mvcov <- 0
     lvcov <- 0
     
@@ -53,10 +48,9 @@ set_stancovs <- function(partable, ov.names, ov.names.x, dp) {
 
       partable$lhs[tmprows] <- partable$lhs[covpars[i]]
       partable$rhs[tmprows] <- partable$rhs[covpars[i]]
-      
+
       ## Decide on =~ (ov) vs ~ (lv)
-      if(partable$lhs[covpars[i]] %in% ov.names &
-         !(partable$lhs[covpars[i]] %in% ov.names.x)){
+      if(partable$mat[i] == "theta"){
         if(!eq.const){
           mvcov <- mvcov + 1
           covidx <- mvcov
