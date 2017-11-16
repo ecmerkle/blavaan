@@ -1,8 +1,7 @@
-  real sem_lv2_lpdf(matrix x, real[,,] alpha, real[,,] B, real[,,] psi, real[,,] lambda, real[,,] gamma, int gamind, real[,] sampmean, real[,] meanx, int[] g, int k, int N, int Ng, int diagpsi, int fullbeta, int nlv, int[] lvind, int nlvno0){
+  real sem_lv2_lpdf(matrix x, real[,,] alpha, real[,,] B, real[,,] psi, real[,,] gamma, int gamind, real[,] meanx, int[] g, int k, int N, int Ng, int diagpsi, int fullbeta, int nlv, int[] lvind, int nlvno0){
     real ldetcomp[Ng];
     matrix[k,k] iden;
     vector[k] alpha2[Ng];
-    matrix[dims(lambda)[1],k] lamib[Ng];
     vector[k] psivecinv[Ng];
     matrix[k,k] psimatinv[Ng];
     matrix[k,k] psimat[Ng];
@@ -41,7 +40,7 @@
         }
         psimatinv[j] = diag_matrix(psivecinv[j]);
 
-        siginv[j] = (iden[tmpobs[1:(nlvno0+nov)],tmpobs[1:(nlvno0+nov)]] - to_matrix(B[tmpobs[1:(nlvno0+nov)],tmpobs[1:(nlvno0+nov)],j])') * psimatinv[j] * (iden[tmpobs[1:(nlvno0+nov)],tmpobs[1:(nlvno0+nov)]] - to_matrix(B[tmpobs[1:(nlvno0+nov)],tmpobs[1:(nlvno0+nov)],j]));
+        siginv[j,1:(nlvno0+nov),1:(nlvno0+nov)] = (iden[tmpobs[1:(nlvno0+nov)],tmpobs[1:(nlvno0+nov)]] - to_matrix(B[tmpobs[1:(nlvno0+nov)],tmpobs[1:(nlvno0+nov)],j])') * psimatinv[j,tmpobs[1:(nlvno0+nov)],tmpobs[1:(nlvno0+nov)]] * (iden[tmpobs[1:(nlvno0+nov)],tmpobs[1:(nlvno0+nov)]] - to_matrix(B[tmpobs[1:(nlvno0+nov)],tmpobs[1:(nlvno0+nov)],j]));
 
 	if(fullbeta){
 	  ldetcomp[j] = log_determinant(iden[tmpobs[1:(nlvno0+nov)],tmpobs[1:(nlvno0+nov)]] - to_matrix(B[tmpobs[1:(nlvno0+nov)],tmpobs[1:(nlvno0+nov)],j]));

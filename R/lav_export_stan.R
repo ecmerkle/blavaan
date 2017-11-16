@@ -331,14 +331,14 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       TXT <- paste0(TXT, "sem_lv2_lpdf(")
     }
 
-    TXT <- paste0(TXT, "alpha, beta, psi, lambda, ")
+    TXT <- paste0(TXT, "alpha, beta, psi, ")
     TXT <- paste0(TXT, ifelse(gamind, "gamma", "beta"), ", ")
-    TXT <- paste0(TXT, as.numeric(gamind), ", sampmean, meanx, ")
+    TXT <- paste0(TXT, as.numeric(gamind), ", meanx, ")
     TXT <- paste0(TXT, "g, ", (nlv + n.psi.ov), ", N, ",
                   ngroups, ", ", diagpsi, ", ", fullbeta, ", ", nlv,
                   ", etaind, ", nlvno0)
     if(miss.psi){
-      TXT <- paste0(TXT, ", nseenx, obsvarx, nseenexo, obsexo")
+      TXT <- paste0(TXT, ", nseenx, obsvarx")
     }
     TXT <- paste0(TXT, ");\n")
   }
