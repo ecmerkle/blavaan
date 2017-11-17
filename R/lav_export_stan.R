@@ -134,7 +134,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   ## number of free parameters per type, for stan parameter vectors
   ## (need separated so can use "lower" and "upper")
   parmats <- lavInspect(model)
-  parmattable <- lavInspect(model, 'partable')
+  parmattable <- lavInspect(model, 'est')
   parconst <- attr(parmats, "header")
   gamind <- "gamma" %in% names(parmats[[1]])
 
@@ -801,7 +801,8 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       TPS <- paste0(TPS, t2, "thetld[j] = cholesky_decompose(",
                     "thetld[j]);\n")
     }
-    if(dumov & !model@Options$fixed.x & !all(parmattable$lambda == 0)){
+    if(dumov & !model@Options$fixed.x &
+       !all(parmattable$lambda == diag(nrow(parmattable$lambda)))){
       TPS <- paste0(TPS, t2, "alpha[dummylv,1,j] = to_array_1d(inverse((to_matrix(lambda[,,j]) * inverse(diag_matrix(rep_vector(1.0, ", (nlv + n.psi.ov), ")) - to_matrix(beta[,,j])))[dummyov,dummylv]) * to_vector(to_array_1d(alpha[dummylv,1,j])")
       TPS <- paste0(TPS, "));\n")
     }
