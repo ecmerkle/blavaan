@@ -50,7 +50,7 @@ set_stancovs <- function(partable) {
       partable$rhs[tmprows] <- partable$rhs[covpars[i]]
 
       ## Decide on =~ (ov) vs ~ (lv)
-      if(partable$mat[i] == "theta"){
+      if(partable$mat[covpars[i]] == "theta"){
         if(!eq.const){
           mvcov <- mvcov + 1
           covidx <- mvcov

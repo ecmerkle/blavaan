@@ -105,13 +105,26 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
                 rhstrans <- paste(partable$mat[pvnum], "free[",
                                   partable$freeparnums[pvnum], "]",
                                   sep="")
-
-                jageq <- partable$rhs[compeq]
-                for(j in 1:length(rhsvars)){
-                    jageq <- gsub(rhsvars[j], rhstrans[j], jageq)
+                ## defined variables involved in another equality
+                defvars <- which(partable$mat[pvnum] == "def")
+                if(length(defvars) > 0){
+                    defpt <- pvnum[defvars]
+                    rhstrans[defvars] <- paste0(partable$mat[defpt],
+                                                "[", partable$row[defpt],
+                                                ",", partable$col[defpt],
+                                                ",", partable$group[defpt],
+                                                "]")
                 }
-                ## FIXME? no longer needed?
-                ##jageq <- gsub("[", "parvec[", jageq, fixed = TRUE)
+
+                oldjageq <- partable$rhs[compeq]
+                transtab <- as.list(rhstrans)
+                names(transtab) <- rhsvars
+                jagexpr <- parse(text=oldjageq)[[1]]
+                jageq <- do.call("substitute", list(jagexpr,
+                                                    transtab))
+                jageq <- paste(deparse(jageq, width.cutoff = 500), collapse="")
+
+                jageq <- gsub('\"', '', jageq)
 
                 TXT2 <- paste(TXT2, jageq, eolop, sep="")
             } else {
