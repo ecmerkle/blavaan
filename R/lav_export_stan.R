@@ -139,7 +139,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   gamind <- "gamma" %in% names(parmats[[1]])
 
   ## so it is always a list of lists
-  if(model@Data@ngroups == 1){
+  if(ngroups == 1){
     parmats <- list(g1 = parmats)
     parmattable <- list(g1 = parmattable)
   }
@@ -758,6 +758,13 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     }
     tpdecs <- paste0(tpdecs, t1, "real mu[N,", nov, "];\n")
 
+    if(any(partable$mat == "def")){
+      ndecs <- sum(partable$mat == "def" &
+                   partable$group == 1)
+      tpdecs <- paste0(tpdecs, "\n", t1, "real def[", ndecs, ", 1, ",
+                       ngroups, "];\n")
+    }
+    
     if(nlv + n.psi.ov > 0){
       tpdecs <- paste0(tpdecs, t1, "matrix[N,", (nlv + n.psi.ov), "] eta;\n")
       if(nlvno0 < nlv){
@@ -765,7 +772,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
                          "] mueta[N];\n")
       }
       tpdecs <- paste0(tpdecs, "\n", t1,
-                       "eta = rep_matrix(0, N,", (nlv + n.psi.ov),
+                       "eta = rep_matrix(0, N, ", (nlv + n.psi.ov),
                        ");\n")
     }
     
