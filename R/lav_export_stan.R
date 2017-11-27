@@ -332,7 +332,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     if(miss.psi){
       TXT <- paste0(TXT, "sem_lv_missing_lpdf(")
     } else {
-      TXT <- paste0(TXT, "sem_lv2_lpdf(")
+      TXT <- paste0(TXT, "sem_lv_lpdf(")
     }
 
     TXT <- paste0(TXT, "alpha, beta, psi, ")
@@ -828,14 +828,14 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
 
   funblk <- "functions{\n"
   if((nlv + n.psi.ov) > 0){
-    funblk <- paste0(funblk, t1, "#include 'sem_mean2.stan' \n")
+    funblk <- paste0(funblk, t1, "#include 'sem_mean.stan' \n")
     if(nlvno0 < nlv){
       funblk <- paste0(funblk, t1, "#include 'sem_mean_eta.stan' \n")
     }
     if(miss.psi){
       funblk <- paste0(funblk, t1, "#include 'sem_lv_missing.stan' \n")
     } else {
-      funblk <- paste0(funblk, t1, "#include 'sem_lv2.stan' \n")
+      funblk <- paste0(funblk, t1, "#include 'sem_lv.stan' \n")
     }
   }
   funblk <- paste0(funblk, t1, "#include 'fill_lower.stan' \n")

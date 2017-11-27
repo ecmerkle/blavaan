@@ -17,7 +17,7 @@
       alpha2[j] = to_vector(alpha[,1,j]);
     }
 
-    evlv = sem_mean2(alpha2, B, gamma, g, k, Ng, gamind, meanx);
+    evlv = sem_mean(alpha2, B, gamma, g, k, Ng, gamind, meanx);
 
     // TODO speed up by using missingness patterns
     xvectm = 0;
