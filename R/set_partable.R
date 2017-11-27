@@ -343,6 +343,10 @@ set_mv0 <- function(partable, ov.names, ngroups) {
                                partable$rhs == ovn[i] &
                                partable$group == j)
 
+                lvreg <- which(partable$op == "~" &
+                               partable$lhs == ovn[i] &
+                               partable$group == j)
+
                 lvcov <- which(partable$op == "~~" &
                                (partable$lhs %in% partable$lhs[lvloc] |
                                 partable$rhs %in% partable$lhs[lvloc]) &
@@ -351,7 +355,7 @@ set_mv0 <- function(partable, ov.names, ngroups) {
                 ## If this is an indicator of multiple lvs or
                 ## has covariances attached, we cannot handle it
                 ## in conditional (on lv) form:
-                if(length(lvloc) > 1 | length(lvcov) > 0){
+                if(length(lvloc) + length(lvreg) + length(lvcov) > 1){
                     if(length(mvloc) > 1){
                         stop("blavaan ERROR: Problem with ov variances fixed to 0.")
                     }
