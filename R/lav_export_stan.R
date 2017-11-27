@@ -522,7 +522,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       obsexo <- matrix(1, ntot, 1)
       nseenexo <- rep(1, ntot)
     }
-    
+
     g <- rep(NA, ntot)
 
     for(k in 1:ngroups){
@@ -602,7 +602,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
 
     if(length(nas) > 0){
       if(ny > 0) y <- y[-nas,]
-      if(n.psi.ov > 0) x <- x[-nas]
+      if(n.psi.ov > 0) x <- x[-nas,]
       g <- g[-nas]
       if(ny > 0){
         obsvar <- obsvar[-nas,]
@@ -613,7 +613,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       if(n.psi.ov > 0){
         obsvarx <- obsvarx[-nas,]
         misvarx <- misvarx[-nas,]
-        obsexo <- obsexo[-nas,]
+        obsexo <- matrix(obsexo[-nas,]) # converts to numeric
         nseenx <- nseenx[-nas]
         nmisx <- nmisx[-nas]
         nseenexo <- nseenexo[-nas]

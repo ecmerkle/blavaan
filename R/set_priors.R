@@ -200,14 +200,22 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x, target="ja
     covs <- unique(partable$lhs[grep(".phant", partable$lhs)])
     
     if(length(covs) > 0){
-        TXT2 <- paste(TXT2, "\n\n", t1, commop, "Inferential covariances", sep="")
+      TXT2 <- paste(TXT2, "\n\n", t1, commop, "Inferential covariances", sep="")
         for(i in 1:length(covs)){
             for(k in 1:max(partable$group)){
-                varlocs <- which(partable$lhs == covs[i] &
-                                 partable$op == "=~" &
+                varlocs <- which(((partable$lhs == covs[i] &
+                                   partable$op == "=~") |
+                                  (partable$rhs == covs[i] &
+                                   partable$op == "~")) &
                                  partable$group == k)
                 vartxt <- "star"
                 vars <- partable$rhs[varlocs]
+                ## catch where we need lhs instead of rhs
+                lhsvars <- grepl(".phant", vars)
+                if(any(lhsvars)){
+                    vars[lhsvars] <- partable$lhs[varlocs[lhsvars]]
+                }
+
                 if(length(varlocs) == 0){
                     ## lv
                     varlocs <- which(partable$rhs == covs[i] &
@@ -226,7 +234,8 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x, target="ja
                               grepl(vartxt, partable$mat))
 
                 matname <- ifelse(grepl("theta", partable$mat[var1]), "theta", "psi")
-                phpars <- which(partable$lhs == covs[i] &
+                phpars <- which((partable$lhs == covs[i] |
+                                 partable$rhs == covs[i]) &
                                 partable$group == k)
                 if(length(phpars) == 1){
                     phpars <- which(partable$rhs == covs[i] &

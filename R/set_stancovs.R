@@ -26,7 +26,7 @@ set_stancovs <- function(partable) {
   if(length(covpars) > 0){
     mvcov <- 0
     lvcov <- 0
-    
+
     for(i in 1:length(covpars)){      
       ## Is this constrained equal to a previous parameter?
       eq.const <- FALSE
