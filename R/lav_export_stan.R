@@ -352,8 +352,10 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   ovcol <- which(ov.names %in% ovreg)
 
   if(nlvno0 < nlv){
-    TPS <- paste0(TPS, t1, "for(i in 1:N) {\n")
-    TPS <- paste0(TPS, t2, "eta[i,etaind] = etavec[i];\n", t1, "}\n")
+    if(nlvno0 > 0){
+      TPS <- paste0(TPS, t1, "for(i in 1:N) {\n")
+      TPS <- paste0(TPS, t2, "eta[i,etaind] = etavec[i];\n", t1, "}\n")
+    }
     
     TPS <- paste0(TPS, t1, "mueta = sem_mean_eta(alpha, eta, ",
                   "beta, ", ifelse(gamind, "gamma", "beta"),
@@ -437,8 +439,8 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
                      ",g[i]]*", RHS, sep="")
       }
     }
+    TPS <- paste(TPS, eolop, "\n", sep="")
   }
-  TPS <- paste(TPS, eolop, "\n", sep="")
 
   ## priors/constraints
   TXT2 <- set_stanpars(TXT2, partable, nfree, dp, orig.lv.names.x)

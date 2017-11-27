@@ -28,11 +28,11 @@
 	  tmpobs[j] = lvind[j];
 	}
 	for(j in (nlvno0 + 1):(nlvno0 + nseen[i])){
-	  tmpobs[j] = nlvno0 + obsvar[i,(j - nlvno0)]; //nlv + obsvar[i,(j - nlv)];
+	  tmpobs[j] = nlv + obsvar[i,(j - nlvno0)]; //nlv + obsvar[i,(j - nlv)];
 	}
       } else {
         for(j in 1:nseen[i]){
-	  tmpobs[j] = nlvno0 + obsvar[i,j]; //nlv?
+	  tmpobs[j] = nlv + obsvar[i,j]; //nlv?
 	}
       }
 
