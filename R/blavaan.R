@@ -257,7 +257,9 @@ blavaan <- function(...,  # default lavaan arguments
             }
         }
 
-        trunop <- ifelse(target == "stan", " T[0,]", " T(0,)")
+        ## NB stan is truncated at 0.1 instead of 0, otherwise
+        ##    some chains get stuck near 0
+        trunop <- ifelse(target == "stan", " T[0.1,]", " T(0,)")
         for(i in 1:length(fload)){
             if(LAV@ParTable$prior[fload[i]] != ""){
                 LAV@ParTable$prior[fload[i]] <- paste(LAV@ParTable$prior[fload[i]], trunop, sep="")
