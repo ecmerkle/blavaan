@@ -344,8 +344,8 @@ set_mv0 <- function(partable, ov.names, ngroups) {
                                partable$group == j)
 
                 lvcov <- which(partable$op == "~~" &
-                               (partable$lhs %in% partable$lhs[lvloc]) |
-                               (partable$rhs %in% partable$lhs[lvloc]) &
+                               (partable$lhs %in% partable$lhs[lvloc] |
+                                partable$rhs %in% partable$lhs[lvloc]) &
                                partable$lhs != partable$rhs)
 
                 ## If this is an indicator of multiple lvs or
@@ -375,7 +375,7 @@ set_mv0 <- function(partable, ov.names, ngroups) {
                     partable$free[lvvar] <- partable$free[mvloc]
                     partable$ustart[lvvar] <- partable$ustart[mvloc]
                     partable$plabel[lvvar] <- partable$plabel[mvloc]
-                    partable$start[lvvar] <- partable$plabel[mvloc]
+                    partable$start[lvvar] <- partable$start[mvloc]
 
                     partable$free[mvloc] <- tmpfree
                     partable$ustart[mvloc] <- tmpustart
