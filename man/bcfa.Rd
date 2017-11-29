@@ -6,9 +6,9 @@ Fit a Confirmatory Factor Analysis (CFA) model.}
 \usage{
 bcfa(..., cp = "srs",
      dp = NULL, n.chains = 3, burnin, sample,
-     adapt, jagfile = FALSE, jagextra = list(), inits = "simple",
+     adapt, mcmcfile = FALSE, mcmcextra = list(), inits = "simple",
      convergence = "manual", target = "jags", save.lvs = FALSE,
-     jags.ic = FALSE, seed = NULL, jagcontrol = list())
+     jags.ic = FALSE, seed = NULL, bcontrol = list())
 }
 \arguments{
 \item{...}{Default lavaan arguments.  See \code{\link{lavaan}}.}
@@ -24,13 +24,13 @@ bcfa(..., cp = "srs",
 \item{sample}{The total number of samples to take after burnin.}
 \item{adapt}{The number of adaptive iterations to use at the start of
   the simulation.}
-\item{jagfile}{If \code{TRUE}, the JAGS model will be written to file
+\item{mcmcfile}{If \code{TRUE}, the JAGS/Stan model will be written to file
   (in the lavExport directory). Can also supply a character
   string, which serves as the name of the directory to which files will be written.}
-\item{jagextra}{A list with potential names \code{syntax} and
+\item{mcmcextra}{A list with potential names \code{syntax} and
   \code{monitor}. The \code{syntax} object is a text string containing extra
-  code to insert in the JAGS model syntax, and the \code{monitor} object
-  is a character vector containing extra JAGS parameters to sample.}
+  code to insert in the JAGS/Stan model syntax, and the \code{monitor} object
+  is a character vector containing extra JAGS/Stan parameters to sample.}
 \item{inits}{If it is a character string, the options are currently
     \code{"simple"} (default), \code{"Mplus"}, \code{"prior"}, and
     \code{"jags"}.  In the first two 
@@ -62,10 +62,9 @@ bcfa(..., cp = "srs",
 \item{jags.ic}{Should DIC be computed the JAGS way, in addition to the BUGS way? Logical; defaults to FALSE}
 \item{seed}{A vector of length \code{n.chains} containing random
   seeds for the MCMC run. If \code{NULL}, seeds will be chosen randomly.}
-\item{jagcontrol}{A list containing additional parameters passed to
-    \code{run.jags} (or \code{autorun.jags}).  See the manpage of those functions for an
-    overview of the additional parameters that can be set.  No other
-    model estimation functions are currently available.}
+\item{bcontrol}{A list containing additional parameters passed to
+    \code{run.jags} (or \code{autorun.jags}) or \code{stan}.  See the manpage of those functions for an
+    overview of the additional parameters that can be set.}
 }
 \details{
     The \code{bcfa} function is a wrapper for the more general 
@@ -101,7 +100,7 @@ HS.model <- ' visual  =~ x1 + x2 + x3
               speed   =~ x7 + x8 + x9 '
 
 fit <- bcfa(HS.model, data=HolzingerSwineford1939,
-            jagcontrol=list(method="rjparallel"))
+            bcontrol=list(method="rjparallel"))
 summary(fit)
 }
 }

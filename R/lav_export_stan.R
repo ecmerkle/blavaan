@@ -850,8 +850,17 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   tmp <- tempfile(fileext = ".stan")
   cat(fullmodel, file = tmp)
   isystem <- system.file("stanfuns", package = "blavaan")
+
+  ## for capturing "diagnostics from parser"
+  tfile <- tempfile(fileext = ".tmp")
+  tmp2 <- file(tfile, open = "wt")
+  sink(tmp2, type="message")
+  
   out$model <- rstan::stanc_builder(file = tmp, isystem = isystem,
                                     obfuscate_model_name = TRUE)$model_code
+  
+  sink(type="message")
+  close(tmp2)
 
   out <- c(out, list(monitors = monitors, pxpartable = partable))
 
