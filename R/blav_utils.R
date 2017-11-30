@@ -140,11 +140,11 @@ samp_lls <- function(lavjags        = NULL,
                      lavoptions     = NULL, 
                      lavcache       = NULL,
                      lavdata        = NULL,
+                     lavmcmc        = NULL,
                      thin           = 5,
                      conditional    = FALSE){
     itnums <- sampnums(lavjags, thin = thin)
     nsamps <- length(itnums)
-    lavmcmc <- make_mcmc(lavjags)
   
     nchain <- length(lavmcmc)
     llmat <- array(NA, c(nsamps, nchain, 2)) ## logl + baseline logl
@@ -173,6 +173,7 @@ case_lls <- function(lavjags        = NULL,
                      lavoptions     = NULL, 
                      lavcache       = NULL,
                      lavdata        = NULL,
+                     lavmcmc        = NULL,
                      conditional    = FALSE,
                      thin           = 5){
 
@@ -180,7 +181,6 @@ case_lls <- function(lavjags        = NULL,
     itnums <- sampnums(lavjags, thin=5)
     nsamps <- length(itnums)
   
-    lavmcmc <- make_mcmc(lavjags)
     nchain <- length(lavmcmc)
 
     llmat <- matrix(NA, nchain*nsamps, sum(unlist(lavdata@nobs)))
@@ -211,7 +211,7 @@ fill_params <- function(postsamp      = NULL,
                                        x = postsamp[lavpartable$jagpnum[!is.na(lavpartable$jagpnum)]])
   } else {
     filled <- lav_model_set_parameters(lavmodel,
-                                       x = postsamp[lavpartable$stanpnum[lavpartable$free > 0][order(lavpartable$free[lavpartable$free > 0])]])
+                                       x = postsamp[lavpartable$stansumnum[lavpartable$free > 0][order(lavpartable$free[lavpartable$free > 0])]])
   }
   filled
 }
@@ -231,7 +231,7 @@ rearr_params <- function(mcmc         = NULL,
     if("jagpnum" %in% names(lavpartable)){
         fullmat[,lavpartable$jagpnum[lavpartable$free > 0]]
     } else {
-        fullmat[,lavpartable$stanpnum[lavpartable$free > 0][order(lavpartable$free[lavpartable$free > 0])]]
+        fullmat[,lavpartable$stansumnum[lavpartable$free > 0][order(lavpartable$free[lavpartable$free > 0])]]
     }
 }   
 
@@ -428,6 +428,7 @@ samp_kls <- function(lavjags        = NULL,
                      lavoptions     = NULL, 
                      lavcache       = NULL,
                      lavdata        = NULL,
+                     lavmcmc        = NULL,
                      thin           = 5,
                      conditional    = FALSE){
 
@@ -437,7 +438,6 @@ samp_kls <- function(lavjags        = NULL,
     ##if(mis | lavoptions$categorical) stop("blavaan ERROR: K-L divergence not implemented for missing data or ordinal variables.")
 
     itnums <- sampnums(lavjags, thin = thin)
-    lavmcmc <- make_mcmc(lavjags)
     lavmcmc <- lapply(lavmcmc, function(x) x[itnums,])
     draws <- do.call("rbind", lavmcmc)
   
@@ -518,7 +518,10 @@ samp_kls <- function(lavjags        = NULL,
 fill_eta <- function(postsamp, lavpartable, lavsamplestats, lavdata){
     nlv <- length(lav_partable_attributes(lavpartable)$vnames$lv[[1]])
     etapars <- grepl("^eta", names(postsamp))
-    etamat <- matrix(postsamp[etapars], lavsamplestats@ntotal, nlv)
+    cnums <- strsplit(names(postsamp)[etapars], "\\[|,|\\]")
+    cnums <- sapply(cnums, function(x) as.numeric(x[3]))
+    etavec <- postsamp[etapars][order(cnums)]
+    etamat <- matrix(etavec, lavsamplestats@ntotal, nlv)
     ngroups <- lavsamplestats@ngroups
 
     eta <- vector("list", ngroups)
@@ -545,6 +548,7 @@ kl_und <- function(mn0, mn1, cov0, invcov0, cov1, invcov1,
   (1/2) * (kl01 + kl10)
 }
 
+## now defunct:
 ## get various fit metrics from a fitted model for each
 ## posterior draw
 samp_idx <- function(lavjags        = NULL,
@@ -554,6 +558,7 @@ samp_idx <- function(lavjags        = NULL,
                      lavoptions     = NULL, 
                      lavcache       = NULL,
                      lavdata        = NULL,
+                     lavmcmc        = NULL,
                      thin           = 5,
                      measure        = "logl"){
     itnums <- sampnums(lavjags, thin = thin)
@@ -584,8 +589,13 @@ make_mcmc <- function(mcmcout){
   if(class(mcmcout) == "runjags"){
     lavmcmc <- mcmcout$mcmc
   } else {
+    ## for stan: as.array() gives parameters in a different order from summary()
+    ##           so reorder
+    tmpsumm <- rstan::summary(mcmcout)
     lavmcmc <- as.array(mcmcout)
     lavmcmc <- lapply(seq(dim(lavmcmc)[2]), function(x) lavmcmc[,x,])
+    reord <- match(rownames(tmpsumm$summary), colnames(lavmcmc[[1]]))
+    lavmcmc <- lapply(lavmcmc, function(x) x[,reord])
   }
   lavmcmc
 }

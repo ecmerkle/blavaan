@@ -160,7 +160,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
         casells <- case_lls(object@external$mcmcout, object@Model,
                             object@ParTable, object@SampleStats,
                             lavopt, object@Cache,
-                            object@Data)
+                            object@Data, make_mcmc(object@external$mcmcout))
         fitres <- waic(casells)
         indices["waic"] <- fitres$waic
         indices["p_waic"] <- fitres$p_waic
@@ -191,6 +191,7 @@ fit_idx <- function(BLAV, thin = 5, measure = "logl"){
                     BLAV@Options,
                     BLAV@Cache,
                     BLAV@Data,
+                    make_mcmc(BLAV@external$mcmcout),
                     thin = thin,
                     measure = measure)
 

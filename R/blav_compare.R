@@ -18,14 +18,14 @@ blavCompare <- function(object1, object2, ...) {
   ll1 <- case_lls(object1@external$mcmcout, object1@Model,
                   object1@ParTable, object1@SampleStats,
                   lavopt1, object1@Cache,
-                  object1@Data)
+                  object1@Data, make_mcmc(object1@external$mcmcout))
 
   lavopt2 <- object2@Options
   lavopt2$estimator <- "ML"
   ll2 <- case_lls(object2@external$mcmcout, object2@Model,
                   object2@ParTable, object2@SampleStats,
                   lavopt2, object2@Cache,
-                  object2@Data)
+                  object2@Data, make_mcmc(object2@external$mcmcout))
 
   loo1 <- loo(ll1); loo2 <- loo(ll2)
   waic1 <- waic(ll1); waic2 <- waic(ll2)

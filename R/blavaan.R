@@ -514,7 +514,11 @@ blavaan <- function(...,  # default lavaan arguments
                                     lavsamplestats = lavsamplestats, lavoptions = lavoptions,
                                     lavcache = lavcache, lavdata = lavdata)[1]
             if(save.lvs) {
-                fullpmeans <- summary(make_mcmc(res))[[1]][,"Mean"]
+                if(target == "jags"){
+                    fullpmeans <- summary(make_mcmc(res))[[1]][,"Mean"]
+                } else {
+                    fullpmeans <- rstan::summary(res)$summary[,"mean"]
+                }
                 cfx <- get_ll(fullpmeans, lavmodel = lavmodel, lavpartable = lavpartable,
                               lavsamplestats = lavsamplestats, lavoptions = lavoptions,
                               lavcache = lavcache, lavdata = lavdata,
@@ -545,12 +549,13 @@ blavaan <- function(...,  # default lavaan arguments
     ## fx is mean ll, where ll is marginal log-likelihood (integrate out lvs)
     if(lavoptions$test != "none") {
       cat("Computing posterior predictives...\n")
+      lavmcmc <- make_mcmc(res)
       samplls <- samp_lls(res, lavmodel, lavpartable, lavsamplestats,
-                          lavoptions, lavcache, lavdata)
+                          lavoptions, lavcache, lavdata, lavmcmc)
       if(jags.ic) {
         sampkls <- samp_kls(res, lavmodel, lavpartable,
                             lavsamplestats, lavoptions, lavcache,
-                            lavdata, conditional = FALSE)
+                            lavdata, lavmcmc, conditional = FALSE)
       } else {
         sampkls <- NULL
       }
@@ -558,11 +563,11 @@ blavaan <- function(...,  # default lavaan arguments
       if(save.lvs) {
         csamplls <- samp_lls(res, lavmodel, lavpartable,
                              lavsamplestats, lavoptions, lavcache,
-                             lavdata, conditional = TRUE)
+                             lavdata, lavmcmc, conditional = TRUE)
         if(jags.ic) {
           csampkls <- samp_kls(res, lavmodel, lavpartable,
                               lavsamplestats, lavoptions, lavcache,
-                              lavdata, conditional = TRUE)
+                              lavdata, lavmcmc, conditional = TRUE)
         } else {
           csampkls <- NULL
         }
