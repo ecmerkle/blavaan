@@ -20,6 +20,18 @@
     evlv = sem_mean(alpha2, B, gamma, g, k, Ng, gamind, meanx);
 
     // TODO speed up by using missingness patterns
+    // need to send in: npatt (num patterns per group) int npatt[Ng]
+    //                  obspatt int obspatt[N] each observation's pattern
+    //   modify:        nseen int[max(npatt)] nseen[Ng]
+    //                  obsvar int[max(npatt),k] obsvar[Ng]
+    //                  
+    // for(k in 1:Ng){
+    //   for(i in 1:npatt[k]){
+    //     compute siginv, ldetcomp
+    //     siginv: matrix[k,k] siginv[Ng,max(npatt)]
+    //     ldetcomp: vector[max(npatt)] ldetcomp[Ng]
+    //   }
+    // }
     xvectm = 0;
     ldetsum = 0;
     for(i in 1:N){
