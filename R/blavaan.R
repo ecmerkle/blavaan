@@ -46,6 +46,9 @@ blavaan <- function(...,  # default lavaan arguments
 
     # ensure stan is here
     if(target == "stan"){
+      if(convergence == "auto"){
+        stop("blavaan ERROR: auto convergence is unavailable for stan.")
+      }
       # could also use requireNamespace + attachNamespace
       if(!(suppressMessages(require("rstan", quietly = TRUE)))){
         stop("blavaan ERROR: rstan package is not installed.")
