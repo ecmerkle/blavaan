@@ -94,6 +94,9 @@ blavaan <- function(...,  # default lavaan arguments
     }
     ## cannot use lavaan inits with fa priors; FIXME?
     if(cp == "fa" & inits %in% c("simple", "default")) inits <- "jags"
+    if(cp == "fa" & target == "stan"){
+      cat("blavaan NOTE: fa priors are not available with stan. srs priors will be used. \n")
+    }
 
     # 'jag' arguments are now 'mcmc'
     jagargs <- c("jagfile", "jagextra", "jagcontrol")
