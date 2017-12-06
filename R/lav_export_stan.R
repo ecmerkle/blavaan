@@ -1,4 +1,4 @@
-lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra = "", inits = "prior") {
+lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra = "", inits = "prior", debug = FALSE) {
   ## lots of code is taken from lav_export_bugs.R
 
   if(class(model)[1]=="lavaan"){
@@ -342,7 +342,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
                   ngroups, ", ", diagpsi, ", ", fullbeta, ", ", nlv,
                   ", etaind, ", nlvno0)
     if(miss.psi){
-      TXT <- paste0(TXT, ", nseenx, obsvarx")
+      TXT <- paste0(TXT, ", nseenx, obsvarx, obspatt, gpatt")
     }
     TXT <- paste0(TXT, ");\n")
   }
@@ -505,6 +505,8 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     y <- matrix(NA, ntot, ny) #lapply(1:tmpnmvs, function(x) rep(NA,ntot))
     if(n.psi.ov > 0) x <- matrix(NA, ntot, n.psi.ov)
 
+    ## TODO: no longer a need for misvar, nmis, misvarx, nmisx,
+    ##       obsexo, nseenexo, so remove?
     if(ny > 0){
       obsvar <- matrix(-999, ntot, ny)
       nseen <- rep(NA, ntot)
@@ -512,8 +514,10 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       nmis <- rep(NA, ntot)
     }
     if(n.psi.ov > 0){
-      obsvarx <- matrix(-999, ntot, n.psi.ov)
-      nseenx <- rep(NA, ntot)
+      gpatt <- sapply(model@SampleStats@missing, length)
+      obsvarx <- array(-999, c(ngroups, max(gpatt), n.psi.ov))
+      nseenx <- matrix(-999, ngroups, max(gpatt))
+      obspatt <- rep(NA, ntot)
       misvarx <- matrix(-999, ntot, n.psi.ov)
       nmisx <- rep(NA, ntot)
     }
@@ -542,6 +546,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       
       ## missingness patterns
       npatt <- lavdata@Mp[[k]]$npatterns
+      
       for(m in 1:npatt){
         if(ny > 0){
           tmpobs <- which(lavdata@Mp[[k]]$pat[m,])
@@ -565,18 +570,21 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
 
         if(n.psi.ov > 0){
           ## now for x
-          tmpobsx <- which(lavdata@Mp[[k]]$pat[m,])
+          M <- model@SampleStats@missing[[k]]
+          Mp <- lavdata@Mp[[k]]
+          
+          tmpobsx <- which(Mp$pat[m,])
           tmpobs <- tmpobsx[tmpobsx %in% xind]
-          tmpmis <- which(!lavdata@Mp[[k]]$pat[m,])
+          tmpmis <- which(!Mp$pat[m,])
           tmpmis <- tmpmis[tmpmis %in% xind]
-          tmpidx <- lavdata@Mp[[k]]$case.idx[[m]]
-          nseenx[tmpidx] <- length(tmpobs)
+          tmpidx <- Mp$case.idx[[m]]
+          obspatt[lavdata@case.idx[[k]][tmpidx]] <- m
+          
+          nseenx[k,m] <- length(tmpobs)
           tmpobsexo <- which(tmpobs %in% exoind)
           nseenexo[tmpidx] <- length(tmpobsexo)
           if(length(tmpobs) > 0){
-            tmpobs <- matrix(tmpobs, length(tmpidx), length(tmpobs),
-                             byrow=TRUE)
-            obsvarx[tmpidx,1:nseenx[tmpidx[1]]] <- tmpobs
+            obsvarx[k, m, 1:length(tmpobs)] <- tmpobs
           }
           if(length(tmpobsexo) > 0){
             tmpobsexo <- matrix(tmpobsexo, length(tmpidx),
@@ -613,10 +621,11 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
         nmis <- nmis[-nas]
       }
       if(n.psi.ov > 0){
-        obsvarx <- obsvarx[-nas,]
+        #obsvarx <- obsvarx[-nas,]
         misvarx <- misvarx[-nas,]
         obsexo <- matrix(obsexo[-nas,]) # converts to numeric
-        nseenx <- nseenx[-nas]
+        #nseenx <- nseenx[-nas]
+        obspatt <- obspatt[-nas]
         nmisx <- nmisx[-nas]
         nseenexo <- nseenexo[-nas]
       }
@@ -638,9 +647,9 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     if(miss.psi){
       if(n.psi.ov > 0){
         for(i in 1:nrow(x)){
-          x[i,1:nseenx[i]] <- x[i,obsvarx[i,1:nseenx[i]]]
-          if(n.psi.ov - nseenx[i] > 0){
-            x[i,(nseenx[i]+1):n.psi.ov] <- -999
+          x[i,1:nseenx[obspatt[i]]] <- x[i,obsvarx[g[i],obspatt[i],1:nseenx[obspatt[i]]]]
+          if(n.psi.ov - nseenx[obspatt[i]] > 0){
+            x[i,(nseenx[obspatt[i]]+1):n.psi.ov] <- -999
           }
         }
       }
@@ -671,7 +680,10 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
         standata <- c(standata, list(obsvarx=obsvarx,
                                      misvarx=misvarx,
                                      obsexo=obsexo,
-                                     nseenx=nseenx, nmisx=nmisx,
+                                     nseenx=nseenx,
+                                     obspatt=obspatt,
+                                     gpatt=array(gpatt),
+                                     nmisx=nmisx,
                                      nseenexo=nseenexo))
         standata$x[is.na(standata$x)] <- -999
       }
@@ -699,11 +711,15 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     }
     if(miss.psi){
       if(n.psi.ov > 0){
-        datablk <- paste0(datablk, t1, "int obsvarx[N,", n.psi.ov,
+        datablk <- paste0(datablk, t1, "int obsvarx[", ngroups, ",",
+                          max(gpatt), ",", n.psi.ov,
                           "];\n", t1, "int misvarx[N,", n.psi.ov,
                           "];\n", t1, "int obsexo[N,",
                           ncol(obsexo), "];\n", t1,
-                          "int nseenx[N];\n", t1,
+                          "int nseenx[", ngroups, ",", max(gpatt),
+                          "];\n", t1,
+                          "int obspatt[N];\n", t1, 
+                          "int gpatt[", ngroups, "];\n", t1,
                           "int nmisx[N];\n", t1,
                           "int nseenexo[N];\n")
       }
@@ -854,12 +870,10 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   ## for capturing "diagnostics from parser"
   tfile <- tempfile(fileext = ".tmp")
   tmp2 <- file(tfile, open = "wt")
-  sink(tmp2, type="message")
-  
+  if(!debug) sink(tmp2, type="message")
   out$model <- rstan::stanc_builder(file = tmp, isystem = isystem,
                                     obfuscate_model_name = TRUE)$model_code
-  
-  sink(type="message")
+  if(!debug) sink(type="message")
   close(tmp2)
 
   out <- c(out, list(monitors = monitors, pxpartable = partable))

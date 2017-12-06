@@ -145,8 +145,8 @@ blavaan <- function(...,  # default lavaan arguments
     if("debug" %in% dotNames) {
         if(dotdotdot$debug)  {
             ## short burnin/sample
-            burnin <- 1000
-            sample <- 1000
+            burnin <- 100
+            sample <- 100
         }
     }
 
@@ -209,6 +209,12 @@ blavaan <- function(...,  # default lavaan arguments
     }
 
     # call lavaan
+    mcdebug <- FALSE
+    if("debug" %in% dotNames){
+      ## only debug mcmc stuff
+      mcdbebug <- dotdotdot$debug
+      dotdotdot <- dotdotdot[-which(dotNames == "debug")]
+    }
     LAV <- do.call("lavaan", dotdotdot)
 
     if(LAV@Data@data.type == "moment") {
@@ -367,7 +373,8 @@ blavaan <- function(...,  # default lavaan arguments
                                          lavdata = lavdata,
                                          dp = dp, n.chains = n.chains,
                                          mcmcextra = mcmcextra,
-                                         inits = initsin),
+                                         inits = initsin,
+                                         debug = mcdebug),
                                 silent = TRUE)
             }
         }

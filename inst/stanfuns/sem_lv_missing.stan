@@ -1,15 +1,20 @@
-  real sem_lv_missing_lpdf(matrix x, real[,,] alpha, real[,,] B, real[,,] psi, real[,,] gamma, int gamind, real[,] meanx, int[] g, int k, int N, int Ng, int diagpsi, int fullbeta, int nlv, int[] lvind, int nlvno0, int[] nseen, int[,] obsvar){
-    real ldetcomp[Ng];
+  real sem_lv_missing_lpdf(matrix x, real[,,] alpha, real[,,] B, real[,,] psi, real[,,] gamma, int gamind, real[,] meanx, int[] g, int k, int N, int Ng, int diagpsi, int fullbeta, int nlv, int[] lvind, int nlvno0, int[,] nseen, int[,,] obsvar, int[] obspatt, int[] gpatt){
+    real ldetcomp[Ng,max(gpatt)];
     matrix[k,k] iden;
     vector[k] alpha2[Ng];
     vector[k] psivecinv[Ng];
     matrix[k,k] psimatinv[Ng];
-    matrix[k,k] siginv[Ng];
+    matrix[k,k] siginv[Ng,max(gpatt)];
     vector[k] xvec;
     vector[k] evlv[Ng];
+    int idx[(k-nlv-nlvno0)];
     int tmpobs[k];
     real xvectm;
     real ldetsum;
+    int nov;
+    int nidx;
+
+    nov = k - nlv;
 
     iden = diag_matrix(rep_vector(1.0, k));
 
@@ -19,65 +24,68 @@
 
     evlv = sem_mean(alpha2, B, gamma, g, k, Ng, gamind, meanx);
 
-    // TODO speed up by using missingness patterns
-    // need to send in: npatt (num patterns per group) int npatt[Ng]
-    //                  obspatt int obspatt[N] each observation's pattern
-    //   modify:        nseen int[max(npatt)] nseen[Ng]
-    //                  obsvar int[max(npatt),k] obsvar[Ng]
-    //                  
-    // for(k in 1:Ng){
-    //   for(i in 1:npatt[k]){
-    //     compute siginv, ldetcomp
-    //     siginv: matrix[k,k] siginv[Ng,max(npatt)]
-    //     ldetcomp: vector[max(npatt)] ldetcomp[Ng]
-    //   }
-    // }
+    //     compute siginv, ldetcomp by missingness pattern
+    //     siginv: matrix[k,k] siginv[Ng,max(gpatt)]
+    //     ldetcomp: vector[max(gpatt)] ldetcomp[Ng]
+    for(gg in 1:Ng){
+      for(m in 1:gpatt[gg]){
+        if(nlvno0 > 0){
+	  idx[1:nlvno0] = lvind;
+	}
+	if(nov > 0){
+	  for(j in 1:nseen[gg,m]){
+	    idx[nlvno0+j] = nlv + obsvar[gg,m,j]; //nlv + obsvar[i,(j - nlv)];
+	  }
+        }
+	nidx = nlvno0 + nseen[gg,m];
+
+        if(diagpsi){
+          for(j in 1:nidx){
+            psivecinv[gg,idx[j]] = 1/psi[idx[j],idx[j],gg];
+          }
+          psimatinv[gg] = diag_matrix(psivecinv[gg]);
+
+          siginv[gg,m,1:nidx,1:nidx] = (iden[idx[1:nidx],idx[1:nidx]] - to_matrix(B[idx[1:nidx],idx[1:nidx],gg])') * psimatinv[gg,idx[1:nidx],idx[1:nidx]] * (iden[idx[1:nidx],idx[1:nidx]] - to_matrix(B[idx[1:nidx],idx[1:nidx],gg]));
+
+	  if(fullbeta){
+	    ldetcomp[gg,m] = log_determinant(iden[idx[1:nidx],idx[1:nidx]] - to_matrix(B[idx[1:nidx],idx[1:nidx],gg]));
+	    ldetcomp[gg,m] = ldetcomp[gg,m] + ldetcomp[gg,m] + sum(log(diagonal(to_matrix(psi[idx[1:nidx],idx[1:nidx],gg]))));
+	  } else {
+            ldetcomp[gg,m] = sum(log(diagonal(to_matrix(psi[idx[1:nidx],idx[1:nidx],gg]))));
+  	  }
+        } else {
+          psimatinv[gg] = to_matrix(psi[,,gg]);
+	  psimatinv[gg] = psimatinv[gg] + psimatinv[gg]' - diag_matrix(diagonal(psimatinv[gg]));
+
+	  ldetcomp[gg,m] = log_determinant(psimatinv[gg,idx[1:nidx],idx[1:nidx]]);
+	  if(fullbeta){
+	    ldetcomp[gg,m] = ldetcomp[gg,m] + 2 * log_determinant(iden[idx[1:nidx],idx[1:nidx]] - to_matrix(B[idx[1:nidx],idx[1:nidx],gg]));
+	  }
+
+	  psimatinv[gg,1:nidx,1:nidx] = inverse_spd(psimatinv[gg,idx[1:nidx],idx[1:nidx]]);
+          siginv[gg,m,1:nidx,1:nidx] = (iden[idx[1:nidx],idx[1:nidx]] - to_matrix(B[idx[1:nidx],idx[1:nidx],gg])') * psimatinv[gg,1:nidx,1:nidx] * (iden[idx[1:nidx],idx[1:nidx]] - to_matrix(B[idx[1:nidx],idx[1:nidx],gg]));
+        }
+      }
+    }
+
+    // now that ldetcomp and siginv computed for each pattern,
+    // obtain log-likelihood
     xvectm = 0;
     ldetsum = 0;
     for(i in 1:N){
       if(nlvno0 > 0){
-        for(j in 1:nlvno0){
-	  tmpobs[j] = lvind[j];
-	}
-	for(j in (nlvno0 + 1):(nlvno0 + nseen[i])){
-	  tmpobs[j] = nlv + obsvar[i,(j - nlvno0)]; //nlv + obsvar[i,(j - nlv)];
-	}
-      } else {
-        for(j in 1:nseen[i]){
-	  tmpobs[j] = nlv + obsvar[i,j]; //nlv?
+        idx[1:nlvno0] = lvind;
+      }
+      if(nov > 0){
+        for(j in 1:nseen[g[i],obspatt[i]]){
+	  idx[nlvno0+j] = nlv + obsvar[g[i],obspatt[i],j]; //nlv + obsvar[i,(j - nlv)];
 	}
       }
+      nidx = nlvno0 + nseen[g[i],obspatt[i]];
 
-      if(diagpsi){
-        for(j in 1:(nlvno0 + nseen[i])){
-          psivecinv[g[i],tmpobs[j]] = 1/psi[tmpobs[j],tmpobs[j],g[i]];
-        }
-        psimatinv[g[i]] = diag_matrix(psivecinv[g[i]]);
-
-        siginv[g[i],1:(nlvno0+nseen[i]),1:(nlvno0+nseen[i])] = (iden[tmpobs[1:(nlvno0+nseen[i])],tmpobs[1:(nlvno0+nseen[i])]] - to_matrix(B[tmpobs[1:(nlvno0+nseen[i])],tmpobs[1:(nlvno0+nseen[i])],g[i]])') * psimatinv[g[i],tmpobs[1:(nlvno0+nseen[i])],tmpobs[1:(nlvno0+nseen[i])]] * (iden[tmpobs[1:(nlvno0+nseen[i])],tmpobs[1:(nlvno0+nseen[i])]] - to_matrix(B[tmpobs[1:(nlvno0+nseen[i])],tmpobs[1:(nlvno0+nseen[i])],g[i]]));
-
-	if(fullbeta){
-	  ldetcomp[g[i]] = log_determinant(iden[tmpobs[1:(nlvno0+nseen[i])],tmpobs[1:(nlvno0+nseen[i])]] - to_matrix(B[tmpobs[1:(nlvno0+nseen[i])],tmpobs[1:(nlvno0+nseen[i])],g[i]]));
-	  ldetcomp[g[i]] = ldetcomp[g[i]] + ldetcomp[g[i]] + sum(log(diagonal(to_matrix(psi[tmpobs[1:(nlvno0+nseen[i])],tmpobs[1:(nlvno0+nseen[i])],g[i]]))));
-	} else {
-          ldetcomp[g[i]] = sum(log(diagonal(to_matrix(psi[tmpobs[1:(nlvno0+nseen[i])],tmpobs[1:(nlvno0+nseen[i])],g[i]]))));
-  	}
-      } else {
-        psimatinv[g[i]] = to_matrix(psi[,,g[i]]);
-	psimatinv[g[i]] = psimatinv[g[i]] + psimatinv[g[i]]' - diag_matrix(diagonal(psimatinv[g[i]]));
-
-	ldetcomp[g[i]] = log_determinant(psimatinv[g[i],tmpobs[1:(nlvno0+nseen[i])],tmpobs[1:(nlvno0+nseen[i])]]);
-	if(fullbeta){
-	  ldetcomp[g[i]] = ldetcomp[g[i]] + 2 * log_determinant(iden[tmpobs[1:(nlvno0+nseen[i])],tmpobs[1:(nlvno0+nseen[i])]] - to_matrix(B[tmpobs[1:(nlvno0+nseen[i])],tmpobs[1:(nlvno0+nseen[i])],g[i]]));
-	}
-
-	psimatinv[g[i],1:(nlvno0+nseen[i]),1:(nlvno0+nseen[i])] = inverse_spd(psimatinv[g[i],tmpobs[1:(nlvno0+nseen[i])],tmpobs[1:(nlvno0+nseen[i])]]);
-        siginv[g[i],1:(nlvno0+nseen[i]),1:(nlvno0+nseen[i])] = (iden[tmpobs[1:(nlvno0+nseen[i])],tmpobs[1:(nlvno0+nseen[i])]] - to_matrix(B[tmpobs[1:(nlvno0+nseen[i])],tmpobs[1:(nlvno0+nseen[i])],g[i]])') * psimatinv[g[i],1:(nlvno0+nseen[i]),1:(nlvno0+nseen[i])] * (iden[tmpobs[1:(nlvno0+nseen[i])],tmpobs[1:(nlvno0+nseen[i])]] - to_matrix(B[tmpobs[1:(nlvno0+nseen[i])],tmpobs[1:(nlvno0+nseen[i])],g[i]]));
-      }
-
-      xvec[1:(nlvno0+nseen[i])] = x[i,1:(nlvno0+nseen[i])]';
-      xvectm = xvectm + (xvec[1:(nlvno0+nseen[i])] - evlv[g[i],tmpobs[1:(nlvno0+nseen[i])]])' * siginv[g[i],1:(nlvno0+nseen[i]),1:(nlvno0+nseen[i])] * (xvec[1:(nlvno0+nseen[i])] - evlv[g[i],tmpobs[1:(nlvno0+nseen[i])]]);
-      ldetsum = ldetsum + ldetcomp[g[i]];
+      xvec[1:nidx] = x[i,1:nidx]';
+      xvectm = xvectm + (xvec[1:nidx] - evlv[g[i],idx[1:nidx]])' * siginv[g[i],obspatt[i],1:nidx,1:nidx] * (xvec[1:nidx] - evlv[g[i],idx[1:nidx]]);
+      ldetsum = ldetsum + ldetcomp[g[i],obspatt[i]];
     }
 
     return -0.5 * (ldetsum + xvectm);
