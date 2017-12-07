@@ -488,17 +488,17 @@ blavaan <- function(...,  # default lavaan arguments
         timing$Estimate <- (proc.time()[3] - start.time)
         start.time <- proc.time()[3]
 
-        if(jag.do.fit){
-            if(target == "jags"){
-                parests <- coeffun(lavpartable, jagtrans$pxpartable, res)
-                stansumm <- NA
-            } else {
-                parests <- coeffun_stan(jagtrans$pxpartable, res)
-                stansumm <- parests$stansumm
-            }
-            x <- parests$x
-            lavpartable <- parests$lavpartable
+        if(target == "jags"){
+          parests <- coeffun(lavpartable, jagtrans$pxpartable, res)
+          stansumm <- NA
+        } else {
+          parests <- coeffun_stan(jagtrans$pxpartable, res)
+          stansumm <- parests$stansumm
+        }
+        x <- parests$x
+        lavpartable <- parests$lavpartable
 
+        if(jag.do.fit){
             lavmodel <- lav_model_set_parameters(lavmodel, x = x)
             if(target == "jags"){
                 attr(x, "iterations") <- res$sample

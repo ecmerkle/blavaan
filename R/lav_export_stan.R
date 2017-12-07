@@ -884,14 +884,17 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
 coeffun_stan <- function(lavpartable, rsob, fun = "mean") {
   ## Extract posterior means from coda.samples() object.
   ## rsob is the result of rstan().
-  rssumm <- rstan::summary(rsob)
-  rsmcmc <- as.array(rsob)
+  stanfit <- !is.null(rsob)
+  if(stanfit){
+    rssumm <- rstan::summary(rsob)
+    rsmcmc <- as.array(rsob)
 
-  ## posterior means:
-  if(fun == "mean"){
-    b.est <- rssumm$summary[,"mean"]
-  } else if(fun == "median"){
-    b.est <- rssumm$summary[,"50%"]
+    ## posterior means:
+    if(fun == "mean"){
+      b.est <- rssumm$summary[,"mean"]
+    } else if(fun == "median"){
+      b.est <- rssumm$summary[,"50%"]
+    }
   }
 
   ## move "free" parameters from rho to theta
@@ -915,26 +918,32 @@ coeffun_stan <- function(lavpartable, rsob, fun = "mean") {
   lavpartable <- lapply(lavpartable, function(x) x[lavord])
   
   ## from stan to partable
-  ptnames <- with(lavpartable, paste0(mat, "[", row, ",", col, ",",
-                                      group, "]"))
-  cmatch <- match(ptnames, names(b.est), nomatch=0)
-  lavpartable$est[cmatch > 0] <- b.est[cmatch]
-  lavpartable$psrf[cmatch > 0] <- rssumm$summary[cmatch,"Rhat"]
+  if(stanfit){
+    ptnames <- with(lavpartable, paste0(mat, "[", row, ",", col, ",",
+                                        group, "]"))
+    cmatch <- match(ptnames, names(b.est), nomatch=0)
+    lavpartable$est[cmatch > 0] <- b.est[cmatch]
+    lavpartable$psrf[cmatch > 0] <- rssumm$summary[cmatch,"Rhat"]
 
-  ## NB: order of parameters in mcmc array differs from order
-  ##     of parameters in summary()
-  lavpartable$stanpnum <- match(ptnames, names(rsmcmc[1,1,]), nomatch=0)
-  lavpartable$stansumnum <- match(ptnames, rownames(rssumm$summary), nomatch=0)
+    ## NB: order of parameters in mcmc array differs from order
+    ##     of parameters in summary()
+    lavpartable$stanpnum <- match(ptnames, names(rsmcmc[1,1,]), nomatch=0)
+    lavpartable$stansumnum <- match(ptnames, rownames(rssumm$summary), nomatch=0)
 
-  sdvec <- rssumm$summary[cmatch, "sd"]
+    sdvec <- rssumm$summary[cmatch, "sd"]
 
-  ## vcorr
-  draw_mat <- as.matrix(rsob)
-  cmatch <- match(ptnames[lavpartable$free > 0][order(lavpartable$free[lavpartable$free > 0])], colnames(draw_mat))
-  vcorr <- cor(draw_mat[,cmatch])
+    ## vcorr
+    draw_mat <- as.matrix(rsob)
+    cmatch <- match(ptnames[lavpartable$free > 0][order(lavpartable$free[lavpartable$free > 0])], colnames(draw_mat))
+    vcorr <- cor(draw_mat[,cmatch])
 
-  svmatch <- match(colnames(vcorr), names(sdvec), nomatch = 0)
-  sdvec <- sdvec[svmatch]
+    svmatch <- match(colnames(vcorr), names(sdvec), nomatch = 0)
+    sdvec <- sdvec[svmatch]
+  } else {
+    sdvec <- NULL
+    vcorr <- NULL
+    rssumm <- list(summary=NULL)
+  }
   
   ## convert to list
   lavpartable <- as.list(lavpartable, seq(ncol(lavpartable)))
