@@ -7,7 +7,7 @@
     matrix[k,k] siginv[Ng,max(gpatt)];
     vector[k] xvec;
     vector[k] evlv[Ng];
-    int idx[(k-nlv-nlvno0)];
+    int idx[(k-nlv+nlvno0)];
     int tmpobs[k];
     real xvectm;
     real ldetsum;
