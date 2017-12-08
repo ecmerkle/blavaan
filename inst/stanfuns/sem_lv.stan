@@ -34,7 +34,6 @@
 
     evlv = sem_mean(alpha2, B, gamma, g, k, Ng, gamind, meanx);
 
-
     if(diagpsi){
       for(j in 1:Ng){
         for(i in 1:nidx){
@@ -46,7 +45,7 @@
 
 	if(fullbeta){
 	  ldetcomp[j] = log_determinant(iden[idx,idx] - to_matrix(B[idx,idx,j]));
-	  ldetcomp[j] = ldetcomp[j] + ldetcomp[j] + sum(log(diagonal(to_matrix(psi[idx,idx,j]))));
+	  ldetcomp[j] = -2 * ldetcomp[j] + sum(log(diagonal(to_matrix(psi[idx,idx,j]))));
 	} else {
           ldetcomp[j] = sum(log(diagonal(to_matrix(psi[idx,idx,j]))));
   	}
@@ -57,7 +56,7 @@
 
 	ldetcomp[j] = log_determinant(psimat[j,idx,idx]);
 	if(fullbeta){
-	  ldetcomp[j] = ldetcomp[j] + 2 * log_determinant(iden[idx,idx] - to_matrix(B[idx,idx,j]));
+	  ldetcomp[j] = ldetcomp[j] - 2 * log_determinant(iden[idx,idx] - to_matrix(B[idx,idx,j]));
 	}
 
 	psimatinv[j] = psimat[j];

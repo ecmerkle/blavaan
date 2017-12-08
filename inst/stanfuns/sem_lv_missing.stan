@@ -49,7 +49,7 @@
 
 	  if(fullbeta){
 	    ldetcomp[gg,m] = log_determinant(iden[idx[1:nidx],idx[1:nidx]] - to_matrix(B[idx[1:nidx],idx[1:nidx],gg]));
-	    ldetcomp[gg,m] = ldetcomp[gg,m] + ldetcomp[gg,m] + sum(log(diagonal(to_matrix(psi[idx[1:nidx],idx[1:nidx],gg]))));
+	    ldetcomp[gg,m] = -2 * ldetcomp[gg,m] + sum(log(diagonal(to_matrix(psi[idx[1:nidx],idx[1:nidx],gg]))));
 	  } else {
             ldetcomp[gg,m] = sum(log(diagonal(to_matrix(psi[idx[1:nidx],idx[1:nidx],gg]))));
   	  }
@@ -59,7 +59,7 @@
 
 	  ldetcomp[gg,m] = log_determinant(psimatinv[gg,idx[1:nidx],idx[1:nidx]]);
 	  if(fullbeta){
-	    ldetcomp[gg,m] = ldetcomp[gg,m] + 2 * log_determinant(iden[idx[1:nidx],idx[1:nidx]] - to_matrix(B[idx[1:nidx],idx[1:nidx],gg]));
+	    ldetcomp[gg,m] = ldetcomp[gg,m] - 2 * log_determinant(iden[idx[1:nidx],idx[1:nidx]] - to_matrix(B[idx[1:nidx],idx[1:nidx],gg]));
 	  }
 
 	  psimatinv[gg,1:nidx,1:nidx] = inverse_spd(psimatinv[gg,idx[1:nidx],idx[1:nidx]]);

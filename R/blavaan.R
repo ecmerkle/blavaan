@@ -212,7 +212,7 @@ blavaan <- function(...,  # default lavaan arguments
     mcdebug <- FALSE
     if("debug" %in% dotNames){
       ## only debug mcmc stuff
-      mcdbebug <- dotdotdot$debug
+      mcdebug <- dotdotdot$debug
       dotdotdot <- dotdotdot[-which(dotNames == "debug")]
     }
     LAV <- do.call("lavaan", dotdotdot)
