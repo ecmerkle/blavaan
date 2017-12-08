@@ -14,6 +14,10 @@
     }
 
     for(i in 1:N){
+      // see regind/exoind stuff
+      // Works for MILCS:
+      //evlv[i] = to_matrix(B[,,g[i]]) * eta[i,]';
+      // Works for lcs model
       evlv[i] = ibinv[g[i]] * (to_vector(alphvec[,1,g[i]]) + to_matrix(B[,,g[i]]) * eta[i,]');
     }
 
