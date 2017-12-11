@@ -289,7 +289,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       }
     }
   }
-  
+
   ## missingness of ovs split by whether or not they appear
   ## in psi
   missflag <- FALSE
@@ -354,13 +354,14 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   if(nlvno0 < nlv){
     if(nlvno0 > 0){
       TPS <- paste0(TPS, t1, "for(i in 1:N) {\n")
-      TPS <- paste0(TPS, t2, "eta[i,etaind] = etavec[i];\n", t1, "}\n")
+      TPS <- paste0(TPS, t2, "eta[i,etaind] = etavec[i];\n")
+      TPS <- paste0(TPS, t1, "}\n")
     }
-    
+
     TPS <- paste0(TPS, t1, "mueta = sem_mean_eta(alpha, eta, ",
                   "beta, ", ifelse(gamind, "gamma", "beta"),
                   ", g, ", (nlv + n.psi.ov),
-                  ", N, ", ngroups, ", lvind);\n")
+                  ", N, ", ngroups, ", ", nlv, ", lvind, eta0ind);\n")
   }
   
   ## Define mean of each observed variable
