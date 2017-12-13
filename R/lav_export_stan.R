@@ -11,6 +11,17 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   commop <- "// "
   eolop <- ";"
   if(length(dp) == 0) dp <- dpriors(target = "stan")
+
+  ## to decide whether we need generated quantities
+  etaname <- "eta"
+  betaname <- "beta"
+  std.lv <- lavInspect(model, "options")$std.lv
+  if(std.lv){
+    etaname <- "etaUNC"
+    if("beta" %in% names(lavInspect(model, "est"))){
+      betaname <- "betaUNC"
+    }
+  }
   
   ## get names of ovs before we add phantom variables
   old.pta <- lav_partable_attributes(partable = partable, pta = NULL)
@@ -77,6 +88,8 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   
   ## stan blocks
   datblk <- parblk <- TPS <- TXT <- ""
+  if(std.lv) GQ <- "generated quantities {\n"
+
   ## hold priors to put at bottom of model block
   TXT2 <- ""
   TXT <- paste("model {\n", sep="")
@@ -101,6 +114,13 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   nmvs <- nov
   ov.names <- orig.ov.names
 
+  ## if std.lv, these are renamed to "lambdaUNC" and picked
+  ## up again in generated quantities
+  if(std.lv){
+    partable$mat[partable$mat == "lambda"] <- "lambdaUNC"
+    partable$mat[partable$mat == "beta"] <- "betaUNC"
+  }
+  
   eqlabs <- partable$rhs[partable$op %in% c("==", ":=")]
   eqplabs <- partable$lhs[partable$op %in% c("==", ":=")]
   eqplabs <- eqplabs[eqplabs %in% partable$label]
@@ -197,6 +217,12 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     parblk <- paste0(parblk, t1, "vector")
     if(parnm %in% c("theta", "psi")){
       parblk <- paste0(parblk, "<lower=0>")        
+    }
+    if(parnm == "lambda" & std.lv){
+      parnm <- "lambdaUNC"
+    }
+    if(parnm == "beta" & std.lv){
+      parnm <- "betaUNC"
     }
     parblk <- paste0(parblk, "[", nfree[i], "]")
     parblk <- paste0(parblk, " ", parnm, "free", eolop, "\n")
@@ -327,7 +353,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   TXT <- paste0(TXT, t1, "}\n\n")
 
   if((nlv + n.psi.ov) > 0){
-    TXT <- paste0(TXT, t1, "eta ~ ")
+    TXT <- paste0(TXT, t1, etaname, " ~ ")
 
     if(miss.psi){
       TXT <- paste0(TXT, "sem_lv_missing_lpdf(")
@@ -335,8 +361,8 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       TXT <- paste0(TXT, "sem_lv_lpdf(")
     }
 
-    TXT <- paste0(TXT, "alpha, beta, psi, ")
-    TXT <- paste0(TXT, ifelse(gamind, "gamma", "beta"), ", ")
+    TXT <- paste0(TXT, "alpha, ", betaname, ", psi, ")
+    TXT <- paste0(TXT, ifelse(gamind, "gamma", betaname), ", ")
     TXT <- paste0(TXT, as.numeric(gamind), ", meanx, ")
     TXT <- paste0(TXT, "g, ", (nlv + n.psi.ov), ", N, ",
                   ngroups, ", ", diagpsi, ", ", fullbeta, ", ", nlv,
@@ -354,12 +380,13 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   if(nlvno0 < nlv){
     if(nlvno0 > 0){
       TPS <- paste0(TPS, t1, "for(i in 1:N) {\n")
-      TPS <- paste0(TPS, t2, "eta[i,etaind] = etavec[i];\n")
+      TPS <- paste0(TPS, t2, etaname, "[i,etaind] = etavec[i];\n")
       TPS <- paste0(TPS, t1, "}\n")
     }
 
-    TPS <- paste0(TPS, t1, "mueta = sem_mean_eta(alpha, eta, ",
-                  "beta, ", ifelse(gamind, "gamma", "beta"),
+    TPS <- paste0(TPS, t1, "mueta = sem_mean_eta(alpha, ", etaname,
+                  ", ", betaname, ", ",
+                  ifelse(gamind, "gamma", betaname),
                   ", g, ", (nlv + n.psi.ov),
                   ", N, ", ngroups, ", ", nlv, ", lvind, eta0ind);\n")
   }
@@ -370,16 +397,16 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   ## data would be cbind(ov.names.nox, ov.names.x)
   TPS <- paste(TPS, t1, commop, "mu definitions\n", t1,
                "for(i in 1:N) {\n", sep="")
-
+  
   if(nlvno0 < nlv){
     #TPS <- paste0(TPS, t2, "eta[i,etaind] = etavec[i];\n")
-    TPS <- paste0(TPS, t2, "eta[i,eta0ind] = mueta[i,eta0ind]';\n")
+    TPS <- paste0(TPS, t2, etaname, "[i,eta0ind] = mueta[i,eta0ind]';\n")
   } else if(nlv > 0){
-    TPS <- paste0(TPS, t2, "eta[i,1:", nlv, "] = etavec[i];\n")
+    TPS <- paste0(TPS, t2, etaname, "[i,1:", nlv, "] = etavec[i];\n")
   }
 
   if(n.psi.ov > 0){
-    TPS <- paste0(TPS, t2, "eta[i,", (nlv+1), ":", (nlv + n.psi.ov),
+    TPS <- paste0(TPS, t2, etaname, "[i,", (nlv+1), ":", (nlv + n.psi.ov),
                   "] = x[i]';\n")
   }
   
@@ -415,7 +442,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
         for(j in 1:length(lam.idx)) {
           TPS <- paste(TPS, " + ", loadings$mat[lam.idx[j]], "[",
                        loadings$row[lam.idx[j]], ",", loadings$col[lam.idx[j]],
-                       ",g[i]]*eta[i,", match(loadings$lhs[lam.idx[j]], lv.names)
+                       ",g[i]]*", etaname, "[i,", match(loadings$lhs[lam.idx[j]], lv.names)
                      , "]", sep="")
         } # end j loop
       }
@@ -427,9 +454,9 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
         ## what is the rhs?
         rhs <- regressions$rhs[j]
         if(rhs %in% lv.names) {
-          RHS <- paste("etamat[i,", match(rhs, lv.names), "]", sep="")
+          RHS <- paste(etaname, "[i,", match(rhs, lv.names), "]", sep="")
         } else if(rhs %in% thet.ov.names) {
-          RHS <- paste("etamat[i,", nlv + match(rhs, thet.ov.names), "]", sep="")
+          RHS <- paste(etaname, "[i,", nlv + match(rhs, thet.ov.names), "]", sep="")
         } else if(rhs %in% psi.ov.names) {
           RHS <- paste("x[i,", match(rhs, psi.ov.names), "]", sep="")
         }
@@ -444,6 +471,16 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   }
 
   ## priors/constraints
+  if(std.lv){
+    lamidx <- which(names(nfree) == "lambda")
+    if(length(lamidx) > 0){
+      names(nfree)[lamidx] <- "lambdaUNC"
+    }
+    betidx <- which(names(nfree) == "beta")
+    if(length(betidx) > 0){
+      names(nfree)[betidx] <- "betaUNC"
+    }
+  }
   TXT2 <- set_stanpars(TXT2, partable, nfree, dp, orig.lv.names.x)
   partable$prior <- TXT2$partable$prior
   partable$freeparnums <- TXT2$partable$freeparnums
@@ -741,7 +778,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     pmats <- vector("list", length(matrows))
     for(i in 1:length(pmats)){
         if(names(matrows)[i] == "lambda"){
-            tmpmat <- model@Model@GLIST$lambda
+            tmpmat <- lavInspect(model, "est")$lambda
             pmats[[i]] <- array(tmpmat,
                                 c(nrow(tmpmat), ncol(tmpmat), ngroups))
         } else {
@@ -752,30 +789,55 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
 
     ## monitored parameters
     monitors <- with(partable[partable$mat != "",], unique(mat))
+    monitors[monitors=="lambdaUNC"] <- "lambda"
+    monitors[monitors=="betaUNC"] <- "beta"
 
     ## these are passed in as data in stan, so are the "frames"
     tpnames <- names(pmats)
     names(pmats) <- paste0(names(pmats), "frame")
 
     ## declare data variables and defined params
-    datdecs <- tpdecs <- tpeqs <- ""
+    datdecs <- tpdecs <- tpeqs <- gqeqs <- ""
     for(i in 1:length(tpnames)){
       tmpdim <- dim(pmats[[i]])
+      tmpname <- tpnames[i]
+
+      if(tmpname == "lambda" & std.lv){
+        GQ <- paste0(GQ, t1, "real lambda[", tmpdim[1], ",",
+                     tmpdim[2], ",", tmpdim[3], "];\n")
+        GQ <- paste0(GQ, t1, "matrix[N,", tmpdim[2], "] eta;\n")
+        gqeqs <- paste0(gqeqs, t1, "lambda = lambdaUNC;\n", t1, 
+                        "eta = etaUNC;\n")
+
+        tmpname <- "lambdaUNC"
+      }
+
+      if(tmpname == "beta" & std.lv){
+        GQ <- paste0(GQ, t1, "real beta[", tmpdim[1], ",",
+                     tmpdim[2], ",", tmpdim[3], "];\n")
+        gqeqs <- paste0(gqeqs, t1, "beta = betaUNC;\n")
+
+        tmpname <- "betaUNC"
+      }
+      
       datdecs <- paste0(datdecs, t1, "real ",
                         names(pmats)[i], "[", tmpdim[1],
                         ",", tmpdim[2], ",", tmpdim[3], "];\n")
       tpdecs <- paste0(tpdecs, t1, "real ",
-                       tpnames[i], "[", tmpdim[1],
+                       tmpname, "[", tmpdim[1],
                        ",", tmpdim[2], ",", tmpdim[3], "];\n")
-      if(tpnames[i] == "theta"){
+
+      if(tmpname == "theta"){
         tpdecs <- paste0(tpdecs, t1, "matrix[", ny,
                          ",", ny, "] thetld[", tmpdim[3],
                          "];\n")
       }
-      tpeqs <- paste0(tpeqs, t1, tpnames[i], " = ",
+
+      tpeqs <- paste0(tpeqs, t1, tmpname, " = ",
                       names(pmats)[i], ";\n")
     }
     tpdecs <- paste0(tpdecs, t1, "real mu[N,", nov, "];\n")
+    GQ <- paste0(GQ, gqeqs, "\n")
 
     if(any(partable$mat == "def")){
       ndecs <- sum(partable$mat == "def" &
@@ -785,13 +847,13 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     }
     
     if(nlv + n.psi.ov > 0){
-      tpdecs <- paste0(tpdecs, t1, "matrix[N,", (nlv + n.psi.ov), "] eta;\n")
+      tpdecs <- paste0(tpdecs, t1, "matrix[N,", (nlv + n.psi.ov), "] ", etaname, ";\n")
       if(nlvno0 < nlv){
         tpdecs <- paste0(tpdecs, t1, "vector[", (nlv + n.psi.ov),
                          "] mueta[N];\n")
       }
-      tpdecs <- paste0(tpdecs, "\n", t1,
-                       "eta = rep_matrix(0, N, ", (nlv + n.psi.ov),
+      tpdecs <- paste0(tpdecs, "\n", t1, etaname,
+                       " = rep_matrix(0, N, ", (nlv + n.psi.ov),
                        ");\n")
     }
     
@@ -829,7 +891,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     }
     if(dumov & !model@Options$fixed.x &
        !all(parmattable$lambda == diag(nrow(parmattable$lambda)))){
-      TPS <- paste0(TPS, t2, "alpha[dummylv,1,j] = to_array_1d(inverse((to_matrix(lambda[,,j]) * inverse(diag_matrix(rep_vector(1.0, ", (nlv + n.psi.ov), ")) - to_matrix(beta[,,j])))[dummyov,dummylv]) * to_vector(to_array_1d(alpha[dummylv,1,j])")
+      TPS <- paste0(TPS, t2, "alpha[dummylv,1,j] = to_array_1d(inverse((to_matrix(lambda", ifelse(std.lv, "UNC", ""), "[,,j]) * inverse(diag_matrix(rep_vector(1.0, ", (nlv + n.psi.ov), ")) - to_matrix(beta", ifelse(std.lv, "UNC", ""), "[,,j])))[dummyov,dummylv]) * to_vector(to_array_1d(alpha[dummylv,1,j])")
       TPS <- paste0(TPS, "));\n")
     }
     
@@ -844,6 +906,57 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
         
     out <- c(out, list(data=standata))
   }
+
+  if(std.lv){
+    ## find first loading per lvs that have loadings
+    loadpt <- partable$op == "=~"
+    lvload <- unique(partable$lhs[loadpt])
+    for(i in 1:length(lvload)){
+      for(k in 1:ngroups){
+        tmpidx <- which(partable$lhs == lvload[i] &
+                        partable$op == "=~" &
+                        partable$group == k)[1]
+
+        GQ <- paste0(GQ, t1, "if(lambdaUNC[",
+                     partable$row[tmpidx], ",", partable$col[tmpidx],
+                     ",", k, "] < 0){\n")
+        GQ <- paste0(GQ, t2, "lambda[,", partable$col[tmpidx], ",",
+                     k, "] = to_array_1d(-1 * to_vector(lambdaUNC[,", partable$col[tmpidx], ",",
+                     k, "]));\n")
+        GQ <- paste0(GQ, t2, "eta[,", partable$col[tmpidx],
+                     "] = to_vector(-1 * etaUNC[,", partable$col[tmpidx], "]);\n")
+
+        ## find regressions associated with this lv, they need
+        ## sign changes too
+        regidx <- which(partable$rhs == lvload[i] &
+                        partable$op == "~" &
+                        partable$lhs %in% lvload &
+                        partable$group == k)
+        if(length(regidx) > 0){
+          for(j in 1:length(regidx)){
+            tmpidx <- which(partable$lhs == partable$lhs[regidx[j]] &
+                            partable$op == "=~" &
+                            partable$group == k)[1]
+
+            ## FIXME need to check backwards as well
+            GQ <- paste0(GQ, "\n", t2, "if(lambdaUNC[",
+                         partable$row[tmpidx], ",",
+                         partable$col[tmpidx], ",", k, "] > 0){\n")
+
+            GQ <- paste0(GQ, t3, "beta[", partable$row[regidx[j]],
+                         ",", partable$col[regidx[j]], ",", k,
+                         "] = -1 * betaUNC[", partable$row[regidx[j]],
+                         ",", partable$col[regidx[j]], ",", k,
+                         "];\n")
+
+            GQ <- paste0(GQ, t2, "}\n")
+          }
+        }
+        GQ <- paste0(GQ, t1, "}\n")
+      } # k
+    } # i
+    GQ <- paste0(GQ, "}\n")
+  } # std.lv
 
   funblk <- "functions{\n"
   if((nlv + n.psi.ov) > 0){
@@ -862,6 +975,12 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   funblk <- paste0(funblk, "}\n\n")
 
   fullmodel <- paste0(funblk, datablk, parblk, TPS, out$model, "\n")
+  if(std.lv){
+    fullmodel <- paste0(fullmodel, GQ, "\n")
+    ## turn back to lambda so we get the right parameters!
+    partable$mat[partable$mat == "lambdaUNC"] <- "lambda"
+    partable$mat[partable$mat == "betaUNC"] <- "beta"
+  }
 
   ## insert function files, similar to brms approach:
   tmp <- tempfile(fileext = ".stan")
