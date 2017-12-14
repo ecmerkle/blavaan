@@ -271,26 +271,27 @@ blavaan <- function(...,  # default lavaan arguments
         if(!prispec){
             LAV@ParTable$prior <- rep("", length(LAV@ParTable$id))
         }
-        ## first loading for each lv
         loadpt <- LAV@ParTable$op == "=~"
         lvs <- unique(LAV@ParTable$lhs[loadpt])
         fload <- NULL
-        for(i in 1:length(lvs)){
-            for(k in 1:max(LAV@ParTable$group)){
-                fload <- c(fload, which(LAV@ParTable$lhs == lvs[i] &
-                                        LAV@ParTable$op == "=~" &
-                                        LAV@ParTable$group == k)[1])
+        if(length(lvs) > 0){
+            for(i in 1:length(lvs)){
+                for(k in 1:max(LAV@ParTable$group)){
+                    fload <- c(fload, which(LAV@ParTable$lhs == lvs[i] &
+                                            LAV@ParTable$op == "=~" &
+                                            LAV@ParTable$group == k)[1])
+                }
             }
-        }
 
-        ## NB truncation doesn't work well in stan. instead
-        ##    use generated quantities after the fact.
-        trunop <- ifelse(target == "jags", " T(0,)", "")
-        for(i in 1:length(fload)){
-            if(LAV@ParTable$prior[fload[i]] != ""){
-                LAV@ParTable$prior[fload[i]] <- paste(LAV@ParTable$prior[fload[i]], trunop, sep="")
-            } else {
-                LAV@ParTable$prior[fload[i]] <- paste(dp[["lambda"]], trunop, sep="")
+            ## NB truncation doesn't work well in stan. instead
+            ##    use generated quantities after the fact.
+            trunop <- ifelse(target == "jags", " T(0,)", "")
+            for(i in 1:length(fload)){
+                if(LAV@ParTable$prior[fload[i]] != ""){
+                    LAV@ParTable$prior[fload[i]] <- paste(LAV@ParTable$prior[fload[i]], trunop, sep="")
+                } else {
+                    LAV@ParTable$prior[fload[i]] <- paste(dp[["lambda"]], trunop, sep="")
+                }
             }
         }
     }
