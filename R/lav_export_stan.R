@@ -18,7 +18,9 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   std.lv <- lavInspect(model, "options")$std.lv
   if(std.lv){
     etaname <- "etaUNC"
-    if("beta" %in% names(lavInspect(model, "est"))){
+    glist <- lavInspect(model, "est")
+    if(lavInspect(model, "ngroups") > 1) glist <- glist[[1]]
+    if("beta" %in% names(glist)){
       betaname <- "betaUNC"
     }
   }
@@ -778,7 +780,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     pmats <- vector("list", length(matrows))
     for(i in 1:length(pmats)){
         if(names(matrows)[i] == "lambda"){
-            tmpmat <- lavInspect(model, "est")$lambda
+            tmpmat <- parmattable[[1]]$lambda
             pmats[[i]] <- array(tmpmat,
                                 c(nrow(tmpmat), ncol(tmpmat), ngroups))
         } else {
