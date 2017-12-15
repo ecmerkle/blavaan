@@ -90,7 +90,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   
   ## stan blocks
   datblk <- parblk <- TPS <- TXT <- ""
-  if(std.lv) GQ <- "generated quantities {\n"
+  if(std.lv) GQ <- "\ngenerated quantities {\n"
 
   ## hold priors to put at bottom of model block
   TXT2 <- ""
@@ -913,66 +913,68 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     ## find first loading per lvs that have loadings
     loadpt <- partable$op == "=~"
     lvload <- unique(partable$lhs[loadpt])
-    for(i in 1:length(lvload)){
-      for(k in 1:ngroups){
-        tmpidx <- which(partable$lhs == lvload[i] &
-                        partable$op == "=~" &
-                        partable$group == k)[1]
+    if(length(lvload) > 0){
+      for(i in 1:length(lvload)){
+        for(k in 1:ngroups){
+          tmpidx <- which(partable$lhs == lvload[i] &
+                          partable$op == "=~" &
+                          partable$group == k)[1]
 
-        GQ <- paste0(GQ, t1, "if(lambdaUNC[",
-                     partable$row[tmpidx], ",", partable$col[tmpidx],
-                     ",", k, "] < 0){\n")
-        GQ <- paste0(GQ, t2, "lambda[,", partable$col[tmpidx], ",",
-                     k, "] = to_array_1d(-1 * to_vector(lambdaUNC[,", partable$col[tmpidx], ",",
-                     k, "]));\n")
-        GQ <- paste0(GQ, t2, "eta[,", partable$col[tmpidx],
-                     "] = to_vector(-1 * etaUNC[,", partable$col[tmpidx], "]);\n")
+          GQ <- paste0(GQ, t1, "if(lambdaUNC[",
+                       partable$row[tmpidx], ",", partable$col[tmpidx],
+                       ",", k, "] < 0){\n")
+          GQ <- paste0(GQ, t2, "lambda[,", partable$col[tmpidx], ",",
+                       k, "] = to_array_1d(-1 * to_vector(lambdaUNC[,", partable$col[tmpidx], ",",
+                       k, "]));\n")
+          GQ <- paste0(GQ, t2, "eta[,", partable$col[tmpidx],
+                       "] = to_vector(-1 * etaUNC[,", partable$col[tmpidx], "]);\n")
 
-        ## find regressions associated with this lv, they need
-        ## sign changes too
-        regidx <- which(partable$rhs == lvload[i] &
-                        partable$op == "~" &
-                        partable$lhs %in% lvload &
-                        partable$group == k)
-        revtxt <- "" # for checking opposite (loading > 0 &
-                     # next lv loading < 0)
-        if(length(regidx) > 0){
-          for(j in 1:length(regidx)){
-            tmpidx <- which(partable$lhs == partable$lhs[regidx[j]] &
-                            partable$op == "=~" &
-                            partable$group == k)[1]
+          ## find regressions associated with this lv, they need
+          ## sign changes too
+          regidx <- which(partable$rhs == lvload[i] &
+                          partable$op == "~" &
+                          partable$lhs %in% lvload &
+                          partable$group == k)
+          revtxt <- "" # for checking opposite (loading > 0 &
+                       # next lv loading < 0)
+          if(length(regidx) > 0){
+            for(j in 1:length(regidx)){
+              tmpidx <- which(partable$lhs == partable$lhs[regidx[j]] &
+                              partable$op == "=~" &
+                              partable$group == k)[1]
 
-            GQ <- paste0(GQ, "\n", t2, "if(lambdaUNC[",
-                         partable$row[tmpidx], ",",
-                         partable$col[tmpidx], ",", k, "] > 0){\n")
+              GQ <- paste0(GQ, "\n", t2, "if(lambdaUNC[",
+                           partable$row[tmpidx], ",",
+                           partable$col[tmpidx], ",", k, "] > 0){\n")
 
-            revtxt <- paste0(revtxt, t2, "if(lambdaUNC[",
-                             partable$row[tmpidx], ",",
-                             partable$col[tmpidx], ",", k, "] < 0){\n")
+              revtxt <- paste0(revtxt, t2, "if(lambdaUNC[",
+                               partable$row[tmpidx], ",",
+                               partable$col[tmpidx], ",", k, "] < 0){\n")
 
-            GQ <- paste0(GQ, t3, "beta[", partable$row[regidx[j]],
-                         ",", partable$col[regidx[j]], ",", k,
-                         "] = -1 * betaUNC[", partable$row[regidx[j]],
-                         ",", partable$col[regidx[j]], ",", k,
-                         "];\n")
+              GQ <- paste0(GQ, t3, "beta[", partable$row[regidx[j]],
+                           ",", partable$col[regidx[j]], ",", k,
+                           "] = -1 * betaUNC[", partable$row[regidx[j]],
+                           ",", partable$col[regidx[j]], ",", k,
+                           "];\n")
 
-            revtxt <- paste0(revtxt, t3, "beta[", partable$row[regidx[j]],
-                             ",", partable$col[regidx[j]], ",", k,
-                             "] = -1 * betaUNC[", partable$row[regidx[j]],
-                             ",", partable$col[regidx[j]], ",", k,
-                             "];\n")
+              revtxt <- paste0(revtxt, t3, "beta[", partable$row[regidx[j]],
+                               ",", partable$col[regidx[j]], ",", k,
+                               "] = -1 * betaUNC[", partable$row[regidx[j]],
+                               ",", partable$col[regidx[j]], ",", k,
+                               "];\n")
 
-            GQ <- paste0(GQ, t2, "}\n")
-            revtxt <- paste0(revtxt, t2, "}\n")
+              GQ <- paste0(GQ, t2, "}\n")
+              revtxt <- paste0(revtxt, t2, "}\n")
+            }
           }
-        }
-        if(revtxt == ""){
-          GQ <- paste0(GQ, t1, "}\n")
-        } else {
-          GQ <- paste0(GQ, t1, "} else {\n", revtxt, t1, "}\n")
-        }
-      } # k
-    } # i
+          if(revtxt == ""){
+            GQ <- paste0(GQ, t1, "}\n")
+          } else {
+            GQ <- paste0(GQ, t1, "} else {\n", revtxt, t1, "}\n")
+          }
+        } # k
+      } # i
+    } # lvload > 0
     GQ <- paste0(GQ, "}\n")
   } # std.lv
 
