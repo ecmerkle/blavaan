@@ -89,7 +89,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   t4 <- paste(rep(" ", 8L), collapse="")
   
   ## stan blocks
-  datblk <- parblk <- TPS <- TXT <- ""
+  datblk <- parblk <- TPS <- TXT <- GQ <- ""
   if(std.lv) GQ <- "\ngenerated quantities {\n"
 
   ## hold priors to put at bottom of model block

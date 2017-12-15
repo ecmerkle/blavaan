@@ -50,8 +50,10 @@ blavaan <- function(...,  # default lavaan arguments
         stop("blavaan ERROR: auto convergence is unavailable for stan.")
       }
       # could also use requireNamespace + attachNamespace
-      if(!(suppressMessages(require("rstan", quietly = TRUE)))){
+      if(!(suppressMessages(requireNamespace("rstan", quietly = TRUE)))){
         stop("blavaan ERROR: rstan package is not installed.")
+      } else {
+        suppressMessages(attachNamespace("rstan"))
       }
       rstan::rstan_options(auto_write = TRUE)
       options(mc.cores = min(n.chains, parallel::detectCores()))
