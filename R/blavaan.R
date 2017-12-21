@@ -53,7 +53,9 @@ blavaan <- function(...,  # default lavaan arguments
       if(!(suppressMessages(requireNamespace("rstan", quietly = TRUE)))){
         stop("blavaan ERROR: rstan package is not installed.")
       } else {
-        suppressMessages(attachNamespace("rstan"))
+        if(!isNamespaceLoaded("rstan")){
+          suppressMessages(attachNamespace("rstan"))
+        }
       }
       rstan::rstan_options(auto_write = TRUE)
       options(mc.cores = min(n.chains, parallel::detectCores()))
