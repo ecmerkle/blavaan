@@ -17,7 +17,7 @@ short.summary <- function(object) {
                     packageDescription("blavaan", fields="Version")))
     } else if(object@Fit@iterations > 0) {
         if(object@Fit@converged) {
-	    cat(sprintf("blavaan (%s) results of %3i samples after %3i adapt+burnin iterations\n",
+	    cat(sprintf("blavaan (%s) results of %3i samples after %3i adapt/burnin iterations\n",
                     packageDescription("blavaan", fields="Version"),
                     object@external$sample,
                     object@external$burnin))

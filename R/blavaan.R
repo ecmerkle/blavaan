@@ -512,10 +512,11 @@ blavaan <- function(...,  # default lavaan arguments
             } else {
                 wrmup <- ifelse(length(rjarg$warmup) > 0,
                                 rjarg$warmup, floor(rjarg$iter/2))
-                attr(x, "iterations") <- wrmup
-                # saved in @external so summary() can use it:
-                burnin <- wrmup
-                sample <- sample - wrmup
+                attr(x, "iterations") <- sample
+                # burnin + sample already defined, will be saved in
+                # @external so summary() can use it:
+                #burnin <- wrmup
+                #sample <- sample - wrmup
             }
             attr(x, "converged") <- TRUE
         } else {
