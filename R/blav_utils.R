@@ -18,16 +18,17 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
     }
 
     if(conditional){
-      eta <- fill_eta(postsamp, lavpartable, lavsamplestats, lavdata)
+      eta <- fill_eta(postsamp, lavmodel, lavpartable,
+                      lavsamplestats, lavdata)
 
       ## implied meanvec + covmat
       ## TODO replace with lav_predict_yhat?
       ## (lav_predict_yhat unavailable from lavPredict with custom ETA)
       mnvec <- lavaan:::computeYHAT(lavmodel, lavmodel@GLIST,
                                     lavsamplestats, ETA = eta)
-      thnames <- which(names(lavmodel@GLIST) == 'theta')
-      covmat <- lapply(thnames, function(i) lavmodel@GLIST[[i]])
-      ## covmat <- lavaan:::computeTHETA(lavmodel, lavmodel@GLIST)
+      ##thnames <- which(names(lavmodel@GLIST) == 'theta')
+      ##covmat <- lapply(thnames, function(i) lavmodel@GLIST[[i]])
+      covmat <- lavaan:::computeTHETA(lavmodel, lavmodel@GLIST)
 
       ngroups <- lavsamplestats@ngroups
       implied <- list(cov = covmat, mean = mnvec,
@@ -452,10 +453,10 @@ samp_kls <- function(lavjags        = NULL,
                                  lavpartable)
 
         if(conditional){
-            eta0 <- fill_eta(draws[i,], lavpartable, lavsamplestats,
-                             lavdata)
-            eta1 <- fill_eta(draws[(halfdraws + i),], lavpartable,
+            eta0 <- fill_eta(draws[i,], lavmodel, lavpartable,
                              lavsamplestats, lavdata)
+            eta1 <- fill_eta(draws[(halfdraws + i),], lavmodel,
+                             lavpartable, lavsamplestats, lavdata)
 
             mnvec0 <- lavaan:::computeYHAT(lavmodel0,
                                            lavmodel0@GLIST,
@@ -515,18 +516,31 @@ samp_kls <- function(lavjags        = NULL,
 }        
 
 ## fill in eta matrices (1 per group, in list)
-fill_eta <- function(postsamp, lavpartable, lavsamplestats, lavdata){
-    nlv <- length(lav_partable_attributes(lavpartable)$vnames$lv[[1]])
+fill_eta <- function(postsamp, lavmodel, lavpartable, lavsamplestats, lavdata){
+    nlv <- length(lavmodel@GLIST$alpha)
     etapars <- grepl("^eta", names(postsamp))
     cnums <- strsplit(names(postsamp)[etapars], "\\[|,|\\]")
     cnums <- sapply(cnums, function(x) as.numeric(x[3]))
     etavec <- postsamp[etapars][order(cnums)]
-    etamat <- matrix(etavec, lavsamplestats@ntotal, nlv)
+
+    ## need to worry about (1) excluding phantom lvs
+    ## and (2) including dummy lvs
+    foundlvs <- sum(etapars)/lavsamplestats@ntotal
+    etamat <- matrix(etavec, lavsamplestats@ntotal, foundlvs)
+    if(foundlvs < nlv) etamat <- cbind(etamat, matrix(0, lavsamplestat@ntotal, (nlv - foundlvs)))
+
     ngroups <- lavsamplestats@ngroups
 
     eta <- vector("list", ngroups)
-    for(g in 1:ngroups){
-        eta[[g]] <- etamat[lavdata@case.idx[[g]], , drop = FALSE]
+      for(g in 1:ngroups){        
+        eta[[g]] <- etamat[lavdata@case.idx[[g]], 1:nlv, drop = FALSE]
+
+        ## fill in eta with dummys, if needed
+        dummyov <- c(lavmodel@ov.x.dummy.ov.idx[[g]], lavmodel@ov.y.dummy.ov.idx[[g]])
+        dummylv <- c(lavmodel@ov.x.dummy.lv.idx[[g]], lavmodel@ov.y.dummy.lv.idx[[g]])
+        if(length(dummyov) > 0){
+          eta[[g]][, dummylv] <- lavdata@X[[g]][, dummyov]
+        }
     }
 
     eta
