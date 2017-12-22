@@ -527,7 +527,7 @@ fill_eta <- function(postsamp, lavmodel, lavpartable, lavsamplestats, lavdata){
     ## and (2) including dummy lvs
     foundlvs <- sum(etapars)/lavsamplestats@ntotal
     etamat <- matrix(etavec, lavsamplestats@ntotal, foundlvs)
-    if(foundlvs < nlv) etamat <- cbind(etamat, matrix(0, lavsamplestat@ntotal, (nlv - foundlvs)))
+    if(foundlvs < nlv) etamat <- cbind(etamat, matrix(0, lavsamplestats@ntotal, (nlv - foundlvs)))
 
     ngroups <- lavsamplestats@ngroups
 
