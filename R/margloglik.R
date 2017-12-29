@@ -183,7 +183,7 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
   ## }
   #print(c(priloglik, loglik, log(det(Jinv))))
   
-  margloglik <- (q/2)*log(2*pi) + log(det(Jinv))/2 +
+  margloglik <- (q/2)*log(2*pi) + determinant(Jinv, logarithm=TRUE)$modulus/2 +
                 priloglik + loglik
   names(margloglik) <- ""
   margloglik
