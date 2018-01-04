@@ -89,7 +89,11 @@ blav_fit_measures <- function(object, fit.measures = "all",
         fit.ic <- c(fit.ic, "dic_cond_j", "p_dic_cond_j")
     }
     fit.ic <- c(fit.ic, "waic", "p_waic", "looic", "p_loo")
-
+    if("csamplls" %in% names(object@external)){
+        fit.ic <- c(fit.ic, "waic_cond", "p_waic_cond",
+                    "looic_cond", "p_loo_cond")
+    }
+  
     fit.rmsea <- "rmsea"
     
     # marginal logl
@@ -167,6 +171,20 @@ blav_fit_measures <- function(object, fit.measures = "all",
         fitres <- loo(casells)
         indices["looic"] <- fitres$looic
         indices["p_loo"] <- fitres$p_loo
+
+        if("csamplls" %in% names(object@external)){
+            casells <- case_lls(object@external$mcmcout, object@Model,
+                                object@ParTable, object@SampleStats,
+                                lavopt, object@Cache,
+                                object@Data, make_mcmc(object@external$mcmcout),
+                                conditional = TRUE)
+            fitres <- waic(casells)
+            indices["waic_cond"] <- fitres$waic
+            indices["p_waic_cond"] <- fitres$p_waic
+            fitres <- loo(casells)
+            indices["looic_cond"] <- fitres$looic
+            indices["p_loo_cond"] <- fitres$p_loo
+        }
     }
     if("margloglik" %in% fit.measures) {
         indices["margloglik"] <- object@test[[1]]$stat
