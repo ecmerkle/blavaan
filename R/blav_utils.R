@@ -65,11 +65,41 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
             tmpll <- try(dmnorm(lavdata@X[[g]], mnvec, cmat, log=TRUE))
             if(inherits(tmpll, "try-error")) tmpll <- NA
 
+            ## subtract logl.X
+            x.idx <- lavsamplestats@x.idx[[g]]
+            if(!is.null(x.idx) && length(x.idx) > 0L){
+                Mu.X <- lavsamplestats@mean.x[[g]]
+                Sigma.X <- lavsamplestats@cov.x[[g]]
+                if(is.null(Mu.X)){
+                    Mu.X <- mnvec[x.idx]
+                }
+                if(is.null(Sigma.X)){
+                    Sigma.X <- cmat[x.idx, x.idx, drop=FALSE]
+                }
+                tmpll.x <- try(dmnorm(lavdata@X[[g]][,x.idx], Mu.X, Sigma.X, log=TRUE))
+                if(inherits(tmpll.x, "try-error")) tmpll.x <- NA
+                tmpll <- tmpll - tmpll.x
+            }
+            
             if(!conditional){
                 sampmn <- apply(lavdata@X[[g]], 2, mean, na.rm=TRUE)
                 sampcov <- ((lavdata@nobs[[g]]-1)/(lavdata@nobs[[g]]))*cov(lavdata@X[[g]])
 
                 basell <- dmnorm(lavdata@X[[g]], sampmn, sampcov, log=TRUE)
+
+                if(!is.null(x.idx) && length(x.idx) > 0L){
+                    Mu.X <- lavsamplestats@mean.x[[g]]
+                    Sigma.X <- lavsamplestats@cov.x[[g]]
+                    if(is.null(Mu.X)){
+                        Mu.X <- sampmn[x.idx]
+                    }
+                    if(is.null(Sigma.X)){
+                        Sigma.X <- sampcov[x.idx, x.idx, drop=FALSE]
+                    }
+                    tmpll.x <- try(dmnorm(lavdata@X[[g]][,x.idx], Mu.X, Sigma.X, log=TRUE))
+                    if(inherits(tmpll.x, "try-error")) tmpll.x <- NA
+                    basell <- basell - tmpll.x
+                }
             }
 
             if(casewise){
