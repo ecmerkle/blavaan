@@ -539,10 +539,10 @@ blavaan <- function(...,  # default lavaan arguments
                 } else {
                     fullpmeans <- rstan::summary(res)$summary[,"mean"]
                 }
-                cfx <- get_ll(fullpmeans, lavmodel = lavmodel, lavpartable = lavpartable,
-                              lavsamplestats = lavsamplestats, lavoptions = lavoptions,
-                              lavcache = lavcache, lavdata = lavdata,
-                              conditional = TRUE)[1]
+                cfx <- NA #get_ll(fullpmeans, lavmodel = lavmodel, lavpartable = lavpartable,
+                              #lavsamplestats = lavsamplestats, lavoptions = lavoptions,
+                              #lavcache = lavcache, lavdata = lavdata,
+                              #conditional = TRUE)[1]
             }
         } else {
             attr(x, "fx") <- as.numeric(NA)
@@ -577,23 +577,23 @@ blavaan <- function(...,  # default lavaan arguments
                             lavsamplestats, lavoptions, lavcache,
                             lavdata, lavmcmc, conditional = FALSE)
       } else {
-        sampkls <- NULL
+        sampkls <- NA
       }
       
       if(save.lvs) {
-        csamplls <- samp_lls(res, lavmodel, lavpartable,
-                             lavsamplestats, lavoptions, lavcache,
-                             lavdata, lavmcmc, conditional = TRUE)
+        csamplls <- NA #samp_lls(res, lavmodel, lavpartable,
+                         #    lavsamplestats, lavoptions, lavcache,
+                         #    lavdata, lavmcmc, conditional = TRUE)
         if(jags.ic) {
-          csampkls <- samp_kls(res, lavmodel, lavpartable,
-                              lavsamplestats, lavoptions, lavcache,
-                              lavdata, lavmcmc, conditional = TRUE)
+          csampkls <- NA #samp_kls(res, lavmodel, lavpartable,
+                           #   lavsamplestats, lavoptions, lavcache,
+                           #   lavdata, lavmcmc, conditional = TRUE)
         } else {
-          csampkls <- NULL
+          csampkls <- NA
         }
       }
     } else {
-      samplls <- NULL
+      samplls <- NA
     }
 
     timing$PostPred <- (proc.time()[3] - start.time)

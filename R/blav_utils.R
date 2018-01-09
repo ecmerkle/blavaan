@@ -24,11 +24,10 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
       ## implied meanvec + covmat
       ## TODO replace with lav_predict_yhat?
       ## (lav_predict_yhat unavailable from lavPredict with custom ETA)
-      mnvec <- lavaan:::computeYHAT(lavmodel, lavmodel@GLIST,
-                                    lavsamplestats, ETA = eta)
-      ##thnames <- which(names(lavmodel@GLIST) == 'theta')
-      ##covmat <- lapply(thnames, function(i) lavmodel@GLIST[[i]])
-      covmat <- lavaan:::computeTHETA(lavmodel, lavmodel@GLIST)
+      #mnvec <- lavaan:::computeYHAT(lavmodel, lavmodel@GLIST,
+      #                              lavsamplestats, ETA = eta)
+      ## instead use lavInspect(,"est")?
+      #covmat <- lavaan:::computeTHETA(lavmodel, lavmodel@GLIST)
 
       ngroups <- lavsamplestats@ngroups
       implied <- list(cov = covmat, mean = mnvec,
@@ -488,18 +487,18 @@ samp_kls <- function(lavjags        = NULL,
             eta1 <- fill_eta(draws[(halfdraws + i),], lavmodel,
                              lavpartable, lavsamplestats, lavdata)
 
-            mnvec0 <- lavaan:::computeYHAT(lavmodel0,
-                                           lavmodel0@GLIST,
-                                           lavsamplestats,
-                                           ETA = eta0)
-            cmat0 <- lavaan:::computeTHETA(lavmodel0,
-                                           lavmodel0@GLIST)
-            mnvec1 <- lavaan:::computeYHAT(lavmodel1,
-                                           lavmodel1@GLIST,
-                                           lavsamplestats,
-                                           ETA = eta1)
-            cmat1 <- lavaan:::computeTHETA(lavmodel1,
-                                           lavmodel1@GLIST)
+            #mnvec0 <- lavaan:::computeYHAT(lavmodel0,
+            #                               lavmodel0@GLIST,
+            #                               lavsamplestats,
+            #                               ETA = eta0)
+            #cmat0 <- lavaan:::computeTHETA(lavmodel0,
+            #                               lavmodel0@GLIST)
+            #mnvec1 <- lavaan:::computeYHAT(lavmodel1,
+            #                               lavmodel1@GLIST,
+            #                               lavsamplestats,
+            #                               ETA = eta1)
+            #cmat1 <- lavaan:::computeTHETA(lavmodel1,
+            #                               lavmodel1@GLIST)
             implied0 <- list(cov = cmat0, mean = mnvec0,
                              slopes = vector("list", ngroups),
                              th = vector("list", ngroups),
