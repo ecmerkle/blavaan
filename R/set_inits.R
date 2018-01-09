@@ -139,10 +139,11 @@ set_inits_stan <- function(partable, nfree, n.chains, inits){
   }
 
   ## TODO need exported, or reverse rstan::lookup()
-  rosetta <- rstan:::rosetta
+  ## rosetta <- rstan:::rosetta
   ## alternate way to possibly get around export
-  ##rloc <- paste0(system.file("R", package="rstan"), "/sysdata")
-  ##lazyLoad(rloc)
+  rloc <- paste0(system.file("R", package="rstan"), "/sysdata")
+  lazyLoad(rloc)
+  rosetta <- rosetta
 
   pricom <- dist2r(freepartable$prior, target = "stan")
   for(i in 1:nrow(freepartable)){

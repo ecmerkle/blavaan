@@ -28,7 +28,8 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
       #                              lavsamplestats, ETA = eta)
       ## instead use lavInspect(,"est")?
       #covmat <- lavaan:::computeTHETA(lavmodel, lavmodel@GLIST)
-
+      covmat <- cov(eta)
+      
       ngroups <- lavsamplestats@ngroups
       implied <- list(cov = covmat, mean = mnvec,
                       slopes = vector("list", ngroups),
@@ -377,10 +378,11 @@ dist2r <- function(priors, target){
         out <- jagsdist2r(priors)
     } else if(target == "stan"){
         ## TODO need exported, or reverse rstan::lookup()
-        rosetta <- rstan:::rosetta
+        #rosetta <- rstan:::rosetta
         ## alternate way to possibly get around export
-        ##rloc <- paste0(system.file("R", package="rstan"), "/sysdata")
-        ##lazyLoad(rloc)
+        rloc <- paste0(system.file("R", package="rstan"), "/sysdata")
+        lazyLoad(rloc)
+        rosetta <- rosetta
         prisplit <- strsplit(priors, "[, ()]+")
         pridist <- sapply(prisplit, function(x) x[1])
         newdist <- rosetta$RFunction[match(pridist, rosetta$StanFunction)]
