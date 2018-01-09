@@ -55,8 +55,6 @@ blavaan <- function(...,  # default lavaan arguments
       } else {
         try(suppressMessages(attachNamespace("rstan")), silent = TRUE)
       }
-      rstan::rstan_options(auto_write = TRUE)
-      options(mc.cores = min(n.chains, parallel::detectCores()))
     }
 
     # if seed supplied, check that there is one per chain
