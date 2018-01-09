@@ -59,8 +59,8 @@ blavaan <- function(...,  # default lavaan arguments
 
     # if seed supplied, check that there is one per chain
     seedlen <- length(seed)
-    if(seedlen > 0 & seedlen != n.chains){
-      stop("blavaan ERROR: number of seeds must equal n.chains.")
+    if(seedlen > 0 & target == "jags" & seedlen != n.chains){
+      stop("blavaan ERROR: for JAGS, number of seeds must equal n.chains.")
     }
   
     # capture data augmentation/full information options
@@ -408,12 +408,17 @@ blavaan <- function(...,  # default lavaan arguments
             }
             if(class(inits) == "list") jagtrans$inits <- inits
 
-            ## add seed to inits; FIXME only for jags?
-            if(seedlen > 0){
+            ## add seed to inits; for stan, just add it to
+            ## bcontrol
+            if(seedlen > 0 & target == "jags"){
                 sdinit <- lapply(seed, function(x) list(.RNG.seed = x,
                                                         .RNG.name = "base::Super-Duper"))
                 for(i in 1:n.chains){
                     jagtrans$inits[[i]] <- c(jagtrans$inits[[i]], sdinit[[i]])
+                }
+            } else if(seedlen > 0 & target == "stan"){
+                if(!("seed" %in% names(bcontrol))){
+                    bcontrol <- c(bcontrol, list(seed = seed))
                 }
             }
 
