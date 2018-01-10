@@ -1,4 +1,4 @@
-set_stancovs <- function(partable) {
+set_stancovs <- function(partable, std.lv) {
   ## Add phantom lvs for covariance parameters
 
   ## first: parameter matrices + indexing
@@ -12,6 +12,11 @@ set_stancovs <- function(partable) {
     partable$group[defpar] <- 1
   }
 
+  ## must be psiUNC if std.lv
+  if(std.lv){
+    partable$mat[partable$mat == "psi"] <- "psiUNC"
+  }
+  
   ## add prior column if it doesn't exist
   if(is.na(match("prior", names(partable)))) partable$prior <- rep("", length(partable$id))
   

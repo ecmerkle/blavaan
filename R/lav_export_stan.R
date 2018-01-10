@@ -23,6 +23,9 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     if("beta" %in% names(glist)){
       betaname <- "betaUNC"
     }
+    if("psi" %in% names(glist)){
+      psiname <- "psiUNC"
+    }
   }
   
   ## get names of ovs before we add phantom variables
@@ -40,8 +43,8 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   ## set up mvs with fixed 0 variances (single indicators of lvs)
   partable <- set_mv0(partable, orig.ov.names, ngroups)
   ## convert covariances to corr * sd1 * sd2
-  partable <- set_stancovs(partable)
-
+  partable <- set_stancovs(partable, std.lv)
+  
   ## ensure group parameters are in order, for parameter indexing:
   partable <- partable[order(partable$group),]
   ## get parameter table attributes 
@@ -116,11 +119,12 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   nmvs <- nov
   ov.names <- orig.ov.names
 
-  ## if std.lv, these are renamed to "lambdaUNC" and picked
+  ## if std.lv, these are renamed to "lambdaUNC", etc and picked
   ## up again in generated quantities
   if(std.lv){
     partable$mat[partable$mat == "lambda"] <- "lambdaUNC"
     partable$mat[partable$mat == "beta"] <- "betaUNC"
+    partable$mat[partable$mat == "psi"] <- "psiUNC"
   }
   
   eqlabs <- partable$rhs[partable$op %in% c("==", ":=")]
@@ -225,6 +229,9 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     }
     if(parnm == "beta" & std.lv){
       parnm <- "betaUNC"
+    }
+    if(parnm == "psi" & std.lv){
+      parnm <- "psiUNC"
     }
     parblk <- paste0(parblk, "[", nfree[i], "]")
     parblk <- paste0(parblk, " ", parnm, "free", eolop, "\n")
@@ -363,7 +370,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       TXT <- paste0(TXT, "sem_lv_lpdf(")
     }
 
-    TXT <- paste0(TXT, "alpha, ", betaname, ", psi, ")
+    TXT <- paste0(TXT, "alpha, ", betaname, ", ", psiname, ", ")
     TXT <- paste0(TXT, ifelse(gamind, "gamma", betaname), ", ")
     TXT <- paste0(TXT, as.numeric(gamind), ", meanx, ")
     TXT <- paste0(TXT, "g, ", (nlv + n.psi.ov), ", N, ",
@@ -481,6 +488,10 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     betidx <- which(names(nfree) == "beta")
     if(length(betidx) > 0){
       names(nfree)[betidx] <- "betaUNC"
+    }
+    psiidx <- which(names(nfree) == "psi")
+    if(length(psiidx) > 0){
+      names(nfree)[psiidx] <- "psiUNC"
     }
   }
   TXT2 <- set_stanpars(TXT2, partable, nfree, dp, orig.lv.names.x)
@@ -793,6 +804,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     monitors <- with(partable[partable$mat != "",], unique(mat))
     monitors[monitors=="lambdaUNC"] <- "lambda"
     monitors[monitors=="betaUNC"] <- "beta"
+    monitors[monitors=="psiUNC"] <- "psi"
 
     ## these are passed in as data in stan, so are the "frames"
     tpnames <- names(pmats)
@@ -820,6 +832,14 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
         gqeqs <- paste0(gqeqs, t1, "beta = betaUNC;\n")
 
         tmpname <- "betaUNC"
+      }
+
+      if(tmpname == "psi" & std.lv){
+        GQ <- paste0(GQ, t1, "real psi[", tmpdim[1], ",",
+                     tmpdim[2], ",", tmpdim[3], "];\n")
+        gqeqs <- paste0(gqeqs, t1, "psi = psiUNC;\n")
+
+        tmpname <- "psiUNC"
       }
       
       datdecs <- paste0(datdecs, t1, "real ",
@@ -935,11 +955,16 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
                           partable$op == "~" &
                           partable$lhs %in% lvload &
                           partable$group == k)
+          covidx <- which(partable$rhs == lvload[i] &
+                          partable$op == "~~" &
+                          partable$lhs %in% lvload &
+                          partable$group == k)
+          nextlvs <- c(regidx, covidx)
           revtxt <- "" # for checking opposite (loading > 0 &
-                       # next lv loading < 0)
-          if(length(regidx) > 0){
-            for(j in 1:length(regidx)){
-              tmpidx <- which(partable$lhs == partable$lhs[regidx[j]] &
+                       # next restricted lv loading < 0)
+          if(length(nextlvs) > 0){
+            for(j in 1:length(nextlvs)){
+              tmpidx <- which(partable$lhs == partable$lhs[nextlvs[j]] &
                               partable$op == "=~" &
                               partable$group == k)[1]
 
@@ -951,16 +976,22 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
                                partable$row[tmpidx], ",",
                                partable$col[tmpidx], ",", k, "] < 0){\n")
 
-              GQ <- paste0(GQ, t3, "beta[", partable$row[regidx[j]],
-                           ",", partable$col[regidx[j]], ",", k,
-                           "] = -1 * betaUNC[", partable$row[regidx[j]],
-                           ",", partable$col[regidx[j]], ",", k,
+              if(partable$op[nextlvs[j]] == "~"){
+                tmpmat <- "beta"
+              } else {
+                tmpmat <- "psi"
+              }
+
+              GQ <- paste0(GQ, t3, tmpmat, "[", partable$row[nextlvs[j]],
+                           ",", partable$col[nextlvs[j]], ",", k,
+                           "] = -1 * ", tmpmat, "UNC[", partable$row[nextlvs[j]],
+                           ",", partable$col[nextlvs[j]], ",", k,
                            "];\n")
 
-              revtxt <- paste0(revtxt, t3, "beta[", partable$row[regidx[j]],
-                               ",", partable$col[regidx[j]], ",", k,
-                               "] = -1 * betaUNC[", partable$row[regidx[j]],
-                               ",", partable$col[regidx[j]], ",", k,
+              revtxt <- paste0(revtxt, t3, tmpmat, "[", partable$row[nextlvs[j]],
+                               ",", partable$col[nextlvs[j]], ",", k,
+                               "] = -1 * ", tmpmat, "UNC[", partable$row[nextlvs[j]],
+                               ",", partable$col[nextlvs[j]], ",", k,
                                "];\n")
 
               GQ <- paste0(GQ, t2, "}\n")
@@ -1000,6 +1031,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     ## turn back to lambda so we get the right parameters!
     partable$mat[partable$mat == "lambdaUNC"] <- "lambda"
     partable$mat[partable$mat == "betaUNC"] <- "beta"
+    partable$mat[partable$mat == "psiUNC"] <- "psi"
   }
 
   ## insert function files, similar to brms approach:
