@@ -622,7 +622,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
           
           nseenx[k,m] <- length(tmpobs)
           tmpobsexo <- which(tmpobs %in% exoind)
-          nseenexo[tmpidx] <- length(tmpobsexo)
+          nseenexo[lavdata@case.idx[[k]][tmpidx]] <- length(tmpobsexo)
           if(length(tmpobs) > 0){
             obsvarx[k, m, 1:length(tmpobs)] <- tmpobs
           }
@@ -631,18 +631,18 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
                                 length(tmpobsexo), byrow=TRUE)
             obsexo[tmpidx,1:nseenexo[tmpidx[1]]] <- tmpobsexo
           }
-          nmisx[tmpidx] <- length(tmpmis)
+          nmisx[lavdata@case.idx[[k]][tmpidx]] <- length(tmpmis)
           if(length(tmpmis) > 0){
             tmpmis <- matrix(tmpmis, length(tmpidx), length(tmpmis),
                              byrow=TRUE)
-            misvarx[tmpidx,1:nmisx[tmpidx[1]]] <- tmpmis
+            misvarx[lavdata@case.idx[[k]][tmpidx],1:nmisx[tmpidx[1]]] <- tmpmis
           }
         }
       }
     }
     if(ny > 0) colnames(y) <- ov.names[yind]
     if(n.psi.ov > 0) colnames(x) <- ov.names[xind]
-    
+
     ## remove fully deleted rows
     yna <- rep(FALSE, ntot)
     xna <- rep(FALSE, ntot)
@@ -687,7 +687,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     if(miss.psi){
       if(n.psi.ov > 0){
         for(i in 1:nrow(x)){
-          x[i,1:nseenx[obspatt[i]]] <- x[i,obsvarx[g[i],obspatt[i],1:nseenx[obspatt[i]]]]
+          x[i,1:nseenx[obspatt[i]]] <- x[i,obsvarx[g[i],obspatt[i],1:nseenx[g[i],obspatt[i]]]]
           if(n.psi.ov - nseenx[obspatt[i]] > 0){
             x[i,(nseenx[obspatt[i]]+1):n.psi.ov] <- -999
           }

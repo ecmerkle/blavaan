@@ -4,6 +4,7 @@
     vector[k] alpha2[Ng];
     vector[k] psivecinv[Ng];
     matrix[k,k] psimatinv[Ng];
+    matrix[k,k] psimat[Ng];
     matrix[k,k] siginv[Ng,max(gpatt)];
     vector[k] xvec;
     vector[k] evlv[Ng];
@@ -54,15 +55,14 @@
             ldetcomp[gg,m] = sum(log(diagonal(to_matrix(psi[idx[1:nidx],idx[1:nidx],gg]))));
   	  }
         } else {
-          psimatinv[gg] = to_matrix(psi[,,gg]);
-	  psimatinv[gg] = psimatinv[gg] + psimatinv[gg]' - diag_matrix(diagonal(psimatinv[gg]));
+          psimat[gg] = to_matrix(psi[,,gg]) + to_matrix(psi[,,gg])' - diag_matrix(diagonal(to_matrix(psi[,,gg])));
 
-	  ldetcomp[gg,m] = log_determinant(psimatinv[gg,idx[1:nidx],idx[1:nidx]]);
+	  ldetcomp[gg,m] = log_determinant(psimat[gg,idx[1:nidx],idx[1:nidx]]);
 	  if(fullbeta){
 	    ldetcomp[gg,m] = ldetcomp[gg,m] - 2 * log_determinant(iden[idx[1:nidx],idx[1:nidx]] - to_matrix(B[idx[1:nidx],idx[1:nidx],gg]));
 	  }
 
-	  psimatinv[gg,1:nidx,1:nidx] = inverse_spd(psimatinv[gg,idx[1:nidx],idx[1:nidx]]);
+	  psimatinv[gg,1:nidx,1:nidx] = inverse_spd(psimat[gg,idx[1:nidx],idx[1:nidx]]);
           siginv[gg,m,1:nidx,1:nidx] = (iden[idx[1:nidx],idx[1:nidx]] - to_matrix(B[idx[1:nidx],idx[1:nidx],gg])') * psimatinv[gg,1:nidx,1:nidx] * (iden[idx[1:nidx],idx[1:nidx]] - to_matrix(B[idx[1:nidx],idx[1:nidx],gg]));
         }
       }
