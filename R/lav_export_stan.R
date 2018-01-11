@@ -11,23 +11,6 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   commop <- "// "
   eolop <- ";"
   if(length(dp) == 0) dp <- dpriors(target = "stan")
-
-  ## to decide whether we need generated quantities
-  etaname <- "eta"
-  betaname <- "beta"
-  psiname <- "psi"
-  std.lv <- lavInspect(model, "options")$std.lv
-  if(std.lv){
-    etaname <- "etaUNC"
-    glist <- lavInspect(model, "est")
-    if(lavInspect(model, "ngroups") > 1) glist <- glist[[1]]
-    if("beta" %in% names(glist)){
-      betaname <- "betaUNC"
-    }
-    if("psi" %in% names(glist)){
-      psiname <- "psiUNC"
-    }
-  }
   
   ## get names of ovs before we add phantom variables
   old.pta <- lav_partable_attributes(partable = partable, pta = NULL)
@@ -41,6 +24,27 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   orig.ov.names.x <- old.vnames$ov.x[[1]]
   nlvx <- length(orig.lv.names.x)
 
+  ## to decide whether we need generated quantities
+  etaname <- "eta"
+  betaname <- "beta"
+  psiname <- "psi"
+  std.lv <- lavInspect(model, "options")$std.lv
+  nlv <- length(lav_partable_attributes(partable = partable, pta = NULL)$vnames$lv[[1]])
+  if(std.lv & nlv > 0){
+    etaname <- "etaUNC"
+    glist <- lavInspect(model, "est")
+    if(lavInspect(model, "ngroups") > 1) glist <- glist[[1]]
+    if("beta" %in% names(glist)){
+      betaname <- "betaUNC"
+    }
+    if("psi" %in% names(glist)){
+      psiname <- "psiUNC"
+    }
+  } else {
+    ## in case std.lv=TRUE with no lvs
+    std.lv <- FALSE
+  }
+  
   ## set up mvs with fixed 0 variances (single indicators of lvs)
   partable <- set_mv0(partable, orig.ov.names, ngroups)
   ## convert covariances to corr * sd1 * sd2
@@ -289,7 +293,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
                     model@Model@ov.x.dummy.lv.idx[[1]])
   dumov <- 0L
   if(length(ov.dummy.idx) > 0) dumov <- 1L
-
+  
   ## FIXME? see .internal_get_ALPHA from lav_representation_lisrel.R
   ## for alternative (better) way to handle this than eqs.x  
   if(nov.x > 0 | length(vnames$eqs.x[[1]]) > 0){
@@ -868,7 +872,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       tpdecs <- paste0(tpdecs, "\n", t1, "real def[", ndecs, ", 1, ",
                        ngroups, "];\n")
     }
-    
+
     if(nlv + n.psi.ov > 0){
       tpdecs <- paste0(tpdecs, t1, "matrix[N,", (nlv + n.psi.ov), "] ", etaname, ";\n")
       if(nlvno0 < nlv){
