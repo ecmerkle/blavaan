@@ -15,6 +15,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   ## to decide whether we need generated quantities
   etaname <- "eta"
   betaname <- "beta"
+  psiname <- "psi"
   std.lv <- lavInspect(model, "options")$std.lv
   if(std.lv){
     etaname <- "etaUNC"
