@@ -214,19 +214,23 @@ case_lls <- function(lavjags        = NULL,
   
     nchain <- length(lavmcmc)
 
+    ntot <- sum(unlist(lavdata@nobs))
     llmat <- matrix(NA, nchain*nsamps, sum(unlist(lavdata@nobs)))
 
     for(i in 1:nsamps){
         for(j in 1:nchain){
-            llmat[(i-1)*nchain + j,] <- get_ll(lavmcmc[[j]][itnums[i],],
-                                               lavmodel,
-                                               lavpartable, 
-                                               lavsamplestats, 
-                                               lavoptions, 
-                                               lavcache,
-                                               lavdata,
-                                               casewise = TRUE,
-                                               conditional = conditional)
+            clls <- get_ll(lavmcmc[[j]][itnums[i],],
+                           lavmodel,
+                           lavpartable, 
+                           lavsamplestats, 
+                           lavoptions, 
+                           lavcache,
+                           lavdata,
+                           casewise = TRUE,
+                           conditional = conditional)
+
+            if(length(clls) > ntot) clls <- clls[!is.na(clls)]
+            llmat[(i-1)*nchain + j,] <- clls
         }
     }
 
