@@ -4,13 +4,13 @@ citEntry(entry = "Article",
   title        = "blavaan: Bayesian structural equation models via parameter expansion",
   author       = personList(as.person("Edgar C. Merkle"),
                             as.person("Yves Rosseel")),
-  journal      = "arXiv 1511.05604",
-  year         = "2016",
+  journal      = "Journal of Statistical Software",
+  year         = "in press",
   url          = "https://arxiv.org/abs/1511.05604",
 
   textVersion =
-  paste("Edgar C. Merkle and Yves Rosseel (2016).",
+  paste("Edgar C. Merkle and Yves Rosseel (in press).",
         "blavaan: Bayesian structural equation models via parameter expansion.",
-        "arXiv 1511.05604.",
+        "Journal of Statistical Software",
         "URL https://arxiv.org/abs/1511.05604")
 )
