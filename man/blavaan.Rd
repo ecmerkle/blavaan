@@ -55,8 +55,8 @@ blavaan(..., cp = "srs",
   respectively. Otherwise, parameters
   are sampled as specified by the user (or by the \code{run.jags}
   defaults).}
-\item{target}{Desired MCMC package (currently, only \code{jags} is
-  available).}
+\item{target}{Desired MCMC package (\code{"jags"} is default, but
+  \code{"stan"} also available).}
 \item{save.lvs}{Should sample latent variables (factor scores) be saved? Logical; defaults to FALSE}
 \item{jags.ic}{Should DIC be computed the JAGS way, in addition to the BUGS way? Logical; defaults to FALSE}
 \item{seed}{A vector of length \code{n.chains} containing random
