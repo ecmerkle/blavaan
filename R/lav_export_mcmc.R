@@ -366,7 +366,6 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
                               !grepl("star", partable$mat))
 
         if(length(psi.free.idx) != 1L) {
-          browser()
           stop("blavaan ERROR: parameter for residual variance ",
                lv.names[j], " not found")
         }
