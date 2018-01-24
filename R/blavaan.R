@@ -539,10 +539,10 @@ blavaan <- function(...,  # default lavaan arguments
                 } else {
                     fullpmeans <- rstan::summary(res)$summary[,"mean"]
                 }
-                cfx <- NA #get_ll(fullpmeans, lavmodel = lavmodel, lavpartable = lavpartable,
-                              #lavsamplestats = lavsamplestats, lavoptions = lavoptions,
-                              #lavcache = lavcache, lavdata = lavdata,
-                              #conditional = TRUE)[1]
+                cfx <- get_ll(fullpmeans, lavmodel = lavmodel, lavpartable = lavpartable,
+                              lavsamplestats = lavsamplestats, lavoptions = lavoptions,
+                              lavcache = lavcache, lavdata = lavdata,
+                              conditional = TRUE)[1]
             }
         } else {
             attr(x, "fx") <- as.numeric(NA)
@@ -581,13 +581,13 @@ blavaan <- function(...,  # default lavaan arguments
       }
       
       if(save.lvs) {
-        csamplls <- NA #samp_lls(res, lavmodel, lavpartable,
-                         #    lavsamplestats, lavoptions, lavcache,
-                         #    lavdata, lavmcmc, conditional = TRUE)
+        csamplls <- samp_lls(res, lavmodel, lavpartable,
+                             lavsamplestats, lavoptions, lavcache,
+                             lavdata, lavmcmc, conditional = TRUE)
         if(jags.ic) {
-          csampkls <- NA #samp_kls(res, lavmodel, lavpartable,
-                           #   lavsamplestats, lavoptions, lavcache,
-                           #   lavdata, lavmcmc, conditional = TRUE)
+          csampkls <- samp_kls(res, lavmodel, lavpartable,
+                               lavsamplestats, lavoptions, lavcache,
+                               lavdata, lavmcmc, conditional = TRUE)
         } else {
           csampkls <- NA
         }

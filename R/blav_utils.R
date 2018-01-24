@@ -24,11 +24,10 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
       ## implied meanvec + covmat
       ## TODO replace with lav_predict_yhat?
       ## (lav_predict_yhat unavailable from lavPredict with custom ETA)
-      #mnvec <- lavaan:::computeYHAT(lavmodel, lavmodel@GLIST,
-      #                              lavsamplestats, ETA = eta)
+      mnvec <- lavaan:::computeYHAT(lavmodel, lavmodel@GLIST,
+                                    lavsamplestats, ETA = eta)
       ## instead use lavInspect(,"est")?
-      #covmat <- lavaan:::computeTHETA(lavmodel, lavmodel@GLIST)
-      covmat <- cov(eta)
+      covmat <- lavaan:::computeTHETA(lavmodel, lavmodel@GLIST)
       
       ngroups <- lavsamplestats@ngroups
       implied <- list(cov = covmat, mean = mnvec,
@@ -172,7 +171,7 @@ samp_lls <- function(lavjags        = NULL,
                      lavcache       = NULL,
                      lavdata        = NULL,
                      lavmcmc        = NULL,
-                     thin           = 5,
+                     thin           = 1,
                      conditional    = FALSE){
     itnums <- sampnums(lavjags, thin = thin)
     nsamps <- length(itnums)
@@ -206,7 +205,7 @@ case_lls <- function(lavjags        = NULL,
                      lavdata        = NULL,
                      lavmcmc        = NULL,
                      conditional    = FALSE,
-                     thin           = 5){
+                     thin           = 1){
 
     ## mcmc draws always in list
     itnums <- sampnums(lavjags, thin=5)
@@ -465,7 +464,7 @@ samp_kls <- function(lavjags        = NULL,
                      lavcache       = NULL,
                      lavdata        = NULL,
                      lavmcmc        = NULL,
-                     thin           = 5,
+                     thin           = 1,
                      conditional    = FALSE){
 
     ## need to implement plummer's approach of generating y_rep
@@ -493,18 +492,18 @@ samp_kls <- function(lavjags        = NULL,
             eta1 <- fill_eta(draws[(halfdraws + i),], lavmodel,
                              lavpartable, lavsamplestats, lavdata)
 
-            #mnvec0 <- lavaan:::computeYHAT(lavmodel0,
-            #                               lavmodel0@GLIST,
-            #                               lavsamplestats,
-            #                               ETA = eta0)
-            #cmat0 <- lavaan:::computeTHETA(lavmodel0,
-            #                               lavmodel0@GLIST)
-            #mnvec1 <- lavaan:::computeYHAT(lavmodel1,
-            #                               lavmodel1@GLIST,
-            #                               lavsamplestats,
-            #                               ETA = eta1)
-            #cmat1 <- lavaan:::computeTHETA(lavmodel1,
-            #                               lavmodel1@GLIST)
+            mnvec0 <- lavaan:::computeYHAT(lavmodel0,
+                                           lavmodel0@GLIST,
+                                           lavsamplestats,
+                                           ETA = eta0)
+            cmat0 <- lavaan:::computeTHETA(lavmodel0,
+                                           lavmodel0@GLIST)
+            mnvec1 <- lavaan:::computeYHAT(lavmodel1,
+                                           lavmodel1@GLIST,
+                                           lavsamplestats,
+                                           ETA = eta1)
+            cmat1 <- lavaan:::computeTHETA(lavmodel1,
+                                           lavmodel1@GLIST)
             implied0 <- list(cov = cmat0, mean = mnvec0,
                              slopes = vector("list", ngroups),
                              th = vector("list", ngroups),
@@ -608,7 +607,7 @@ samp_idx <- function(lavjags        = NULL,
                      lavcache       = NULL,
                      lavdata        = NULL,
                      lavmcmc        = NULL,
-                     thin           = 5,
+                     thin           = 1,
                      measure        = "logl"){
     itnums <- sampnums(lavjags, thin = thin)
     nsamps <- length(itnums)
