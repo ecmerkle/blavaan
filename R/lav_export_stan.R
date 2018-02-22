@@ -535,7 +535,8 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   ## NB: if meanx is empty, we won't use it. so just
   ## set meanx to smean for stan.
   smean <- do.call("cbind", model@SampleStats@mean)
-  if(length(model@SampleStats@mean.x[[1]]) > 0){
+  if(length(model@SampleStats@mean.x[[1]]) > 0 &
+     !is.na(model@SampleStats@mean.x[[1]][1])){
     meanx <- do.call("cbind", model@SampleStats@mean.x)
   } else {
     meanx <- smean
@@ -679,7 +680,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       if(n.psi.ov > 0){
         #obsvarx <- obsvarx[-nas,]
         misvarx <- misvarx[-nas,]
-        obsexo <- matrix(obsexo[-nas,]) # converts to numeric
+        obsexo <- as.matrix(obsexo[-nas,]) # converts to numeric
         #nseenx <- nseenx[-nas]
         obspatt <- obspatt[-nas]
         nmisx <- nmisx[-nas]
@@ -719,8 +720,8 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     }
     standata <- c(standata, list(dummyov=array(ov.dummy.idx),
                                  dummylv=array(lv.dummy.idx),
-                                 sampmean=smean,
-                                 meanx=meanx))
+                                 sampmean=array(smean, dim=c(nrow(smean), ncol(smean))),
+                                 meanx=array(meanx, dim=c(nrow(meanx), ncol(meanx)))))
 
     if(ny > 0) standata <- c(standata, list(y=y))
     if(n.psi.ov > 0) standata <- c(standata, list(x=x))
