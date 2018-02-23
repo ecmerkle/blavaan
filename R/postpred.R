@@ -83,6 +83,8 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
           DATA.X <- do.call("rbind", dataX)
           colnames(DATA.X) <- lavdata@ov.names[[1L]]
           DATA.eXo <- do.call("rbind", dataeXo)
+          empties <- as.numeric(sapply(lavdata@Mp, function(x) x$empty.idx))
+          DATA.eXo <- DATA.eXo[-empties, , drop = FALSE]
           if(!is.null(DATA.eXo)) {
             colnames(DATA.eXo) <- lavdata@ov.names.x[[1L]]
             DATA <- cbind(DATA.X, DATA.eXo)

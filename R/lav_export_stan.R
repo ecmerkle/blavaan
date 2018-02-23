@@ -535,9 +535,10 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   ## NB: if meanx is empty, we won't use it. so just
   ## set meanx to smean for stan.
   smean <- do.call("cbind", model@SampleStats@mean)
-  if(length(model@SampleStats@mean.x[[1]]) > 0 &
-     !is.na(model@SampleStats@mean.x[[1]][1])){
-    meanx <- do.call("cbind", model@SampleStats@mean.x)
+  if(length(model@SampleStats@mean.x[[1]]) > 0){
+    if(!is.na(model@SampleStats@mean.x[[1]][1])){
+      meanx <- do.call("cbind", model@SampleStats@mean.x)
+    }
   } else {
     meanx <- smean
   }
