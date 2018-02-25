@@ -535,12 +535,11 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   ## NB: if meanx is empty, we won't use it. so just
   ## set meanx to smean for stan.
   smean <- do.call("cbind", model@SampleStats@mean)
+  meanx <- smean
   if(length(model@SampleStats@mean.x[[1]]) > 0){
     if(!is.na(model@SampleStats@mean.x[[1]][1])){
       meanx <- do.call("cbind", model@SampleStats@mean.x)
     }
-  } else {
-    meanx <- smean
   }
   datablk <- paste0(datablk, t1, "real sampmean[", nrow(smean), ",",
                     ncol(smean), "];\n", t1,
@@ -669,19 +668,19 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     nas <- which(yna | xna)
 
     if(length(nas) > 0){
-      if(ny > 0) y <- y[-nas,]
-      if(n.psi.ov > 0) x <- x[-nas,]
+      if(ny > 0) y <- y[-nas, , drop=FALSE]
+      if(n.psi.ov > 0) x <- x[-nas, , drop=FALSE]
       g <- g[-nas]
       if(ny > 0){
-        obsvar <- obsvar[-nas,]
-        misvar <- misvar[-nas,]
+        obsvar <- obsvar[-nas, , drop=FALSE]
+        misvar <- misvar[-nas, , drop=FALSE]
         nseen <- nseen[-nas]
         nmis <- nmis[-nas]
       }
       if(n.psi.ov > 0){
         #obsvarx <- obsvarx[-nas,]
-        misvarx <- misvarx[-nas,]
-        obsexo <- as.matrix(obsexo[-nas,]) # converts to numeric
+        misvarx <- misvarx[-nas, , drop=FALSE]
+        obsexo <- obsexo[-nas, , drop=FALSE]
         #nseenx <- nseenx[-nas]
         obspatt <- obspatt[-nas]
         nmisx <- nmisx[-nas]
