@@ -694,6 +694,8 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     if(missflag){
       if(ny > 0){
         for(i in 1:nrow(y)){
+          ## TODO do this at first definition of obsvar?
+          obsvar[i,1:nseen[i]] <- match(obsvar[i,1:nseen[i]], yind)
           y[i,1:nseen[i]] <- y[i,obsvar[i,1:nseen[i]]]
           if(ny - nseen[i] > 0){
             y[i,(nseen[i]+1):ny] <- -999
@@ -703,8 +705,17 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     }
     if(miss.psi){
       if(n.psi.ov > 0){
+        for(gg in 1:ngroups){
+          for(m in 1:max(obspatt)){
+            if(nseenx[gg,obspatt[m]] > 0){
+              ## TODO do this at first definition of obsvarx?
+              xidx <- match(obsvarx[gg,m,1:nseenx[gg,m]], xind)
+              obsvarx[gg,m,1:nseenx[gg,m]] <- xidx
+            }
+          }
+        }
         for(i in 1:nrow(x)){
-          x[i,1:nseenx[obspatt[i]]] <- x[i,obsvarx[g[i],obspatt[i],1:nseenx[g[i],obspatt[i]]]]
+          x[i,1:nseenx[g[i],obspatt[i]]] <- x[i,obsvarx[g[i],obspatt[i],1:nseenx[g[i],obspatt[i]]]]
           if(n.psi.ov - nseenx[obspatt[i]] > 0){
             x[i,(nseenx[obspatt[i]]+1):n.psi.ov] <- -999
           }
