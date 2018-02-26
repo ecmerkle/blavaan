@@ -1,6 +1,6 @@
 postpred <- function(lavpartable, lavmodel, lavoptions, 
                      lavsamplestats, lavdata, lavcache, lavjags,
-                     samplls, measure = "logl", thin = 5) {
+                     samplls, measure = "logl", thin = 1) {
 
     ## run through lavjags$mcmc, generate data from various posterior
     ## samples. thin like we do in samp_lls
@@ -39,12 +39,19 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
           dataX[[g]] <- MASS::mvrnorm(n     = lavsamplestats@nobs[[g]],
                                       Sigma = Sigma.hat[[g]],
                                       mu    = Mu.hat[[g]])
+          
           ## get completely missing observations out, or there
           ## will be problems
           allmis <- apply(is.na(origlavdata@X[[g]]), 1, all)
           if(sum(allmis) > 0){
             origlavdata@X[[g]] <- origlavdata@X[[g]][-which(allmis),]
           }
+
+          ## fixed x should also be generated, so don't need this:
+          ##x.idx <- lavsamplestats@x.idx[[g]]
+          ##if(!is.null(x.idx) && length(x.idx) > 0L){
+          ##  dataX[[g]][,x.idx] <- origlavdata@X[[g]][,x.idx]
+          ##}
           
           dataX[[g]][is.na(origlavdata@X[[g]])] <- NA
         }
@@ -68,6 +75,13 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
 
         if(!mis){
           lavdata@X <- dataX
+          x.idx <- lavsamplestats@x.idx[[g]]
+          if(!is.null(x.idx) && length(x.idx) > 0L){
+            for(g in 1:lavsamplestats@ngroups) {
+              lavsamplestats@mean.x[[g]] <- apply(lavdata@X[[g]][,x.idx], 2, mean)
+              lavsamplestats@cov.x[[g]] <- cov(lavdata@X[[g]][,x.idx])
+            }
+          }
 
           chisq.boot <- 2*diff(get_ll(lavmodel = lavmodel,
                                       lavsamplestats = lavsamplestats,
