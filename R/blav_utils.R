@@ -9,6 +9,7 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
                    lavoptions     = NULL, 
                    lavcache       = NULL,
                    lavdata        = NULL,
+                   lavobject      = NULL, # just to use lavPredict()
                    measure        = "logl",
                    casewise       = FALSE,
                    conditional    = FALSE){
@@ -22,13 +23,20 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
                       lavsamplestats, lavdata)
 
       ## implied meanvec + covmat
-      ## TODO replace with lav_predict_yhat?
-      ## (lav_predict_yhat unavailable from lavPredict with custom ETA)
-      mnvec <- lavaan:::computeYHAT(lavmodel, lavmodel@GLIST,
-                                    lavsamplestats, ETA = eta)
-      ## instead use lavInspect(,"est")?
-      covmat <- lavaan:::computeTHETA(lavmodel, lavmodel@GLIST)
-      
+      #mnvec <- lavaan:::computeYHAT(lavmodel, lavmodel@GLIST,
+      #                              lavsamplestats, ETA = eta)
+      lavobject@Model <- lavmodel
+      mnvec <- lavPredict(lavobject, type="ov", ETA = eta)
+      if(any(class(mnvec) == "matrix")) mnvec <- list(mnvec)
+
+      #covmat <- lavaan:::computeTHETA(lavmodel, lavmodel@GLIST)
+      covmat <- lavInspect(lavobject, 'theta')
+      if(any(class(covmat) == "matrix")) covmat <- list(covmat)
+      ## to avoid warnings from mnormt::pd.solve
+      covmat <- lapply(covmat, function(x){
+        class(x) <- "matrix"
+        x})
+       
       ngroups <- lavsamplestats@ngroups
       implied <- list(cov = covmat, mean = mnvec,
                       slopes = vector("list", ngroups),
@@ -171,6 +179,7 @@ samp_lls <- function(lavjags        = NULL,
                      lavcache       = NULL,
                      lavdata        = NULL,
                      lavmcmc        = NULL,
+                     lavobject      = NULL,
                      thin           = 1,
                      conditional    = FALSE){
     itnums <- sampnums(lavjags, thin = thin)
@@ -188,6 +197,7 @@ samp_lls <- function(lavjags        = NULL,
                                      lavoptions, 
                                      lavcache,
                                      lavdata,
+                                     lavobject,
                                      conditional = conditional)
         }
     }
@@ -204,6 +214,7 @@ case_lls <- function(lavjags        = NULL,
                      lavcache       = NULL,
                      lavdata        = NULL,
                      lavmcmc        = NULL,
+                     lavobject      = NULL,
                      conditional    = FALSE,
                      thin           = 1){
 
@@ -225,6 +236,7 @@ case_lls <- function(lavjags        = NULL,
                            lavoptions, 
                            lavcache,
                            lavdata,
+                           lavobject,
                            casewise = TRUE,
                            conditional = conditional)
 
@@ -464,6 +476,7 @@ samp_kls <- function(lavjags        = NULL,
                      lavcache       = NULL,
                      lavdata        = NULL,
                      lavmcmc        = NULL,
+                     lavobject      = NULL,
                      thin           = 1,
                      conditional    = FALSE){
 
@@ -492,18 +505,18 @@ samp_kls <- function(lavjags        = NULL,
             eta1 <- fill_eta(draws[(halfdraws + i),], lavmodel,
                              lavpartable, lavsamplestats, lavdata)
 
-            mnvec0 <- lavaan:::computeYHAT(lavmodel0,
-                                           lavmodel0@GLIST,
-                                           lavsamplestats,
-                                           ETA = eta0)
-            cmat0 <- lavaan:::computeTHETA(lavmodel0,
-                                           lavmodel0@GLIST)
-            mnvec1 <- lavaan:::computeYHAT(lavmodel1,
-                                           lavmodel1@GLIST,
-                                           lavsamplestats,
-                                           ETA = eta1)
-            cmat1 <- lavaan:::computeTHETA(lavmodel1,
-                                           lavmodel1@GLIST)
+            lavobject@Model <- lavmodel0
+            mnvec0 <- lavPredict(lavobject, type="ov", ETA=eta0)
+            if(any(class(mnvec0) == "matrix")) mnvec <- list(mnvec0)
+            cmat0 <- lavInspect(lavobject, 'theta')
+            if(any(class(cmat0) == "matrix")) cmat0 <- list(cmat0)
+
+            lavobject@Model <- lavmodel1
+            mnvec1 <- lavPredict(lavobject, type="ov", ETA=eta1)
+            if(any(class(mnvec1) == "matrix")) mnvec <- list(mnvec1)
+            cmat1 <- lavInspect(lavobject, 'theta')
+            if(any(class(cmat1) == "matrix")) cmat1 <- list(cmat1)
+
             implied0 <- list(cov = cmat0, mean = mnvec0,
                              slopes = vector("list", ngroups),
                              th = vector("list", ngroups),

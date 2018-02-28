@@ -181,7 +181,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
                                 object@ParTable, object@SampleStats,
                                 lavopt, object@Cache,
                                 object@Data, make_mcmc(object@external$mcmcout),
-                                conditional = TRUE)
+                                lavobject=object, conditional = TRUE)
             fitres <- waic(casells)
             indices["waic_cond"] <- fitres$waic
             indices["p_waic_cond"] <- fitres$p_waic

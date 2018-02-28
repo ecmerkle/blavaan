@@ -539,10 +539,18 @@ blavaan <- function(...,  # default lavaan arguments
                 } else {
                     fullpmeans <- rstan::summary(res)$summary[,"mean"]
                 }
-                cfx <- get_ll(fullpmeans, lavmodel = lavmodel, lavpartable = lavpartable,
-                              lavsamplestats = lavsamplestats, lavoptions = lavoptions,
-                              lavcache = lavcache, lavdata = lavdata,
-                              conditional = TRUE)[1]
+                ## do they have a recent version of lavaan
+                lavvers <- packageVersion('lavaan')
+                recvers <- (lavvers == '0.6-1' | lavvers >= package_version('0.6-1.1189'))
+                if(recvers){
+                  cfx <- get_ll(fullpmeans, lavmodel = lavmodel, lavpartable = lavpartable,
+                                lavsamplestats = lavsamplestats, lavoptions = lavoptions,
+                                lavcache = lavcache, lavdata = lavdata,
+                                lavobject = LAV, conditional = TRUE)[1]
+                } else {
+                  cat("blavaan NOTE: Conditional ICs require a newer version of lavaan;\n   see http://lavaan.ugent.be/development.html\n")
+                  cfx <- NA
+                }
             }
         } else {
             attr(x, "fx") <- as.numeric(NA)
@@ -581,13 +589,19 @@ blavaan <- function(...,  # default lavaan arguments
       }
       
       if(save.lvs) {
-        csamplls <- samp_lls(res, lavmodel, lavpartable,
-                             lavsamplestats, lavoptions, lavcache,
-                             lavdata, lavmcmc, conditional = TRUE)
-        if(jags.ic) {
+        if(recvers){
+          csamplls <- samp_lls(res, lavmodel, lavpartable,
+                               lavsamplestats, lavoptions, lavcache,
+                               lavdata, lavmcmc, lavobject = LAV,
+                               conditional = TRUE)
+        } else {
+          csamplls <- NA
+        }
+        if(jags.ic & recvers) {
           csampkls <- samp_kls(res, lavmodel, lavpartable,
                                lavsamplestats, lavoptions, lavcache,
-                               lavdata, lavmcmc, conditional = TRUE)
+                               lavdata, lavmcmc, lavobject = LAV,
+                               conditional = TRUE)
         } else {
           csampkls <- NA
         }
