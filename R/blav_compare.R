@@ -43,10 +43,18 @@ blavCompare <- function(object1, object2, ...) {
 
   cat("Laplace approximation to the log-Bayes factor\n(experimental; positive values favor object1):",
       sprintf("%8.3f", bf), "\n\n")
-  
-  res <- list(bf = res, loo = rbind(loo1[1:6], loo2[1:6]),
+
+  if(packageVersion('loo') >= '2.0.0'){
+    looobj <- list(loo1$estimates, loo2$estimates)
+    waicobj <- list(waic1$estimates, waic2$estimates)
+  } else {
+    looobj <- rbind(loo1[1:6], loo2[1:6])
+    waicobj <- rbind(loo1[1:6], loo2[1:6])
+  }
+
+  res <- list(bf = res, loo = looobj,
               diff_loo = diff_loo,
-              waic = rbind(waic1[1:6], waic2[1:6]),
+              waic = waicobj,
               diff_waic = diff_waic)
 
   invisible(res)
