@@ -32,8 +32,10 @@ set_inits <- function(partable, ov.cp, lv.cp, n.chains, inits){
   for(i in 1:nrow(partable)){
     eqcons <- which(partable$lhs == partable$label[i] &
                     partable$op %in% c("==", ":=", ">", "<"))
-    if((i %in% wps) | partable$free[i] == 0 | partable$prior[i] == "" | length(eqcons > 0)) next
-
+    if((i %in% wps) | partable$free[i] == 0 | partable$prior[i] == "") next
+    ## next unless it is a simple equality constraint:
+    if(length(eqcons) > 0 & !grepl('^\\.p', partable$rhs[eqcons[1]])) next
+    
     tmppri <- partable$prior[i]
       
     pricom <- unlist(strsplit(tmppri, "[, ()]+"))
