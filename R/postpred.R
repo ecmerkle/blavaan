@@ -78,8 +78,8 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
           x.idx <- lavsamplestats@x.idx[[g]]
           if(!is.null(x.idx) && length(x.idx) > 0L){
             for(g in 1:lavsamplestats@ngroups) {
-              lavsamplestats@mean.x[[g]] <- apply(lavdata@X[[g]][,x.idx], 2, mean)
-              lavsamplestats@cov.x[[g]] <- cov(lavdata@X[[g]][,x.idx])
+              lavsamplestats@mean.x[[g]] <- apply(lavdata@X[[g]][,x.idx,drop=FALSE], 2, mean)
+              lavsamplestats@cov.x[[g]] <- cov(lavdata@X[[g]][,x.idx,drop=FALSE])
             }
           }
 

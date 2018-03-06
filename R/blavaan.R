@@ -98,10 +98,12 @@ blavaan <- function(...,  # default lavaan arguments
       cat("blavaan NOTE: fa priors are not available with stan. srs priors will be used. \n")
     }
 
-    # 'jag' arguments are now 'mcmc'
-    jagargs <- c("jagfile", "jagextra", "jagcontrol")
+    # 'jag' arguments are now mcmcfile, mcmcextra, bcontrol
+    jagargs <- c("jagfile", "jagextra")
+    barg <- "jagcontrol"
     jaglocs <- match(jagargs, dotNames, nomatch = 0)
-    if(any(jaglocs > 0)){
+    blocs <- match(barg, dotNames, nomatch = 0)
+    if(any(jaglocs > 0)){      
       cat(paste0("blavaan NOTE: the following argument(s) are deprecated: ",
                  paste(jagargs[jaglocs > 0], collapse=" "),
                  ".\n        the argument(s) now start with 'mcmc' instead of 'jag'. \n"))
@@ -110,6 +112,16 @@ blavaan <- function(...,  # default lavaan arguments
         assign(newargs[i], dotdotdot[[jaglocs[jaglocs > 0][i]]])
       }
       dotdotdot <- dotdotdot[-jaglocs]; dotNames <- dotNames[-jaglocs]
+    }
+    if(any(blocs > 0)){      
+      cat(paste0("blavaan NOTE: the following argument is deprecated: ",
+                 paste(barg[blocs > 0], collapse=" "),
+                 ".\n        the argument now starts with 'b' instead of 'jag'. \n"))
+      newargs <- gsub("jag", "b", barg[blocs > 0])
+      for(i in 1:length(newargs)){
+        assign(newargs[i], dotdotdot[[blocs[blocs > 0][i]]])
+      }
+      dotdotdot <- dotdotdot[-blocs]; dotNames <- dotNames[-blocs]
     }
   
     # which arguments do we override?
