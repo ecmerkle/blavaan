@@ -103,7 +103,7 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
                 pvnum <- match(rhsvars, partable$label)
 
                 rhstrans <- paste(partable$mat[pvnum], "[", partable$row[pvnum],
-                                  ", ", partable$col[pvnum], ", ", partable$group[pvnum],
+                                  ",", partable$col[pvnum], ",", partable$group[pvnum],
                                   "]", sep="")
                 ## defined variables involved in another equality
                 defvars <- which(partable$mat[pvnum] == "def")
