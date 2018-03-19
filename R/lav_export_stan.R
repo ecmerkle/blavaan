@@ -293,9 +293,9 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
                     model@Model@ov.x.dummy.lv.idx[[1]])
   dumov <- 0L
   if(length(ov.dummy.idx) > 0) dumov <- 1L
-  
+
   ## FIXME? see .internal_get_ALPHA from lav_representation_lisrel.R
-  ## for alternative (better) way to handle this than eqs.x  
+  ## for alternative (better) way to handle this than eqs.x
   if(nov.x > 0 | length(vnames$eqs.x[[1]]) > 0){
     xnames <- c(ov.names.x, vnames$eqs.x[[1]])
     exoind <- which(ov.names[xind] %in% xnames)
@@ -319,15 +319,20 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     exoind <- rep(0,length(xind))
     lvindall <- regind
     etaind <- exoind
-    if(nlv > 0){
-      if(length(lv0.idx) < nlv & length(lv0.idx) > 0){
+    if(nlv > 0 & length(lv0.idx) < nlv){
+      if(length(lv0.idx) > 0){
         nlvno0 <- nlv - length(lv0.idx)
+        regind <- c((1:nlv)[-lv0.idx], (nlvno0+regind))
+        exoind <- nlvno0 + exoind        
         etaind <- (1:nlv)[-lv0.idx]
       } else {
         nlvno0 <- nlv
+        regind <- c(1:nlv, (nlv+regind))
+        exoind <- nlv + exoind
         etaind <- 1:nlv
       }
     }
+    lvindall <- c(regind, exoind)
   }
 
   ## missingness of ovs split by whether or not they appear
