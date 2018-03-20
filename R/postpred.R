@@ -1,14 +1,35 @@
+### Ed Merkle
+### posterior predictive model checking
+###   - returns PPP value to store in @test slot
+###   - returns posterior predictive distribution (PP-Dist) for additional
+###     discrepancy functions evaluated on observed and replicated data
+### Last updated: 20 March 2018
+### Mauricio Garnier-Villarreal:
+###   - update to return "chisq" PP-Dist from observed and replicated data
+### Terrence D. Jorgensen:
+###   - added "discFUN" argument to evaluate custom discrepancy function(s)
+###     on observed and replicated data.  This is distinct from the "measure"
+###     argument, which only returns values from fitMeasures().
+###   - made notes with "FIXME TDJ" in places where postpred() could be updated
+
 postpred <- function(lavpartable, lavmodel, lavoptions, 
                      lavsamplestats, lavdata, lavcache, lavjags,
-                     samplls, measure = "logl", thin = 1) {
-
+                     samplls, measure = "logl", thin = 1, discFUN = NULL) {
+    ## check custom discrepancy function(s)
+    if (!is.null(discFUN)) {
+      allFuncs <- if (is.list(discFUN)) all(sapply(discFUN, is.function)) else FALSE
+      if (!(is.function(discFUN) || allFuncs)) stop('The "discFUN" argument must',
+                                                    ' be a (list of) function(s).')
+    }
+    discFUN <- NULL # Not implemented yet
+  
     ## run through lavjags$mcmc, generate data from various posterior
     ## samples. thin like we do in samp_lls
     lavmcmc <- make_mcmc(lavjags)
     samp.indices <- sampnums(lavjags, thin=thin)
     n.chains <- length(lavmcmc)
     psamp <- length(samp.indices)
-  
+    
     ## parallel across chains if we can
     ncores <- NA
     loop.comm <- "lapply"
@@ -16,24 +37,24 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
       ncores <- min(n.chains, parallel::detectCores())
       loop.comm <- "mclapply"
     }
-  
+    
     origlavmodel <- lavmodel
     origlavdata <- lavdata
-
+  
     loop.args <- list(X = 1:n.chains, FUN = function(j){
-      ind <- csdist <- rep(NA, psamp)
+      ind <- csdist <- csboots <- rep(NA, psamp)
       for(i in 1:psamp){
         ## translate each posterior sample to a model-implied mean vector +
         ## cov matrix.
         lavmodel <- fill_params(lavmcmc[[j]][samp.indices[i],],
                                 origlavmodel, lavpartable)
-
+  
         ## generate data (some code from lav_bootstrap.R)
         implied <- lav_model_implied(lavmodel)
         Sigma.hat <- implied$cov
         Mu.hat <- implied$mean
         dataeXo <- lavdata@eXo
-
+  
         dataX <- vector("list", length=lavdata@ngroups)
         for(g in 1:lavsamplestats@ngroups) {
           dataX[[g]] <- MASS::mvrnorm(n     = lavsamplestats@nobs[[g]],
@@ -46,7 +67,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
           if(sum(allmis) > 0){
             origlavdata@X[[g]] <- origlavdata@X[[g]][-which(allmis),]
           }
-
+  
           ## fixed x should also be generated, so don't need this:
           ##x.idx <- lavsamplestats@x.idx[[g]]
           ##if(!is.null(x.idx) && length(x.idx) > 0L){
@@ -55,7 +76,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
           
           dataX[[g]][is.na(origlavdata@X[[g]])] <- NA
         }
-
+  
         ## compute (i) X2 of generated data and model-implied
         ## moments, along with (ii) X2 of real data and model-implied
         ## moments.
@@ -68,11 +89,13 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
                              #    lavcache = lavcache,
                              #    lavdata = origlavdata,
                              #    measure = measure)
-
+        
+        #FIXME TDJ: apply custom "discFUN" here
+  
         ## check for missing, to see if we can easily get baseline ll for chisq
         mis <- FALSE
         if(any(is.na(unlist(lavdata@X)))) mis <- TRUE
-
+  
         if(!mis){
           lavdata@X <- dataX
           x.idx <- lavsamplestats@x.idx[[g]]
@@ -82,18 +105,21 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
               lavsamplestats@cov.x[[g]] <- cov(lavdata@X[[g]][,x.idx,drop=FALSE])
             }
           }
-
+  
           chisq.boot <- 2*diff(get_ll(lavmodel = lavmodel,
                                       lavsamplestats = lavsamplestats,
                                       lavdata = lavdata,
                                       measure = measure))
+          #FIXME TDJ: no way to apply custom "discFUN" here. Use hack below?
         } else {
           ## we need lavaan to get the saturated log-l for missing data (EM)
                                          
           # YR: ugly hack to avoid lav_samplestats_from_data:
           # reconstruct data + call lavaan()
           # ed: if we need lavaan() anyway, might as well
-          # get the chisq while we're here:
+          #     get the chisq while we're here:
+          # TDJ: this also enables us to apply custom "discFUN" argument to
+          #     fitted lavaan object -- also use this hack when !is.null(discFUN)?
           DATA.X <- do.call("rbind", dataX)
           colnames(DATA.X) <- lavdata@ov.names[[1L]]
           DATA.eXo <- do.call("rbind", dataeXo)
@@ -111,7 +137,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
             DATA <- DATA.X
           }
           DATA <- as.data.frame(DATA)
-
+  
           lavoptions2 <- lavoptions
           lavoptions2$verbose <- FALSE
           lavoptions2$estimator <- "ML"
@@ -139,13 +165,13 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
           }
           # bootSampleStats <- out@SampleStats
           # end of ugly hack
-
+  
           if(measure %in% c("logl", "chisq")){
             chisq.boot <- fitMeasures(out, "chisq")
           } else {
             chisq.boot <- fitMeasures(out, measure)
           }
-
+  
           ## see lines 286-298 of lav_bootstrap to avoid fixed.x errors?
           ## chisq.boot <- 2*diff(get_ll(lavmodel = lavmodel,
           ##                             lavpartable = lavpartable,
@@ -158,22 +184,33 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
         ## record whether observed value is larger
         ind[i] <- chisq.obs < chisq.boot
         csdist[i] <- chisq.obs
+        csboots[i] <- chisq.boot
+        #FIXME TDJ: extract and organize custom "discFUN" output here
+        
       } # i
-      list(ind = ind, csdist = csdist)
+      
+      result <- list(ind = ind, csdist = csdist, csboots = csboots)
+      # if (!is.null(discFUN)) result <- c(result, discFUN_results)
+      result
     })
-
+  
     if(loop.comm == "mclapply"){
         loop.args <- c(loop.args, list(mc.cores = ncores))
         res <- do.call(parallel::mclapply, loop.args)
     } else {
         res <- do.call(lapply, loop.args)
     }
-
+  
     ind <- unlist(lapply(res, function(x) x$ind))
     csdist <- unlist(lapply(res, function(x) x$csdist))
-
+    csboots <- unlist(lapply(res, function(x) x$csboots))
+    #FIXME TDJ: extract custom "discFUN" output here
+    
     ppval <- mean(as.numeric(ind))
     cspi <- quantile(as.numeric(csdist), c(.025,.975))
     
-    list(ppval=ppval, cspi=cspi)
+    #FIXME TDJ: check whether to add custom "discFUN" output to returned list
+    list(ppval = ppval, cspi = cspi, chisqs = cbind(obs = csdist, reps = csboots))
 }
+
+

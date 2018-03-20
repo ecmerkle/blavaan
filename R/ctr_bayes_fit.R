@@ -1,14 +1,18 @@
 ### Mauricio Garnier-Villareal and Terrence D. Jorgensen
-### Last updated: 19 March 2018
+### Last updated: 20 March 2018
 ### functions applying traditional SEM fit criteria to Bayesian models.
 ### Inspired by, and adpated from, Rens van de Schoot's idea for BRMSEA, as
 ### published in http://dx.doi.org/10.1177/0013164417709314
 
 
 ## Public function (eventually, after documenting and peer review)
-BayesFIT <- function(fit, rescale = c("devM","ppmc"), fit_null = NULL) {
-  rescale <- as.character(rescale[1])
-  if (rescale != "devM") stop('Only rescale="devM" is currently available')
+BayesFIT <- function(fit, pD = c("loo","waic","dic"),
+                     rescale = c("devM","ppmc"), fit_null = NULL) {
+  ## check arguments
+  pD <- tolower(as.character(pD[1]))
+  if (!pD %in% c("loo","waic","dic")) stop('Invalid choice of "pD" argument')
+
+  rescale <- tolower(as.character(rescale[1])) #FIXME: make sure references to "devM" check for "devm"
   if (rescale == "ppmc" && blavInspect(fit, 'ntotal') < 1000)
     warning("Hoofs et al.'s proposed BRMSEA (and derivative indices based on",
             " the posterior predictive distribution) was only proposed for",
@@ -16,16 +20,22 @@ BayesFIT <- function(fit, rescale = c("devM","ppmc"), fit_null = NULL) {
   
   chisqs <- as.numeric(apply(fit@external$samplls, 2,
                              function(x) 2*(x[,2] - x[,1])))
-  fit_pd <- fitMeasures(fit, 'p_loo')
-  # if (rescale = "ppmc") {
-  #   reps <- as.numeric(apply(fit@external$replls, 2,
-  #                            function(x) 2*(x[,2] - x[,1])))
-  # } else reps <- NULL
+  fit_pd <- fitMeasures(fit, paste0('p_', pD))
+  if (rescale == "ppmc") {
+    reps <- postpred(lavpartable = fit@ParTable,
+                     lavmodel = fit@Model,
+                     lavoptions = fit@Options,
+                     lavsamplestats = fit@SampleStats,
+                     lavdata = fit@Data,
+                     lavcache = fit@Cache,
+                     lavjags = fit@external$mcmcout, #FIXME: Ed, is this correct?
+                     samplls = fit@external$samplls)$chisqs[,"reps"]
+  } else reps <- NULL
   
   if (is.null(fit_null)) {
     null_model <- FALSE
     chisq_null <- NULL
-    # reps_null <- NULL
+    reps_null <- NULL
     pD_null <- NULL
   } else {
     null_model <- TRUE
@@ -34,27 +44,33 @@ BayesFIT <- function(fit, rescale = c("devM","ppmc"), fit_null = NULL) {
     if (length(chisqs) != length(chisq_null)) {
       null_model <- FALSE
       chisq_null <- NULL
-      # reps_null <- NULL
+      reps_null <- NULL
       pD_null <- NULL
       warning("Incremental fit indices were not calculated.",
               " Save equal number of draws from the posterior of both",
               " the hypothesized and null models.")
     } else {
-      # if (rescale = "ppmc") {
-      #   reps_null <- as.numeric(apply(fit_null@external$replls, 2,
-      #                                 function(x) 2*(x[,2] - x[,1])))
-      # }
+      if (rescale == "ppmc") {
+        reps_null <- postpred(lavpartable = fit_null@ParTable,
+                              lavmodel = fit_null@Model,
+                              lavoptions = fit_null@Options,
+                              lavsamplestats = fit_null@SampleStats,
+                              lavdata = fit_null@Data,
+                              lavcache = fit_null@Cache,
+                              lavjags = fit_null@external$mcmcout, #FIXME: Ed, is this correct?
+                              samplls = fit_null@external$samplls)$chisqs[,"reps"]
+      }
       pD_null <- fitMeasures(fit_null, 'p_loo')
     }
   }
 
-  ff <- BayesRelFit(obs = chisqs, # reps = reps,
+  ff <- BayesRelFit(obs = chisqs, reps = reps,
                     nvar = fit@Model@nvar, pD = fit_pd,
                     N = blavInspect(fit, 'ntotal'), Min1 = FALSE,
                     ms = blavInspect(fit, 'meanstructure'),
-                    Ngr = blavInspect(fit, 'ngroups'), null_model = null_model,
-                    obs_null = chisq_null, # reps_null = reps_null,
-                    pD_null = pD_null)
+                    Ngr = blavInspect(fit, 'ngroups'), rescale = rescale,
+                    null_model = null_model, obs_null = chisq_null,
+                    reps_null = reps_null, pD_null = pD_null)
   return(ff)
 }
 
@@ -70,11 +86,11 @@ BayesRelFit <- function(obs, reps = NULL, nvar, pD, N, ms = TRUE, Min1 = FALSE,
                         Ngr = 1, rescale = c("devM","ppmc"), null_model = TRUE,
                         obs_null = NULL, reps_null = NULL, pD_null = NULL) {
   if (Min1) N <- N - 1
-  rescale <- as.character(rescale[1])
-  if (rescale == "devM") {
+  rescale <- tolower(as.character(rescale[1]))
+  if (rescale == "devm") {
     reps <- pD
     if (!is.null(null_model)) reps_null <- pD_null
-  } else stop('Only rescale="devM" is currently available')
+  }
   if (rescale == "ppmc" && (is.null(reps) || (null_model && is.null(reps_null))))
     stop('rescale="ppmc" requires non-NULL reps argument (and reps_null, if applicable).')
   
@@ -84,7 +100,7 @@ BayesRelFit <- function(obs, reps = NULL, nvar, pD, N, ms = TRUE, Min1 = FALSE,
   p <- p * Ngr
   ## Substract parameters and estimated parameters
   dif.ppD <- p - pD
-  nonc <- obs - reps - dif.ppD # == obs - p when rescale == "devM" because reps = pD
+  nonc <- obs - reps - dif.ppD # == obs - p when rescale == "devm" because reps = pD
   ## Correct if numerator is smaller than zero
   nonc[nonc < 0] <- 0
   ## Compute BRMSEA
