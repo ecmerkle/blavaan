@@ -323,16 +323,14 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       if(length(lv0.idx) > 0){
         nlvno0 <- nlv - length(lv0.idx)
         regind <- c((1:nlv)[-lv0.idx], (nlvno0+regind))
-        exoind <- nlvno0 + exoind        
         etaind <- (1:nlv)[-lv0.idx]
       } else {
         nlvno0 <- nlv
         regind <- c(1:nlv, (nlv+regind))
-        exoind <- nlv + exoind
         etaind <- 1:nlv
       }
     }
-    lvindall <- c(regind, exoind)
+    lvindall <- regind
   }
 
   ## missingness of ovs split by whether or not they appear
