@@ -96,7 +96,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
         mis <- FALSE
         if(any(is.na(unlist(lavdata@X)))) mis <- TRUE
   
-        if(!mis){
+        if(!mis & length(discFUN) == 0){ #TDJ: if discFUN is supplied, we go right to "else"
           lavdata@X <- dataX
           x.idx <- lavsamplestats@x.idx[[g]]
           if(!is.null(x.idx) && length(x.idx) > 0L){
@@ -120,6 +120,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
           #     get the chisq while we're here:
           # TDJ: this also enables us to apply custom "discFUN" argument to
           #     fitted lavaan object -- also use this hack when !is.null(discFUN)?
+          #     ed: yes, probably want to pull necessary stuff from "out" object below
           DATA.X <- do.call("rbind", dataX)
           colnames(DATA.X) <- lavdata@ov.names[[1L]]
           DATA.eXo <- do.call("rbind", dataeXo)
