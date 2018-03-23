@@ -1,81 +1,134 @@
-## functions applying traditional SEM fit criteria to Bayesian models,
-## from Mauricio Garnier-Villareal with code contributions from
-## Terrence Jorgensen and Rens van de Schoot.
+### Mauricio Garnier-Villareal and Terrence D. Jorgensen
+### Last updated: 20 March 2018
+### functions applying traditional SEM fit criteria to Bayesian models.
+### Inspired by, and adpated from, Rens van de Schoot's idea for BRMSEA, as
+### published in http://dx.doi.org/10.1177/0013164417709314
 
-BayesFIT <- function(fit, fit_null=NULL){
+
+## Public function (eventually, after documenting and peer review)
+BayesFIT <- function(fit, pD = c("loo","waic","dic"),
+                     rescale = c("devM","ppmc"), fit_null = NULL) {
+  ## check arguments
+  pD <- tolower(as.character(pD[1]))
+  if (!pD %in% c("loo","waic","dic")) stop('Invalid choice of "pD" argument')
+
+  rescale <- tolower(as.character(rescale[1])) #FIXME: make sure references to "devM" check for "devm"
+  if (rescale == "ppmc" && blavInspect(fit, 'ntotal') < 1000)
+    warning("Hoofs et al.'s proposed BRMSEA (and derivative indices based on",
+            " the posterior predictive distribution) was only proposed for",
+            " evaluating models fit to very large samples (N > 1000).")
+  
   chisqs <- as.numeric(apply(fit@external$samplls, 2,
                              function(x) 2*(x[,2] - x[,1])))
-  fit_pd <- fitMeasures(fit, 'p_loo')
-
-  if( is.null(fit_null) ){
+  fit_pd <- fitMeasures(fit, paste0('p_', pD))
+  if (rescale == "ppmc") {
+    reps <- postpred(lavpartable = fit@ParTable,
+                     lavmodel = fit@Model,
+                     lavoptions = fit@Options,
+                     lavsamplestats = fit@SampleStats,
+                     lavdata = fit@Data,
+                     lavcache = fit@Cache,
+                     lavjags = fit@external$mcmcout, #FIXME: Ed, is this correct?
+                     samplls = fit@external$samplls)$chisqs[,"reps"]
+  } else reps <- NULL
+  
+  if (is.null(fit_null)) {
     null_model <- FALSE
     chisq_null <- NULL
+    reps_null <- NULL
     pD_null <- NULL
   } else {
     null_model <- TRUE
     chisq_null <- as.numeric(apply(fit_null@external$samplls, 2,
                                    function(x) 2*(x[,2] - x[,1])))
-    pD_null <- fitMeasures(fit_null, 'p_loo')
+    if (length(chisqs) != length(chisq_null)) {
+      null_model <- FALSE
+      chisq_null <- NULL
+      reps_null <- NULL
+      pD_null <- NULL
+      warning("Incremental fit indices were not calculated.",
+              " Save equal number of draws from the posterior of both",
+              " the hypothesized and null models.")
+    } else {
+      if (rescale == "ppmc") {
+        reps_null <- postpred(lavpartable = fit_null@ParTable,
+                              lavmodel = fit_null@Model,
+                              lavoptions = fit_null@Options,
+                              lavsamplestats = fit_null@SampleStats,
+                              lavdata = fit_null@Data,
+                              lavcache = fit_null@Cache,
+                              lavjags = fit_null@external$mcmcout, #FIXME: Ed, is this correct?
+                              samplls = fit_null@external$samplls)$chisqs[,"reps"]
+      }
+      pD_null <- fitMeasures(fit_null, 'p_loo')
+    }
   }
 
-  ff <- BayesRelFit(obs=chisqs,
-                    nvar=fit@Model@nvar,
-                    pD=fit_pd, N=blavInspect(fit, 'ntotal'),
-                    ms=blavInspect(fit, 'meanstructure'),
-                    Min1=TRUE, Ngr=blavInspect(fit, 'ngroups'),
-                    null_model=null_model, obs_null=chisq_null,
-                    pD_null=pD_null)
-  
+  ff <- BayesRelFit(obs = chisqs, reps = reps,
+                    nvar = fit@Model@nvar, pD = fit_pd,
+                    N = blavInspect(fit, 'ntotal'), Min1 = FALSE,
+                    ms = blavInspect(fit, 'meanstructure'),
+                    Ngr = blavInspect(fit, 'ngroups'), rescale = rescale,
+                    null_model = null_model, obs_null = chisq_null,
+                    reps_null = reps_null, pD_null = pD_null)
   return(ff)
 }
 
 
-### Bayesian RMSEA from Rens
-### MGV: change the correction method, not longer like Rens
-### MGV: modified to also calculate gammahat, adjusted gammahat
-### TDJ: added McDonald's centrality index
-### if a null model information provided, it calculates CFI, TLI, NFI
-BayesRelFit <-function(obs, nvar, pD, N, ms = TRUE, Min1 = TRUE,
-                       Ngr = 1, null_model=TRUE, obs_null=NULL,
-                       pD_null=NULL){
-
+### Hidden function to calculate Bayesian fit indices
+### Rens: Bayesian RMSEA adapted from http://dx.doi.org/10.1177/0013164417709314
+### MGV:  change the correction method, not longer like Rens
+### TDJ:  added argument to select Rens' method ("ppmc") vs. ours ("devM")
+### MGV:  modified to also calculate gammahat, adjusted gammahat
+### TDJ:  added McDonald's centrality index
+### MGV:  If a null model information provided, it calculates CFI, TLI, NFI
+BayesRelFit <- function(obs, reps = NULL, nvar, pD, N, ms = TRUE, Min1 = FALSE,
+                        Ngr = 1, rescale = c("devM","ppmc"), null_model = TRUE,
+                        obs_null = NULL, reps_null = NULL, pD_null = NULL) {
+  if (Min1) N <- N - 1
+  rescale <- tolower(as.character(rescale[1]))
+  if (rescale == "devm") {
+    reps <- pD
+    if (!is.null(null_model)) reps_null <- pD_null
+  }
+  if (rescale == "ppmc" && (is.null(reps) || (null_model && is.null(reps_null))))
+    stop('rescale="ppmc" requires non-NULL reps argument (and reps_null, if applicable).')
+  
   ## Compute number of modeled moments
-  if(ms) p <- (((nvar * (nvar + 1)) / 2) + nvar)
-  if(!ms) p <- (((nvar * (nvar + 1))/ 2) + 0)
+  p <- ((nvar * (nvar + 1)) / 2)
+  if (ms) p <- p + nvar
   p <- p * Ngr
-  # # Substract parameters and estimated parameters
+  ## Substract parameters and estimated parameters
   dif.ppD <- p - pD
-  nonc <- obs - pD - dif.ppD # == obs - p
-  # # Correct if numerator is smaller than zero
+  nonc <- obs - reps - dif.ppD # == obs - p when rescale == "devm" because reps = pD
+  ## Correct if numerator is smaller than zero
   nonc[nonc < 0] <- 0
-  # # Compute BRMSEA (with or without the -1 correction)
-  if(Min1)
-    BRMSEA <- sqrt(nonc / (dif.ppD * (N - 1)))*sqrt(Ngr)
-  if(!Min1) BRMSEA <- sqrt(nonc / (dif.ppD * N))*sqrt(Ngr)
-
+  ## Compute BRMSEA
+  BRMSEA <- sqrt(nonc / (dif.ppD * N)) * sqrt(Ngr)
+  
   ## compute GammaHat and adjusted GammaHat
-  gammahat <- nvar / ( nvar+2* ((nonc)/(N-1))  )
-  adjgammahat <- 1 - (((Ngr * nvar * (nvar + 1))/2)/dif.ppD) * (1 - gammahat)
+  gammahat <- nvar / (nvar + 2*nonc/N)
+  adjgammahat <- 1 - (p / dif.ppD) * (1 - gammahat)
   
   ## compute McDonald's centrality index
-  Mc <- exp(-.5 * nonc/(N-1) )
+  Mc <- exp(-.5 * nonc/N)
+  
+  out <- cbind(chi_adj = obs - reps, df_adj = dif.ppD, BRMSEA = BRMSEA,
+               BGammaHat = gammahat, adjBGammaHat = adjgammahat, BMc = Mc)
   
   ## calculate fit when null model is provided
   if (null_model) {
     dif.ppD_null <- p - pD_null
-    nonc_null <- ( ( obs_null-pD_null ) - dif.ppD_null )
+    nonc_null <- (obs_null - reps_null) - dif.ppD_null
     
-    cfi <- (nonc_null - nonc)/nonc_null 
-    tli <- ((( obs_null-pD_null )/dif.ppD_null) - (( obs-pD )/dif.ppD)) / (((( obs_null-pD_null )/dif.ppD_null))-1) 
-    nfi <- (( obs_null-pD_null ) - ( obs-pD )) / ( obs_null-pD_null )
+    cfi <- 1 - (nonc / nonc_null)
+    tli_null_part <- (obs_null - reps_null) / dif.ppD_null
+    tli <- (tli_null_part - (obs - reps) / dif.ppD) / (tli_null_part - 1)
+    nfi <- ((obs_null - reps_null) - (obs - reps)) / (obs_null - reps_null)
     
-    out <- cbind(chi_adj=obs-pD, df_adj=dif.ppD, 
-                 BRMSEA=BRMSEA, BGammaHat=gammahat, adjBGammaHat=adjgammahat, 
-                 BMc = Mc, BCFI=cfi, BTLI=tli, BNFI=nfi)
-  } else {
-    out <- cbind(chi_adj=obs-pD, df_adj=dif.ppD,
-                 BRMSEA=BRMSEA, BGammaHat=gammahat, adjBGammaHat=adjgammahat, BMc = Mc)
+    out <- cbind(out, BCFI = cfi, BTLI = tli, BNFI = nfi)
   }
   
+  class(out) <- c("lavaan.matrix","matrix")
   return(out)
 }
