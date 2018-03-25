@@ -3,7 +3,7 @@ importFrom("methods",
 
 importFrom("utils", 
            # "sessionInfo",
-           "packageDescription", "str", "write.table")
+           "packageDescription", "str", "write.table", "packageVersion")
 
 importFrom("stats", 
            "approx", "density", "dnorm", "pnorm", "rgamma", "rnorm",
@@ -29,7 +29,8 @@ importFrom("lavaan",
            "lav_model_get_parameters", "lav_model_implied", 
            "lav_model_set_parameters", "lav_model_vcov_se", 
            "lav_partable_attributes",
-           "modificationIndices", "parTable", "parameterEstimates")
+           "modificationIndices", "parTable", "parameterEstimates",
+           "lavPredict")
 
 importFrom("runjags",
            "run.jags", "runjags.options")
