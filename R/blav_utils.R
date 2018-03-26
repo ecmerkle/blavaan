@@ -507,13 +507,13 @@ samp_kls <- function(lavjags        = NULL,
 
             lavobject@Model <- lavmodel0
             mnvec0 <- lavPredict(lavobject, type="ov", ETA=eta0)
-            if(any(class(mnvec0) == "matrix")) mnvec <- list(mnvec0)
+            if(any(class(mnvec0) == "matrix")) mnvec0 <- list(mnvec0)
             cmat0 <- lavInspect(lavobject, 'theta')
             if(any(class(cmat0) == "matrix")) cmat0 <- list(cmat0)
 
             lavobject@Model <- lavmodel1
             mnvec1 <- lavPredict(lavobject, type="ov", ETA=eta1)
-            if(any(class(mnvec1) == "matrix")) mnvec <- list(mnvec1)
+            if(any(class(mnvec1) == "matrix")) mnvec1 <- list(mnvec1)
             cmat1 <- lavInspect(lavobject, 'theta')
             if(any(class(cmat1) == "matrix")) cmat1 <- list(cmat1)
 
