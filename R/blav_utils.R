@@ -144,7 +144,10 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
         if("control" %in% slotNames(lavmodel)){
             lavmodel@control <- list(optim.method="none")
         }
-
+        ## FIXME: not sure when 'free' becomes numeric,
+        ## but S4 doesn't like it in the lavaan call
+        ## (only sometimes; related to extra monitors?)
+        lavpartable$free <- as.integer(lavpartable$free)
         fit.samp <- try(lavaan(slotParTable = lavpartable,
                                slotModel = lavmodel,
                                slotOptions = lavoptions,
@@ -430,12 +433,12 @@ add_monitors <- function(lavpartable, lavjags, jagextra){
     lavpartable$lhs <- c(lavpartable$lhs, xnms)
     lavpartable$op <- c(lavpartable$op, rep(":=", sum(nvars)))
     lavpartable$rhs <- c(lavpartable$rhs, rep("", sum(nvars)))
-    lavpartable$user <- c(lavpartable$user, rep(2, sum(nvars)))
-    lavpartable$group <- c(lavpartable$group, rep(1, sum(nvars)))
-    lavpartable$block <- c(lavpartable$block, rep(1, sum(nvars)))
-    lavpartable$free <- c(lavpartable$free, rep(0, sum(nvars)))
+    lavpartable$user <- c(lavpartable$user, rep(2L, sum(nvars)))
+    lavpartable$group <- c(lavpartable$group, rep(1L, sum(nvars)))
+    lavpartable$block <- c(lavpartable$block, rep(1L, sum(nvars)))
+    lavpartable$free <- c(lavpartable$free, rep(0L, sum(nvars)))
     lavpartable$ustart <- c(lavpartable$ustart, rep(NA, sum(nvars)))
-    lavpartable$exo <- c(lavpartable$exo, rep(0, sum(nvars)))
+    lavpartable$exo <- c(lavpartable$exo, rep(0L, sum(nvars)))
     lavpartable$label <- c(lavpartable$label, rep("", sum(nvars)))
     lavpartable$plabel <- c(lavpartable$plabel, rep("", sum(nvars)))
     lavpartable$start <- c(lavpartable$start, rep(0, sum(nvars)))
