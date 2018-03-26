@@ -696,7 +696,7 @@ blavaan <- function(...,  # default lavaan arguments
 
         if(length(reservemons) < length(mcmcextra$monitor)){
             jecopy <- mcmcextra
-            jecopy$monitor <- jecopy$monitor[-reservemons]
+            if(length(reservemons) > 0) jecopy$monitor <- jecopy$monitor[-reservemons]
             lavpartable <- add_monitors(lavpartable, lavjags, jecopy)
         }
     }

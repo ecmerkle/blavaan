@@ -219,9 +219,8 @@ case_lls <- function(lavjags        = NULL,
                      thin           = 1){
 
     ## mcmc draws always in list
-    itnums <- sampnums(lavjags, thin=5)
+    itnums <- sampnums(lavjags, thin=thin)
     nsamps <- length(itnums)
-  
     nchain <- length(lavmcmc)
 
     ntot <- sum(unlist(lavdata@nobs))
