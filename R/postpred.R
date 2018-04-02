@@ -48,18 +48,37 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
         ## cov matrix.
         lavmodel <- fill_params(lavmcmc[[j]][samp.indices[i],],
                                 origlavmodel, lavpartable)
-  
+
         ## generate data (some code from lav_bootstrap.R)
         implied <- lav_model_implied(lavmodel)
         Sigma.hat <- implied$cov
         Mu.hat <- implied$mean
         dataeXo <- lavdata@eXo
   
-        dataX <- vector("list", length=lavdata@ngroups)
+        dataX <- origlavdata@X
         for(g in 1:lavsamplestats@ngroups) {
-          dataX[[g]] <- MASS::mvrnorm(n     = lavsamplestats@nobs[[g]],
-                                      Sigma = Sigma.hat[[g]],
-                                      mu    = Mu.hat[[g]])
+          x.idx <- lavsamplestats@x.idx[[g]]
+          if(!is.null(x.idx) && length(x.idx) > 0L){
+            ## for fixed.x, generate the other ovs
+            ## conditional on the x values
+            nox <- (1:nrow(Mu.hat[[g]]))[-x.idx]
+            tm1 <- Sigma.hat[[g]][nox,x.idx] %*% solve(Sigma.hat[[g]][x.idx,x.idx])
+            cmu <- Mu.hat[[g]][nox,] +
+              tm1 %*% apply(origlavdata@X[[g]][,x.idx], 1, function(x) (x - Mu.hat[[g]][x.idx,]))
+            csig <- Sigma.hat[[g]][nox,nox] - tm1 %*% Sigma.hat[[g]][x.idx,nox]
+            sigchol <- chol(csig)
+            
+            dataX[[g]][,nox] <- t(apply(cmu, 2, function(x) mnormt::rmnorm(n=1,
+                                                                    sqrt=sigchol,
+                                                                    mean=x)))
+          } else {
+            nox <- 1:nrow(Mu.hat[[g]])
+            cmu <- Mu.hat[[g]]
+            csig <- Sigma.hat[[g]]
+
+            dataX[[g]] <- mnormt::rmnorm(n = lavsamplestats@nobs[[g]],
+                                         varcov = csig, mean = cmu)
+          }
           
           ## get completely missing observations out, or there
           ## will be problems
@@ -68,27 +87,14 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
             origlavdata@X[[g]] <- origlavdata@X[[g]][-which(allmis),]
           }
   
-          ## fixed x should also be generated, so don't need this:
-          ##x.idx <- lavsamplestats@x.idx[[g]]
-          ##if(!is.null(x.idx) && length(x.idx) > 0L){
-          ##  dataX[[g]][,x.idx] <- origlavdata@X[[g]][,x.idx]
-          ##}
-          
           dataX[[g]][is.na(origlavdata@X[[g]])] <- NA
         }
-  
+
         ## compute (i) X2 of generated data and model-implied
         ## moments, along with (ii) X2 of real data and model-implied
         ## moments.
         chisq.obs <- -2*(samplls[i, j, 1] -
                          samplls[i, j, 2])
-                             #get_ll(lavmodel = lavmodel,
-                             #    lavpartable = lavpartable,
-                             #    lavsamplestats = lavsamplestats,
-                             #    lavoptions = lavoptions,
-                             #    lavcache = lavcache,
-                             #    lavdata = origlavdata,
-                             #    measure = measure)
         
         #FIXME TDJ: apply custom "discFUN" here
   
@@ -98,14 +104,6 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
   
         if(!mis & length(discFUN) == 0){ #TDJ: if discFUN is supplied, we go right to "else"
           lavdata@X <- dataX
-          x.idx <- lavsamplestats@x.idx[[g]]
-          if(!is.null(x.idx) && length(x.idx) > 0L){
-            for(g in 1:lavsamplestats@ngroups) {
-              lavsamplestats@mean.x[[g]] <- apply(lavdata@X[[g]][,x.idx,drop=FALSE], 2, mean)
-              lavsamplestats@cov.x[[g]] <- cov(lavdata@X[[g]][,x.idx,drop=FALSE])
-            }
-          }
-  
           chisq.boot <- 2*diff(get_ll(lavmodel = lavmodel,
                                       lavsamplestats = lavsamplestats,
                                       lavdata = lavdata,
