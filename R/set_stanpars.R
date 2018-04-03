@@ -137,6 +137,9 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
                     } else if(grepl("star", partable$mat[i])){
                         pname <- paste("i", strsplit(partable$mat[i], "star")[[1]][1], sep="")
                         partype <- grep(pname, names(dp))
+                    } else if(grepl("UNC", partable$mat[i])){
+                        pname <- strsplit(partable$mat[i], "UNC")[[1]][1]
+                        partype <- grep(pname, names(dp))
                     } else {
                         partype <- grep(partable$mat[i], names(dp))
                     }
