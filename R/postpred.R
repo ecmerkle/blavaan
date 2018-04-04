@@ -64,7 +64,8 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
             nox <- (1:nrow(Mu.hat[[g]]))[-x.idx]
             tm1 <- Sigma.hat[[g]][nox,x.idx] %*% solve(Sigma.hat[[g]][x.idx,x.idx])
             cmu <- Mu.hat[[g]][nox,] +
-              tm1 %*% apply(origlavdata@X[[g]][,x.idx], 1, function(x) (x - Mu.hat[[g]][x.idx,]))
+              tm1 %*% apply(origlavdata@X[[g]][,x.idx,drop=FALSE], 1,
+                            function(x) (x - Mu.hat[[g]][x.idx,]))
             csig <- Sigma.hat[[g]][nox,nox] - tm1 %*% Sigma.hat[[g]][x.idx,nox]
             sigchol <- chol(csig)
             
