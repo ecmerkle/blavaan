@@ -77,8 +77,8 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
             cmu <- Mu.hat[[g]]
             csig <- Sigma.hat[[g]]
 
-            dataX[[g]] <- matrix(mnormt::rmnorm(n = lavsamplestats@nobs[[g]],
-                                 varcov = csig, mean = cmu))
+            dataX[[g]] <- as.matrix(mnormt::rmnorm(n = lavsamplestats@nobs[[g]],
+                                   varcov = csig, mean = cmu))
           }
 
           ## get completely missing observations out, or there
