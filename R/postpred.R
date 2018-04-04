@@ -33,13 +33,22 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
     ## parallel across chains if we can
     ncores <- NA
     loop.comm <- "lapply"
-    if(.Platform$OS.type != "windows" & requireNamespace("parallel", quietly = TRUE)){
+    if(FALSE){#.Platform$OS.type != "windows" & requireNamespace("parallel", quietly = TRUE)){
       ncores <- min(n.chains, parallel::detectCores())
       loop.comm <- "mclapply"
     }
     
     origlavmodel <- lavmodel
     origlavdata <- lavdata
+
+    ## get completely missing observations out, or there
+    ## will be problems
+    for(g in 1:lavsamplestats@ngroups) {
+      allmis <- apply(is.na(origlavdata@X[[g]]), 1, all)
+      if(sum(allmis) > 0){
+        origlavdata@X[[g]] <- origlavdata@X[[g]][-which(allmis),,drop=FALSE]
+      }
+    }
   
     loop.args <- list(X = 1:n.chains, FUN = function(j){
       ind <- csdist <- csboots <- rep(NA, psamp)
@@ -78,14 +87,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
             csig <- Sigma.hat[[g]]
 
             dataX[[g]] <- as.matrix(mnormt::rmnorm(n = lavsamplestats@nobs[[g]],
-                                   varcov = csig, mean = cmu))
-          }
-
-          ## get completely missing observations out, or there
-          ## will be problems
-          allmis <- apply(is.na(origlavdata@X[[g]]), 1, all)
-          if(sum(allmis) > 0){
-            origlavdata@X[[g]] <- origlavdata@X[[g]][-which(allmis),]
+                                    varcov = csig, mean = cmu))
           }
   
           dataX[[g]][is.na(origlavdata@X[[g]])] <- NA
@@ -137,7 +139,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
             DATA <- DATA.X
           }
           DATA <- as.data.frame(DATA)
-  
+
           lavoptions2 <- lavoptions
           lavoptions2$verbose <- FALSE
           lavoptions2$estimator <- "ML"
