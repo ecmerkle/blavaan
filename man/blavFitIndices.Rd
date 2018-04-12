@@ -70,7 +70,7 @@ summary(object, central.tendency = c("mean","median","mode"),
   and (if requested) the HPD credible-interval limits.
 }
 \author{
-Mauricio Garnier-Villareal (MarquetteUniversity;
+Mauricio Garnier-Villareal (Marquette University;
 \email{mauricio.garniervillarreal@marquette.edu})
 
 Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@gmail.com})

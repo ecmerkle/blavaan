@@ -276,10 +276,8 @@ BayesChiFit <- function(obs, reps = NULL, nvar, pD, N, Ngr = 1,
                             pD = pD, rescale = rescale),
              indices = result)
   ## for print methods
-  for (i in seq_along(out@details)) {
-    class1 <- class(out@details[[i]])
-    class(out@details[[i]]) <- c("lavaan.vector", class1)
-  }
+  class(out@details$chisq) <- c("lavaan.vector","numeric")
+  class(out@details$df) <- c("lavaan.vector","numeric")
   for (i in seq_along(out@indices)) {
     class(out@indices[[i]]) <- c("lavaan.vector","numeric")
   }
