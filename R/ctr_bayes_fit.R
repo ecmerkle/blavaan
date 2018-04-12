@@ -1,5 +1,5 @@
 ### Mauricio Garnier-Villareal and Terrence D. Jorgensen
-### Last updated: 11 April 2018
+### Last updated: 12 April 2018
 ### functions applying traditional SEM fit criteria to Bayesian models.
 ### Inspired by, and adpated from, Rens van de Schoot's idea for BRMSEA, as
 ### published in http://dx.doi.org/10.1177/0013164417709314
@@ -174,6 +174,8 @@ blavFitIndices <- function(object, pD = c("loo","waic","dic"),
                        reps_null = reps_null, pD_null = pD_null)
   }
   
+  nChains <- blavInspect(object, 'n.chains')
+  out@details <- c(out@details, list(n.chains = nChains))
   out
 }
 

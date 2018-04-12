@@ -19,8 +19,10 @@ summary(object, central.tendency = c("mean","median","mode"),
 }
 \arguments{
   \item{object}{An object of class \code{\linkS4class{blavaan}}.}
-  \item{pD}{\code{character} indicating from which information criterion to
-    use the estimated number of parameters.}
+  \item{pD}{\code{character} indicating from which information criterion
+    returned by \code{fitMeasures(object)} to use the estimated number of
+    parameters. The default is from the leave-one-out information criterion
+    (LOO-IC), which is most highly recommended by Vehtari et al. (2017).}
   \item{rescale}{\code{character} indicating the method used to calculate
     fit indices. If \code{rescale = "devM"} (default), the Bayesian analog of
     the \eqn{\chi^2} statistic (the deviance evaluated at the posterior mean
@@ -29,7 +31,7 @@ summary(object, central.tendency = c("mean","median","mode"),
     \code{rescale = "PPMC"}, the deviance at each iteration is rescaled by
     subtracting the deviance of data simulated from the posterior predictive
     distribution (as in posterior predictive model checking; see Hoofs et al.,
-    in press). If \code{rescale = "MCMC"} (not implemented yet), the fit
+    2017). If \code{rescale = "MCMC"} (not implemented yet), the fit
     measures are simply calculated at each iteration of the Markov chain(s),
     based on the model-implied moments at that iteration.}
   \item{fit.measures}{If \code{"all"}, all fit measures available will be
@@ -54,7 +56,7 @@ summary(object, central.tendency = c("mean","median","mode"),
   \item{prob}{The "confidence" level of the credible interval(s).}
 }
 \value{
-  An S4 object of class 'blavFitIndices' consisting of 2 slots:
+  An S4 object of class \code{blavFitIndices} consisting of 2 slots:
   \item{\code{@details}}{A \code{list} containing the choices made by the user
     (or defaults; e.g., which values of \code{pD} and \code{rescale} were set),
     as well as the posterior distribution of the \eqn{\chi^2} (deviance)
@@ -68,7 +70,7 @@ summary(object, central.tendency = c("mean","median","mode"),
   and (if requested) the HPD credible-interval limits.
 }
 \author{
-Mauricio Garnier-Villareal (University of Marquette;
+Mauricio Garnier-Villareal (MarquetteUniversity;
 \email{mauricio.garniervillarreal@marquette.edu})
 
 Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@gmail.com})
@@ -76,7 +78,7 @@ Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@gmail.com})
 \references{
   \code{rescale = "PPMC"} based on:
   
-  Hoofs, H., van de Schoot, R., Jansen, N. W., & Kant, I. (in press).
+  Hoofs, H., van de Schoot, R., Jansen, N. W., & Kant, I. (2017).
   Evaluating model fit in Bayesian confirmatory factor analysis with large
   samples: Simulation study introducing the BRMSEA. 
   \emph{Educational and Psychological Measurement}. doi:10.1177/0013164417709314
@@ -86,6 +88,13 @@ Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@gmail.com})
   Garnier-Villarreal, M., & Jorgensen, T. D. (2018).
   \emph{Adapting fit indices for Bayesian SEM: Comparison to maximum likelihood}.
   Unpublished manuscript (see \url{https://osf.io/afkcw/}).
+  
+  Other references:
+  
+  Vehtari, A., Gelman, A., & Gabry, J. (2017). Practical Bayesian model
+  evaluation using leave-one-out cross-validation and WAIC.
+  \emph{Statistics and Computing, 27}(5), 1413--1432.
+  doi:10.1007/s11222-016-9696-4
   
 }
 \examples{ \dontrun{
@@ -110,7 +119,7 @@ summary(ML)
 
 ## other options:
 
-## - use Hoofs et al.'s (in press) PPMC-based method
+## - use Hoofs et al.'s (2017) PPMC-based method
 ## - use the estimated number of parameters from WAIC instead of LOO-IC
 PPMC <- blavFitIndices(fit1, baseline.model = fit0,
                        pD = "waic", rescale = "PPMC")
@@ -119,5 +128,30 @@ PPMC <- blavFitIndices(fit1, baseline.model = fit0,
 ## - specify only the desired measures of central tendency
 ## - specify a different "confidence" level for the credible intervals
 summary(PPMC, central.tendency = c("mean","mode"), prob = .95)
+
+
+
+## Access the posterior distributions for further investigation
+head(distML <- data.frame(ML@indices))
+
+## For example, diagnostic plots using the bayesplot package:
+
+## distinguish chains
+nChains <- blavInspect(fit1, "n.chains")
+distML$Chain <- rep(1:nChains, each = nrow(distML) / nChains)
+
+library(bayesplot)
+mcmc_pairs(distML, pars = c("BRMSEA","BMc","BGammaHat","BCFI","BTLI"),
+           diag_fun = "hist")
+## Indices are highly correlated across iterations in both chains
+
+## Compare to PPMC method
+distPPMC <- data.frame(PPMC@indices)
+distPPMC$Chain <- rep(1:nChains, each = nrow(distPPMC) / nChains)
+mcmc_pairs(distPPMC, pars = c("BRMSEA","BMc","BGammaHat","BCFI","BTLI"),
+           diag_fun = "dens")
+## nonlinear relation between BRMSEA, related to the floor effect of BRMSEA
+## that Hoofs et al. found for larger (12-indicator) models
+
 }}
 
