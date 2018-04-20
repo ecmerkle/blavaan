@@ -33,7 +33,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
     ## parallel across chains if we can
     ncores <- NA
     loop.comm <- "lapply"
-    if(FALSE){#.Platform$OS.type != "windows" & requireNamespace("parallel", quietly = TRUE)){
+    if(.Platform$OS.type != "windows" & requireNamespace("parallel", quietly = TRUE)){
       ncores <- min(n.chains, parallel::detectCores())
       loop.comm <- "mclapply"
     }
@@ -41,14 +41,10 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
     origlavmodel <- lavmodel
     origlavdata <- lavdata
 
-    ## get completely missing observations out, or there
-    ## will be problems
-    for(g in 1:lavsamplestats@ngroups) {
-      allmis <- apply(is.na(origlavdata@X[[g]]), 1, all)
-      if(sum(allmis) > 0){
-        origlavdata@X[[g]] <- origlavdata@X[[g]][-which(allmis),,drop=FALSE]
-      }
-    }
+
+    ## check for missing, to see if we can easily get baseline ll for chisq
+    mis <- FALSE
+    if(any(is.na(unlist(lavdata@X)))) mis <- TRUE
   
     loop.args <- list(X = 1:n.chains, FUN = function(j){
       ind <- csdist <- csboots <- rep(NA, psamp)
@@ -63,24 +59,57 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
         Sigma.hat <- implied$cov
         Mu.hat <- implied$mean
         dataeXo <- lavdata@eXo
-  
+
         dataX <- origlavdata@X
         for(g in 1:lavsamplestats@ngroups) {
           x.idx <- lavsamplestats@x.idx[[g]]
+          nox <- (1:nrow(Mu.hat[[g]]))[-x.idx]
           if(!is.null(x.idx) && length(x.idx) > 0L){
             ## for fixed.x, generate the other ovs
             ## conditional on the x values
-            nox <- (1:nrow(Mu.hat[[g]]))[-x.idx]
-            tm1 <- Sigma.hat[[g]][nox,x.idx] %*% solve(Sigma.hat[[g]][x.idx,x.idx])
-            cmu <- Mu.hat[[g]][nox,] +
-              tm1 %*% apply(origlavdata@X[[g]][,x.idx,drop=FALSE], 1,
-                            function(x) (x - Mu.hat[[g]][x.idx,]))
-            csig <- Sigma.hat[[g]][nox,nox] - tm1 %*% Sigma.hat[[g]][x.idx,nox]
-            sigchol <- chol(csig)
+            if(!mis){
+              tm1 <- Sigma.hat[[g]][nox,x.idx] %*% solve(Sigma.hat[[g]][x.idx,x.idx])
+              cmu <- Mu.hat[[g]][nox,] +
+                tm1 %*% apply(origlavdata@X[[g]][,x.idx,drop=FALSE], 1,
+                              function(x) (x - Mu.hat[[g]][x.idx,]))
+              csig <- Sigma.hat[[g]][nox,nox] - tm1 %*% Sigma.hat[[g]][x.idx,nox]
+              sigchol <- chol(csig)
             
-            dataX[[g]][,nox] <- t(apply(cmu, 2, function(x) mnormt::rmnorm(n=1,
-                                                                    sqrt=sigchol,
-                                                                    mean=x)))
+              dataX[[g]][,nox] <- t(apply(cmu, 2, function(x) mnormt::rmnorm(n=1,
+                                                                      sqrt=sigchol,
+                                                                      mean=x)))
+            } else {
+              ## condition only on observed x values
+              M <- lavsamplestats@missing[[g]]
+              Mp <- lavdata@Mp[[g]]
+              for(p in 1:length(M)){
+                var.idx <- M[[p]][["var.idx"]]
+                obsx <- which(x.idx %in% var.idx)
+                if(length(obsx) > 0){
+                  xp.idx <- x.idx[obsx]
+                  tm1 <- Sigma.hat[[g]][nox,xp.idx] %*% solve(Sigma.hat[[g]][xp.idx,xp.idx])
+                  cmu <- Mu.hat[[g]][nox,] +
+                    tm1 %*% apply(origlavdata@X[[g]][,xp.idx,drop=FALSE], 1,
+                                  function(x) (x - Mu.hat[[g]][xp.idx,]))
+                  csig <- Sigma.hat[[g]][nox,nox] - tm1 %*% Sigma.hat[[g]][xp.idx,nox]
+                  sigchol <- chol(csig)
+
+                  dataX[[g]][Mp$case.idx[[p]],nox] <- t(apply(cmu, 2,
+                                                              function(x) mnormt::rmnorm(n=1,
+                                                                                         sqrt=sigchol,
+                                                                                         mean=x)))
+                } else {
+                  cmu <- Mu.hat[[g]][nox,]
+                  csig <- Sigma.hat[[g]][nox,nox]
+
+                  dataX[[g]][Mp$case.idx[[p]],nox] <- as.matrix(mnormt::rmnorm(n = length(Mp$case.idx[[p]]),
+                                                                               varcov = csig,
+                                                                               mean = cmu))
+                }
+
+
+              }
+            }
           } else {
             nox <- 1:nrow(Mu.hat[[g]])
             cmu <- Mu.hat[[g]]
@@ -91,6 +120,9 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
           }
   
           dataX[[g]][is.na(origlavdata@X[[g]])] <- NA
+          if(length(origlavdata@Mp[[g]]$empty.idx) > 0){
+            dataX[[g]] <- dataX[[g]][-origlavdata@Mp[[g]]$empty.idx,]
+          }
         }
 
         ## compute (i) X2 of generated data and model-implied
@@ -102,10 +134,6 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
         #FIXME TDJ: Apply custom "discFUN" here.
         #           Need to create a lavaan object using original data,
         #           like the hack below does for generated data.
-  
-        ## check for missing, to see if we can easily get baseline ll for chisq
-        mis <- FALSE
-        if(any(is.na(unlist(lavdata@X)))) mis <- TRUE
   
         if(!mis & length(discFUN) == 0){ #TDJ: if discFUN is supplied, we go right to "else"
           lavdata@X <- dataX
