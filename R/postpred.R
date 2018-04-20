@@ -40,7 +40,12 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
     
     origlavmodel <- lavmodel
     origlavdata <- lavdata
-
+    ## get rid of completely missing
+    for(g in 1:lavsamplestats@ngroups){
+      if(length(origlavdata@Mp[[g]]$empty.idx) > 0){
+        origlavdata@X[[g]] <- origlavdata@X[[g]][-origlavdata@Mp[[g]]$empty.idx,,drop=FALSE]
+      }
+    }
 
     ## check for missing, to see if we can easily get baseline ll for chisq
     mis <- FALSE
@@ -79,7 +84,8 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
                                                                       sqrt=sigchol,
                                                                       mean=x)))
             } else {
-              ## condition only on observed x values
+              ## condition only on observed x values; to be revised after
+              ## lav_mvnorm_missing_loglik_samplestats handles x.idx
               M <- lavsamplestats@missing[[g]]
               Mp <- lavdata@Mp[[g]]
               for(p in 1:length(M)){
@@ -106,8 +112,6 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
                                                                                varcov = csig,
                                                                                mean = cmu))
                 }
-
-
               }
             }
           } else {
@@ -118,11 +122,8 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
             dataX[[g]] <- as.matrix(mnormt::rmnorm(n = lavsamplestats@nobs[[g]],
                                     varcov = csig, mean = cmu))
           }
-  
+
           dataX[[g]][is.na(origlavdata@X[[g]])] <- NA
-          if(length(origlavdata@Mp[[g]]$empty.idx) > 0){
-            dataX[[g]] <- dataX[[g]][-origlavdata@Mp[[g]]$empty.idx,]
-          }
         }
 
         ## compute (i) X2 of generated data and model-implied

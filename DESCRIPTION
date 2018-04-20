@@ -1,6 +1,6 @@
 Package: blavaan
 Title: Bayesian Latent Variable Analysis
-Version: 0.3-2.318
+Version: 0.3-2.319
 Authors@R: c(person(given = "Edgar", family = "Merkle",
                     role = c("aut", "cre"),
                     email = "merklee@missouri.edu"),
