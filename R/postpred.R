@@ -40,12 +40,6 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
     
     origlavmodel <- lavmodel
     origlavdata <- lavdata
-    ## get rid of completely missing
-    for(g in 1:lavsamplestats@ngroups){
-      if(length(origlavdata@Mp[[g]]$empty.idx) > 0){
-        origlavdata@X[[g]] <- origlavdata@X[[g]][-origlavdata@Mp[[g]]$empty.idx,,drop=FALSE]
-      }
-    }
 
     ## check for missing, to see if we can easily get baseline ll for chisq
     mis <- FALSE
@@ -84,18 +78,29 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
                                                                       sqrt=sigchol,
                                                                       mean=x)))
             } else {
-              ## condition only on observed x values; to be revised after
+              ## condition only on observed x values; to be re-examined after
               ## lav_mvnorm_missing_loglik_samplestats handles x.idx
               M <- lavsamplestats@missing[[g]]
               Mp <- lavdata@Mp[[g]]
               for(p in 1:length(M)){
                 var.idx <- M[[p]][["var.idx"]]
-                obsx <- which(x.idx %in% var.idx)
+                obsx <- x.idx[var.idx[x.idx]]
+
+                ## could also generate missing x's, but has no
+                ## impact
+                ##misx <- x.idx[!var.idx[x.idx]]
+                ##if(length(misx) > 0){
+                ##  dataX[[g]][Mp$case.idx[[p]],misx] <- mnormt::rmnorm(n = M[[p]]$freq,
+                ##                                         varcov = Sigma.hat[[g]][misx,misx],
+                ##                                         mean = Mu.hat[[g]][misx,])
+                ##  obsx <- x.idx
+                ##}
+                  
                 if(length(obsx) > 0){
-                  xp.idx <- x.idx[obsx]
+                  xp.idx <- obsx
                   tm1 <- Sigma.hat[[g]][nox,xp.idx] %*% solve(Sigma.hat[[g]][xp.idx,xp.idx])
                   cmu <- Mu.hat[[g]][nox,] +
-                    tm1 %*% apply(origlavdata@X[[g]][,xp.idx,drop=FALSE], 1,
+                    tm1 %*% apply(origlavdata@X[[g]][Mp$case.idx[[p]],xp.idx,drop=FALSE], 1,
                                   function(x) (x - Mu.hat[[g]][xp.idx,]))
                   csig <- Sigma.hat[[g]][nox,nox] - tm1 %*% Sigma.hat[[g]][xp.idx,nox]
                   sigchol <- chol(csig)
@@ -108,7 +113,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
                   cmu <- Mu.hat[[g]][nox,]
                   csig <- Sigma.hat[[g]][nox,nox]
 
-                  dataX[[g]][Mp$case.idx[[p]],nox] <- as.matrix(mnormt::rmnorm(n = length(Mp$case.idx[[p]]),
+                  dataX[[g]][Mp$case.idx[[p]],nox] <- as.matrix(mnormt::rmnorm(n = M[[p]]$freq,
                                                                                varcov = csig,
                                                                                mean = cmu))
                 }
@@ -119,13 +124,18 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
             cmu <- Mu.hat[[g]]
             csig <- Sigma.hat[[g]]
 
-            dataX[[g]] <- as.matrix(mnormt::rmnorm(n = lavsamplestats@nobs[[g]],
+            dataX[[g]] <- as.matrix(mnormt::rmnorm(n = nrow(dataX[[g]]),
                                     varcov = csig, mean = cmu))
           }
 
           dataX[[g]][is.na(origlavdata@X[[g]])] <- NA
-        }
 
+          ## get rid of completely missing
+          if(length(origlavdata@Mp[[g]]$empty.idx) > 0){
+            dataX[[g]] <- dataX[[g]][-origlavdata@Mp[[g]]$empty.idx,,drop=FALSE]
+          }
+        }
+        
         ## compute (i) X2 of generated data and model-implied
         ## moments, along with (ii) X2 of real data and model-implied
         ## moments.
