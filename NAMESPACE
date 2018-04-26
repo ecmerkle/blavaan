@@ -6,7 +6,7 @@ importFrom("utils",
            "packageDescription", "str", "write.table", "packageVersion")
 
 importFrom("stats", 
-           "approx", "density", "dnorm", "pnorm", "rgamma", "rnorm",
+           "approx", "density", "median", "dnorm", "pnorm", "rgamma", "rnorm",
            "runif", "quantile", "rWishart", "cov", "cor",
            "coef", "logLik",
            "residuals", "resid",
@@ -40,7 +40,7 @@ importFrom("MCMCpack",
 
 importFrom("coda",
            "mcmc.list",
-           "mcmc",
+           "mcmc", "as.mcmc",
            "HPDinterval")
 
 importFrom("mnormt",
@@ -54,6 +54,6 @@ importFrom("loo",
            "loo", "waic", "compare")
 
 export("blavaan", "bcfa", "bsem", "bgrowth", "dpriors", "BF", "blavCompare",
-       "blavTech", "blavInspect")
+       "blavTech", "blavInspect", "blavFitIndices")
 
 S3method(plot, blavaan)

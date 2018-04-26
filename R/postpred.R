@@ -21,7 +21,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
       if (!(is.function(discFUN) || allFuncs)) stop('The "discFUN" argument must',
                                                     ' be a (list of) function(s).')
     }
-    discFUN <- NULL # Not implemented yet
+    discFUN <- NULL #FIXME: Not implemented yet
   
     ## run through lavjags$mcmc, generate data from various posterior
     ## samples. thin like we do in samp_lls
@@ -142,8 +142,10 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
         chisq.obs <- -2*(samplls[i, j, 1] -
                          samplls[i, j, 2])
         
-        #FIXME TDJ: apply custom "discFUN" here
-    
+        #FIXME TDJ: Apply custom "discFUN" here.
+        #           Need to create a lavaan object using original data,
+        #           like the hack below does for generated data.
+  
         if(!mis & length(discFUN) == 0){ #TDJ: if discFUN is supplied, we go right to "else"
           lavdata@X <- dataX
           chisq.boot <- 2*diff(get_ll(lavmodel = lavmodel,
