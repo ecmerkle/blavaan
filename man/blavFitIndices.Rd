@@ -13,8 +13,7 @@ blavFitIndices(object, pD = c("loo","waic","dic"),
                fit.measures = "all", baseline.model = NULL)
 
 ## S4 method for signature 'blavFitIndices'
-
-summary(object, central.tendency = c("mean","median","mode"),
+\S4method{summary}{blavFitIndices}(object, central.tendency = c("mean","median","mode"),
         hpd = TRUE, prob = .90)
 }
 \arguments{

@@ -1,5 +1,6 @@
 \name{blavaan}
 \alias{blavaan}
+\alias{blavaan-class}
 \title{Fit a Bayesian Latent Variable Model}
 \description{
 Fit a Bayesian latent variable model.}
@@ -66,7 +67,7 @@ blavaan(..., cp = "srs",
     overview of the additional parameters that can be set.}
 }
 \value{
-  An object of class \code{\linkS4class{lavaan}}, for which several methods
+  An object that inherits from class \code{\linkS4class{lavaan}}, for which several methods
   are available, including a \code{summary} method.
 }
 \references{
@@ -74,8 +75,8 @@ Yves Rosseel (2012). lavaan: An R Package for Structural Equation
 Modeling. Journal of Statistical Software, 48(2), 1-36. URL
 http://www.jstatsoft.org/v48/i02/.
 
-Edgar C. Merkle & Yves Rosseel (2015). blavaan: Bayesian Structural
-Equation Models via Parameter Expansion.
+Edgar C. Merkle & Yves Rosseel (in press). blavaan: Bayesian Structural
+Equation Models via Parameter Expansion. Journal of Statistical Software.
 }
 \seealso{
 \code{\link{bcfa}}, \code{\link{bsem}}, \code{\link{bgrowth}}
