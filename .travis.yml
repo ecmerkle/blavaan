@@ -3,3 +3,8 @@ cache: packages
 
 sudo: required
 warnings_are_errors: true
+
+addons:
+  apt:
+    packages:
+      - jags
