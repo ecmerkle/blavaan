@@ -22,7 +22,7 @@ blavInspect <- function(blavobject, what, ...) {
                    "ac.10", "neff", "mcmc", "draws", "samples",
                    "n.chains", "cp", "dp", "postmode", "postmean",
                    "postmedian", "hpd", "jagnames", "stannames",
-                   "fscores", "lvs", "fsmeans", "lvmeans")
+                   "fscores", "lvs", "fsmeans", "lvmeans", "mcobj")
 
     ## whats that are not handled
     nowhats <- c("mi", "modindices", "modification.indices",
@@ -82,6 +82,8 @@ blavInspect <- function(blavobject, what, ...) {
                 if(add.labels) rownames(draws) <- labs
             }
             draws
+        } else if(what == "mcobj"){
+            blavobject@external$mcmcout
         } else if(what %in% c("fscores","lvs","fsmeans","lvmeans")){
             if(jagtarget){
                 etas <- any(blavobject@external$mcmcout$monitor == "eta")

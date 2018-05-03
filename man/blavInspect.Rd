@@ -27,6 +27,7 @@ documentation.
   \item{\code{"ac.10"}:}{Each parameter's estimated lag-10 autocorrelation.}
   \item{\code{"neff"}:}{Each parameters effective sample size, taking into account autocorrelation.}
   \item{\code{"mcmc"}:}{An object of class \code{mcmc} containing the individual parameter draws from the MCMC run. Aliases: \code{"draws"}, \code{"samples"}.}
+  \item{\code{"mcobj"}:}{The underlying run.jags or stan object that resulted from the MCMC run.}
   \item{\code{"n.chains"}:}{The number of chains sampled.}
   \item{\code{"cp"}:}{The approach used for estimating covariance parameters (\code{"srs"} or \code{"fa"}).}
   \item{\code{"dp"}:}{Default prior distributions used for each type of model parameter.}
