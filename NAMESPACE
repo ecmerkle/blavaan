@@ -32,9 +32,6 @@ importFrom("lavaan",
            "modificationIndices", "parTable", "parameterEstimates",
            "lavPredict")
 
-importFrom("runjags",
-           "run.jags", "runjags.options")
-
 importFrom("MCMCpack",
            "dwish")
 

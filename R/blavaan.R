@@ -44,7 +44,7 @@ blavaan <- function(...,  # default lavaan arguments
         }
     }
 
-    # ensure stan is here
+    # ensure rstan/runjags are here
     if(target == "stan"){
       if(convergence == "auto"){
         stop("blavaan ERROR: auto convergence is unavailable for stan.")
@@ -54,6 +54,12 @@ blavaan <- function(...,  # default lavaan arguments
         stop("blavaan ERROR: rstan package is not installed.")
       } else {
         try(suppressMessages(attachNamespace("rstan")), silent = TRUE)
+      }
+    } else if(target == "jags"){
+      if(!(suppressMessages(requireNamespace("runjags", quietly = TRUE)))){
+        stop("blavaan ERROR: runjags package is not installed.")
+      } else {
+        try(suppressMessages(attachNamespace("runjags")), silent = TRUE)
       }
     }
 
@@ -450,8 +456,8 @@ blavaan <- function(...,  # default lavaan arguments
 
             if(target == "jags"){
                 ## obtain posterior modes
-                if(suppressMessages(requireNamespace("modeest", quietly = TRUE))) runjags.options(mode.continuous = TRUE)
-                runjags.options(force.summary = TRUE)
+                if(suppressMessages(requireNamespace("modeest", quietly = TRUE))) runjags::runjags.options(mode.continuous = TRUE)
+                runjags::runjags.options(force.summary = TRUE)
             }
 
             if(jag.do.fit){
