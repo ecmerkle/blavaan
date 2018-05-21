@@ -1,6 +1,8 @@
 language: r
 cache: packages
 
+r_github_packages: yrosseel/lavaan
+
 sudo: required
 warnings_are_errors: true
 
