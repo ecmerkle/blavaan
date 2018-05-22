@@ -20,7 +20,7 @@ Authors@R: c(person(given = "Edgar", family = "Merkle",
             )
 Description: Fit a variety of Bayesian latent variable models, including confirmatory
    factor analysis, structural equation models, and latent growth curve models.
-Depends: R(>= 3.2.0), methods, lavaan(>= 0.5-23)
+Depends: R(>= 3.2.0), methods, lavaan(>= 0.6-1)
 Imports: stats, utils, graphics, MCMCpack, coda, mnormt, nonnest2(>= 0.5-1), loo(>= 2.0)
 Suggests: runjags(>= 2.0.4-2), rstan(>= 2.17-3), modeest, rjags, semTools, parallel
 License: GPL (>= 2)
