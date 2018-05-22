@@ -44,22 +44,36 @@ blavaan <- function(...,  # default lavaan arguments
         }
     }
 
-    # ensure rstan/runjags are here
+    # ensure rstan/runjags are here. if target is not installed but
+    # the other is, then use the other instead.
     if(target == "stan"){
       if(convergence == "auto"){
         stop("blavaan ERROR: auto convergence is unavailable for stan.")
       }
-      # could also use requireNamespace + attachNamespace
-      if(!(suppressMessages(requireNamespace("rstan", quietly = TRUE)))){
-        stop("blavaan ERROR: rstan package is not installed.")
+
+      if(!pkgcheck("rstan")){
+        if(pkgcheck("runjags")){
+          cat("blavaan NOTE: rstan not installed; using runjags instead.\n")
+          target <- "jags"
+          pkgload("runjags")
+        } else {
+          stop("blavaan ERROR: rstan package is not installed.")
+        }
       } else {
-        try(suppressMessages(attachNamespace("rstan")), silent = TRUE)
+        pkgload("rstan")
       }
     } else if(target == "jags"){
-      if(!(suppressMessages(requireNamespace("runjags", quietly = TRUE)))){
-        stop("blavaan ERROR: runjags package is not installed.")
+      if(!pkgcheck("runjags")){
+        ## go to rstan if they have it
+        if(pkgcheck("rstan")){
+          cat("blavaan NOTE: runjags not installed; using rstan instead.\n")
+          target <- "stan"
+          pkgload("rstan")
+        } else {
+          stop("blavaan ERROR: runjags package is not installed.")
+        }
       } else {
-        try(suppressMessages(attachNamespace("runjags")), silent = TRUE)
+        pkgload("runjags")
       }
     }
 

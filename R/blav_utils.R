@@ -662,3 +662,12 @@ make_mcmc <- function(mcmcout){
   }
   lavmcmc
 }
+
+## check that a package is installed via requireNamspace
+pkgcheck <- function(x){
+  suppressMessages(requireNamespace(x, quietly = TRUE))
+}
+
+pkgload <- function(x){
+  try(suppressMessages(attachNamespace(x)), silent = TRUE)
+}
