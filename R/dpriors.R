@@ -1,7 +1,14 @@
 dpriors <- function(..., target="jags"){
   userspec <- list(...)
 
-  if(length(userspec) > 0){
+  jagpres <- pkgcheck("runjags")
+  stanpres <- pkgcheck("rstan")
+
+  if(jagpres & !stanpres){
+    dp <- do.call("jagpriors", userspec)
+  } else if(stanpres & !jagpres){
+    dp <- do.call("stanpriors", userspec)
+  } else if(length(userspec) > 0){
     ## check whether they are supplying jags or stan distributions
     jagdists <- transtables()$disttrans[,'jags']
     ## add other jags dists not in the translation table
@@ -16,7 +23,7 @@ dpriors <- function(..., target="jags"){
       if(target == "jags"){
         dp <- do.call("jagpriors", userspec)
       } else {
-        stop("blavaan ERROR: JAGS distributions sent to dpriors(), but target='stan'")
+        stop("blavaan ERROR: JAGS distributions sent to dpriors(), but target != 'jags'")
       }
     } else if(length(unlist(userjags)) == 0){
       ## assume they wanted stan
