@@ -240,6 +240,7 @@ nlvcovs)
             partable$free[tmprows[1:3]] <- 0
             partable$ustart[tmprows[3]] <- 1
             partable$ustart[tmprows[1:2]] <- 0
+            partable$exo[tmprows[1:3]] <- 0
           } else {
             partable$plabel[tmprows[3]] <- partable$plabel[covparg]
             partable$free[tmprows[3]] <- partable$free[covparg]
