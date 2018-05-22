@@ -273,6 +273,7 @@ nlvcovs)
           partable$user[(nr-1):nr] <- 2
           partable$free[(nr-1):nr] <- 0
           partable$group[(nr-1):nr] <- 0
+          partable$exo[(nr-1):nr] <- 0
 
           if((ctype == "ov" & ov.cp == "fa") | (ctype == "lv" & lv.cp == "fa")){
             old.label <- which(partable$op == "~~" &
@@ -288,6 +289,7 @@ nlvcovs)
             partable$user[nr] <- 2
             partable$free[nr] <- 0
             partable$group[nr] <- 0
+            partable$exo[nr] <- 0
           }
         }
       }
@@ -309,6 +311,9 @@ nlvcovs)
 
   if(length(covpars) > 0) partable <- partable[-covpars,]
 
+  ## to avoid errors in lavaan 0.6-1
+  if(any(is.na(partable$exo))) partable$exo[is.na(partable$exo)] <- 0
+  
   ## Add parameter numbers now that we have phantoms
   parnums <- rep(NA, nrow(partable))
   parrows <- which(!(partable$op == "=="))
