@@ -559,7 +559,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
 
   if(!is.null(lavdata) | class(model)[1]=="lavaan"){
     if(class(model)[1] == "lavaan") lavdata <- model@Data
-    ntot <- sum(unlist(lavdata@norig))
+    ntot <- sum(unlist(lavdata@nobs))
 
     ## exogenous x's go in their own matrix
     y <- matrix(NA, ntot, ny) #lapply(1:tmpnmvs, function(x) rep(NA,ntot))
@@ -591,6 +591,11 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
 
     g <- rep(NA, ntot)
 
+    ## case.idx is only for used cases
+    lavdata@case.idx <- lapply(lavdata@case.idx, function(x){
+      newidx <- match(1:max(x), x)
+      newidx[!is.na(newidx)]})
+    
     for(k in 1:ngroups){
       if(ny > 0){
         for(j in 1:ny){

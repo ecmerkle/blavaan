@@ -250,7 +250,7 @@ blavaan <- function(...,  # default lavaan arguments
       mcdebug <- dotdotdot$debug
       dotdotdot <- dotdotdot[-which(dotNames == "debug")]
     }
-    LAV <- suppressWarnings(do.call("lavaan", dotdotdot))
+    LAV <- do.call("lavaan", dotdotdot)
 
     if(LAV@Data@data.type == "moment") {
         stop("blavaan ERROR: full data are required. consider using kd() from package semTools.")
