@@ -376,7 +376,7 @@ blavaan <- function(...,  # default lavaan arguments
     } else {
         # if missing data, posterior predictives are way slow
         if(any(is.na(unlist(LAV@Data@X)))) {
-            cat("blavaan NOTE: Posterior predictives with missing data are currently very slow.\nConsider setting test=\"none\".\n\n")
+            cat("blavaan NOTE: Posterior predictives with missing data are currently very slow.\n\tConsider setting test=\"none\".\n\n")
         }
     }
     if(!jag.do.fit){

@@ -592,9 +592,12 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     g <- rep(NA, ntot)
 
     ## case.idx is only for used cases
-    lavdata@case.idx <- lapply(lavdata@case.idx, function(x){
-      newidx <- match(1:max(x), x)
-      newidx[!is.na(newidx)]})
+    tmpidx <- unlist(lavdata@case.idx)
+    newidx <- match(1:max(tmpidx), tmpidx)
+    newidx <- newidx[!is.na(newidx)]
+    grpidx <- rep(1:length(lavdata@case.idx), sapply(lavdata@case.idx, length))
+    lavdata@case.idx <- split(newidx, grpidx)
+    names(lavdata@case.idx) <- NULL
     
     for(k in 1:ngroups){
       if(ny > 0){
