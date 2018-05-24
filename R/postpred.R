@@ -3,7 +3,7 @@
 ###   - returns PPP value to store in @test slot
 ###   - returns posterior predictive distribution (PP-Dist) for additional
 ###     discrepancy functions evaluated on observed and replicated data
-### Last updated: 20 March 2018
+### Last updated: 24 May 2018
 ### Mauricio Garnier-Villarreal:
 ###   - update to return "chisq" PP-Dist from observed and replicated data
 ### Terrence D. Jorgensen:
@@ -168,7 +168,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
           DATA.eXo <- do.call("rbind", dataeXo)
           empties <- any(sapply(lavdata@Mp, function(x) length(x$empty.idx)) > 0)
           if(empties){
-            empties <- as.numeric(sapply(lavdata@Mp, function(x) x$empty.idx))
+            empties <- as.numeric(unlist(sapply(lavdata@Mp, function(x) x$empty.idx)))
             if(!any(is.na(empties))){
               DATA.eXo <- DATA.eXo[-empties, , drop = FALSE]
             }
