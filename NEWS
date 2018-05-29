@@ -1,3 +1,25 @@
+Changes in Version 0.3-2
+    o Improved handling of Stan models, including missing data, defined variables, 0-variance latents, multi-group.
+
+    o Conditional (on latent variables) information criteria available when save.lvs = TRUE.
+
+    o Experimental function blavFitIndices() added for Bayesian versions of SEM metrics, contributed by Terrence Jorgensen.
+
+    o blavaan 'intelligently' chooses target, if either runjags or rstan (but not both) is installed.
+
+    o Version dependencies updated, including lavaan and loo.
+
+    o Bug fixes from previous version.
+
+Changes in Version 0.3-1
+    o Stan export/estimation now supported.
+
+    o Improved handling of complex models, including growth/change models.
+
+    o Logical argument save.lvs added to sample factor scores. Samples/means can be obtained by supplying arguments 'lvs' and 'lvmeans' to blavInspect().
+
+    o Bug fixes from previous version.
+
 Changes in Version 0.2-4
     o Add 'seed' argument for setting the random seeds in each JAGS chain.
 
