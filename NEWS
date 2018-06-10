@@ -3,6 +3,8 @@ Changes in Version 0.3-2
 
     o Conditional (on latent variables) information criteria available when save.lvs = TRUE.
 
+    o Added CITATION to JSS publication and corresponding references updated.
+
     o Experimental function blavFitIndices() added for Bayesian versions of SEM metrics, contributed by Terrence Jorgensen.
 
     o blavaan 'intelligently' chooses target, if either runjags or rstan (but not both) is installed.
