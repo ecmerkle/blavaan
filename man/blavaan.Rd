@@ -75,8 +75,9 @@ Yves Rosseel (2012). lavaan: An R Package for Structural Equation
 Modeling. Journal of Statistical Software, 48(2), 1-36. URL
 http://www.jstatsoft.org/v48/i02/.
 
-Edgar C. Merkle & Yves Rosseel (in press). blavaan: Bayesian Structural
-Equation Models via Parameter Expansion. Journal of Statistical Software.
+Edgar C. Merkle & Yves Rosseel (2018). blavaan: Bayesian Structural
+Equation Models via Parameter Expansion. Journal of Statistical
+Software, 85(4), 1-30. URL http://www.jstatsoft.org/v85/i04/.
 }
 \seealso{
 \code{\link{bcfa}}, \code{\link{bsem}}, \code{\link{bgrowth}}

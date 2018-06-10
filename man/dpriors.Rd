@@ -40,8 +40,9 @@ dpriors(..., target = "jags")
 A character vector containing the prior distribution for each type of parameter.
 }
 \references{
-Edgar C. Merkle & Yves Rosseel (2015). blavaan: Bayesian Structural
-Equation Models via Parameter Expansion.
+Edgar C. Merkle & Yves Rosseel (2018). blavaan: Bayesian Structural
+Equation Models via Parameter Expansion. Journal of Statistical
+Software, 85(4), 1-30. URL http://www.jstatsoft.org/v85/i04/.
 }
 \seealso{
 \code{\link{bcfa}}, \code{\link{bsem}}, \code{\link{bgrowth}}
