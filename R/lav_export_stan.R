@@ -275,7 +275,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
                   partable$op == "~~" &
                   partable$lhs == partable$rhs &
                   partable$group == 1 &
-                  partable$mat == "psi")
+                  grepl("psi", partable$mat))
   n.psi.ov <- length(psi.ov)
   ny <- nov - n.psi.ov
   if(n.psi.ov > 0){
@@ -967,6 +967,11 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
           tmpidx <- which(partable$lhs == lvload[i] &
                           partable$op == "=~" &
                           partable$group == k)[1]
+          ## regressions of the lv on ov
+          regov <- which(partable$rhs == lvload[i] &
+                         partable$op == "~" &
+                         !(partable$lhs %in% lvload) &
+                         partable$group == k)
 
           GQ <- paste0(GQ, t1, "if(lambdaUNC[",
                        partable$row[tmpidx], ",", partable$col[tmpidx],
@@ -976,6 +981,12 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
                        k, "]));\n")
           GQ <- paste0(GQ, t2, "eta[,", partable$col[tmpidx],
                        "] = to_vector(-1 * etaUNC[,", partable$col[tmpidx], "]);\n")
+          if(length(regov) > 0){
+            GQ <- paste0(GQ, t2, "beta[", partable$row[regov], ",",
+                         partable$col[regov], ",", k, "] = -1 * ",
+                         "betaUNC[", partable$row[regov], ",",
+                         partable$col[regov], ",", k, "];\n")
+          }
 
           ## find regressions associated with this lv, they need
           ## sign changes too
