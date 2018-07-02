@@ -892,7 +892,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     if(any(partable$mat == "def")){
       ndecs <- sum(partable$mat == "def" &
                    partable$group == 1)
-      tpdecs <- paste0(tpdecs, "\n", t1, "real def[", ndecs, ", 1, ",
+      tpdecs <- paste0(tpdecs, "\n", t1, "real def[", ndecs, ",1,",
                        ngroups, "];\n")
     }
 
