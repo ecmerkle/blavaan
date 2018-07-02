@@ -34,7 +34,8 @@ blavInspect <- function(blavobject, what, ...) {
             idx <- idx[!is.na(idx)]
         } else {
             idx <- blavobject@ParTable$stansumnum
-            idx <- idx[blavobject@ParTable$free > 0]
+            idx <- idx[blavobject@ParTable$free > 0 |
+                       blavobject@ParTable$mat == "def"]
         }
         labs <- lav_partable_labels(blavobject@ParTable, type = "free")
         if(what %in% c("start", "starting.values", "inits")){
