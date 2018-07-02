@@ -972,6 +972,11 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
                          partable$op == "~" &
                          !(partable$lhs %in% lvload) &
                          partable$group == k)
+          ## regressions of an ov on lv
+          reglv <- which(partable$lhs == lvload[i] &
+                         partable$op == "~" &
+                         !(partable$rhs %in% lvload) &
+                         partable$group == k)
 
           GQ <- paste0(GQ, t1, "if(lambdaUNC[",
                        partable$row[tmpidx], ",", partable$col[tmpidx],
@@ -987,9 +992,14 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
                          "betaUNC[", partable$row[regov], ",",
                          partable$col[regov], ",", k, "];\n")
           }
+          if(length(reglv) > 0){
+            GQ <- paste0(GQ, t2, "beta[", partable$row[reglv], ",",
+                         partable$col[reglv], ",", k, "] = -1 * ",
+                         "betaUNC[", partable$row[reglv], ",",
+                         partable$col[reglv], ",", k, "];\n")
+          }
 
-          ## find regressions associated with this lv, they need
-          ## sign changes too
+          ## find lv-on-lv regressions, they need sign changes too
           regidx <- which(partable$rhs == lvload[i] &
                           partable$op == "~" &
                           partable$lhs %in% lvload &
