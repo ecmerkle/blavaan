@@ -141,6 +141,7 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
         lavoptions$estimator <- "ML"
         ## control() is part of lavmodel (for now)
         lavoptions$optim.method <- "none"
+        lavoptions$check.gradient <- FALSE
         if("control" %in% slotNames(lavmodel)){
             lavmodel@control <- list(optim.method="none")
         }
