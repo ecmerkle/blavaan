@@ -161,8 +161,10 @@ blavaan <- function(...,  # default lavaan arguments
     jag.do.fit <- TRUE
     if("do.fit" %in% dotNames){
         jag.do.fit <- dotdotdot$do.fit
-        burnin <- 0
-        sample <- 0
+        if(!jag.do.fit){
+            burnin <- 0
+            sample <- 0
+        }
     }
     if("warn" %in% dotNames){
         origwarn <- dotdotdot$warn
