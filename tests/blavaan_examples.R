@@ -6,7 +6,8 @@ y1 <- 0.5 + 2*x1 + rnorm(100)
 g <- rep(1:2, each=50)
 Data <- data.frame(y1 = y1, x1 = x1, g = g)
 
-Sys.unsetenv('R_TESTS')
+## seemed to help if running this via R CMD check:
+## Sys.unsetenv('R_TESTS')
 library("blavaan")
 model <- ' y1 ~ prior("dnorm(0,1)")*x1 '
 fitjags <- bsem(model, data=Data, fixed.x=TRUE, burnin=200,
