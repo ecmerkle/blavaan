@@ -403,6 +403,10 @@ setMethod("coef", "blavaan",
 
 plot.blavaan <- function(x, pars=NULL, plot.type="trace", ...){
     # NB: arguments go to plot.runjags() or stan plot functions
+    if(length(pars) == 0L){
+        pars <- x@ParTable$free
+        pars <- pars[pars > 0 & !is.na(pars)]
+    }
     if(x@Options$target == "jags"){
         parnames <- x@ParTable$pxnames[match(pars, x@ParTable$free)]
         ## TODO get lavaan parameter names to show up. Tougher than
