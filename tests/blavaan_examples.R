@@ -1,0 +1,19 @@
+## short examples to test functionality
+set.seed(341)
+
+x1 <- rnorm(100)
+y1 <- 0.5 + 2*x1 + rnorm(100)
+g <- rep(1:2, each=50)
+Data <- data.frame(y1 = y1, x1 = x1, g = g)
+
+Sys.unsetenv('R_TESTS')
+library("blavaan")
+model <- ' y1 ~ prior("dnorm(0,1)")*x1 '
+fitjags <- bsem(model, data=Data, fixed.x=TRUE, burnin=200,
+                sample=200, group="g")
+
+model <- ' y1 ~ prior("normal(0,1)")*x1 '
+fitstan <- bsem(model, data=Data, fixed.x=TRUE, burnin=200,
+                sample=200, target="stan", group="g")
+
+save(list=c("fitjags", "fitstan"), file="../R/sysdata.rda")

@@ -1,4 +1,4 @@
-test_that("blavaan errors", {
+test_that("blavaan arguments", {
   x1 <- rnorm(100)
   x2 <- rnorm(100)
   y1 <- 0.5 + 2*x1 + rnorm(100)
@@ -26,4 +26,12 @@ test_that("blavaan errors", {
 
   ## equality constraint with multiple variables on lhs
   expect_error(bsem(model2, data=Data, fixed.x=TRUE))
+
+  ## do.fit=TRUE + FALSE
+  fit <- bsem(model, data=Data, fixed.x=TRUE, adapt=2,
+              burnin=2, sample=2, do.fit=FALSE)
+  expect_s4_class(fit, "blavaan")
+  fit <- bsem(model, data=Data, fixed.x=TRUE, adapt=2,
+              burnin=2, sample=2, do.fit=TRUE)
+  expect_s4_class(fit, "blavaan")
 })

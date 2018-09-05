@@ -1,1 +1,3 @@
 ^\.travis\.yml$
+^tests/blavaan_examples\.R$
+^.*\.Rhistory$
