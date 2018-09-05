@@ -45,8 +45,8 @@ blavaan <- function(...,  # default lavaan arguments
     }
 
     # ordinal/multilevel functionality not available
-    #if("ordered" %in% dotNames) stop("blavaan ERROR: models with ordered variables are not yet available.")
-    #if("cluster" %in% dotNames) stop("blavaan ERROR: two-level models are not yet available.")
+    if("ordered" %in% dotNames) stop("blavaan ERROR: models with ordered variables are not yet available.")
+    if("cluster" %in% dotNames) stop("blavaan ERROR: two-level models are not yet available.")
   
     # ensure rstan/runjags are here. if target is not installed but
     # the other is, then use the other instead.
