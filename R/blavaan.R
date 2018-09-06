@@ -500,7 +500,6 @@ blavaan <- function(...,  # default lavaan arguments
                     } else {
                         rjarg$raftery.options <- list(r=.01, converge.eps=.01)
                     }
-                    if(!("max.time" %in% names(rjarg))) rjarg$max.time <- "5m"
                 }
                 res <- try(do.call(rjcall, rjarg))
             } else {
