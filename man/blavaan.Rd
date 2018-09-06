@@ -53,8 +53,7 @@ blavaan(..., cp = "srs",
   sampled until convergence is achieved (via \code{autorun.jags}). In
   this case, the arguments \code{burnin} and \code{sample} are passed to
   \code{autorun.jags} as \code{startburnin} and \code{startsample},
-  respectively, and the \code{max.time} is set to 5 minutes (which can be
-  modified via the \code{bcontrol} argument). Otherwise, parameters
+  respectively. Otherwise, parameters
   are sampled as specified by the user (or by the \code{run.jags}
   defaults).}
 \item{target}{Desired MCMC package (\code{"jags"} is default, but
