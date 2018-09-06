@@ -34,4 +34,6 @@ test_that("blavaan arguments", {
   fit <- bsem(model, data=Data, fixed.x=TRUE, adapt=2,
               burnin=2, sample=2, do.fit=TRUE)
   expect_s4_class(fit, "blavaan")
+  unloadNamespace("runjags")
+  unloadNamespace("rstan")
 })
