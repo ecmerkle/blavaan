@@ -27,11 +27,8 @@ test_that("blavaan arguments", {
   ## equality constraint with multiple variables on lhs
   expect_error(bsem(model2, data=Data, fixed.x=TRUE))
 
-  ## do.fit=TRUE + FALSE
+  ## do.fit=FALSE
   fit <- bsem(model, data=Data, fixed.x=TRUE, adapt=2,
               burnin=2, sample=2, do.fit=FALSE)
-  expect_s4_class(fit, "blavaan")
-  fit <- bsem(model, data=Data, fixed.x=TRUE, adapt=2,
-              burnin=2, sample=2, do.fit=TRUE)
   expect_s4_class(fit, "blavaan")
 })
