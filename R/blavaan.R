@@ -535,7 +535,8 @@ blavaan <- function(...,  # default lavaan arguments
           parests <- coeffun(lavpartable, jagtrans$pxpartable, res)
           stansumm <- NA
         } else {
-          parests <- coeffun_stan(jagtrans$pxpartable, res)
+          parests <- coeffun_stan(lavpartable, jagtrans$pxpartable,
+                                  res)
           stansumm <- parests$stansumm
         }
         x <- parests$x

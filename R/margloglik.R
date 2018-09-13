@@ -8,12 +8,6 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
 
   ## unique parameters (remove equality constraints and
   ## cov parameters under srs priors)
-  if(target == "stan"){
-    lavpartable$pxnames <- with(lavpartable, paste0(mat, "[", row,
-                                                    ",", col, ",",
-                                                    group, "]"))
-    lavpartable$pxnames[lavpartable$freeparnums == 0] <- NA
-  }
   eqpars <- lavpartable$rhs[lavpartable$op == "=="]
   fixpars <- which(lavpartable$free == 0 | lavpartable$prior == "")
   urows <- 1:length(lavpartable$pxnames)
