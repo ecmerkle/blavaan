@@ -409,23 +409,30 @@ plot.blavaan <- function(x, pars=NULL, plot.type="trace", ...){
     }
     if(x@Options$target == "jags"){
         parnames <- x@ParTable$pxnames[match(pars, x@ParTable$free)]
-        ## TODO get lavaan parameter names to show up. Tougher than
-        ## expected... see line 216 of runjags::summary.R;
-        ## checkvalidrunjagsobject somehow destroys name changes.
-        plot(x@external$mcmcout, plot.type=plot.type, vars=parnames, ...)
+        parlabs <- sapply(with(x@ParTable, paste0(lhs,op,rhs)[match(pars, free)]), list)
+        axis_env$trans <- cbind(parnames, parlabs)
+        plot(x@external$mcmcout, plot.type=plot.type, vars=parnames,
+             trace.options=list(ylab=expression(labf(varname))), ...)
     } else {
+        parnums <- x@ParTable$stanpnum[match(pars, x@ParTable$free)]
+        parlabs <- with(x@ParTable, paste0(lhs,op,rhs)[match(pars, free)])
+        names(x@external$mcmcout)[parnums] <- parlabs
         plargs <- list(x = x@external$mcmcout,
                        plotfun = plot.type)
-        if(length(pars) > 0){
-            allpars <- colnames(as.matrix(x@external$mcmcout))
-            parnums <- x@ParTable$stanpnum[match(pars, x@ParTable$free)]
-            parnames <- allpars[parnums]
-            plargs <- c(plargs, list(pars = parnames))
-        }
+        plargs <- c(plargs, list(pars = parlabs))
+
         do.call(rstan::plot, plargs)
     }
 }
-    
+
+## function/environment for y-axis label of runjags plots
+labf <- function(var){
+  unlist(axis_env$trans[axis_env$trans[,1] == var, 2]) #axis_env$trans[panel.number(),2]
+}
+  
+axis_env <- new.env(parent = emptyenv())
+
+
 #setMethod("anova", signature(object = "blavaan"),
 #function(object, ...) {
 #
