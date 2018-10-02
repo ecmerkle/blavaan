@@ -412,7 +412,7 @@ plot.blavaan <- function(x, pars=NULL, plot.type="trace", ...){
         parlabs <- sapply(with(x@ParTable, paste0(lhs,op,rhs)[match(pars, free)]), list)
         axis_env$trans <- cbind(parnames, parlabs)
         plot(x@external$mcmcout, plot.type=plot.type, vars=parnames,
-             trace.options=list(ylab=expression(labf(varname))), ...)
+             trace.options=list(ylab=expression(labelfun(varname))), ...)
     } else {
         parnums <- x@ParTable$stanpnum[match(pars, x@ParTable$free)]
         parlabs <- with(x@ParTable, paste0(lhs,op,rhs)[match(pars, free)])
@@ -426,7 +426,7 @@ plot.blavaan <- function(x, pars=NULL, plot.type="trace", ...){
 }
 
 ## function/environment for y-axis label of runjags plots
-labf <- function(var){
+labelfun <- function(var){
   unlist(axis_env$trans[axis_env$trans[,1] == var, 2]) #axis_env$trans[panel.number(),2]
 }
   

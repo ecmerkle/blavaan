@@ -51,6 +51,6 @@ importFrom("loo",
            "loo", "waic", "compare")
 
 export("blavaan", "bcfa", "bsem", "bgrowth", "dpriors", "BF", "blavCompare",
-       "blavTech", "blavInspect", "blavFitIndices")
+       "blavTech", "blavInspect", "blavFitIndices", "labelfun")
 
 S3method(plot, blavaan)
