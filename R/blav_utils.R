@@ -465,7 +465,7 @@ namecheck <- function(ov.names){
     
     if(length(forbid.idx) > 0L){
         stop("blavaan ERROR: the following variable names must be changed:\n",
-             "                   ", paste(forbidden[forbid.idx], collapse = " "))
+             "                   ", paste(ov.names[forbid.idx], collapse = " "))
     }
 }
 

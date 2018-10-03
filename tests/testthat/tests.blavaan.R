@@ -31,4 +31,10 @@ test_that("blavaan arguments", {
   fit <- bsem(model, data=Data, fixed.x=TRUE, adapt=2,
               burnin=2, sample=2, do.fit=FALSE)
   expect_s4_class(fit, "blavaan")
+
+  ## named variable that clashes
+  names(Data)[1] <- "lambda"
+  model2 <- ' lambda ~ b1*x1 + b2*x2 '
+  expect_error(bsem(model2, data=Data))
+              
 })
