@@ -632,6 +632,9 @@ blavaan <- function(...,  # default lavaan arguments
       }
     } else {
       samplls <- NA
+      sampkls <- NA
+      csamplls <- NA
+      csampkls <- NA
     }
 
     timing$PostPred <- (proc.time()[3] - start.time)
