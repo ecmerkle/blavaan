@@ -6,6 +6,10 @@ r_github_packages: yrosseel/lavaan
 sudo: required
 warnings_are_errors: true
 
+env:
+  global:
+    - _R_CHECK_FORCE_SUGGESTS_=false
+
 addons:
   apt:
     packages:
