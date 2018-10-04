@@ -34,8 +34,12 @@ blavInspect <- function(blavobject, what, ...) {
             idx <- idx[!is.na(idx)]
         } else {
             idx <- blavobject@ParTable$stansumnum
-            idx <- idx[blavobject@ParTable$free > 0 |
-                       grepl("^def", blavobject@ParTable$pxnames)]
+            if("pxnames" %in% names(blavobject@ParTable)){
+              drows <- grepl("^def", blavobject@ParTable$pxnames)
+            } else {
+              drows <- grepl("def", blavobject@ParTable$mat)
+            }
+            idx <- idx[blavobject@ParTable$free > 0 | drows]
         }
         labs <- lav_partable_labels(blavobject@ParTable, type = "free")
         if(what %in% c("start", "starting.values", "inits")){
