@@ -1,9 +1,6 @@
 language: r
 cache: packages
 
-r_packages:
-  - rstan
-
 r_github_packages:
   - yrosseel/lavaan
 
