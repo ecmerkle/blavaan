@@ -43,11 +43,7 @@ blavInspect <- function(blavobject, what, ...) {
         }
         labs <- lav_partable_labels(blavobject@ParTable, type = "free")
         if(what %in% c("start", "starting.values", "inits")){
-            if(jagtarget){
-                blavobject@external$mcmcout$inits
-            } else {
-                blavobject@external$inits
-            }
+            blavobject@external$inits
         } else if(what %in% c("psrf", "ac.10", "neff")){
             if(jagtarget){
                 mcmcsumm <- blavobject@external$mcmcout$summaries
