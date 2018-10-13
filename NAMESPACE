@@ -48,7 +48,7 @@ importFrom("nonnest2",
            "llcont")
 
 importFrom("loo",
-           "loo", "waic", "compare")
+           "loo", "waic", "compare", "relative_eff")
 
 export("blavaan", "bcfa", "bsem", "bgrowth", "dpriors", "BF", "blavCompare",
        "blavTech", "blavInspect", "blavFitIndices", "labelfun")

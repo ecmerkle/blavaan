@@ -19,6 +19,10 @@ blavCompare <- function(object1, object2, ...) {
                   object1@ParTable, object1@SampleStats,
                   lavopt1, object1@Cache,
                   object1@Data, make_mcmc(object1@external$mcmcout))
+  nchain1 <- blavInspect(object1, "n.chains")
+  niter1 <- nrow(ll1)/nchain1
+  cid1 <- rep(1:nchain1, each=niter1)
+  ref1 <- relative_eff(ll1, chain_id = cid1)
 
   lavopt2 <- object2@Options
   lavopt2$estimator <- "ML"
@@ -26,8 +30,13 @@ blavCompare <- function(object1, object2, ...) {
                   object2@ParTable, object2@SampleStats,
                   lavopt2, object2@Cache,
                   object2@Data, make_mcmc(object2@external$mcmcout))
+  nchain2 <- blavInspect(object1, "n.chains")
+  niter2 <- nrow(ll2)/nchain2
+  cid2 <- rep(1:nchain2, each=niter2)
+  ref2 <- relative_eff(ll2, chain_id = cid2)
 
-  loo1 <- loo(ll1); loo2 <- loo(ll2)
+  loo1 <- loo(ll1, r_eff=ref1)
+  loo2 <- loo(ll2, r_eff=ref2)
   waic1 <- waic(ll1); waic2 <- waic(ll2)
 
   diff_loo <- compare(loo1, loo2)
@@ -44,13 +53,8 @@ blavCompare <- function(object1, object2, ...) {
   cat("Laplace approximation to the log-Bayes factor\n(experimental; positive values favor object1):",
       sprintf("%8.3f", bf), "\n\n")
 
-  if(packageVersion('loo') >= '2.0.0'){
-    looobj <- list(loo1$estimates, loo2$estimates)
-    waicobj <- list(waic1$estimates, waic2$estimates)
-  } else {
-    looobj <- rbind(loo1[1:6], loo2[1:6])
-    waicobj <- rbind(loo1[1:6], loo2[1:6])
-  }
+  looobj <- list(loo1$estimates, loo2$estimates)
+  waicobj <- list(waic1$estimates, waic2$estimates)
 
   res <- list(bf = res, loo = looobj,
               diff_loo = diff_loo,
