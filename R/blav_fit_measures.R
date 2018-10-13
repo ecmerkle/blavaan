@@ -88,10 +88,11 @@ blav_fit_measures <- function(object, fit.measures = "all",
     if("csampkls" %in% names(object@external)){
         fit.ic <- c(fit.ic, "dic_cond_j", "p_dic_cond_j")
     }
-    fit.ic <- c(fit.ic, "waic", "p_waic", "looic", "p_loo")
+    fit.ic <- c(fit.ic, "waic", "p_waic", "se_waic",
+                "looic", "p_loo", "se_loo")
     if("csamplls" %in% names(object@external)){
-        fit.ic <- c(fit.ic, "waic_cond", "p_waic_cond",
-                    "looic_cond", "p_loo_cond")
+        fit.ic <- c(fit.ic, "waic_cond", "p_waic_cond", "se_waic_cond",
+                    "looic_cond", "p_loo_cond", "se_loo_cond")
     }
   
     fit.rmsea <- "rmsea"
@@ -169,14 +170,22 @@ blav_fit_measures <- function(object, fit.measures = "all",
                             object@ParTable, object@SampleStats,
                             lavopt, object@Cache,
                             object@Data, make_mcmc(object@external$mcmcout))
+
         fitres <- waic(casells)
-        if(packageVersion('loo') >= '2.0.0') fitres <- fitres$estimates[,'Estimate']
+        fitse <- fitres$estimates[,'SE']
+        fitres <- fitres$estimates[,'Estimate']
         indices["waic"] <- fitres[["waic"]]
         indices["p_waic"] <- fitres[["p_waic"]]
-        fitres <- loo(casells)
-        if(packageVersion('loo') >= '2.0.0') fitres <- fitres$estimates[,'Estimate']
+        indices["se_waic"] <- fitse[["waic"]]
+        nchain <- blavInspect(object, "n.chains")
+        ref <- relative_eff(casells, chain_id =
+                            rep(1:nchain, each = nrow(casells)/nchain))
+        fitres <- loo(casells, r_eff = ref)
+        fitse <- fitres$estimates[,'SE']
+        fitres <- fitres$estimates[,'Estimate']
         indices["looic"] <- fitres[["looic"]]
         indices["p_loo"] <- fitres[["p_loo"]]
+        indices["se_loo"] <- fitse[["looic"]]
 
         if("csamplls" %in% names(object@external)){
             casells <- case_lls(object@external$mcmcout, object@Model,
@@ -184,14 +193,21 @@ blav_fit_measures <- function(object, fit.measures = "all",
                                 lavopt, object@Cache,
                                 object@Data, make_mcmc(object@external$mcmcout),
                                 lavobject=object, conditional = TRUE)
+
             fitres <- waic(casells)
-            if(packageVersion('loo') >= '2.0.0') fitres <- fitres$estimates[,'Estimate']
+            fitse <- fitres$estimates[,'SE']
+            fitres <- fitres$estimates[,'Estimate']
             indices["waic_cond"] <- fitres[["waic"]]
             indices["p_waic_cond"] <- fitres[["p_waic"]]
-            fitres <- loo(casells)
-            if(packageVersion('loo') >= '2.0.0') fitres <- fitres$estimates[,'Estimate']
+            indices["se_waic_cond"] <- fitse[["waic"]]
+            ref <- relative_eff(casells, chain_id =
+                                rep(1:nchain, each = nrow(casells)/nchain))
+            fitres <- loo(casells, r_eff = ref)
+            fitse <- fitres$estimates[,'SE']
+            fitres <- fitres$estimates[,'Estimate']
             indices["looic_cond"] <- fitres[["looic"]]
             indices["p_loo_cond"] <- fitres[["p_loo"]]
+            indices["se_loo_cond"] <- fitse[["looic"]]
         }
     }
     if("margloglik" %in% fit.measures) {
