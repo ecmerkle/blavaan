@@ -17,4 +17,4 @@ model <- ' y1 ~ prior("normal(0,1)")*x1 '
 fitstan <- bsem(model, data=Data, fixed.x=TRUE, burnin=200,
                 sample=200, target="stan", group="g")
 
-save(list=c("fitjags", "fitstan"), file="../R/sysdata.rda")
+save(list=c("fitjags", "fitstan"), file="../inst/testdata/sysdata.rda")

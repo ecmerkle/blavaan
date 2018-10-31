@@ -1,3 +1,21 @@
+Changes in Version 0.3-3
+    o Fix bug in Stan models, where an ov is regressed on an lv (or vice versa) and
+      std.lv=TRUE.
+
+    o Small fixes to blavInspect().
+
+    o For convergence="auto", max time was previously 5 min (undocumented).
+      It is now Inf.
+
+    o Axis labels are now more sensible on convergence plots.
+
+    o Relative effective sample size now used to compute loo/waic SEs, and SEs
+      are now returned via fitMeasures().
+
+    o Added unit testing via testthat.
+
+    o Other bug fixes.
+
 Changes in Version 0.3-2
     o Improved handling of Stan models, including missing data, defined variables, 0-variance latents, multi-group.
 

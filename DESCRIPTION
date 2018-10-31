@@ -1,9 +1,10 @@
 Package: blavaan
 Title: Bayesian Latent Variable Analysis
-Version: 0.3-3.387
+Version: 0.3-3
 Authors@R: c(person(given = "Edgar", family = "Merkle",
                     role = c("aut", "cre"),
-                    email = "merklee@missouri.edu"),
+                    email = "merklee@missouri.edu",
+                    comment = c(ORCID = "0000-0001-7158-0653")),
              person(given = "Yves", family = "Rosseel",
                     role  = "aut",
                     email = "Yves.Rosseel@UGent.be"),
@@ -20,7 +21,7 @@ Authors@R: c(person(given = "Edgar", family = "Merkle",
             )
 Description: Fit a variety of Bayesian latent variable models, including confirmatory
    factor analysis, structural equation models, and latent growth curve models.
-Depends: R(>= 3.2.0), methods, lavaan(>= 0.6-1)
-Imports: stats, utils, graphics, MCMCpack, coda, mnormt, nonnest2(>= 0.5-1), loo(>= 2.0)
+Depends: R(>= 3.2.0), methods, lavaan(>= 0.6-3)
+Imports: stats, utils, graphics, MCMCpack, coda, mnormt, nonnest2(>= 0.5-2), loo(>= 2.0)
 Suggests: runjags(>= 2.0.4-2), rstan(>= 2.17-3), modeest, rjags, semTools, parallel, testthat(>= 2.0.0)
 License: GPL (>= 2)
