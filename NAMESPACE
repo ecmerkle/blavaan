@@ -30,7 +30,7 @@ importFrom("lavaan",
            "lav_model_set_parameters", "lav_model_vcov_se", 
            "lav_partable_attributes",
            "modificationIndices", "parTable", "parameterEstimates",
-           "lavPredict")
+           "lavPredict", "standardizedSolution")
 
 importFrom("MCMCpack",
            "dwish")
@@ -51,6 +51,7 @@ importFrom("loo",
            "loo", "waic", "compare", "relative_eff")
 
 export("blavaan", "bcfa", "bsem", "bgrowth", "dpriors", "BF", "blavCompare",
-       "blavTech", "blavInspect", "blavFitIndices", "labelfun")
+       "blavTech", "blavInspect", "blavFitIndices", "labelfun", "standardizedposterior",
+       "standardizedPosterior")
 
 S3method(plot, blavaan)

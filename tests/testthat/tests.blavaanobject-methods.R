@@ -45,6 +45,9 @@ test_that("blavaan object methods work", {
 
     expect_equal(dim(blavInspect(fitjags, 'hpd')),
                  dim(blavInspect(fitstan, 'hpd')))
+
+    expect_equal(dim(standardizedposterior(fitjags)),
+                 dim(standardizedposterior(fitstan)))
   }
     
 })

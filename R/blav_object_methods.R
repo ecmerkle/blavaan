@@ -149,6 +149,7 @@ short.summary <- function(object) {
     #cat("\n")
 }
 
+
 setMethod("show", "blavaan",
 function(object) {
 
@@ -156,6 +157,7 @@ function(object) {
     short.summary(object)
 
 })
+
 
 setMethod("summary", "blavaan",
 function(object, header       = TRUE,
@@ -315,6 +317,7 @@ function(object, header       = TRUE,
     } # parameter estimates
 })
 
+
 # NB not absolutely necessary, except for
 # bug in lavaan 0.5-23.1097
 setMethod("coef", "blavaan",
@@ -323,83 +326,6 @@ setMethod("coef", "blavaan",
     callNextMethod(object, type, labels)
   })
 
-# setMethod("vcov", "blavaan",
-# function(object, labels=TRUE) {
-# 
-#
-#    # check for convergence first!
-#    if(object@Fit@npar > 0L && !object@Fit@converged)
-#        warning("blavaan WARNING: chains may not have converged, proceed with caution.")
-#    
-#    VarCov <- object@external$mcmcout$vcov
-#
-#    labs <- lav_partable_labels(object@ParTable, type="free")
-#    
-#    if(labels) rownames(VarCov) <- colnames(VarCov) <- labs
-#
-#    #if(!redundant) VarCov <- VarCov[!duplicated(labs), !duplicated(labs)]
-#
-#    class(VarCov) <- c("lavaan.matrix.symmetric", "matrix")
-#   
-#    VarCov
-#})
-
-
-# logLik (so that we can use the default AIC/BIC functions from stats4(
-# setMethod("logLik", "blavaan",
-# function(object, ...) {
-#    if(object@Options$estimator != "ML") {
-#        warning("lavaan WARNING: logLik only available if estimator is ML")
-#    }
-#    if(object@Fit@npar > 0L && !object@Fit@converged) {
-#        warning("lavaan WARNING: model did not converge")
-#    }
-#    
-#    logl.df <- fitMeasures(object, c("logl", "npar", "ntotal"))
-#    names(logl.df) <- NULL
-#    logl <- logl.df[1]
-#    attr(logl, "df") <- logl.df[2]    ### note: must be npar, not df!!
-#    attr(logl, "nobs") <- logl.df[3]
-#    class(logl) <- "logLik"
-#    logl
-#})
-
-# nobs
-## if(!exists("nobs", envir=asNamespace("stats4"))) {
-##     setGeneric("nobs", function(object, ...) standardGeneric("nobs"))
-## }
-## setMethod("nobs", signature(object = "blavaan"),
-## function(object, ...) {
-##     object@SampleStats@ntotal
-## })
-
-# see: src/library/stats/R/update.R
-## setMethod("update", signature(object = "lavaan"),
-## function(object, model, ..., evaluate = TRUE) {
-
-##     call <- object@call
-##     if(is.null(call))
-##         stop("need an object with call slot")
-
-##     extras <- match.call(expand.dots = FALSE)$...
-
-##     if(!missing(model))
-##         #call$formula <- update.formula(formula(object), formula.)
-##         call$model <- model
-
-##     if(length(extras) > 0) {
-##         existing <- !is.na(match(names(extras), names(call)))
-##         for(a in names(extras)[existing]) call[[a]] <- extras[[a]]
-##         if(any(!existing)) {
-##             call <- c(as.list(call), extras[!existing])
-##             call <- as.call(call)
-##         }
-##     }
-##     if (evaluate) {
-##         eval(call, parent.frame())
-##     }
-##     else call
-## })
 
 plot.blavaan <- function(x, pars=NULL, plot.type="trace", ...){
     # NB: arguments go to plot.runjags() or stan plot functions
@@ -425,51 +351,13 @@ plot.blavaan <- function(x, pars=NULL, plot.type="trace", ...){
     }
 }
 
+
 ## function/environment for y-axis label of runjags plots
 labelfun <- function(var){
   unlist(axis_env$trans[axis_env$trans[,1] == var, 2]) #axis_env$trans[panel.number(),2]
 }
   
 axis_env <- new.env(parent = emptyenv())
-
-
-#setMethod("anova", signature(object = "blavaan"),
-#function(object, ...) {
-#
-#    # NOTE: if we add additional arguments, it is not the same generic
-#    # anova() function anymore, and match.call will be screwed up
-#
-#    # NOTE: we need to extract the names of the models from match.call here,
-#    #       otherwise, we loose them in the call stack
-#
-#    mcall <- match.call(expand.dots = TRUE)
-#    dots <- list(...)
-#
-#    # catch SB.classic and SB.H0
-#    SB.classic <- TRUE; SB.H0 <- FALSE
-#
-#    arg.names <- names(dots)
-#    arg.idx <- which(nchar(arg.names) > 0L)
-#    if(length(arg.idx) > 0L) {
-#        if(!is.null(dots$SB.classic))
-#            SB.classic <- dots$SB.classic
-#        if(!is.null(dots$SB.H0))
-#            SB.H0 <- dots$SB.H0           
-#        dots <- dots[-arg.idx]
-#    }
-#
-#    modp <- if(length(dots))
-#        sapply(dots, is, "lavaan") else logical(0)
-#    mods <- c(list(object), dots[modp])
-#    NAMES <- sapply(as.list(mcall)[c(FALSE, TRUE, modp)], deparse)
-#
-#    # use do.call to handle changed dots
-#    ans <- do.call("lavTestLRT", c(list(object = object, 
-#                   SB.classic = SB.classic, SB.H0 = SB.H0, 
-#                   model.names = NAMES), dots))
-#
-#    ans
-#})
 
 
 SDBF <- function(PE) {
@@ -489,4 +377,47 @@ SDBF <- function(PE) {
   bf[tmprow] <- pridens - postdens
   
   bf
+}
+
+
+## obtain full posterior distribution of standardized parameters
+standardizedPosterior <- standardizedposterior <- function(object, ...) {
+
+  dots <- list(...)
+
+  allowargs <- c('type', 'cov.std', 'remove.eq', 'remove.ineq', 'remove.def')
+  
+  if(!all(names(dots) %in% allowargs)){
+    stop(paste0("blavaan ERROR: arguments must be in ",
+                paste(allowargs, collapse=" ")))
+  }
+  
+  ## posterior draws in matrix form
+  draws <- make_mcmc(object@external$mcmcout)
+  draws <- do.call("rbind", draws)
+
+  ## copy of fit, for manipulation
+  tf <- object
+
+  ## put a posterior draw in the tf object + compute standardized estimates
+  tmp <- fill_params(draws[1,], object@Model, object@ParTable)
+  tf@Model <- tmp
+  tf@ParTable$est[tf@ParTable$free > 0] <- lav_model_get_parameters(tmp)
+  tmp2 <- do.call("standardizedSolution", c(list(object=tf), dots))
+
+  ## use tmp2 object to figure out the right number of columns, then loop
+  fullres <- matrix(NA, nrow(draws), nrow(tmp2))
+  colnames(fullres) <- with(tmp2, paste0(lhs, op, rhs))
+  fullres[1,] <- tmp2[, 'est.std']
+
+  for(i in 2:nrow(draws)){
+    tmp <- fill_params(draws[i,], object@Model, object@ParTable)
+    tf@Model <- tmp
+    tf@ParTable$est[tf@ParTable$free > 0] <- lav_model_get_parameters(tmp)
+
+    ## compute standardized estimates
+    fullres[i,] <- do.call("standardizedSolution", c(list(object=tf), dots))[, 'est.std']
+  }
+
+  fullres
 }
