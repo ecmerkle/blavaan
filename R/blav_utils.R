@@ -285,15 +285,19 @@ rearr_params <- function(mcmc         = NULL,
 }   
 
 ## iteration numbers for samp_lls and postpred
-sampnums <- function(lavmcmc, thin){
+sampnums <- function(lavmcmc, thin, lout = FALSE){
     if("mcmc" %in% names(lavmcmc)){
         niter <- nrow(lavmcmc$mcmc[[1]])
     } else {
         niter <- dim(as.array(lavmcmc))[1]
     }
     #nsamps <- min(1000,floor(niter/thin))
-    psamp <- seq(1, niter, thin)
-
+    if(lout){
+        psamp <- seq(1, niter, length.out = thin)
+    } else {
+        psamp <- seq(1, niter, thin)
+    }
+    
     psamp
 }
 
