@@ -55,6 +55,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
                         lavsamplestats = lavsamplestats)
       lavmodel <- dataX$lavmod[[1]]
       dataX <- dataX[[1]]
+      dataeXo <- lavdata@eXo
 
       ## compute (i) X2 of generated data and model-implied
       ## moments, along with (ii) X2 of real data and model-implied
