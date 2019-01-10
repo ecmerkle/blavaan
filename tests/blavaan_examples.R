@@ -16,5 +16,7 @@ fitjags <- bsem(model, data=Data, fixed.x=TRUE, burnin=200,
 model <- ' y1 ~ prior("normal(0,1)")*x1 '
 fitstan <- bsem(model, data=Data, fixed.x=TRUE, burnin=200,
                 sample=200, target="stan", group="g")
+## this really blows up file size if kept:
+attr(fitstan@external$mcmcout, 'stanmodel') <- NULL
 
 save(list=c("fitjags", "fitstan"), file="../inst/testdata/sysdata.rda")
