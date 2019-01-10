@@ -3,6 +3,9 @@ Changes in Version 0.3-4
 
     o Rearrange posterior predictive internals.
 
+    o Turn off posterior modes for target="jags", due to conflict between current
+      versions of runjags and modeest.
+
 Changes in Version 0.3-3
     o Fix bug in Stan models, where an ov is regressed on an lv (or vice versa) and
       std.lv=TRUE.
