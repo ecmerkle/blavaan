@@ -1,3 +1,8 @@
+Changes in Version 0.3-4
+    o Add function standardizedPosterior() for standardizing posterior draws.
+
+    o Rearrange posterior predictive internals.
+
 Changes in Version 0.3-3
     o Fix bug in Stan models, where an ov is regressed on an lv (or vice versa) and
       std.lv=TRUE.
