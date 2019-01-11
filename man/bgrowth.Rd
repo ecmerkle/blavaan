@@ -59,7 +59,8 @@ save.lvs = FALSE, jags.ic = FALSE, seed = NULL, bcontrol = list())
   \code{"stan"} also available).}
 \item{save.lvs}{Should sample latent variables (factor scores) be saved? Logical; defaults to FALSE}
 \item{jags.ic}{Should DIC be computed the JAGS way, in addition to the BUGS way? Logical; defaults to FALSE}
-\item{seed}{A vector of length \code{n.chains} containing random
+\item{seed}{A vector of length \code{n.chains} (for target
+  \code{"jags"}) or an integer (for target \code{"stan"}) containing random
   seeds for the MCMC run. If \code{NULL}, seeds will be chosen randomly.}
 \item{bcontrol}{A list containing additional parameters passed to
     \code{run.jags} (or \code{autorun.jags}) or \code{stan}.  See the manpage of those functions for an
