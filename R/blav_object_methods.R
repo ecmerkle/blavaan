@@ -408,6 +408,7 @@ standardizedPosterior <- standardizedposterior <- function(object, ...) {
   ## use tmp2 object to figure out the right number of columns, then loop
   fullres <- matrix(NA, nrow(draws), nrow(tmp2))
   colnames(fullres) <- with(tmp2, paste0(lhs, op, rhs))
+  if("group" %in% colnames(tmp2)) colnames(fullres) <- paste0(colnames(fullres), '.g', tmp2$group)
   fullres[1,] <- tmp2[, 'est.std']
 
   for(i in 2:nrow(draws)){
