@@ -231,10 +231,12 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     if(blavmis == "fi") stop("blavaan ERROR: missing='fi' not yet supported for ordinal data")
     for(j in 1:nmvs){
       if(ov.names[j] %in% ov.ord){
-        tvname <- partable$mat[partable$lhs == ov.names[j] &
-                               partable$lhs == partable$rhs &
-                               partable$op == "~~" &
-                               partable$group == 1]
+        tvvar <- which(partable$op == "~~" &
+                       partable$lhs == ov.names[j] &
+                       partable$lhs == partable$rhs &
+                       !(grepl("star", partable$mat)) & # needed?
+                       partable$group == 1)
+        tvname <- partable$mat[tvvar]
         ord.num <- match(ov.names[j], ov.ord)
         TXT <- paste(TXT, t2, "ones[i,", ord.num, "] ~ dbern(probs[i,", ord.num,
                      ",", ov.names[j], "[i]])\n", sep="")
@@ -259,7 +261,7 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
                      "] ", eqop, " 1 - sum(probs[i,", ord.num, ",1:", ncats[ord.num]-1, "])\n",
                      sep="")
       } else {
-        TXT <- paste(TXT, t2, ov.names[j], "[i,", j, "] ~ dnorm(mu[i,", j, "],", tvname, "[", j, ",g[i]])\n", sep="")
+        TXT <- paste(TXT, t2, ov.names[j], "[i] ~ dnorm(mu[i,", j, "],", tvname, "[", partable$row[tvvar], ",", partable$col[tvvar], ",g[i]])\n", sep="")
       }
     }
   }

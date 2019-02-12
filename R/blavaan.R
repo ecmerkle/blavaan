@@ -44,8 +44,9 @@ blavaan <- function(...,  # default lavaan arguments
         }
     }
 
-    # ordinal/multilevel functionality not available
-    if("ordered" %in% dotNames) stop("blavaan ERROR: models with ordered variables are not yet available.")
+    # if("ordered" %in% dotNames) stop("blavaan ERROR: models with ordered variables are not yet available.")
+
+    # multilevel functionality not available
     if("cluster" %in% dotNames) stop("blavaan ERROR: two-level models are not yet available.")
   
     # ensure rstan/runjags are here. if target is not installed but
@@ -90,15 +91,11 @@ blavaan <- function(...,  # default lavaan arguments
     # capture data augmentation/full information options
     blavmis <- "da"
     if("missing" %in% dotNames) {
-        if(dotdotdot$missing %in% c("da", "fi")) {
-            blavmis <- dotdotdot$missing
-            misloc <- which(dotNames == "missing")
-            dotdotdot <- dotdotdot[-misloc]; dotNames <- dotNames[-misloc]
-        }
-    }
-
-    if(blavmis == "fi" & "ordered" %in% dotNames){
-      stop("blavaan ERROR: missing='fi' cannot be used with ordinal data.")
+      if(dotdotdot$missing %in% c("da", "fi")) {
+        blavmis <- dotdotdot$missing
+        misloc <- which(dotNames == "missing")
+        dotdotdot <- dotdotdot[-misloc]; dotNames <- dotNames[-misloc]
+      }
     }
 
     # covariance priors are now all srs or fa
@@ -157,6 +154,7 @@ blavaan <- function(...,  # default lavaan arguments
                 "                   ", 
                 paste(lavArgsOverride[warn.idx], collapse = " "))
     }
+  
     # if do.fit supplied, save it for jags stuff
     jag.do.fit <- TRUE
     if("do.fit" %in% dotNames){
@@ -177,7 +175,11 @@ blavaan <- function(...,  # default lavaan arguments
     dotdotdot$control <- list(iter.max = 1); dotdotdot$warn <- FALSE
     dotdotdot$meanstructure <- TRUE
     dotdotdot$missing <- "direct"   # direct/ml creates error? (bug in lavaan?)
-    dotdotdot$estimator <- "default" # until 'Bayes' is accepted by lavaan()
+    if("ordered" %in% dotNames |
+       any(apply(dotdotdot$data, 2, function(x) class(x)[1]) == "ordered")){
+      dotdotdot$missing <- "default"
+    }
+    dotdotdot$estimator <- "default"
 
     # jags args
     if("debug" %in% dotNames) {
@@ -239,13 +241,6 @@ blavaan <- function(...,  # default lavaan arguments
                 paste(lavArgsRemove[warn.idx], collapse = " "), "\n")
     }
 
-    # check for ordered data
-    if("ordered" %in% dotNames) {
-        dotdotdot$missing <- "default"
-        dotdotdot$test <- "none"
-        dotNames <- names(dotdotdot)
-    }
-
     # call lavaan
     mcdebug <- FALSE
     if("debug" %in% dotNames){
@@ -264,7 +259,20 @@ blavaan <- function(...,  # default lavaan arguments
   
     # check for conflicting mv names
     namecheck(LAV@Data@ov.names[[1]])
-    
+
+    # deal with ordinal data, turn some options off
+    ordmod <- LAV@Options$categorical
+    if(ordmod){
+      ## this picks up variables of class ordered that were not
+      ## explicitly specified via ordered argument
+      dotdotdot$ordered <- LAV@Data@ordered
+      if(blavmis == "fi"){
+        stop("blavaan ERROR: missing='fi' cannot be used with ordinal data.")
+      }
+      dotdotdot$test <- "none"
+      dotNames <- names(dotdotdot)
+    }  
+  
     ineq <- which(LAV@ParTable$op %in% c("<",">"))
     if(length(ineq) > 0) {
         LAV@ParTable <- lapply(LAV@ParTable, function(x) x[-ineq])
