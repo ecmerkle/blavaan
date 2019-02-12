@@ -3,7 +3,8 @@ importFrom("methods",
 
 importFrom("utils", 
            # "sessionInfo",
-           "packageDescription", "str", "write.table", "packageVersion")
+           "packageDescription", "str", "write.table", "packageVersion",
+           "capture.output")
 
 importFrom("stats", 
            "approx", "density", "median", "dnorm", "pnorm", "rgamma", "rnorm",
