@@ -13,7 +13,7 @@ test_that("blavaan arguments", {
   expect_error(bsem(model, data=Data, fixed.x=TRUE, seed=1))
 
   ## supply ordinals
-  expect_error(bsem(model, data=Data, fixed.x=TRUE, ordered=c("y1", "x1", adapt=2, burnin=2, sample=2)))
+  #expect_error(bsem(model, data=Data, fixed.x=TRUE, ordered=c("y1", "x1", adapt=2, burnin=2, sample=2)))
 
   ## unknown cp
   expect_error(bsem(model, data=Data, ov.cp="blah", fixed.x=TRUE))

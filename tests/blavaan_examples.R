@@ -1,5 +1,4 @@
 ## short examples to test functionality
-if(FALSE){
 set.seed(341)
 
 x1 <- rnorm(100)
@@ -21,4 +20,4 @@ fitstan <- bsem(model, data=Data, fixed.x=TRUE, burnin=200,
 attr(fitstan@external$mcmcout, 'stanmodel') <- NULL
 
 save(list=c("fitjags", "fitstan"), file="../inst/testdata/sysdata.rda")
-}
+
