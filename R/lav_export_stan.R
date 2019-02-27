@@ -75,7 +75,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   #lv.names <- c(lv.names[lv.names %in% orig.lv.names.x],
   #              lv.names[!(lv.names %in% orig.lv.names.x)])
   nlv <- length(lv.names)
-  
+
   ## check that variables are the same in all groups:
   for(g in 1:ngroups){
     if(!identical(orig.ov.names, old.vnames$ov[[g]])){
@@ -123,6 +123,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
 
   nmvs <- nov
   ov.names <- orig.ov.names
+  ov.normal <- ov.names[!(ov.names %in% ov.ord)]
 
   ## if std.lv, these are renamed to "lambdaUNC", etc and picked
   ## up again in generated quantities
@@ -614,7 +615,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       
       ## missingness patterns
       npatt <- lavdata@Mp[[k]]$npatterns
-      
+
       for(m in 1:npatt){
         if(ny > 0){
           tmpobs <- which(lavdata@Mp[[k]]$pat[m,])

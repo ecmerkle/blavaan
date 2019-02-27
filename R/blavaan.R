@@ -177,7 +177,7 @@ blavaan <- function(...,  # default lavaan arguments
     dotdotdot$missing <- "direct"   # direct/ml creates error? (bug in lavaan?)
     if("ordered" %in% dotNames |
        any(apply(dotdotdot$data, 2, function(x) class(x)[1]) == "ordered")){
-      dotdotdot$missing <- "default"
+      dotdotdot$missing <- "pairwise" # needed to get missing patterns
     }
     dotdotdot$estimator <- "default"
 
