@@ -256,6 +256,9 @@ blavaan <- function(...,  # default lavaan arguments
 
     # turn warnings back on by default
     LAV@Options$warn <- origwarn
+
+    # put original do.fit back
+    LAV@Options$do.fit <- jag.do.fit
   
     # check for conflicting mv names
     namecheck(LAV@Data@ov.names[[1]])

@@ -24,11 +24,18 @@ blavInspect <- function(blavobject, what, ...) {
                    "postmedian", "hpd", "jagnames", "stannames",
                    "fscores", "lvs", "fsmeans", "lvmeans", "mcobj")
 
+    ## blavwhats that don't require do.fit
+    blavnofit <- c("start", "starting.values", "inits", "n.chains", "cp", "dp",
+                   "jagnames", "stannames")
+  
     ## whats that are not handled
     nowhats <- c("mi", "modindices", "modification.indices",
                  "wls.est", "wls.obs", "wls.v")
 
     if(what %in% blavwhats){
+        if(!(what %in% blavnofit) & !blavobject@Options$do.fit){
+            stop(paste0("blavaan ERROR: ", what, " does not exist when do.fit = FALSE"))
+        }
         if(jagtarget){
             idx <- blavobject@ParTable$jagpnum
             idx <- idx[!is.na(idx)]
