@@ -11,7 +11,7 @@ blavaan <- function(...,  # default lavaan arguments
                     mcmcextra           = list(),
                     inits              = "simple",
                     convergence        = "manual",
-                    target             = "jags",
+                    target             = "stan",
                     save.lvs           = FALSE,
                     jags.ic            = FALSE,
                     seed               = NULL,
@@ -790,7 +790,7 @@ blavaan <- function(...,  # default lavaan arguments
 bcfa <- bsem <- function(..., cp = "srs", dp = NULL,
     n.chains = 3, burnin, sample, adapt,
     mcmcfile = FALSE, mcmcextra = list(), inits = "simple",
-    convergence = "manual", target = "jags", save.lvs = FALSE,
+    convergence = "manual", target = "stan", save.lvs = FALSE,
     jags.ic = FALSE, seed = NULL, bcontrol = list()) {
 
     dotdotdot <- list(...)
@@ -834,7 +834,7 @@ bcfa <- bsem <- function(..., cp = "srs", dp = NULL,
 bgrowth <- function(..., cp = "srs", dp = NULL,
     n.chains = 3, burnin, sample, adapt,
     mcmcfile = FALSE, mcmcextra = list(), inits = "simple",
-    convergence = "manual", target = "jags", save.lvs = FALSE,
+    convergence = "manual", target = "stan", save.lvs = FALSE,
     jags.ic = FALSE, seed = NULL, bcontrol = list()) {
 
     dotdotdot <- list(...)
