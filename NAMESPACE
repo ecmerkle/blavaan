@@ -48,11 +48,20 @@ importFrom("mnormt",
 importFrom("nonnest2",
            "llcont")
 
+importFrom("rstan",
+           "sampling", "stan")
+
 importFrom("loo",
            "loo", "waic", "compare", "relative_eff")
+
+import(Rcpp)
+
+import(rstantools)
 
 export("blavaan", "bcfa", "bsem", "bgrowth", "dpriors", "BF", "blavCompare",
        "blavTech", "blavInspect", "blavFitIndices", "labelfun", "standardizedposterior",
        "standardizedPosterior")
 
 S3method(plot, blavaan)
+
+useDynLib(blavaan, .registration = TRUE)

@@ -8,20 +8,29 @@ Authors@R: c(person(given = "Edgar", family = "Merkle",
              person(given = "Yves", family = "Rosseel",
                     role  = "aut",
                     email = "Yves.Rosseel@UGent.be"),
+             person(given = "Ben", family = "Goodrich", role = "aut",
+	            email = "benjamin.goodrich@columbia.edu"),
              person(given = "Mauricio",
                     family = "Garnier-Villarreal",
                     role = "ctb",
-                    email = "maugavilla@gmail.com"),
+                    email = "maugavilla@gmail.com",
+		    comment = "R/ctr_bayes_fit.R"),
              person(given = c("Terrence", "D."), family = "Jorgensen",
                     role = "ctb",
-                    email = "T.D.Jorgensen@uva.nl"),
-             person(given = "Huub", family="Hoofs", role = "ctb"),
+                    email = "T.D.Jorgensen@uva.nl",
+		    comment = "R/ctr_bayes_fit.R"),
+             person(given = "Huub", family="Hoofs", role = "ctb",
+	            comment = "R/ctr_bayes_fit.R"),
              person(given = "Rens", family="van de Schoot",
-                    role = "ctb")
+                    role = "ctb", comment = "R/ctr_bayes_fit.R")
             )
 Description: Fit a variety of Bayesian latent variable models, including confirmatory
    factor analysis, structural equation models, and latent growth curve models.
-Depends: R(>= 3.2.0), methods, lavaan(>= 0.6-3)
-Imports: stats, utils, graphics, MCMCpack, coda, mnormt, nonnest2(>= 0.5-2), loo(>= 2.0)
-Suggests: runjags(>= 2.0.4-2), rstan(>= 2.17-3), modeest, rjags, semTools, parallel, testthat(>= 2.0.0)
-License: GPL (>= 2)
+License: GPL (>= 3)
+ByteCompile: true
+Depends: R(>= 3.3.0), methods, lavaan(>= 0.6-3), Rcpp(>= 0.12.15)
+Imports: stats, utils, graphics, MCMCpack, coda, mnormt, nonnest2(>= 0.5-2), loo(>= 2.0), rstan(>= 2.17.3), rstantools(>= 1.5.0)
+LinkingTo: StanHeaders (>= 2.17.2), rstan (>= 2.17.3), BH (>= 1.66.0-1), Rcpp (>= 0.12.15), RcppEigen (>= 0.3.3.4.0)
+Suggests: runjags(>= 2.0.4-2), modeest, rjags, semTools, parallel, testthat(>= 2.0.0)
+SystemRequirements: GNU make
+NeedsCompilation: yes
