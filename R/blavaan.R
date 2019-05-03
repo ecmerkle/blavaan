@@ -51,21 +51,9 @@ blavaan <- function(...,  # default lavaan arguments
   
     # ensure rstan/runjags are here. if target is not installed but
     # the other is, then use the other instead.
-    if(target == "stan"){
+    if(grepl("stan", target)){
       if(convergence == "auto"){
         stop("blavaan ERROR: auto convergence is unavailable for stan.")
-      }
-
-      if(!pkgcheck("rstan")){
-        if(pkgcheck("runjags")){
-          cat("blavaan NOTE: rstan not installed; using runjags instead.\n")
-          target <- "jags"
-          pkgload("runjags")
-        } else {
-          stop("blavaan ERROR: rstan package is not installed.")
-        }
-      } else {
-        pkgload("rstan")
       }
     } else if(target == "jags"){
       if(!pkgcheck("runjags")){
@@ -115,7 +103,7 @@ blavaan <- function(...,  # default lavaan arguments
     }
     ## cannot use lavaan inits with fa priors; FIXME?
     if(cp == "fa" & inits %in% c("simple", "default")) inits <- "jags"
-    if(cp == "fa" & target == "stan"){
+    if(cp == "fa" & grepl("stan", target)){
       cat("blavaan NOTE: fa priors are not available with stan. srs priors will be used. \n")
     }
 
@@ -198,7 +186,7 @@ blavaan <- function(...,  # default lavaan arguments
     if(convergence == "auto"){
         names(mfj) <- c("startburnin", "startsample", "adapt")
     }
-    if(target == "stan"){
+    if(grepl("stan", target)){
         names(mfj) <- c("warmup", "iter", "adapt")
         ## stan iter argument includes warmup:
         mfj$iter <- mfj$warmup + mfj$iter
@@ -280,7 +268,7 @@ blavaan <- function(...,  # default lavaan arguments
     if(length(ineq) > 0) {
         LAV@ParTable <- lapply(LAV@ParTable, function(x) x[-ineq])
         if(class(mcmcfile) == "logical") mcmcfile <- TRUE
-        warning("blavaan WARNING: blavaan does not currently handle inequality constraints.\ntry modifying the exported JAGS code.")
+        warning("blavaan WARNING: blavaan does not currently handle inequality constraints.\n try modifying the exported MCMC syntax.")
     }
     eqs <- which(LAV@ParTable$op == "==")
     if(length(eqs) > 0) {
@@ -289,7 +277,7 @@ blavaan <- function(...,  # default lavaan arguments
             lhsvars[i] <- length(all.vars(parse(file="", text=LAV@ParTable$lhs[eqs[i]])))
         }
         if(any(lhsvars > 1)) {
-            stop("blavaan ERROR: blavaan does not handle equality constraints with more than 1 variable on the lhs.\n  try modifying the constraints.")
+            stop("blavaan ERROR: blavaan does not handle equality constraints with more than 1 variable on the lhs.\n try modifying the constraints.")
         }
     }
 
@@ -418,7 +406,7 @@ blavaan <- function(...,  # default lavaan arguments
                                          mcmcextra = mcmcextra, inits = initsin,
                                          blavmis = blavmis, target="jags"),
                                 silent = TRUE)
-            } else {
+            } else if(target == "stanclassic"){
                 jagtrans <- try(lav2stan(model = LAV,
                                          lavdata = lavdata,
                                          dp = dp, n.chains = n.chains,
@@ -426,6 +414,27 @@ blavaan <- function(...,  # default lavaan arguments
                                          inits = initsin,
                                          debug = mcdebug),
                                 silent = TRUE)
+            } else {
+                l2s <- try(lav2stanmarg(LAV), silent = TRUE)
+                if(!inherits(l2s, "try-error")){
+                    ## FIXME these should come from lav2stanmarg
+                    ldargs <- c(l2s$dat, list(sd_Lambda_y_small = 2,
+                                              sd_Lambda_x_small = 2,
+                                              sd_Gamma_small = 2, sd_B_small = 2,
+                                              theta_sd_rate = .5, theta_x_sd_rate = .5))
+                    jagtrans <- try(do.call("stanmarg_data", ldargs), silent = TRUE)
+                    jagtrans <- list(data = jagtrans, monitors = c("ly_sign",
+                                           "lx_sign",
+                                           "bet_sign", "g_sign",
+                                           "Theta_cov", "Theta_var",
+                                           "Theta_x_cov", "Theta_x_var",
+                                           "Psi_cov", "Psi_var",
+                                           "Ph_cov", "Ph_var",
+                                           "Nu_free", "Alpha_free",
+                                           "eta"))
+                } else {
+                    jagtrans <- l2s$dat
+                }  
             }
         }
 
@@ -433,8 +442,10 @@ blavaan <- function(...,  # default lavaan arguments
             if(mcmcfile){
                 dir.create(path=jagdir, showWarnings=FALSE)
                 fext <- ifelse(target=="jags", "jag", "stan")
-                cat(jagtrans$model, file = paste(jagdir, "/sem.",
-                                               fext, sep=""))
+                if(target!="stan"){
+                    cat(jagtrans$model, file = paste(jagdir, "/sem.",
+                                                     fext, sep=""))
+                }
                 if(target=="jags"){
                     save(jagtrans, file = paste(jagdir, "/semjags.rda",
                                                 sep=""))
@@ -465,7 +476,7 @@ blavaan <- function(...,  # default lavaan arguments
                 for(i in 1:n.chains){
                     jagtrans$inits[[i]] <- c(jagtrans$inits[[i]], sdinit[[i]])
                 }
-            } else if(seedlen > 0 & target == "stan"){
+            } else if(seedlen > 0 & grepl("stan", target)){
                 if(!("seed" %in% names(bcontrol))){
                     bcontrol <- c(bcontrol, list(seed = seed))
                 }
@@ -475,11 +486,16 @@ blavaan <- function(...,  # default lavaan arguments
               rjarg <- with(jagtrans, list(model = paste(model),
                                            monitor = sampparms, 
                                            data = data, inits = inits))
-            } else {
+            } else if(target == "stanclassic"){
               rjarg <- with(jagtrans, list(model_code = model,
                                            pars = sampparms,
                                            data = data,
                                            init = inits))
+            } else {
+              rjarg <- with(jagtrans, list(object = stanmodels$stanmarg,
+                                           data = data,
+                                           pars = sampparms))
+              ## TODO: , init = inits)
             }
 
             ## user-supplied jags params
@@ -495,9 +511,11 @@ blavaan <- function(...,  # default lavaan arguments
             if(jag.do.fit){
                 if(target == "jags"){
                     rjcall <- "run.jags"
-                } else {
+                } else if(target == "stanclassic"){
                     cat("Compiling stan model...")
                     rjcall <- "stan"
+                } else {
+                    rjcall <- "sampling"
                 }
                 if(convergence == "auto"){
                     rjcall <- "autorun.jags"
@@ -513,6 +531,7 @@ blavaan <- function(...,  # default lavaan arguments
                         rjarg$raftery.options <- list(r=.01, converge.eps=.01)
                     }
                 }
+                ## the model is run here:
                 res <- try(do.call(rjcall, rjarg))
             } else {
                 res <- NULL
@@ -546,9 +565,12 @@ blavaan <- function(...,  # default lavaan arguments
         if(target == "jags"){
           parests <- coeffun(lavpartable, jagtrans$pxpartable, res)
           stansumm <- NA
-        } else {
+        } else if(target == "stanclassic"){
           parests <- coeffun_stan(lavpartable, jagtrans$pxpartable,
                                   res)
+          stansumm <- parests$stansumm
+        } else {
+          parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free'), l2s$free2, jagtrans$data, res)
           stansumm <- parests$stansumm
         }
         x <- parests$x
@@ -739,7 +761,7 @@ blavaan <- function(...,  # default lavaan arguments
                     origpt = lavpartable, inits = jagtrans$inits,
                     pxpt = jagtrans$pxpartable, burnin = burnin,
                     sample = sample)
-    if(target == "stan") extslot <- c(extslot, list(stansumm = stansumm))
+    if(grepl("stan", target)) extslot <- c(extslot, list(stansumm = stansumm))
     if(jags.ic) extslot <- c(extslot, list(sampkls = sampkls))
     if(save.lvs) {
       extslot <- c(extslot, list(cfx = cfx, csamplls = csamplls))
