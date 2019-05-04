@@ -423,6 +423,7 @@ blavaan <- function(...,  # default lavaan arguments
                                               sd_Gamma_small = 2, sd_B_small = 2,
                                               theta_sd_rate = .5, theta_x_sd_rate = .5))
                     jagtrans <- try(do.call("stanmarg_data", ldargs), silent = TRUE)
+browser()
                     jagtrans <- list(data = jagtrans, monitors = c("ly_sign",
                                            "lx_sign",
                                            "bet_sign", "g_sign",
@@ -433,7 +434,7 @@ blavaan <- function(...,  # default lavaan arguments
                                            "Nu_free", "Alpha_free",
                                            "eta"))
                 } else {
-                    jagtrans <- l2s$dat
+                    jagtrans <- l2s
                 }  
             }
         }

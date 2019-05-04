@@ -58,11 +58,16 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, ...) {
         stop("blavaan ERROR: cross-matrix equality constraints not supported.")
       }
     }
-  }
 
+    ## wskel[,2] must refer to only free parameters, skipping over
+    ## constrained parameters
+    freepars <- cumsum(wskel[,1] == 0)
+    wskel[wskel[,1]==1,2] <- freepars[wskel[wskel[,1]==1,2]]
+  }
+  
   lvmat <- mat %in% c('Gamma', 'B', 'Psi_r')
   lammat <- grepl('Lambda', mat)
-  sign <- matrix(1, Ng * len, 2 + lvmat)
+  sign <- matrix(0, Ng * len, 2 + lvmat)
   if (std.lv & (lvmat | lammat)) {
     if (lvmat) {
       lamfree <- ddd$free2
@@ -125,10 +130,10 @@ lav2stanmarg <- function(lavobject) {
     dat$miss <- 1L
     Mp <- lavobject@Data@Mp
     cases <- lapply(Mp, function(x) do.call("c", x$case.idx))
-    misgrps <- sapply(Mp, function(x) x$freq)
-    if (length(misgrps) > 1) {
-      misgrps <- do.call("c", misgrps)
-    }
+    misgrps <- lapply(Mp, function(x) x$freq)
+#   if (length(misgrps) > 1) {
+    misgrps <- do.call("c", misgrps)
+#   }
     misgrps <- rep(1:length(misgrps), misgrps)
     npatt <- sapply(Mp, function(x) NROW(x$pat))
     dat$startrow <- tapply(1:NROW(misgrps), misgrps, head, 1)
@@ -525,7 +530,7 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
       } else {
         tmpw <- NULL
       }
-if(sum(tmpw[,1]==0) != length(grep(stanvec[j], names(b.est)))) browser()
+
       if(NROW(tmpw) > 0){
         ## need rowvec & rowvec2 because stan summary rows
         ## ordered differently from stan draws rows

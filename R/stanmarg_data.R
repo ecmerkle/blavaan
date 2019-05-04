@@ -361,13 +361,13 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   pris <- format_priors(Alpha_skeleton, dat$Ng, dat$w14skel, alpha_mn, alpha_sd)
   dat$alpha_mn <- pris[['p1']]; dat$alpha_sd <- pris[['p2']]
   dat$len_alph <- length(dat$alpha_mn)
-  
+
   stopifnot(length(theta_sd_rate) == 1L || length(theta_sd_rate) == (dat$Ng * dat$p - sum(dat$w5skel[,1] == 1L)))
-  if (length(theta_sd_rate) == 1L) dat$theta_sd_rate <- rep(theta_sd_rate, dat$Ng * (dat$p - sum(dat$w5skel[,1] == 1L)))
+  if (length(theta_sd_rate) == 1L) dat$theta_sd_rate <- rep(theta_sd_rate, dat$Ng * dat$p - sum(dat$w5skel[,1] == 1L))
   else dat$theta_sd_rate <- as.numeric(theta_sd_rate)
 
   stopifnot(length(theta_x_sd_rate) == 1L   || length(theta_x_sd_rate) == (dat$Ng * dat$q - sum(dat$w6skel[,1] == 1L)))
-  if (length(theta_x_sd_rate) == 1L) dat$theta_x_sd_rate <- rep(theta_x_sd_rate, dat$Ng * (dat$q - sum(dat$w6skel[,1] == 1L)))
+  if (length(theta_x_sd_rate) == 1L) dat$theta_x_sd_rate <- rep(theta_x_sd_rate, dat$Ng * dat$q - sum(dat$w6skel[,1] == 1L))
   else dat$theta_x_sd_rate <- as.numeric(theta_x_sd_rate)
   
   return(dat)
