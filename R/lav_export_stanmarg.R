@@ -112,7 +112,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, ...) {
   return(out)
 }
 
-lav2stanmarg <- function(lavobject) {
+lav2stanmarg <- function(lavobject, dp) {
   ## extract model and data characteristics from lavaan object
   dat <- list()
   opts <- lavInspect(lavobject, 'options')
@@ -435,7 +435,20 @@ lav2stanmarg <- function(lavobject) {
     dat$w14skel <- matrix(0, 0, 2)
   }
 
-  return(list(dat = dat, free2 = free2))
+  lavpartable <- parTable(lavobject)
+
+  ## add priors by using set_stanpars() from classic approach
+  lavpartable <- lavMatrixRepresentation(lavpartable, add.attributes = TRUE)
+  lavpartable$rhoidx <- rep(0, length(lavpartable$mat))
+  if (!("prior" %in% names(lavpartable))) lavpartable$prior <- rep("", length(lavpartable$mat))
+  covpars <- with(lavpartable, mat %in% c("theta", "psi") &
+                               row != col)
+  lavpartable$mat[covpars] <- "rho"
+  
+  stanprires <- set_stanpars("", lavpartable, free2, dp, "")
+  lavpartable$prior <- stanprires$partable$prior
+  
+  return(list(dat = dat, free2 = free2, lavpartable = lavpartable))
 }
 
 

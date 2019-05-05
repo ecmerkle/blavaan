@@ -415,13 +415,9 @@ blavaan <- function(...,  # default lavaan arguments
                                          debug = mcdebug),
                                 silent = TRUE)
             } else {
-                l2s <- try(lav2stanmarg(LAV), silent = TRUE)
+                l2s <- try(lav2stanmarg(LAV, dp), silent = TRUE)
                 if(!inherits(l2s, "try-error")){
-                    ## FIXME these should come from lav2stanmarg
-                    ldargs <- c(l2s$dat, list(sd_Lambda_y_small = 2,
-                                              sd_Lambda_x_small = 2,
-                                              sd_Gamma_small = 2, sd_B_small = 2,
-                                              theta_sd_rate = .5, theta_x_sd_rate = .5))
+                    ldargs <- c(l2s$dat, list(lavpartable = l2s$lavpartable))
                     jagtrans <- try(do.call("stanmarg_data", ldargs), silent = TRUE)
 browser()
                     jagtrans <- list(data = jagtrans, monitors = c("ly_sign",

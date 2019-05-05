@@ -22,34 +22,106 @@ make_sparse_skeleton <- function(skeleton) {
 
 # Get prior parameters in a manner that Stan will like
 #
-# @param skeleton A matrix that indicates the restrictions placed on
-#   its elements. If `NA`, then the element is unrestricted. If
-#   `Inf` or `-Inf`, the element is unrestricted but is constrained
-#   to be positive or negative respectively. Otherwise, the element is 
-#   fixed to the specified number, which is often zero but can be any finite 
-#   value.
-# @param Ng Number of groups
-# @param wskel Matrix of equality constraints
-# @param param1 first parameter of prior distribution (possibly supplied by user)
-# @param param2 second parameter of prior distribution (possibly supplied by user)
+# @param lavpartable A lavaan partable with "priors" column
+# @param mat The matrix for which we are obtaining priors
 # @return A list containing the prior parameters
-format_priors <- function(skeleton, Ng, wskel, param1, param2) {
-  nfree <- Ng * sum(!is.finite(skeleton)) - sum(wskel[,1] == 1L)
-  stopifnot(length(param1) == 1L || length(param1) == nfree)
-  if (length(param1) == 1L) param1 <- array(param1, nfree)
-  else param1 <- as.numeric(param1)
+format_priors <- function(lavpartable, mat) {
 
-  stopifnot(length(param2) == 1L || length(param2) == nfree)
-  if (length(param2) == 1L) param2 <- array(param2, nfree)
-  else param2 <- as.numeric(param2)
+  if (grepl("var", mat)) {
+    mat <- gsub("var", "", mat)
+    prisel <- lavpartable$row == lavpartable$col
+  } else if (grepl("off", mat)) {
+    mat <- gsub("off", "", mat)
+    prisel <- lavpartable$row != lavpartable$col
+  } else {
+    prisel <- rep(TRUE, length(lavpartable$row))
+  }
+  
+  if (mat == "nu") {
+    prisel <- prisel & (lavpartable$mat %in% c(mat, "mean.x"))
+  } else {
+    prisel <- prisel & (lavpartable$mat == mat) & (lavpartable$free > 0)
+  }
+  thepris <- lavpartable$prior[prisel]
 
+  if (length(thepris) > 0) {
+    textpris <- thepris[thepris != ""]
+
+    prisplit <- strsplit(textpris, "[, ()]+")
+
+    param1 <- sapply(prisplit, function(x) x[2])
+    param2 <- sapply(prisplit, function(x) x[3])
+
+    param1 <- as.numeric(param1)
+    param2 <- as.numeric(param2)
+  } else {
+    param1 <- NULL
+    param2 <- NULL
+  }
+  
   return(list(p1=param1, p2=param2))
 }
 
+# Get prior parameters in a manner that Stan will like
+#
+# @param lavpartable A lavaan partable with "priors" column
+# @param mat The matrix for which we are obtaining priors
+# @return A list containing the prior parameters
+format_priors <- function(lavpartable, mat) {
 
-#' Bayesian Structural Equation Models via Stan
-#'
-#' Obtain data list for LERSIL().
+  if (grepl("var", mat)) {
+    mat <- gsub("var", "", mat)
+    prisel <- lavpartable$row == lavpartable$col
+  } else if (grepl("off", mat)) {
+    mat <- gsub("off", "", mat)
+    prisel <- lavpartable$row != lavpartable$col
+  } else {
+    prisel <- rep(TRUE, length(lavpartable$row))
+  }
+  prisel <- prisel & (lavpartable$mat == mat) & (lavpartable$free > 0)      
+  thepris <- lavpartable$prior[prisel]
+
+  if (length(thepris) > 0) {
+    textpris <- thepris[thepris != ""]
+
+    prisplit <- strsplit(textpris, "[, ()]+")
+
+    param1 <- sapply(prisplit, function(x) x[2])
+    param2 <- sapply(prisplit, function(x) x[3])
+
+    param1 <- as.numeric(param1)
+    param2 <- as.numeric(param2)
+  } else {
+    param1 <- array(0,0)
+    param2 <- array(0,0)
+  }
+  
+  return(list(p1=param1, p2=param2))
+}
+
+# Check that priors match what is in the stan file
+#
+# @param lavpartable A lavaan partable with "priors" column
+# @param mat The matrix for which we are obtaining priors
+# @return nothing
+check_priors <- function(lavpartable) {
+  right_pris <- sapply(dpriors(target = "stan"), function(x) strsplit(x, "[, ()]+")[[1]][1])
+
+  pt_pris <- sapply(lavpartable$prior[lavpartable$prior != ""], function(x) strsplit(x, "[, ()]+")[[1]][1])
+  names(pt_pris) <- lavpartable$mat[lavpartable$prior != ""]
+
+  primatch <- match(names(pt_pris), names(right_pris))
+
+  badpris <- which(pt_pris != right_pris[primatch])
+
+  if (length(badpris) > 0) {
+    badtxt <- unique(paste(names(pt_pris)[badpris], pt_pris[badpris]))
+    stop(paste0("blavaan ERROR: For target='stan', the following priors are not allowed:\n", paste(badtxt, collapse = "\n"), "\n See dpriors(target='stan') for each parameter's required distribution."))
+  }
+}
+
+
+#' Obtain data list for stanmarg.
 #'
 #' @export
 #' @param S If `YX` is not supplied, then you must supply
@@ -92,16 +164,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
                           w14skel,
                           lam_y_sign, lam_x_sign, # sign constraint matrices
                           gam_sign, b_sign, psi_r_sign, phi_r_sign,
-                          lambda_y_mn = 0, lambda_y_sd = 10, # prior settings
-                          lambda_x_mn = 0, lambda_x_sd = 10,
-                          gamma_mn = 0, gamma_sd = 10,
-                          b_mn = 0, b_sd = 10, theta_r_alpha = 1,
-                          theta_r_beta = 1, theta_x_r_alpha = 1,
-                          theta_x_r_beta = 1, psi_r_alpha = 1, psi_r_beta = 1,
-                          phi_r_alpha = 1, phi_r_beta = 1, nu_mn = 0,
-                          nu_sd = 50, alpha_mn = 0, alpha_sd = 10,
-                          theta_sd_rate = .5, theta_x_sd_rate = .5,
-                          psi_sd_rate = .5, phi_sd_rate = .5,
+                          lavpartable = NULL, # for priors
                           ...) {
   
   dat <- list()
@@ -305,70 +368,64 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$len_small_w14 <- length(dat$small_w14)
   dat$w14skel <- w14skel
 
-  ## priors
-  pris <- format_priors(Lambda_y_skeleton, dat$Ng, dat$w1skel, lambda_y_mn, lambda_y_sd)
+  ## priors; first make sure they match what is in the stan file
+  check_priors(lavpartable)
+  
+  pris <- format_priors(lavpartable, "lambda")
   dat$lambda_y_mn <- pris[['p1']]; dat$lambda_y_sd <- pris[['p2']]
   dat$len_lam_y <- length(dat$lambda_y_mn)
   
-  pris <- format_priors(Lambda_x_skeleton, dat$Ng, dat$w2skel, lambda_x_mn, lambda_x_sd)
+  pris <- format_priors(lavpartable, "lambda_x")
   dat$lambda_x_mn <- pris[['p1']]; dat$lambda_x_sd <- pris[['p2']]
   dat$len_lam_x <- length(dat$lambda_x_mn)
 
-  pris <- format_priors(Gamma_skeleton, dat$Ng, dat$w3skel, gamma_mn, gamma_sd)
+  pris <- format_priors(lavpartable, "gamma")
   dat$gamma_mn <- pris[['p1']]; dat$gamma_sd <- pris[['p2']]
   dat$len_gam <- length(dat$gamma_mn)
   
-  pris <- format_priors(B_skeleton, dat$Ng, dat$w4skel, b_mn, b_sd)
+  pris <- format_priors(lavpartable, "beta")
   dat$b_mn <- pris[['p1']]; dat$b_sd <- pris[['p2']]
   dat$len_b <- length(dat$b_mn)
 
-  pris <- format_priors(dThet, dat$Ng, dat$w5skel, theta_sd_rate, theta_sd_rate)
+  pris <- format_priors(lavpartable, "thetavar")
   dat$theta_sd_rate <- pris[['p1']] #; dat$b_sd <- pris[['p2']]
   dat$len_thet_sd <- length(dat$theta_sd_rate)
 
-  pris <- format_priors(dThetx, dat$Ng, dat$w6skel, theta_x_sd_rate, theta_x_sd_rate)
+  pris <- format_priors(lavpartable, "cov.xvar")
   dat$theta_x_sd_rate <- pris[['p1']] #; dat$b_sd <- pris[['p2']]
   dat$len_thet_x_sd <- length(dat$theta_x_sd_rate)
   
-  pris <- format_priors(Theta_r_skeleton, dat$Ng, dat$w7skel, theta_r_alpha, theta_r_beta)
+  pris <- format_priors(lavpartable, "thetaoff")
   dat$theta_r_alpha <- pris[['p1']]; dat$theta_r_beta <- pris[['p2']]
   dat$len_thet_r <- length(dat$theta_r_alpha)
   
-  pris <- format_priors(Theta_x_r_skeleton, dat$Ng, dat$w8skel, theta_x_r_alpha, theta_x_r_beta)
+  pris <- format_priors(lavpartable, "cov.xoff")
   dat$theta_x_r_alpha <- pris[['p1']]; dat$theta_x_r_beta <- pris[['p2']]
   dat$len_thet_x_r <- length(dat$theta_x_r_alpha)
 
-  pris <- format_priors(dPsi, dat$Ng, dat$w9skel, psi_sd_rate, psi_sd_rate)
+  pris <- format_priors(lavpartable, "psivar")
   dat$psi_sd_rate <- pris[['p1']] #; dat$b_sd <- pris[['p2']]
   dat$len_psi_sd <- length(dat$psi_sd_rate)
   
-  pris <- format_priors(Psi_r_skeleton, dat$Ng, dat$w10skel, psi_r_alpha, psi_r_beta)
+  pris <- format_priors(lavpartable, "psioff")
   dat$psi_r_alpha <- pris[['p1']]; dat$psi_r_beta <- pris[['p2']]
   dat$len_psi_r <- length(dat$psi_r_alpha)
 
-  pris <- format_priors(dPhi, dat$Ng, dat$w11skel, phi_sd_rate, phi_sd_rate)
+  pris <- format_priors(lavpartable, "phivar")
   dat$phi_sd_rate <- pris[['p1']] #; dat$b_sd <- pris[['p2']]
   dat$len_phi_sd <- length(dat$phi_sd_rate)
 
-  pris <- format_priors(Phi_r_skeleton, dat$Ng, dat$w12skel, phi_r_alpha, phi_r_beta)
+  pris <- format_priors(lavpartable, "phioff")
   dat$phi_r_alpha <- pris[['p1']]; dat$phi_r_beta <- pris[['p2']]
   dat$len_phi_r <- length(dat$phi_r_alpha)
   
-  pris <- format_priors(Nu_skeleton, dat$Ng, dat$w13skel, nu_mn, nu_sd)
+  pris <- format_priors(lavpartable, "nu")
   dat$nu_mn <- pris[['p1']]; dat$nu_sd <- pris[['p2']]
   dat$len_nu <- length(dat$nu_mn)
 
-  pris <- format_priors(Alpha_skeleton, dat$Ng, dat$w14skel, alpha_mn, alpha_sd)
+  pris <- format_priors(lavpartable, "alpha")
   dat$alpha_mn <- pris[['p1']]; dat$alpha_sd <- pris[['p2']]
   dat$len_alph <- length(dat$alpha_mn)
-
-  stopifnot(length(theta_sd_rate) == 1L || length(theta_sd_rate) == (dat$Ng * dat$p - sum(dat$w5skel[,1] == 1L)))
-  if (length(theta_sd_rate) == 1L) dat$theta_sd_rate <- rep(theta_sd_rate, dat$Ng * dat$p - sum(dat$w5skel[,1] == 1L))
-  else dat$theta_sd_rate <- as.numeric(theta_sd_rate)
-
-  stopifnot(length(theta_x_sd_rate) == 1L   || length(theta_x_sd_rate) == (dat$Ng * dat$q - sum(dat$w6skel[,1] == 1L)))
-  if (length(theta_x_sd_rate) == 1L) dat$theta_x_sd_rate <- rep(theta_x_sd_rate, dat$Ng * dat$q - sum(dat$w6skel[,1] == 1L))
-  else dat$theta_x_sd_rate <- as.numeric(theta_x_sd_rate)
   
   return(dat)
 }
