@@ -34,10 +34,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, ...) {
     start <- start + np
   }
 
-  ## only done here to ensure matrices are right size for
-  ## stanmarg_data; we use the results of make_sparse_skeleton
-  ## in stanmarg_data instead of here so that stanmarg_data does not
-  ## depend on lavaan objects.
+  ## ensure matrices are right size for stanmarg_data
   parts <- make_sparse_skeleton(matskel)
   len <- length(parts$w)
 
@@ -112,7 +109,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, ...) {
   return(out)
 }
 
-lav2stanmarg <- function(lavobject, dp) {
+lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
   ## extract model and data characteristics from lavaan object
   dat <- list()
   opts <- lavInspect(lavobject, 'options')
@@ -183,6 +180,10 @@ lav2stanmarg <- function(lavobject, dp) {
     estmats <- list(estmats)
   }
   free2 <- list()
+  nfree <- list()
+  lavpartable <- parTable(lavobject)
+  lavpartable <- lavMatrixRepresentation(lavpartable, add.attributes = TRUE)
+  freeparnums <- rep(0, length(lavpartable$free))
   
   ## 1. Lambda_y
   if ("lambda" %in% names(freemats[[1]])) {
@@ -195,6 +196,10 @@ lav2stanmarg <- function(lavobject, dp) {
     dat$lam_y_sign <- res$sign
     lyfree2 <- res$free2
     free2 <- c(free2, list(lambda = res$free))
+    ptrows <- which(lavpartable$mat == "lambda" & lavpartable$free > 0)
+    veclen <- length(ptrows)
+    nfree <- c(nfree, list(lambda = sum(res$wskel[1:veclen,1] == 0)))
+    freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
   } else {
     dat$Lambda_y_skeleton <- matrix(0, 0, 0)
     dat$w1skel <- matrix(0, 0, 2)
@@ -219,6 +224,10 @@ lav2stanmarg <- function(lavobject, dp) {
     dat$w3skel <- res$wskel
     dat$gam_sign <- res$sign
     free2 <- c(free2, list(gamma = res$free))
+    ptrows <- which(lavpartable$mat == "gamma" & lavpartable$free > 0)
+    veclen <- length(ptrows)
+    nfree <- c(nfree, list(gamma = sum(res$wskel[1:veclen,1] == 0)))
+    freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
   } else {
     dat$Gamma_skeleton <- matrix(0, ncol(dat$Lambda_y_skeleton), 0)
     dat$w3skel <- matrix(0, 0, 2)
@@ -236,6 +245,10 @@ lav2stanmarg <- function(lavobject, dp) {
     dat$w4skel <- res$wskel
     dat$b_sign <- res$sign
     free2 <- c(free2, list(beta = res$free))
+    ptrows <- which(lavpartable$mat == "beta" & lavpartable$free > 0)
+    veclen <- length(ptrows)
+    nfree <- c(nfree, list(beta = sum(res$wskel[1:veclen,1] == 0)))
+    freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
   } else {
     dat$B_skeleton <- matrix(0, ncol(dat$Lambda_y_skeleton), 0)
     dat$w4skel <- matrix(0, 0, 2)
@@ -261,6 +274,10 @@ lav2stanmarg <- function(lavobject, dp) {
     dat$Theta_skeleton <- res$matskel
     dat$w5skel <- res$wskel
     free2 <- c(free2, list(dtheta = res$free))
+    ptrows <- with(lavpartable, which(mat == "theta" & free > 0 & row == col))
+    veclen <- length(ptrows)
+    nfree <- c(nfree, list(theta = sum(res$wskel[1:veclen,1] == 0)))
+    freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
   } else {
     dat$Theta_skeleton <- matrix(0, 0, 0)
     dat$w5skel <- matrix(0, 0, 2)
@@ -284,7 +301,11 @@ lav2stanmarg <- function(lavobject, dp) {
 
     dat$Theta_x_skeleton <- res$matskel
     dat$w6skel <- res$wskel
-    free2 <- c(free2, list(dthetax = res$free))
+    free2 <- c(free2, list(cov.x = res$free))
+    ptrows <- with(lavpartable, which(mat == "cov.x" & free > 0 & row == col))
+    veclen <- length(ptrows)
+    nfree <- c(nfree, list(cov.x = sum(res$wskel[1:veclen,1] == 0)))
+    freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)    
   } else {
     dat$Theta_x_skeleton <- matrix(0, 0, 0)
     dat$w6skel <- matrix(0, 0, 2)
@@ -309,6 +330,12 @@ lav2stanmarg <- function(lavobject, dp) {
     dat$Theta_r_skeleton <- res$matskel
     dat$w7skel <- res$wskel
     free2 <- c(free2, list(rtheta = res$free))
+    ptrows <- with(lavpartable, which(mat == "theta" & free > 0 & row != col))
+    veclen <- length(ptrows)
+    if (veclen > 0) {
+      nfree <- c(nfree, list(rho = sum(res$wskel[1:veclen,1] == 0)))
+      freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
+    }
   } else {
     dat$Theta_r_skeleton <- matrix(0, 0, 0)
     dat$w7skel <- matrix(0, 0, 2)
@@ -333,6 +360,12 @@ lav2stanmarg <- function(lavobject, dp) {
     dat$Theta_x_r_skeleton <- res$matskel
     dat$w8skel <- res$wskel
     free2 <- c(free2, list(cov.x = res$free))
+    ptrows <- with(lavpartable, which(mat == "cov.x" & free > 0 & row != col))
+    veclen <- length(ptrows)
+    if (veclen > 0) {
+      nfree <- c(nfree, list(cov.x = sum(res$wskel[1:veclen,1] == 0)))
+      freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
+    }
   } else {
     dat$Theta_x_r_skeleton <- matrix(0, 0, 0)
     dat$w8skel <- matrix(0, 0, 2)
@@ -358,6 +391,10 @@ lav2stanmarg <- function(lavobject, dp) {
     dat$Psi_skeleton <- res$matskel
     dat$w9skel <- res$wskel
     free2 <- c(free2, list(dpsi = res$free))
+    ptrows <- with(lavpartable, which(mat == "psi" & free > 0 & row == col))
+    veclen <- length(ptrows)
+    nfree <- c(nfree, list(psi = sum(res$wskel[1:veclen,1] == 0)))
+    freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
   } else {
     dat$Psi_skeleton <- matrix(0, 0, 0)
     dat$w9skel <- matrix(0, 0, 2)
@@ -384,6 +421,12 @@ lav2stanmarg <- function(lavobject, dp) {
     dat$w10skel <- res$wskel
     dat$psi_r_sign <- res$sign
     free2 <- c(free2, list(rpsi = res$free))
+    ptrows <- with(lavpartable, which(mat == "psi" & free > 0 & row != col))
+    veclen <- length(ptrows)
+    if (veclen > 0) {
+      nfree <- c(nfree, list(lvrho = sum(res$wskel[1:veclen,1] == 0)))
+      freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
+    }
   } else {
     dat$Psi_r_skeleton <- matrix(0, 0, 0)
     dat$w10skel <- matrix(0, 0, 2)
@@ -416,6 +459,10 @@ lav2stanmarg <- function(lavobject, dp) {
     dat$Nu_skeleton <- res$matskel
     dat$w13skel <- res$wskel
     free2 <- c(free2, list(nu = res$free))
+    ptrows <- with(lavpartable, which(mat %in% c("nu", "mean.x") & free > 0))
+    veclen <- length(ptrows)
+    nfree <- c(nfree, list(nu = sum(res$wskel[1:veclen,1] == 0)))
+    freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
   } else {
     dat$Nu_skeleton <- matrix(0, 0, 0)
     dat$w13skel <- matrix(0, 0, 2)
@@ -430,15 +477,18 @@ lav2stanmarg <- function(lavobject, dp) {
     dat$Alpha_skeleton <- res$matskel
     dat$w14skel <- res$wskel
     free2 <- c(free2, list(alpha = res$free))
+    ptrows <- with(lavpartable, which(mat == "alpha" & free > 0))
+    veclen <- length(ptrows)
+    if (veclen > 0) {
+      nfree <- c(nfree, list(alpha = sum(res$wskel[1:veclen,1] == 0)))
+      freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
+    }
   } else {
     dat$Alpha_skeleton <- matrix(0, 0, 0)
     dat$w14skel <- matrix(0, 0, 2)
   }
 
-  lavpartable <- parTable(lavobject)
-
   ## add priors by using set_stanpars() from classic approach
-  lavpartable <- lavMatrixRepresentation(lavpartable, add.attributes = TRUE)
   lavpartable$rhoidx <- rep(0, length(lavpartable$mat))
   if (!("prior" %in% names(lavpartable))) lavpartable$prior <- rep("", length(lavpartable$mat))
   covpars <- with(lavpartable, mat %in% c("theta", "psi") &
@@ -447,8 +497,22 @@ lav2stanmarg <- function(lavobject, dp) {
   
   stanprires <- set_stanpars("", lavpartable, free2, dp, "")
   lavpartable$prior <- stanprires$partable$prior
+
+  ## add inits (manipulate partable to re-use set_inits_stan)
+  lavpartable$freeparnums <- freeparnums
+  offd <- with(lavpartable, mat == "theta" & row != col)
+  lavpartable$mat[offd] <- "rho"
+  offd <- with(lavpartable, mat == "psi" & row != col)
+  lavpartable$mat[offd] <- "lvrho"
+  ## FIXME? theta_x, cov.x will go to lvrho
+  if (!(inits %in% c("jags", "stan"))) {
+    ini <- set_inits_stan(lavpartable, nfree, n.chains, inits)
+  } else {
+    ini <- NULL
+  }
   
-  return(list(dat = dat, free2 = free2, lavpartable = lavpartable))
+  return(list(dat = dat, free2 = free2, lavpartable = lavpartable,
+              init = ini))
 }
 
 

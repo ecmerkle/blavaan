@@ -26,7 +26,6 @@ make_sparse_skeleton <- function(skeleton) {
 # @param mat The matrix for which we are obtaining priors
 # @return A list containing the prior parameters
 format_priors <- function(lavpartable, mat) {
-
   if (grepl("var", mat)) {
     mat <- gsub("var", "", mat)
     prisel <- lavpartable$row == lavpartable$col
@@ -50,44 +49,12 @@ format_priors <- function(lavpartable, mat) {
     prisplit <- strsplit(textpris, "[, ()]+")
 
     param1 <- sapply(prisplit, function(x) x[2])
-    param2 <- sapply(prisplit, function(x) x[3])
 
-    param1 <- as.numeric(param1)
-    param2 <- as.numeric(param2)
-  } else {
-    param1 <- NULL
-    param2 <- NULL
-  }
-  
-  return(list(p1=param1, p2=param2))
-}
-
-# Get prior parameters in a manner that Stan will like
-#
-# @param lavpartable A lavaan partable with "priors" column
-# @param mat The matrix for which we are obtaining priors
-# @return A list containing the prior parameters
-format_priors <- function(lavpartable, mat) {
-
-  if (grepl("var", mat)) {
-    mat <- gsub("var", "", mat)
-    prisel <- lavpartable$row == lavpartable$col
-  } else if (grepl("off", mat)) {
-    mat <- gsub("off", "", mat)
-    prisel <- lavpartable$row != lavpartable$col
-  } else {
-    prisel <- rep(TRUE, length(lavpartable$row))
-  }
-  prisel <- prisel & (lavpartable$mat == mat) & (lavpartable$free > 0)      
-  thepris <- lavpartable$prior[prisel]
-
-  if (length(thepris) > 0) {
-    textpris <- thepris[thepris != ""]
-
-    prisplit <- strsplit(textpris, "[, ()]+")
-
-    param1 <- sapply(prisplit, function(x) x[2])
-    param2 <- sapply(prisplit, function(x) x[3])
+    if (!grepl("\\[", prisplit[[1]][3])) {
+      param2 <- sapply(prisplit, function(x) x[3])
+    } else {
+      param2 <- rep(NA, length(param1))
+    }
 
     param1 <- as.numeric(param1)
     param2 <- as.numeric(param2)

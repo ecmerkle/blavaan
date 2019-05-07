@@ -415,12 +415,16 @@ blavaan <- function(...,  # default lavaan arguments
                                          debug = mcdebug),
                                 silent = TRUE)
             } else {
-                l2s <- try(lav2stanmarg(LAV, dp), silent = TRUE)
+              l2s <- try(lav2stanmarg(lavobject = LAV, dp = dp,
+                                      n.chains = n.chains,
+                                      inits = initsin),
+                         silent = TRUE)
                 if(!inherits(l2s, "try-error")){
                     ldargs <- c(l2s$dat, list(lavpartable = l2s$lavpartable))
                     jagtrans <- try(do.call("stanmarg_data", ldargs), silent = TRUE)
 browser()
-                    jagtrans <- list(data = jagtrans, monitors = c("ly_sign",
+                    jagtrans <- list(data = jagtrans,
+                                     monitors = c("ly_sign",
                                            "lx_sign",
                                            "bet_sign", "g_sign",
                                            "Theta_cov", "Theta_var",
@@ -429,6 +433,9 @@ browser()
                                            "Ph_cov", "Ph_var",
                                            "Nu_free", "Alpha_free",
                                            "eta"))
+                    if("init" %in% names(l2s)){
+                      jagtrans <- c(jagtrans, list(init = l2s$init))
+                    }
                 } else {
                     jagtrans <- l2s
                 }  
@@ -491,8 +498,8 @@ browser()
             } else {
               rjarg <- with(jagtrans, list(object = stanmodels$stanmarg,
                                            data = data,
-                                           pars = sampparms))
-              ## TODO: , init = inits)
+                                           pars = sampparms,
+                                           init = init))
             }
 
             ## user-supplied jags params
