@@ -504,9 +504,20 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
   lavpartable$mat[offd] <- "rho"
   offd <- with(lavpartable, mat == "psi" & row != col)
   lavpartable$mat[offd] <- "lvrho"
-  ## FIXME? theta_x, cov.x will go to lvrho
+  ## FIXME theta_x, cov.x not handled
   if (!(inits %in% c("jags", "stan"))) {
     ini <- set_inits_stan(lavpartable, nfree, n.chains, inits)
+
+    mapping <- c(Lambda_y_free = "lambdafree", Gamma_free = "gammafree",
+                 B_free = "betafree", Theta_sd_free = "thetafree",
+                 Theta_r_free = "rhofree", Psi_sd_free = "psifree",
+                 Psi_r_free = "lvrhofree", Theta_x_sd_free = "thetaxfree",
+                 Theta_x_r_free = "cov.x", Nu_free = "nufree",
+                 Alpha_free = "alphafree")
+    for (i in 1:length(ini)) {
+      nmidx <- match(names(ini[[i]]), mapping)
+      names(ini[[i]]) <- names(mapping)[nmidx]
+    }
   } else {
     ini <- NULL
   }
@@ -643,6 +654,7 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
 
   ## add matrices, which are used in blavInspect()
   lavpartable <- lavMatrixRepresentation(lavpartable, add.attributes = TRUE, as.data.frame. = FALSE)
+  lavpartable$est[lavpartable$free > 0] <- est
   
   list(x = est, vcorr = vcorr, sd = sdvec,
        stansumm = rssumm$summary, lavpartable = lavpartable)
