@@ -184,7 +184,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
   lavpartable <- parTable(lavobject)
   lavpartable <- lavMatrixRepresentation(lavpartable, add.attributes = TRUE)
   freeparnums <- rep(0, length(lavpartable$free))
-  
+
   ## 1. Lambda_y
   if ("lambda" %in% names(freemats[[1]])) {
     fr <- lapply(freemats, function(x) x$lambda)
@@ -495,19 +495,17 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
   ## add priors by using set_stanpars() from classic approach
   lavpartable$rhoidx <- rep(0, length(lavpartable$mat))
   if (!("prior" %in% names(lavpartable))) lavpartable$prior <- rep("", length(lavpartable$mat))
-  covpars <- with(lavpartable, mat %in% c("theta", "psi") &
-                               row != col)
-  lavpartable$mat[covpars] <- "rho"
+  offd <- with(lavpartable, mat == "theta" & row != col)
+  lavpartable$mat[offd] <- "rho"
+  offd <- with(lavpartable, mat == "psi" & row != col)
+  lavpartable$mat[offd] <- "lvrho"
 
   stanprires <- set_stanpars("", lavpartable, free2, dp, "")
   lavpartable$prior <- stanprires$partable$prior
 
   ## add inits (manipulate partable to re-use set_inits_stan)
   lavpartable$freeparnums <- freeparnums
-  offd <- with(lavpartable, mat == "theta" & row != col)
-  lavpartable$mat[offd] <- "rho"
-  offd <- with(lavpartable, mat == "psi" & row != col)
-  lavpartable$mat[offd] <- "lvrho"
+
   ## FIXME theta_x, cov.x not handled
   if (!(inits %in% c("jags", "stan"))) {
     ini <- set_inits_stan(lavpartable, nfree, n.chains, inits)
