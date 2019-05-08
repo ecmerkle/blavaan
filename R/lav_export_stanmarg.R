@@ -393,8 +393,10 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     free2 <- c(free2, list(dpsi = res$free))
     ptrows <- with(lavpartable, which(mat == "psi" & free > 0 & row == col))
     veclen <- length(ptrows)
-    nfree <- c(nfree, list(psi = sum(res$wskel[1:veclen,1] == 0)))
-    freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
+    if(veclen > 0) {
+      nfree <- c(nfree, list(psi = sum(res$wskel[1:veclen,1] == 0)))
+      freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
+    }
   } else {
     dat$Psi_skeleton <- matrix(0, 0, 0)
     dat$w9skel <- matrix(0, 0, 2)
@@ -461,8 +463,10 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     free2 <- c(free2, list(nu = res$free))
     ptrows <- with(lavpartable, which(mat %in% c("nu", "mean.x") & free > 0))
     veclen <- length(ptrows)
-    nfree <- c(nfree, list(nu = sum(res$wskel[1:veclen,1] == 0)))
-    freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
+    if (veclen > 0) {
+      nfree <- c(nfree, list(nu = sum(res$wskel[1:veclen,1] == 0)))
+      freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
+    }
   } else {
     dat$Nu_skeleton <- matrix(0, 0, 0)
     dat$w13skel <- matrix(0, 0, 2)
@@ -494,7 +498,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
   covpars <- with(lavpartable, mat %in% c("theta", "psi") &
                                row != col)
   lavpartable$mat[covpars] <- "rho"
-  
+
   stanprires <- set_stanpars("", lavpartable, free2, dp, "")
   lavpartable$prior <- stanprires$partable$prior
 
@@ -646,15 +650,19 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
 
   names(sdvec) <- colnames(vcorr)
 
+  ## add to partable for other functions
   ## indexing of stan objects
   lavpartable$stanpnum <- rep(NA, length(lavpartable$est))
   lavpartable$stansumnum <- rep(NA, length(lavpartable$est))
   lavpartable$stanpnum[lavpartable$free > 0] <- rowidx
   lavpartable$stansumnum[lavpartable$free > 0] <- rowidx2
 
-  ## add matrices, which are used in blavInspect()
-  lavpartable <- lavMatrixRepresentation(lavpartable, add.attributes = TRUE, as.data.frame. = FALSE)
+  ## est + psrf
   lavpartable$est[lavpartable$free > 0] <- est
+  lavpartable$psrf[lavpartable$free > 0] <- rssumm$summary[rowidx2,"Rhat"]
+  
+  ## matrices
+  lavpartable <- lavMatrixRepresentation(lavpartable, add.attributes = TRUE, as.data.frame. = FALSE)
   
   list(x = est, vcorr = vcorr, sd = sdvec,
        stansumm = rssumm$summary, lavpartable = lavpartable)
