@@ -20,6 +20,39 @@ make_sparse_skeleton <- function(skeleton) {
   return(parts)
 }
 
+group_sparse_skeleton <- function(skeleton) {
+  stopifnot(length(dim(skeleton)) == 3)
+
+  Ng <- dim(skeleton)[1]
+
+  g_len <- array(NA, Ng)
+  tmpw <- tmpv <- list()
+
+  for (g in 1:Ng) {
+    parts <- make_sparse_skeleton(as.matrix(skeleton[g,,]))
+    wlen <- length(parts$w)
+    g_len[g] <- wlen
+    tmpw <- c(tmpw, list(parts$w))
+    tmpv <- c(tmpv, list(parts$v))
+  }
+
+  vdat <- wdat <- matrix(0, Ng, max(g_len))
+
+  for (g in 1:Ng) {
+    if (g_len[g] > 0) {
+      vdat[g, 1:g_len[g]] <- tmpv[[g]]
+      wdat[g, 1:g_len[g]] <- tmpw[[g]]
+    }
+  }
+  if (Ng == 1) {
+    vdat <- as.numeric(vdat)
+    wdat <- as.numeric(wdat)
+  }
+
+  out <- list(g_len = g_len, v = vdat, w = wdat, u = parts$u)
+  return(out)
+}
+
 # Get prior parameters in a manner that Stan will like
 #
 # @param lavpartable A lavaan partable with "priors" column
@@ -178,175 +211,138 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
 
   dat$p <- dim(Lambda_y_skeleton)[2]
   dat$m <- dim(Lambda_y_skeleton)[3]
-  glen <- array(NA, Ng)
-  tmpw <- tmpv <- list()
-  for (g in 1:Ng) {
-    parts <- make_sparse_skeleton(as.matrix(Lambda_y_skeleton[g,,]))
-    wlen <- length(parts$w)
-    glen[g] <- wlen
-    tmpw <- c(tmpw, list(parts$w))
-    tmpv <- c(tmpv, list(parts$v))
-  }
-  maxlen <- max(glen)
-
-  dat$u1 <- parts$u
-  dat$v1 <- dat$w1 <- matrix(0, Ng, maxlen)
-
-  for (g in 1:Ng) {
-    dat$v1[g, 1:glen[g]] <- tmpv[[g]]
-    dat$w1[g, 1:glen[g]] <- tmpw[[g]]
-  }
-  if (Ng == 1) {
-    dat$v1 <- as.numeric(dat$v1)
-    dat$w1 <- as.numeric(dat$w1)
-  }
-  dat$len_w1 <- maxlen
-  dat$wg1 <- array(glen, length(glen))
+  tmpres <- group_sparse_skeleton(Lambda_y_skeleton)
+  dat$len_w1 <- max(tmpres$g_len)
+  dat$w1 <- tmpres$w
+  dat$v1 <- tmpres$v
+  dat$u1 <- tmpres$u
+  dat$wg1 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w1skel <- w1skel
   dat$lam_y_sign <- lam_y_sign
 
-  parts <- make_sparse_skeleton(Lambda_x_skeleton)
-  dat$q <- nrow(Lambda_x_skeleton)
-  dat$n <- ncol(Lambda_x_skeleton)
-  dat$len_w2 <- length(parts$w)
-  dat$w2 <- parts$w
-  dat$v2 <- parts$v
-  dat$u2 <- parts$u
+  dat$q <- dim(Lambda_x_skeleton)[2]
+  dat$n <- dim(Lambda_x_skeleton)[3]
+  tmpres <- group_sparse_skeleton(Lambda_x_skeleton)
+  dat$len_w2 <- max(tmpres$g_len)
+  dat$w2 <- tmpres$w
+  dat$v2 <- tmpres$v
+  dat$u2 <- tmpres$u
+  dat$wg2 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w2skel <- w2skel
   dat$lam_x_sign <- lam_x_sign
 
-  parts <- make_sparse_skeleton(Gamma_skeleton)
-  dat$len_w3 <- length(parts$w)
-  dat$w3 <- parts$w
-  dat$v3 <- parts$v
-  dat$u3 <- parts$u
+  tmpres <- group_sparse_skeleton(Gamma_skeleton)
+  dat$len_w3 <- max(tmpres$g_len)
+  dat$w3 <- tmpres$w
+  dat$v3 <- tmpres$v
+  dat$u3 <- tmpres$u
+  dat$wg3 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w3skel <- w3skel
   dat$gam_sign <- gam_sign
 
-  parts <- make_sparse_skeleton(as.matrix(B_skeleton[1,,]))
-  dat$len_w4 <- length(parts$w)
-  dat$w4 <- parts$w
-  dat$v4 <- parts$v
-  dat$u4 <- parts$u
-  vals <- B_skeleton[!is.finite(B_skeleton)]
-  dat$small_w4 <- as.array(which(is.na(vals)))
-  dat$len_small_w4 <- length(dat$small_w4)
+  tmpres <- group_sparse_skeleton(B_skeleton)
+  dat$len_w4 <- max(tmpres$g_len)
+  dat$w4 <- tmpres$w
+  dat$v4 <- tmpres$v
+  dat$u4 <- tmpres$u
   dat$w4skel <- w4skel
   dat$b_sign <- b_sign
 
-  dThet <- as.matrix(Theta_skeleton[1,,])
-  dThet[lower.tri(dThet)] <- dThet[upper.tri(dThet)] <- 0L
-  parts <- make_sparse_skeleton(dThet)
-  dat$len_w5 <- length(parts$w)
-  dat$w5 <- parts$w
-  dat$v5 <- parts$v
-  dat$u5 <- parts$u
-  vals <- dThet[!is.finite(dThet)]
-  dat$small_w5 <- as.array(which(is.na(vals)))
-  dat$len_small_w5 <- length(dat$small_w5)
+  dThet <- Theta_skeleton
+  for (g in 1:Ng) {
+    tmpmat <- as.matrix(dThet[g,,])
+    tmpmat[lower.tri(tmpmat)] <- tmpmat[upper.tri(tmpmat)] <- 0L
+    dThet[g,,] <- tmpmat
+  }
+  tmpres <- group_sparse_skeleton(dThet)
+  dat$len_w5 <- max(tmpres$g_len)
+  dat$w5 <- tmpres$w
+  dat$v5 <- tmpres$v
+  dat$u5 <- tmpres$u
   dat$w5skel <- w5skel
 
   dThetx <- Theta_x_skeleton
-  dThetx[lower.tri(dThetx)] <- dThetx[upper.tri(dThetx)] <- 0L
-  parts <- make_sparse_skeleton(dThetx)
-  dat$len_w6 <- length(parts$w)
-  dat$w6 <- parts$w
-  dat$v6 <- parts$v
-  dat$u6 <- parts$u
-  vals <- dThetx[!is.finite(dThetx)]
-  dat$small_w6 <- as.array(which(is.na(vals)))
-  dat$len_small_w6 <- length(dat$small_w6)
+  for (g in 1:Ng) {
+    tmpmat <- as.matrix(dThetx[g,,])
+    tmpmat[lower.tri(tmpmat)] <- tmpmat[upper.tri(tmpmat)] <- 0L
+    dThetx[g,,] <- tmpmat
+  }
+  tmpres <- group_sparse_skeleton(dThetx)
+  dat$len_w6 <- max(tmpres$g_len)
+  dat$w6 <- tmpres$w
+  dat$v6 <- tmpres$v
+  dat$u6 <- tmpres$u
   dat$w6skel <- w6skel
 
-  Theta_r_skeleton <- as.matrix(Theta_r_skeleton[1,,])
-  parts <- make_sparse_skeleton(Theta_r_skeleton)
-  dat$len_w7 <- length(parts$w)
-  dat$w7 <- parts$w
-  dat$v7 <- parts$v
-  dat$u7 <- parts$u  
-  vals <- Theta_r_skeleton[!is.finite(Theta_r_skeleton)]
-  dat$small_w7 <- as.array(which(is.na(vals)))
-  dat$len_small_w7 <- length(dat$small_w7)
+  tmpres <- group_sparse_skeleton(Theta_r_skeleton)
+  dat$len_w7 <- max(tmpres$g_len)
+  dat$w7 <- tmpres$w
+  dat$v7 <- tmpres$v
+  dat$u7 <- tmpres$u
   dat$w7skel <- w7skel
 
-  parts <- make_sparse_skeleton(Theta_x_r_skeleton)
-  dat$len_w8 <- length(parts$w)
-  dat$w8 <- parts$w
-  dat$v8 <- parts$v
-  dat$u8 <- parts$u
-  vals <- Theta_x_r_skeleton[!is.finite(Theta_x_r_skeleton)]
-  dat$small_w8 <- as.array(which(is.na(vals)))
-  dat$len_small_w8 <- length(dat$small_w8)
+  tmpres <- group_sparse_skeleton(Theta_x_r_skeleton)
+  dat$len_w8 <- max(tmpres$g_len)
+  dat$w8 <- tmpres$w
+  dat$v8 <- tmpres$v
+  dat$u8 <- tmpres$u
   dat$w8skel <- w8skel
-  
-  dPsi <- as.matrix(Psi_skeleton[1,,])
-  dPsi[lower.tri(dPsi)] <- dPsi[upper.tri(dPsi)] <- 0L
-  parts <- make_sparse_skeleton(dPsi)
-  dat$len_w9 <- length(parts$w)
-  dat$w9 <- parts$w
-  dat$v9 <- parts$v
-  dat$u9 <- parts$u
-  vals <- dPsi[!is.finite(dPsi)]
-  dat$small_w9 <- as.array(which(is.na(vals)))
-  dat$len_small_w9 <- length(dat$small_w9)
+
+  dPsi <- Psi_skeleton
+  for (g in 1:Ng) {
+    tmpmat <- as.matrix(dPsi[g,,])
+    tmpmat[lower.tri(tmpmat)] <- tmpmat[upper.tri(tmpmat)] <- 0L
+    dPsi[g,,] <- tmpmat
+  }
+  tmpres <- group_sparse_skeleton(dPsi)
+  dat$len_w9 <- max(tmpres$g_len)
+  dat$w9 <- tmpres$w
+  dat$v9 <- tmpres$v
+  dat$u9 <- tmpres$u
   dat$w9skel <- w9skel
 
-  Psi_r_skeleton <- as.matrix(Psi_r_skeleton[1,,])
-  parts <- make_sparse_skeleton(Psi_r_skeleton)
-  dat$len_w10 <- length(parts$w)
-  dat$w10 <- parts$w
-  dat$v10 <- parts$v
-  dat$u10 <- parts$u
-  vals <- Psi_r_skeleton[!is.finite(Psi_r_skeleton)]
-  dat$small_w10 <- as.array(which(is.na(vals)))
-  dat$len_small_w10 <- length(dat$small_w10)
+  tmpres <- group_sparse_skeleton(Psi_r_skeleton)
+  dat$len_w10 <- max(tmpres$g_len)
+  dat$w10 <- tmpres$w
+  dat$v10 <- tmpres$v
+  dat$u10 <- tmpres$u
   dat$w10skel <- w10skel
   dat$psi_r_sign <- psi_r_sign
 
   dPhi <- Phi_skeleton
-  dPhi[lower.tri(dPhi)] <- dPhi[upper.tri(dPhi)] <- 0L
-  parts <- make_sparse_skeleton(dPhi)
-  dat$len_w11 <- length(parts$w)
-  dat$w11 <- parts$w
-  dat$v11 <- parts$v
-  dat$u11 <- parts$u
-  vals <- dPhi[!is.finite(dPhi)]
-  dat$small_w11 <- as.array(which(is.na(vals)))
-  dat$len_small_w11 <- length(dat$small_w11)
+  for (g in 1:Ng) {
+    tmpmat <- as.matrix(dPhi[g,,])
+    tmpmat[lower.tri(tmpmat)] <- tmpmat[upper.tri(tmpmat)] <- 0L
+    dPhi[g,,] <- tmpmat
+  }
+  tmpres <- group_sparse_skeleton(dPhi)
+  dat$len_w11 <- max(tmpres$g_len)
+  dat$w11 <- tmpres$w
+  dat$v11 <- tmpres$v
+  dat$u11 <- tmpres$u
   dat$w11skel <- w11skel
 
-  parts <- make_sparse_skeleton(Phi_r_skeleton)
-  dat$len_w12 <- length(parts$w)
-  dat$w12 <- parts$w
-  dat$v12 <- parts$v
-  dat$u12 <- parts$u
-  vals <- Phi_r_skeleton[!is.finite(Phi_r_skeleton)]
-  dat$small_w12 <- as.array(which(is.na(vals)))
-  dat$len_small_w12 <- length(dat$small_w12)
+  tmpres <- group_sparse_skeleton(Phi_r_skeleton)
+  dat$len_w12 <- max(tmpres$g_len)
+  dat$w12 <- tmpres$w
+  dat$v12 <- tmpres$v
+  dat$u12 <- tmpres$u
   dat$w12skel <- w12skel
   dat$phi_r_sign <- phi_r_sign
 
-  Nu_skeleton <- as.matrix(Nu_skeleton[1,,])
   if(dat$has_data & is.null(Nu_skeleton)) stop("blavaan ERROR: Nu_skeleton not provided")
-  parts <- make_sparse_skeleton(Nu_skeleton)
-  dat$len_w13 <- length(parts$w)
-  dat$w13 <- parts$w
-  dat$v13 <- parts$v
-  dat$u13 <- parts$u
-  vals <- Nu_skeleton[!is.finite(Nu_skeleton)]
-  dat$small_w13 <- as.array(which(is.na(vals)))
-  dat$len_small_w13 <- length(dat$small_w13)
+  tmpres <- group_sparse_skeleton(Nu_skeleton)
+  dat$len_w13 <- max(tmpres$g_len)
+  dat$w13 <- tmpres$w
+  dat$v13 <- tmpres$v
+  dat$u13 <- tmpres$u
   dat$w13skel <- w13skel
 
-  Alpha_skeleton <- as.matrix(Alpha_skeleton[1,,])
-  parts <- make_sparse_skeleton(Alpha_skeleton)
-  dat$len_w14 <- length(parts$w)
-  dat$w14 <- parts$w
-  dat$v14 <- parts$v
-  dat$u14 <- parts$u
-  vals <- Alpha_skeleton[!is.finite(Alpha_skeleton)]
-  dat$small_w14 <- as.array(which(is.na(vals)))
-  dat$len_small_w14 <- length(dat$small_w14)
+  tmpres <- group_sparse_skeleton(Alpha_skeleton)
+  dat$len_w14 <- max(tmpres$g_len)
+  dat$w14 <- tmpres$w
+  dat$v14 <- tmpres$v
+  dat$u14 <- tmpres$u
   dat$w14skel <- w14skel
 
   ## priors; first make sure they match what is in the stan file

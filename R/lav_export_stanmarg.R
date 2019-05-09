@@ -208,14 +208,14 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     nfree <- c(nfree, list(lambda = sum(res$wskel[1:veclen,1] == 0)))
     freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
   } else {
-    dat$Lambda_y_skeleton <- matrix(0, 0, 0)
+    dat$Lambda_y_skeleton <- array(0, dim = c(Ng, 0, 0))
     dat$w1skel <- matrix(0, 0, 2)
     dat$lam_y_sign <- matrix(0, 0, 2)
   }
 
   ## 2. Lambda_x; never used because x only pops up in
   ##    the conditional case.
-  dat$Lambda_x_skeleton <- matrix(0, 0, 0)
+  dat$Lambda_x_skeleton <- array(0, dim = c(Ng, 0, 0))
   dat$w2skel <- matrix(0, 0, 2)
   dat$lam_x_sign <- matrix(0, 0, 2)
 
@@ -236,7 +236,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     nfree <- c(nfree, list(gamma = sum(res$wskel[1:veclen,1] == 0)))
     freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
   } else {
-    dat$Gamma_skeleton <- matrix(0, dim(dat$Lambda_y_skeleton)[3], 0)
+    dat$Gamma_skeleton <- array(0, dim = c(Ng, dim(dat$Lambda_y_skeleton)[3], 0))
     dat$w3skel <- matrix(0, 0, 2)
     dat$gam_sign <- matrix(0, 0, 3)
   }
@@ -286,7 +286,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     nfree <- c(nfree, list(theta = sum(res$wskel[1:veclen,1] == 0)))
     freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
   } else {
-    dat$Theta_skeleton <- matrix(0, 0, 0)
+    dat$Theta_skeleton <- array(0, dim = c(Ng, 0, 0))
     dat$w5skel <- matrix(0, 0, 2)
   }
 
@@ -314,7 +314,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     nfree <- c(nfree, list(cov.x = sum(res$wskel[1:veclen,1] == 0)))
     freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)    
   } else {
-    dat$Theta_x_skeleton <- matrix(0, 0, 0)
+    dat$Theta_x_skeleton <- array(0, dim = c(Ng, 0, 0))
     dat$w6skel <- matrix(0, 0, 2)
   }
 
@@ -344,7 +344,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
       freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
     }
   } else {
-    dat$Theta_r_skeleton <- matrix(0, 0, 0)
+    dat$Theta_r_skeleton <- array(0, dim = c(Ng, 0, 0))
     dat$w7skel <- matrix(0, 0, 2)
   }
 
@@ -374,7 +374,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
       freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
     }
   } else {
-    dat$Theta_x_r_skeleton <- matrix(0, 0, 0)
+    dat$Theta_x_r_skeleton <- array(0, dim = c(Ng, 0, 0))
     dat$w8skel <- matrix(0, 0, 2)
   }
 
@@ -405,7 +405,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
       freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
     }
   } else {
-    dat$Psi_skeleton <- matrix(0, 0, 0)
+    dat$Psi_skeleton <- array(0, dim = c(Ng, 0, 0))
     dat$w9skel <- matrix(0, 0, 2)
   }
 
@@ -437,17 +437,17 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
       freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
     }
   } else {
-    dat$Psi_r_skeleton <- matrix(0, 0, 0)
+    dat$Psi_r_skeleton <- array(0, dim = c(Ng, 0, 0))
     dat$w10skel <- matrix(0, 0, 2)
     dat$psi_r_sign <- matrix(0, 0, 3)
   }
 
   ## 11. Phi unused
-  dat$Phi_skeleton <- matrix(0, 0, 0)
+  dat$Phi_skeleton <- array(0, dim = c(Ng, 0, 0))
   dat$w11skel <- matrix(0, 0, 2)
 
   ## 12. Phi_r unused
-  dat$Phi_r_skeleton <- matrix(0, 0, 0)
+  dat$Phi_r_skeleton <- array(0, dim = c(Ng, 0, 0))
   dat$w12skel <- matrix(0, 0, 2)
   dat$phi_r_sign <- matrix(0, 0, 3)
 
@@ -475,7 +475,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
       freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
     }
   } else {
-    dat$Nu_skeleton <- matrix(0, 0, 0)
+    dat$Nu_skeleton <- array(0, dim = c(Ng, 0, 0))
     dat$w13skel <- matrix(0, 0, 2)
   }
 
@@ -495,7 +495,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
       freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
     }
   } else {
-    dat$Alpha_skeleton <- matrix(0, 0, 0)
+    dat$Alpha_skeleton <- array(0, dim = c(Ng, 0, 0))
     dat$w14skel <- matrix(0, 0, 2)
   }
 
