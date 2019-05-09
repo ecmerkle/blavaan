@@ -11,8 +11,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, ...) {
 
   ddd <- list(...)
 
-  matskel <- est[[1]]
-  matskel[free[[1]] != 0L] <- Inf
+  matskel <- array(NA, dim = c(Ng, dim(est[[1]])))
 
   ## for corrmats, only use lower triangle
   if (grepl("_r", mat)) {
@@ -21,11 +20,15 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, ...) {
       free[[i]][upper.tri(free[[i]])] <- 0
     }
   }
-  
+
   ## re-number free parameters just for this matrix
   start <- 1L
   free2 <- free
   for (i in 1:Ng) {
+    tmpmat <- est[[i]]
+    tmpmat[free[[i]] != 0L] <- Inf
+    matskel[i, , ] <- tmpmat
+    
     tm <- free[[i]]
     np <- sum(tm != 0)
     tm[tm != 0] <- start:(start + np - 1)
@@ -35,10 +38,14 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, ...) {
   }
 
   ## ensure matrices are right size for stanmarg_data
-  parts <- make_sparse_skeleton(matskel)
-  len <- length(parts$w)
+  len <- 0
+  for (g in 1:Ng) {
+    parts <- make_sparse_skeleton(as.matrix(matskel[g,,]))
+    wlen <- length(parts$w)
+    len <- len + wlen
+  }
 
-  wskel <- matrix(0, Ng * len, 2)
+  wskel <- matrix(0, len, 2)
   if (NROW(constraint) > 0) {
     freemat <- do.call("rbind", free)
     free2mat <- do.call("rbind", free2)
@@ -64,7 +71,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, ...) {
   
   lvmat <- mat %in% c('Gamma', 'B', 'Psi_r')
   lammat <- grepl('Lambda', mat)
-  sign <- matrix(0, Ng * len, 2 + lvmat)
+  sign <- matrix(0, len, 2 + lvmat)
   if (std.lv & (lvmat | lammat)) {
     if (lvmat) {
       lamfree <- ddd$free2
@@ -229,7 +236,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     nfree <- c(nfree, list(gamma = sum(res$wskel[1:veclen,1] == 0)))
     freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
   } else {
-    dat$Gamma_skeleton <- matrix(0, ncol(dat$Lambda_y_skeleton), 0)
+    dat$Gamma_skeleton <- matrix(0, dim(dat$Lambda_y_skeleton)[3], 0)
     dat$w3skel <- matrix(0, 0, 2)
     dat$gam_sign <- matrix(0, 0, 3)
   }
@@ -250,7 +257,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     nfree <- c(nfree, list(beta = sum(res$wskel[1:veclen,1] == 0)))
     freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
   } else {
-    dat$B_skeleton <- matrix(0, ncol(dat$Lambda_y_skeleton), 0)
+    dat$B_skeleton <- matrix(0, dim(dat$Lambda_y_skeleton)[3], 0)
     dat$w4skel <- matrix(0, 0, 2)
     dat$b_sign <- matrix(0, 0, 3)
   }

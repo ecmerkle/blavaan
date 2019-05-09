@@ -142,12 +142,13 @@ data {
   /* sparse matrix representations of skeletons of coefficient matrices, 
      which is not that interesting but necessary because you cannot pass
      missing values into the data block of a Stan program from R */
-  int<lower=0> len_w1;        // number of free elements in Lambda_y
-  vector[len_w1] w1;          // values of free elements in Lambda_y
-  int<lower=1> v1[len_w1];    // index  of free elements in Lambda_y
+  int<lower=0> len_w1;        // max number of free elements in Lambda_y per grp
+  int<lower=0> wg1[Ng];           // number of free elements in Lambda_y per grp
+  vector[len_w1] w1[Ng];          // values of free elements in Lambda_y
+  int<lower=1> v1[Ng, len_w1];    // index  of free elements in Lambda_y
   int<lower=1> u1[p + 1];     // index  of free elements in Lambda_y
-  int<lower=0> w1skel[Ng * len_w1, 2];
-  int<lower=0> lam_y_sign[Ng * len_w1, 2];
+  int<lower=0> w1skel[sum(wg1), 2];
+  int<lower=0> lam_y_sign[sum(wg1), 2];
   int<lower=0> len_lam_y;     // number of free elements minus equality constraints
   real lambda_y_mn[len_lam_y];           // prior
   real<lower=0> lambda_y_sd[len_lam_y];
@@ -284,7 +285,7 @@ data {
   real<lower=0> alpha_sd[len_alph];
 }
 transformed data { // (re)construct skeleton matrices in Stan (not that interesting)
-  matrix[p, m] Lambda_y_skeleton = to_dense_matrix(p, m, w1, v1, u1);
+  matrix[p, m] Lambda_y_skeleton[Ng];
   matrix[q, n] Lambda_x_skeleton = to_dense_matrix(q, n, w2, v2, u2);
   matrix[m, n] Gamma_skeleton = to_dense_matrix(m, n, w3, v3, u3);
   matrix[m, m] B_skeleton = to_dense_matrix(m, m, w4, v4, u4);
@@ -341,11 +342,13 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
   
   for (g in 1:Ng) {
     // count free elements in Lambda_y_skeleton
+    Lambda_y_skeleton[g] = to_dense_matrix(p, m, w1[g], v1[g,], u1);
+    
     g_start1[g] = len_free[1] + 1;
     f_start1[g] = pos[1];
     for (i in 1:p) {
       for (j in 1:m) {
-        if (is_inf(Lambda_y_skeleton[i,j])) {
+        if (is_inf(Lambda_y_skeleton[g,i,j])) {
 	  if (w1skel[pos[1],2] == 0) len_free[1] += 1;
 	  pos[1] += 1;
         }
@@ -541,7 +544,7 @@ transformed parameters {
 
   // Now fill them in
   for (g in 1:Ng) {
-    Lambda_y[g] = fill_matrix(Lambda_y_free, Lambda_y_skeleton, w1skel, g_start1[g], f_start1[g]);
+    Lambda_y[g] = fill_matrix(Lambda_y_free, Lambda_y_skeleton[g], w1skel, g_start1[g], f_start1[g]);
     Lambda_x[g] = fill_matrix(Lambda_x_free, Lambda_x_skeleton, w2skel, g_start2[g], f_start2[g]);
     Gamma[g] = fill_matrix(Gamma_free, Gamma_skeleton, w3skel, g_start3[g], f_start3[g]);
     B[g] = fill_matrix(B_free, B_skeleton, w4skel, g_start4[g], f_start4[g]);
@@ -698,7 +701,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   Ph_r = sign_constrain_reg(2 * Phi_r_free - 1, len_free[12], phi_r_sign, Lambda_x_free, Lambda_x_free);
   
   for (g in 1:Ng) {
-    L_Y[g] = fill_matrix(ly_sign, Lambda_y_skeleton, w1skel, g_start1[g], f_start1[g]);
+    L_Y[g] = fill_matrix(ly_sign, Lambda_y_skeleton[g], w1skel, g_start1[g], f_start1[g]);
 
     L_X[g] = fill_matrix(lx_sign, Lambda_x_skeleton, w2skel, g_start2[g], f_start2[g]);
 

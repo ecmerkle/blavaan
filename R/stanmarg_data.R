@@ -175,20 +175,36 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
 
   if(dat$missing & save_lvs) stop("blavaan ERROR: lvs cannot currently be saved when data are missing.")
   dat$save_lvs <- save_lvs
-  
-  parts <- make_sparse_skeleton(Lambda_y_skeleton)
-  dat$p <- nrow(Lambda_y_skeleton)
-  dat$m <- ncol(Lambda_y_skeleton)
-  dat$len_w1 <- length(parts$w)
-  dat$w1 <- parts$w
-  dat$v1 <- parts$v
+
+  dat$p <- dim(Lambda_y_skeleton)[2]
+  dat$m <- dim(Lambda_y_skeleton)[3]
+  glen <- array(NA, Ng)
+  tmpw <- tmpv <- list()
+  for (g in 1:Ng) {
+    parts <- make_sparse_skeleton(as.matrix(Lambda_y_skeleton[g,,]))
+    wlen <- length(parts$w)
+    glen[g] <- wlen
+    tmpw <- c(tmpw, list(parts$w))
+    tmpv <- c(tmpv, list(parts$v))
+  }
+  maxlen <- max(glen)
+
   dat$u1 <- parts$u
-  vals <- Lambda_y_skeleton[!is.finite(Lambda_y_skeleton)]
-  dat$small_w1 <- as.array(which(is.na(vals)))
-  dat$len_small_w1 <- length(dat$small_w1)
+  dat$v1 <- dat$w1 <- matrix(0, Ng, maxlen)
+
+  for (g in 1:Ng) {
+    dat$v1[g, 1:glen[g]] <- tmpv[[g]]
+    dat$w1[g, 1:glen[g]] <- tmpw[[g]]
+  }
+  if (Ng == 1) {
+    dat$v1 <- as.numeric(dat$v1)
+    dat$w1 <- as.numeric(dat$w1)
+  }
+  dat$len_w1 <- maxlen
+  dat$wg1 <- array(glen, length(glen))
   dat$w1skel <- w1skel
   dat$lam_y_sign <- lam_y_sign
-  
+
   parts <- make_sparse_skeleton(Lambda_x_skeleton)
   dat$q <- nrow(Lambda_x_skeleton)
   dat$n <- ncol(Lambda_x_skeleton)
@@ -196,24 +212,18 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$w2 <- parts$w
   dat$v2 <- parts$v
   dat$u2 <- parts$u
-  vals <- Lambda_x_skeleton[!is.finite(Lambda_x_skeleton)]
-  dat$small_w2 <- as.array(which(is.na(vals)))
-  dat$len_small_w2 <- length(dat$small_w2)
   dat$w2skel <- w2skel
   dat$lam_x_sign <- lam_x_sign
-  
+
   parts <- make_sparse_skeleton(Gamma_skeleton)
   dat$len_w3 <- length(parts$w)
   dat$w3 <- parts$w
   dat$v3 <- parts$v
   dat$u3 <- parts$u
-  vals <- Gamma_skeleton[!is.finite(Gamma_skeleton)]
-  dat$small_w3 <- as.array(which(is.na(vals)))
-  dat$len_small_w3 <- length(dat$small_w3)
   dat$w3skel <- w3skel
   dat$gam_sign <- gam_sign
 
-  parts <- make_sparse_skeleton(B_skeleton)
+  parts <- make_sparse_skeleton(as.matrix(B_skeleton[1,,]))
   dat$len_w4 <- length(parts$w)
   dat$w4 <- parts$w
   dat$v4 <- parts$v
@@ -224,7 +234,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$w4skel <- w4skel
   dat$b_sign <- b_sign
 
-  dThet <- Theta_skeleton
+  dThet <- as.matrix(Theta_skeleton[1,,])
   dThet[lower.tri(dThet)] <- dThet[upper.tri(dThet)] <- 0L
   parts <- make_sparse_skeleton(dThet)
   dat$len_w5 <- length(parts$w)
@@ -248,6 +258,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$len_small_w6 <- length(dat$small_w6)
   dat$w6skel <- w6skel
 
+  Theta_r_skeleton <- as.matrix(Theta_r_skeleton[1,,])
   parts <- make_sparse_skeleton(Theta_r_skeleton)
   dat$len_w7 <- length(parts$w)
   dat$w7 <- parts$w
@@ -268,7 +279,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$len_small_w8 <- length(dat$small_w8)
   dat$w8skel <- w8skel
   
-  dPsi <- Psi_skeleton
+  dPsi <- as.matrix(Psi_skeleton[1,,])
   dPsi[lower.tri(dPsi)] <- dPsi[upper.tri(dPsi)] <- 0L
   parts <- make_sparse_skeleton(dPsi)
   dat$len_w9 <- length(parts$w)
@@ -280,6 +291,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$len_small_w9 <- length(dat$small_w9)
   dat$w9skel <- w9skel
 
+  Psi_r_skeleton <- as.matrix(Psi_r_skeleton[1,,])
   parts <- make_sparse_skeleton(Psi_r_skeleton)
   dat$len_w10 <- length(parts$w)
   dat$w10 <- parts$w
@@ -314,6 +326,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$w12skel <- w12skel
   dat$phi_r_sign <- phi_r_sign
 
+  Nu_skeleton <- as.matrix(Nu_skeleton[1,,])
   if(dat$has_data & is.null(Nu_skeleton)) stop("blavaan ERROR: Nu_skeleton not provided")
   parts <- make_sparse_skeleton(Nu_skeleton)
   dat$len_w13 <- length(parts$w)
@@ -325,6 +338,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$len_small_w13 <- length(dat$small_w13)
   dat$w13skel <- w13skel
 
+  Alpha_skeleton <- as.matrix(Alpha_skeleton[1,,])
   parts <- make_sparse_skeleton(Alpha_skeleton)
   dat$len_w14 <- length(parts$w)
   dat$w14 <- parts$w
