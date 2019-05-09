@@ -493,6 +493,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
   }
 
   ## add priors by using set_stanpars() from classic approach
+  ## needs some partable mods
   lavpartable$rhoidx <- rep(0, length(lavpartable$mat))
   if (!("prior" %in% names(lavpartable))) lavpartable$prior <- rep("", length(lavpartable$mat))
   offd <- with(lavpartable, mat == "theta" & row != col)
@@ -500,12 +501,20 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
   offd <- with(lavpartable, mat == "psi" & row != col)
   lavpartable$mat[offd] <- "lvrho"
 
-  stanprires <- set_stanpars("", lavpartable, free2, dp, "")
+  prifree <- free2
+  prinames <- names(prifree)
+  mapping <- c(theta = "dtheta", psi = "dpsi", rho = "rtheta",
+               lvrho = "rpsi")
+  prich <- prinames %in% mapping
+  primap <- match(prinames[prich], mapping)
+  names(prifree)[prich] <- names(mapping)[primap]
+  
+  stanprires <- set_stanpars("", lavpartable, prifree, dp, "")
   lavpartable$prior <- stanprires$partable$prior
-
+  
   ## add inits (manipulate partable to re-use set_inits_stan)
   lavpartable$freeparnums <- freeparnums
-
+  
   ## FIXME theta_x, cov.x not handled
   if (!(inits %in% c("jags", "stan"))) {
     ini <- set_inits_stan(lavpartable, nfree, n.chains, inits)

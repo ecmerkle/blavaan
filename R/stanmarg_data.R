@@ -35,7 +35,7 @@ format_priors <- function(lavpartable, mat) {
   } else {
     prisel <- rep(TRUE, length(lavpartable$row))
   }
-  
+
   if (mat == "nu") {
     prisel <- prisel & (lavpartable$mat %in% c(mat, "mean.x"))
   } else {
@@ -56,8 +56,8 @@ format_priors <- function(lavpartable, mat) {
       param2 <- rep(NA, length(param1))
     }
 
-    param1 <- as.numeric(param1)
-    param2 <- as.numeric(param2)
+    param1 <- array(as.numeric(param1), length(param1))
+    param2 <- array(as.numeric(param2), length(param2))
   } else {
     param1 <- array(0,0)
     param2 <- array(0,0)
