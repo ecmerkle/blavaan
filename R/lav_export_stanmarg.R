@@ -257,7 +257,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     nfree <- c(nfree, list(beta = sum(res$wskel[1:veclen,1] == 0)))
     freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
   } else {
-    dat$B_skeleton <- matrix(0, dim(dat$Lambda_y_skeleton)[3], 0)
+    dat$B_skeleton <- array(0, dim = c(Ng, dim(dat$Lambda_y_skeleton)[3], 0))
     dat$w4skel <- matrix(0, 0, 2)
     dat$b_sign <- matrix(0, 0, 3)
   }

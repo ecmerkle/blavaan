@@ -29,7 +29,9 @@ group_sparse_skeleton <- function(skeleton) {
   tmpw <- tmpv <- list()
 
   for (g in 1:Ng) {
-    parts <- make_sparse_skeleton(as.matrix(skeleton[g,,]))
+    ## removing first dimension and maintaining dims 2+3 is tricky:
+    parts <- make_sparse_skeleton(array(skeleton[g,,],
+                                        dim = dim(skeleton)[2:3]))
     wlen <- length(parts$w)
     g_len[g] <- wlen
     tmpw <- c(tmpw, list(parts$w))
@@ -43,10 +45,6 @@ group_sparse_skeleton <- function(skeleton) {
       vdat[g, 1:g_len[g]] <- tmpv[[g]]
       wdat[g, 1:g_len[g]] <- tmpw[[g]]
     }
-  }
-  if (Ng == 1) {
-    vdat <- as.numeric(vdat)
-    wdat <- as.numeric(wdat)
   }
 
   out <- list(g_len = g_len, v = vdat, w = wdat, u = parts$u)
@@ -245,6 +243,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$w4 <- tmpres$w
   dat$v4 <- tmpres$v
   dat$u4 <- tmpres$u
+  dat$wg4 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w4skel <- w4skel
   dat$b_sign <- b_sign
 
@@ -259,6 +258,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$w5 <- tmpres$w
   dat$v5 <- tmpres$v
   dat$u5 <- tmpres$u
+  dat$wg5 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w5skel <- w5skel
 
   dThetx <- Theta_x_skeleton
@@ -272,6 +272,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$w6 <- tmpres$w
   dat$v6 <- tmpres$v
   dat$u6 <- tmpres$u
+  dat$wg6 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w6skel <- w6skel
 
   tmpres <- group_sparse_skeleton(Theta_r_skeleton)
@@ -279,6 +280,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$w7 <- tmpres$w
   dat$v7 <- tmpres$v
   dat$u7 <- tmpres$u
+  dat$wg7 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w7skel <- w7skel
 
   tmpres <- group_sparse_skeleton(Theta_x_r_skeleton)
@@ -286,6 +288,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$w8 <- tmpres$w
   dat$v8 <- tmpres$v
   dat$u8 <- tmpres$u
+  dat$wg8 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w8skel <- w8skel
 
   dPsi <- Psi_skeleton
@@ -299,6 +302,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$w9 <- tmpres$w
   dat$v9 <- tmpres$v
   dat$u9 <- tmpres$u
+  dat$wg9 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w9skel <- w9skel
 
   tmpres <- group_sparse_skeleton(Psi_r_skeleton)
@@ -306,6 +310,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$w10 <- tmpres$w
   dat$v10 <- tmpres$v
   dat$u10 <- tmpres$u
+  dat$wg10 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w10skel <- w10skel
   dat$psi_r_sign <- psi_r_sign
 
@@ -320,6 +325,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$w11 <- tmpres$w
   dat$v11 <- tmpres$v
   dat$u11 <- tmpres$u
+  dat$wg11 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w11skel <- w11skel
 
   tmpres <- group_sparse_skeleton(Phi_r_skeleton)
@@ -327,6 +333,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$w12 <- tmpres$w
   dat$v12 <- tmpres$v
   dat$u12 <- tmpres$u
+  dat$wg12 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w12skel <- w12skel
   dat$phi_r_sign <- phi_r_sign
 
@@ -336,6 +343,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$w13 <- tmpres$w
   dat$v13 <- tmpres$v
   dat$u13 <- tmpres$u
+  dat$wg13 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w13skel <- w13skel
 
   tmpres <- group_sparse_skeleton(Alpha_skeleton)
@@ -343,6 +351,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$w14 <- tmpres$w
   dat$v14 <- tmpres$v
   dat$u14 <- tmpres$u
+  dat$wg14 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w14skel <- w14skel
 
   ## priors; first make sure they match what is in the stan file
