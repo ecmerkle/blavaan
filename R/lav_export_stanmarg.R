@@ -50,10 +50,18 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, ...) {
     freemat <- do.call("rbind", free)
     free2mat <- do.call("rbind", free2)
     for (i in 1:NROW(constraint)) {
+
       usecon <- c(any(freemat == constraint$lhs[i]),
                   any(freemat == constraint$rhs[i]))
       if (sum(usecon) == 2) {
         lhsnum <- free2mat[freemat == constraint$lhs[i]]
+
+        ## lhs may also be equality constrained, need to find
+        ## the first occurrence
+        while (wskel[lhsnum, 1] == 1) {
+          lhsnum <- wskel[lhsnum, 2]
+        }
+        
         rhsnum <- free2mat[freemat == constraint$rhs[i]]
         constraint$rhs2 <- rhsnum ## for sign constraints below
 
@@ -650,8 +658,8 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
         eqconst <- tmpw[,2][tmpw[,1] == 1]
         rowvec[tmpw[,1] == 1] <- rowvec[tmpw[,1] == 0][eqconst]
         rowvec2[tmpw[,1] == 1] <- rowvec2[tmpw[,1] == 0][eqconst]
-        parvec[tmpw[,1] == 1] <- parvec[eqconst]
-        tmpsd[tmpw[,1] == 1] <- tmpsd[eqconst]
+        parvec[tmpw[,1] == 1] <- parvec[tmpw[,1] == 0][eqconst]
+        tmpsd[tmpw[,1] == 1] <- tmpsd[tmpw[,1] == 0][eqconst]
 
         rowidx[parnums] <- rowvec
         rowidx2[parnums] <- rowvec2
