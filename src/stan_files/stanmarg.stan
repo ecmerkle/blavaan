@@ -146,7 +146,7 @@ data {
   int<lower=0> wg1[Ng];           // number of free elements in Lambda_y per grp
   vector[len_w1] w1[Ng];          // values of free elements in Lambda_y
   int<lower=1> v1[Ng, len_w1];    // index  of free elements in Lambda_y
-  int<lower=1> u1[p + 1];     // index  of free elements in Lambda_y
+  int<lower=1> u1[Ng, p + 1];     // index  of free elements in Lambda_y
   int<lower=0> w1skel[sum(wg1), 2];
   int<lower=0> lam_y_sign[sum(wg1), 2];
   int<lower=0> len_lam_y;     // number of free elements minus equality constraints
@@ -158,7 +158,7 @@ data {
   int<lower=0> wg2[Ng];
   vector[len_w2] w2[Ng];
   int<lower=1> v2[Ng, len_w2];
-  int<lower=1> u2[q + 1];
+  int<lower=1> u2[Ng, q + 1];
   int<lower=0> w2skel[sum(wg2), 2];
   int<lower=0> lam_x_sign[sum(wg2), 2];
   int<lower=0> len_lam_x;
@@ -170,7 +170,7 @@ data {
   int<lower=0> wg3[Ng];
   vector[len_w3] w3[Ng];
   int<lower=1> v3[Ng, len_w3];
-  int<lower=1> u3[m + 1];
+  int<lower=1> u3[Ng, m + 1];
   int<lower=0> w3skel[sum(wg3), 2];
   int<lower=0> gam_sign[sum(wg3), 3];
   int<lower=0> len_gam;
@@ -182,7 +182,7 @@ data {
   int<lower=0> wg4[Ng];
   vector[len_w4] w4[Ng];
   int<lower=1> v4[Ng, len_w4];
-  int<lower=1> u4[m + 1];
+  int<lower=1> u4[Ng, m + 1];
   int<lower=0> w4skel[sum(wg4), 2];
   int<lower=0> b_sign[sum(wg4), 3];
   int<lower=0> len_b;
@@ -194,7 +194,7 @@ data {
   int<lower=0> wg5[Ng];
   vector[len_w5] w5[Ng];
   int<lower=1> v5[Ng, len_w5];
-  int<lower=1> u5[p + 1];
+  int<lower=1> u5[Ng, p + 1];
   int<lower=0> w5skel[sum(wg5), 2];
   int<lower=0> len_thet_sd;
   real theta_sd_rate[len_thet_sd];
@@ -204,7 +204,7 @@ data {
   int<lower=0> wg6[Ng];
   vector[len_w6] w6[Ng];
   int<lower=1> v6[Ng, len_w6];
-  int<lower=1> u6[q + 1];
+  int<lower=1> u6[Ng, q + 1];
   int<lower=0> w6skel[sum(wg6), 2];
   int<lower=0> len_thet_x_sd;
   real theta_x_sd_rate[len_thet_x_sd];
@@ -214,7 +214,7 @@ data {
   int<lower=0> wg7[Ng];
   vector[len_w7] w7[Ng];
   int<lower=1> v7[Ng, len_w7];
-  int<lower=1> u7[p + 1];
+  int<lower=1> u7[Ng, p + 1];
   int<lower=0> w7skel[sum(wg7), 2];
   int<lower=0> len_thet_r;
   real<lower=0> theta_r_alpha[len_thet_r];
@@ -225,7 +225,7 @@ data {
   int<lower=0> wg8[Ng];
   vector[len_w8] w8[Ng];
   int<lower=1> v8[Ng, len_w8];
-  int<lower=1> u8[q + 1];
+  int<lower=1> u8[Ng, q + 1];
   int<lower=0> w8skel[sum(wg8), 2];
   int<lower=0> len_thet_x_r;
   real<lower=0> theta_x_r_alpha[len_thet_x_r];
@@ -236,7 +236,7 @@ data {
   int<lower=0> wg9[Ng];
   vector[len_w9] w9[Ng];
   int<lower=1> v9[Ng, len_w9];
-  int<lower=1> u9[m + 1];
+  int<lower=1> u9[Ng, m + 1];
   int<lower=0> w9skel[sum(wg9), 2];
   int<lower=0> len_psi_sd;
   real<lower=0> psi_sd_rate[len_psi_sd];
@@ -246,7 +246,7 @@ data {
   int<lower=0> wg10[Ng];
   vector[len_w10] w10[Ng];
   int<lower=1> v10[Ng, len_w10];
-  int<lower=1> u10[m + 1];
+  int<lower=1> u10[Ng, m + 1];
   int<lower=0> w10skel[sum(wg10), 2];
   int<lower=0> psi_r_sign[sum(wg10), 3];
   int<lower=0> len_psi_r;
@@ -258,7 +258,7 @@ data {
   int<lower=0> wg11[Ng];
   vector[len_w11] w11[Ng];
   int<lower=1> v11[Ng, len_w11];
-  int<lower=1> u11[n + 1];
+  int<lower=1> u11[Ng, n + 1];
   int<lower=0> w11skel[sum(wg11), 2];
   int<lower=0> len_phi_sd;
   real<lower=0> phi_sd_rate[len_phi_sd];
@@ -268,7 +268,7 @@ data {
   int<lower=0> wg12[Ng];
   vector[len_w12] w12[Ng];
   int<lower=1> v12[Ng, len_w12];
-  int<lower=1> u12[n + 1];
+  int<lower=1> u12[Ng, n + 1];
   int<lower=0> w12skel[sum(wg12), 2];
   int<lower=0> phi_r_sign[sum(wg12), 3];
   int<lower=0> len_phi_r;
@@ -280,7 +280,7 @@ data {
   int<lower=0> wg13[Ng];
   vector[len_w13] w13[Ng];
   int<lower=1> v13[Ng, len_w13];
-  int<lower=1> u13[p + q + 1];
+  int<lower=1> u13[Ng, p + q + 1];
   int<lower=0> w13skel[sum(wg13), 2];
   int<lower=0> len_nu;
   real nu_mn[len_nu];
@@ -290,8 +290,8 @@ data {
   int<lower=0> len_w14;
   int<lower=0> wg14[Ng];
   vector[len_w14] w14[Ng];
-  int<lower=1> v14[Ng, len_w14];
-  int<lower=1> u14[m + n + 1];
+  int<lower=0> v14[Ng, len_w14];
+  int<lower=1> u14[Ng, m + n + 1];
   int<lower=0> w14skel[sum(wg14), 2];
   int<lower=0> len_alph;
   real alpha_mn[len_alph];
@@ -354,20 +354,20 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
   }
   
   for (g in 1:Ng) {
-    Lambda_y_skeleton[g] = to_dense_matrix(p, m, w1[g], v1[g,], u1);
-    Lambda_x_skeleton[g] = to_dense_matrix(q, n, w2[g], v2[g,], u2);
-    Gamma_skeleton[g] = to_dense_matrix(m, n, w3[g], v3[g,], u3);
-    B_skeleton[g] = to_dense_matrix(m, m, w4[g], v4[g,], u4);
-    Theta_skeleton[g] = to_dense_matrix(p, p, w5[g], v5[g,], u5);
-    Theta_x_skeleton[g] = to_dense_matrix(q, q, w6[g], v6[g,], u6);
-    Theta_r_skeleton[g] = to_dense_matrix(p, p, w7[g], v7[g,], u7);
-    Theta_x_r_skeleton[g] = to_dense_matrix(q, q, w8[g], v8[g,], u8);
-    Psi_skeleton[g] = to_dense_matrix(m, m, w9[g], v9[g,], u9);
-    Psi_r_skeleton[g] = to_dense_matrix(m, m, w10[g], v10[g,], u10);
-    Phi_skeleton[g] = to_dense_matrix(n, n, w11[g], v11[g,], u11);
-    Phi_r_skeleton[g] = to_dense_matrix(n, n, w12[g], v12[g,], u12);
-    Nu_skeleton[g] = to_dense_matrix((p + q), 1, w13[g], v13[g,], u13);
-    Alpha_skeleton[g] = to_dense_matrix((m + n), 1, w14[g], v14[g,], u14);
+    Lambda_y_skeleton[g] = to_dense_matrix(p, m, w1[g], v1[g,], u1[g,]);
+    Lambda_x_skeleton[g] = to_dense_matrix(q, n, w2[g], v2[g,], u2[g,]);
+    Gamma_skeleton[g] = to_dense_matrix(m, n, w3[g], v3[g,], u3[g,]);
+    B_skeleton[g] = to_dense_matrix(m, m, w4[g], v4[g,], u4[g,]);
+    Theta_skeleton[g] = to_dense_matrix(p, p, w5[g], v5[g,], u5[g,]);
+    Theta_x_skeleton[g] = to_dense_matrix(q, q, w6[g], v6[g,], u6[g,]);
+    Theta_r_skeleton[g] = to_dense_matrix(p, p, w7[g], v7[g,], u7[g,]);
+    Theta_x_r_skeleton[g] = to_dense_matrix(q, q, w8[g], v8[g,], u8[g,]);
+    Psi_skeleton[g] = to_dense_matrix(m, m, w9[g], v9[g,], u9[g,]);
+    Psi_r_skeleton[g] = to_dense_matrix(m, m, w10[g], v10[g,], u10[g,]);
+    Phi_skeleton[g] = to_dense_matrix(n, n, w11[g], v11[g,], u11[g,]);
+    Phi_r_skeleton[g] = to_dense_matrix(n, n, w12[g], v12[g,], u12[g,]);
+    Nu_skeleton[g] = to_dense_matrix((p + q), 1, w13[g], v13[g,], u13[g,]);
+    Alpha_skeleton[g] = to_dense_matrix((m + n), 1, w14[g], v14[g,], u14[g,]);
     
     // count free elements in Lambda_y_skeleton
     g_start1[g] = len_free[1] + 1;

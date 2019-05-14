@@ -619,6 +619,7 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
     stanvec <- names(mapping)[mapping == names(freeidx[[1]])[m]]
     wskel <- names(mapping2)[mapping == names(freeidx[[1]])[m]]
     wvec <- paste0("w", wskel)
+    wgvec <- paste0("wg", wskel)
     wskel <- paste0(wvec, "skel")
 
     ## 2 for cov/var vectors, 1 otherwise
@@ -632,7 +633,7 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
       if(is.na(parnums[1])) next
 
       if(any(!is.finite(lersdat[[wvec[j]]]))){
-        tmpw <- tmpw[1:(lersdat[['Ng']] * sum(!is.finite(lersdat[[wvec[j]]]))), , drop=FALSE]
+        tmpw <- tmpw[1:(sum(!is.finite(lersdat[[wvec[j]]]))), , drop=FALSE]
       } else {
         tmpw <- NULL
       }

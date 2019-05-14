@@ -25,8 +25,8 @@ group_sparse_skeleton <- function(skeleton) {
 
   Ng <- dim(skeleton)[1]
 
-  g_len <- array(NA, Ng)
-  tmpw <- tmpv <- list()
+  g_len <- u_len <- array(NA, Ng)
+  tmpu <- tmpw <- tmpv <- list()
 
   for (g in 1:Ng) {
     ## removing first dimension and maintaining dims 2+3 is tricky:
@@ -34,20 +34,26 @@ group_sparse_skeleton <- function(skeleton) {
                                         dim = dim(skeleton)[2:3]))
     wlen <- length(parts$w)
     g_len[g] <- wlen
+    u_len[g] <- length(parts$u)
+    tmpu <- c(tmpu, list(parts$u))
     tmpw <- c(tmpw, list(parts$w))
     tmpv <- c(tmpv, list(parts$v))
   }
 
   vdat <- wdat <- matrix(0, Ng, max(g_len))
+  udat <- matrix(0, Ng, max(u_len))
 
   for (g in 1:Ng) {
     if (g_len[g] > 0) {
       vdat[g, 1:g_len[g]] <- tmpv[[g]]
       wdat[g, 1:g_len[g]] <- tmpw[[g]]
     }
+    if (u_len[g] > 0) {
+      udat[g, 1:u_len[g]] <- tmpu[[g]]
+    }
   }
-
-  out <- list(g_len = g_len, v = vdat, w = wdat, u = parts$u)
+  
+  out <- list(g_len = g_len, v = vdat, w = wdat, u = udat)
   return(out)
 }
 
