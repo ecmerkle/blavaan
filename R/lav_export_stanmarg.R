@@ -350,6 +350,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     es <- lapply(estmats, function(x){
       dmat <- x$theta
       diag(dmat) <- 1L
+      dmat[upper.tri(dmat)] <- 0L
       dmat}
       )
     
@@ -380,6 +381,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     es <- lapply(estmats, function(x){
       dmat <- x$cov.x
       diag(dmat) <- 1L
+      dmat[upper.tri(dmat)] <- 0L
       dmat}
       )
     
@@ -441,6 +443,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     es <- lapply(estmats, function(x){
       dmat <- x$psi
       diag(dmat) <- 1L
+      dmat[upper.tri(dmat)] <- 0L
       dmat}
       )
     

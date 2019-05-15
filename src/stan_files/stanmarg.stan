@@ -104,11 +104,16 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     vector[num_elements(free_elements)] out;
     int R = rows(to_matrix(cormat[1]));
     int C = cols(to_matrix(cormat[1]));
-    int pos = 1;
+    int pos = 1; // position of eq_skeleton
+    int freepos = 1; // position of free_elements
+    
     for (g in 1:ngrp) {
       for (c in 1:(R-1)) for (r in (c+1):R) {
-        if (cormat[g,r,c] != 0 && wskel[pos,1] == 0) {
-	  out[pos] = sdmat[g,r,r] * sdmat[g,c,c] * cormat[g,r,c];
+	if (cormat[g,r,c] != 0) {
+	  if (wskel[pos,1] == 0) {
+	    out[freepos] = sdmat[g,r,r] * sdmat[g,c,c] * cormat[g,r,c];
+	    freepos += 1;
+	  }
 	  pos += 1;
 	}
       }
