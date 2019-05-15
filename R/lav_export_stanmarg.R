@@ -80,15 +80,18 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, ...) {
   lvmat <- mat %in% c('Gamma', 'B', 'Psi_r')
   lammat <- grepl('Lambda', mat)
   sign <- matrix(0, len, 2 + lvmat)
-  if (std.lv & (lvmat | lammat)) {
+  if (std.lv & (lvmat | lammat) & length(ddd$sign) > 0) {
     if (lvmat) {
       lamfree <- ddd$free2
       lamsign <- ddd$sign
-      
+
       for (i in 1:length(free2)) {
         fpar <- which(free2[[i]] != 0, arr.ind = TRUE)
         if (nrow(fpar) > 0) {
           for (j in 1:nrow(fpar)) {
+            ## in case all loadings restricted to 0
+            if (all(lamfree[[i]][,fpar[j,2]] == 0L)) next
+            
             ## find sign-constrained loadings of the two lvs
             lampar1 <- lamfree[[i]][,fpar[j,2]]
             l1 <- min(lampar1[lampar1 != 0L])
