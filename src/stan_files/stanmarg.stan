@@ -771,6 +771,8 @@ generated quantities { // these matrices are saved in the output but do not figu
       iden[g] = diag_matrix(rep_vector(1, m));
     }
     Psi_cov = cor2cov(PS, iden, P_r, w10skel, Ng);
+  } else {
+    Psi_cov = P_r;
   }
   if (n > 0 && len_free[12] > 0) {
     matrix[n, n] iden[Ng];
@@ -778,6 +780,8 @@ generated quantities { // these matrices are saved in the output but do not figu
       iden[g] = diag_matrix(rep_vector(1, n));
     }
     Ph_cov = cor2cov(PH, iden, Ph_r, w12skel, Ng);
+  } else {
+    Ph_cov = Ph_r;
   }
   Psi_var = Psi_sd_free .* Psi_sd_free;
   Ph_var = Phi_sd_free .* Phi_sd_free;
