@@ -18,6 +18,15 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, ...) {
     matskel[upper.tri(matskel)] <- 0    
     for (i in 1:Ng) {
       free[[i]][upper.tri(free[[i]])] <- 0
+
+      ## fixed covs that need to be cors
+      fcov <- which(est[[i]] != 0 & free[[i]] == 0, arr.ind = TRUE)
+      fcov <- fcov[fcov[,1] != fcov[,2], , drop = FALSE]
+      if (length(fcov) > 0) {
+        for (j in 1:nrow(fcov)) {
+          est[[i]][fcov[j,1], fcov[j,2]] <- est[[i]][fcov[j,1], fcov[j,2]] / sqrt(ddd$dest[[i]][fcov[j,1], fcov[j,1]] * ddd$dest[[i]][fcov[j,2], fcov[j,2]])
+        }
+      }
     }
   }
 
@@ -292,6 +301,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
       dmat[lower.tri(dmat)] <- dmat[upper.tri(dmat)] <- 0
       dmat}
       )
+    dest <- es
     
     res <- matattr(fr, es, constrain, mat = "Theta", Ng, opts$std.lv)
 
@@ -309,6 +319,37 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     dat$w5skel <- matrix(0, 0, 2)
   }
 
+  ## 7. Theta_r
+  if ("theta" %in% names(freemats[[1]])) {
+    fr <- lapply(freemats, function(x){
+      dmat <- x$theta
+      diag(dmat) <- 0L
+      dmat}
+      )
+    
+    es <- lapply(estmats, function(x){
+      dmat <- x$theta
+      diag(dmat) <- 1L
+      dmat[upper.tri(dmat)] <- 0L
+      dmat}
+      )
+    
+    res <- matattr(fr, es, constrain, mat = "Theta_r", Ng, opts$std.lv, dest = dest)
+
+    dat$Theta_r_skeleton <- res$matskel
+    dat$w7skel <- res$wskel
+    free2 <- c(free2, list(rtheta = res$free))
+    ptrows <- with(lavpartable, which(mat == "theta" & free > 0 & row != col))
+    veclen <- length(ptrows)
+    if (veclen > 0) {
+      nfree <- c(nfree, list(rho = sum(res$wskel[1:veclen,1] == 0)))
+      freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
+    }
+  } else {
+    dat$Theta_r_skeleton <- array(0, dim = c(Ng, 0, 0))
+    dat$w7skel <- matrix(0, 0, 2)
+  }
+  
   ## 6. diag(Theta_x)
   if ("cov.x" %in% names(freemats[[1]])) {
     fr <- lapply(freemats, function(x){
@@ -322,6 +363,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
       dmat[lower.tri(dmat)] <- dmat[upper.tri(dmat)] <- 0
       dmat}
       )
+    dest <- es
     
     res <- matattr(fr, es, constrain, mat = "Theta_x", Ng, opts$std.lv)
 
@@ -339,36 +381,6 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     dat$w6skel <- matrix(0, 0, 2)
   }
 
-  ## 7. Theta_r
-  if ("theta" %in% names(freemats[[1]])) {
-    fr <- lapply(freemats, function(x){
-      dmat <- x$theta
-      diag(dmat) <- 0L
-      dmat}
-      )
-    
-    es <- lapply(estmats, function(x){
-      dmat <- x$theta
-      diag(dmat) <- 1L
-      dmat[upper.tri(dmat)] <- 0L
-      dmat}
-      )
-    
-    res <- matattr(fr, es, constrain, mat = "Theta_r", Ng, opts$std.lv)
-
-    dat$Theta_r_skeleton <- res$matskel
-    dat$w7skel <- res$wskel
-    free2 <- c(free2, list(rtheta = res$free))
-    ptrows <- with(lavpartable, which(mat == "theta" & free > 0 & row != col))
-    veclen <- length(ptrows)
-    if (veclen > 0) {
-      nfree <- c(nfree, list(rho = sum(res$wskel[1:veclen,1] == 0)))
-      freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
-    }
-  } else {
-    dat$Theta_r_skeleton <- array(0, dim = c(Ng, 0, 0))
-    dat$w7skel <- matrix(0, 0, 2)
-  }
 
   ## 8. Theta_x_r
   if ("cov.x" %in% names(freemats[[1]])) {
@@ -385,7 +397,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
       dmat}
       )
     
-    res <- matattr(fr, es, constrain, mat = "Theta_x_r", Ng, opts$std.lv)
+    res <- matattr(fr, es, constrain, mat = "Theta_x_r", Ng, opts$std.lv, dest = dest)
 
     dat$Theta_x_r_skeleton <- res$matskel
     dat$w8skel <- res$wskel
@@ -414,7 +426,8 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
       dmat[lower.tri(dmat)] <- dmat[upper.tri(dmat)] <- 0
       dmat}
       )
-
+    dest <- es
+    
     ## std.lv only matters for off-diagonals
     res <- matattr(fr, es, constrain, mat = "Psi", Ng, FALSE)
 
@@ -448,7 +461,8 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
       )
     
     res <- matattr(fr, es, constrain, mat = "Psi_r", Ng, opts$std.lv,
-                   free2 = lyfree2, sign = dat$lam_y_sign)
+                   free2 = lyfree2, sign = dat$lam_y_sign,
+                   dest = dest)
 
     dat$Psi_r_skeleton <- res$matskel
     dat$w10skel <- res$wskel

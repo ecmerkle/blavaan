@@ -421,6 +421,7 @@ blavaan <- function(...,  # default lavaan arguments
                          silent = TRUE)
                 if(!inherits(l2s, "try-error")){
                     ldargs <- c(l2s$dat, list(lavpartable = l2s$lavpartable))
+                    lavpartable$prior <- l2s$lavpartable$prior
                     jagtrans <- try(do.call("stanmarg_data", ldargs), silent = TRUE)
 browser()
                     jagtrans <- list(data = jagtrans,

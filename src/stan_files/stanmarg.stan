@@ -763,7 +763,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   Theta_var = Theta_sd_free .* Theta_sd_free;
   Theta_x_cov = cor2cov(Theta_x_r, Theta_x_sd, Theta_x_r_free, w8skel, Ng);
   Theta_x_var = Theta_x_sd_free .* Theta_x_sd_free;
-  if (m > 0) {
+  if (m > 0 && len_free[10] > 0) {
     /* iden is created so that we can re-use cor2cov, even though
        we don't need to multiply to get covariances */
     matrix[m, m] iden[Ng];
@@ -772,7 +772,7 @@ generated quantities { // these matrices are saved in the output but do not figu
     }
     Psi_cov = cor2cov(PS, iden, P_r, w10skel, Ng);
   }
-  if (n > 0) {
+  if (n > 0 && len_free[12] > 0) {
     matrix[n, n] iden[Ng];
     for (g in 1:Ng) {
       iden[g] = diag_matrix(rep_vector(1, n));
