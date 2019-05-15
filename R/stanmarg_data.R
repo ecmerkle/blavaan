@@ -76,8 +76,9 @@ format_priors <- function(lavpartable, mat) {
   if (mat == "nu") {
     prisel <- prisel & (lavpartable$mat %in% c(mat, "mean.x"))
   } else {
-    prisel <- prisel & (lavpartable$mat == mat) & (lavpartable$free > 0)
+    prisel <- prisel & (lavpartable$mat == mat)
   }
+  prisel <- prisel & (lavpartable$free > 0)
   thepris <- lavpartable$prior[prisel]
 
   if (length(thepris) > 0) {
