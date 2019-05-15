@@ -213,8 +213,10 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     free2 <- c(free2, list(lambda = res$free))
     ptrows <- which(lavpartable$mat == "lambda" & lavpartable$free > 0)
     veclen <- length(ptrows)
-    nfree <- c(nfree, list(lambda = sum(res$wskel[1:veclen,1] == 0)))
-    freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
+    if (veclen > 0) {
+      nfree <- c(nfree, list(lambda = sum(res$wskel[1:veclen,1] == 0)))
+      freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
+    }
   } else {
     dat$Lambda_y_skeleton <- array(0, dim = c(Ng, 0, 0))
     dat$w1skel <- matrix(0, 0, 2)
@@ -241,8 +243,10 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     free2 <- c(free2, list(gamma = res$free))
     ptrows <- which(lavpartable$mat == "gamma" & lavpartable$free > 0)
     veclen <- length(ptrows)
-    nfree <- c(nfree, list(gamma = sum(res$wskel[1:veclen,1] == 0)))
-    freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
+    if (veclen > 0) {
+      nfree <- c(nfree, list(gamma = sum(res$wskel[1:veclen,1] == 0)))
+      freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
+    }
   } else {
     dat$Gamma_skeleton <- array(0, dim = c(Ng, dim(dat$Lambda_y_skeleton)[3], 0))
     dat$w3skel <- matrix(0, 0, 2)
@@ -262,14 +266,16 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     free2 <- c(free2, list(beta = res$free))
     ptrows <- which(lavpartable$mat == "beta" & lavpartable$free > 0)
     veclen <- length(ptrows)
-    nfree <- c(nfree, list(beta = sum(res$wskel[1:veclen,1] == 0)))
-    freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
+    if (veclen > 0) {
+      nfree <- c(nfree, list(beta = sum(res$wskel[1:veclen,1] == 0)))
+      freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
+    }
   } else {
     dat$B_skeleton <- array(0, dim = c(Ng, dim(dat$Lambda_y_skeleton)[3], 0))
     dat$w4skel <- matrix(0, 0, 2)
     dat$b_sign <- matrix(0, 0, 3)
   }
-  
+
   ## 5. diag(Theta)
   if ("theta" %in% names(freemats[[1]])) {
     fr <- lapply(freemats, function(x){
@@ -291,8 +297,10 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     free2 <- c(free2, list(dtheta = res$free))
     ptrows <- with(lavpartable, which(mat == "theta" & free > 0 & row == col))
     veclen <- length(ptrows)
-    nfree <- c(nfree, list(theta = sum(res$wskel[1:veclen,1] == 0)))
-    freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
+    if (veclen > 0) {
+      nfree <- c(nfree, list(theta = sum(res$wskel[1:veclen,1] == 0)))
+      freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
+    }
   } else {
     dat$Theta_skeleton <- array(0, dim = c(Ng, 0, 0))
     dat$w5skel <- matrix(0, 0, 2)
@@ -319,8 +327,10 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     free2 <- c(free2, list(cov.x = res$free))
     ptrows <- with(lavpartable, which(mat == "cov.x" & free > 0 & row == col))
     veclen <- length(ptrows)
-    nfree <- c(nfree, list(cov.x = sum(res$wskel[1:veclen,1] == 0)))
-    freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)    
+    if (veclen > 0) {
+      nfree <- c(nfree, list(cov.x = sum(res$wskel[1:veclen,1] == 0)))
+      freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
+    }
   } else {
     dat$Theta_x_skeleton <- array(0, dim = c(Ng, 0, 0))
     dat$w6skel <- matrix(0, 0, 2)
