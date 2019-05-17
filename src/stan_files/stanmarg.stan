@@ -100,7 +100,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   }
 
   // obtain covariance parameter vector for correlation/sd matrices
-  vector cor2cov(matrix[] cormat, matrix[] sdmat, vector free_elements, int[,] wskel, int ngrp) {
+  vector cor2cov(matrix[] cormat, matrix[] sdmat, vector free_elements, matrix[] matskel, int[,] wskel, int ngrp) {
     vector[num_elements(free_elements)] out;
     int R = rows(to_matrix(cormat[1]));
     int C = cols(to_matrix(cormat[1]));
@@ -109,7 +109,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     
     for (g in 1:ngrp) {
       for (c in 1:(R-1)) for (r in (c+1):R) {
-	if (cormat[g,r,c] != 0) {
+        if (is_inf(matskel[g,r,c])) {
 	  if (wskel[pos,1] == 0) {
 	    out[freepos] = sdmat[g,r,r] * sdmat[g,c,c] * cormat[g,r,c];
 	    freepos += 1;
@@ -759,9 +759,9 @@ generated quantities { // these matrices are saved in the output but do not figu
   }
 
   // off-diagonal covariance parameter vectors, from cor/sd matrices:
-  Theta_cov = cor2cov(Theta_r, Theta_sd, Theta_r_free, w7skel, Ng);
+  Theta_cov = cor2cov(Theta_r, Theta_sd, Theta_r_free, Theta_r_skeleton, w7skel, Ng);
   Theta_var = Theta_sd_free .* Theta_sd_free;
-  Theta_x_cov = cor2cov(Theta_x_r, Theta_x_sd, Theta_x_r_free, w8skel, Ng);
+  Theta_x_cov = cor2cov(Theta_x_r, Theta_x_sd, Theta_x_r_free, Theta_x_r_skeleton, w8skel, Ng);
   Theta_x_var = Theta_x_sd_free .* Theta_x_sd_free;
   if (m > 0 && len_free[10] > 0) {
     /* iden is created so that we can re-use cor2cov, even though
@@ -770,7 +770,7 @@ generated quantities { // these matrices are saved in the output but do not figu
     for (g in 1:Ng) {
       iden[g] = diag_matrix(rep_vector(1, m));
     }
-    Psi_cov = cor2cov(PS, iden, P_r, w10skel, Ng);
+    Psi_cov = cor2cov(PS, iden, P_r, Psi_r_skeleton, w10skel, Ng);
   } else {
     Psi_cov = P_r;
   }
@@ -779,7 +779,7 @@ generated quantities { // these matrices are saved in the output but do not figu
     for (g in 1:Ng) {
       iden[g] = diag_matrix(rep_vector(1, n));
     }
-    Ph_cov = cor2cov(PH, iden, Ph_r, w12skel, Ng);
+    Ph_cov = cor2cov(PH, iden, Ph_r, Phi_r_skeleton, w12skel, Ng);
   } else {
     Ph_cov = Ph_r;
   }
