@@ -618,7 +618,9 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   matrix[p, q] top_right[Ng];        // top right block of Sigma
   
   for (g in 1:Ng) {
-    Lambda_y_A[g] = mdivide_right(Lambda_y[g], I - B[g]);     // = Lambda_y * (I - B)^{-1}
+    if (m > 0) {
+      Lambda_y_A[g] = mdivide_right(Lambda_y[g], I - B[g]);     // = Lambda_y * (I - B)^{-1}
+    }
     Lambda_xt[g] = transpose(Lambda_x[g]);                         // copies so do it just once
 
     Mu[g] = to_vector(Nu[g]);
@@ -640,10 +642,9 @@ model { // N.B.: things declared in the model block do not get saved in the outp
       if (q > 0) {
 	GPG[g] = quad_form(PHI[g], transpose(Gamma[g]));
       }
-      Sigma[g, 1:p, 1:p] = quad_form(GPG[g] + Psi[g], transpose(Lambda_y_A[g]));
-      Sigma[g, 1:p, 1:p] += quad_form_sym(Theta_r[g], Theta_sd[g]);
-
+      Sigma[g, 1:p, 1:p] = quad_form_sym(Theta_r[g], Theta_sd[g]);
       if (m > 0) {
+        Sigma[g, 1:p, 1:p] += quad_form(GPG[g] + Psi[g], transpose(Lambda_y_A[g]));
 	Mu[g, 1:p] += to_vector(Lambda_y_A[g] * Alpha[g, 1:m, 1]);
       }
       if (n > 0) {
