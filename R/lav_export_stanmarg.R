@@ -103,12 +103,20 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, ...) {
             
             ## find sign-constrained loadings of the two lvs
             lampar1 <- lamfree[[i]][,fpar[j,2]]
-            l1 <- min(lampar1[lampar1 != 0L])
-            if (lamsign[l1,1] == 1) l1 <- lamsign[l1,2]
+            if (all(lampar1 == 0)) { # ov converted to lv
+              l1 <- 1
+            } else {
+              l1 <- min(lampar1[lampar1 != 0L])
+              if (lamsign[l1,1] == 1) l1 <- lamsign[l1,2]
+            }
 
             lampar2 <- lamfree[[i]][,fpar[j,1]]
-            l2 <- min(lampar2[lampar2 != 0])
-            if (lamsign[l2,1] == 1) l2 <- lamsign[l2,2]
+            if (all(lampar2 == 0)) {
+              l2 <- 1
+            } else {
+              l2 <- min(lampar2[lampar2 != 0])
+              if (lamsign[l2,1] == 1) l2 <- lamsign[l2,2]
+            }
 
             rowloc <- free2[[i]][fpar[j,1], fpar[j,2]]
             sign[rowloc, 2:3] <- c(l1, l2)
