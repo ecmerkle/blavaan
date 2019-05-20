@@ -163,9 +163,9 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     Mp <- lavobject@Data@Mp
     cases <- lapply(Mp, function(x) do.call("c", x$case.idx))
     misgrps <- lapply(Mp, function(x) x$freq)
-#   if (length(misgrps) > 1) {
+
     misgrps <- do.call("c", misgrps)
-#   }
+
     misgrps <- rep(1:length(misgrps), misgrps)
     npatt <- sapply(Mp, function(x) NROW(x$pat))
     dat$startrow <- tapply(1:NROW(misgrps), misgrps, head, 1)

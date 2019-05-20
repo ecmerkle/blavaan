@@ -6,7 +6,7 @@ Fit a Growth Curve model.}
 \usage{
 bgrowth(..., cp = "srs", dp = NULL, n.chains = 3,
 burnin, sample, adapt, mcmcfile = FALSE, mcmcextra = list(), 
-inits = "prior", convergence = "manual", target = "jags",
+inits = "prior", convergence = "manual", target = "stan",
 save.lvs = FALSE, jags.ic = FALSE, seed = NULL, bcontrol = list())
 }
 \arguments{

@@ -7,7 +7,7 @@ Fit a Confirmatory Factor Analysis (CFA) model.}
 bcfa(..., cp = "srs",
      dp = NULL, n.chains = 3, burnin, sample,
      adapt, mcmcfile = FALSE, mcmcextra = list(), inits = "prior",
-     convergence = "manual", target = "jags", save.lvs = FALSE,
+     convergence = "manual", target = "stan", save.lvs = FALSE,
      jags.ic = FALSE, seed = NULL, bcontrol = list())
 }
 \arguments{
