@@ -206,7 +206,8 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
     
     dat$S <- array(NA, dim=c(Ng, NCOL(YX), NCOL(YX)))
     for(i in 1:Ng) {
-      dat$S[i,,] <- (dat$N[i] - 1) * cov(YX[(startrow[i] : endrow[i]), , drop = FALSE]) # NB!! this multiplication is needed to use wishart_lpdf
+      dat$S[i,,] <- diag(1, NCOL(YX))
+      ## not added because, if not pd, stan fails: (dat$N[i] - 1) * cov(YX[(startrow[i] : endrow[i]), , drop = FALSE]) # NB!! this multiplication is needed to use wishart_lpdf
     }
   }
 
