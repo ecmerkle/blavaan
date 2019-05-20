@@ -609,8 +609,6 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
     }
     sd.est <- rssumm$summary[,"sd"]
   }
-
-  draw_mat <- as.matrix(rsob)
   
   ## lavaan pars to stan par vectors
   mapping <- c(ly_sign = "lambda", g_sign = "gamma",
@@ -652,79 +650,89 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
   freenums <- lapply(free2, function(x) lapply(x, function(y) y[y > 0]))
   nfree <- max(sapply(lavfree, function(x) sapply(x, max)))
 
-  freevec <- rep(NA, nfree)
-  rowidx <- rowidx2 <- rep(NA, nfree) # row index of stan est and summary containing the parameters (for vcorr)
+  if(stanfit){
+    draw_mat <- as.matrix(rsob)
 
-  ## 1. get free par vector
-  ## 2. expand it using w?skel for eq constraints
-  ## 3. fill "x" in using lavaan free
-  ## 4. record freeidx, double-counting free parameters
-  est <- sdvec <- rep(NA, nfree)
+    freevec <- rep(NA, nfree)
+    rowidx <- rowidx2 <- rep(NA, nfree) # row index of stan est and summary containing the parameters (for vcorr)
 
-  for(m in 1:length(freeidx[[1]])){
-    stanvec <- names(mapping)[mapping == names(freeidx[[1]])[m]]
-    wskel <- names(mapping2)[mapping == names(freeidx[[1]])[m]]
-    wvec <- paste0("w", wskel)
-    wgvec <- paste0("wg", wskel)
-    wskel <- paste0(wvec, "skel")
+    ## 1. get free par vector
+    ## 2. expand it using w?skel for eq constraints
+    ## 3. fill "x" in using lavaan free
+    ## 4. record freeidx, double-counting free parameters
+    est <- sdvec <- rep(NA, nfree)
 
-    ## 2 for cov/var vectors, 1 otherwise
-    if(length(stanvec) > 2) stop("blavaan ERROR: problem with mapping from stan to lavaan")
+    for(m in 1:length(freeidx[[1]])){
+      stanvec <- names(mapping)[mapping == names(freeidx[[1]])[m]]
+      wskel <- names(mapping2)[mapping == names(freeidx[[1]])[m]]
+      wvec <- paste0("w", wskel)
+      wgvec <- paste0("wg", wskel)
+      wskel <- paste0(wvec, "skel")
 
-    for(j in 1:length(stanvec)){
-      freename <- names(mapping3)[mapping3 == stanvec[j]]
-      parnums <- do.call("c", freenums[[freename]])      
-      tmpw <- lersdat[[wskel[j]]]
+      ## 2 for cov/var vectors, 1 otherwise
+      if(length(stanvec) > 2) stop("blavaan ERROR: problem with mapping from stan to lavaan")
 
-      if(is.na(parnums[1])) next
+      for(j in 1:length(stanvec)){
+        freename <- names(mapping3)[mapping3 == stanvec[j]]
+        parnums <- do.call("c", freenums[[freename]])      
+        tmpw <- lersdat[[wskel[j]]]
 
-      if(any(!is.finite(lersdat[[wvec[j]]]))){
-        tmpw <- tmpw[1:(sum(!is.finite(lersdat[[wvec[j]]]))), , drop=FALSE]
-      } else {
-        tmpw <- NULL
-      }
+        if(is.na(parnums[1])) next
 
-      if(NROW(tmpw) > 0){
-        ## need rowvec & rowvec2 because stan summary rows
-        ## ordered differently from stan draws rows
-        parvec <- tmpsd <- rowvec <- rowvec2 <- rep(NA, NROW(tmpw))
-        rowvec[tmpw[,1] == 0] <- grep(stanvec[j], names(b.est))
-        rowvec2[tmpw[,1] == 0] <- grep(stanvec[j], colnames(draw_mat))
-        parvec[tmpw[,1] == 0] <- b.est[rowvec[tmpw[,1] == 0]]
-        tmpsd[tmpw[,1] == 0] <- sd.est[rowvec[tmpw[,1] == 0]]
+        if(any(!is.finite(lersdat[[wvec[j]]]))){
+          tmpw <- tmpw[1:(sum(!is.finite(lersdat[[wvec[j]]]))), , drop=FALSE]
+        } else {
+          tmpw <- NULL
+        }
 
-        eqconst <- tmpw[,2][tmpw[,1] == 1]
-        rowvec[tmpw[,1] == 1] <- rowvec[tmpw[,1] == 0][eqconst]
-        rowvec2[tmpw[,1] == 1] <- rowvec2[tmpw[,1] == 0][eqconst]
-        parvec[tmpw[,1] == 1] <- parvec[tmpw[,1] == 0][eqconst]
-        tmpsd[tmpw[,1] == 1] <- tmpsd[tmpw[,1] == 0][eqconst]
+        if(NROW(tmpw) > 0){
+          ## need rowvec & rowvec2 because stan summary rows
+          ## ordered differently from stan draws rows
+          parvec <- tmpsd <- rowvec <- rowvec2 <- rep(NA, NROW(tmpw))
+          rowvec[tmpw[,1] == 0] <- grep(stanvec[j], names(b.est))
+          rowvec2[tmpw[,1] == 0] <- grep(stanvec[j], colnames(draw_mat))
+          parvec[tmpw[,1] == 0] <- b.est[rowvec[tmpw[,1] == 0]]
+          tmpsd[tmpw[,1] == 0] <- sd.est[rowvec[tmpw[,1] == 0]]
 
-        rowidx[parnums] <- rowvec
-        rowidx2[parnums] <- rowvec2
-        est[parnums] <- parvec
-        sdvec[parnums] <- tmpsd
+          eqconst <- tmpw[,2][tmpw[,1] == 1]
+          rowvec[tmpw[,1] == 1] <- rowvec[tmpw[,1] == 0][eqconst]
+          rowvec2[tmpw[,1] == 1] <- rowvec2[tmpw[,1] == 0][eqconst]
+          parvec[tmpw[,1] == 1] <- parvec[tmpw[,1] == 0][eqconst]
+          tmpsd[tmpw[,1] == 1] <- tmpsd[tmpw[,1] == 0][eqconst]
+          
+          rowidx[parnums] <- rowvec
+          rowidx2[parnums] <- rowvec2
+          est[parnums] <- parvec
+          sdvec[parnums] <- tmpsd
+        }
       }
     }
+
+    vcorr <- cor(draw_mat[,rowidx2])
+
+    names(sdvec) <- colnames(vcorr)
+
+    ## add to partable for other functions
+    ## indexing of stan objects
+    lavpartable$stanpnum <- rep(NA, length(lavpartable$est))
+    lavpartable$stansumnum <- rep(NA, length(lavpartable$est))
+    lavpartable$stanpnum[lavpartable$free > 0] <- rowidx
+    lavpartable$stansumnum[lavpartable$free > 0] <- rowidx2
+
+    ## est + psrf
+    lavpartable$est[lavpartable$free > 0] <- est
+    lavpartable$psrf[lavpartable$free > 0] <- rssumm$summary[rowidx2,"Rhat"]
+  } else {
+    sdvec <- NULL
+    vcorr <- NULL
+    rssumm <- list(summary = NULL)
   }
-
-  vcorr <- cor(draw_mat[,rowidx2])
-
-  names(sdvec) <- colnames(vcorr)
-
-  ## add to partable for other functions
-  ## indexing of stan objects
-  lavpartable$stanpnum <- rep(NA, length(lavpartable$est))
-  lavpartable$stansumnum <- rep(NA, length(lavpartable$est))
-  lavpartable$stanpnum[lavpartable$free > 0] <- rowidx
-  lavpartable$stansumnum[lavpartable$free > 0] <- rowidx2
-
-  ## est + psrf
-  lavpartable$est[lavpartable$free > 0] <- est
-  lavpartable$psrf[lavpartable$free > 0] <- rssumm$summary[rowidx2,"Rhat"]
   
   ## matrices
   lavpartable <- lavMatrixRepresentation(lavpartable, add.attributes = TRUE, as.data.frame. = FALSE)
   
-  list(x = est, vcorr = vcorr, sd = sdvec,
-       stansumm = rssumm$summary, lavpartable = lavpartable)
+  list(x = lavpartable$est[lavpartable$free > 0],
+       lavpartable = lavpartable,
+       vcorr = vcorr, sd = sdvec,
+       stansumm = rssumm$summary)
 }
