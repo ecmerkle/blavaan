@@ -423,7 +423,7 @@ blavaan <- function(...,  # default lavaan arguments
                     ldargs <- c(l2s$dat, list(lavpartable = l2s$lavpartable))
                     lavpartable$prior <- l2s$lavpartable$prior
                     jagtrans <- try(do.call("stanmarg_data", ldargs), silent = TRUE)
-browser()
+
                     jagtrans <- list(data = jagtrans,
                                      monitors = c("ly_sign",
                                            "lx_sign",
