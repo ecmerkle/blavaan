@@ -1,4 +1,4 @@
-dpriors <- function(..., target="jags"){
+dpriors <- function(..., target="stan"){
   userspec <- list(...)
 
   jagpres <- pkgcheck("runjags")
