@@ -6,28 +6,39 @@
 ### authors:
 ### Ed Merkle
 ###   - data generation and ppp computations
+### Yves Rosseel
+###   - "dirty hack" to manufacture a lavaan object from 1 posterior sample
 ### Mauricio Garnier-Villarreal:
 ###   - update to return "chisq" PP-Dist from observed and replicated data
 ### Terrence D. Jorgensen:
 ###   - added "discFUN" argument to evaluate custom discrepancy function(s)
 ###     on observed and replicated data.  This is distinct from the "measure"
 ###     argument, which only returns values from fitMeasures().
+###   - added "probs" argument to optionally return different quantiles, and
+###     changed the returned name from "cspi" to "quantiles" (now a named list)
+###   - updated if-else logic to first check for custom discrepancy (only used
+###     in public ppmc() function), then check for complete-data logl/chisq,
+###     otherwise use hack for (in)complete data using ANY fit.measures from
+###     fitMeasures().  Note that the latter could also be a custom discFUN.
 ###   - made notes with "FIXME TDJ" in places where postpred() could be updated
 
-postpred <- function(lavpartable, lavmodel, lavoptions, 
+postpred <- function(lavpartable, lavmodel, lavoptions,
                      lavsamplestats, lavdata, lavcache, lavjags,
-                     samplls, measure = "logl", thin = 1, discFUN = NULL) {
+                     samplls, measure = "logl", thin = 1,
+                     discFUN = NULL, probs = c(.025, .975)) {
 
   ## check custom discrepancy function(s)
   if (!is.null(discFUN)) {
-    allFuncs <- FALSE
-    if (is.list(discFUN)) allFuncs <- all(sapply(discFUN, is.function))
-    if (!(is.function(discFUN) || allFuncs)) stop('blavaan ERROR: The "discFUN" argument must',
-                                                    ' be a (list of) function(s).')
+    if (!is.list(discFUN)) discFUN <- list(discFUN)
+    if (!all(sapply(discFUN, is.function)))
+      stop('blavaan ERROR: The "discFUN" argument must be a (list of) function(s).')
   }
-  discFUN <- NULL #FIXME: Not implemented yet
-  
-  n.chains <- length(make_mcmc(lavjags))
+
+  ## verify that probs is a numeric vector
+  probs <- as.numeric(probs)
+
+  lavmcmc <- make_mcmc(lavjags)
+  n.chains <- length(lavmcmc)
   samp.indices <- sampnums(lavjags, thin=thin)
   psamp <- length(samp.indices)
 
@@ -42,9 +53,19 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
   ## check for missing, to see if we can easily get baseline ll for chisq
   mis <- FALSE
   if(any(is.na(unlist(lavdata@X)))) mis <- TRUE
-  
+
   loop.args <- list(X = 1:n.chains, FUN = function(j){
-    ind <- csdist <- csboots <- rep(NA, psamp)
+    ## lists to store output (reduced after concatenated across chains)
+    if (length(discFUN) == 1L) {
+      ind <- csdist <- csboots <- vector("list", psamp)
+    } else {
+      ## Nested lists (iterations within discrepancy functions)
+      ind <- csdist <- csboots <- vector("list", length(discFUN))
+      for (d in seq_along(discFUN)) {
+        ind[[d]] <- csdist[[d]] <- csboots[[d]] <- vector("list", psamp)
+      }
+    }
+
     for(i in 1:psamp){
       ## supply extra args to postdata so that we only generate
       ## a single dataset
@@ -57,26 +78,66 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
       dataX <- dataX[[1]]
       dataeXo <- lavdata@eXo
 
-      ## compute (i) X2 of generated data and model-implied
-      ## moments, along with (ii) X2 of real data and model-implied
-      ## moments.
-      chisq.obs <- -2*(samplls[samp.indices[i], j, 1] -
-                       samplls[samp.indices[i], j, 2])
 
-      ##FIXME TDJ: Apply custom "discFUN" here.
-      ##           Need to create a lavaan object using original data,
-      ##           like the hack below does for generated data.
-  
-      if(!mis & length(discFUN) == 0){ #TDJ: if discFUN is supplied, we go right to "else"
+      ## compute (i) X2 of generated data and model-implied moments,
+      ## along with (ii) X2 of real data and model-implied moments.
+
+      ## REAL DATA
+      if (length(discFUN)) {
+        ## update options
+        lavoptions1 <- lavoptions
+        lavoptions1$verbose <- FALSE
+        lavoptions1$estimator <- "ML"
+        lavoptions1$se <- "none"
+        lavoptions1$test <- "standard"
+        lavoptions1$optim.method <- "none"
+        lavmodel1 <- fill_params(lavmcmc[[j]][i,], # update parameters
+                                 lavmodel, lavpartable)
+        if ("control" %in% slotNames(lavmodel1)) {
+          lavmodel1@control <- list(optim.method = "none")
+        }
+        fit <- lavaan(slotOptions = lavoptions1, slotModel = lavmodel1, # updated slots
+                      slotSampleStats = lavsamplestats, slotData = lavdata,
+                      slotParTable = lavpartable, slotCache = lavcache)
+
+        ## Apply custom "discFUN" to observed data
+        chisq.obs <- vector("list", length(discFUN))
+        for (d in seq_along(discFUN)) {
+          chisq.obs[[d]] <- discFUN[[d]](fit)
+          if (mode(chisq.obs[[d]]) != "numeric")
+            stop('Each function in discFUN must return an object with numeric ',
+                 'mode (e.g., vector, matrix, or array)')
+        }
+
+      } else if (measure[1] %in% c("logl", "chisq")) {
+        ## standard chi-squared-based PPP
+        chisq.obs <- -2*(samplls[samp.indices[i], j, 1] -
+                         samplls[samp.indices[i], j, 2])
+
+      } else {
+        ## save alternative fit.measures=measure for observed data
+        chisq.obs <- get_ll(postsamp = lavmcmc[[j]][i,],
+                            lavmodel = lavmodel,
+                            lavsamplestats = lavsamplestats,
+                            lavdata = lavdata,
+                            lavpartable = lavpartable,
+                            lavoptions = lavoptions,
+                            measure = measure)
+      }
+
+
+      ## SIMULATED DATA
+      if (!mis & !length(discFUN) & measure[1] %in% c("logl", "chisq")) {
         lavdata@X <- dataX
         chisq.boot <- 2*diff(get_ll(lavmodel = lavmodel,
                                     lavsamplestats = lavsamplestats,
                                     lavdata = lavdata,
-                                    measure = measure))
-        ##FIXME TDJ: no way to apply custom "discFUN" here. Use hack below?
+                                    measure = measure[1]))
+
+      ## chi-squared for (in)complete data, or any other measure/discFUN
       } else {
         ## we need lavaan to get the saturated log-l for missing data (EM)
-                                         
+
         # YR: ugly hack to avoid lav_samplestats_from_data:
         # reconstruct data + call lavaan()
         # ed: if we need lavaan() anyway, might as well
@@ -113,29 +174,43 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
           lavmodel2@control <- list(optim.method="none")
         }
         if(lavsamplestats@ngroups > 1L) {
-          DATA$.g. <- rep(1:lavdata@ngroups, 
+          DATA$.g. <- rep(1:lavdata@ngroups,
                           times = unlist(lavdata@nobs))
-          out <- lavaan(slotOptions = lavoptions2, 
+          out <- lavaan(slotOptions = lavoptions2,
                         slotParTable = lavpartable,
-                        slotSampleStats = NULL, slotData = NULL, 
-                        slotModel = lavmodel2, slotCache = lavcache, 
+                        slotSampleStats = NULL, slotData = NULL,
+                        slotModel = lavmodel2, slotCache = lavcache,
                         data = DATA, group = ".g.")
         } else {
-          out <- lavaan(slotOptions = lavoptions2, 
+          out <- lavaan(slotOptions = lavoptions2,
                         slotParTable = lavpartable,
-                        slotSampleStats = NULL, slotData = NULL, 
-                        slotModel = lavmodel2, slotCache = lavcache, 
+                        slotSampleStats = NULL, slotData = NULL,
+                        slotModel = lavmodel2, slotCache = lavcache,
                         data = DATA)
         }
         # bootSampleStats <- out@SampleStats
         # end of ugly hack
-  
-        if(measure %in% c("logl", "chisq")){
+
+        ## prioritize custom discrepancy function, so "logl" can remain default
+        if (length(discFUN)) {
+          #TODO TDJ: Apply custom "discFUN" to simulated data
+          chisq.boot <- vector("list", length(discFUN))
+          for (d in seq_along(discFUN)) {
+            chisq.boot[[d]] <- discFUN[[d]](out)
+            # if (mode(chisq.boot[[d]]) != "numeric") # already checked for chisq.obs
+            #   stop('Each function in discFUN must return an object with numeric ',
+            #        'mode (e.g., vector, matrix, or array)')
+          }
+
+        } else if (measure[1] %in% c("logl", "chisq")) {
+          ## standard chi-squared-based PPP
           chisq.boot <- fitMeasures(out, "chisq")
+
         } else {
+          ## save alternative fit.measures=measure for simulated data
           chisq.boot <- fitMeasures(out, measure)
         }
-  
+
         ## see lines 286-298 of lav_bootstrap to avoid fixed.x errors?
         ## probably only needed for missing='ml.x'?
         ## chisq.boot <- 2*diff(get_ll(lavmodel = lavmodel,
@@ -146,16 +221,35 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
         ##                             lavdata = lavdata,
         ##                             measure = measure))
       }
-      ## record whether observed value is larger
-      ind[i] <- chisq.obs < chisq.boot
-      csdist[i] <- chisq.obs
-      csboots[i] <- chisq.boot
-      ##FIXME TDJ: extract and organize custom "discFUN" output here
-        
+
+
+      ## COMPARE REAL v. SIMULATED, record whether observed value is larger
+      if (length(discFUN) > 1L) {
+        ## loop over each "discFUN" to extract output in a list
+        for (d in seq_along(discFUN)) {
+          csdist[[d]][[i]] <- chisq.obs[[d]]
+          csboots[[d]][[i]] <- chisq.boot[[d]]
+          ind[[d]][[i]] <- chisq.obs[[d]] < chisq.boot[[d]]
+          ## pass long names, etc. from anything more complex than a scalar
+          attributes(ind[[d]][[i]]) <- attributes(chisq.obs[[d]])
+        }
+
+      } else {
+        ## either a scalar or vector from fitMeasures (or length(discFUN) == 1L)
+        if (length(discFUN)) {
+          chisq.obs <- chisq.obs[[1]]
+          chisq.boot <- chisq.boot[[1]]
+        } # else it is a fitMeasures() vector
+        ind[[i]] <- chisq.obs < chisq.boot
+        ## pass long names, etc. from anything more complex than a scalar
+        if (length(chisq.obs) > 1L) attributes(ind[[i]]) <- attributes(chisq.obs)
+        csdist[[i]] <- chisq.obs
+        csboots[[i]] <- chisq.boot
+      }
+
     } # i
-      
+
     result <- list(ind = ind, csdist = csdist, csboots = csboots)
-    ## if (!is.null(discFUN)) result <- c(result, discFUN_results)
     result
   })
 
@@ -165,17 +259,84 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
   } else {
     res <- do.call(lapply, loop.args)
   }
-  
-  ind <- unlist(lapply(res, function(x) x$ind))
-  csdist <- unlist(lapply(res, function(x) x$csdist))
-  csboots <- unlist(lapply(res, function(x) x$csboots))
-  ##FIXME TDJ: extract custom "discFUN" output here
-    
-  ppval <- mean(as.numeric(ind))
-  cspi <- quantile(as.numeric(csdist), c(.025,.975))
-    
-  ##FIXME TDJ: check whether to add custom "discFUN" output to returned list
-  list(ppval = ppval, cspi = cspi, chisqs = cbind(obs = csdist, reps = csboots))
+
+  ##FIXME TDJ:
+  if (length(discFUN) > 1L) {
+    ## multiple discrepancy functions, store in lists
+    ind <- csdist <- csboots <- ppval <- quants <- vector("list", length(discFUN))
+
+    for (d in seq_along(discFUN)) {
+      ## concatenate chains
+      ind[[d]]     <- do.call(c, lapply(res, function(x) x$ind[[d]]     ))
+      csdist[[d]]  <- do.call(c, lapply(res, function(x) x$csdist[[d]]  ))
+      csboots[[d]] <- do.call(c, lapply(res, function(x) x$csboots[[d]] ))
+      ## mean for any k-dim array
+      ppval[[d]]   <- Reduce("+", ind[[d]]) / length(ind[[d]])
+      attributes(ppval[[d]]) <- attributes(ind[[d]][[1]])
+      ## Assign names, if they exist
+      if (!is.null(names(discFUN))) {
+        names(ppval)   <- names(discFUN)
+        names(csdist)  <- names(discFUN)
+        names(csboots) <- names(discFUN)
+      }
+
+      ## quantiles, customized by type of output
+      if (length(csdist[[d]][[1]]) == 1L) {
+        ## scalar, store in vector
+        quants[[d]] <- quantile(as.numeric(csdist[[d]]), probs = probs)
+      } else if (is.null(dim(csdist[[d]][[1]]))) {
+        ## vector, store in matrix
+        quants[[d]] <- t(apply(do.call(rbind, csdist[[d]]), 2, quantile, probs = probs))
+        rownames(quants[[d]]) <- names(csdist[[d]][[1]])
+      } else {
+        ## multidimensional array (including matrices)
+        ## vectorize to apply same calculation as above, reapply attributes
+        csVecs <- lapply(csdist[[d]], as.numeric)
+        quantMat <- apply(do.call(rbind, csVecs), 2, quantile, probs = probs)
+        quants[[d]] <- sapply(rownames(quantMat), function(n) quantMat[n,],
+                              simplify = FALSE)
+        for (qq in seq_along(quants[[d]])) {
+          attributes(quants[[d]][[qq]]) <- attributes(csdist[[d]][[1]])
+        }
+        rm(csVecs, quantMat) # in case a later "d" fails?... error would break anyway
+      }
+
+    } # d
+
+  } else {
+    ## either 1 custom discrepancy function (could be an array with attributes)
+    ## or fitMeasures() output (scalar or vector)
+
+    ## concatenate chains
+    ind     <- do.call(c, lapply(res, function(x) x$ind     ))
+    csdist  <- do.call(c, lapply(res, function(x) x$csdist  ))
+    csboots <- do.call(c, lapply(res, function(x) x$csboots ))
+    ## mean for any k-dim array
+    ppval   <- Reduce("+", ind) / length(ind)
+    attributes(ppval) <- attributes(ind[[1]])
+
+    ## quantiles, customized by type of output
+    if (length(csdist[[1]]) == 1L) {
+      ## scalar, store in vector
+      quants <- quantile(as.numeric(csdist), probs = probs)
+    } else if (is.null(dim(csdist[[1]]))) {
+      ## vector, store in matrix
+      quants <- t(apply(do.call(rbind, csdist), 2, quantile, probs = probs))
+      rownames(quants) <- names(csdist[[1]])
+    } else {
+      ## multidimensional array (including matrices)
+      ## vectorize to apply same calculation as above, reapply attributes
+      csVecs <- lapply(csdist, as.numeric)
+      quantMat <- apply(do.call(rbind, csVecs), 2, quantile, probs = probs)
+      quants <- sapply(rownames(quantMat), function(n) quantMat[n,])
+      for (qq in seq_along(quants)) attributes(quants[[qq]]) <- attributes(csdist[[1]])
+    }
+
+  }
+
+  list(ppval = ppval, quantiles = quants,
+       #FIXME: move quantiles to a method (summary, mean)
+       ppdist = list(obs = csdist, reps = csboots))
 }
 
 
@@ -187,7 +348,7 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, ...){
   if(conditional){
     stop("blavaan ERROR: conditional posterior predictives unavailable.")
   }
-  
+
   ## users can supply object; postpred() will supply the slots:
   if(length(object) == 0L){
     if(!all(c('lavmodel', 'lavdata', 'lavjags', 'lavpartable',
@@ -210,7 +371,7 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, ...){
   lavmcmc <- make_mcmc(lavjags)
   n.chains <- length(lavmcmc)
   chnums <- 1:n.chains
-  
+
   ## parallel only if object is supplied; postpred uses the other
   ## args and already is using parallel
   ncores <- NA
@@ -229,7 +390,7 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, ...){
     samp.indices <- sampnums(lavjags, thin=nper, lout=TRUE)
   }
   psamp <- length(samp.indices)
-  
+
   origlavmodel <- lavmodel
   origlavdata <- lavdata
 
@@ -239,7 +400,7 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, ...){
 
   postdat <- vector("list", psamp)
   lavmod <- vector("list", psamp)
-  
+
   loop.args <- list(X = chnums, FUN = function(j){
     ind <- csdist <- csboots <- rep(NA, psamp)
     for(i in 1:psamp){
@@ -261,7 +422,7 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, ...){
         nox <- (1:nrow(Mu.hat[[g]]))[-x.idx]
         if(!is.null(x.idx) && length(x.idx) > 0L){
           ## for fixed.x, generate the other ovs
-          ## conditional on the x values. 
+          ## conditional on the x values.
           ## can use approach similar to
           ## lav_mvnorm_missing_impute_pattern (lav_mvnorm_missing.R)
           if(!mis){
@@ -271,7 +432,7 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, ...){
                             function(x) (x - Mu.hat[[g]][x.idx,]))
             csig <- Sigma.hat[[g]][nox,nox] - tm1 %*% Sigma.hat[[g]][x.idx,nox]
             sigchol <- chol(csig)
-            
+
             dataX[[g]][,nox] <- t(apply(cmu, 2, function(x) mnormt::rmnorm(n=1,
                                                                            sqrt=sigchol,
                                                                            mean=x)))
@@ -294,7 +455,7 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, ...){
               ##                                         mean = Mu.hat[[g]][misx,])
               ##  obsx <- x.idx
               ##}
-                  
+
               if(length(obsx) > 0){
                 xp.idx <- obsx
                 tm1 <- Sigma.hat[[g]][nox,xp.idx] %*% solve(Sigma.hat[[g]][xp.idx,xp.idx])
@@ -334,11 +495,11 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, ...){
           dataX[[g]] <- dataX[[g]][-origlavdata@Mp[[g]]$empty.idx,,drop=FALSE]
         }
       }
-      
+
       postdat[[i]] <- dataX
     }
     list(postdat = postdat, lavmod = lavmod)})
-  
+
   if(loop.comm == "mclapply"){
     loop.args <- c(loop.args, list(mc.cores = ncores))
     res <- do.call(parallel::mclapply, loop.args)
