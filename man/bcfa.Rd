@@ -33,7 +33,7 @@ bcfa(..., cp = "srs",
   is a character vector containing extra JAGS/Stan parameters to sample.}
 \item{inits}{If it is a character string, the options are currently
     \code{"simple"}, \code{"Mplus"}, \code{"prior"} (default), and
-    \code{"jags"}.  In the first two 
+    \code{"jags"}.  In the first two
     cases, parameter values are set as though they will be estimated via
     ML (see \code{\link{lavaan}}).  The starting parameter value for
     each chain is then perturbed from the original values through the
@@ -45,9 +45,9 @@ bcfa(..., cp = "srs",
     If \code{start} is a fitted
     object of class \code{\linkS4class{lavaan}}, the estimated values of
     the corresponding parameters will be extracted, then perturbed in
-    the manner described above. If it is a model list, 
-    for example the output of the \code{paramaterEstimates()} function, 
-    the values of the \code{est} or \code{start} or \code{ustart} column 
+    the manner described above. If it is a model list,
+    for example the output of the \code{paramaterEstimates()} function,
+    the values of the \code{est} or \code{start} or \code{ustart} column
     (whichever is found first) will be extracted.}
 \item{convergence}{If \code{"auto"}, parameters will be
   sampled until convergence is achieved (via \code{autorun.jags}). In
@@ -69,13 +69,13 @@ bcfa(..., cp = "srs",
     overview of the additional parameters that can be set.}
 }
 \details{
-    The \code{bcfa} function is a wrapper for the more general 
+    The \code{bcfa} function is a wrapper for the more general
     \code{\link{blavaan}} function, using the following default
     \code{\link{lavaan}} arguments:
-    \code{int.ov.free = TRUE}, \code{int.lv.free = FALSE}, 
-    \code{auto.fix.first = TRUE} (unless \code{std.lv = TRUE}), 
-    \code{auto.fix.single = TRUE}, \code{auto.var = TRUE}, 
-    \code{auto.cov.lv.x = TRUE}, 
+    \code{int.ov.free = TRUE}, \code{int.lv.free = FALSE},
+    \code{auto.fix.first = TRUE} (unless \code{std.lv = TRUE}),
+    \code{auto.fix.single = TRUE}, \code{auto.var = TRUE},
+    \code{auto.cov.lv.x = TRUE},
     \code{auto.th = TRUE}, \code{auto.delta = TRUE},
     and \code{auto.cov.y = TRUE}.
 }
@@ -103,7 +103,7 @@ HS.model <- ' visual  =~ x1 + x2 + x3
               speed   =~ x7 + x8 + x9 '
 
 fit <- bcfa(HS.model, data=HolzingerSwineford1939,
-            bcontrol=list(method="rjparallel"))
+            target = "jags", bcontrol=list(method="rjparallel"))
 summary(fit)
 }
 }

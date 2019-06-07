@@ -5,7 +5,7 @@
 \description{
 Fit a Bayesian latent variable model.}
 \usage{
-blavaan(..., cp = "srs", 
+blavaan(..., cp = "srs",
     dp = NULL, n.chains = 3, burnin, sample,
     adapt, mcmcfile = FALSE, mcmcextra = list(), inits = "prior",
     convergence = "manual", target = "stan", save.lvs = FALSE,
@@ -45,9 +45,9 @@ blavaan(..., cp = "srs",
     If \code{start} is a fitted
     object of class \code{\linkS4class{lavaan}}, the estimated values of
     the corresponding parameters will be extracted, then perturbed in
-    the manner described above. If it is a model list, 
-    for example the output of the \code{paramaterEstimates()} function, 
-    the values of the \code{est} or \code{start} or \code{ustart} column 
+    the manner described above. If it is a model list,
+    for example the output of the \code{paramaterEstimates()} function,
+    the values of the \code{est} or \code{start} or \code{ustart} column
     (whichever is found first) will be extracted.}
 \item{convergence}{If \code{"auto"}, parameters will be
   sampled until convergence is achieved (via \code{autorun.jags}). In
@@ -94,7 +94,7 @@ HS.model <- ' visual  =~ x1 + x2 + x3
 fit <- blavaan(HS.model, data=HolzingerSwineford1939,
                auto.var=TRUE, auto.fix.first=TRUE,
                auto.cov.lv.x=TRUE,
-               bcontrol=list(method="rjparallel"))
+               target = "jags", bcontrol=list(method="rjparallel"))
 summary(fit)
 coef(fit)
 }
