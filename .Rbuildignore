@@ -1,3 +1,5 @@
 ^\.travis\.yml$
 ^tests/blavaan_examples\.R$
 ^.*\.Rhistory$
+^.*\.Rproj$
+^\.Rproj\.user$
