@@ -9,8 +9,8 @@ test_that("blavaan arguments", {
   ## auto convergence in stan
   expect_error(bsem(model, data=Data, fixed.x=TRUE, target="stan", convergence="auto"))
 
-  ## seed length != # chains
-  expect_error(bsem(model, data=Data, fixed.x=TRUE, seed=1))
+  ## seed length != # chains for jags
+  expect_error(bsem(model, data=Data, fixed.x=TRUE, seed=1, target="jags"))
 
   ## supply ordinals
   #expect_error(bsem(model, data=Data, fixed.x=TRUE, ordered=c("y1", "x1", adapt=2, burnin=2, sample=2)))

@@ -48,5 +48,5 @@ Software, 85(4), 1-30. URL http://www.jstatsoft.org/v85/i04/.
 \code{\link{bcfa}}, \code{\link{bsem}}, \code{\link{bgrowth}}
 }
 \examples{
-dpriors(nu = "dunif(0,10)", lambda = "dnorm(0,1e-2) T(0,)", itheta = "dexp(1)")
+dpriors(nu = "normal(0,10)", lambda = "normal(0,1)", rho = "beta(3,3)")
 }
