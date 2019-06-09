@@ -722,6 +722,7 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
     ## est + psrf
     lavpartable$est[lavpartable$free > 0] <- est
     lavpartable$psrf[lavpartable$free > 0] <- rssumm$summary[rowidx2,"Rhat"]
+    lavpartable$pxnames[lavpartable$free > 0] <- rownames(rssumm$summary)[rowidx2]
   } else {
     sdvec <- NULL
     vcorr <- NULL
@@ -730,7 +731,6 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
   
   ## matrices and names
   lavpartable <- lavMatrixRepresentation(lavpartable, add.attributes = TRUE, as.data.frame. = FALSE)
-  lavpartable$pxnames[lavpartable$free > 0] <- rownames(rssumm$summary)[rowidx2]
   
   list(x = lavpartable$est[lavpartable$free > 0],
        lavpartable = lavpartable,

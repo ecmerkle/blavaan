@@ -10,7 +10,7 @@ test_that("blavaan object methods work", {
 
     ## parameter summaries
     expect_equal(dim(parTable(fitjags)), c(10,20))
-    expect_equal(dim(parTable(fitstan)), c(10,23))
+    expect_equal(dim(parTable(fitstan)), c(10,24))
 
     expect_equal(sum(fitjags@ParTable$free > 0, na.rm = TRUE),
                  length(blavInspect(fitjags, 'psrf')))
