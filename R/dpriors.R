@@ -61,8 +61,8 @@ jagpriors <- function(nu="dnorm(0,1e-3)", alpha="dnorm(0,1e-2)",
 ## see ?stan::expose_stan_functions for obtaining margloglik info
 stanpriors <- function(nu="normal(0,32)",
                        alpha="normal(0,10)", lambda="normal(0,10)",
-                       beta="normal(0,10)", theta="exponential(.5)[sd]",
-                       psi="exponential(.5)[sd]", rho="beta(1,1)",
+                       beta="normal(0,10)", theta="gamma(1,.5)[sd]",
+                       psi="gamma(1,.5)[sd]", rho="beta(1,1)",
                        ibpsi="wishart(3,iden)",
                        tau="normal(0,10^.5)",
                        delta="gamma(1,.5)"){

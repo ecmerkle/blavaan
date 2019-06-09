@@ -207,7 +207,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     ops <- unique(constrain$op)
     ops <- ops[ops != "=="]
     stop(paste("blavaan ERROR: cannot handle constraints with ",
-               paste(ops, collapse=" ")))
+               paste(ops, collapse=" "), "\n Try target='stanclassic'"))
   }
   estmats <- lavInspect(lavobject, 'est')
   if (Ng == 1) {
