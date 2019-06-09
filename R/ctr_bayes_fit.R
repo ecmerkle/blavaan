@@ -1,5 +1,5 @@
 ### Mauricio Garnier-Villareal and Terrence D. Jorgensen
-### Last updated: 7 June 2019
+### Last updated: 9 June 2019
 ### functions applying traditional SEM fit criteria to Bayesian models.
 ### Inspired by, and adpated from, Rens van de Schoot's idea for BRMSEA, as
 ### published in http://dx.doi.org/10.1177/0013164417709314
@@ -78,6 +78,7 @@ setMethod("show", "blavFitIndices", function(object) {
       "-based fit indices:\n\n", sep = "")
   fits <- getMethod("summary","blavFitIndices")(object, "mean", hpd = FALSE)
   out <- fits$EAP
+  if (!length(out)) stop('No fit indices were calculated')
   names(out) <- rownames(fits)
   class(out) <- c("lavaan.vector","numeric")
   print(out)
@@ -91,7 +92,7 @@ setMethod("show", "blavFitIndices", function(object) {
 ## --------------------
 
 ## Public function
-blavFitIndices <- function(object, pD = c("loo","waic","dic"),
+blavFitIndices <- function(object, thin = 1, pD = c("loo","waic","dic"),
                            rescale = c("devM","ppmc","mcmc"),
                            fit.measures = "all", baseline.model = NULL) {
   ## check arguments
@@ -110,17 +111,45 @@ blavFitIndices <- function(object, pD = c("loo","waic","dic"),
   chisqs <- as.numeric(apply(object@external$samplls, 2,
                              function(x) 2*(x[,2] - x[,1])))
   fit_pd <- fitMeasures(object, paste0('p_', pD))
+
   if (rescale == "mcmc") {
-    stop('blavaan ERROR: type = "mcmc" not implemented yet.')
-    ##FIXME TDJ: Call postpred(), just save different information.
-    ## if (!is.null(baseline.model))
-    ##      - Pass baseline model (parTable?) as argument? (priors?!)
-    ##      - Or calculate using baseline posterior chi-squared?
-    ## ff <- postpred(...)$... # extract discFUN() output
-    ## out <- new("blavFitIndices", details = list(rescale = rescale,
-    ##            customized.baseline = !is.null(baseline.model)), indices = ff)
-    ## WARNING: This would only make sense with uninformative priors, when pD ~= df.
+    ## WARNING: This would ONLY make sense with uninformative priors,
+    ##          when pD approximately = npar used by lavaan::fitMeasures.
     ##    e.g., With small-variance priors on all of theta, df could be negative.
+    warning('rescale="MCMC" is purely experimental, and surely inappropriate ',
+            'with informative priors, to the degree that the estimated pD ',
+            'deviates from the number of estimated parameters (the latter of ',
+            'which are used by lavaan::fitMeasures() to calculate the df).')
+
+    ## no need to call hidden BayesChiFit(), use lavaan to calculate
+    postDist <- postpred(lavpartable = object@ParTable,
+                         lavmodel = object@Model,
+                         lavoptions = object@Options,
+                         lavsamplestats = object@SampleStats,
+                         lavdata = object@Data,
+                         lavcache = object@Cache,
+                         lavjags = object@external$mcmcout,
+                         measure = fit.measures, thin = thin)$ppdist$obs
+    indexMat <- do.call(rbind, postDist)
+    indexList <- sapply(colnames(indexMat), function(cc) indexMat[ , cc],
+                        simplify = FALSE)
+    out <- new("blavFitIndices",
+               details = list(chisq = numeric(0), df = numeric(0),
+                              pD = character(0), rescale = rescale),
+               indices = indexList)
+    ## for print methods
+    class(out@details$chisq) <- c("lavaan.vector","numeric")
+    class(out@details$df) <- c("lavaan.vector","numeric")
+    for (i in seq_along(out@indices)) {
+      class(out@indices[[i]]) <- c("lavaan.vector","numeric")
+    }
+
+    return(out)
+    #FIXME: if (!is.null(baseline.model))
+    ##      - Pass baseline model (parTable?) as argument? (priors?!)
+    ##      - Or update postpred() to apply independence model using
+    ##        that iteration's model-implied variances?
+
   } else if (rescale == "ppmc") {
     reps <- postpred(lavpartable = object@ParTable,
                      lavmodel = object@Model,
@@ -194,6 +223,7 @@ blavFitIndices <- function(object, pD = c("loo","waic","dic"),
 ### MGV:  modified to also calculate gammahat, adjusted gammahat
 ### TDJ:  added McDonald's centrality index
 ### MGV:  If a null model information provided, it calculates CFI, TLI, NFI
+### TDJ:  rescale="mcmc" not executed within public function, not here
 BayesChiFit <- function(obs, reps = NULL, nvar, pD, N, Ngr = 1,
                         ms = TRUE, Min1 = FALSE,
                         rescale = c("devM","ppmc"), fit.measures = "all",
@@ -203,7 +233,7 @@ BayesChiFit <- function(obs, reps = NULL, nvar, pD, N, Ngr = 1,
     stop('blavaan ERROR: fit.measures must be a character vector')
   }
   fit.measures <- tolower(fit.measures)
-  if (fit.measures == "all") {
+  if (any(fit.measures == "all")) {
     fit.measures <- c("brmsea","bgammahat","adjbgammahat","bmc")
     if (null_model) fit.measures <- c(fit.measures, "bcfi","btli","bnfi")
   }
@@ -218,9 +248,6 @@ BayesChiFit <- function(obs, reps = NULL, nvar, pD, N, Ngr = 1,
   if (rescale == "ppmc" && (is.null(reps) || (null_model && is.null(reps_null)))) {
     stop('blavaan ERROR: rescale="ppmc" requires non-NULL reps argument (and reps_null, if applicable).')
   }
-  ##FIXME TDJ: postpred(discFUN = ) argument would enable type = "mcmc".
-  ##           Just calculate any fit indices using each posterior sample.
-  ##           Add fit.measures= argument here and above. How to handle CFI...?
 
   ## Compute number of modeled moments
   p <- ((nvar * (nvar + 1)) / 2)

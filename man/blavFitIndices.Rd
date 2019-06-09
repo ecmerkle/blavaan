@@ -8,7 +8,7 @@
 This function provides a posterior distribution of some \eqn{\chi^2}-based fit
 indices to assess the global fit of a latent variable model.}
 \usage{
-blavFitIndices(object, pD = c("loo","waic","dic"),
+blavFitIndices(object, thin = 1L, pD = c("loo","waic","dic"),
                rescale = c("devM","ppmc","mcmc"),
                fit.measures = "all", baseline.model = NULL)
 
@@ -18,6 +18,8 @@ blavFitIndices(object, pD = c("loo","waic","dic"),
 }
 \arguments{
   \item{object}{An object of class \code{\linkS4class{blavaan}}.}
+  \item{thin}{Optional \code{integer} indicating how much to thin each chain.
+    Default is \code{1L}, indicating not to thin the chains.}
   \item{pD}{\code{character} indicating from which information criterion
     returned by \code{fitMeasures(object)} to use the estimated number of
     parameters. The default is from the leave-one-out information criterion
@@ -30,9 +32,12 @@ blavFitIndices(object, pD = c("loo","waic","dic"),
     \code{rescale = "PPMC"}, the deviance at each iteration is rescaled by
     subtracting the deviance of data simulated from the posterior predictive
     distribution (as in posterior predictive model checking; see Hoofs et al.,
-    2017). If \code{rescale = "MCMC"} (not implemented yet), the fit
-    measures are simply calculated at each iteration of the Markov chain(s),
-    based on the model-implied moments at that iteration.}
+    2017). If \code{rescale = "MCMC"}, the fit measures are simply calculated
+    using \code{\link[lavaan]{fitMeasures}} at each iteration of the Markov
+    chain(s), based on the model-implied moments at that iteration (NOT advised
+    when the model includes informative priors, in which case the model's
+    estimated \emph{pD} will deviate from the number of parameters used to
+    calculate \emph{df} in \code{\link[lavaan]{fitMeasures}}).}
   \item{fit.measures}{If \code{"all"}, all fit measures available will be
     returned. If only a single or a few fit measures are specified by name,
     only those are computed and returned. If \code{rescale = "devM"} or
@@ -41,10 +46,11 @@ blavFitIndices(object, pD = c("loo","waic","dic"),
     \code{"BTLI"}, or \code{"BNFI"}. If \code{rescale = "MCMC"}, the user may
     request any indices returned by \code{\link[lavaan]{fitMeasures}} for
     objects of class \code{\linkS4class{lavaan}}.}
-  \item{baseline.model}{If not \code{NULL}, an object of class 
+  \item{baseline.model}{If not \code{NULL}, an object of class
     \code{\linkS4class{blavaan}}, representing a user-specified baseline model.
     If a \code{baseline.model} is provided, incremental fit indices (BCFI,
-    BTLI, or BNFI) can be requested in \code{fit.measures}.}
+    BTLI, or BNFI) can be requested in \code{fit.measures}. Ignored if
+    \code{rescale = "MCMC"}.}
   \item{central.tendency}{\code{character} indicating which statistics should
     be used to characterize the location of the posterior distribution. By
     default, all 3 statistics are returned. The posterior mean is labeled
@@ -62,7 +68,7 @@ blavFitIndices(object, pD = c("loo","waic","dic"),
     statistic (rescaled, if \code{rescale = "devM"} or \code{"PPMC"}).}
   \item{\code{@indices}}{A \code{list} containing the posterior distribution
     of each requested \code{fit.measure}.}
-  
+
   The \code{summary()} method returns a \code{data.frame} containing one row
   for each requested \code{fit.measure}, and columns containing the specified
   measure(s) of \code{central.tendency}, the posterior \emph{SD},
@@ -76,25 +82,26 @@ Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@gmail.com})
 }
 \references{
   \code{rescale = "PPMC"} based on:
-  
+
   Hoofs, H., van de Schoot, R., Jansen, N. W., & Kant, I. (2017).
   Evaluating model fit in Bayesian confirmatory factor analysis with large
-  samples: Simulation study introducing the BRMSEA. 
+  samples: Simulation study introducing the BRMSEA.
   \emph{Educational and Psychological Measurement}. doi:10.1177/0013164417709314
-  
+
   \code{rescale = "devM"} based on:
-  
-  Garnier-Villarreal, M., & Jorgensen, T. D. (2018).
-  \emph{Adapting fit indices for Bayesian SEM: Comparison to maximum likelihood}.
-  Unpublished manuscript (see \url{https://osf.io/afkcw/}).
-  
+
+  Garnier-Villarreal, M., & Jorgensen, T. D. (in press).
+  Adapting fit indices for Bayesian SEM: Comparison to maximum likelihood.
+  \emph{Psychological Methods}. doi:10.1037/met0000224
+  (See also \url{https://osf.io/afkcw/})
+
   Other references:
-  
+
   Vehtari, A., Gelman, A., & Gabry, J. (2017). Practical Bayesian model
   evaluation using leave-one-out cross-validation and WAIC.
   \emph{Statistics and Computing, 27}(5), 1413--1432.
   doi:10.1007/s11222-016-9696-4
-  
+
 }
 \examples{ \dontrun{
 HS.model <- ' visual  =~ x1 + x2 + x3
@@ -104,7 +111,7 @@ HS.model <- ' visual  =~ x1 + x2 + x3
 fit1 <- bcfa(HS.model, data = HolzingerSwineford1939, cp = "fa",
              n.chains = 2, burnin = 1000, sample = 1000)
 
-## fit null model to calculate CFI, TLI, and NFI 
+## fit null model to calculate CFI, TLI, and NFI
 null.model <- c(paste0("x", 1:9, " ~~ x", 1:9), paste0("x", 1:9, " ~ 1"))
 fit0 <- bcfa(null.model, data = HolzingerSwineford1939, cp = "fa",
              n.chains = 2, burnin = 1000, sample = 1000)

@@ -56,14 +56,16 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
 
   loop.args <- list(X = 1:n.chains, FUN = function(j){
     ## lists to store output (reduced after concatenated across chains)
-    if (length(discFUN) == 1L) {
-      ind <- csdist <- csboots <- vector("list", psamp)
-    } else {
+    if (length(discFUN)) {
       ## Nested lists (iterations within discrepancy functions)
       ind <- csdist <- csboots <- vector("list", length(discFUN))
       for (d in seq_along(discFUN)) {
         ind[[d]] <- csdist[[d]] <- csboots[[d]] <- vector("list", psamp)
       }
+
+    } else {
+      ## scalar or vecctor from fitMeasures()
+      ind <- csdist <- csboots <- vector("list", psamp)
     }
 
     for(i in 1:psamp){
@@ -224,24 +226,20 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
 
 
       ## COMPARE REAL v. SIMULATED, record whether observed value is larger
-      if (length(discFUN) > 1L) {
+      if (length(discFUN)) {
         ## loop over each "discFUN" to extract output in a list
         for (d in seq_along(discFUN)) {
           csdist[[d]][[i]] <- chisq.obs[[d]]
           csboots[[d]][[i]] <- chisq.boot[[d]]
           ind[[d]][[i]] <- chisq.obs[[d]] < chisq.boot[[d]]
-          ## pass long names, etc. from anything more complex than a scalar
+          ## pass long names, etc.
           attributes(ind[[d]][[i]]) <- attributes(chisq.obs[[d]])
         }
 
       } else {
-        ## either a scalar or vector from fitMeasures (or length(discFUN) == 1L)
-        if (length(discFUN)) {
-          chisq.obs <- chisq.obs[[1]]
-          chisq.boot <- chisq.boot[[1]]
-        } # else it is a fitMeasures() vector
+        ## either a scalar or vector from fitMeasures()
         ind[[i]] <- chisq.obs < chisq.boot
-        ## pass long names, etc. from anything more complex than a scalar
+        ## pass long names, etc.
         if (length(chisq.obs) > 1L) attributes(ind[[i]]) <- attributes(chisq.obs)
         csdist[[i]] <- chisq.obs
         csboots[[i]] <- chisq.boot
@@ -260,13 +258,13 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
     res <- do.call(lapply, loop.args)
   }
 
-  ##FIXME TDJ:
-  if (length(discFUN) > 1L) {
-    ## multiple discrepancy functions, store in lists
-    ind <- csdist <- csboots <- ppval <- quants <- vector("list", length(discFUN))
+  ## extract PPP and posterior (realized & predictive) distributions
+  if (length(discFUN)) {
+    ## store in list per discrepancy function
+    ind <- csdist <- csboots <- ppval <- vector("list", length(discFUN))
 
     for (d in seq_along(discFUN)) {
-      ## concatenate chains
+      ## concatenate lists from each chain
       ind[[d]]     <- do.call(c, lapply(res, function(x) x$ind[[d]]     ))
       csdist[[d]]  <- do.call(c, lapply(res, function(x) x$csdist[[d]]  ))
       csboots[[d]] <- do.call(c, lapply(res, function(x) x$csboots[[d]] ))
@@ -279,63 +277,21 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
         names(csdist)  <- names(discFUN)
         names(csboots) <- names(discFUN)
       }
-
-      ## quantiles, customized by type of output
-      if (length(csdist[[d]][[1]]) == 1L) {
-        ## scalar, store in vector
-        quants[[d]] <- quantile(as.numeric(csdist[[d]]), probs = probs)
-      } else if (is.null(dim(csdist[[d]][[1]]))) {
-        ## vector, store in matrix
-        quants[[d]] <- t(apply(do.call(rbind, csdist[[d]]), 2, quantile, probs = probs))
-        rownames(quants[[d]]) <- names(csdist[[d]][[1]])
-      } else {
-        ## multidimensional array (including matrices)
-        ## vectorize to apply same calculation as above, reapply attributes
-        csVecs <- lapply(csdist[[d]], as.numeric)
-        quantMat <- apply(do.call(rbind, csVecs), 2, quantile, probs = probs)
-        quants[[d]] <- sapply(rownames(quantMat), function(n) quantMat[n,],
-                              simplify = FALSE)
-        for (qq in seq_along(quants[[d]])) {
-          attributes(quants[[d]][[qq]]) <- attributes(csdist[[d]][[1]])
-        }
-        rm(csVecs, quantMat) # in case a later "d" fails?... error would break anyway
-      }
-
-    } # d
+    }
 
   } else {
-    ## either 1 custom discrepancy function (could be an array with attributes)
-    ## or fitMeasures() output (scalar or vector)
+    ## either scalar or vector from fitMeasures()
 
-    ## concatenate chains
+    ## concatenate lists from each chain
     ind     <- do.call(c, lapply(res, function(x) x$ind     ))
     csdist  <- do.call(c, lapply(res, function(x) x$csdist  ))
     csboots <- do.call(c, lapply(res, function(x) x$csboots ))
-    ## mean for any k-dim array
+    ## mean vector
     ppval   <- Reduce("+", ind) / length(ind)
     attributes(ppval) <- attributes(ind[[1]])
-
-    ## quantiles, customized by type of output
-    if (length(csdist[[1]]) == 1L) {
-      ## scalar, store in vector
-      quants <- quantile(as.numeric(csdist), probs = probs)
-    } else if (is.null(dim(csdist[[1]]))) {
-      ## vector, store in matrix
-      quants <- t(apply(do.call(rbind, csdist), 2, quantile, probs = probs))
-      rownames(quants) <- names(csdist[[1]])
-    } else {
-      ## multidimensional array (including matrices)
-      ## vectorize to apply same calculation as above, reapply attributes
-      csVecs <- lapply(csdist, as.numeric)
-      quantMat <- apply(do.call(rbind, csVecs), 2, quantile, probs = probs)
-      quants <- sapply(rownames(quantMat), function(n) quantMat[n,])
-      for (qq in seq_along(quants)) attributes(quants[[qq]]) <- attributes(csdist[[1]])
-    }
-
   }
 
-  list(ppval = ppval, quantiles = quants,
-       #FIXME: move quantiles to a method (summary, mean)
+  list(ppval = ppval,
        ppdist = list(obs = csdist, reps = csboots))
 }
 
