@@ -728,8 +728,9 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
     rssumm <- list(summary = NULL)
   }
   
-  ## matrices
+  ## matrices and names
   lavpartable <- lavMatrixRepresentation(lavpartable, add.attributes = TRUE, as.data.frame. = FALSE)
+  lavpartable$pxnames[lavpartable$free > 0] <- rownames(rssumm$summary)[rowidx2]
   
   list(x = lavpartable$est[lavpartable$free > 0],
        lavpartable = lavpartable,

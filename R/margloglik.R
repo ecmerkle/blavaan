@@ -32,12 +32,13 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
                   rownames(summstats),
                   nomatch=0)
 
-  ## this is potentially under srs parameterization,
-  ## need to change below to use lavaan's log-likelihood
+  ## this is potentially under srs parameterization (unless stanmarg)
   if(target == "jags"){
     thetstar <- summstats[cmatch,"Mean"]
-  } else if(target == "stan"){
+  } else if(target == "stanclassic"){
     thetstar <- summstats[cmatch,"mean"]
+  } else {
+    thetstar <- lavpartable$est[urows]
   }
   names(thetstar) <- NULL
 
