@@ -1,5 +1,5 @@
 ### Terrence D. Jorgensen
-### Last updated: 11 June 2019
+### Last updated: 13 June 2019
 ### function to implement a posterior predictor model check using any
 ### discrepancy function that can be applied to a lavaan object
 
@@ -174,9 +174,23 @@ plot.blavPPMC <- function(x, ..., discFUN, element, central.tendency = "",
   OBS <- sapply(x@obsDist[[discFUN]], function(i) i[element])
   SIM <- sapply(x@simDist[[discFUN]], function(i) i[element])
   PPP <- x@PPP[[discFUN]][element]
-  idx <- paste0(discFUN, "[", if (is.character(element)) '"',
-                paste(element, collapse = ifelse(is.character(element), '","', ", ")),
-                if (is.character(element)) '"', "]")
+  if (is.numeric(element)) {
+    if (is.null(dim(x@PPP[[discFUN]]))) {
+      ## vector, try names()
+      NAMES <- names(x@PPP[[discFUN]])[element]
+    } else {
+      ## multidimensional array, try dimnames()
+      NAMES <- mapply(function(i, j) i[j],
+                      i = dimnames(x@PPP[[discFUN]]), j = element)
+    }
+    if (length(NAMES) < length(element)) NAMES <- element
+  } else NAMES <- as.character(element)
+  idx <- paste0(discFUN, "[",
+                if (is.character(NAMES)) '"',
+                paste(NAMES,
+                      collapse = ifelse(is.character(NAMES), '","', ", ")),
+                if (is.character(NAMES)) '"',
+                "]")
 
   ## specify arguments for plot.default (scatterplot)
   dots <- list(...)
@@ -279,11 +293,22 @@ hist.blavPPMC <- function(x, ..., discFUN, element, hpd = TRUE, prob = .95,
   OBS <- sapply(x@obsDist[[discFUN]], function(i) i[element])
   SIM <- sapply(x@simDist[[discFUN]], function(i) i[element])
   PPP <- x@PPP[[discFUN]][element]
+  if (is.numeric(element)) {
+    if (is.null(dim(x@PPP[[discFUN]]))) {
+      ## vector, try names()
+      NAMES <- names(x@PPP[[discFUN]])[element]
+    } else {
+      ## multidimensional array, try dimnames()
+      NAMES <- mapply(function(i, j) i[j],
+                      i = dimnames(x@PPP[[discFUN]]), j = element)
+    }
+    if (length(NAMES) < length(element)) NAMES <- element
+  } else NAMES <- as.character(element)
   idx <- paste0('Discrepancy Function: ', discFUN, "[",
-                if (is.character(element)) '"',
-                paste(element,
-                      collapse = ifelse(is.character(element), '","', ", ")),
-                if (is.character(element)) '"',
+                if (is.character(NAMES)) '"',
+                paste(NAMES,
+                      collapse = ifelse(is.character(NAMES), '","', ", ")),
+                if (is.character(NAMES)) '"',
                 "]")
 
   ## grab density limits from 2 densities to set ylim
@@ -352,6 +377,58 @@ hist.blavPPMC <- function(x, ..., discFUN, element, hpd = TRUE, prob = .95,
   ## return arguments to create plot (and optionally, legend)
   invisible(list(plot = dots, lines = lineArgs, abline = ablineArgs,
                  legend = legendArgs, density = densityArgs))
+}
+
+## S3 hist() method
+pairs.blavPPMC <- function(x, discFUN, horInd = 1:DIM, verInd = 1:DIM,
+                           printLegend = FALSE, ...) {
+  ## check discFUN
+  if (missing(discFUN)) discFUN <- names(x@discFUN)[1]
+  if (is.numeric(discFUN)) {
+    discFUN <- names(x@discFUN)[ as.integer(discFUN)[1] ]
+  } else discFUN <- as.character(discFUN[1])
+  if (!discFUN %in% discFUN) stop('Invalid choice of discFUN. Available ',
+                                  'choices are:\n\t',
+                                  paste0(names(x@discFUN), collapse = "\n\t"))
+
+  ## check that pairs() can be applied to a 2-dim matrix
+  DIM <- dim(x@obsDist[[discFUN]])
+  if (!is.matrix(x@PPP[[discFUN]]))
+    stop('The pairs() method can only be applied when discFUN returns a',
+         '2-dimensional matrix/array. "', discFUN, '" ',
+         if (is.null(DIM)) 'is a vector.' else {
+           paste('has', length(DIM), 'dimensions.')
+         })
+
+  ## set up grid
+  opar <- par(mfrow = c(length(horInd), length(verInd))); on.exit(par(opar))
+
+  ## symmetric?
+  SYM <- length(horInd) == length(verInd)
+  if (SYM) SYM <- all(sort(horInd) == sort(verInd))
+  if (SYM) verInd <- horInd
+
+  ## loop over indices
+  for (RR in seq_along(horInd)) for (CC in seq_along(verInd)) {
+    if (RR > CC || !SYM) {
+      ## scatterplots in lower triangle (or whole thing if !SYM)
+      plot(x, discFUN = discFUN,
+           element = paste0("x", c(horInd[RR], verInd[CC])))
+
+    } else if (RR == CC) {
+      ## names on diagonal
+      plot.new()
+      legend("center", paste0("x", RR), bty = "n", cex = 5)
+
+    } else {
+      ## histograms above the diagonal
+      hist(x, discFUN = discFUN, printLegend = printLegend,
+           element = paste0("x", c(horInd[RR], verInd[CC])))
+    }
+
+  }
+
+  invisible(NULL)
 }
 
 

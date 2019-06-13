@@ -5,6 +5,7 @@
 \alias{summary,blavPPMC-method}
 \alias{plot,blavPPMC-method}
 \alias{hist,blavPPMC-method}
+\alias{pairs,blavPPMC-method}
 \title{Posterior Predictive Model Checks}
 \description{
 This function allows users to conduct a posterior predictive model check to
@@ -23,6 +24,9 @@ ppmc(object, thin = 1, fit.measures = c("srmr","chisq"), discFUN = NULL)
 \S3method{hist}{blavPPMC}(x, ..., discFUN, element, hpd = TRUE, prob = .95,
      printLegend = TRUE, legendArgs = list(x = "topleft"),
      densityArgs = list(), nd = 3)
+
+\S3method{pairs}{blavPPMC}(x, discFUN, horInd = 1:DIM, verInd = 1:DIM,
+      printLegend = FALSE, ...)
 }
 \arguments{
   \item{object,x}{An object of class \code{\linkS4class{blavaan}}.}
@@ -43,6 +47,10 @@ ppmc(object, thin = 1, fit.measures = c("srmr","chisq"), discFUN = NULL)
     \code{character} indicating which discrepancy function to summarize.}
   \item{element}{\code{numeric} or \code{character} indicating the index (in
     each \code{dim}ension of the \code{discFUN} output, if multiple) to plot.}
+  \item{horInd,verInd}{Similar to \item{element}, but a \code{numeric} or
+    \code{character} vector indicating the indices of a \code{matrix} to plot
+    in a scatterplot matrix. If \code{horInd==verInd}, histograms will be
+    plotted in the upper triangle.}
   \item{dist}{\code{character} indicating whether to summarize the distribution
     of \code{discFUN} on either the \code{obs}erved or \code{sim}ulated data.}
   \item{central.tendency}{\code{character} indicating which statistics should
@@ -85,8 +93,12 @@ ppmc(object, thin = 1, fit.measures = c("srmr","chisq"), discFUN = NULL)
     one summary statistic per element if \code{discFUN} returns a \code{matrix}
     or multidimensional \code{array}.
 
-  The \code{plot} method invisible returns \code{NULL}, printing a plot to the
-    current device.
+  The \code{plot} and \code{pairs} methods invisibly return \code{NULL},
+  printing a plot (or scatterplot matrix) to the current device.
+
+  The \code{hist} method invisibly returns a \code{list} or arguments that can
+  be passed to the function for which the \code{list} element is named.  Users
+  can edit the arguments in the list to customize their histograms.
 }
 \author{
 Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@gmail.com})
@@ -110,43 +122,54 @@ fitg <- bcfa(HS.model, data = HolzingerSwineford1939, cp = "fa",
              n.chains = 2, burnin = 1000, sample = 500, group = "school")
 
 
-## use fit.measures as a shortcut for global fitMeasures only
+## Use fit.measures as a shortcut for global fitMeasures only
+## - Note that indices calculated from the "df" are only appropriate under
+##   noninformative priors, such that pD approximates the number of estimated
+##   parameters counted under ML estimation; incremental fit indices
+##   introduce further complications)
 
-AFIs <- ppmc(object, thin = 10, fit.measures = c("srmr","chisq","rmsea","cfi"))
-summary(AFIs)          # summarize all of a discrepancy function's output
-plot(AFIs, y = "srmr") # only plot one discrepancy function at a time
+AFIs <- ppmc(fit, thin = 10, fit.measures = c("srmr","chisq","rmsea","cfi"))
+summary(AFIs)                 # summarize the whole vector in a data.frame
+hist(AFIs, element = "rmsea") # only plot one discrepancy function at a time
+plot(AFIs, element = "srmr")
 
 
 ## define a list of custom discrepancy functions
-## - model-implied correlations
 ## - (global) fit measures
 ## - (local) standardized residuals
 
-discFUN <- list(impCor = function(fit) lavInspect(fit, "cor.lv"),
-                fitIndices = function(fit) {
+discFUN <- list(global = function(fit) {
                   fitMeasures(fit, fit.measures = c("cfi","rmsea","srmr","chisq"))
                 },
-                cor.resid = function(fit) lavResiduals(fit)$cov,
-                mean.resid = function(fit) lavResiduals(fit)$mean)
-out1g <- ppmc(object, discFUN = discFUN)
-summary(out1g, discFUN = "impCor")
-plot(out1g, y = c("visual","speed"), discFUN = "impCor")
+                std.cov.resid = function(fit) lavResiduals(fit, zstat = FALSE,
+                                                           summary = FALSE)$cov,
+                std.mean.resid = function(fit) lavResiduals(fit, zstat = FALSE,
+                                                            summary = FALSE)$mean)
+out1g <- ppmc(fit, discFUN = discFUN)
+
+## summarize first discrepancy by default (fit indices)
+summary(out1g)
+## some model-implied correlations look systematically over/underestimated
+summary(out1g, discFUN = "std.cov.resid", central.tendency = "EAP")
+hist(out1g, discFUN = "std.cov.resid", element = c(1, 7))
+plot(out1g, discFUN = "std.cov.resid", element = c("x1","x7"))
 
 
 ## define a list of custom discrepancy functions for multiple groups
-## (must return each group's numeric output is a different function)
+## (return each group's numeric output using a different function)
 
-disc2g <- list(impCor1 = function(fit) lavInspect(fit, "cor.lv")[[1]],
-               impCor2 = function(fit) lavInspect(fit, "cor.lv")[[2]],
-               fitIndices = function(fit) {
+disc2g <- list(global = function(fit) {
                  fitMeasures(fit, fit.measures = c("cfi","rmsea","mfi","srmr","chisq"))
                },
-               cor.resid1 = function(fit) lavResiduals(fit)[[1]]$cov,
-               cor.resid2 = function(fit) lavResiduals(fit)[[2]]$cov)
+               cor.resid1 = function(fit) lavResiduals(fit, zstat = FALSE,
+                                                       type = "cor.bollen",
+                                                       summary = FALSE)[[1]]$cov,
+               cor.resid2 = function(fit) lavResiduals(fit, zstat = FALSE,
+                                                       type = "cor.bollen",
+                                                       summary = FALSE)[[2]]$cov)
 out2g <- ppmc(fitg, discFUN = disc2g, thin = 2)
-summary(out2g, discFUN = "cor.resid1")
-plot(out2g, y = c("x3","x9"), discFUN = "cor.resid1") # group 1
-plot(out2g, y = c(3, 9), discFUN = "cor.resid2")      # group 2
-
+## some residuals look like a bigger problem in one group than another
+pairs(out2g, discFUN = "cor.resid1", horInd = 1:3, verInd = 7:9) # group 1
+pairs(out2g, discFUN = "cor.resid2", horInd = 1:3, verInd = 7:9) # group 2
 }}
 

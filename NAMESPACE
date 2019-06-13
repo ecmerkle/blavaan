@@ -18,7 +18,7 @@ importFrom("stats",
            "vcov")
 
 importFrom("graphics",
-           "plot","hist")
+           "plot", "hist", "pairs")
 
 importFrom("lavaan",
            "lavaan", "logLik",
