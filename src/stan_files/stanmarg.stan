@@ -202,7 +202,8 @@ data {
   int<lower=1> u5[Ng, p + 1];
   int<lower=0> w5skel[sum(wg5), 2];
   int<lower=0> len_thet_sd;
-  real theta_sd_rate[len_thet_sd];
+  real<lower=0> theta_sd_shape[len_thet_sd];
+  real<lower=0> theta_sd_rate[len_thet_sd];
 
   // same things but for diag(Theta_x)
   int<lower=0> len_w6;
@@ -212,7 +213,8 @@ data {
   int<lower=1> u6[Ng, q + 1];
   int<lower=0> w6skel[sum(wg6), 2];
   int<lower=0> len_thet_x_sd;
-  real theta_x_sd_rate[len_thet_x_sd];
+  real<lower=0> theta_x_sd_shape[len_thet_x_sd];
+  real<lower=0> theta_x_sd_rate[len_thet_x_sd];
   
   // same things but for Theta_r
   int<lower=0> len_w7;
@@ -244,6 +246,7 @@ data {
   int<lower=1> u9[Ng, m + 1];
   int<lower=0> w9skel[sum(wg9), 2];
   int<lower=0> len_psi_sd;
+  real<lower=0> psi_sd_shape[len_psi_sd];
   real<lower=0> psi_sd_rate[len_psi_sd];
 
   // same things but for Psi_r
@@ -266,6 +269,7 @@ data {
   int<lower=1> u11[Ng, n + 1];
   int<lower=0> w11skel[sum(wg11), 2];
   int<lower=0> len_phi_sd;
+  real<lower=0> phi_sd_shape[len_phi_sd];
   real<lower=0> phi_sd_rate[len_phi_sd];
 
   // same things but for Phi_r
@@ -681,10 +685,10 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   target += normal_lpdf(Nu_free       | nu_mn, nu_sd);
   target += normal_lpdf(Alpha_free    | alpha_mn, alpha_sd);
   
-  target += exponential_lpdf(Theta_sd_free | theta_sd_rate);
-  target += exponential_lpdf(Theta_x_sd_free | theta_x_sd_rate);
-  target += exponential_lpdf(Psi_sd_free | psi_sd_rate);
-  target += exponential_lpdf(Phi_sd_free | phi_sd_rate);
+  target += gamma_lpdf(Theta_sd_free | theta_sd_shape, theta_sd_rate);
+  target += gamma_lpdf(Theta_x_sd_free | theta_x_sd_shape, theta_x_sd_rate);
+  target += gamma_lpdf(Psi_sd_free | psi_sd_shape, psi_sd_rate);
+  target += gamma_lpdf(Phi_sd_free | phi_sd_shape, phi_sd_rate);
 
   target += beta_lpdf(Theta_r_free | theta_r_alpha, theta_r_beta);
   target += beta_lpdf(Theta_x_r_free | theta_x_r_alpha, theta_x_r_beta);

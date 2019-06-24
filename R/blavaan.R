@@ -435,7 +435,7 @@ blavaan <- function(...,  # default lavaan arguments
                                            "Nu_free", "Alpha_free",
                                            "eta"))
                     if("init" %in% names(l2s)){
-                      jagtrans <- c(jagtrans, list(init = l2s$init))
+                      jagtrans <- c(jagtrans, list(inits = l2s$init))
                     }
                 } else {
                     jagtrans <- l2s
@@ -500,7 +500,7 @@ blavaan <- function(...,  # default lavaan arguments
               rjarg <- with(jagtrans, list(object = stanmodels$stanmarg,
                                            data = data,
                                            pars = sampparms,
-                                           init = init))
+                                           init = inits))
             }
 
             ## user-supplied jags params

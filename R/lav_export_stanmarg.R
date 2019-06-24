@@ -207,7 +207,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     ops <- unique(constrain$op)
     ops <- ops[ops != "=="]
     stop(paste("blavaan ERROR: cannot handle constraints with ",
-               paste(ops, collapse=" ")))
+               paste(ops, collapse=" "), "\n Try target='stanclassic'"))
   }
   estmats <- lavInspect(lavobject, 'est')
   if (Ng == 1) {
@@ -722,13 +722,14 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
     ## est + psrf
     lavpartable$est[lavpartable$free > 0] <- est
     lavpartable$psrf[lavpartable$free > 0] <- rssumm$summary[rowidx2,"Rhat"]
+    lavpartable$pxnames[lavpartable$free > 0] <- rownames(rssumm$summary)[rowidx2]
   } else {
     sdvec <- NULL
     vcorr <- NULL
     rssumm <- list(summary = NULL)
   }
   
-  ## matrices
+  ## matrices and names
   lavpartable <- lavMatrixRepresentation(lavpartable, add.attributes = TRUE, as.data.frame. = FALSE)
   
   list(x = lavpartable$est[lavpartable$free > 0],

@@ -381,11 +381,13 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$len_b <- length(dat$b_mn)
 
   pris <- format_priors(lavpartable, "thetavar")
-  dat$theta_sd_rate <- pris[['p1']] #; dat$b_sd <- pris[['p2']]
+  dat$theta_sd_shape <- pris[['p1']]
+  dat$theta_sd_rate <- pris[['p2']]
   dat$len_thet_sd <- length(dat$theta_sd_rate)
 
   pris <- format_priors(lavpartable, "cov.xvar")
-  dat$theta_x_sd_rate <- pris[['p1']] #; dat$b_sd <- pris[['p2']]
+  dat$theta_x_sd_shape <- pris[['p1']]
+  dat$theta_x_sd_rate <- pris[['p2']]
   dat$len_thet_x_sd <- length(dat$theta_x_sd_rate)
   
   pris <- format_priors(lavpartable, "thetaoff")
@@ -397,7 +399,8 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$len_thet_x_r <- length(dat$theta_x_r_alpha)
 
   pris <- format_priors(lavpartable, "psivar")
-  dat$psi_sd_rate <- pris[['p1']] #; dat$b_sd <- pris[['p2']]
+  dat$psi_sd_shape <- pris[['p1']]
+  dat$psi_sd_rate <- pris[['p2']]
   dat$len_psi_sd <- length(dat$psi_sd_rate)
   
   pris <- format_priors(lavpartable, "psioff")
@@ -405,7 +408,8 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$len_psi_r <- length(dat$psi_r_alpha)
 
   pris <- format_priors(lavpartable, "phivar")
-  dat$phi_sd_rate <- pris[['p1']] #; dat$b_sd <- pris[['p2']]
+  dat$phi_sd_shape <- pris[['p1']]
+  dat$phi_sd_rate <- pris[['p2']]
   dat$len_phi_sd <- length(dat$phi_sd_rate)
 
   pris <- format_priors(lavpartable, "phioff")
