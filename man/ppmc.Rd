@@ -16,7 +16,7 @@ ppmc(object, thin = 1, fit.measures = c("srmr","chisq"), discFUN = NULL)
 
 \S4method{summary}{blavPPMC}(object, discFUN, dist = c("obs","sim"),
         central.tendency = c("mean","median","mode"),
-        hpd = TRUE, prob = .95)
+        hpd = TRUE, prob = .95, to.data.frame = FALSE, diag = TRUE)
 
 \S3method{plot}{blavPPMC}(x, ..., discFUN, element, central.tendency = "",
      hpd = TRUE, prob = .95, nd = 3)
@@ -63,6 +63,11 @@ ppmc(object, thin = 1, fit.measures = c("srmr","chisq"), discFUN = NULL)
     posterior density (HPD) credible interval for \code{discFUN}.}
   \item{prob}{The "confidence" level of the credible interval(s).}
   \item{nd}{The number of digits to print in the scatter\code{plot}.}
+  \item{to.data.frame}{\code{logical} indicating whether the \code{summary} of a
+    2-dimensional \code{matrix} returned by \code{discFUN} should have its
+    unique elements stored in rows of a \code{data.frame} that can be sorted
+    for convenience of identifying large discrepancies.}
+  \item{diag}{Passed to \code{\link[base]{lower.tri}} if \code{to.data.frame=TRUE}.}
   \item{\dots}{Additional \code{graphical \link[graphics]{par}ameters} to be
     passed to \code{\link[graphics]{plot.default}}.}
   \item{printLegend}{\code{logical}. If \code{TRUE} (default), a legend will
@@ -153,7 +158,11 @@ summary(out1g)
 summary(out1g, discFUN = "std.cov.resid", central.tendency = "EAP")
 hist(out1g, discFUN = "std.cov.resid", element = c(1, 7))
 plot(out1g, discFUN = "std.cov.resid", element = c("x1","x7"))
-
+## For ease of investigation, optionally export summary as a data.frame
+summDF <- summary(out1g, discFUN = "std.cov.resid", central.tendency = "EAP",
+                  to.data.frame = TRUE)
+summDF[order(summDF$EAP), ] # sort by size of average residual
+summDF[order(summDF$PPP_sim_LessThan_obs), ] # sort by size of PPP
 
 ## define a list of custom discrepancy functions for multiple groups
 ## (return each group's numeric output using a different function)
@@ -171,5 +180,14 @@ out2g <- ppmc(fitg, discFUN = disc2g, thin = 2)
 ## some residuals look like a bigger problem in one group than another
 pairs(out2g, discFUN = "cor.resid1", horInd = 1:3, verInd = 7:9) # group 1
 pairs(out2g, discFUN = "cor.resid2", horInd = 1:3, verInd = 7:9) # group 2
+
+## print all to file: must be a LARGE picture. First group 1 ...
+png("cor.resid1.png", width = 1600, height = 1200)
+pairs(out2g, discFUN = "cor.resid1")
+dev.off()
+## ... then group 2
+png("cor.resid2.png", width = 1600, height = 1200)
+pairs(out2g, discFUN = "cor.resid2")
+dev.off()
 }}
 

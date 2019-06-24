@@ -1,5 +1,5 @@
 ### Terrence D. Jorgensen
-### Last updated: 13 June 2019
+### Last updated: 24 June 2019
 ### function to implement a posterior predictor model check using any
 ### discrepancy function that can be applied to a lavaan object
 
@@ -17,7 +17,8 @@ setClass("blavPPMC",
 
 summary.blavPPMC <- function(object, discFUN, dist = c("obs","sim"),
                              central.tendency = c("mean","median","mode"),
-                             hpd = TRUE, prob = .95) {
+                             hpd = TRUE, prob = .95,
+                             to.data.frame = FALSE, diag = TRUE) {
   ## check choices
   if (!is.character(central.tendency)) {
     stop('blavaan ERROR: central.tendency must be a character vector')
@@ -108,8 +109,23 @@ summary.blavPPMC <- function(object, discFUN, dist = c("obs","sim"),
     XXmat <- apply(do.call(rbind, XXvecs), 2, getSummaries)
     out <- sapply(rownames(XXmat), function(n) XXmat[n,], simplify = FALSE)
     for (nn in seq_along(out)) attributes(out[[nn]]) <- attributes(XX[[1]])
-    out[["PPP_sim>obs"]] <- object@PPP[[discFUN]]
-    out[["PPP_sim<obs"]] <- 1 - object@PPP[[discFUN]]
+
+    if (isSymmetric(out[[1]]) && to.data.frame) {
+      ## store unique elements of symmetric matrix in data.frame
+      XXidx <- which(lower.tri(out[[1]], diag = diag), arr.ind = TRUE)
+      XXnames <- rownames(out[[1]])
+      DF <- data.frame(moment = paste0(XXnames[XXidx[,2]], "~~", XXnames[XXidx[,1]]))
+      for (nn in names(out)) DF[[nn]] <- out[[nn]][XXidx]
+      DF$PPP_sim_GreaterThan_obs <- object@PPP[[discFUN]][XXidx]
+      DF$PPP_sim_LessThan_obs <- 1 - object@PPP[[discFUN]][XXidx]
+      out <- DF
+
+    } else {
+      ## add PPP-arrays to list of output
+      out[["PPP_sim>obs"]] <- object@PPP[[discFUN]]
+      out[["PPP_sim<obs"]] <- 1 - object@PPP[[discFUN]]
+    }
+
   }
 
   out
@@ -392,7 +408,7 @@ pairs.blavPPMC <- function(x, discFUN, horInd = 1:DIM, verInd = 1:DIM,
                                   paste0(names(x@discFUN), collapse = "\n\t"))
 
   ## check that pairs() can be applied to a 2-dim matrix
-  DIM <- dim(x@obsDist[[discFUN]])
+  DIM <- dim(x@PPP[[discFUN]])
   if (!is.matrix(x@PPP[[discFUN]]))
     stop('The pairs() method can only be applied when discFUN returns a',
          '2-dimensional matrix/array. "', discFUN, '" ',
@@ -401,6 +417,7 @@ pairs.blavPPMC <- function(x, discFUN, horInd = 1:DIM, verInd = 1:DIM,
          })
 
   ## set up grid
+  DIM # evaluate promise
   opar <- par(mfrow = c(length(horInd), length(verInd))); on.exit(par(opar))
 
   ## symmetric?
