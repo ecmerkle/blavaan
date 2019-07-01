@@ -1,5 +1,5 @@
 ### Terrence D. Jorgensen
-### Last updated: 24 June 2019
+### Last updated: 1 July 2019
 ### function to implement a posterior predictor model check using any
 ### discrepancy function that can be applied to a lavaan object
 
@@ -18,7 +18,8 @@ setClass("blavPPMC",
 summary.blavPPMC <- function(object, discFUN, dist = c("obs","sim"),
                              central.tendency = c("mean","median","mode"),
                              hpd = TRUE, prob = .95,
-                             to.data.frame = FALSE, diag = TRUE) {
+                             to.data.frame = FALSE, diag = TRUE,
+                             sort.by = NULL, decreasing = FALSE) {
   ## check choices
   if (!is.character(central.tendency)) {
     stop('blavaan ERROR: central.tendency must be a character vector')
@@ -87,6 +88,14 @@ summary.blavPPMC <- function(object, discFUN, dist = c("obs","sim"),
     out <- data.frame(t(apply(do.call(rbind, XX), 2, getSummaries)))
     out <- cbind(out, "PPP_sim_GreaterThan_obs" = object@PPP[[discFUN]],
                  "PPP_sim_LessThan_obs" = 1 - object@PPP[[discFUN]])
+    ## sort?
+    if (length(sort.by)) {
+      sort.by <- as.character(sort.by)[1]
+      if (sort.by %in% colnames(out)) {
+        ORD <- order(out[ , sort.by], decreasing = decreasing)
+        out <- out[ORD, ]
+      }
+    }
     class(out) <- c("lavaan.data.frame","data.frame")
     attr(out, "header") <- paste0("Posterior summary statistics and highest ",
                                   "posterior density (HPD) ", round(prob*100, 2),
@@ -119,7 +128,29 @@ summary.blavPPMC <- function(object, discFUN, dist = c("obs","sim"),
       DF$PPP_sim_GreaterThan_obs <- object@PPP[[discFUN]][XXidx]
       DF$PPP_sim_LessThan_obs <- 1 - object@PPP[[discFUN]][XXidx]
       out <- DF
-
+      ## sort?
+      if (length(sort.by)) {
+        sort.by <- as.character(sort.by)[1]
+        if (sort.by %in% colnames(out)) {
+          ORD <- order(out[ , sort.by], decreasing = decreasing)
+          out <- out[ORD, ]
+        }
+      }
+      class(out) <- c("lavaan.data.frame","data.frame")
+      attr(out, "header") <- paste0("Posterior summary statistics and highest ",
+                                    "posterior density (HPD) ", round(prob*100, 2),
+                                    "% credible intervals for the posterior ",
+                                    if (dist == "sim") "predictive ",
+                                    "distribution of ",
+                                    if (dist == "obs") "realized ",
+                                    "discrepancy-function values based on ",
+                                    if (dist == "obs") "observed ",
+                                    if (dist == "sim") {
+                                      "data simulated from the posterior, "
+                                    } else "data, ",
+                                    "along with posterior predictive p values ",
+                                    "to test hypotheses in either direction:\n\n",
+                                    sep = "")
     } else {
       ## add PPP-arrays to list of output
       out[["PPP_sim>obs"]] <- object@PPP[[discFUN]]

@@ -16,7 +16,8 @@ ppmc(object, thin = 1, fit.measures = c("srmr","chisq"), discFUN = NULL)
 
 \S4method{summary}{blavPPMC}(object, discFUN, dist = c("obs","sim"),
         central.tendency = c("mean","median","mode"),
-        hpd = TRUE, prob = .95, to.data.frame = FALSE, diag = TRUE)
+        hpd = TRUE, prob = .95, to.data.frame = FALSE, diag = TRUE,
+        sort.by = NULL, decreasing = FALSE)
 
 \S3method{plot}{blavPPMC}(x, ..., discFUN, element, central.tendency = "",
      hpd = TRUE, prob = .95, nd = 3)
@@ -68,6 +69,10 @@ ppmc(object, thin = 1, fit.measures = c("srmr","chisq"), discFUN = NULL)
     unique elements stored in rows of a \code{data.frame} that can be sorted
     for convenience of identifying large discrepancies.}
   \item{diag}{Passed to \code{\link[base]{lower.tri}} if \code{to.data.frame=TRUE}.}
+  \item{sort.by}{\code{character}. If \code{summary} returns a \code{data.frame},
+    it can be sorted by this column name using \code{\link[base]{order}}.}
+  \item{decreasing}{Passed to \code{\link[base]{order}} if
+    \code{!is.null(sort.by)}.}
   \item{\dots}{Additional \code{graphical \link[graphics]{par}ameters} to be
     passed to \code{\link[graphics]{plot.default}}.}
   \item{printLegend}{\code{logical}. If \code{TRUE} (default), a legend will
@@ -158,11 +163,13 @@ summary(out1g)
 summary(out1g, discFUN = "std.cov.resid", central.tendency = "EAP")
 hist(out1g, discFUN = "std.cov.resid", element = c(1, 7))
 plot(out1g, discFUN = "std.cov.resid", element = c("x1","x7"))
-## For ease of investigation, optionally export summary as a data.frame
-summDF <- summary(out1g, discFUN = "std.cov.resid", central.tendency = "EAP",
-                  to.data.frame = TRUE)
-summDF[order(summDF$EAP), ] # sort by size of average residual
-summDF[order(summDF$PPP_sim_LessThan_obs), ] # sort by size of PPP
+## For ease of investigation, optionally export summary as a data.frame,
+## sorted by size of average residual
+summary(out1g, discFUN = "std.cov.resid", central.tendency = "EAP",
+        to.data.frame = TRUE, sort.by = "EAP")
+## or sorted by size of PPP
+summary(out1g, discFUN = "std.cov.resid", central.tendency = "EAP",
+        to.data.frame = TRUE, sort.by = "PPP_sim_LessThan_obs")
 
 ## define a list of custom discrepancy functions for multiple groups
 ## (return each group's numeric output using a different function)
