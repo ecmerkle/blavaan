@@ -33,7 +33,7 @@ bsem(..., cp = "srs",
   is a character vector containing extra JAGS/Stan parameters to sample.}
 \item{inits}{If it is a character string, the options are currently
     \code{"simple"}, \code{"Mplus"}, \code{"prior"} (default), and
-    \code{"jags"}.  In the first two 
+    \code{"jags"}.  In the first two
     cases, parameter values are set as though they will be estimated via
     ML (see \code{\link{lavaan}}).  The starting parameter value for
     each chain is then perturbed from the original values through the
@@ -45,9 +45,9 @@ bsem(..., cp = "srs",
     If \code{start} is a fitted
     object of class \code{\linkS4class{lavaan}}, the estimated values of
     the corresponding parameters will be extracted, then perturbed in
-    the manner described above. If it is a model list, 
-    for example the output of the \code{paramaterEstimates()} function, 
-    the values of the \code{est} or \code{start} or \code{ustart} column 
+    the manner described above. If it is a model list,
+    for example the output of the \code{paramaterEstimates()} function,
+    the values of the \code{est} or \code{start} or \code{ustart} column
     (whichever is found first) will be extracted.}
 \item{convergence}{If \code{"auto"}, parameters will be
   sampled until convergence is achieved (via \code{autorun.jags}). In
@@ -75,7 +75,7 @@ bsem(..., cp = "srs",
     \code{int.ov.free = TRUE}, \code{int.lv.free = FALSE},
     \code{auto.fix.first = TRUE} (unless \code{std.lv = TRUE}),
     \code{auto.fix.single = TRUE}, \code{auto.var = TRUE},
-    \code{auto.cov.lv.x = TRUE}, 
+    \code{auto.cov.lv.x = TRUE},
     \code{auto.th = TRUE}, \code{auto.delta = TRUE},
     and \code{auto.cov.y = TRUE}.
   }
@@ -97,9 +97,9 @@ Software, 85(4), 1-30. URL http://www.jstatsoft.org/v85/i04/.
 }
 \examples{
 \dontrun{
-## The industrialization and Political Democracy Example 
+## The industrialization and Political Democracy Example
 ## Bollen (1989), page 332
-model <- ' 
+model <- '
   # latent variable definitions
      ind60 =~ x1 + x2 + x3
      dem60 =~ y1 + a*y2 + b*y3 + c*y4

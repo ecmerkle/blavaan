@@ -1,12 +1,12 @@
-importFrom("methods", 
+importFrom("methods",
            "is", "new", "slot", "slotNames", "callNextMethod", "getMethod")
 
-importFrom("utils", 
+importFrom("utils",
            # "sessionInfo",
            "packageDescription", "str", "write.table", "packageVersion",
            "capture.output", "head", "tail")
 
-importFrom("stats", 
+importFrom("stats",
            "approx", "density", "median", "dnorm", "pnorm", "rgamma", "rnorm",
            "runif", "sd", "quantile", "rWishart", "cov", "cor",
            "coef", "logLik",
@@ -17,18 +17,18 @@ importFrom("stats",
            "anova",
            "vcov")
 
-importFrom("graphics", 
-           "plot")
+importFrom("graphics",
+           "plot", "hist", "pairs")
 
 importFrom("lavaan",
            "lavaan", "logLik",
            "fitMeasures", "fitmeasures",
-           "inspect", "lavInspect", "lavTech", "lavNames", 
+           "inspect", "lavInspect", "lavTech", "lavNames",
            "lavParseModelString", "lavMatrixRepresentation",
-           "lav_func_jacobian_complex", "lav_func_jacobian_simple", 
-           "lav_partable_labels", "lavaanify", 
-           "lav_model_get_parameters", "lav_model_implied", 
-           "lav_model_set_parameters", "lav_model_vcov_se", 
+           "lav_func_jacobian_complex", "lav_func_jacobian_simple",
+           "lav_partable_labels", "lavaanify",
+           "lav_model_get_parameters", "lav_model_implied",
+           "lav_model_set_parameters", "lav_model_vcov_se",
            "lav_partable_attributes",
            "modificationIndices", "parTable", "parameterEstimates",
            "lavPredict", "standardizedSolution")
@@ -60,8 +60,10 @@ import(rstantools)
 
 export("blavaan", "bcfa", "bsem", "bgrowth", "dpriors", "BF", "blavCompare",
        "blavTech", "blavInspect", "blavFitIndices", "labelfun", "standardizedposterior",
-       "standardizedPosterior")
+       "standardizedPosterior", "ppmc")
 
 S3method(plot, blavaan)
+S3method(plot, blavPPMC)
+S3method(hist, blavPPMC)
 
 useDynLib(blavaan, .registration = TRUE)

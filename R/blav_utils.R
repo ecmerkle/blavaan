@@ -3,10 +3,10 @@
 ## calculate model log-likelihood given some sampled parameter
 ## values (with lvs integrated out by default)
 get_ll <- function(postsamp       = NULL, # one posterior sample
-                   lavmodel       = NULL, 
-                   lavpartable    = NULL, 
-                   lavsamplestats = NULL, 
-                   lavoptions     = NULL, 
+                   lavmodel       = NULL,
+                   lavpartable    = NULL,
+                   lavsamplestats = NULL,
+                   lavoptions     = NULL,
                    lavcache       = NULL,
                    lavdata        = NULL,
                    lavobject      = NULL, # just to use lavPredict()
@@ -36,7 +36,7 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
       covmat <- lapply(covmat, function(x){
         class(x) <- "matrix"
         x})
-       
+
       ngroups <- lavsamplestats@ngroups
       implied <- list(cov = covmat, mean = mnvec,
                       slopes = vector("list", ngroups),
@@ -50,7 +50,7 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
     mis <- FALSE
     if(any(is.na(unlist(lavdata@X)))) mis <- TRUE
 
-    if(measure %in% c("logl", "chisq") & !mis){
+    if(measure[1] %in% c("logl", "chisq") & !mis){
         if(casewise){
             ll.samp <- rep(NA, sum(unlist(lavdata@nobs)))
         } else if(conditional){
@@ -87,7 +87,7 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
                 if(inherits(tmpll.x, "try-error")) tmpll.x <- NA
                 tmpll <- tmpll - tmpll.x
             }
-            
+
             if(!conditional){
                 sampmn <- apply(lavdata@X[[g]], 2, mean, na.rm=TRUE)
                 sampcov <- ((lavdata@nobs[[g]]-1)/(lavdata@nobs[[g]]))*cov(lavdata@X[[g]])
@@ -136,7 +136,7 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
             ##                                 mnvec[obs], cmat[obs,obs], log=TRUE)
             ##     }
             ## }
-            
+
         }
     } else {
         ## other measures require us to run lavaan
@@ -164,7 +164,7 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
 
             if(casewise){
                 ll.samp <- llcont(fit.samp)
-            } else if(measure == "logl"){
+            } else if(measure[1] == "logl"){
                 ll.samp <- c(fitMeasures(fit.samp, "logl"),
                              fitMeasures(fit.samp, "unrestricted.logl"))
             } else {
@@ -175,15 +175,19 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
         }
     }
 
-    as.numeric(ll.samp)
+    ##TDJ: preserve names of other fitMeasures(), when requested by postpred()
+    ATTR <- attributes(ll.samp)
+    ll.samp <- as.numeric(ll.samp)
+    attributes(ll.samp) <- ATTR
+    ll.samp
 }
 
 ## get log-likelihoods for each sampled parameter
 samp_lls <- function(lavjags        = NULL,
-                     lavmodel       = NULL, 
-                     lavpartable    = NULL, 
-                     lavsamplestats = NULL, 
-                     lavoptions     = NULL, 
+                     lavmodel       = NULL,
+                     lavpartable    = NULL,
+                     lavsamplestats = NULL,
+                     lavoptions     = NULL,
                      lavcache       = NULL,
                      lavdata        = NULL,
                      lavmcmc        = NULL,
@@ -192,7 +196,7 @@ samp_lls <- function(lavjags        = NULL,
                      conditional    = FALSE){
     itnums <- sampnums(lavjags, thin = thin)
     nsamps <- length(itnums)
-  
+
     nchain <- length(lavmcmc)
     llmat <- array(NA, c(nsamps, nchain, 2)) ## logl + baseline logl
 
@@ -200,9 +204,9 @@ samp_lls <- function(lavjags        = NULL,
         for(j in 1:nchain){
             llmat[i,j,1:2] <- get_ll(lavmcmc[[j]][itnums[i],],
                                      lavmodel,
-                                     lavpartable, 
-                                     lavsamplestats, 
-                                     lavoptions, 
+                                     lavpartable,
+                                     lavsamplestats,
+                                     lavoptions,
                                      lavcache,
                                      lavdata,
                                      lavobject,
@@ -215,10 +219,10 @@ samp_lls <- function(lavjags        = NULL,
 
 ## casewise log-likelihoods
 case_lls <- function(lavjags        = NULL,
-                     lavmodel       = NULL, 
-                     lavpartable    = NULL, 
-                     lavsamplestats = NULL, 
-                     lavoptions     = NULL, 
+                     lavmodel       = NULL,
+                     lavpartable    = NULL,
+                     lavsamplestats = NULL,
+                     lavoptions     = NULL,
                      lavcache       = NULL,
                      lavdata        = NULL,
                      lavmcmc        = NULL,
@@ -238,9 +242,9 @@ case_lls <- function(lavjags        = NULL,
         for(j in 1:nchain){
             clls <- get_ll(lavmcmc[[j]][itnums[i],],
                            lavmodel,
-                           lavpartable, 
-                           lavsamplestats, 
-                           lavoptions, 
+                           lavpartable,
+                           lavsamplestats,
+                           lavoptions,
                            lavcache,
                            lavdata,
                            lavobject,
@@ -286,7 +290,7 @@ rearr_params <- function(mcmc         = NULL,
     } else {
         fullmat[,lavpartable$stansumnum[lavpartable$free > 0][order(lavpartable$free[lavpartable$free > 0])]]
     }
-}   
+}
 
 ## iteration numbers for samp_lls and postpred
 sampnums <- function(lavmcmc, thin, lout = FALSE){
@@ -301,7 +305,7 @@ sampnums <- function(lavmcmc, thin, lout = FALSE){
     } else {
         psamp <- seq(1, niter, thin)
     }
-    
+
     psamp
 }
 
@@ -399,7 +403,7 @@ dist2r <- function(priors, target){
     ## explicitly change sqrt() to ^.5, because it may often be
     ## used to express sd's
     gsub("sqrt\\((.*)\\)\\).*", "\\1^.5\\)", priors)
-  
+
     if(target == "jags"){
         out <- jagsdist2r(priors)
     } else if(target == "stan"){
@@ -436,7 +440,7 @@ add_monitors <- function(lavpartable, lavjags, jagextra){
     psrflocs <- sapply(monres, function(x) x$psrfloc)
     xnms <- sapply(monres, function(x) x$xnms)
     nvars <- sapply(monres, function(x) x$nvars)
-        
+
     nrs <- length(lavpartable$id)
     lavpartable$id <- c(lavpartable$id, (nrs + 1):(nrs + sum(nvars)))
     lavpartable$lhs <- c(lavpartable$lhs, xnms)
@@ -470,7 +474,7 @@ namecheck <- function(ov.names){
                    paste(".phant", 1:100, sep=""), "def")
 
     forbid.idx <- which(ov.names %in% forbidden)
-    
+
     if(length(forbid.idx) > 0L){
         stop("blavaan ERROR: the following variable names must be changed:\n",
              "                   ", paste(ov.names[forbid.idx], collapse = " "))
@@ -480,10 +484,10 @@ namecheck <- function(ov.names){
 ## compute undirected K-L divergence across all draws
 ## (each draw paired with one from another chain)
 samp_kls <- function(lavjags        = NULL,
-                     lavmodel       = NULL, 
-                     lavpartable    = NULL, 
-                     lavsamplestats = NULL, 
-                     lavoptions     = NULL, 
+                     lavmodel       = NULL,
+                     lavpartable    = NULL,
+                     lavsamplestats = NULL,
+                     lavoptions     = NULL,
                      lavcache       = NULL,
                      lavdata        = NULL,
                      lavmcmc        = NULL,
@@ -499,7 +503,7 @@ samp_kls <- function(lavjags        = NULL,
     itnums <- sampnums(lavjags, thin = thin)
     lavmcmc <- lapply(lavmcmc, function(x) x[itnums,])
     draws <- do.call("rbind", lavmcmc)
-  
+
     ndraws <- nrow(draws)
     halfdraws <- floor(ndraws/2)
     ngroups <- lavsamplestats@ngroups
@@ -571,7 +575,7 @@ samp_kls <- function(lavjags        = NULL,
         klres[i] <- tmpkl
     }
     klres
-}        
+}
 
 ## fill in eta matrices (1 per group, in list)
 fill_eta <- function(postsamp, lavmodel, lavpartable, lavsamplestats, lavdata){
@@ -590,7 +594,7 @@ fill_eta <- function(postsamp, lavmodel, lavpartable, lavsamplestats, lavdata){
     ngroups <- lavsamplestats@ngroups
 
     eta <- vector("list", ngroups)
-      for(g in 1:ngroups){        
+      for(g in 1:ngroups){
         eta[[g]] <- etamat[lavdata@case.idx[[g]], 1:nlv, drop = FALSE]
 
         ## fill in eta with dummys, if needed
@@ -603,7 +607,7 @@ fill_eta <- function(postsamp, lavmodel, lavpartable, lavsamplestats, lavdata){
 
     eta
 }
-        
+
 ## compute undirected K-L divergence between two normal distributions
 kl_und <- function(mn0, mn1, cov0, invcov0, cov1, invcov1,
                    det0, det1){
@@ -624,10 +628,10 @@ kl_und <- function(mn0, mn1, cov0, invcov0, cov1, invcov1,
 ## get various fit metrics from a fitted model for each
 ## posterior draw
 samp_idx <- function(lavjags        = NULL,
-                     lavmodel       = NULL, 
-                     lavpartable    = NULL, 
-                     lavsamplestats = NULL, 
-                     lavoptions     = NULL, 
+                     lavmodel       = NULL,
+                     lavpartable    = NULL,
+                     lavsamplestats = NULL,
+                     lavoptions     = NULL,
                      lavcache       = NULL,
                      lavdata        = NULL,
                      lavmcmc        = NULL,
@@ -644,9 +648,9 @@ samp_idx <- function(lavjags        = NULL,
         for(j in 1:nchain){
             idxmat[i,j] <- get_ll(lavmcmc[[j]][itnums[i],],
                                   lavmodel,
-                                  lavpartable, 
-                                  lavsamplestats, 
-                                  lavoptions, 
+                                  lavpartable,
+                                  lavsamplestats,
+                                  lavoptions,
                                   lavcache,
                                   lavdata,
                                   measure)[1]
