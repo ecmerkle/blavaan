@@ -48,7 +48,7 @@ ppmc(object, thin = 1, fit.measures = c("srmr","chisq"), discFUN = NULL)
     \code{character} indicating which discrepancy function to summarize.}
   \item{element}{\code{numeric} or \code{character} indicating the index (in
     each \code{dim}ension of the \code{discFUN} output, if multiple) to plot.}
-  \item{horInd,verInd}{Similar to \item{element}, but a \code{numeric} or
+  \item{horInd,verInd}{Similar to \code{element}, but a \code{numeric} or
     \code{character} vector indicating the indices of a \code{matrix} to plot
     in a scatterplot matrix. If \code{horInd==verInd}, histograms will be
     plotted in the upper triangle.}
