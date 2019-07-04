@@ -27,7 +27,7 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x, target="ja
 
         eqpar <- which(partable$rhs == partable$plabel[i] &
                        partable$op == "==")
-        compeq <- which(partable$lhs == partable$label[i] &
+        compeq <- which(partable$lhs == partable$plabel[i] &
                         partable$op %in% c("==", ":=") &
                         grepl("\\+|-|/|\\*|\\(|\\)|\\^", partable$rhs))
         fixed <- partable$free[i] == 0 & partable$op[i] != ":="
@@ -48,7 +48,7 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x, target="ja
 
             ## only complex equality constraints and defined parameters;
             ## rhs needs math expression
-            compeq <- which(partable$lhs == partable$label[i] &
+            compeq <- which(partable$lhs == partable$plabel[i] &
                             partable$op %in% c("==", ":=") &
                             grepl("\\+|-|/|\\*|\\(|\\)|\\^", partable$rhs))
             ## TODO block prior associated with lv.x.wish
@@ -115,7 +115,7 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x, target="ja
                 ## see lav_partable_constraints.R
                 rhsvars <- all.vars(parse(file="",
                                           text=partable$rhs[compeq]))
-                pvnum <- match(rhsvars, partable$label)
+                pvnum <- match(rhsvars, partable$plabel)
 
                 rhstrans <- paste(partable$mat[pvnum], "[",
                                   partable$row[pvnum], ",",
