@@ -4,6 +4,9 @@ PKG_CPPFLAGS = -I"../inst/include" -I"$(STANHEADERS_SRC)" -DBOOST_RESULT_OF_USE_
 SOURCES = $(wildcard stan_files/*.stan)
 OBJECTS = $(SOURCES:.stan=.o) init.o
 
+CXX_STD = CXX14
+CXX14STD = -std=c++1y
+
 all: $(SHLIB)
 		@if test -e "/usr/bin/install_name_tool" && test -e "/usr/local/clang4/lib/libc++.1.dylib" && test -e "/usr/lib/libc++.1.dylib"; then /usr/bin/install_name_tool -change /usr/local/clang4/lib/libc++.1.dylib /usr/lib/libc++.1.dylib $(SHLIB); fi
 

@@ -93,8 +93,7 @@ HS.model <- ' visual  =~ x1 + x2 + x3
 
 fit <- blavaan(HS.model, data=HolzingerSwineford1939,
                auto.var=TRUE, auto.fix.first=TRUE,
-               auto.cov.lv.x=TRUE,
-               target = "jags", bcontrol=list(method="rjparallel"))
+               auto.cov.lv.x=TRUE)
 summary(fit)
 coef(fit)
 }

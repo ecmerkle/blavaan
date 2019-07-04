@@ -119,8 +119,7 @@ model <- '
 
 ## unique priors for mv intercepts; parallel chains
 fit <- bsem(model, data=PoliticalDemocracy,
-            dp=dpriors(nu="dnorm(5,1e-2)"),
-            target = "jags", bcontrol=list(method="rjparallel"))
+            dp=dpriors(nu="normal(5,10)"))
 summary(fit)
 }
 }
