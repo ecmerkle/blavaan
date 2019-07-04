@@ -3,9 +3,9 @@
 \alias{blavPPMC-class}
 \alias{show,blavPPMC-method}
 \alias{summary,blavPPMC-method}
-\alias{plot,blavPPMC-method}
-\alias{hist,blavPPMC-method}
-\alias{pairs,blavPPMC-method}
+\alias{plot.blavPPMC}
+\alias{hist.blavPPMC}
+\alias{pairs.blavPPMC}
 \title{Posterior Predictive Model Checks}
 \description{
 This function allows users to conduct a posterior predictive model check to

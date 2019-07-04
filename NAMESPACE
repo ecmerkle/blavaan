@@ -18,7 +18,11 @@ importFrom("stats",
            "vcov")
 
 importFrom("graphics",
-           "plot", "hist", "pairs")
+           "plot", "hist", "pairs", "legend", "par", "plot.new",
+           "polygon")
+
+importFrom("grDevices",
+           "adjustcolor")
 
 importFrom("lavaan",
            "lavaan", "logLik",
