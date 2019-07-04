@@ -92,7 +92,11 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
                 sampmn <- apply(lavdata@X[[g]], 2, mean, na.rm=TRUE)
                 sampcov <- ((lavdata@nobs[[g]]-1)/(lavdata@nobs[[g]]))*cov(lavdata@X[[g]])
 
-                basell <- dmnorm(lavdata@X[[g]], sampmn, sampcov, log=TRUE)
+                basell <- try(dmnorm(lavdata@X[[g]], sampmn, sampcov, log=TRUE))
+                if(inherits(basell, "try-error")){
+                  basell <- NA
+                  warning("blavaan WARNING: sample covariance matrix is not positive definite")
+                }
 
                 if(!is.null(x.idx) && length(x.idx) > 0L){
                     Mu.X <- lavsamplestats@mean.x[[g]]
