@@ -20,7 +20,8 @@
 ###     in public ppmc() function), then check for complete-data logl/chisq,
 ###     otherwise use hack for (in)complete data using ANY fit.measures from
 ###     fitMeasures().  Note that the latter could also be a custom discFUN.
-###   - made notes with "FIXME TDJ" in places where postpred() could be updated
+###   - for custom discFUN, updated simulated data to retain grouping variable
+###     name and the group labels
 
 postpred <- function(lavpartable, lavmodel, lavoptions,
                      lavsamplestats, lavdata, lavcache, lavjags,
@@ -176,13 +177,13 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
           lavmodel2@control <- list(optim.method="none")
         }
         if(lavsamplestats@ngroups > 1L) {
-          DATA$.g. <- rep(1:lavdata@ngroups,
-                          times = unlist(lavdata@nobs))
+          DATA[ , lavdata@group] <- rep(lavdata@group.label,
+                                        times = unlist(lavdata@nobs))
           out <- lavaan(slotOptions = lavoptions2,
                         slotParTable = lavpartable,
                         slotSampleStats = NULL, slotData = NULL,
                         slotModel = lavmodel2, slotCache = lavcache,
-                        data = DATA, group = ".g.")
+                        data = DATA, group = lavdata@group)
         } else {
           out <- lavaan(slotOptions = lavoptions2,
                         slotParTable = lavpartable,
