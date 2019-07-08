@@ -1,10 +1,10 @@
 language: r
+sudo: required
 cache: packages
 
 r_github_packages:
   - yrosseel/lavaan
 
-sudo: required
 warnings_are_errors: true
 
 matrix:
@@ -18,10 +18,10 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-7
-	    - jags
+            - jags
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
-	- _R_CHECK_FORCE_SUGGESTS_=false
+        - _R_CHECK_FORCE_SUGGESTS_=false
     - os: linux
       dist: trusty
       r: devel
@@ -31,11 +31,12 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-7
-	    - jags
+            - jags
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
-	- _R_CHECK_FORCE_SUGGESTS_=false
-	
+        - _R_CHECK_FORCE_SUGGESTS_=false
+
+
 before_install:
   - mkdir -p ~/.R
   - echo "CXX14FLAGS=-O3 -mtune=native -march=native -Wno-unused-variable -Wno-unused-function  -Wno-macro-redefined" >> ~/.R/Makevars
