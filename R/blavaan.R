@@ -447,9 +447,11 @@ blavaan <- function(...,  # default lavaan arguments
             if(mcmcfile){
                 dir.create(path=jagdir, showWarnings=FALSE)
                 fext <- ifelse(target=="jags", "jag", "stan")
-                if(target!="stan"){
-                    cat(jagtrans$model, file = paste(jagdir, "/sem.",
-                                                     fext, sep=""))
+                fnm <- paste0(jagdir, "/sem.", fext)
+                if(target=="stan"){
+                    cat(stanmodels$stanmarg@model_code, file = fnm)
+                } else {
+                    cat(jagtrans$model, file = fnm)
                 }
                 if(target=="jags"){
                     save(jagtrans, file = paste(jagdir, "/semjags.rda",
