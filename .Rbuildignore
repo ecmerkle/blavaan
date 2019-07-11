@@ -3,3 +3,6 @@
 ^.*\.Rhistory$
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^.*\.so$
+^.*\.o$
+^src/stanmarg\.hpp$
