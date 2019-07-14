@@ -1,6 +1,6 @@
 Package: blavaan
 Title: Bayesian Latent Variable Analysis
-Version: 0.3-5.470
+Version: 0.3-5.481
 Authors@R: c(person(given = "Edgar", family = "Merkle",
                     role = c("aut", "cre"),
                     email = "merklee@missouri.edu",
@@ -30,7 +30,7 @@ Description: Fit a variety of Bayesian latent variable models, including confirm
 License: GPL (>= 3)
 ByteCompile: true
 Depends: R(>= 3.5.0), methods, lavaan(>= 0.6-4), Rcpp(>= 0.12.15)
-Imports: stats, utils, graphics, MCMCpack, coda, mnormt, nonnest2(>= 0.5-2), loo(>= 2.0), rstan(>= 2.17.3), rstantools(>= 1.5.0)
+Imports: stats, utils, graphics, MCMCpack, coda, mnormt, nonnest2(>= 0.5-2), loo(>= 2.0), rstan(>= 2.19.2), rstantools(>= 1.5.0)
 LinkingTo: StanHeaders (>= 2.18.1), rstan (>= 2.19.2), BH (>= 1.69.0), Rcpp (>= 0.12.15), RcppEigen (>= 0.3.3.4.0)
 Suggests: runjags(>= 2.0.4-2), modeest, rjags, semTools, parallel, testthat(>= 2.0.0)
 SystemRequirements: GNU make
