@@ -593,6 +593,10 @@ blavaan <- function(...,  # default lavaan arguments
                 wrmup <- ifelse(length(rjarg$warmup) > 0,
                                 rjarg$warmup, floor(rjarg$iter/2))
                 attr(x, "iterations") <- sample
+                if(target == "stan"){
+                    ## defined variables come from delta method:
+                    lavpartable$est <- lav_model_get_parameters(lavmodel = lavmodel, type = "user", extra = TRUE)
+                }
                 # burnin + sample already defined, will be saved in
                 # @external so summary() can use it:
                 #burnin <- wrmup

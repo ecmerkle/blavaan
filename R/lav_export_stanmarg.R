@@ -561,8 +561,11 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
   prich <- prinames %in% mapping
   primap <- match(prinames[prich], mapping)
   names(prifree)[prich] <- names(mapping)[primap]
-  
-  stanprires <- set_stanpars("", lavpartable, prifree, dp, "")
+
+  lpt <- lavpartable
+  lpt$mat[lpt$op == ":="] <- "def"
+  dp <- c(dp, def = "")
+  stanprires <- set_stanpars("", lpt, prifree, dp, "")
   lavpartable$prior <- stanprires$partable$prior
   
   ## add inits (manipulate partable to re-use set_inits_stan)

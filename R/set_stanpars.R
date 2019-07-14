@@ -39,7 +39,7 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
     }
 
     for(i in 1:nrow(partable)){
-        if(partable$mat[i] != "" | partable$op[i] == ":="){            
+        if(partable$mat[i] != "" | partable$op[i] == ":="){
             ## to find equality constraints
             eqpar <- which(partable$rhs == partable$plabel[i] &
                            partable$op == "==")
