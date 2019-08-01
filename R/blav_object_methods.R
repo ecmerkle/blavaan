@@ -349,12 +349,14 @@ plot.blavaan <- function(x, pars=NULL, plot.type="trace", ...){
     } else {
         parnums <- x@ParTable$stanpnum[match(pars, x@ParTable$free)]
         parlabs <- with(x@ParTable, paste0(lhs,op,rhs)[match(pars, free)])
+        oldnames <- names(x@external$mcmcout)[parnums]
         names(x@external$mcmcout)[parnums] <- parlabs
         plargs <- list(x = x@external$mcmcout,
                        plotfun = plot.type)
         plargs <- c(plargs, list(pars = parlabs), list(...))
 
         do.call(rstan::plot, plargs)
+        names(x@external$mcmcout)[parnums] <- oldnames
     }
 }
 
