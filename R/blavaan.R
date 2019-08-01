@@ -44,7 +44,7 @@ blavaan <- function(...,  # default lavaan arguments
         }
     }
 
-    # if("ordered" %in% dotNames) stop("blavaan ERROR: models with ordered variables are not yet available.")
+    if("ordered" %in% dotNames) stop("blavaan ERROR: models with ordered variables are not yet available.")
 
     # multilevel functionality not available
     if("cluster" %in% dotNames) stop("blavaan ERROR: two-level models are not yet available.")
