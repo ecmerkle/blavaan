@@ -1,3 +1,16 @@
+Changes in Version 0.3-5
+    o target="stan" is now the default, using a pre-compiled stan model instead
+      of "on the fly" code.
+
+    o ppmc() function added by Terrence Jorgensen, facilitating posterior
+      predictive checks.
+
+    o default priors are changed from gamma on precisions to gamma on standard
+      deviations.
+
+    o bug fixes: in blavInspect(,"lvmeans") for jags; parameter names in 
+      stan plots
+
 Changes in Version 0.3-4
     o Add function standardizedPosterior() for standardizing posterior draws.
 
