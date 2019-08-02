@@ -651,7 +651,8 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
 
   freeidx <- lapply(lavfree, function(x) lapply(x, function(y) which(y > 0, arr.ind = TRUE)))
   freenums <- lapply(free2, function(x) lapply(x, function(y) y[y > 0]))
-  nfree <- max(sapply(lavfree, function(x) sapply(x, max)))
+  nfree <- max(sapply(lavfree, function(x)
+    sapply(x, function(x) ifelse(length(x) > 0, max(x), 0))))
 
   if(stanfit){
     draw_mat <- as.matrix(rsob)
