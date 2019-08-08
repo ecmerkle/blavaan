@@ -1,3 +1,6 @@
+Changes in Version 0.3-6
+    o bug fix for stan plots, which were silently failing.
+
 Changes in Version 0.3-5
     o target="stan" is now the default, using a pre-compiled stan model instead
       of "on the fly" code.
@@ -9,7 +12,7 @@ Changes in Version 0.3-5
       deviations.
 
     o bug fixes: in blavInspect(,"lvmeans") for jags; parameter names in 
-      stan plots
+      stan plots.
 
 Changes in Version 0.3-4
     o Add function standardizedPosterior() for standardizing posterior draws.
