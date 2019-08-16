@@ -327,37 +327,32 @@ setMethod("coef", "blavaan",
   })
 
 
-plot.blavaan <- function(x, pars=NULL, plot.type="trace", ...){
-    # NB: arguments go to plot.runjags() or stan plot functions
+plot.blavaan <- function(x, pars=NULL, plot.type="trace", showplot=TRUE, ...){
+    # NB: arguments now go to bayesplot functions
     if(length(pars) == 0L){
         pars <- x@ParTable$free
         pars <- pars[pars > 0 & !is.na(pars)]
     }
+    samps <- as.array(blavInspect(x, 'mcmc'))
+  
     if(x@Options$target == "jags"){
-        ddd <- list(...)
-        if(plot.type=="trace"){
-          if(!("trace.iters" %in% names(ddd))) ddd$trace.iters <- x@external$sample
-        }
         parnames <- x@ParTable$pxnames[match(pars, x@ParTable$free)]
-        parlabs <- sapply(with(x@ParTable, paste0(lhs,op,rhs)[match(pars, free)]), list)
-        axis_env$trans <- cbind(parnames, parlabs)
-
-        do.call(plot,
-                c(list(x=x@external$mcmcout, plot.type=plot.type, vars=parnames,
-                       trace.options=list(ylab=expression(labelfun(varname)))),
-                  ddd))
+        samps <- samps[, match(parnames, colnames(samps)), ]
     } else {
         parnums <- x@ParTable$stanpnum[match(pars, x@ParTable$free)]
-        #parlabs <- with(x@ParTable, paste0(lhs,op,rhs)[match(pars, free)])
-        parlabs <- names(x@external$mcmcout)[parnums]
-        #names(x@external$mcmcout)[parnums] <- parlabs
-        plargs <- list(x = x@external$mcmcout,
-                       plotfun = plot.type)
-        plargs <- c(plargs, list(pars = parlabs), list(...))
-
-        do.call(rstan::plot, plargs)
-        #names(x@external$mcmcout)[parnums] <- oldnames
+        samps <- samps[, parnums, ]
     }
+    colnames(samps) <- with(x@ParTable, paste0(lhs,op,rhs)[match(pars, free)])
+
+    plfun <- get(paste0("mcmc_", plot.type), asNamespace("bayesplot"))
+
+    ## samps dims must be "iteration, chain, parameter"
+    samps <- aperm(samps, c(1, 3, 2))
+    pl <- do.call(plfun, c(list(x = samps), list(...)))
+
+    if(showplot) plot(pl)
+
+    invisible(pl)
 }
 
 
