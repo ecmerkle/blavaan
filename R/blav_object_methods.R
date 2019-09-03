@@ -342,8 +342,12 @@ plot.blavaan <- function(x, pars=NULL, plot.type="trace", showplot=TRUE, ...){
         parnums <- x@ParTable$stanpnum[match(pars, x@ParTable$free)]
         samps <- samps[, parnums, ]
     }
-    colnames(samps) <- with(x@ParTable, paste0(lhs,op,rhs)[match(pars, free)])
-
+    if(blavInspect(x, 'ngroups') == 1L){
+        colnames(samps) <- with(x@ParTable, paste0(lhs,op,rhs)[match(pars, free)])
+    } else {
+        colnames(samps) <- with(x@ParTable, paste0(lhs,op,rhs,".g",group)[match(pars, free)])
+    }
+        
     plfun <- get(paste0("mcmc_", plot.type), asNamespace("bayesplot"))
 
     ## samps dims must be "iteration, chain, parameter"
