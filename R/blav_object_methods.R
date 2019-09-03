@@ -334,8 +334,8 @@ plot.blavaan <- function(x, pars=NULL, plot.type="trace", showplot=TRUE, ...){
         pars <- pars[pars > 0 & !is.na(pars)]
     }
     samps <- as.array(blavInspect(x, 'mcmc'))
-  
-    if(x@Options$target == "jags"){
+
+    if(x@Options$target != "stan"){
         parnames <- x@ParTable$pxnames[match(pars, x@ParTable$free)]
         samps <- samps[, match(parnames, colnames(samps)), ]
     } else {
