@@ -20,9 +20,18 @@ fitstan <- bsem(model, data=Data, fixed.x=TRUE, burnin=200,
 fitstanc <- bsem(model, data=Data, fixed.x=TRUE, burnin=200,
                  sample=200, target="stanclassic", group="g")
 
+## for checking factor scores
+HS.model <- ' visual  =~ x1 + x2 + x3
+              textual =~ x4 + x5 + x6 '
+
+fitstanfs <- bcfa(HS.model, data=HolzingerSwineford1939,
+                  burnin=100, sample=100, target="stan",
+                  save.lvs=TRUE)
+
 ## this really blows up file size if kept:
 attr(fitstan@external$mcmcout, 'stanmodel') <- NULL
 attr(fitstanc@external$mcmcout, 'stanmodel') <- NULL
+attr(fitstanfs@external$mcmcout, 'stanmodel') <- NULL
 
-save(list=c("fitjags", "fitstan", "fitstanc"), file="../inst/testdata/sysdata.rda")
+save(list=c("fitjags", "fitstan", "fitstanc", "fitstanfs"), file="../inst/testdata/sysdata.rda")
 
