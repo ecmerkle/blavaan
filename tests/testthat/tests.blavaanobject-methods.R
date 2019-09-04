@@ -79,8 +79,8 @@ test_that("blavaan object methods work", {
     expect_equal(dim(blavInspect(fitstanfs, 'lvmeans')),
                  c(301, 2))
 
-    expect_equal(dim(blavInspect(fitstanfs, 'lvs')[[3]]),
-                 c(100, 602))
+    expect_equal(dim(blavInspect(fitstanfs, 'lvs')[[2]]),
+                 c(10, 602))
 
     ## plots
     expect_silent(p <- plot(fitstan, showplot = FALSE))
