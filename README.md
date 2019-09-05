@@ -33,7 +33,7 @@ The development version of blavaan (containing updates not yet on CRAN) can be i
 remotes::install_github("ecmerkle/blavaan", INSTALL_opts = "--no-multiarch")
 
 # from website:
-install.packages("blavaan", repos="http://faculty.missouri.edu/~merklee", type="source")
+install.packages("blavaan", repos = "http://faculty.missouri.edu/~merklee", type = "source")
 ```
 
 For further information, see:
