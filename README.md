@@ -22,7 +22,7 @@ model <- '
      y4 ~~ y8
      y6 ~~ y8
 '
-fit <- bsem(model, data=PoliticalDemocracy)
+fit <- bsem(model, data = PoliticalDemocracy)
 summary(fit)
 ```
 
