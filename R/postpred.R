@@ -43,14 +43,6 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
   samp.indices <- sampnums(lavjags, thin=thin)
   psamp <- length(samp.indices)
 
-  ## parallel across chains if we can
-  ncores <- NA
-  loop.comm <- "lapply"
-  if(.Platform$OS.type != "windows" & requireNamespace("parallel", quietly = TRUE)){
-    ncores <- min(n.chains, parallel::detectCores())
-    loop.comm <- "mclapply"
-  }
-
   ## check for missing, to see if we can easily get baseline ll for chisq
   mis <- FALSE
   if(any(is.na(unlist(lavdata@X)))) mis <- TRUE
@@ -252,12 +244,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
     result
   })
 
-  if(loop.comm == "mclapply"){
-    loop.args <- c(loop.args, list(mc.cores = ncores))
-    res <- do.call(parallel::mclapply, loop.args)
-  } else {
-    res <- do.call(lapply, loop.args)
-  }
+  res <- do.call("future_lapply", loop.args)
 
   ## extract PPP and posterior (realized & predictive) distributions
   if (length(discFUN)) {
@@ -328,15 +315,6 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, ...){
   lavmcmc <- make_mcmc(lavjags)
   n.chains <- length(lavmcmc)
   chnums <- 1:n.chains
-
-  ## parallel only if object is supplied; postpred uses the other
-  ## args and already is using parallel
-  ncores <- NA
-  loop.comm <- "lapply"
-  if(.Platform$OS.type != "windows" & requireNamespace("parallel", quietly = TRUE) & length(object) > 0L){
-    ncores <- min(n.chains, parallel::detectCores())
-    loop.comm <- "mclapply"
-  }
 
   if(all(c("samp.indices", "chain.num") %in% names(ddd))){
     ## 1 sample, for postpred
@@ -457,12 +435,7 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, ...){
     }
     list(postdat = postdat, lavmod = lavmod)})
 
-  if(loop.comm == "mclapply"){
-    loop.args <- c(loop.args, list(mc.cores = ncores))
-    res <- do.call(parallel::mclapply, loop.args)
-  } else {
-    res <- do.call(lapply, loop.args)
-  }
+  res <- do.call("future_lapply", loop.args)
 
   lavmod <- sapply(res, function(x) x$lavmod)
   res <- lapply(res, function(x) x$postdat)

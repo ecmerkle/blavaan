@@ -58,6 +58,9 @@ importFrom("rstan",
 importFrom("loo",
            "loo", "waic", "compare", "relative_eff")
 
+importFrom("future.apply",
+           "future_lapply")
+
 import(Rcpp)
 
 import(rstantools)
