@@ -44,17 +44,18 @@ blavaan <- function(...,  # default lavaan arguments
         }
     }
 
+    # ordinal functionality not available
     if("ordered" %in% dotNames) stop("blavaan ERROR: models with ordered variables are not yet available.")
 
     # multilevel functionality not available
     if("cluster" %in% dotNames) stop("blavaan ERROR: two-level models are not yet available.")
-  
+
     # ensure rstan/runjags are here. if target is not installed but
     # the other is, then use the other instead.
     if(grepl("stan", target)){
-      if(convergence == "auto"){
-        stop("blavaan ERROR: auto convergence is unavailable for stan.")
-      }
+      if(convergence == "auto") stop("blavaan ERROR: auto convergence is unavailable for Stan.")
+
+      if(target == "stan" & length(mcmcextra) > 0) stop("blavaan ERROR: mcmcextra is not available for target='stan'.")
     } else if(target == "jags"){
       if(!pkgcheck("runjags")){
         ## go to rstan if they have it
@@ -415,10 +416,10 @@ blavaan <- function(...,  # default lavaan arguments
                                          debug = mcdebug),
                                 silent = TRUE)
             } else {
-              l2s <- try(lav2stanmarg(lavobject = LAV, dp = dp,
-                                      n.chains = n.chains,
-                                      inits = initsin),
-                         silent = TRUE)
+                l2s <- try(lav2stanmarg(lavobject = LAV, dp = dp,
+                                        n.chains = n.chains,
+                                        inits = initsin),
+                           silent = TRUE)
                 if(!inherits(l2s, "try-error")){
                     ldargs <- c(l2s$dat, list(lavpartable = l2s$lavpartable, save_lvs = save.lvs))
                     lavpartable$prior <- l2s$lavpartable$prior
