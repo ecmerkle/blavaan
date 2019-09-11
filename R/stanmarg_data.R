@@ -94,8 +94,13 @@ format_priors <- function(lavpartable, mat) {
       param2 <- rep(NA, length(param1))
     }
 
+    ## check that var/sd/prec is same for all
+    powargs <- sapply(prisplit, tail, 1)
+    if (any(grepl("\\[", powargs))) {
+      if (length(unique(powargs)) > 0) stop(paste0("blavaan ERROR: In matrix ", mat, ", all priors must be placed on either vars, sds, or precisions."))
+    }
     powpar <- 1
-    powarg <- tail(prisplit[[1]], 1)
+    powarg <- powargs[1]
     if (grepl("\\[var\\]", powarg)) {
       powpar <- 2
     } else if (!grepl("\\[sd\\]", powarg)) {
