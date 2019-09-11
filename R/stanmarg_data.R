@@ -97,7 +97,7 @@ format_priors <- function(lavpartable, mat) {
     ## check that var/sd/prec is same for all
     powargs <- sapply(prisplit, tail, 1)
     if (any(grepl("\\[", powargs))) {
-      if (length(unique(powargs)) > 0) stop(paste0("blavaan ERROR: In matrix ", mat, ", all priors must be placed on either vars, sds, or precisions."))
+      if (length(unique(powargs)) > 1) stop(paste0("blavaan ERROR: In matrix ", mat, ", all priors must be placed on either vars, sds, or precisions."))
     }
     powpar <- 1
     powarg <- powargs[1]
@@ -125,7 +125,6 @@ format_priors <- function(lavpartable, mat) {
 # @return nothing
 check_priors <- function(lavpartable) {
   right_pris <- sapply(dpriors(target = "stan"), function(x) strsplit(x, "[, ()]+")[[1]][1])
-
   pt_pris <- sapply(lavpartable$prior[lavpartable$prior != ""], function(x) strsplit(x, "[, ()]+")[[1]][1])
   names(pt_pris) <- lavpartable$mat[lavpartable$prior != ""]
 

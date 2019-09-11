@@ -36,5 +36,15 @@ test_that("blavaan arguments", {
   names(Data)[1] <- "lambda"
   model2 <- ' lambda ~ b1*x1 + b2*x2 '
   expect_error(bsem(model2, data=Data))
-              
+
+  ## one prior on variance, one on sd (for target="stan" only)
+  model3 <- ' y1 ~ x1
+              x2 ~ x1
+              y1 ~~ prior("gamma(1,.5)[sd]")*y1
+              x2 ~~ prior("gamma(1,.5)[var]")*x2 '
+  expect_error(bsem(model3, data=Data, target="stan"))
+
+  ## unknown prior
+  expect_error(bsem(model, data=Data, dp=dpriors(psi="mydist(1,.5)")))
+  
 })
