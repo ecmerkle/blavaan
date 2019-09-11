@@ -204,6 +204,7 @@ data {
   int<lower=0> len_thet_sd;
   real<lower=0> theta_sd_shape[len_thet_sd];
   real<lower=0> theta_sd_rate[len_thet_sd];
+  int<lower=-2, upper=2> theta_pow;
 
   // same things but for diag(Theta_x)
   int<lower=0> len_w6;
@@ -215,7 +216,8 @@ data {
   int<lower=0> len_thet_x_sd;
   real<lower=0> theta_x_sd_shape[len_thet_x_sd];
   real<lower=0> theta_x_sd_rate[len_thet_x_sd];
-  
+  int<lower=-2, upper=2> theta_x_pow;
+
   // same things but for Theta_r
   int<lower=0> len_w7;
   int<lower=0> wg7[Ng];
@@ -248,6 +250,7 @@ data {
   int<lower=0> len_psi_sd;
   real<lower=0> psi_sd_shape[len_psi_sd];
   real<lower=0> psi_sd_rate[len_psi_sd];
+  int<lower=-2,upper=2> psi_pow;
 
   // same things but for Psi_r
   int<lower=0> len_w10;
@@ -271,6 +274,7 @@ data {
   int<lower=0> len_phi_sd;
   real<lower=0> phi_sd_shape[len_phi_sd];
   real<lower=0> phi_sd_rate[len_phi_sd];
+  int<lower=-2,upper=2> phi_pow;
 
   // same things but for Phi_r
   int<lower=0> len_w12;
@@ -620,7 +624,12 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   matrix[p + q, p + q] Sigma[Ng];                                           // model covariance matrix
 
   matrix[p, q] top_right[Ng];        // top right block of Sigma
-  
+  /* transformed sd parameters for priors */
+  vector[len_free[5]] Theta_pri;
+  vector[len_free[6]] Theta_x_pri;
+  vector[len_free[9]] Psi_pri;
+  vector[len_free[11]] Phi_pri;
+
   for (g in 1:Ng) {
     if (m > 0) {
       Lambda_y_A[g] = mdivide_right(Lambda_y[g], I - B[g]);     // = Lambda_y * (I - B)^{-1}
@@ -684,11 +693,26 @@ model { // N.B.: things declared in the model block do not get saved in the outp
 
   target += normal_lpdf(Nu_free       | nu_mn, nu_sd);
   target += normal_lpdf(Alpha_free    | alpha_mn, alpha_sd);
-  
-  target += gamma_lpdf(Theta_sd_free | theta_sd_shape, theta_sd_rate);
-  target += gamma_lpdf(Theta_x_sd_free | theta_x_sd_shape, theta_x_sd_rate);
-  target += gamma_lpdf(Psi_sd_free | psi_sd_shape, psi_sd_rate);
-  target += gamma_lpdf(Phi_sd_free | phi_sd_shape, phi_sd_rate);
+
+  /* transform sd parameters to var or prec, depending on
+     what the user wants. */
+  for (i in 1:len_free[5]) {
+    Theta_pri[i] = Theta_sd_free[i]^(theta_pow);
+  }
+  for (i in 1:len_free[6]) {
+    Theta_x_pri[i] = Theta_x_sd_free[i]^(theta_x_pow);
+  }
+  for (i in 1:len_free[9]) {
+    Psi_pri[i] = Psi_sd_free[i]^(psi_pow);
+  }
+  for (i in 1:len_free[11]) {
+    Phi_pri[i] = Phi_sd_free[i]^(phi_pow);
+  }
+
+  target += gamma_lpdf(Theta_pri | theta_sd_shape, theta_sd_rate);
+  target += gamma_lpdf(Theta_x_pri | theta_x_sd_shape, theta_x_sd_rate);
+  target += gamma_lpdf(Psi_pri | psi_sd_shape, psi_sd_rate);
+  target += gamma_lpdf(Phi_pri | phi_sd_shape, phi_sd_rate);
 
   target += beta_lpdf(Theta_r_free | theta_r_alpha, theta_r_beta);
   target += beta_lpdf(Theta_x_r_free | theta_x_r_alpha, theta_x_r_beta);

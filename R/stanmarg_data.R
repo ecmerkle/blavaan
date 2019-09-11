@@ -94,14 +94,23 @@ format_priors <- function(lavpartable, mat) {
       param2 <- rep(NA, length(param1))
     }
 
+    powpar <- 1
+    powarg <- tail(prisplit[[1]], 1)
+    if (grepl("\\[var\\]", powarg)) {
+      powpar <- 2
+    } else if (!grepl("\\[sd\\]", powarg)) {
+      powpar <- -2
+    }
+    
     param1 <- array(as.numeric(param1), length(param1))
     param2 <- array(as.numeric(param2), length(param2))
   } else {
     param1 <- array(0,0)
     param2 <- array(0,0)
+    powpar <- 1
   }
   
-  return(list(p1=param1, p2=param2))
+  return(list(p1=param1, p2=param2, powpar=powpar))
 }
 
 # Check that priors match what is in the stan file
@@ -384,11 +393,13 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$theta_sd_shape <- pris[['p1']]
   dat$theta_sd_rate <- pris[['p2']]
   dat$len_thet_sd <- length(dat$theta_sd_rate)
+  dat$theta_pow <- pris[['powpar']]
 
   pris <- format_priors(lavpartable, "cov.xvar")
   dat$theta_x_sd_shape <- pris[['p1']]
   dat$theta_x_sd_rate <- pris[['p2']]
   dat$len_thet_x_sd <- length(dat$theta_x_sd_rate)
+  dat$theta_x_pow <- pris[['powpar']]
   
   pris <- format_priors(lavpartable, "thetaoff")
   dat$theta_r_alpha <- pris[['p1']]; dat$theta_r_beta <- pris[['p2']]
@@ -402,6 +413,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$psi_sd_shape <- pris[['p1']]
   dat$psi_sd_rate <- pris[['p2']]
   dat$len_psi_sd <- length(dat$psi_sd_rate)
+  dat$psi_pow <- pris[['powpar']]
   
   pris <- format_priors(lavpartable, "psioff")
   dat$psi_r_alpha <- pris[['p1']]; dat$psi_r_beta <- pris[['p2']]
@@ -411,7 +423,8 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$phi_sd_shape <- pris[['p1']]
   dat$phi_sd_rate <- pris[['p2']]
   dat$len_phi_sd <- length(dat$phi_sd_rate)
-
+  dat$phi_pow <- pris[['powpar']]
+  
   pris <- format_priors(lavpartable, "phioff")
   dat$phi_r_alpha <- pris[['p1']]; dat$phi_r_beta <- pris[['p2']]
   dat$len_phi_r <- length(dat$phi_r_alpha)
