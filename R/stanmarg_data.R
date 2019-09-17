@@ -66,8 +66,11 @@ format_priors <- function(lavpartable, mat) {
   if (grepl("var", mat)) {
     mat <- gsub("var", "", mat)
     prisel <- lavpartable$row == lavpartable$col
-  } else if (grepl("off", mat)) {
-    mat <- gsub("off", "", mat)
+  } else if (grepl("psioff", mat)) {
+    mat <- "lvrho"
+    prisel <- lavpartable$row != lavpartable$col
+  } else if (grepl("thetaoff", mat)) {
+    mat <- "rho"
     prisel <- lavpartable$row != lavpartable$col
   } else {
     prisel <- rep(TRUE, length(lavpartable$row))
@@ -418,7 +421,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$psi_sd_rate <- pris[['p2']]
   dat$len_psi_sd <- length(dat$psi_sd_rate)
   dat$psi_pow <- pris[['powpar']]
-  
+
   pris <- format_priors(lavpartable, "psioff")
   dat$psi_r_alpha <- pris[['p1']]; dat$psi_r_beta <- pris[['p2']]
   dat$len_psi_r <- length(dat$psi_r_alpha)
