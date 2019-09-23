@@ -130,7 +130,7 @@ data {
   int<lower=0> n; // number of latent exogenous variables
   int<lower=1> Ng; // number of groups
   cov_matrix[p + q] S[Ng];     // sample covariance matrix among all manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
-  int<lower=0, upper=1> has_data; // are the raw (centered) data on y and x available?
+  int<lower=0, upper=1> has_data; // are the raw data on y and x available?
   int<lower=0, upper=1> missing; // are there missing values?
   int<lower=0, upper=1> save_lvs; // should we save lvs?
   int<lower=1> Np; // number of group-by-missing patterns combos
