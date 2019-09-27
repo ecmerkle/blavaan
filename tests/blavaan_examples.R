@@ -9,19 +9,20 @@ Data <- data.frame(y1 = y1, x1 = x1, g = g)
 ## seemed to help if running this via R CMD check:
 ## Sys.unsetenv('R_TESTS')
 library("blavaan")
+
+## don't care that models are not converged, keeping file size small
 model <- ' y1 ~ prior("dnorm(0,1)")*x1 '
-fitjags <- bsem(model, data=Data, fixed.x=TRUE, burnin=200,
-                sample=200, target="jags", group="g")
+fitjags <- bsem(model, data=Data, fixed.x=TRUE, burnin=20,
+                sample=20, target="jags", group="g")
 
 model <- ' y1 ~ prior("normal(0,1)")*x1 '
-fitstan <- bsem(model, data=Data, fixed.x=TRUE, burnin=200,
-                sample=200, target="stan", group="g")
+fitstan <- bsem(model, data=Data, fixed.x=TRUE, burnin=20,
+                sample=20, target="stan", group="g")
 
-fitstanc <- bsem(model, data=Data, fixed.x=TRUE, burnin=200,
-                 sample=200, target="stanclassic", group="g")
+fitstanc <- bsem(model, data=Data, fixed.x=TRUE, burnin=20,
+                 sample=20, target="stanclassic", group="g")
 
 ## for checking factor score functionality
-## (don't care that it is not converged, keeping file size small)
 HS.model <- ' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6 '
 
