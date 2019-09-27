@@ -1,3 +1,17 @@
+Changes in Version 0.3-7
+    o for target="stan", gamma priors can now be placed on user's choice of
+      variances, standard deviations, or precisions.
+
+    o save.lvs=TRUE now works for target="stan".
+
+    o plot() now works uniformly across Stan and JAGS, relying on bayesplot.
+
+    o post-MCMC parallelization is now handled via future.apply package
+      (requires an extra "plan" command from user, but works on windows).
+
+    o for target="stan", priors on correlations are now passed through
+      to Stan (due to previous bug, they were implicitly treated as uniform).
+
 Changes in Version 0.3-6
     o bug fix for stan plots, which were silently failing.
 
