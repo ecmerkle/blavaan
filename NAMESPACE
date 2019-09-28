@@ -61,6 +61,26 @@ importFrom("loo",
 importFrom("future.apply",
            "future_lapply")
 
+## need to import something, though others could be used
+importFrom("bayesplot",
+           "mcmc_trace")
+           ## "mcmc_acf", "mcmc_acf_bar", "mcmc_areas",
+           ## "mcmc_areas_data", "mcmc_areas_ridges",
+           ## "mcmc_areas_ridges_data", "mcmc_combo", "mcmc_dens",
+           ## "mcmc_dens_chains", "mcmc_dens_chains_data",
+           ## "mcmc_dens_overlay", "mcmc_hex", "mcmc_hist",
+           ## "mcmc_hist_by_chain", "mcmc_intervals",
+           ## "mcmc_intervals_data", "mcmc_neff", "mcmc_neff_data",
+           ## "mcmc_neff_hist", "mcmc_nuts_acceptance",
+           ## "mcmc_nuts_divergence", "mcmc_nuts_energy",
+           ## "mcmc_nuts_stepsize", "mcmc_nuts_treedepth", "mcmc_pairs",
+           ## "mcmc_parcoord", "mcmc_parcoord_data", "mcmc_rank_hist",
+           ## "mcmc_rank_overlay", "mcmc_recover_hist",
+           ## "mcmc_recover_intervals", "mcmc_recover_scatter",
+           ## "mcmc_rhat", "mcmc_rhat_data", "mcmc_rhat_hist",
+           ## "mcmc_scatter", "mcmc_trace", "mcmc_trace_data",
+           ## "mcmc_trace_highlight", "mcmc_violin")
+
 import(Rcpp)
 
 import(rstantools)
