@@ -82,6 +82,13 @@ test_that("blavaan object methods work", {
     expect_equal(dim(blavInspect(fitstanfs, 'lvs')[[2]]),
                  c(10, 602))
 
+    HS.model <- ' visual  =~ x1 + x2 + x3
+                  textual =~ x4 + x5 + x6 '
+    fitlav <- cfa(HS.model, data=HolzingerSwineford1939,
+                  meanstructure=TRUE)
+    expect_true(cor(blavInspect(fitstanfs, 'lvmeans')[,1],
+                    lavPredict(fitlav, 'lv')[,1]) > .95)
+
     ## plots
     expect_silent(p <- plot(fitstan, showplot = FALSE))
     expect_silent(p <- plot(fitstan, 1:4, showplot = FALSE))

@@ -435,8 +435,7 @@ blavaan <- function(...,  # default lavaan arguments
                                            "Theta_x_cov", "Theta_x_var",
                                            "Psi_cov", "Psi_var",
                                            "Ph_cov", "Ph_var",
-                                           "Nu_free", "Alpha_free",
-                                           "eta"))
+                                           "Nu_free", "Alpha_free"))
                     if("init" %in% names(l2s)){
                       jagtrans <- c(jagtrans, list(inits = l2s$init))
                     }
