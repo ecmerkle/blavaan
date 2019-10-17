@@ -198,22 +198,25 @@ samp_lls <- function(lavjags        = NULL,
     nsamps <- length(itnums)
 
     nchain <- length(lavmcmc)
-    llmat <- array(NA, c(nsamps, nchain, 2)) ## logl + baseline logl
 
-    for(i in 1:nsamps){
-        for(j in 1:nchain){
-            llmat[i,j,1:2] <- get_ll(lavmcmc[[j]][itnums[i],],
-                                     lavmodel,
-                                     lavpartable,
-                                     lavsamplestats,
-                                     lavoptions,
-                                     lavcache,
-                                     lavdata,
-                                     lavobject,
-                                     conditional = conditional)
-        }
-    }
+    loop.args <- list(X = 1:nsamps, FUN = function(i){
+      tmpmat <- matrix(NA, nchain, 2)
+      for(j in 1:nchain){
+        tmpmat[j,1:2] <- get_ll(lavmcmc[[j]][itnums[i],],
+                               lavmodel,
+                               lavpartable,
+                               lavsamplestats,
+                               lavoptions,
+                               lavcache,
+                               lavdata,
+                               lavobject,
+                               conditional = conditional)
+      }
+      tmpmat})
 
+    llmat <- do.call("lapply", loop.args) #"future_lapply", loop.args)
+    llmat <- array(unlist(llmat), c(nchain, 2, nsamps)) ## logl + baseline logl
+    llmat <- aperm(llmat, c(3,1,2))
     llmat
 }
 
