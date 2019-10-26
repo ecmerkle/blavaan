@@ -508,6 +508,7 @@ ppmc <- function(object, thin = 1, fit.measures = c("srmr","chisq"),
                   lavdata = object@Data,
                   lavcache = object@Cache,
                   lavjags = object@external$mcmcout,
+                  samplls = object@external$samplls,
                   measure = fit.measures, thin = thin, discFUN = discFUN)
 
   ## "out" is a list:
