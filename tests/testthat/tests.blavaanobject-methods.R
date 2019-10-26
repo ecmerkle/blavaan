@@ -108,5 +108,10 @@ test_that("blavaan object methods work", {
     expect_silent(p <- plot(fitjags, 1:4, plot.type = "dens", showplot = FALSE))
     expect_silent(p <- plot(fitjags, c(2,4), plot.type = "scatter", showplot = FALSE))
   }
-    
+
+  ## ppmc
+  ppmc_res <- ppmc(fitstan)
+  expect_s4_class(ppmc_res, "blavPPMC")
+  ppmc_summ <- summary(ppmc_res)
+  expect_s3_class(ppmc_summ, "lavaan.data.frame")
 })
