@@ -59,7 +59,7 @@ importFrom("loo",
            "loo", "waic", "compare", "relative_eff")
 
 importFrom("future.apply",
-           "future_lapply")
+           "future_lapply", "future_sapply")
 
 ## need to import something, though others could be used
 importFrom("bayesplot",

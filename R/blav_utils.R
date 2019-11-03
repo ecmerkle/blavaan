@@ -214,7 +214,7 @@ samp_lls <- function(lavjags        = NULL,
       }
       tmpmat})
 
-    llmat <- do.call("lapply", loop.args) #"future_lapply", loop.args)
+    llmat <- do.call("future_lapply", loop.args)
     llmat <- array(unlist(llmat), c(nchain, 2, nsamps)) ## logl + baseline logl
     llmat <- aperm(llmat, c(3,1,2))
     llmat
@@ -241,24 +241,24 @@ case_lls <- function(lavjags        = NULL,
     ntot <- sum(unlist(lavdata@nobs))
     llmat <- matrix(NA, nchain*nsamps, sum(unlist(lavdata@nobs)))
 
-    for(i in 1:nsamps){
-        for(j in 1:nchain){
-            clls <- get_ll(lavmcmc[[j]][itnums[i],],
-                           lavmodel,
-                           lavpartable,
-                           lavsamplestats,
-                           lavoptions,
-                           lavcache,
-                           lavdata,
-                           lavobject,
-                           casewise = TRUE,
-                           conditional = conditional)
-
-            if(length(clls) > ntot) clls <- clls[!is.na(clls)]
-            llmat[(i-1)*nchain + j,] <- clls
-        }
+    tmpres <- vector("list", nchain)
+    for(j in 1:nchain){
+      loop.args <- list(X = 1:nsamps, FUN = function(i, j){
+        get_ll(lavmcmc[[j]][itnums[i],],
+               lavmodel,
+               lavpartable,
+               lavsamplestats,
+               lavoptions,
+               lavcache,
+               lavdata,
+               lavobject,
+               casewise = TRUE,
+               conditional = conditional)}, j = j)
+      tmpres[[j]] <- t(do.call("future_sapply", loop.args))
     }
 
+    llmat <- do.call("rbind", tmpres)
+      
     llmat
 }
 
