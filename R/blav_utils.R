@@ -165,8 +165,8 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
             if(casewise){
                 ll.samp <- llcont(fit.samp)
             } else if(measure[1] == "logl"){
-                ll.samp <- c(fitMeasures(fit.samp, "logl"),
-                             fitMeasures(fit.samp, "unrestricted.logl"))
+              ll.samp <- fitMeasures(fit.samp,
+                                     c("logl", "unrestricted.logl"))
             } else {
                 ll.samp <- fitMeasures(fit.samp, measure)
             }
