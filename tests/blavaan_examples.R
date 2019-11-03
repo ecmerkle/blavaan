@@ -27,7 +27,7 @@ HS.model <- ' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6 '
 
 fitstanfs <- bcfa(HS.model, data=HolzingerSwineford1939,
-                  burnin=10, sample=10, target="stan",
+                  burnin=50, sample=10, target="stan",
                   save.lvs=TRUE, n.chains=2)
 
 ## this really blows up file size if kept:
