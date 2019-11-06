@@ -47,21 +47,21 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
   mis <- FALSE
   if(any(is.na(unlist(lavdata@X)))) mis <- TRUE
 
-  loop.args <- list(X = 1:n.chains, FUN = function(j){
+  loop.args <- list(X = 1:psamp, FUN = function(i){
     ## lists to store output (reduced after concatenated across chains)
     if (length(discFUN)) {
       ## Nested lists (iterations within discrepancy functions)
       ind <- csdist <- csboots <- vector("list", length(discFUN))
       for (d in seq_along(discFUN)) {
-        ind[[d]] <- csdist[[d]] <- csboots[[d]] <- vector("list", psamp)
+        ind[[d]] <- csdist[[d]] <- csboots[[d]] <- vector("list", n.chains)
       }
 
     } else {
       ## scalar or vecctor from fitMeasures()
-      ind <- csdist <- csboots <- vector("list", psamp)
+      ind <- csdist <- csboots <- vector("list", n.chains)
     }
 
-    for(i in 1:psamp){
+    for(j in 1:n.chains){
       ## supply extra args to postdata so that we only generate
       ## a single dataset
       dataX <- postdata(samp.indices = samp.indices[i],
@@ -222,30 +222,30 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
       if (length(discFUN)) {
         ## loop over each "discFUN" to extract output in a list
         for (d in seq_along(discFUN)) {
-          csdist[[d]][[i]] <- chisq.obs[[d]]
-          csboots[[d]][[i]] <- chisq.boot[[d]]
-          ind[[d]][[i]] <- chisq.obs[[d]] < chisq.boot[[d]]
+          csdist[[d]][[j]] <- chisq.obs[[d]]
+          csboots[[d]][[j]] <- chisq.boot[[d]]
+          ind[[d]][[j]] <- chisq.obs[[d]] < chisq.boot[[d]]
           ## pass long names, etc.
-          attributes(ind[[d]][[i]]) <- attributes(chisq.obs[[d]])
+          attributes(ind[[d]][[j]]) <- attributes(chisq.obs[[d]])
         }
 
       } else {
         ## either a scalar or vector from fitMeasures()
-        ind[[i]] <- chisq.obs < chisq.boot
+        ind[[j]] <- chisq.obs < chisq.boot
         ## pass long names, etc.
-        if (length(chisq.obs) > 1L) attributes(ind[[i]]) <- attributes(chisq.obs)
-        csdist[[i]] <- chisq.obs
-        csboots[[i]] <- chisq.boot
+        if (length(chisq.obs) > 1L) attributes(ind[[j]]) <- attributes(chisq.obs)
+        csdist[[j]] <- chisq.obs
+        csboots[[j]] <- chisq.boot
       }
 
-    } # i
+    } # j
 
     result <- list(ind = ind, csdist = csdist, csboots = csboots)
     result
   })
 
   res <- do.call("future_lapply", loop.args)
-
+  
   ## extract PPP and posterior (realized & predictive) distributions
   if (length(discFUN)) {
     ## store in list per discrepancy function
@@ -253,12 +253,13 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
 
     for (d in seq_along(discFUN)) {
       ## concatenate lists from each chain
-      ind[[d]]     <- do.call(c, lapply(res, function(x) x$ind[[d]]     ))
-      csdist[[d]]  <- do.call(c, lapply(res, function(x) x$csdist[[d]]  ))
-      csboots[[d]] <- do.call(c, lapply(res, function(x) x$csboots[[d]] ))
-      ## mean for any k-dim array
+      ind[[d]]     <- do.call("c", lapply(res, function(x) x$ind[[d]]     ))
+      csdist[[d]]  <- do.call("c", lapply(res, function(x) x$csdist[[d]]  ))
+      csboots[[d]] <- do.call("c", lapply(res, function(x) x$csboots[[d]] ))
+      ## mean for any k-dim array;
+      ## FIXME? Reduce() is very slow here 
       ppval[[d]]   <- Reduce("+", ind[[d]]) / length(ind[[d]])
-      attributes(ppval[[d]]) <- attributes(ind[[d]][[1]])
+      attributes(ppval[[d]]) <- attributes(res[[1]]$ind[[d]][[1]])
       ## Assign names, if they exist
       if (!is.null(names(discFUN))) {
         names(ppval)   <- names(discFUN)
@@ -269,14 +270,15 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
 
   } else {
     ## either scalar or vector from fitMeasures()
+    ## was originally based on a list of length n.chains,
+    ## instead of psamp
+    ind <- do.call("c", lapply(res, function(x) x$ind))
+    csdist <- do.call("c", lapply(1:n.chains, function(j) lapply(res, function(x) x$csdist[[j]])))
+    csboots <- do.call("c", lapply(1:n.chains, function(j) lapply(res, function(x) x$csboots[[j]])))
 
-    ## concatenate lists from each chain
-    ind     <- do.call(c, lapply(res, function(x) x$ind     ))
-    csdist  <- do.call(c, lapply(res, function(x) x$csdist  ))
-    csboots <- do.call(c, lapply(res, function(x) x$csboots ))
     ## mean vector
-    ppval   <- Reduce("+", ind) / length(ind)
-    attributes(ppval) <- attributes(ind[[1]])
+    ppval <- colMeans(do.call("rbind", ind))
+    attributes(ppval) <- attributes(res[[1]]$ind[[1]])
   }
 
   list(ppval = ppval,
