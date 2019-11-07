@@ -289,6 +289,8 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
 ## generate data from posterior predictive dist
 postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, ...){
 
+  ## parallel=TRUE can be sent here, but it slows everything down if
+  ## used within postpred() because it leads to nested parallelization.
   ddd <- list(...)
 
   if(conditional){
@@ -437,7 +439,11 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, ...){
     }
     list(postdat = postdat, lavmod = lavmod)})
 
-  res <- do.call("future_lapply", loop.args)
+  lapcomm <- "lapply"
+  if("parallel" %in% names(ddd)){
+    if(ddd$parallel) lapcomm <- "future_lapply"
+  }
+  res <- do.call(lapcomm, loop.args)
 
   lavmod <- sapply(res, function(x) x$lavmod)
   res <- lapply(res, function(x) x$postdat)
