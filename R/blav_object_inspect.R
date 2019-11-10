@@ -15,7 +15,7 @@ blavInspect <- function(blavobject, what, ...) {
     add.labels <- TRUE
     if(any(dotNames == "add.labels")) add.labels <- dotdotdot$add.labels
 
-    jagtarget <- class(blavobject@external$mcmcout) == "runjags"
+    jagtarget <- inherits(blavobject@external$mcmcout, "runjags")
   
     ## whats unique to blavaan
     blavwhats <- c("start", "starting.values", "inits", "psrf",
@@ -106,7 +106,7 @@ blavInspect <- function(blavobject, what, ...) {
 
             ## how many lvs, excluding phantoms
             lvmn <- lavInspect(blavobject, "mean.lv")
-            if(any(class(lvmn) == "list")){
+            if(inherits(lvmn, "list")){
                 nlv <- length(lvmn[[1]])
             } else {
                 nlv <- length(lvmn)

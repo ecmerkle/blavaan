@@ -194,7 +194,7 @@ function(object, header       = TRUE,
 
 
     if(estimates) {
-        jagtarget <- class(object@external$mcmcout) == "runjags"
+        jagtarget <- inherits(object@external$mcmcout, "runjags")
         newpt <- object@ParTable
         newpt$group[newpt$group == 0] <- 1 # for defined parameters
 

@@ -1,7 +1,7 @@
 lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra = "", inits = "prior", debug = FALSE) {
   ## lots of code is taken from lav_export_bugs.R
 
-  if(class(model)[1]=="lavaan"){
+  if(inherits(model, "lavaan")){
     partable <- parTable(model)
   } else {
     stop("blavaan ERROR: model must be class lavaan")
@@ -194,7 +194,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   }
 
   nfree <- sapply(parmats, sapply, function(x){
-    if(class(x)[1] == "lavaan.matrix.symmetric"){
+    if(inherits(x, "lavaan.matrix.symmetric")){
       # off-diagonals handled via rho parameters, unless they
       # are both ov.names.x
       if(FALSE){ #rownames(x)[1] %in% c(lv.names, ov.names.x)){
@@ -211,7 +211,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     }})
   if(length(parconst) > 0){
     nfix <- sapply(parmats, sapply, function(x){
-      if(class(x)[1] == "lavaan.matrix.symmetric"){
+      if(inherits(x, "lavaan.matrix.symmetric")){
         sum(diag(x) %in% parconst$rhs)
       } else {
         sum(x %in% parconst$rhs)
@@ -558,8 +558,8 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
                     length(ov.dummy.idx), "];\n", t1,
                     "int dummylv[", length(lv.dummy.idx), "];\n")
 
-  if(!is.null(lavdata) | class(model)[1]=="lavaan"){
-    if(class(model)[1] == "lavaan") lavdata <- model@Data
+  if(!is.null(lavdata) | inherits(model, "lavaan")){
+    if(inherits(model, "lavaan")) lavdata <- model@Data
     ntot <- length(unlist(lavdata@case.idx)) #sum(unlist(lavdata@norig)) #bs))
 
     ## exogenous x's go in their own matrix

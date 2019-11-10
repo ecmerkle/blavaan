@@ -165,7 +165,7 @@ blavaan <- function(...,  # default lavaan arguments
     dotdotdot$meanstructure <- TRUE
     dotdotdot$missing <- "direct"   # direct/ml creates error? (bug in lavaan?)
     if("ordered" %in% dotNames |
-       any(apply(dotdotdot$data, 2, function(x) class(x)[1]) == "ordered")){
+       any(apply(dotdotdot$data, 2, function(x) inherits(x, "ordered")))){
       dotdotdot$missing <- "pairwise" # needed to get missing patterns
     }
     dotdotdot$estimator <- "default"
@@ -268,7 +268,7 @@ blavaan <- function(...,  # default lavaan arguments
     ineq <- which(LAV@ParTable$op %in% c("<",">"))
     if(length(ineq) > 0) {
         LAV@ParTable <- lapply(LAV@ParTable, function(x) x[-ineq])
-        if(class(mcmcfile) == "logical") mcmcfile <- TRUE
+        if(inherits(mcmcfile, "logical")) mcmcfile <- TRUE
         warning("blavaan WARNING: blavaan does not currently handle inequality constraints.\n try modifying the exported MCMC syntax.")
     }
     eqs <- which(LAV@ParTable$op == "==")
@@ -336,10 +336,10 @@ blavaan <- function(...,  # default lavaan arguments
 
     # if mcmcfile is a directory, vs list, vs logical
     trans.exists <- FALSE
-    if(class(mcmcfile)=="character"){
+    if(inherits(mcmcfile, "character")){
         jagdir <- mcmcfile
         mcmcfile <- TRUE
-    } else if(class(mcmcfile)=="list"){
+    } else if(inherits(mcmcfile, "list")){
         trans.exists <- TRUE
         ## read syntax file
         jagsyn <- readLines(mcmcfile$syntax)
@@ -358,7 +358,7 @@ blavaan <- function(...,  # default lavaan arguments
 
     # if inits is list
     initsin <- inits
-    if(class(inits) == "list") initsin <- "jags"
+    if(inherits(inits, "list")) initsin <- "jags"
 
     # extract slots from dummy lavaan object
     lavpartable    <- LAV@ParTable
@@ -475,7 +475,7 @@ blavaan <- function(...,  # default lavaan arguments
             if(initsin == "jags"){
                 jagtrans$inits <- vector("list", n.chains)
             }
-            if(class(inits) == "list") jagtrans$inits <- inits
+            if(inherits(inits, "list")) jagtrans$inits <- inits
 
             ## add seed to inits; for stan, just add it to
             ## bcontrol

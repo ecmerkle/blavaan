@@ -1,7 +1,7 @@
 lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = NULL, n.chains = 1, mcmcextra = "", inits = "prior", blavmis = "da", pta = NULL, target = "stan") {
   ## lots of code is taken from lav_export_bugs.R
 
-  if(class(model)[1]=="lavaan"){
+  if(inherits(model, "lavaan")){
     partable <- parTable(model)
   } else {
     partable <- model
@@ -507,8 +507,8 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
         
   ## Now add data for jags if we have it
   datablk <- paste0("data{\n", t1, "int N;\n", t1, "int g[N];\n")
-  if(!is.null(lavdata) | class(model)[1]=="lavaan"){
-    if(class(model)[1] == "lavaan") lavdata <- model@Data
+  if(!is.null(lavdata) | inherits(model, "lavaan")){
+    if(inherits(model, "lavaan")) lavdata <- model@Data
     ntot <- sum(unlist(lavdata@norig))
     ## pick up exogenous x's
     tmpnmvs <- length(orig.ov.names)
