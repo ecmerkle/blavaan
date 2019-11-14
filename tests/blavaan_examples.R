@@ -13,22 +13,22 @@ library("blavaan")
 ## don't care that models are not converged, keeping file size small
 model <- ' y1 ~ prior("dnorm(0,1)")*x1 '
 fitjags <- bsem(model, data=Data, fixed.x=TRUE, burnin=20,
-                sample=20, target="jags", group="g")
+                sample=20, target="jags", group="g", seed=1:3)
 
 model <- ' y1 ~ prior("normal(0,1)")*x1 '
 fitstan <- bsem(model, data=Data, fixed.x=TRUE, burnin=20,
-                sample=20, target="stan", group="g")
+                sample=20, target="stan", group="g", seed=1)
 
 fitstanc <- bsem(model, data=Data, fixed.x=TRUE, burnin=20,
-                 sample=20, target="stanclassic", group="g")
+                 sample=20, target="stanclassic", group="g", seed=1)
 
 ## for checking factor score functionality
 HS.model <- ' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6 '
 
 fitstanfs <- bcfa(HS.model, data=HolzingerSwineford1939,
-                  burnin=50, sample=10, target="stan",
-                  save.lvs=TRUE, n.chains=2)
+                  burnin=30, sample=10, target="stan",
+                  save.lvs=TRUE, n.chains=2, seed=1)
 
 ## this really blows up file size if kept:
 attr(fitstan@external$mcmcout, 'stanmodel') <- NULL
