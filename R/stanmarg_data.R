@@ -63,6 +63,10 @@ group_sparse_skeleton <- function(skeleton) {
 # @param mat The matrix for which we are obtaining priors
 # @return A list containing the prior parameters
 format_priors <- function(lavpartable, mat) {
+  ## parameter matrices are filled in by row, so need to make
+  ## sure we get parameters in the right order!
+  lavpartable <- lavpartable[order(lavpartable$col),]
+  
   if (grepl("var", mat)) {
     mat <- gsub("var", "", mat)
     prisel <- lavpartable$row == lavpartable$col
@@ -81,6 +85,7 @@ format_priors <- function(lavpartable, mat) {
   } else {
     prisel <- prisel & (lavpartable$mat == mat)
   }
+  
   prisel <- prisel & (lavpartable$free > 0)
   thepris <- lavpartable$prior[prisel]
 
@@ -379,7 +384,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
 
   ## priors; first make sure they match what is in the stan file
   check_priors(lavpartable)
-  
+
   pris <- format_priors(lavpartable, "lambda")
   dat$lambda_y_mn <- pris[['p1']]; dat$lambda_y_sd <- pris[['p2']]
   dat$len_lam_y <- length(dat$lambda_y_mn)
