@@ -1,3 +1,8 @@
+Changes in Version 0.3-8
+    o post-estimation, posterior predictive computations have been sped up considerably.
+
+    o a number of bug fixes.
+
 Changes in Version 0.3-7
     o for target="stan", gamma priors can now be placed on user's choice of
       variances, standard deviations, or precisions.
