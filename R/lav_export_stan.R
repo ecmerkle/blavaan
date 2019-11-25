@@ -354,14 +354,13 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   if(ny > 0){
     if(missflag){
       TXT <- paste0(TXT, t2,
-                    "segment(y[i], 1, nseen[i]) ~ ",
-                    "multi_normal_cholesky(",
+                    "target += multi_normal_cholesky_lpdf(segment(y[i], 1, nseen[i]) | ",
                     "to_vector(mu[i])[obsvar[i,1:nseen[i]]],",
                     "thetld[g[i],obsvar[i,1:nseen[i]],",
                     "obsvar[i,1:nseen[i]]]);\n")
     } else {
       TXT <- paste0(TXT, t2,
-                    "y[i] ~ multi_normal_cholesky(",
+                    "target += multi_normal_cholesky_lpdf(y[i] | ",
                     "to_vector(mu[i,1:", (nov - n.psi.ov),
                     "]), thetld[g[i]]);\n")
     }
@@ -371,7 +370,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   TXT <- paste0(TXT, t1, "}\n\n")
 
   if((nlv + n.psi.ov) > 0){
-    TXT <- paste0(TXT, t1, etaname, " ~ ")
+    TXT <- paste0(TXT, t1, "target += ")
 
     if(miss.psi){
       TXT <- paste0(TXT, "sem_lv_missing_lpdf(")
@@ -379,7 +378,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       TXT <- paste0(TXT, "sem_lv_lpdf(")
     }
 
-    TXT <- paste0(TXT, "alpha, ", betaname, ", ", psiname, ", ")
+    TXT <- paste0(TXT, etaname, " | alpha, ", betaname, ", ", psiname, ", ")
     TXT <- paste0(TXT, ifelse(gamind, "gamma", betaname), ", ")
     TXT <- paste0(TXT, as.numeric(gamind), ", meanx, ")
     TXT <- paste0(TXT, "g, ", (nlv + n.psi.ov), ", N, ",

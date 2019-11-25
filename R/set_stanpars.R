@@ -129,8 +129,7 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
                 TXT2 <- paste(TXT2, jageq, eolop, sep="")
             } else {
                 ## needs a prior
-                TXT3 <- paste(TXT3, "\n", t1, partable$mat[i], "free[",
-                              partable$freeparnums[i], "]", sep="")
+                TXT3 <- paste(TXT3, "\n", t1, "target += ", sep="")
                 if(partable$prior[i] == ""){
                     if(partable$mat[i] == "lvrho"){
                         partype <- grep("rho", names(dp))
@@ -166,6 +165,9 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
                 } else {
                     jagpri <- partable$prior[i]
                 }
+                splpri <- unlist(strsplit(jagpri, "\\("))
+                jagpdist <- paste0(splpri[1], "_lpdf(")
+                jagpparm <- paste(splpri[-1], collapse = "(")
                 if(!vpri & (grepl("theta", partable$mat[i]) | grepl("psi", partable$mat[i]))){
                     sq <- ifelse(spri, "2", "-1")
                     TXT2 <- paste(TXT2, "pow(", partable$mat[i], "free[",
@@ -176,7 +178,9 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
                                   partable$freeparnums[i],
                                   "]", eolop, sep="")
                 }
-                TXT3 <- paste(TXT3, " ~ ", jagpri, eolop, sep="")
+              
+              TXT3 <- paste0(TXT3, jagpdist, partable$mat[i], "free[",
+                            partable$freeparnums[i], "] | ", jagpparm, eolop)
             }
         }
     }
