@@ -102,7 +102,8 @@ set_inits <- function(partable, ov.cp, lv.cp, n.chains, inits){
   initvals
 }
 
-set_inits_stan <- function(partable, nfree, n.chains, inits){
+set_inits_stan <- function(partable, nfree, n.chains, inits,
+                           ntot = NULL, nlvno0 = 0){
   ## Generate initial values for each chain
   initvals <- vector("list", n.chains)
   names(initvals) <- paste("c", 1:n.chains, sep="")
@@ -118,6 +119,9 @@ set_inits_stan <- function(partable, nfree, n.chains, inits){
     ## }
   }
   names(initmats) <- paste0(names(pveclen), "free")
+  if(nlvno0 > 0){
+    initmats <- c(initmats, list(etavec = array(1, dim = c(ntot, nlvno0))))
+  }
 
   for(i in 1:n.chains){
     initvals[[i]] <- initmats
