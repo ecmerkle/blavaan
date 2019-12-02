@@ -928,7 +928,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     }
     ## beta always declared
     tpdecs <- paste0(tpdecs, t1, "matrix[", nlvno0, ",",
-                     nlvno0, "] ibinv[", tmpdim[1],
+                     nlvno0, "] ibinv[", tmpdim[3],
                      "];\n")
     tpdecs <- paste0(tpdecs, t1, "real mu[N,", nov, "];\n")
     GQ <- paste0(GQ, gqeqs, "\n")
