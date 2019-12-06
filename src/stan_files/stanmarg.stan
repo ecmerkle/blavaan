@@ -642,7 +642,7 @@ model { // N.B.: things declared in the model block do not get saved in the outp
       top_right[g] = Lambda_y_A[g] * Gamma[g] * PHI[g] * Lambda_xt[g];        // top right block of Sigma    
       Sigma[g, 1:p, (p + 1):(p + q)] = top_right[g];
       Sigma[g, (p + 1):(p + q), 1:p] = transpose(top_right[g]);
-      Sigma[g, (p + 1):(p + q), (p + 1):(p + q)] = quad_form(PHI[g], Lambda_xt[g]);
+      Sigma[g, (p + 1):(p + q), (p + 1):(p + q)] = quad_form_sym(PHI[g], Lambda_xt[g]);
       Sigma[g, (p + 1):(p + q), (p + 1):(p + q)] += quad_form_sym(Theta_x_r[g], Theta_x_sd[g]);
 
       if (n > 0) {
@@ -653,11 +653,11 @@ model { // N.B.: things declared in the model block do not get saved in the outp
     GPG[g] = diag_matrix(rep_vector(0, m));
     if (p > 0) {
       if (q > 0) {
-	GPG[g] = quad_form(PHI[g], transpose(Gamma[g]));
+	GPG[g] = quad_form_sym(PHI[g], transpose(Gamma[g]));
       }
       Sigma[g, 1:p, 1:p] = quad_form_sym(Theta_r[g], Theta_sd[g]);
       if (m > 0) {
-        Sigma[g, 1:p, 1:p] += quad_form(GPG[g] + Psi[g], transpose(Lambda_y_A[g]));
+        Sigma[g, 1:p, 1:p] += quad_form_sym(GPG[g] + Psi[g], transpose(Lambda_y_A[g]));
 	Mu[g, 1:p] += to_vector(Lambda_y_A[g] * Alpha[g, 1:m, 1]);
       }
       if (n > 0) {
@@ -924,7 +924,7 @@ generated quantities { // these matrices are saved in the output but do not figu
       // FIXME?? what if obsidx also extends to x variables?
       obsidx = Obsvar[mm, ];
       precision[1:Nobs[mm], 1:Nobs[mm]] = inverse_spd(top_left[obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
-      L = cholesky_decompose(bottom_right - quad_form(precision[1:Nobs[mm], 1:Nobs[mm]], transpose(corner[, obsidx[1:Nobs[mm]]])));
+      L = cholesky_decompose(bottom_right - quad_form_sym(precision[1:Nobs[mm], 1:Nobs[mm]], transpose(corner[, obsidx[1:Nobs[mm]]])));
       beta[, 1:Nobs[mm]] = corner[, obsidx[1:Nobs[mm]]] * precision[1:Nobs[mm], 1:Nobs[mm]];
 
       r1 = startrow[mm];
