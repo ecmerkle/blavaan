@@ -120,7 +120,7 @@ set_inits_stan <- function(partable, nfree, n.chains, inits,
   }
   names(initmats) <- paste0(names(pveclen), "free")
   if(nlvno0 > 0){
-    initmats <- c(initmats, list(etavec = array(1, dim = c(ntot, nlvno0))))
+    initmats <- c(initmats, list(etafree = array(1, dim = c(ntot, nlvno0))))
   }
 
   for(i in 1:n.chains){
