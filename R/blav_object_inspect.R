@@ -9,6 +9,8 @@ blavTech <- function(blavobject, what, ...) {
 blavInspect <- function(blavobject, what, ...) {
 
     stopifnot(inherits(blavobject, "blavaan"))
+
+    what <- tolower(what)
   
     dotdotdot <- list(...)
     dotNames <- names(dotdotdot)
@@ -22,7 +24,8 @@ blavInspect <- function(blavobject, what, ...) {
                    "ac.10", "neff", "mcmc", "draws", "samples",
                    "n.chains", "cp", "dp", "postmode", "postmean",
                    "postmedian", "hpd", "jagnames", "stannames",
-                   "fscores", "lvs", "fsmeans", "lvmeans", "mcobj")
+                   "fscores", "lvs", "fsmeans", "lvmeans", "mcobj",
+                   "rhat", "n_eff")
 
     ## blavwhats that don't require do.fit
     blavnofit <- c("start", "starting.values", "inits", "n.chains", "cp", "dp",
@@ -51,13 +54,13 @@ blavInspect <- function(blavobject, what, ...) {
         labs <- lav_partable_labels(blavobject@ParTable, type = "free")
         if(what %in% c("start", "starting.values", "inits")){
             blavobject@external$inits
-        } else if(what %in% c("psrf", "ac.10", "neff")){
+        } else if(what %in% c("psrf", "ac.10", "neff", "rhat", "n_eff")){
             if(jagtarget){
                 mcmcsumm <- blavobject@external$mcmcout$summaries
             } else {
                 mcmcsumm <- rstan::summary(blavobject@external$mcmcout)$summary
             }
-            if(what == "psrf"){
+            if(what %in% c("psrf", "rhat")){
                 if(jagtarget){
                     OUT <- mcmcsumm[idx,'psrf']
                 } else {
