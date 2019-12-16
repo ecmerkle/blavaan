@@ -103,7 +103,9 @@ blavaan <- function(...,  # default lavaan arguments
       dotdotdot <- dotdotdot[-cplocs]; dotNames <- dotNames[-cplocs]
     }
     ## cannot use lavaan inits with fa priors; FIXME?
-    if(cp == "fa" & inits %in% c("simple", "default")) inits <- "jags"
+    if(cp == "fa" & is.character(inits)){
+      if(inits[1] %in% c("simple", "default")) inits <- "jags"
+    }
     if(cp == "fa" & grepl("stan", target)){
       cat("blavaan NOTE: fa priors are not available with stan. srs priors will be used. \n")
     }
