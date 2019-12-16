@@ -151,11 +151,12 @@ set_inits_stan <- function(partable, nfree, n.chains, inits,
   lazyLoad(rloc)
   rosetta <- rosetta
 
-  pricom <- dist2r(freepartable$prior, target = "stan")
+  prilist <- dist2r(freepartable$prior, target = "stan")
   for(i in 1:nrow(freepartable)){
     if(inits == "prior"){
       ## Try to set sensible starting values, using some of the
       ## prior information
+      pricom <- prilist[[i]]
       if(grepl("dnorm", pricom[1])){
         pricom[3] <- "1"
         ## keep loadings/regressions on one side
@@ -177,8 +178,15 @@ set_inits_stan <- function(partable, nfree, n.chains, inits,
       ## Generate initial values
       ## FIXME do something smarter upon failure
       ivs <- try(do.call(pricom[1], list(n.chains, as.numeric(pricom[2]),
-                                     as.numeric(pricom[3]))), silent = TRUE)
-      if(inherits(ivs, "try-error")) ivs <- rep(1, n.chains)
+                                         as.numeric(pricom[3]))), silent = TRUE)
+
+      if(inherits(ivs, "try-error")){
+        ivs <- rep(1, n.chains)
+      } else if(pricom[1] == "rgamma" & !grepl("[sd]", freepartable$prior[i], fixed = TRUE) &
+                !grepl("[var]", freepartable$prior[i], fixed = TRUE)){
+        ## free parameter is a precision, not a variance/sd:
+        ivs <- 1/ivs
+      }
     } else {
       ivs <- rep(freepartable$start[i], n.chains)
     }
