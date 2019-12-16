@@ -450,21 +450,25 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   ## data would be cbind(ov.names.nox, ov.names.x)
   TPS <- paste(TPS, t1, commop, "mu definitions\n", t1,
                "for(i in 1:N) {\n", sep="")
-  
-  if(nlvno0 < nlv){
-    ## some real lvs and some dummy lvs
-    #TPS <- paste0(TPS, t2, "eta[i,etaind] = etavec[i];\n")
-    TPS <- paste0(TPS, t2, etaname, "[i,eta0ind] = mueta[i,eta0ind]';\n")
-    TPS <- paste0(TPS, t2, etaname, "[i,lvind] = transpose(ibinv[g[i]] * (to_vector(alpha[lvind,1,g[i]]) + psild[g[i]] * etavec[i]));\n")
-  } else if(nlv > 0){
-    ## all real lvs
-    TPS <- paste0(TPS, t2, etaname, "[i,1:", nlv, "] = transpose(ibinv[g[i]] * (to_vector(alpha[,1,g[i]]) + psild[g[i]] * etafree[i]));\n")
-  }
 
   if(n.psi.ov > 0){
     TPS <- paste0(TPS, t2, etaname, "[i,", (nlv+1), ":", (nlv + n.psi.ov),
                   "] = x[i]';\n")
   }
+  
+  if(nlvno0 < nlv){
+    ## some real lvs and some dummy lvs
+    #TPS <- paste0(TPS, t2, "eta[i,etaind] = etavec[i];\n")
+    TPS <- paste0(TPS, t2, etaname, "[i,eta0ind] = mueta[i,eta0ind]';\n")
+    TPS <- paste0(TPS, t2, etaname, "[i,lvind] = transpose(ibinv[g[i]] * (to_vector(alpha[lvind,1,g[i]]) + psild[g[i]] * ", etaname, "[i]));\n")
+  } else if(nlv > 0){
+    ## all real lvs
+    TPS <- paste0(TPS, t2, etaname, "[i,1:", nlv, "] = transpose(to_vector(alpha[1:", nlv, ",1,g[i]]) + psild[g[i], 1:", nlv, ",1:", nlv, "] * etafree[i]);\n")
+    TPS <- paste0(TPS, t2, etaname, "[i,1:", nlv, "] = transpose(ibinv[g[i],1:", nlv,
+                  ",] * ", etaname, "[i]');\n")
+  }
+
+
   
   if(ny > 0) {
     for(i in 1:ny) {
@@ -527,7 +531,9 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   }
 
   if(n.psi.ov > 0){
-    TPS <- paste(TPS, t1, "etavec[i,eta0ind] = eta[i,eta0ind]' - (to_vector(alpha[,1,g[i]]) + to_matrix(beta[,,g[i]]) * eta[i,eta0ind]');\n")
+    TPS <- paste0(TPS, t2, "etavec[i,eta0ind] = eta[i,eta0ind]' - (to_vector(alpha[", (nlv+1), ":",
+    (nlv + n.psi.ov), ",1,g[i]]) + to_matrix(beta[", (nlv+1), ":", (nlv + n.psi.ov),
+    ",,g[i]]) * eta[i,]');\n")
   }
   
   ## priors/constraints
