@@ -15,7 +15,7 @@ importFrom("stats",
            "predict",
            "update",
            "anova",
-           "vcov")
+           "vcov", "nobs")
 
 importFrom("graphics",
            "plot", "hist", "pairs", "legend", "par", "plot.new",
