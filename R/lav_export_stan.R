@@ -388,12 +388,16 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   if(any(partable$mat == "theta")){
     if(n.psi.ov > 0){
       for(i in 1:length(yind)){
-        for(j in i:length(yind)){
-          TPS <- paste0(TPS, t2, "thetld[j,", i, ",", j, "] = ",
-                        "theta[", yind[i], ",", yind[j], ",j];\n")
+        thidx <- partable[partable$mat == "theta" & partable$row == yind[i],,drop=FALSE]
+        if(length(yind) > 0){
+          for(j in 1:nrow(thidx)){
+            ycol <- which(yind == thidx$col[j])
+            TPS <- paste0(TPS, t2, "thetld[j,", i, ",", ycol, "] = ",
+                          "theta[", yind[i], ",", thidx$col[j], ",j];\n")
+          }
         }
       }
-      TPS <- paste0(TPS, t2, "thetld[j] = fill_lower(thetld[j]);\n")
+     TPS <- paste0(TPS, t2, "thetld[j] = fill_lower(thetld[j]);\n")
     } else {
       TPS <- paste0(TPS, t2, "thetld[j] = fill_lower(to_matrix(",
                     "theta[,,j]));\n")
@@ -403,7 +407,7 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   }
 
   TPS <- paste0(TPS, t2, "ibinv[j] = inverse(diag_matrix(rep_vector(1,",
-                nlv + n.psi.ov, ")) - to_matrix(beta[,,j]));\n")
+                nlv + n.psi.ov, ")) - to_matrix(", betaname, "[,,j]));\n")
 
   if(any(grepl("psi", partable$mat))){
     if(nlv - nlvno0 > 0){
@@ -414,12 +418,14 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
         }
       }
       TPS <- paste0(TPS, t2, "psild[j] = fill_lower(psild[j]);\n")
+      TPS <- paste0(TPS, t2, "psild[j,eta0ind,eta0ind] = cholesky_decompose(",
+                    "psild[j,eta0ind,eta0ind]);\n")
     } else {
       TPS <- paste0(TPS, t2, "psild[j] = fill_lower(to_matrix(",
                     psiname, "[,,j]));\n")
+      TPS <- paste0(TPS, t2, "psild[j] = cholesky_decompose(psild[j]);\n")
     }
-    TPS <- paste0(TPS, t2, "psild[j] = cholesky_decompose(",
-                  "psild[j]);\n")
+
   }
 
   if(dumov & !model@Options$fixed.x &
@@ -463,9 +469,16 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     TPS <- paste0(TPS, t2, etaname, "[i,lvind] = transpose(ibinv[g[i]] * (to_vector(alpha[lvind,1,g[i]]) + psild[g[i]] * ", etaname, "[i]));\n")
   } else if(nlv > 0){
     ## all real lvs
-    TPS <- paste0(TPS, t2, etaname, "[i,1:", nlv, "] = transpose(to_vector(alpha[1:", nlv, ",1,g[i]]) + psild[g[i], 1:", nlv, ",1:", nlv, "] * etafree[i]);\n")
-    TPS <- paste0(TPS, t2, etaname, "[i,1:", nlv, "] = transpose(ibinv[g[i],1:", nlv,
-                  ",] * ", etaname, "[i]');\n")
+    TPS <- paste0(TPS, t2, etaname, "[i,1:", nlv, "] = transpose(to_vector(alpha[1:", nlv, ",1,g[i]]) + psild[g[i],1:", nlv, ",1:", nlv, "] * etafree[i]);\n")
+    if(n.psi.ov == 0){
+      TPS <- paste0(TPS, t2, etaname, "[i,1:", nlv, "] = transpose(ibinv[g[i],1:", nlv,
+                    ",] * ", etaname, "[i]');\n")
+    } else {
+      TPS <- paste0(TPS, t2, etaname, "[i,1:", nlv, "] = transpose(ibinv[g[i],1:", nlv,
+                    ",1:", nlv, "] * ", etaname, "[i,1:", nlv, "]' + to_matrix(beta[1:", nlv,
+                    ",", (nlv + 1), ":", (nlv + n.psi.ov), ",g[i]]) * ", etaname, "[i,", (nlv + 1),
+                    ":", (nlv + n.psi.ov), "]');\n")
+    }
   }
 
 
@@ -868,16 +881,16 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
 
     pmats <- vector("list", length(matrows))
     for(i in 1:length(pmats)){
-        if(names(matrows)[i] == "lambda"){
-            tmpmat <- parmattable[[1]]$lambda
-            pmats[[i]] <- array(tmpmat,
-                                c(nrow(tmpmat), ncol(tmpmat), ngroups))
-        } else {
-            pmats[[i]] <- array(0, c(matrows[i], matcols[i], ngroups))
-        }
+      if(names(matrows)[i] == "lambda"){
+        tmpmat <- parmattable[[1]]$lambda
+        pmats[[i]] <- array(tmpmat,
+                            c(nrow(tmpmat), ncol(tmpmat), ngroups))
+      } else {
+        pmats[[i]] <- array(0, c(matrows[i], matcols[i], ngroups))
+      }
     }
     names(pmats) <- names(matrows)
-
+    
     ## monitored parameters
     monitors <- with(partable[partable$mat != "",], unique(mat))
     monitors[monitors=="lambdaUNC"] <- "lambda"
@@ -921,8 +934,8 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       }
 
       if(grepl("psi", tmpname)){
-        tpdecs <- paste0(tpdecs, t1, "matrix[", nlvno0, ",",
-                         nlvno0, "] psild[", tmpdim[3],
+        tpdecs <- paste0(tpdecs, t1, "matrix[", (nlv + n.psi.ov), ",",
+                         (nlv + n.psi.ov), "] psild[", tmpdim[3],
                          "];\n")
       }
       
@@ -942,6 +955,14 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       tpeqs <- paste0(tpeqs, t1, tmpname, " = ",
                       names(pmats)[i], ";\n")
     }
+
+    if("theta" %in% names(matrows) & ny > 0){
+      pmats <- c(pmats, list(thetldframe = array(0, c(ngroups, ny, ny))))
+      datdecs <- paste0(datdecs, t1, "matrix[", ny, ",", ny, "] thetldframe[", ngroups,
+                        "];\n")
+      tpeqs <- paste0(tpeqs, t1, "thetld = thetldframe;\n")
+    }
+    
     ## beta always declared
     tpdecs <- paste0(tpdecs, t1, "matrix[", nlvno0, ",",
                      nlvno0, "] ibinv[", tmpdim[3],
