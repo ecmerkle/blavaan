@@ -10,7 +10,7 @@ warnings_are_errors: true
 matrix:
   include:
     - os: linux
-      dist: bionic
+      dist: trusty
       r: release
       addons:
         apt:
@@ -23,7 +23,7 @@ matrix:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
         - _R_CHECK_FORCE_SUGGESTS_=false
     - os: linux
-      dist: bionic
+      dist: trusty
       r: devel
       addons:
         apt:
