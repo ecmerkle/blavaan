@@ -28,7 +28,11 @@ dpriors <- function(..., target="stan"){
     } else if(length(unlist(userjags)) == 0){
       if(target == "jags") stop("blavaan ERROR: target='jags', but no jags distributions were found")
       ## assume they wanted stan
-      dp <- do.call("stanpriors", userspec)
+      if(target == "stanclassic"){
+        dp <- do.call("stanclassicpriors", userspec)
+      } else {
+        dp <- do.call("stanpriors", userspec)
+      }
     } else {
       stop("blavaan ERROR: Distributions sent to dpriors() do not match target.")
     }
