@@ -46,9 +46,12 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
 
             ## only complex equality constraints and defined parameters;
             ## rhs needs math expression
+            defeq <- partable$op[i] %in% c("==", ":=") &
+                     grepl("\\+|-|/|\\*|\\(|\\)|\\^", partable$rhs[i])
             compeq <- which(partable$lhs == partable$plabel[i] &
                             partable$op %in% c("==", ":=") &
                             grepl("\\+|-|/|\\*|\\(|\\)|\\^", partable$rhs))
+
             ## TODO check for inequality constraints here?
           
             ## start parameter assignment
@@ -94,14 +97,19 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
                 } else {
                     TXT2 <- paste(TXT2, eqtxt, eolop, sep="")
                 }
-            } else if(length(compeq) > 0){
+            } else if(defeq | length(compeq) > 0){
+                if(length(compeq) == 0) compeq <- i
                 ## constraints with one parameter label on lhs
                 ## FIXME? cannot handle, e.g., b1 + b2 == 2
                 ## see lav_partable_constraints.R
                 rhsvars <- all.vars(parse(file="",
                                           text=partable$rhs[compeq]))
-                pvnum <- match(rhsvars, partable$plabel)
-
+                if(compeq == i){
+                    pvnum <- match(rhsvars, partable$label)
+                } else {
+                    pvnum <- match(rhsvars, partable$plabel)
+                }
+                    
                 rhstrans <- paste(partable$mat[pvnum], "[", partable$row[pvnum],
                                   ",", partable$col[pvnum], ",", partable$group[pvnum],
                                   "]", sep="")
