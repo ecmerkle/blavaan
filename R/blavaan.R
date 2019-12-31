@@ -417,6 +417,14 @@ blavaan <- function(...,  # default lavaan arguments
                                          inits = initsin,
                                          debug = mcdebug),
                                 silent = TRUE)
+            } else if(target == "stancond"){
+                jagtrans <- try(lav2stancond(model = LAV,
+                                             lavdata = lavdata,
+                                             dp = dp, n.chains = n.chains,
+                                             mcmcextra = mcmcextra,
+                                             inits = initsin,
+                                             debug = mcdebug),
+                                silent = TRUE)
             } else {
                 l2s <- try(lav2stanmarg(lavobject = LAV, dp = dp,
                                         n.chains = n.chains,
@@ -497,7 +505,7 @@ blavaan <- function(...,  # default lavaan arguments
               rjarg <- with(jagtrans, list(model = paste(model),
                                            monitor = sampparms, 
                                            data = data, inits = inits))
-            } else if(target == "stanclassic"){
+            } else if(target %in% c("stanclassic", "stancond")){
               rjarg <- with(jagtrans, list(model_code = model,
                                            pars = sampparms,
                                            data = data,
@@ -522,7 +530,7 @@ blavaan <- function(...,  # default lavaan arguments
             if(jag.do.fit){
                 if(target == "jags"){
                     rjcall <- "run.jags"
-                } else if(target == "stanclassic"){
+                } else if(target %in% c("stanclassic", "stancond")){
                     cat("Compiling stan model...")
                     rjcall <- "stan"
                 } else {
@@ -576,7 +584,7 @@ blavaan <- function(...,  # default lavaan arguments
         if(target == "jags"){
           parests <- coeffun(lavpartable, jagtrans$pxpartable, res)
           stansumm <- NA
-        } else if(target == "stanclassic"){
+        } else if(target %in% c("stanclassic", "stancond")){
           parests <- coeffun_stan(lavpartable, jagtrans$pxpartable,
                                   res)
           stansumm <- parests$stansumm

@@ -56,9 +56,12 @@ bcfa(..., cp = "srs",
   respectively. Otherwise, parameters
   are sampled as specified by the user (or by the \code{run.jags}
   defaults).}
-\item{target}{Desired MCMC package, with \code{"stan"} (pre-compiled) as
-  default. Other options include \code{"jags"} and \code{"stanclassic"},
-  which provide greater functionality than \code{"stan"} but is much slower.}
+\item{target}{Desired MCMC sampling, with \code{"stan"} (pre-compiled
+  marginal approach) as
+  default. Other options include \code{"jags"}, \code{"stancond"}, and
+  \code{"stanclassic"}, which sample latent variables and provide some
+  greater functionality (because syntax is written "on the fly"). But
+  they are slower and less efficient.}
 \item{save.lvs}{Should sample latent variables (factor scores) be saved? Logical; defaults to FALSE}
 \item{jags.ic}{Should DIC be computed the JAGS way, in addition to the BUGS way? Logical; defaults to FALSE}
 \item{seed}{A vector of length \code{n.chains} (for target

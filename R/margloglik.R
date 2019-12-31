@@ -35,7 +35,7 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
   ## this is potentially under srs parameterization (unless stanmarg)
   if(target == "jags"){
     thetstar <- summstats[cmatch,"Mean"]
-  } else if(target == "stanclassic"){
+  } else if(target %in% c("stanclassic", "stancond")){
     thetstar <- summstats[cmatch,"mean"]
   } else {
     thetstar <- lavpartable$est[urows]
