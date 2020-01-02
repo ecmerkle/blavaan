@@ -27,11 +27,13 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x, target="ja
 
         eqpar <- which(partable$rhs == partable$plabel[i] &
                        partable$op == "==")
+        defeq <- partable$op[i] %in% c("==", ":=") &
+                 grepl("\\+|-|/|\\*|\\(|\\)|\\^", partable$rhs[i])
         compeq <- which(partable$lhs == partable$plabel[i] &
                         partable$op %in% c("==", ":=") &
                         grepl("\\+|-|/|\\*|\\(|\\)|\\^", partable$rhs))
         fixed <- partable$free[i] == 0 & partable$op[i] != ":="
-        if(length(eqpar) > 0 | length(compeq) > 0 | fixed |
+        if(length(eqpar) > 0 | defeq | length(compeq) > 0 | fixed |
            miscignore){
             next
         } else {
@@ -48,6 +50,8 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x, target="ja
 
             ## only complex equality constraints and defined parameters;
             ## rhs needs math expression
+            defeq <- partable$op[i] %in% c("==", ":=") &
+                     grepl("\\+|-|/|\\*|\\(|\\)|\\^", partable$rhs[i])
             compeq <- which(partable$lhs == partable$plabel[i] &
                             partable$op %in% c("==", ":=") &
                             grepl("\\+|-|/|\\*|\\(|\\)|\\^", partable$rhs))
@@ -109,13 +113,18 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x, target="ja
                 } else {
                     TXT2 <- paste(TXT2, eqtxt, sep="")
                 }
-            } else if(length(compeq) > 0){
+            } else if(defeq | length(compeq) > 0){
+                if(length(compeq) == 0) compeq <- i
                 ## constraints with one parameter label on lhs
                 ## FIXME? cannot handle, e.g., b1 + b2 == 2
                 ## see lav_partable_constraints.R
                 rhsvars <- all.vars(parse(file="",
                                           text=partable$rhs[compeq]))
-                pvnum <- match(rhsvars, partable$plabel)
+                if(compeq == i){
+                    pvnum <- match(rhsvars, partable$label)
+                } else {
+                    pvnum <- match(rhsvars, partable$plabel)
+                }
 
                 rhstrans <- paste(partable$mat[pvnum], "[",
                                   partable$row[pvnum], ",",
@@ -148,6 +157,7 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x, target="ja
                         partype <- grep(partable$mat[i], names(dp))
                     }
                     if(length(partype) > 1) partype <- partype[1] # due to psi and ibpsi
+
                     partable$prior[i] <- dp[partype]
                 }
                 jagpri <- strsplit(partable$prior[i], "\\[")[[1]][1]
