@@ -37,13 +37,21 @@ test_that("blavaan arguments", {
   model2 <- ' lambda ~ b1*x1 + b2*x2 '
   expect_error(bsem(model2, data=Data))
 
-  ## one prior on variance, one on sd (for target="stan" only)
-  model3 <- ' y1 ~ x1
-              x2 ~ x1
+  ## one prior on variance, one on sd (problem for target="stan" only)
+  ## and check that defined parameters translate
+  model3 <- ' y1 ~ a*x1
+              x2 ~ b*x1
               y1 ~~ prior("gamma(1,.5)[sd]")*y1
-              x2 ~~ prior("gamma(1,.5)[var]")*x2 '
+              x2 ~~ prior("gamma(1,.5)[var]")*x2
+              pprod := a/b '
   expect_error(bsem(model3, data=Data, target="stan"))
 
+  fit <- bsem(model3, data=Data, target="jags", do.fit=FALSE)
+  expect_s4_class(fit, "blavaan")
+
+  fit <- bsem(model3, data=Data, target="stanclassic", do.fit=FALSE)
+  expect_s4_class(fit, "blavaan")
+  
   ## unknown prior
   expect_error(bsem(model, data=Data, dp=dpriors(psi="mydist(1,.5)")))
   
