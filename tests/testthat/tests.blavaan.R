@@ -39,6 +39,7 @@ test_that("blavaan arguments", {
 
   ## one prior on variance, one on sd (problem for target="stan" only)
   ## and check that defined parameters translate
+  names(Data)[1] <- "y1"
   model3 <- ' y1 ~ a*x1
               x2 ~ b*x1
               y1 ~~ prior("gamma(1,.5)[sd]")*y1
