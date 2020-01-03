@@ -1190,10 +1190,13 @@ coeffun_stan <- function(lavpartable, pxpartable, rsob, fun = "mean") {
   defmatch <- which(pxpartable$op == ":=")
   if(length(defmatch) > 0){
     lavpartable$est[lavpartable$op == ":="] <- pxpartable$est[defmatch]
-    lavpartable$psrf[lavpartable$op == ":="] <- pxpartable$psrf[defmatch]
     lavpartable$pxnames[lavpartable$op == ":="] <- pxpartable$pxnames[defmatch]
     lavpartable$stanpnum[lavpartable$op == ":="] <- pxpartable$stanpnum[defmatch]
     lavpartable$stansumnum[lavpartable$op == ":="] <- pxpartable$stansumnum[defmatch]
+    ## will not exist if do.fit=FALSE
+    if("psrf" %in% names(pxpartable)){
+      lavpartable$psrf[lavpartable$op == ":="] <- pxpartable$psrf[defmatch]
+    }
   }
   
   list(x = lavpartable$est[lavpartable$free > 0],
