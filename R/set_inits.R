@@ -65,7 +65,7 @@ set_inits <- function(partable, ov.cp, lv.cp, n.chains, inits){
       ## FIXME do something smarter upon failure
       ivs <- try(do.call(pricom[1], list(n.chains, as.numeric(pricom[2]),
                                      as.numeric(pricom[3]))), silent = TRUE)
-      if(inherits(ivs, "try-error")) ivs <- rep(NA, n.chains)
+      if(inherits(ivs, "try-error")) ivs <- rep(partable$start[i], n.chains)
     } else {
       ivs <- rep(partable$start[i], n.chains)
     }

@@ -46,6 +46,7 @@ test_that("blavaan arguments", {
               pprod := a/b '
   expect_error(bsem(model3, data=Data, target="stan"))
 
+  ## priors are wrong form but will not throw error until estimation
   fit <- bsem(model3, data=Data, target="jags", do.fit=FALSE)
   expect_s4_class(fit, "blavaan")
 

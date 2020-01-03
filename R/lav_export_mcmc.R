@@ -776,8 +776,11 @@ coeffun <- function(lavpartable, pxpartable, rjob, fun = "mean") {
   ## defined variables
   defmatch <- which(pxpartable$op == ":=")
   if(length(defmatch) > 0){
-    lavpartable$est[lavpartable$op == ":="] <- pxpartable$est[defmatch]
-    lavpartable$psrf[lavpartable$op == ":="] <- pxpartable$psrf[defmatch]
+    ## not necessarily if do.fit=FALSE
+    if("est" %in% names(pxpartable)){
+      lavpartable$est[lavpartable$op == ":="] <- pxpartable$est[defmatch]
+      lavpartable$psrf[lavpartable$op == ":="] <- pxpartable$psrf[defmatch]
+    }
     lavpartable$pxnames[lavpartable$op == ":="] <- pxpartable$pxnames[defmatch]
     lavpartable$jagpnum[lavpartable$op == ":="] <- pxpartable$jagpnum[defmatch]
   }
