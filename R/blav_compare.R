@@ -22,7 +22,7 @@ blavCompare <- function(object1, object2, ...) {
   nchain1 <- blavInspect(object1, "n.chains")
   niter1 <- nrow(ll1)/nchain1
   cid1 <- rep(1:nchain1, each=niter1)
-  ref1 <- relative_eff(ll1, chain_id = cid1)
+  ref1 <- relative_eff(exp(ll1), chain_id = cid1)
 
   lavopt2 <- object2@Options
   lavopt2$estimator <- "ML"
@@ -33,22 +33,22 @@ blavCompare <- function(object1, object2, ...) {
   nchain2 <- blavInspect(object1, "n.chains")
   niter2 <- nrow(ll2)/nchain2
   cid2 <- rep(1:nchain2, each=niter2)
-  ref2 <- relative_eff(ll2, chain_id = cid2)
+  ref2 <- relative_eff(exp(ll2), chain_id = cid2)
 
   loo1 <- loo(ll1, r_eff=ref1)
   loo2 <- loo(ll2, r_eff=ref2)
   waic1 <- waic(ll1); waic2 <- waic(ll2)
 
-  diff_loo <- compare(loo1, loo2)
-  diff_waic <- compare(waic1, waic2)
+  diff_loo <- loo_compare(loo1, loo2)
+  diff_waic <- loo_compare(waic1, waic2)
 
   cat("\nWAIC difference & SE (positive values favor object2): \n",
-      sprintf("%8.3f", diff_waic[1]),
-      sprintf("%8.3f", diff_waic[2]), "\n\n")
+      sprintf("%8.3f", diff_waic[2,1]),
+      sprintf("%8.3f", diff_waic[2,2]), "\n\n")
 
   cat("LOO difference & SE (positive values favor object2): \n",
-      sprintf("%8.3f", diff_loo[1]),
-      sprintf("%8.3f", diff_loo[2]), "\n\n")
+      sprintf("%8.3f", diff_loo[2,1]),
+      sprintf("%8.3f", diff_loo[2,2]), "\n\n")
 
   cat("Laplace approximation to the log-Bayes factor\n(experimental; positive values favor object1):",
       sprintf("%8.3f", bf), "\n\n")
@@ -57,9 +57,9 @@ blavCompare <- function(object1, object2, ...) {
   waicobj <- list(waic1$estimates, waic2$estimates)
 
   res <- list(bf = res, loo = looobj,
-              diff_loo = diff_loo,
+              diff_loo = diff_loo[2,1:2],
               waic = waicobj,
-              diff_waic = diff_waic)
+              diff_waic = diff_waic[2,1:2])
 
   invisible(res)
 }
