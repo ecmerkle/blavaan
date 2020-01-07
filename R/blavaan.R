@@ -325,12 +325,12 @@ blavaan <- function(...,  # default lavaan arguments
 
             ## NB truncation doesn't work well in stan. instead
             ##    use generated quantities after the fact.
-            trunop <- ifelse(target == "jags", " T(0,)", "")
-            for(i in 1:length(fload)){
-                if(LAV@ParTable$prior[fload[i]] != ""){
-                    LAV@ParTable$prior[fload[i]] <- paste(LAV@ParTable$prior[fload[i]], trunop, sep="")
-                } else {
-                    LAV@ParTable$prior[fload[i]] <- paste(dp[["lambda"]], trunop, sep="")
+            trunop <- " T(0,)"
+            if(target == "jags"){
+                for(i in 1:length(fload)){
+                    if(LAV@ParTable$prior[fload[i]] != ""){
+                        LAV@ParTable$prior[fload[i]] <- paste(LAV@ParTable$prior[fload[i]], trunop, sep="")
+                    }
                 }
             }
         }
