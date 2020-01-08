@@ -415,6 +415,7 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
   if(any(grepl("psi", partable$mat))){
     if(((nlv + n.psi.ov) > nlv) | (nlvno0 < nlv)){
       TPS <- paste0(TPS, t2, "psild[j] = to_matrix(", psiname, "[,,j]);\n")
+      chidx <- NULL
       if(n.psi.ov > 0 & length(yind) > 0){
         for(i in 1:length(yind)){
           for(j in i:length(yind)){
@@ -423,11 +424,11 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
           }
         }
         chidx <- (nlv + 1):(nlv + n.psi.ov)
-      } else {
-        chidx <- NULL
+      } else if(n.psi.ov > 0 & length(xind) > 0){
+        chidx <- (nlv + 1):(nlv + n.psi.ov)
       }
       chidx <- c(etaind, chidx)
-      
+
       TPS <- paste0(TPS, t2, "psild[j] = fill_lower(psild[j]);\n")
       TPS <- paste0(TPS, t2, "psild[j,", chidx[1], ":", tail(chidx,1), ",", chidx[1], ":",
                     tail(chidx,1), "] = cholesky_decompose(",
