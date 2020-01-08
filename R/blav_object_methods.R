@@ -333,14 +333,14 @@ plot.blavaan <- function(x, pars=NULL, plot.type="trace", showplot=TRUE, ...){
         pars <- x@ParTable$free
         pars <- pars[pars > 0 & !is.na(pars)]
     }
-    samps <- as.array(blavInspect(x, 'mcmc'))
+    samps <- as.array(blavInspect(x, 'mcmc'), drop = FALSE)
 
     if(x@Options$target != "stan"){
         parnames <- x@ParTable$pxnames[match(pars, x@ParTable$free)]
-        samps <- samps[, match(parnames, colnames(samps)), ]
+        samps <- samps[, match(parnames, colnames(samps)), , drop = FALSE]
     } else {
         parnums <- x@ParTable$stanpnum[match(pars, x@ParTable$free)]
-        samps <- samps[, parnums, ]
+        samps <- samps[, parnums, , drop = FALSE]
     }
     if(blavInspect(x, 'ngroups') == 1L){
         colnames(samps) <- with(x@ParTable, paste0(lhs,op,rhs)[match(pars, free)])
