@@ -1,4 +1,4 @@
-lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra = "", inits = "prior", noncent = TRUE, debug = FALSE) {
+lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra = "", inits = "prior", noncent = FALSE, debug = FALSE) {
   ## lots of code is taken from lav_export_bugs.R
 
   if(inherits(model, "lavaan")){
@@ -371,7 +371,7 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
     if(noncent){
       TXT <- paste0(TXT, t2, "target += std_normal_lpdf(etafree[i]);\n")
     } else {
-      TXT <- paste0(TXT, t2, "target += multi_normal_cholesky_lpdf(etafree[i] | mueta[i], psild[g[i],1:", nlvno0, ",1:", nlvno0, "]);\n")
+      TXT <- paste0(TXT, t2, "target += multi_normal_cholesky_lpdf(etafree[i] | mueta[i], psild[g[i],etaind,etaind]);\n")
     }
   }
 
@@ -418,7 +418,6 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
   if(any(grepl("psi", partable$mat))){
     if(((nlv + n.psi.ov) > nlv) | (nlvno0 < nlv)){
       TPS <- paste0(TPS, t2, "psild[j] = to_matrix(", psiname, "[,,j]);\n")
-      chidx <- NULL
       if(n.psi.ov > 0 & length(yind) > 0){
         for(i in 1:length(yind)){
           for(j in i:length(yind)){
@@ -426,17 +425,13 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
                           psiname, "[", yind[i], ",", yind[j], ",j];\n")
           }
         }
-        chidx <- (nlv + 1):(nlv + n.psi.ov)
-      } else if(n.psi.ov > 0 & length(xind) > 0){
-        chidx <- (nlv + 1):(nlv + n.psi.ov)
       }
-      chidx <- c(etaind, chidx)
 
       TPS <- paste0(TPS, t2, "psild[j] = fill_lower(psild[j]);\n")
-      TPS <- paste0(TPS, t2, "psild[j,", chidx[1], ":", tail(chidx,1), ",", chidx[1], ":",
-                    tail(chidx,1), "] = cholesky_decompose(",
-                    "psild[j,", chidx[1], ":", tail(chidx,1), ",", chidx[1], ":",
-                    tail(chidx,1), "]);\n")
+      TPS <- paste0(TPS, t2, "psild[j,etaind,etaind] = ibinv[j,etaind,] * psild[j] * ibinv[j,etaind,]';\n")
+
+      TPS <- paste0(TPS, t2, "psild[j,lvind,lvind] = cholesky_decompose(",
+                    "psild[j,lvind,lvind]);\n")
     } else {
       TPS <- paste0(TPS, t2, "psild[j] = fill_lower(to_matrix(",
                     psiname, "[,,j]));\n")
@@ -464,42 +459,34 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
     TPS <- paste0(TPS, t2, etaname, "[i,", (nlv+1), ":", (nlv + n.psi.ov),
                   "] = x[i]';\n")
   }
-  
+
   if(nlvno0 < nlv){
-    ## some real lvs and some dummy lvs
-    TPS <- paste0(TPS, t2, etaname, "[i,", etaind[1], ":", tail(etaind,1), "] = ")
+    ## some real lvs and some with variances fixed to 0
+    TPS <- paste0(TPS, t2, etaname, "[i,etaind] = ")
     if(noncent){
-      TPS <- paste0(TPS, "transpose(to_vector(alpha[", etaind[1], ":", tail(etaind,1),
-                    ",1,g[i]]) + psild[g[i],", etaind[1], ":", tail(etaind,1), ",",
-                    etaind[1], ":", tail(etaind,1), "] * ")
+      TPS <- paste0(TPS, "transpose(to_vector(alpha[etaind,1,g[i]]) + psild[g[i],etaind,etaind] * ")
     }
-    TPS <- paste0(TPS, "etafree[i]'", ifelse(noncent[1], ")", ""), ";\n");
-    TPS <- paste0(TPS, t2, etaname, "[i,", etaind[1], ":", tail(etaind,1),
-                  "] = transpose(ibinv[g[i],", etaind[1], ":", tail(etaind,1),
-                  ",", etaind[1], ":", tail(etaind,1), "] * ", etaname, "[i,", etaind[1], ":",
-                  tail(etaind,1), "]');\n")
+    TPS <- paste0(TPS, "etafree[i]", ifelse(noncent[1], ")", "'"), ";\n");
+    if(noncent){
+      TPS <- paste0(TPS, t2, etaname, "[i,etaind] = transpose(ibinv[g[i],etaind,etaind] * ",
+                    etaname, "[i,etaind]');\n")
+    }
     if(!noncent){
       ## mean for centered parameterization
-      TPS <- paste0(TPS, t2, "mueta[i] = to_vector(alpha[", etaind[1], ":", tail(etaind,1),
-                    ",1,g[i]])")
-      if(n.psi.ov > 0){
-        TPS <- paste0(TPS, " + to_matrix(beta[", etaind[1], ":", tail(etaind,1), ",", (nlv + 1),
-                      ":", (nlv + n.psi.ov), ",g[i]]) * ", etaname, "[i,", (nlv + 1), ":",
-                      (nlv + n.psi.ov), "]'")
-      }
-      TPS <- paste0(TPS, ";\n")
+      TPS <- paste0(TPS, t2, "mueta[i] = ibinv[g[i],etaind,] * to_vector(alpha[,1,g[i]]);\n")
     }
+    TPS <- paste0(TPS, t2, etaname, "[i,eta0ind] = transpose(ibinv[g[i],eta0ind,eta0ind] * (to_vector(alpha[eta0ind,1,g[i]]) + to_matrix(beta[eta0ind,regind,g[i]]) * ", etaname, "[i,regind]'));\n")
   } else if(nlv > 0){
     ## all real lvs
     TPS <- paste0(TPS, t2, etaname, "[i,1:", nlv, "] = ")
     if(noncent){
       TPS <- paste0(TPS, "transpose(to_vector(alpha[1:", nlv, ",1,g[i]]) + psild[g[i],1:", nlv, ",1:", nlv, "] * ")
     }
-    TPS <- paste0(TPS, "etafree[i]'", ifelse(noncent[1], ")", ""), ";\n");
+    TPS <- paste0(TPS, "etafree[i]", ifelse(noncent[1], ")", "'"), ";\n");
     TPS <- paste0(TPS, t2, etaname, "[i,1:", nlv, "] = transpose(ibinv[g[i],", 1, ":", nlv,
                   ",", 1, ":", nlv, "] * ", etaname, "[i,", 1, ":", nlv, "]');\n")
     if(!noncent){
-      TPS <- paste0(TPS, t2, "mueta[i] = to_vector(alpha[1:", nlv, ",1,g[i]])")
+      TPS <- paste0(TPS, t2, "mueta[i] = to_vector(alpha[etaind,1,g[i]])")
       if(n.psi.ov > 0){
         TPS <- paste0(TPS, " + to_matrix(beta[1:", nlv, ",", (nlv + 1), ":", (nlv + n.psi.ov),
                       ",g[i]]) * ", etaname, "[i,", (nlv + 1), ":", (nlv + n.psi.ov), "]'")
@@ -569,9 +556,10 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
   }
 
   if(n.psi.ov > 0){
-    TPS <- paste0(TPS, t2, "etavec[i,eta0ind] = eta[i,eta0ind]' - (to_vector(alpha[", (nlv+1), ":",
-    (nlv + n.psi.ov), ",1,g[i]]) + to_matrix(beta[", (nlv+1), ":", (nlv + n.psi.ov),
-    ",,g[i]]) * eta[i,]');\n")
+    TPS <- paste0(TPS, t2, "etavec[i,", (nlv+1), ":", (nlv + n.psi.ov),
+                  "] = eta[i,", (nlv+1), ":", (nlv + n.psi.ov), "]' - (to_vector(alpha[",
+                  (nlv+1), ":", (nlv + n.psi.ov), ",1,g[i]]) + to_matrix(beta[",
+                  (nlv+1), ":", (nlv + n.psi.ov), ",,g[i]]) * eta[i,]');\n")
   }
   
   ## priors/constraints
@@ -621,6 +609,9 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
   if((length(lv0.idx) + length(lv.dummy.idx)) > 0){
     datablk <- paste0(datablk, t1, "int eta0ind[", length(lv0.idx) + length(lv.dummy.idx),
                       "];\n")
+  }
+  if(length(regind) > 0){
+    datablk <- paste0(datablk, t1, "int regind[", length(regind), "];\n")
   }
 
   ## NB: if meanx is empty, we won't use it. so just
