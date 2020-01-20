@@ -428,7 +428,7 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
       }
 
       TPS <- paste0(TPS, t2, "psild[j] = fill_lower(psild[j]);\n")
-      TPS <- paste0(TPS, t2, "psild[j,etaind,etaind] = ibinv[j,etaind,] * psild[j] * ibinv[j,etaind,]';\n")
+      TPS <- paste0(TPS, t2, "psild[j,lvind,lvind] = ibinv[j,lvind,] * psild[j] * ibinv[j,lvind,]';\n")
 
       TPS <- paste0(TPS, t2, "psild[j,lvind,lvind] = cholesky_decompose(",
                     "psild[j,lvind,lvind]);\n")
@@ -493,14 +493,14 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
       TPS <- paste0(TPS, "psild[g[i],1:", nlv, ",1:", nlv, "] * ")
     }
     TPS <- paste0(TPS, "etafree[i]", ifelse(noncent[1], ")", "'"), ";\n");
-    TPS <- paste0(TPS, t2, etaname, "[i,1:", nlv, "] = transpose(ibinv[g[i],", 1, ":", nlv,
-                  ",", 1, ":", nlv, "] * ", etaname, "[i,", 1, ":", nlv, "]');\n")
+    #TPS <- paste0(TPS, t2, etaname, "[i,1:", nlv, "] = transpose(ibinv[g[i],", 1, ":", nlv,
+    #              ",", 1, ":", nlv, "] * ", etaname, "[i,", 1, ":", nlv, "]');\n")
     if(!noncent){
-      TPS <- paste0(TPS, t2, "mueta[i] = to_vector(alpha[etaind,1,g[i]])")
-      if(n.psi.ov > 0){
-        TPS <- paste0(TPS, " + to_matrix(beta[1:", nlv, ",", (nlv + 1), ":", (nlv + n.psi.ov),
-                      ",g[i]]) * ", etaname, "[i,", (nlv + 1), ":", (nlv + n.psi.ov), "]'")
-      }
+      TPS <- paste0(TPS, t2, "mueta[i] = ibinv[g[i],etaind,] * to_vector(alpha[,1,g[i]])")
+      #if(n.psi.ov > 0){
+      #  TPS <- paste0(TPS, " + to_matrix(beta[1:", nlv, ",", (nlv + 1), ":", (nlv + n.psi.ov),
+      #                ",g[i]]) * ", etaname, "[i,", (nlv + 1), ":", (nlv + n.psi.ov), "]'")
+      #}
       TPS <- paste0(TPS, ";\n")
     }
   }
@@ -567,9 +567,7 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
 
   if(n.psi.ov > 0){
     TPS <- paste0(TPS, t2, "etavec[i,", (nlv+1), ":", (nlv + n.psi.ov),
-                  "] = eta[i,", (nlv+1), ":", (nlv + n.psi.ov), "]' - (to_vector(alpha[",
-                  (nlv+1), ":", (nlv + n.psi.ov), ",1,g[i]]) + to_matrix(beta[",
-                  (nlv+1), ":", (nlv + n.psi.ov), ",,g[i]]) * eta[i,]');\n")
+                  "] = eta[i,", (nlv+1), ":", (nlv + n.psi.ov), "]' - (ibinv[g[i],", (nlv+1), ":", (nlv + n.psi.ov), ",] * to_vector(alpha[,1,g[i]]));\n")
   }
   
   ## priors/constraints
