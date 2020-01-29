@@ -266,12 +266,6 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
                      nlrho, "] lvrhofree;\n")
   }
 
-  if(nlvno0 > 0){
-    parblk <- paste0(parblk, t1, "vector[", nlvno0, "] etafree[N]",
-                     eolop, "\n")
-  }
-  parblk <- paste0(parblk, "}\n\n")                     
-
   psi.ov <- which(partable$lhs %in% ov.names &
                   partable$op == "~~" &
                   partable$lhs == partable$rhs &
@@ -334,6 +328,11 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
     lvindall <- regind
   }
 
+  if(nlvno0 > 0){
+    parblk <- paste0(parblk, t1, "vector[", nlvno0, "] etafree[N]", eolop, "\n")
+  }
+  parblk <- paste0(parblk, "}\n\n")                     
+  
   ## missingness of ovs split by whether or not they appear
   ## in psi
   missflag <- FALSE
@@ -371,15 +370,8 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
     if(noncent){
       TXT <- paste0(TXT, t2, "target += std_normal_lpdf(etafree[i]);\n")
     } else {
-      TXT <- paste0(TXT, t2, "target += multi_normal_cholesky_lpdf(etafree[i] | mueta[i], psild[g[i],etaind,etaind]);\n")
+      TXT <- paste0(TXT, t2, "target += multi_normal_cholesky_lpdf(eta[i,lvind] | mueta[i], psild[g[i],lvind,lvind]);\n")
     }
-  }
-
-  if(nlv < (nlv + n.psi.ov)){
-    TXT <- paste0(TXT, t2,
-                  "target += multi_normal_cholesky_lpdf(etavec[i,", (nlv + 1), ":",
-                  (nlv + n.psi.ov), "] | rep_vector(0,", n.psi.ov, "), psild[g[i],", (nlv + 1),
-                  ":", (nlv + n.psi.ov), ",", (nlv + 1), ":", (nlv + n.psi.ov), "]);\n")
   }
 
   TXT <- paste0(TXT, t1, "}\n\n")
@@ -455,7 +447,7 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
   TPS <- paste(TPS, t1, commop, "mu definitions\n", t1,
                "for(i in 1:N) {\n", sep="")
 
-  if(n.psi.ov > 0){
+  if(!noncent & n.psi.ov > 0){
     TPS <- paste0(TPS, t2, etaname, "[i,", (nlv+1), ":", (nlv + n.psi.ov),
                   "] = x[i]';\n")
   }
@@ -464,44 +456,27 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
     ## some real lvs and some with variances fixed to 0
     TPS <- paste0(TPS, t2, etaname, "[i,etaind] = ")
     if(noncent){
-      TPS <- paste0(TPS, "transpose(to_vector(alpha[etaind,1,g[i]]) + ")
-      if(n.psi.ov > 0){
-        TPS <- paste0(TPS, "to_matrix(beta[1:", nlv, ",", (nlv + 1), ":", (nlv + n.psi.ov),
-                      ",g[i]]) * ", etaname, "[i,", (nlv + 1), ":", (nlv + n.psi.ov), "]' + ")
-      }
-      TPS <- paste0("psild[g[i],etaind,etaind] * ")
+      TPS <- paste0(TPS, "transpose(ibinv[g[i],lvind,lvind] * to_vector(alpha[lvind,1,g[i]]) + ")
+      TPS <- paste0("psild[g[i],lvind,lvind] * ")
     }
     TPS <- paste0(TPS, "etafree[i]", ifelse(noncent[1], ")", "'"), ";\n");
-    if(noncent){
-      TPS <- paste0(TPS, t2, etaname, "[i,etaind] = transpose(ibinv[g[i],etaind,etaind] * ",
-                    etaname, "[i,etaind]');\n")
-    }
+
     if(!noncent){
       ## mean for centered parameterization
-      TPS <- paste0(TPS, t2, "mueta[i] = ibinv[g[i],etaind,] * to_vector(alpha[,1,g[i]]);\n")
+      TPS <- paste0(TPS, t2, "mueta[i] = ibinv[g[i],lvind,] * to_vector(alpha[,1,g[i]]);\n")
     }
+    
     TPS <- paste0(TPS, t2, etaname, "[i,eta0ind] = transpose(ibinv[g[i],eta0ind,eta0ind] * (to_vector(alpha[eta0ind,1,g[i]]) + to_matrix(beta[eta0ind,regind,g[i]]) * ", etaname, "[i,regind]'));\n")
   } else if(nlv > 0){
     ## all real lvs
-    TPS <- paste0(TPS, t2, etaname, "[i,1:", nlv, "] = ")
+    TPS <- paste0(TPS, t2, etaname, "[i,etaind] = ")
     if(noncent){
-      TPS <- paste0(TPS, "transpose(to_vector(alpha[1:", nlv, ",1,g[i]]) + ")
-      if(n.psi.ov > 0){
-        TPS <- paste0(TPS, "to_matrix(beta[1:", nlv, ",", (nlv + 1), ":", (nlv + n.psi.ov),
-                      ",g[i]]) * ", etaname, "[i,", (nlv + 1), ":", (nlv + n.psi.ov), "]' + ")
-      }
-      TPS <- paste0(TPS, "psild[g[i],1:", nlv, ",1:", nlv, "] * ")
+      TPS <- paste0(TPS, "transpose(ibinv[g[i],lvind,lvind] * to_vector(alpha[lvind,1,g[i]]) + ")
+      TPS <- paste0(TPS, "psild[g[i],lvind,lvind] * ")
     }
     TPS <- paste0(TPS, "etafree[i]", ifelse(noncent[1], ")", "'"), ";\n");
-    #TPS <- paste0(TPS, t2, etaname, "[i,1:", nlv, "] = transpose(ibinv[g[i],", 1, ":", nlv,
-    #              ",", 1, ":", nlv, "] * ", etaname, "[i,", 1, ":", nlv, "]');\n")
     if(!noncent){
-      TPS <- paste0(TPS, t2, "mueta[i] = ibinv[g[i],etaind,] * to_vector(alpha[,1,g[i]])")
-      #if(n.psi.ov > 0){
-      #  TPS <- paste0(TPS, " + to_matrix(beta[1:", nlv, ",", (nlv + 1), ":", (nlv + n.psi.ov),
-      #                ",g[i]]) * ", etaname, "[i,", (nlv + 1), ":", (nlv + n.psi.ov), "]'")
-      #}
-      TPS <- paste0(TPS, ";\n")
+      TPS <- paste0(TPS, t2, "mueta[i] = ibinv[g[i],lvind,] * to_vector(alpha[,1,g[i]]);\n")
     }
   }
 
@@ -565,11 +540,6 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
     TPS <- paste(TPS, eolop, "\n", sep="")
   }
 
-  if(n.psi.ov > 0){
-    TPS <- paste0(TPS, t2, "etavec[i,", (nlv+1), ":", (nlv + n.psi.ov),
-                  "] = eta[i,", (nlv+1), ":", (nlv + n.psi.ov), "]' - (ibinv[g[i],", (nlv+1), ":", (nlv + n.psi.ov), ",] * to_vector(alpha[,1,g[i]]));\n")
-  }
-  
   ## priors/constraints
   if(std.lv){
     lamidx <- which(names(nfree) == "lambda")
@@ -996,7 +966,6 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
 
     if(nlv + n.psi.ov > 0){
       tpdecs <- paste0(tpdecs, t1, "matrix[N,", (nlv + n.psi.ov), "] ", etaname, ";\n")
-      tpdecs <- paste0(tpdecs, t1, "vector[", (nlv + n.psi.ov), "] etavec[N];\n")
       tpdecs <- paste0(tpdecs, "\n", t1, etaname,
                        " = rep_matrix(0, N, ", (nlv + n.psi.ov),
                        ");\n")
