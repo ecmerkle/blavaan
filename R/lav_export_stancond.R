@@ -456,8 +456,8 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
     ## some real lvs and some with variances fixed to 0
     TPS <- paste0(TPS, t2, etaname, "[i,etaind] = ")
     if(noncent){
-      TPS <- paste0(TPS, "transpose(ibinv[g[i],lvind,lvind] * to_vector(alpha[lvind,1,g[i]]) + ")
-      TPS <- paste0("psild[g[i],lvind,lvind] * ")
+      TPS <- paste0(TPS, "transpose(ibinv[g[i],lvind,] * to_vector(alpha[,1,g[i]]) + ")
+      TPS <- paste0(TPS, "psild[g[i],lvind,lvind] * ")
     }
     TPS <- paste0(TPS, "etafree[i]", ifelse(noncent[1], ")", "'"), ";\n");
 
@@ -466,12 +466,12 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
       TPS <- paste0(TPS, t2, "mueta[i] = ibinv[g[i],lvind,] * to_vector(alpha[,1,g[i]]);\n")
     }
     
-    TPS <- paste0(TPS, t2, etaname, "[i,eta0ind] = transpose(ibinv[g[i],eta0ind,eta0ind] * (to_vector(alpha[eta0ind,1,g[i]]) + to_matrix(beta[eta0ind,regind,g[i]]) * ", etaname, "[i,regind]'));\n")
+    TPS <- paste0(TPS, t2, etaname, "[i,eta0ind] = transpose(ibinv[g[i],eta0ind,eta0ind] * to_vector(alpha[eta0ind,1,g[i]]) + ibinv[g[i],eta0ind,regind] * ", etaname, "[i,regind]');\n")
   } else if(nlv > 0){
     ## all real lvs
     TPS <- paste0(TPS, t2, etaname, "[i,etaind] = ")
     if(noncent){
-      TPS <- paste0(TPS, "transpose(ibinv[g[i],lvind,lvind] * to_vector(alpha[lvind,1,g[i]]) + ")
+      TPS <- paste0(TPS, "transpose(ibinv[g[i],lvind,] * to_vector(alpha[,1,g[i]]) + ")
       TPS <- paste0(TPS, "psild[g[i],lvind,lvind] * ")
     }
     TPS <- paste0(TPS, "etafree[i]", ifelse(noncent[1], ")", "'"), ";\n");
