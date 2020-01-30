@@ -1,4 +1,4 @@
-lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra = "", inits = "prior", noncent = FALSE, debug = FALSE) {
+lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra = "", inits = "prior", noncent = TRUE, debug = FALSE) {
   ## lots of code is taken from lav_export_bugs.R
 
   if(inherits(model, "lavaan")){
@@ -276,6 +276,8 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
   if(n.psi.ov > 0){
     psi.ov.names <- partable$lhs[psi.ov]
     thet.ov.names <- ov.names[!(ov.names %in% psi.ov.names)]
+    cat("blavaan NOTE: Using a centered parameterization due to the model representation (ovs in psi).\nThis is not a problem, but noncentered would be used otherwise.\n\n")
+    noncent <- FALSE
   } else {
     psi.ov.names <- ""
     thet.ov.names <- ov.names
@@ -366,12 +368,11 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
     } 
   }
 
-  if(nlvno0 > 0){
-    if(noncent){
-      TXT <- paste0(TXT, t2, "target += std_normal_lpdf(etafree[i]);\n")
-    } else {
-      TXT <- paste0(TXT, t2, "target += multi_normal_cholesky_lpdf(eta[i,lvind] | mueta[i], psild[g[i],lvind,lvind]);\n")
-    }
+  if(nlvno0 > 0 & noncent){
+    TXT <- paste0(TXT, t2, "target += std_normal_lpdf(etafree[i]);\n")
+  }
+  if(length(lvindall) > 0 & !noncent){
+    TXT <- paste0(TXT, t2, "target += multi_normal_cholesky_lpdf(eta[i,lvind] | mueta[i], psild[g[i],lvind,lvind]);\n")
   }
 
   TXT <- paste0(TXT, t1, "}\n\n")
@@ -410,15 +411,6 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
   if(any(grepl("psi", partable$mat))){
     if(((nlv + n.psi.ov) > nlv) | (nlvno0 < nlv)){
       TPS <- paste0(TPS, t2, "psild[j] = to_matrix(", psiname, "[,,j]);\n")
-      if(n.psi.ov > 0 & length(yind) > 0){
-        for(i in 1:length(yind)){
-          for(j in i:length(yind)){
-            TPS <- paste0(TPS, t2, "psild[j,", i, ",", j, "] = ",
-                          psiname, "[", yind[i], ",", yind[j], ",j];\n")
-          }
-        }
-      }
-
       TPS <- paste0(TPS, t2, "psild[j] = fill_lower(psild[j]);\n")
       TPS <- paste0(TPS, t2, "psild[j,lvind,lvind] = ibinv[j,lvind,] * psild[j] * ibinv[j,lvind,]';\n")
 
@@ -478,6 +470,8 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
     if(!noncent){
       TPS <- paste0(TPS, t2, "mueta[i] = ibinv[g[i],lvind,] * to_vector(alpha[,1,g[i]]);\n")
     }
+  } else if(length(lvindall) > 0 & !noncent){
+    TPS <- paste0(TPS, t2, "mueta[i]= ibinv[g[i],lvind,] * to_vector(alpha[,1,g[i]]);\n")
   }
 
   if(ny > 0) {
@@ -921,8 +915,8 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
         tpdecs <- paste0(tpdecs, t1, "matrix[", (nlv + n.psi.ov), ",",
                          (nlv + n.psi.ov), "] psild[", tmpdim[3],
                          "];\n")
-        if(!noncent & nlvno0 > 0){
-          tpdecs <- paste0(tpdecs, t1, "vector[", nlvno0, "] mueta[N];\n")
+        if(!noncent & length(lvindall) > 0){
+          tpdecs <- paste0(tpdecs, t1, "vector[", length(lvindall), "] mueta[N];\n")
         }
       }
       
