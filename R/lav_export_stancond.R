@@ -185,8 +185,15 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
     tmppsi <- tmppsi[lower.tri(tmppsi)]
     if(all(tmppsi == 0)) diagpsi <- 1L
   }
-  fullbeta <- 1L
 
+  diagtheta <- 0L
+  if("theta" %in% names(parmattable[[1]])){
+    tmptheta <- parmattable[[1]]$theta
+    tmptheta <- tmptheta[lower.tri(tmptheta)]
+    if(all(tmptheta == 0)) diagtheta <- 1L
+  }
+
+  fullbeta <- 1L
   if("beta" %in% names(parmattable[[1]])){
     tmpbeta <- parmattable[[1]]$beta
     if(all(tmpbeta[lower.tri(tmpbeta)] == 0) |
@@ -353,19 +360,32 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
   TXT <- paste0(TXT, t1, "for(i in 1:N) {\n")
 
   if(ny > 0){
-    if(missflag){
-      TXT <- paste0(TXT, t2,
-                    "target += multi_normal_cholesky_lpdf(segment(y[i], 1, nseen[i]) | ",
-                    "to_vector(mu[i])[obsvar[i,1:nseen[i]]],",
-                    "thetld[g[i],obsvar[i,1:nseen[i]],",
-                    "obsvar[i,1:nseen[i]]]);\n")
+    TXT <- paste0(TXT, t2, "target += ")
+
+    if(diagtheta){
+      TXT <- paste0(TXT, "normal_lpdf")
     } else {
-      TXT <- paste0(TXT, t2,
-                    "target += multi_normal_cholesky_lpdf(y[i] | ",
-                    "to_vector(mu[i,1:", (nov - n.psi.ov),
-                    "]), thetld[g[i]]);\n")
-      
-    } 
+      TXT <- paste0(TXT, "multi_normal_cholesky_lpdf")
+    }
+    
+    if(missflag){
+      TXT <- paste0(TXT, "(segment(y[i], 1, nseen[i]) | ",
+                    "to_vector(mu[i])[obsvar[i,1:nseen[i]]],")
+      if(diagtheta){
+        TXT <- paste0(TXT, " diagonal(thetld[g[i],obsvar[i,1:nseen[i]],",
+                      "obsvar[i,1:nseen[i]]]));\n")
+      } else {
+        TXT <- paste0(TXT, " thetld[g[i],obsvar[i,1:nseen[i]],",
+                      "obsvar[i,1:nseen[i]]]);\n")
+      }
+    } else {
+      TXT <- paste0(TXT, "(y[i] | to_vector(mu[i,1:", (nov - n.psi.ov), "]),")
+      if(diagtheta){
+        TXT <- paste0(TXT, " diagonal(thetld[g[i]]));\n")
+      } else {
+        TXT <- paste0(TXT, " thetld[g[i]]);\n")
+      }
+    }
   }
 
   if(nlvno0 > 0 & noncent){
