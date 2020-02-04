@@ -65,8 +65,8 @@ group_sparse_skeleton <- function(skeleton) {
 format_priors <- function(lavpartable, mat) {
   ## parameter matrices are filled in by row, so need to make
   ## sure we get parameters in the right order!
-  lavpartable <- lavpartable[order(lavpartable$col),]
-  
+  lavpartable <- lavpartable[order(lavpartable$group, lavpartable$col, lavpartable$row),]
+
   if (grepl("var", mat)) {
     mat <- gsub("var", "", mat)
     prisel <- lavpartable$row == lavpartable$col
