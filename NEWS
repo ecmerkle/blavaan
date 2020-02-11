@@ -1,3 +1,8 @@
+Changes in Version 0.3-9
+    o target="stancond" is added, which is an experimental, noncentered Stan approach.
+
+    o bug fixes for prior settings and std.lv in target="stan", and defined parameters.
+
 Changes in Version 0.3-8
     o post-estimation, posterior predictive computations have been sped up considerably.
 
