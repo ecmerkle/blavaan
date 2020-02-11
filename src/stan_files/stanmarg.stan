@@ -696,17 +696,25 @@ model { // N.B.: things declared in the model block do not get saved in the outp
 
   /* transform sd parameters to var or prec, depending on
      what the user wants. */
-  for (i in 1:len_free[5]) {
-    Theta_pri[i] = Theta_sd_free[i]^(theta_pow);
+  if (theta_pow != 1) {
+    for (i in 1:len_free[5]) {
+      Theta_pri[i] = Theta_sd_free[i]^(theta_pow);
+    }
   }
-  for (i in 1:len_free[6]) {
-    Theta_x_pri[i] = Theta_x_sd_free[i]^(theta_x_pow);
+  if (theta_x_pow != 1) {
+    for (i in 1:len_free[6]) {
+      Theta_x_pri[i] = Theta_x_sd_free[i]^(theta_x_pow);
+    }
   }
-  for (i in 1:len_free[9]) {
-    Psi_pri[i] = Psi_sd_free[i]^(psi_pow);
+  if (psi_pow != 1) {
+    for (i in 1:len_free[9]) {
+      Psi_pri[i] = Psi_sd_free[i]^(psi_pow);
+    }
   }
-  for (i in 1:len_free[11]) {
-    Phi_pri[i] = Phi_sd_free[i]^(phi_pow);
+  if (phi_pow != 1) {
+    for (i in 1:len_free[11]) {
+      Phi_pri[i] = Phi_sd_free[i]^(phi_pow);
+    }
   }
 
   target += gamma_lpdf(Theta_pri | theta_sd_shape, theta_sd_rate);
