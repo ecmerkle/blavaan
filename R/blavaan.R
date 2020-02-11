@@ -183,9 +183,8 @@ blavaan <- function(...,  # default lavaan arguments
 
     mfj <- list(burnin = burnin, sample = sample, adapt = adapt)
 
-    # now based on effective sample size
-    #if(mfj$sample*n.chains/5 < 1000) warning("blavaan WARNING: small sample drawn, proceed with caution.\n")
-    
+    if(target == "stancond") cat("\nblavaan NOTE: target='stancond' is experimental and may not be fully functional\n")
+  
     if(convergence == "auto"){
         names(mfj) <- c("startburnin", "startsample", "adapt")
     }
