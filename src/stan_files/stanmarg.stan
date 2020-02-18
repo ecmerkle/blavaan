@@ -696,40 +696,28 @@ model { // N.B.: things declared in the model block do not get saved in the outp
 
   /* transform sd parameters to var or prec, depending on
      what the user wants. */
-  if (len_free[5] > 0) {
+  Theta_pri = Theta_sd_free;
+  if (len_free[5] > 0 && theta_pow != 1) {
     for (i in 1:len_free[5]) {
-      if (theta_pow != 1) {
-	Theta_pri[i] = Theta_sd_free[i]^(theta_pow);
-      } else {
-	Theta_pri[i] = Theta_sd_free[i];
-      }
+      Theta_pri[i] = Theta_sd_free[i]^(theta_pow);
     }
   }
-  if (len_free[6] > 0) {
+  Theta_x_pri = Theta_x_sd_free;
+  if (len_free[6] > 0 && theta_x_pow != 1) {
     for (i in 1:len_free[6]) {
-      if (theta_x_pow != 1) {
-	Theta_x_pri[i] = Theta_x_sd_free[i]^(theta_x_pow);
-      } else {
-	Theta_x_pri[i] = Theta_x_sd_free[i];
-      }
+      Theta_x_pri[i] = Theta_x_sd_free[i]^(theta_x_pow);
     }
   }
-  if (len_free[9] > 0) {
+  Psi_pri = Psi_sd_free;
+  if (len_free[9] > 0 && psi_pow != 1) {
     for (i in 1:len_free[9]) {
-      if (psi_pow != 1) {
-	Psi_pri[i] = Psi_sd_free[i]^(psi_pow);
-      } else {
-	Psi_pri[i] = Psi_sd_free[i];
-      }
+      Psi_pri[i] = Psi_sd_free[i]^(psi_pow);
     }
   }
-  if (len_free[11] > 0) {
+  Phi_pri = Phi_sd_free;
+  if (len_free[11] > 0 && phi_pow != 1) {
     for (i in 1:len_free[11]) {    
-      if (phi_pow != 1) {
-	Phi_pri[i] = Phi_sd_free[i]^(phi_pow);
-      } else {
-	Phi_pri[i] = Phi_sd_free[i];
-      }
+      Phi_pri[i] = Phi_sd_free[i]^(phi_pow);
     }
   }
 
