@@ -888,7 +888,7 @@ generated quantities { // these matrices are saved in the output but do not figu
     for (mm in 1:Np) {
       grpidx = grpnum[mm];
 
-      A = mdivide_left_tri_low(I - Bet[grpidx], I); // = (I - B)^{-1}
+      A = mdivide_left(I - Bet[grpidx], I); // = (I - B)^{-1}
       total_eta_eta = A - I;
       indirect_eta_eta = total_eta_eta - Bet[grpidx];
       total_eta_y = L_Y[grpidx] * A;
@@ -900,7 +900,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 	total_xi_y = total_eta_y * Gam[grpidx];
       }
 
-      Psi_star = multiply_lower_tri_self_transpose(A * Psi[grpidx]); // original was: L_Psi);
+      Psi_star = quad_form_sym(PS[grpidx], transpose(A)); // original was: L_Psi);
       Pi_t = transpose(total_xi_eta);
       L_Yt = transpose(L_Y[grpidx]);
       L_Xt = transpose(L_X[grpidx]);
