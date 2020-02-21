@@ -588,9 +588,13 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
   } else {
     ini <- NULL
   }
+
+  ## index of dummy lvs, for sampling lvs
+  dumlv <- c(lavobject@Model@ov.x.dummy.lv.idx[[1]],
+             lavobject@Model@ov.y.dummy.lv.idx[[1]])
   
   return(list(dat = dat, free2 = free2, lavpartable = lavpartable,
-              init = ini))
+              init = ini, dumlv = dumlv))
 }
 
 

@@ -430,7 +430,8 @@ blavaan <- function(...,  # default lavaan arguments
                                         inits = initsin),
                            silent = TRUE)
                 if(!inherits(l2s, "try-error")){
-                    ldargs <- c(l2s$dat, list(lavpartable = l2s$lavpartable, save_lvs = save.lvs))
+                    ldargs <- c(l2s$dat, list(lavpartable = l2s$lavpartable, dumlv = l2s$dumlv,
+                                              save_lvs = save.lvs))
                     lavpartable$prior <- l2s$lavpartable$prior
                     jagtrans <- try(do.call("stanmarg_data", ldargs), silent = TRUE)
 
