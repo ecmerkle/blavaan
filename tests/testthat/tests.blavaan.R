@@ -32,6 +32,9 @@ test_that("blavaan arguments", {
               burnin=2, sample=2, do.fit=FALSE)
   expect_s4_class(fit, "blavaan")
 
+  fit <- bsem(model, data=Data, save.lvs=TRUE, do.fit=FALSE)
+  expect_s4_class(fit, "blavaan")
+  
   ## named variable that clashes
   names(Data)[1] <- "lambda"
   model2 <- ' lambda ~ b1*x1 + b2*x2 '

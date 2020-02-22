@@ -628,7 +628,7 @@ blavaan <- function(...,  # default lavaan arguments
             attr(x, "fx") <- get_ll(lavmodel = lavmodel, lavpartable = lavpartable,
                                     lavsamplestats = lavsamplestats, lavoptions = lavoptions,
                                     lavcache = lavcache, lavdata = lavdata)[1]
-            if(save.lvs) {
+            if(save.lvs & jag.do.fit) {
                 if(target == "jags"){
                     fullpmeans <- summary(make_mcmc(res))[[1]][,"Mean"]
                 } else {
@@ -638,6 +638,8 @@ blavaan <- function(...,  # default lavaan arguments
                               lavsamplestats = lavsamplestats, lavoptions = lavoptions,
                               lavcache = lavcache, lavdata = lavdata,
                               lavobject = LAV, conditional = TRUE)[1]
+            } else {
+                cfx <- NULL
             }
         } else {
             attr(x, "fx") <- as.numeric(NA)
