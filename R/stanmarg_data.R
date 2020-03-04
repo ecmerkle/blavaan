@@ -340,11 +340,12 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   ## for lv sampling
   usepsi <- useorig <- array(which(diag(as.matrix(Psi_skeleton[1,,])) != 0))
   if (length(dumlv) > 0) {
-    usepsi <- array(usepsi[-match(dumlv, usepsi)])
+    dums <- match(dumlv, usepsi)
+    usepsi <- array(usepsi[-dums[!is.na(dums)]])
   }
   dat$w9use <- length(usepsi)
   dat$usepsi <- usepsi
-  dat$nopsi <- (1:dim(Psi_skeleton)[2])[-useorig]
+  dat$nopsi <- array((1:dim(Psi_skeleton)[2])[-useorig])
   dat$w9no <- length(dat$nopsi)
   
   tmpres <- group_sparse_skeleton(Psi_r_skeleton)
