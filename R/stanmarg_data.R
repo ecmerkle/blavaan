@@ -338,7 +338,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$wg9 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w9skel <- w9skel
   ## for lv sampling
-  usepsi <- useorig <- array(which(diag(Psi_skeleton[1,,]) != 0))
+  usepsi <- useorig <- array(which(diag(as.matrix(Psi_skeleton[1,,])) != 0))
   if (length(dumlv) > 0) {
     usepsi <- usepsi[-match(dumlv, usepsi)]
   }
