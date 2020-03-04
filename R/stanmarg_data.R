@@ -290,7 +290,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$wg5 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w5skel <- w5skel
   ## for lv sampling
-  usethet <- array(which(diag(Theta_skeleton[1,,]) != 0))
+  usethet <- array(which(diag(as.matrix(Theta_skeleton[1,,])) != 0))
   dat$w5use <- length(usethet)
   dat$usethet <- usethet
   
