@@ -309,9 +309,9 @@ function(object, header       = TRUE,
         #names(PE)[penames == "est"] <- "Post.Mean"
         #PE$est <- PE$Post.Mean
         names(PE)[penames == "se"] <- "Post.SD"
-        names(PE)[penames == "ci.lower"] <- "HPD.025"
-        names(PE)[penames == "ci.upper"] <- "HPD.975"
-        names(PE)[penames == "psrf"] <- "PSRF"
+        names(PE)[penames == "ci.lower"] <- "pi.lower"
+        names(PE)[penames == "ci.upper"] <- "pi.upper"
+        names(PE)[penames == "psrf"] <- "Rhat"
 
         print(PE, nd = nd)
     } # parameter estimates
