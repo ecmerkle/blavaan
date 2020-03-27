@@ -597,15 +597,15 @@ fill_eta <- function(postsamp, lavmodel, lavpartable, lavsamplestats, lavdata){
     ngroups <- lavsamplestats@ngroups
 
     eta <- vector("list", ngroups)
-      for(g in 1:ngroups){
-        eta[[g]] <- etamat[lavdata@case.idx[[g]], 1:nlv, drop = FALSE]
+    for(g in 1:ngroups){
+      eta[[g]] <- etamat[lavdata@case.idx[[g]], 1:nlv, drop = FALSE]
 
-        ## fill in eta with dummys, if needed
-        dummyov <- c(lavmodel@ov.x.dummy.ov.idx[[g]], lavmodel@ov.y.dummy.ov.idx[[g]])
-        dummylv <- c(lavmodel@ov.x.dummy.lv.idx[[g]], lavmodel@ov.y.dummy.lv.idx[[g]])
-        if(length(dummyov) > 0){
-          eta[[g]][, dummylv] <- lavdata@X[[g]][, dummyov]
-        }
+      ## fill in eta with dummys, if needed
+      dummyov <- c(lavmodel@ov.x.dummy.ov.idx[[g]], lavmodel@ov.y.dummy.ov.idx[[g]])
+      dummylv <- c(lavmodel@ov.x.dummy.lv.idx[[g]], lavmodel@ov.y.dummy.lv.idx[[g]])
+      if(length(dummyov) > 0){
+        eta[[g]][, dummylv] <- lavdata@X[[g]][, dummyov]
+      }
     }
 
     eta

@@ -941,9 +941,9 @@ generated quantities { // these matrices are saved in the output but do not figu
 
       // FIXME?? what if obsidx also extends to x variables?
       obsidx = Obsvar[mm, ];
-      precision = inverse_spd(top_left);
-      L = cholesky_decompose(bottom_right[usepsi,usepsi] - quad_form_sym(precision, transpose(corner))[usepsi,usepsi]);
-      beta[, 1:Nobs[mm]] = corner[, obsidx[1:Nobs[mm]]] * precision[obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]];
+      precision[1:Nobs[mm],1:Nobs[mm]] = inverse_spd(top_left[obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+      L = cholesky_decompose(bottom_right[usepsi,usepsi] - quad_form_sym(precision[1:Nobs[mm],1:Nobs[mm]], transpose(corner[,obsidx[1:Nobs[mm]]]))[usepsi,usepsi]);
+      beta[, 1:Nobs[mm]] = corner[, obsidx[1:Nobs[mm]]] * precision[1:Nobs[mm], 1:Nobs[mm]];
 
       r1 = startrow[mm];
       r2 = endrow[mm];

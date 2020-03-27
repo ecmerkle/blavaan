@@ -233,7 +233,6 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
     }
   }
 
-  if(dat$missing & save_lvs) stop("blavaan ERROR: lvs cannot currently be saved when data are missing.")
   dat$save_lvs <- save_lvs
 
   dat$p <- dim(Lambda_y_skeleton)[2]
