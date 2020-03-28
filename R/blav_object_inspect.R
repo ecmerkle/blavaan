@@ -133,7 +133,7 @@ blavInspect <- function(blavobject, what, ...) {
 
             draws <- mcmc.list(draws)
 
-            if(what %in% c("lvmeans", "fsmeans") | "means" %in% dotdotdot){
+            if((what %in% c("lvmeans", "fsmeans")) | ("means" %in% dotdotdot)){
                 br <- TRUE
                 if(jagtarget){
                     summ <- blavobject@external$mcmcout$summaries
@@ -146,7 +146,8 @@ blavInspect <- function(blavobject, what, ...) {
                 mnrows <- grep("^eta", rownames(summ))
 
                 draws <- matrix(summ[mnrows,summname], nsamp,
-                                length(mnrows)/nsamp, byrow=br)[,1:nlv]
+                                length(mnrows)/nsamp, byrow=br)[,1:nlv,drop=FALSE]
+                colnames(draws) <- names(lvmn)
             }
             draws
         } else if(what == "n.chains"){
