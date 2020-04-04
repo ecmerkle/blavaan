@@ -11,9 +11,8 @@ save.lvs = FALSE, jags.ic = FALSE, seed = NULL, bcontrol = list())
 }
 \arguments{
 \item{...}{Default lavaan arguments.  See \code{\link{lavaan}}.}
-\item{cp}{Handling of prior distributions on covariance parameters: possible values are \code{"srs"} or
-    \code{"fa"}.  Option \code{"srs"} is more flexible and better from a
-    theoretical standpoint, but it is also slower.}
+\item{cp}{Handling of prior distributions on covariance parameters:
+  possible values are \code{"srs"} (default) or \code{"fa"}. Option \code{"fa"} is only available for \code{target="jags"}.}
 \item{dp}{Default prior distributions on different types of
     parameters, typically the result of a call to \code{dpriors()}.
     See the \code{dpriors()} help file for more information.}
@@ -48,10 +47,10 @@ save.lvs = FALSE, jags.ic = FALSE, seed = NULL, bcontrol = list())
     for example the output of the \code{paramaterEstimates()} function, 
     the values of the \code{est} or \code{start} or \code{ustart} column 
     (whichever is found first) will be extracted.}
-\item{convergence}{If \code{"auto"}, parameters will be
-  sampled until convergence is achieved (via \code{autorun.jags}). In
+\item{convergence}{Useful only for \code{target="jags"}. If \code{"auto"}, parameters are
+  sampled until convergence is achieved (via \code{autorun.jags()}). In
   this case, the arguments \code{burnin} and \code{sample} are passed to
-  \code{autorun.jags} as \code{startburnin} and \code{startsample},
+  \code{autorun.jags()} as \code{startburnin} and \code{startsample},
   respectively. Otherwise, parameters
   are sampled as specified by the user (or by the \code{run.jags}
   defaults).}
