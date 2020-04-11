@@ -1,4 +1,4 @@
-matattr <- function(free, est, constraint, mat, Ng, std.lv, ...) {
+matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
   ## obtain matrix attributes, equality constraint,
   ## sign constraint information.
   ## free: a specific list of matrices from lavInspect(, 'free')
@@ -75,6 +75,9 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, ...) {
         constraint$rhs2 <- rhsnum ## for sign constraints below
 
         wskel[rhsnum, 1:2] <- c(1L, lhsnum)
+
+        ## check for wiggle, set wskel[,3] to 1 if involved in wiggle
+        if(constraint$rhs[i] %in% wig) wskel[rhsnum, 3] <- 1L
       } else if (sum(usecon) == 1) {
         stop("blavaan ERROR: cross-matrix equality constraints not supported.")
       }
@@ -84,8 +87,6 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, ...) {
     ## constrained parameters
     freepars <- cumsum(wskel[,1] == 0)
     wskel[wskel[,1]==1,2] <- freepars[wskel[wskel[,1]==1,2]]
-
-    ## TODO check for wiggle, set wskel[,3] to 1 if involved in wiggle
   }
   
   lvmat <- mat %in% c('Gamma', 'B', 'Psi_r')
@@ -146,7 +147,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, ...) {
   return(out)
 }
 
-lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
+lav2stanmarg <- function(lavobject, dp, n.chains, inits, wig=NULL) {
   ## extract model and data characteristics from lavaan object
   dat <- list()
   opts <- lavInspect(lavobject, 'options')
@@ -226,7 +227,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
   if ("lambda" %in% names(freemats[[1]])) {
     fr <- lapply(freemats, function(x) x$lambda)
     es <- lapply(estmats, function(x) x$lambda)
-    res <- matattr(fr, es, constrain, mat = "Lambda_y", Ng, opts$std.lv)
+    res <- matattr(fr, es, constrain, mat = "Lambda_y", Ng, opts$std.lv, wig=c(6,7))
 
     dat$Lambda_y_skeleton <- res$matskel
     dat$w1skel <- res$wskel
@@ -257,7 +258,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     es <- lapply(estmats, function(x) x$gamma)
     ## Note: if Lambda_x were in use, then FALSE below needs to
     ##       be opts$std.lv:
-    res <- matattr(fr, es, constrain, mat = "Gamma", Ng, FALSE)
+    res <- matattr(fr, es, constrain, mat = "Gamma", Ng, FALSE, wig)
 
     dat$Gamma_skeleton <- res$matskel
     dat$w3skel <- res$wskel
@@ -279,7 +280,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
   if ("beta" %in% names(freemats[[1]])) {
     fr <- lapply(freemats, function(x) x$beta)
     es <- lapply(estmats, function(x) x$beta)
-    res <- matattr(fr, es, constrain, mat = "B", Ng, opts$std.lv,
+    res <- matattr(fr, es, constrain, mat = "B", Ng, opts$std.lv, wig,
                    free2 = lyfree2, sign = dat$lam_y_sign)
 
     dat$B_skeleton <- res$matskel
@@ -313,7 +314,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
       )
     dest <- es
     
-    res <- matattr(fr, es, constrain, mat = "Theta", Ng, opts$std.lv)
+    res <- matattr(fr, es, constrain, mat = "Theta", Ng, opts$std.lv, wig)
 
     dat$Theta_skeleton <- res$matskel
     dat$w5skel <- res$wskel
@@ -344,7 +345,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
       dmat}
       )
     
-    res <- matattr(fr, es, constrain, mat = "Theta_r", Ng, opts$std.lv, dest = dest)
+    res <- matattr(fr, es, constrain, mat = "Theta_r", Ng, opts$std.lv, wig, dest = dest)
 
     dat$Theta_r_skeleton <- res$matskel
     dat$w7skel <- res$wskel
@@ -375,7 +376,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
       )
     dest <- es
     
-    res <- matattr(fr, es, constrain, mat = "Theta_x", Ng, opts$std.lv)
+    res <- matattr(fr, es, constrain, mat = "Theta_x", Ng, opts$std.lv, wig)
 
     dat$Theta_x_skeleton <- res$matskel
     dat$w6skel <- res$wskel
@@ -407,7 +408,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
       dmat}
       )
     
-    res <- matattr(fr, es, constrain, mat = "Theta_x_r", Ng, opts$std.lv, dest = dest)
+    res <- matattr(fr, es, constrain, mat = "Theta_x_r", Ng, opts$std.lv, wig, dest = dest)
 
     dat$Theta_x_r_skeleton <- res$matskel
     dat$w8skel <- res$wskel
@@ -439,7 +440,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     dest <- es
     
     ## std.lv only matters for off-diagonals
-    res <- matattr(fr, es, constrain, mat = "Psi", Ng, FALSE)
+    res <- matattr(fr, es, constrain, mat = "Psi", Ng, FALSE, wig)
 
     dat$Psi_skeleton <- res$matskel
     dat$w9skel <- res$wskel
@@ -470,7 +471,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
       dmat}
       )
     
-    res <- matattr(fr, es, constrain, mat = "Psi_r", Ng, opts$std.lv,
+    res <- matattr(fr, es, constrain, mat = "Psi_r", Ng, opts$std.lv, wig,
                    free2 = lyfree2, sign = dat$lam_y_sign,
                    dest = dest)
 
@@ -511,7 +512,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
       if ("mean.x" %in% names(x)) out <- rbind(out, x$mean.x)
       out}
       )
-    res <- matattr(fr, es, constrain, mat = "Nu", Ng, opts$std.lv)
+    res <- matattr(fr, es, constrain, mat = "Nu", Ng, opts$std.lv, wig)
 
     dat$Nu_skeleton <- res$matskel
     dat$w13skel <- res$wskel
@@ -531,7 +532,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
   if ("alpha" %in% names(freemats[[1]])) {
     fr <- lapply(freemats, function(x) x$alpha)
     es <- lapply(estmats, function(x) x$alpha)
-    res <- matattr(fr, es, constrain, mat = "Alpha", Ng, opts$std.lv)
+    res <- matattr(fr, es, constrain, mat = "Alpha", Ng, opts$std.lv, wig)
 
     dat$Alpha_skeleton <- res$matskel
     dat$w14skel <- res$wskel
@@ -574,6 +575,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
   lavpartable$freeparnums <- freeparnums
   
   ## FIXME theta_x, cov.x not handled
+  ## FIXME need to account for wiggle params
   if (!(inits %in% c("jags", "stan"))) {
     ini <- set_inits_stan(lavpartable, nfree, n.chains, inits)
 

@@ -23,8 +23,9 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     for (c in 1:C) for (r in 1:R) {
       real rc = skeleton[r, c];
       if (is_inf(rc)) { // free
-	real eq = eq_skeleton[pos, 1];
-	if (eq == 0) {
+	int eq = eq_skeleton[pos, 1];
+	int wig = eq_skeleton[pos, 3];
+	if (eq == 0 || wig == 1) {
 	  out[r,c] = free_elements[freepos];
 	  freepos += 1;
 	} else {
@@ -394,7 +395,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
     for (i in 1:p) {
       for (j in 1:m) {
         if (is_inf(Lambda_y_skeleton[g,i,j])) {
-	  if (w1skel[pos[1],2] == 0) len_free[1] += 1;
+	  if (w1skel[pos[1],2] == 0 || w1skel[pos[1],3] == 1) len_free[1] += 1;
 	  pos[1] += 1;
         }
       }
@@ -406,7 +407,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
     for (i in 1:q) {
       for (j in 1:n) {
 	if (is_inf(Lambda_x_skeleton[g,i,j])) {
-	  if (w2skel[pos[2],2] == 0) len_free[2] += 1;
+	  if (w2skel[pos[2],2] == 0 || w2skel[pos[2],3] == 1) len_free[2] += 1;
 	  pos[2] += 1;
 	}
       }
@@ -418,7 +419,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
     for (i in 1:m) {
       for (j in 1:n) {
 	if (is_inf(Gamma_skeleton[g,i,j])) {
-	  if (w3skel[pos[3],2] == 0) len_free[3] += 1;
+	  if (w3skel[pos[3],2] == 0 || w3skel[pos[3],3] == 1) len_free[3] += 1;
 	  pos[3] += 1;
 	}
       }
@@ -430,7 +431,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
     for (i in 1:m) {
       for (j in 1:m) {
 	if (is_inf(B_skeleton[g,i,j])) {
-	  if (w4skel[pos[4],2] == 0) len_free[4] += 1;
+	  if (w4skel[pos[4],2] == 0 || w4skel[pos[4],3] == 1) len_free[4] += 1;
 	  pos[4] += 1;
 	}
       }
@@ -441,7 +442,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
     f_start5[g] = pos[5];
     for (i in 1:p) {
       if (is_inf(Theta_skeleton[g,i,i])) {
-	if (w5skel[pos[5],2] == 0) len_free[5] += 1;
+	if (w5skel[pos[5],2] == 0 || w5skel[pos[5],3] == 1) len_free[5] += 1;
 	pos[5] += 1;
       }
     }
@@ -451,7 +452,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
     f_start6[g] = pos[6];
     for (i in 1:q) {
       if (is_inf(Theta_x_skeleton[g,i,i])) {
-	if (w6skel[pos[6],2] == 0) len_free[6] += 1;
+	if (w6skel[pos[6],2] == 0 || w6skel[pos[6],3] == 1) len_free[6] += 1;
 	pos[6] += 1;
       }
     }
@@ -462,7 +463,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
     for (i in 1:(p-1)) {
       for (j in (i+1):p) {
 	if (is_inf(Theta_r_skeleton[g,j,i])) {
-	  if (w7skel[pos[7],2] == 0) len_free[7] += 1;
+	  if (w7skel[pos[7],2] == 0 || w7skel[pos[7],3] == 1) len_free[7] += 1;
 	  pos[7] += 1;
 	}
       }
@@ -474,7 +475,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
     for (i in 1:(q-1)) {
       for (j in (i+1):q) {
 	if (is_inf(Theta_x_r_skeleton[g,j,i])) {
-	  if (w8skel[pos[8],2] == 0) len_free[8] += 1;
+	  if (w8skel[pos[8],2] == 0 || w8skel[pos[8],3] == 1) len_free[8] += 1;
 	  pos[8] += 1;
 	}
       }
@@ -485,7 +486,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
     f_start9[g] = pos[9];
     for (i in 1:m) {
       if (is_inf(Psi_skeleton[g,i,i])) {
-	if (w9skel[pos[9],2] == 0) len_free[9] += 1;
+	if (w9skel[pos[9],2] == 0 || w9skel[pos[9],3] == 1) len_free[9] += 1;
 	pos[9] += 1;
       }
     }
@@ -496,7 +497,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
     for (i in 1:(m-1)) {
       for (j in (i+1):m) {
 	if (is_inf(Psi_r_skeleton[g,j,i])) {
-	  if (w10skel[pos[10],2] == 0) len_free[10] += 1;
+	  if (w10skel[pos[10],2] == 0 || w10skel[pos[10],3] == 1) len_free[10] += 1;
 	  pos[10] += 1;
 	}
       }
@@ -507,7 +508,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
     f_start11[g] = pos[11];
     for (i in 1:n) {
       if (is_inf(Phi_skeleton[g,i,i])) {
-	if (w11skel[pos[11],2] == 0) len_free[11] += 1;
+	if (w11skel[pos[11],2] == 0 || w11skel[pos[11],3] == 1) len_free[11] += 1;
 	pos[11] += 1;
       }
     }
@@ -518,7 +519,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
     for (i in 1:(n-1)) {
       for (j in (i+1):n) {
 	if (is_inf(Phi_r_skeleton[g,j,i])) {
-	  if (w12skel[pos[12],2] == 0) len_free[12] += 1;
+	  if (w12skel[pos[12],2] == 0 || w12skel[pos[12],3] == 1) len_free[12] += 1;
 	  pos[12] += 1;
 	}
       }
@@ -530,7 +531,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
     f_start13[g] = pos[13];
     for (i in 1:(p+q)) {
       if (is_inf(Nu_skeleton[g,i,1])) {
-	if (w13skel[pos[13],2] == 0) len_free[13] += 1;
+	if (w13skel[pos[13],2] == 0 || w13skel[pos[13],3] == 1) len_free[13] += 1;
 	pos[13] += 1;
       }
     }
@@ -540,7 +541,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
     f_start14[g] = pos[14];
     for (i in 1:(m+n)) {
       if (is_inf(Alpha_skeleton[g,i,1])) {
-	if (w14skel[pos[14],2] == 0) len_free[14] += 1;
+	if (w14skel[pos[14],2] == 0 || w14skel[pos[14],3] == 1) len_free[14] += 1;
 	pos[14] += 1;
       }
     }
