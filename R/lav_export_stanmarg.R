@@ -54,7 +54,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, ...) {
     len <- len + wlen
   }
 
-  wskel <- matrix(0, len, 2)
+  wskel <- matrix(0, len, 3)
   if (NROW(constraint) > 0) {
     freemat <- do.call("rbind", free)
     free2mat <- do.call("rbind", free2)
@@ -84,6 +84,8 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, ...) {
     ## constrained parameters
     freepars <- cumsum(wskel[,1] == 0)
     wskel[wskel[,1]==1,2] <- freepars[wskel[wskel[,1]==1,2]]
+
+    ## TODO check for wiggle, set wskel[,3] to 1 if involved in wiggle
   }
   
   lvmat <- mat %in% c('Gamma', 'B', 'Psi_r')
@@ -239,14 +241,14 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     }
   } else {
     dat$Lambda_y_skeleton <- array(0, dim = c(Ng, 0, 0))
-    dat$w1skel <- matrix(0, 0, 2)
+    dat$w1skel <- matrix(0, 0, 3)
     dat$lam_y_sign <- matrix(0, 0, 2)
   }
 
   ## 2. Lambda_x; never used because x only pops up in
   ##    the conditional case.
   dat$Lambda_x_skeleton <- array(0, dim = c(Ng, 0, 0))
-  dat$w2skel <- matrix(0, 0, 2)
+  dat$w2skel <- matrix(0, 0, 3)
   dat$lam_x_sign <- matrix(0, 0, 2)
 
   ## 3. Gamma
@@ -269,7 +271,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     }
   } else {
     dat$Gamma_skeleton <- array(0, dim = c(Ng, dim(dat$Lambda_y_skeleton)[3], 0))
-    dat$w3skel <- matrix(0, 0, 2)
+    dat$w3skel <- matrix(0, 0, 3)
     dat$gam_sign <- matrix(0, 0, 3)
   }
 
@@ -292,7 +294,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     }
   } else {
     dat$B_skeleton <- array(0, dim = c(Ng, dim(dat$Lambda_y_skeleton)[3], 0))
-    dat$w4skel <- matrix(0, 0, 2)
+    dat$w4skel <- matrix(0, 0, 3)
     dat$b_sign <- matrix(0, 0, 3)
   }
 
@@ -324,7 +326,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     }
   } else {
     dat$Theta_skeleton <- array(0, dim = c(Ng, 0, 0))
-    dat$w5skel <- matrix(0, 0, 2)
+    dat$w5skel <- matrix(0, 0, 3)
   }
 
   ## 7. Theta_r
@@ -355,7 +357,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     }
   } else {
     dat$Theta_r_skeleton <- array(0, dim = c(Ng, 0, 0))
-    dat$w7skel <- matrix(0, 0, 2)
+    dat$w7skel <- matrix(0, 0, 3)
   }
   
   ## 6. diag(Theta_x)
@@ -386,7 +388,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     }
   } else {
     dat$Theta_x_skeleton <- array(0, dim = c(Ng, 0, 0))
-    dat$w6skel <- matrix(0, 0, 2)
+    dat$w6skel <- matrix(0, 0, 3)
   }
 
 
@@ -418,7 +420,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     }
   } else {
     dat$Theta_x_r_skeleton <- array(0, dim = c(Ng, 0, 0))
-    dat$w8skel <- matrix(0, 0, 2)
+    dat$w8skel <- matrix(0, 0, 3)
   }
 
   ## 9. diag(Psi)
@@ -450,7 +452,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     }
   } else {
     dat$Psi_skeleton <- array(0, dim = c(Ng, 0, 0))
-    dat$w9skel <- matrix(0, 0, 2)
+    dat$w9skel <- matrix(0, 0, 3)
   }
 
   ## 10. Psi_r
@@ -484,17 +486,17 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     }
   } else {
     dat$Psi_r_skeleton <- array(0, dim = c(Ng, 0, 0))
-    dat$w10skel <- matrix(0, 0, 2)
+    dat$w10skel <- matrix(0, 0, 3)
     dat$psi_r_sign <- matrix(0, 0, 3)
   }
 
   ## 11. Phi unused
   dat$Phi_skeleton <- array(0, dim = c(Ng, 0, 0))
-  dat$w11skel <- matrix(0, 0, 2)
+  dat$w11skel <- matrix(0, 0, 3)
 
   ## 12. Phi_r unused
   dat$Phi_r_skeleton <- array(0, dim = c(Ng, 0, 0))
-  dat$w12skel <- matrix(0, 0, 2)
+  dat$w12skel <- matrix(0, 0, 3)
   dat$phi_r_sign <- matrix(0, 0, 3)
 
   ## 13. Nu NB: unlike lavaan, we paste mean.x to end!!
@@ -522,7 +524,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     }
   } else {
     dat$Nu_skeleton <- array(0, dim = c(Ng, 0, 0))
-    dat$w13skel <- matrix(0, 0, 2)
+    dat$w13skel <- matrix(0, 0, 3)
   }
 
   ## 14. Alpha
@@ -542,7 +544,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits) {
     }
   } else {
     dat$Alpha_skeleton <- array(0, dim = c(Ng, 0, 0))
-    dat$w14skel <- matrix(0, 0, 2)
+    dat$w14skel <- matrix(0, 0, 3)
   }
 
   ## add priors by using set_stanpars() from classic approach
