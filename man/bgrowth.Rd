@@ -60,7 +60,7 @@ save.lvs = FALSE, jags.ic = FALSE, seed = NULL, bcontrol = list())
   \code{"stanclassic"}, which sample latent variables and provide some
   greater functionality (because syntax is written "on the fly"). But
   they are slower and less efficient.}
-\item{save.lvs}{Should sample latent variables (factor scores) be saved? Logical; defaults to FALSE}
+\item{save.lvs}{Should sampled latent variables (factor scores) be saved? Logical; defaults to FALSE}
 \item{jags.ic}{Should DIC be computed the JAGS way, in addition to the BUGS way? Logical; defaults to FALSE}
 \item{seed}{A vector of length \code{n.chains} (for target
   \code{"jags"}) or an integer (for target \code{"stan"}) containing random
