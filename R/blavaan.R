@@ -13,6 +13,7 @@ blavaan <- function(...,  # default lavaan arguments
                     convergence        = "manual",
                     target             = "stan",
                     save.lvs           = FALSE,
+                    wiggle             = NULL,
                     jags.ic            = FALSE,
                     seed               = NULL,
                     bcontrol         = list()
@@ -427,7 +428,7 @@ blavaan <- function(...,  # default lavaan arguments
             } else {
                 l2s <- try(lav2stanmarg(lavobject = LAV, dp = dp,
                                         n.chains = n.chains,
-                                        inits = initsin),
+                                        inits = initsin, wig = wiggle),
                            silent = TRUE)
                 if(!inherits(l2s, "try-error")){
                     ldargs <- c(l2s$dat, list(lavpartable = l2s$lavpartable, dumlv = l2s$dumlv,
@@ -837,7 +838,7 @@ blavaan <- function(...,  # default lavaan arguments
 bcfa <- bsem <- function(..., cp = "srs", dp = NULL,
     n.chains = 3, burnin, sample, adapt,
     mcmcfile = FALSE, mcmcextra = list(), inits = "prior",
-    convergence = "manual", target = "stan", save.lvs = FALSE,
+    convergence = "manual", target = "stan", save.lvs = FALSE, wiggle = NULL,
     jags.ic = FALSE, seed = NULL, bcontrol = list()) {
 
     dotdotdot <- list(...)
@@ -881,7 +882,7 @@ bcfa <- bsem <- function(..., cp = "srs", dp = NULL,
 bgrowth <- function(..., cp = "srs", dp = NULL,
     n.chains = 3, burnin, sample, adapt,
     mcmcfile = FALSE, mcmcextra = list(), inits = "prior",
-    convergence = "manual", target = "stan", save.lvs = FALSE,
+    convergence = "manual", target = "stan", save.lvs = FALSE, wiggle = NULL,
     jags.ic = FALSE, seed = NULL, bcontrol = list()) {
 
     dotdotdot <- list(...)

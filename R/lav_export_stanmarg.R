@@ -221,13 +221,16 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wig=NULL) {
   nfree <- list()
   lavpartable <- parTable(lavobject)
   lavpartable <- lavMatrixRepresentation(lavpartable, add.attributes = TRUE)
+  lavpartable <- lavpartable[order(lavpartable$group, lavpartable$col, lavpartable$row),]
   freeparnums <- rep(0, length(lavpartable$free))
 
   ## 1. Lambda_y
   if ("lambda" %in% names(freemats[[1]])) {
     fr <- lapply(freemats, function(x) x$lambda)
     es <- lapply(estmats, function(x) x$lambda)
-    res <- matattr(fr, es, constrain, mat = "Lambda_y", Ng, opts$std.lv, wig=c(6,7))
+    frnums <- sapply(fr, function(x) as.numeric(x[x != 0]))
+    tmpwig <- which(lavpartable[lavpartable$free %in% frnums, 'plabel'] %in% wig)
+    res <- matattr(fr, es, constrain, mat = "Lambda_y", Ng, opts$std.lv, tmpwig)
 
     dat$Lambda_y_skeleton <- res$matskel
     dat$w1skel <- res$wskel
@@ -257,9 +260,11 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wig=NULL) {
   if ("gamma" %in% names(freemats[[1]])) {
     fr <- lapply(freemats, function(x) x$gamma)
     es <- lapply(estmats, function(x) x$gamma)
+    frnums <- sapply(fr, function(x) as.numeric(x[x != 0]))
+    tmpwig <- which(lavpartable[lavpartable$free %in% frnums, 'plabel'] %in% wig)
     ## Note: if Lambda_x were in use, then FALSE below needs to
     ##       be opts$std.lv:
-    res <- matattr(fr, es, constrain, mat = "Gamma", Ng, FALSE, wig)
+    res <- matattr(fr, es, constrain, mat = "Gamma", Ng, FALSE, tmpwig)
 
     dat$Gamma_skeleton <- res$matskel
     dat$w3skel <- res$wskel
@@ -281,7 +286,9 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wig=NULL) {
   if ("beta" %in% names(freemats[[1]])) {
     fr <- lapply(freemats, function(x) x$beta)
     es <- lapply(estmats, function(x) x$beta)
-    res <- matattr(fr, es, constrain, mat = "B", Ng, opts$std.lv, wig,
+    frnums <- sapply(fr, function(x) as.numeric(x[x != 0]))
+    tmpwig <- which(lavpartable[lavpartable$free %in% frnums, 'plabel'] %in% wig)
+    res <- matattr(fr, es, constrain, mat = "B", Ng, opts$std.lv, tmpwig,
                    free2 = lyfree2, sign = dat$lam_y_sign)
 
     dat$B_skeleton <- res$matskel
@@ -314,8 +321,11 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wig=NULL) {
       dmat}
       )
     dest <- es
+
+    frnums <- sapply(fr, function(x) as.numeric(x[x != 0]))
+    tmpwig <- which(lavpartable[lavpartable$free %in% frnums, 'plabel'] %in% wig)
     
-    res <- matattr(fr, es, constrain, mat = "Theta", Ng, opts$std.lv, wig)
+    res <- matattr(fr, es, constrain, mat = "Theta", Ng, opts$std.lv, tmpwig)
 
     dat$Theta_skeleton <- res$matskel
     dat$w5skel <- res$wskel
@@ -345,8 +355,11 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wig=NULL) {
       dmat[upper.tri(dmat)] <- 0L
       dmat}
       )
+
+    frnums <- sapply(fr, function(x) as.numeric(x[x != 0]))
+    tmpwig <- which(lavpartable[lavpartable$free %in% frnums, 'plabel'] %in% wig)
     
-    res <- matattr(fr, es, constrain, mat = "Theta_r", Ng, opts$std.lv, wig, dest = dest)
+    res <- matattr(fr, es, constrain, mat = "Theta_r", Ng, opts$std.lv, tmpwig, dest = dest)
 
     dat$Theta_r_skeleton <- res$matskel
     dat$w7skel <- res$wskel
@@ -376,8 +389,11 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wig=NULL) {
       dmat}
       )
     dest <- es
+
+    frnums <- sapply(fr, function(x) as.numeric(x[x != 0]))
+    tmpwig <- which(lavpartable[lavpartable$free %in% frnums, 'plabel'] %in% wig)
     
-    res <- matattr(fr, es, constrain, mat = "Theta_x", Ng, opts$std.lv, wig)
+    res <- matattr(fr, es, constrain, mat = "Theta_x", Ng, opts$std.lv, tmpwig)
 
     dat$Theta_x_skeleton <- res$matskel
     dat$w6skel <- res$wskel
@@ -408,8 +424,11 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wig=NULL) {
       dmat[upper.tri(dmat)] <- 0L
       dmat}
       )
+
+    frnums <- sapply(fr, function(x) as.numeric(x[x != 0]))
+    tmpwig <- which(lavpartable[lavpartable$free %in% frnums, 'plabel'] %in% wig)
     
-    res <- matattr(fr, es, constrain, mat = "Theta_x_r", Ng, opts$std.lv, wig, dest = dest)
+    res <- matattr(fr, es, constrain, mat = "Theta_x_r", Ng, opts$std.lv, tmpwig, dest = dest)
 
     dat$Theta_x_r_skeleton <- res$matskel
     dat$w8skel <- res$wskel
@@ -439,9 +458,12 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wig=NULL) {
       dmat}
       )
     dest <- es
+
+    frnums <- sapply(fr, function(x) as.numeric(x[x != 0]))
+    tmpwig <- which(lavpartable[lavpartable$free %in% frnums, 'plabel'] %in% wig)
     
     ## std.lv only matters for off-diagonals
-    res <- matattr(fr, es, constrain, mat = "Psi", Ng, FALSE, wig)
+    res <- matattr(fr, es, constrain, mat = "Psi", Ng, FALSE, tmpwig)
 
     dat$Psi_skeleton <- res$matskel
     dat$w9skel <- res$wskel
@@ -471,8 +493,11 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wig=NULL) {
       dmat[upper.tri(dmat)] <- 0L
       dmat}
       )
+
+    frnums <- sapply(fr, function(x) as.numeric(x[x != 0]))
+    tmpwig <- which(lavpartable[lavpartable$free %in% frnums, 'plabel'] %in% wig)
     
-    res <- matattr(fr, es, constrain, mat = "Psi_r", Ng, opts$std.lv, wig,
+    res <- matattr(fr, es, constrain, mat = "Psi_r", Ng, opts$std.lv, tmpwig,
                    free2 = lyfree2, sign = dat$lam_y_sign,
                    dest = dest)
 
@@ -513,7 +538,11 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wig=NULL) {
       if ("mean.x" %in% names(x)) out <- rbind(out, x$mean.x)
       out}
       )
-    res <- matattr(fr, es, constrain, mat = "Nu", Ng, opts$std.lv, wig)
+
+    frnums <- sapply(fr, function(x) as.numeric(x[x != 0]))
+    tmpwig <- which(lavpartable[lavpartable$free %in% frnums, 'plabel'] %in% wig)
+
+    res <- matattr(fr, es, constrain, mat = "Nu", Ng, opts$std.lv, tmpwig)
 
     dat$Nu_skeleton <- res$matskel
     dat$w13skel <- res$wskel
@@ -533,7 +562,11 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wig=NULL) {
   if ("alpha" %in% names(freemats[[1]])) {
     fr <- lapply(freemats, function(x) x$alpha)
     es <- lapply(estmats, function(x) x$alpha)
-    res <- matattr(fr, es, constrain, mat = "Alpha", Ng, opts$std.lv, wig)
+
+    frnums <- sapply(fr, function(x) as.numeric(x[x != 0]))
+    tmpwig <- which(lavpartable[lavpartable$free %in% frnums, 'plabel'] %in% wig)
+    
+    res <- matattr(fr, es, constrain, mat = "Alpha", Ng, opts$std.lv, tmpwig)
 
     dat$Alpha_skeleton <- res$matskel
     dat$w14skel <- res$wskel
@@ -582,7 +615,6 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wig=NULL) {
   lavpartable$freeparnums <- freeparnums
   
   ## FIXME theta_x, cov.x not handled
-  ## FIXME need to account for wiggle params
   if (!(inits %in% c("jags", "stan"))) {
     ini <- set_inits_stan(lavpartable, nfree, n.chains, inits)
 
