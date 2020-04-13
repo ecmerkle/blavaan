@@ -192,6 +192,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
                           gam_sign, b_sign, psi_r_sign, phi_r_sign,
                           lavpartable = NULL, # for priors
                           dumlv = NULL, # for sampling lvs
+                          wigind = NULL, # wiggle indicator
                           ...) {
   
   dat <- list()
@@ -398,7 +399,8 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
 
   ## priors; first make sure they match what is in the stan file
   check_priors(lavpartable)
-
+  dat$wigind <- wigind
+  
   pris <- format_priors(lavpartable, "lambda")
   dat$lambda_y_mn <- pris[['p1']]; dat$lambda_y_sd <- pris[['p2']]
   dat$len_lam_y <- length(dat$lambda_y_mn)

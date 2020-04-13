@@ -605,10 +605,12 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wig=NULL) {
   stanprires <- set_stanpars("", lpt, prifree, dp, "")
   lavpartable$prior <- stanprires$partable$prior
 
+  dat$wigind <- 0L
   if (length(wig) > 0) {
-    ## assign default prior to wiggle params for now, real prior is handled in stan
+    ## assign prior to wiggle params, (mean value is handled in stan)
     needpri <- (lavpartable$prior == "") & (lavpartable$plabel %in% wig)
-    lavpartable$prior[needpri] <- dp[lavpartable$mat[needpri]]
+    lavpartable$prior[needpri] <- "normal(0,.1)"
+    dat$wigind <- 1L
   }
 
   ## add inits (manipulate partable to re-use set_inits_stan)

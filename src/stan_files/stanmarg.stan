@@ -37,6 +37,30 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     }
     return out;
   }
+
+  vector fill_prior(vector free_elements, real[] pri_mean, int[,] eq_skeleton) {
+    int R = size(eq_skeleton);
+    int eqelem = 0;
+    int pos = 1;
+    vector[num_elements(pri_mean)] out;
+
+    for (r in 1:R) {
+      if (pos <= num_elements(pri_mean)) {
+	int eq = eq_skeleton[r, 1];
+	int wig = eq_skeleton[r, 3];
+
+	if (eq == 0) {
+	  out[pos] = pri_mean[pos];
+	  pos += 1;
+	} else if (wig == 1) {
+	  eqelem = eq_skeleton[r, 2];
+	  out[pos] = free_elements[eqelem];
+	  pos += 1;
+	}
+      }
+    }
+    return out;
+  }
   
   /*
    * This is a bug-free version of csr_to_dense_matrix and has the same arguments
@@ -142,6 +166,7 @@ data {
   int<lower=1> startrow[Np]; // starting row for each missing pattern
   int<lower=1,upper=Ntot> endrow[Np]; // ending row for each missing pattern
   int<lower=1,upper=Ng> grpnum[Np]; // group number for each row of data
+  int<lower=0,upper=1> wigind; // do any parameters have approx equality constraint ('wiggle')?
   vector[p + q] YX[has_data ? Ntot : 0]; // if data, include them
 
   
@@ -588,6 +613,11 @@ transformed parameters {
   matrix[n, n] Phi_r_lower[Ng];
   matrix[n, n] Phi_r[Ng];
 
+  vector[len_free[1]] lambda_y_primn;
+  vector[len_free[4]] b_primn;
+  vector[len_free[13]] nu_primn;
+  vector[len_free[14]] alpha_primn;
+  
   // Now fill them in
   for (g in 1:Ng) {
     Lambda_y[g] = fill_matrix(Lambda_y_free, Lambda_y_skeleton[g], w1skel, g_start1[g], f_start1[g]);
@@ -619,6 +649,18 @@ transformed parameters {
       Phi_r[g] = Phi_r_lower[g] + transpose(Phi_r_lower[g]) - diag_matrix(rep_vector(1, n));
       PHI[g] = quad_form_sym(Phi_r[g], Phi_sd[g]);
     }
+  }
+
+  if (wigind) {
+    lambda_y_primn = fill_prior(Lambda_y_free, lambda_y_mn, w1skel);
+    b_primn = fill_prior(B_free, b_mn, w4skel);
+    nu_primn = fill_prior(Nu_free, nu_mn, w13skel);
+    alpha_primn = fill_prior(Alpha_free, alpha_mn, w14skel);
+  } else {
+    lambda_y_primn = to_vector(lambda_y_mn);
+    b_primn = to_vector(b_mn);
+    nu_primn = to_vector(nu_mn);
+    alpha_primn = to_vector(alpha_mn);
   }
 }
 model { // N.B.: things declared in the model block do not get saved in the output, which is okay here
@@ -693,13 +735,13 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   }
   
   /* prior densities in log-units */
-  target += normal_lpdf(Lambda_y_free | lambda_y_mn, lambda_y_sd);
+  target += normal_lpdf(Lambda_y_free | lambda_y_primn, lambda_y_sd);
   target += normal_lpdf(Lambda_x_free | lambda_x_mn, lambda_x_sd);
   target += normal_lpdf(Gamma_free    | gamma_mn, gamma_sd);
-  target += normal_lpdf(B_free        | b_mn, b_sd);
+  target += normal_lpdf(B_free        | b_primn, b_sd);
 
-  target += normal_lpdf(Nu_free       | nu_mn, nu_sd);
-  target += normal_lpdf(Alpha_free    | alpha_mn, alpha_sd);
+  target += normal_lpdf(Nu_free       | nu_primn, nu_sd);
+  target += normal_lpdf(Alpha_free    | alpha_primn, alpha_sd);
 
   /* transform sd parameters to var or prec, depending on
      what the user wants. */
