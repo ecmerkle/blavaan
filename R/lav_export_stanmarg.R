@@ -237,8 +237,9 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wig=NULL) {
     ptrows <- which(lavpartable$mat == "lambda" & lavpartable$free > 0)
     veclen <- length(ptrows)
     if (veclen > 0) {
-      nfree <- c(nfree, list(lambda = sum(res$wskel[1:veclen,1] == 0)))
-      freeparnums[ptrows[res$wskel[1:veclen,1] == 0]] <- 1:sum(res$wskel[1:veclen,1] == 0)
+      fpars <- res$wskel[1:veclen,1] == 0 | res$wskel[1:veclen,3] == 1
+      nfree <- c(nfree, list(lambda = sum(fpars)))
+      freeparnums[ptrows[fpars]] <- 1:sum(fpars)
     }
   } else {
     dat$Lambda_y_skeleton <- array(0, dim = c(Ng, 0, 0))
@@ -570,7 +571,13 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wig=NULL) {
   dp <- c(dp, def = "")
   stanprires <- set_stanpars("", lpt, prifree, dp, "")
   lavpartable$prior <- stanprires$partable$prior
-  
+
+  if (length(wig) > 0) {
+    ## assign default prior to wiggle params for now, real prior is handled in stan
+    needpri <- (lavpartable$prior == "") & (lavpartable$plabel %in% wig)
+    lavpartable$prior[needpri] <- dp[lavpartable$mat[needpri]]
+  }
+
   ## add inits (manipulate partable to re-use set_inits_stan)
   lavpartable$freeparnums <- freeparnums
   
@@ -700,17 +707,19 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
         if(NROW(tmpw) > 0){
           ## need rowvec & rowvec2 because stan summary rows
           ## ordered differently from stan draws rows
+          samppar <- (tmpw[,1] == 0) | (tmpw[,3] == 1) # free or constrained prior
           parvec <- tmpsd <- rowvec <- rowvec2 <- rep(NA, NROW(tmpw))
-          rowvec[tmpw[,1] == 0] <- grep(stanvec[j], names(b.est))
-          rowvec2[tmpw[,1] == 0] <- grep(stanvec[j], colnames(draw_mat))
-          parvec[tmpw[,1] == 0] <- b.est[rowvec[tmpw[,1] == 0]]
-          tmpsd[tmpw[,1] == 0] <- sd.est[rowvec[tmpw[,1] == 0]]
+          rowvec[samppar] <- grep(stanvec[j], names(b.est))
+          rowvec2[samppar] <- grep(stanvec[j], colnames(draw_mat))
+          parvec[samppar] <- b.est[rowvec[samppar]]
+          tmpsd[samppar] <- sd.est[rowvec[samppar]]
 
-          eqconst <- tmpw[,2][tmpw[,1] == 1]
-          rowvec[tmpw[,1] == 1] <- rowvec[tmpw[,1] == 0][eqconst]
-          rowvec2[tmpw[,1] == 1] <- rowvec2[tmpw[,1] == 0][eqconst]
-          parvec[tmpw[,1] == 1] <- parvec[tmpw[,1] == 0][eqconst]
-          tmpsd[tmpw[,1] == 1] <- tmpsd[tmpw[,1] == 0][eqconst]
+          eqpar <- (tmpw[,1] == 1) & (tmpw[,3] == 0)
+          eqconst <- tmpw[,2][eqpar]
+          rowvec[eqpar] <- rowvec[tmpw[,1] == 0][eqconst]
+          rowvec2[eqpar] <- rowvec2[tmpw[,1] == 0][eqconst]
+          parvec[eqpar] <- parvec[tmpw[,1] == 0][eqconst]
+          tmpsd[eqpar] <- tmpsd[tmpw[,1] == 0][eqconst]
           
           rowidx[parnums] <- rowvec
           rowidx2[parnums] <- rowvec2
