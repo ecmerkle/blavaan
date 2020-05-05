@@ -88,12 +88,12 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
     freepars <- cumsum(wskel[,1] == 0)
     wskel[wskel[,1]==1,2] <- freepars[wskel[wskel[,1]==1,2]]
   }
-  
+
   lvmat <- mat %in% c('Gamma', 'B', 'Psi_r')
   lammat <- grepl('Lambda', mat)
   sign <- matrix(0, len, 2 + lvmat)
-  if (std.lv & (lvmat | lammat) & length(ddd$sign) > 0) {
-    if (lvmat) {
+  if (std.lv & (lvmat | lammat)) {
+    if (lvmat & length(ddd$sign) > 0) {
       lamfree <- ddd$free2
       lamsign <- ddd$sign
 
@@ -102,7 +102,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
         if (nrow(fpar) > 0) {
           for (j in 1:nrow(fpar)) {
             ## in case all loadings restricted to 0
-            if (all(lamfree[[i]][,fpar[j,2]] == 0L)) next
+            if (all(lamfree[[i]][,fpar[j,]] == 0L)) next
             
             ## find sign-constrained loadings of the two lvs
             lampar1 <- lamfree[[i]][,fpar[j,2]]
@@ -122,20 +122,24 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
             }
 
             rowloc <- free2[[i]][fpar[j,1], fpar[j,2]]
+            sign[rowloc, 1] <- 1L
             sign[rowloc, 2:3] <- c(l1, l2)
           }
         }
       }
-    } else {
+    } else if (lammat) {
       for (i in 1:length(free2)) {
         for (j in 1:NCOL(free2[[i]])) {
           col <- free2[[i]][,j]
           parnums <- col[col != 0L]
-          psign <- min(parnums)
-          ## if equality constraint, sign must involve the
-          ## "free" parameter
-          if (wskel[psign,1] == 1L) psign <- wskel[psign,2]
-          sign[parnums, 2] <- psign
+          if (length(parnums) > 0) {
+            psign <- min(parnums)
+            ## if equality constraint, sign must involve the
+            ## "free" parameter
+            if (wskel[psign,1] == 1L) psign <- wskel[psign,2]
+            sign[parnums, 1] <- 1L
+            sign[parnums, 2] <- psign
+          }
         }
       }
     }
