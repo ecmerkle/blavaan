@@ -46,12 +46,12 @@ blavaan <- function(...,  # default lavaan arguments
         }
     }
 
-    # ordinal functionality not available
-    if("ordered" %in% dotNames) stop("blavaan ERROR: models with ordered variables are not yet available.")
-
     # multilevel functionality not available
     if("cluster" %in% dotNames) stop("blavaan ERROR: two-level models are not yet available.")
 
+    # wiggle only for target="stan"
+    if(length(wiggle) > 0 & target != "stan") stop("blavaan ERROR: wiggle currently only works for target='stan'.")
+  
     # ensure rstan/runjags are here. if target is not installed but
     # the other is, then use the other instead.
     if(grepl("stan", target)){
@@ -246,6 +246,11 @@ blavaan <- function(...,  # default lavaan arguments
         stop("blavaan ERROR: full data are required. consider using kd() from package semTools.")
     }
 
+    # ordinal functionality not available
+    if(lavInspect(LAV, 'categorical') {
+        stop("blavaan ERROR: models with ordered variables are not yet available.")
+    }
+    
     # turn warnings back on by default
     LAV@Options$warn <- origwarn
 
