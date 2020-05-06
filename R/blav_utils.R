@@ -711,6 +711,7 @@ wiglabels <- function(lavpartable, wiggle){
       if(x == 'means'){
         tmppt <- tmppt[lavpartable$lhs %in% lv.names,]
       }
+      if(NROW(tmppt) == 0L) stop(paste0("blavaan ERROR: use of wiggle='", x, "' also requires group.equal='", x, "'."))
       lapply(unique(tmppt$label), function(y){
         tmppt$plabel[tmppt$label == y]
       })

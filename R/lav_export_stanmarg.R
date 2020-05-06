@@ -151,7 +151,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
   return(out)
 }
 
-lav2stanmarg <- function(lavobject, dp, n.chains, inits, wig=NULL) {
+lav2stanmarg <- function(lavobject, dp, n.chains, inits, wig=NULL, wiggle.sd=NULL) {
   ## extract model and data characteristics from lavaan object
   dat <- list()
   opts <- lavInspect(lavobject, 'options')
@@ -613,7 +613,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wig=NULL) {
   if (length(wig) > 0) {
     ## assign prior to wiggle params, (mean value is handled in stan)
     needpri <- (lavpartable$prior == "") & (lavpartable$plabel %in% wig)
-    lavpartable$prior[needpri] <- "normal(0,.1)"
+    lavpartable$prior[needpri] <- paste0("normal(0,", wiggle.sd, ")")
     dat$wigind <- 1L
   }
 
