@@ -426,15 +426,20 @@ blavaan <- function(...,  # default lavaan arguments
                                              debug = mcdebug),
                                 silent = TRUE)
             } else {
-                wigls <- unlist(wiglabels(parTable(LAV), wiggle))
+                wigls <- wiglabels(parTable(LAV), wiggle)
                 l2s <- try(lav2stanmarg(lavobject = LAV, dp = dp,
                                         n.chains = n.chains,
-                                        inits = initsin, wig = wigls),
+                                        inits = initsin, wig = unlist(wigls)),
                            silent = TRUE)
                 if(!inherits(l2s, "try-error")){
                     ldargs <- c(l2s$dat, list(lavpartable = l2s$lavpartable, dumlv = l2s$dumlv,
                                               save_lvs = save.lvs))
-                    lavpartable$prior <- l2s$lavpartable$prior
+
+                    ## add priors to lavpartable, including wiggle
+                    lavpartable$prior[as.numeric(rownames(l2s$lavpartable))] <- l2s$lavpartable$prior
+                    for(i in 1:length(wigls)){
+                        lavpartable$prior[lavpartable$plabel %in% wigls[[i]][-1]] <- "wiggle[sd=0.1]"
+                    }
                     jagtrans <- try(do.call("stanmarg_data", ldargs), silent = TRUE)
 
                     if(inherits(jagtrans, "try-error")) stop(jagtrans)
