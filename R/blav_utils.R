@@ -679,7 +679,7 @@ make_mcmc <- function(mcmcout){
   lavmcmc
 }
 
-## check that a package is installed via requireNamspace
+## check that a package is installed via requireNamespace
 pkgcheck <- function(x){
   suppressMessages(requireNamespace(x, quietly = TRUE))
 }
@@ -687,3 +687,55 @@ pkgcheck <- function(x){
 pkgload <- function(x){
   try(suppressMessages(attachNamespace(x)), silent = TRUE)
 }
+
+## get plabels that have "wiggle", for target="stan"
+wiglabels <- function(lavpartable, wiggle){
+  ## allowable group.equal names
+  gqnames <- c("loadings", "intercepts", "regressions", "means", "thresholds")
+  gqops <- c("=~", "~1", "~", "~1", "|")
+  lv.names <- unique(unlist(lav_partable_attributes(lavpartable, pta=NULL)$vnames$lv))
+  lavpartable <- lavpartable[lavpartable$label != "",]
+
+  tmplabs <- lapply(wiggle, function(x){
+    if(any(grepl(x, lavpartable$label))){
+      if(any(lavpartable$op[lavpartable$label == x] == "~~")){
+        stop("blavaan ERROR: wiggle cannot be used on variance parameters.")
+      }
+      lavpartable$plabel[lavpartable$label == x]
+    } else if(x %in% gqnames){
+      wname <- which(gqnames == x)
+      tmppt <- lavpartable[lavpartable$op == gqops[wname],]
+      if(x == 'intercepts'){
+        tmppt <- tmppt[!(lavpartable$lhs %in% lv.names),]
+      }
+      if(x == 'means'){
+        tmppt <- tmppt[lavpartable$lhs %in% lv.names,]
+      }
+      lapply(unique(tmppt$label), function(y){
+        tmppt$plabel[tmppt$label == y]
+      })
+    } else {
+      stop("blavaan ERROR: poorly-specified wiggle argument.")
+    }
+  })
+
+  ## fix list nesting, in case group.equal was used
+  outlist <- NULL
+  if(length(tmplabs) == 1 & inherits(tmplabs[[1]], "list")){
+    tmplabs <- tmplabs[[1]]
+  }
+  
+  for(i in 1:length(tmplabs)){
+    if(inherits(tmplabs[[i]], "list")){
+      tmpelem <- tmplabs[[i]]
+    } else {
+      tmpelem <- list(tmplabs[[i]])
+    }
+    if(length(tmpelem[[1]]) > 1){
+      outlist <- c(outlist, tmpelem)
+    }
+  }
+
+  outlist
+}
+  

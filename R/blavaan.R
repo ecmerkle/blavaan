@@ -426,9 +426,10 @@ blavaan <- function(...,  # default lavaan arguments
                                              debug = mcdebug),
                                 silent = TRUE)
             } else {
+                wigls <- unlist(wiglabels(parTable(LAV), wiggle))
                 l2s <- try(lav2stanmarg(lavobject = LAV, dp = dp,
                                         n.chains = n.chains,
-                                        inits = initsin, wig = wiggle),
+                                        inits = initsin, wig = wigls),
                            silent = TRUE)
                 if(!inherits(l2s, "try-error")){
                     ldargs <- c(l2s$dat, list(lavpartable = l2s$lavpartable, dumlv = l2s$dumlv,
