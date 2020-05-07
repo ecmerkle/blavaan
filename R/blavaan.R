@@ -51,6 +51,7 @@ blavaan <- function(...,  # default lavaan arguments
 
     # wiggle only for target="stan"
     if(length(wiggle) > 0 & target != "stan") stop("blavaan ERROR: wiggle currently only works for target='stan'.")
+    if(wiggle.sd <= 0L) stop("blavaan ERROR: wiggle.sd must be > 0.")
   
     # ensure rstan/runjags are here. if target is not installed but
     # the other is, then use the other instead.
@@ -247,7 +248,7 @@ blavaan <- function(...,  # default lavaan arguments
     }
 
     # ordinal functionality not available
-    if(lavInspect(LAV, 'categorical') {
+    if(lavInspect(LAV, 'categorical')) {
         stop("blavaan ERROR: models with ordered variables are not yet available.")
     }
     

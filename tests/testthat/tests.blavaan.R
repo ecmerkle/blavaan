@@ -59,5 +59,9 @@ test_that("blavaan arguments", {
   
   ## unknown prior
   expect_error(bsem(model, data=Data, dp=dpriors(psi="mydist(1,.5)")))
-  
+
+  ## wiggle argument
+  expect_error(bsem(model, data=Data, wiggle='a', target='jags'))
+  expect_error(bsem(model, data=Data, wiggle='a', target='stanclassic'))
+  expect_error(bsem(model, data=Data, wiggle='a', wiggle.sd=0))
 })

@@ -688,8 +688,8 @@ pkgload <- function(x){
   try(suppressMessages(attachNamespace(x)), silent = TRUE)
 }
 
-## get plabels that have "wiggle", for target="stan"
-wiglabels <- function(lavpartable, wiggle){
+## get plabels that have "wiggle"
+wiglabels <- function(lavpartable, wiggle, target = "stan"){
   ## allowable group.equal names
   gqnames <- c("loadings", "intercepts", "regressions", "means", "thresholds")
   gqops <- c("=~", "~1", "~", "~1", "|")
