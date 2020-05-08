@@ -189,7 +189,7 @@ blavFitIndices <- function(object, thin = 1, pD = c("loo","waic","dic"),
                               lavjags = baseline.model@external$mcmcout,
                               samplls = baseline.model@external$samplls)$ppdist[["reps"]]
       }
-      pD_null <- fitMeasures(baseline.model, 'p_loo')
+      pD_null <- fitMeasures(baseline.model, paste0('p_', pD))
     }
   }
 
