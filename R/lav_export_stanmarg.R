@@ -151,7 +151,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
   return(out)
 }
 
-lav2stanmarg <- function(lavobject, dp, n.chains, inits, wig=NULL, wiggle.sd=NULL) {
+lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=NULL) {
   ## extract model and data characteristics from lavaan object
   dat <- list()
   opts <- lavInspect(lavobject, 'options')
@@ -226,6 +226,13 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wig=NULL, wiggle.sd=NUL
   lavpartable <- parTable(lavobject)
   lavpartable <- lavMatrixRepresentation(lavpartable, add.attributes = TRUE)
   lavpartable <- lavpartable[order(lavpartable$group, lavpartable$col, lavpartable$row),]
+
+  if (length(wiggle) > 0){
+    wigls <- wiglabels(lavpartable, wiggle, wiggle.sd)
+    wig <- unlist(wigls$outlist)
+    wigpris <- wigls$lavpartable$prior
+  }
+
   freeparnums <- rep(0, length(lavpartable$free))
 
   ## 1. Lambda_y
@@ -643,7 +650,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wig=NULL, wiggle.sd=NUL
              lavobject@Model@ov.y.dummy.lv.idx[[1]])
   
   return(list(dat = dat, free2 = free2, lavpartable = lavpartable,
-              init = ini, dumlv = dumlv))
+              init = ini, dumlv = dumlv, wigpris = wigpris))
 }
 
 

@@ -49,8 +49,7 @@ blavaan <- function(...,  # default lavaan arguments
     # multilevel functionality not available
     if("cluster" %in% dotNames) stop("blavaan ERROR: two-level models are not yet available.")
 
-    # wiggle only for target="stan"
-    if(length(wiggle) > 0 & target != "stan") stop("blavaan ERROR: wiggle currently only works for target='stan'.")
+    # wiggle sd
     if(wiggle.sd <= 0L) stop("blavaan ERROR: wiggle.sd must be > 0.")
   
     # ensure rstan/runjags are here. if target is not installed but
@@ -433,10 +432,9 @@ blavaan <- function(...,  # default lavaan arguments
                                              debug = mcdebug),
                                 silent = TRUE)
             } else {
-                wigls <- wiglabels(parTable(LAV), wiggle)
                 l2s <- try(lav2stanmarg(lavobject = LAV, dp = dp,
                                         n.chains = n.chains,
-                                        inits = initsin, wig = unlist(wigls),
+                                        inits = initsin, wiggle = wiggle,
                                         wiggle.sd = wiggle.sd),
                            silent = TRUE)
                 if(!inherits(l2s, "try-error")){
@@ -444,10 +442,8 @@ blavaan <- function(...,  # default lavaan arguments
                                               save_lvs = save.lvs))
 
                     ## add priors to lavpartable, including wiggle
-                    lavpartable$prior[as.numeric(rownames(l2s$lavpartable))] <- l2s$lavpartable$prior
-                    for(i in 1:length(wigls)){
-                        lavpartable$prior[lavpartable$plabel %in% wigls[[i]][-1]] <- paste0("wiggle[sd=", wiggle.sd, "]")
-                    }
+                    lavpartable$prior[as.numeric(rownames(l2s$lavpartable))] <- l2s$wigpris
+
                     jagtrans <- try(do.call("stanmarg_data", ldargs), silent = TRUE)
 
                     if(inherits(jagtrans, "try-error")) stop(jagtrans)

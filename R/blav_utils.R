@@ -689,37 +689,40 @@ pkgload <- function(x){
 }
 
 ## get plabels that have "wiggle"
-wiglabels <- function(lavpartable, wiggle, target = "stan"){
+wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
   ## allowable group.equal names
   gqnames <- c("loadings", "intercepts", "regressions", "means", "thresholds")
   gqops <- c("=~", "~1", "~", "~1", "|")
   lv.names <- unique(unlist(lav_partable_attributes(lavpartable, pta=NULL)$vnames$lv))
-  lavpartable <- lavpartable[lavpartable$label != "",]
+  lpt <- lavpartable[lavpartable$label != "",]
 
   tmplabs <- lapply(wiggle, function(x){
-    if(any(grepl(x, lavpartable$label))){
-      if(any(lavpartable$op[lavpartable$label == x] == "~~")){
+    if(any(grepl(x, lpt$label))){
+      if(any(lpt$op[lpt$label == x] == "~~")){
         stop("blavaan ERROR: wiggle cannot be used on variance parameters.")
       }
-      lavpartable$plabel[lavpartable$label == x]
+      lpt$plabel[lpt$label == x]
     } else if(x %in% gqnames){
       wname <- which(gqnames == x)
-      tmppt <- lavpartable[lavpartable$op == gqops[wname],]
+      tmppt <- lpt[lpt$op == gqops[wname],]
       if(x == 'intercepts'){
-        tmppt <- tmppt[!(lavpartable$lhs %in% lv.names),]
+        tmppt <- tmppt[!(lpt$lhs %in% lv.names),]
       }
       if(x == 'means'){
-        tmppt <- tmppt[lavpartable$lhs %in% lv.names,]
+        tmppt <- tmppt[lpt$lhs %in% lv.names,]
       }
       if(NROW(tmppt) == 0L) stop(paste0("blavaan ERROR: use of wiggle='", x, "' also requires group.equal='", x, "'."))
-      lapply(unique(tmppt$label), function(y){
-        tmppt$plabel[tmppt$label == y]
-      })
+
+      if(target == "stan"){
+        lapply(unique(tmppt$label), function(y){
+          tmppt$plabel[tmppt$label == y]
+        })
+      }
     } else {
       stop("blavaan ERROR: poorly-specified wiggle argument.")
     }
   })
-
+  
   ## fix list nesting, in case group.equal was used
   outlist <- NULL
   if(length(tmplabs) == 1 & inherits(tmplabs[[1]], "list")){
@@ -737,6 +740,24 @@ wiglabels <- function(lavpartable, wiggle, target = "stan"){
     }
   }
 
-  outlist
+  ## prior for partable
+  if(!("prior" %in% names(lavpartable))) lavpartable$prior <- rep("", length(lavpartable$lhs))
+  for(i in 1:length(wiggle)){
+    tmprows <- which(lavpartable$label == wiggle[i])
+    if(target == "stan"){
+      parname <- with(lavpartable, paste0(mat[tmprows[1]], "[", group[tmprows[1]], ",",
+                                          row[tmprows[1]], ",", col[tmprows[1]], "]"))
+      wigpri <- paste0("normal(", parname, ",", wiggle.sd, ")")
+    } else {
+      dname <- ifelse(grepl("stan", target), "normal(", "dnorm(")
+      wigsc <- ifelse(grepl("stan", target), wiggle.sd, wiggle.sd^(-2))
+      parname <- lavpartable$pxnames[tmprows[1]]
+      wigpri <- paste0(dname, parname, ",", wigsc, ")")
+    }
+    lavpartable$prior[tmprows] <- c(lavpartable$prior[tmprows[1]],
+                                    rep(wigpri, length(tmprows) - 1))
+  }
+
+  list(outlist = outlist, lavpartable = lavpartable)
 }
   
