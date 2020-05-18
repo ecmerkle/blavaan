@@ -62,6 +62,11 @@ bsem(..., cp = "srs",
   greater functionality (because syntax is written "on the fly"). But
   they are slower and less efficient.}
 \item{save.lvs}{Should sampled latent variables (factor scores) be saved? Logical; defaults to FALSE}
+\item{wiggle}{Labels of equality-constrained parameters that should be
+  "approximately" equal. Can also be "intercepts", "loadings",
+  "regressions", "means".}
+\item{wiggle.sd}{The prior sd (of normal distribution) to be used in approximate equality
+  constraints.}
 \item{jags.ic}{Should DIC be computed the JAGS way, in addition to the BUGS way? Logical; defaults to FALSE}
 \item{seed}{A vector of length \code{n.chains} (for target
   \code{"jags"}) or an integer (for target \code{"stan"}) containing random
