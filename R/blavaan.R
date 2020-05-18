@@ -413,7 +413,8 @@ blavaan <- function(...,  # default lavaan arguments
                                          cp = cp, lv.x.wish = lavoptions$auto.cov.lv.x,
                                          dp = dp, n.chains = n.chains,
                                          mcmcextra = mcmcextra, inits = initsin,
-                                         blavmis = blavmis, target="jags"),
+                                         blavmis = blavmis, wiggle = wiggle,
+                                         wiggle.sd = wiggle.sd, target = "jags"),
                                 silent = TRUE)
             } else if(target == "stanclassic"){
                 jagtrans <- try(lav2stan(model = LAV,
@@ -442,7 +443,9 @@ blavaan <- function(...,  # default lavaan arguments
                                               save_lvs = save.lvs))
 
                     ## add priors to lavpartable, including wiggle
-                    lavpartable$prior[as.numeric(rownames(l2s$lavpartable))] <- l2s$wigpris
+                    if(length(wiggle) > 0){
+                      lavpartable$prior[as.numeric(rownames(l2s$lavpartable))] <- l2s$wigpris
+                    }
 
                     jagtrans <- try(do.call("stanmarg_data", ldargs), silent = TRUE)
 

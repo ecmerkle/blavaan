@@ -231,6 +231,9 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     wigls <- wiglabels(lavpartable, wiggle, wiggle.sd)
     wig <- unlist(wigls$outlist)
     wigpris <- wigls$lavpartable$prior
+  } else {
+    wig <- NULL
+    wigpris <- NULL
   }
 
   freeparnums <- rep(0, length(lavpartable$free))

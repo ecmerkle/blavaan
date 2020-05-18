@@ -160,7 +160,12 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x, target="ja
 
                     partable$prior[i] <- dp[partype]
                 }
-                jagpri <- strsplit(partable$prior[i], "\\[")[[1]][1]
+                if(grepl(")[", partable$prior[i], fixed=TRUE)){
+                    ## this avoids wiggle priors, which have param indexing
+                    jagpri <- paste0(strsplit(partable$prior[i], ")[", fixed=TRUE)[[1]][1], ")")
+                } else {
+                    jagpri <- partable$prior[i]
+                }
                 vpri <- grepl("\\[var\\]", partable$prior[i])
                 spri <- grepl("\\[sd\\]", partable$prior[i])
                 if(!vpri & (grepl("theta", partable$mat[i]) | grepl("psi", partable$mat[i]))){

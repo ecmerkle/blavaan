@@ -1,4 +1,4 @@
-lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = NULL, n.chains = 1, mcmcextra = "", inits = "prior", blavmis = "da", pta = NULL, target = "stan") {
+lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = NULL, n.chains = 1, mcmcextra = "", inits = "prior", blavmis = "da", pta = NULL, wiggle = NULL, wiggle.sd = NULL, target = "stan") {
   ## lots of code is taken from lav_export_bugs.R
 
   if(inherits(model, "lavaan")){
@@ -85,6 +85,11 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
   phnames <- unique(partable$lhs[grep(".phant", partable$lhs)])
   lv.names <- c(lv.names, phnames[!(phnames %in% lv.names)])
 
+  ## deal with wiggle
+  if(length(wiggle) > 0){
+    partable <- wiglabels(partable, wiggle, wiggle.sd, target=target)$lavpartable
+  }
+  
   ## tabs
   t1 <- paste(rep(" ", 2L), collapse="")
   t2 <- paste(rep(" ", 4L), collapse="")
@@ -695,7 +700,7 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     
     out <- c(out, list(data=jagsdata))
   }
-
+  
   if(target == "stan"){
     nparms <- max(partable$freeparnums, na.rm = TRUE)
     parmblk <- paste0("parameters{\n", t1, "vector[",

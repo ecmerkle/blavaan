@@ -694,7 +694,7 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
   gqnames <- c("loadings", "intercepts", "regressions", "means", "thresholds")
   gqops <- c("=~", "~1", "~", "~1", "|")
   lv.names <- unique(unlist(lav_partable_attributes(lavpartable, pta=NULL)$vnames$lv))
-  lpt <- lavpartable[lavpartable$label != "",]
+  lpt <- lavpartable[lavpartable$label != "" & !is.na(lavpartable$label),]
 
   tmplabs <- lapply(wiggle, function(x){
     if(any(grepl(x, lpt$label))){
@@ -722,7 +722,7 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
       stop("blavaan ERROR: poorly-specified wiggle argument.")
     }
   })
-  
+
   ## fix list nesting, in case group.equal was used
   outlist <- NULL
   if(length(tmplabs) == 1 & inherits(tmplabs[[1]], "list")){
@@ -751,11 +751,17 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
     } else {
       dname <- ifelse(grepl("stan", target), "normal(", "dnorm(")
       wigsc <- ifelse(grepl("stan", target), wiggle.sd, wiggle.sd^(-2))
-      parname <- lavpartable$pxnames[tmprows[1]]
+      parname <- with(lavpartable, paste0(mat[tmprows[1]], "[", row[tmprows[1]], ",",
+                                          col[tmprows[1]], ",", group[tmprows[1]], "]"))
       wigpri <- paste0(dname, parname, ",", wigsc, ")")
     }
     lavpartable$prior[tmprows] <- c(lavpartable$prior[tmprows[1]],
                                     rep(wigpri, length(tmprows) - 1))
+    ## nuke == rows
+    eqrows <- with(lavpartable, which(op == "==" & (rhs %in% plabel[tmprows])))
+    if(length(eqrows) > 0){
+      lavpartable <- lavpartable[-eqrows,]
+    }
   }
 
   list(outlist = outlist, lavpartable = lavpartable)
