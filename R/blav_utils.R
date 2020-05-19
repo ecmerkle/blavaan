@@ -754,14 +754,15 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
       parname <- with(lavpartable, paste0(mat[tmprows[1]], "[", row[tmprows[1]], ",",
                                           col[tmprows[1]], ",", group[tmprows[1]], "]"))
       wigpri <- paste0(dname, parname, ",", wigsc, ")")
+
+      ## nuke == rows
+      eqrows <- with(lavpartable, which(op == "==" & (rhs %in% plabel[tmprows])))
+      if(length(eqrows) > 0){
+        lavpartable <- lavpartable[-eqrows,]
+      }
     }
     lavpartable$prior[tmprows] <- c(lavpartable$prior[tmprows[1]],
                                     rep(wigpri, length(tmprows) - 1))
-    ## nuke == rows
-    eqrows <- with(lavpartable, which(op == "==" & (rhs %in% plabel[tmprows])))
-    if(length(eqrows) > 0){
-      lavpartable <- lavpartable[-eqrows,]
-    }
   }
 
   list(outlist = outlist, lavpartable = lavpartable)
