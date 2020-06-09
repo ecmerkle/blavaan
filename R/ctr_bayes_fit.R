@@ -43,7 +43,7 @@ summary.blavFitIndices <- function(object,
     if ("mode" %in% central.tendency || "map" %in% central.tendency) {
       ## can the modeest package be used?
       if (suppressMessages(requireNamespace("modeest", quietly = TRUE))) {
-        out <- c(out, MAP =  modeest::mlv(x, method = "kernel", na.rm = TRUE)$M)
+        out <- c(out, MAP =  modeest::mlv(x, method = "kernel", na.rm = TRUE))
       } else {
         ## if not, use the quick-and-dirty way
         dd <- density(x, na.rm = TRUE)
