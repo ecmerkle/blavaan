@@ -8,7 +8,7 @@ bsem(..., cp = "srs",
      dp = NULL, n.chains = 3, burnin, sample,
      adapt, mcmcfile = FALSE, mcmcextra = list(), inits = "prior",
      convergence = "manual", target = "stan", save.lvs = FALSE,
-     wiggle = NULL, wiggle.sd = 0.01, jags.ic = FALSE, seed = NULL,
+     wiggle = NULL, wiggle.sd = 0.1, jags.ic = FALSE, seed = NULL,
      bcontrol = list())
 }
 \arguments{

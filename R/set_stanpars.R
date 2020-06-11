@@ -53,7 +53,7 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
                             grepl("\\+|-|/|\\*|\\(|\\)|\\^", partable$rhs))
 
             ## TODO check for inequality constraints here?
-          
+
             ## start parameter assignment
             TXT2 <- paste(TXT2, "\n", t1, partable$mat[i], "[",
                           partable$row[i], ",", partable$col[i],
@@ -163,7 +163,12 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
                         partable$prior[covr] <- dp[partype]
                     }
                 }
-                jagpri <- strsplit(partable$prior[i], "\\[")[[1]][1]
+                if(grepl(")[", partable$prior[i], fixed=TRUE)){
+                  ## this avoids wiggle priors, which have param indexing
+                  jagpri <- paste0(strsplit(partable$prior[i], ")[", fixed=TRUE)[[1]][1], ")")
+                } else {
+                  jagpri <- partable$prior[i]
+                }
                 vpri <- grepl("\\[var\\]", partable$prior[i])
                 spri <- grepl("\\[sd\\]", partable$prior[i])
                 if(vpri){
@@ -173,9 +178,19 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
                 } else {
                     jagpri <- partable$prior[i]
                 }
+
                 splpri <- unlist(strsplit(jagpri, "\\("))
                 jagpdist <- paste0(splpri[1], "_lpdf(")
-                jagpparm <- paste(splpri[-1], collapse = "(")
+                if(grepl("[", splpri[-1], fixed=TRUE)){
+                  ## wiggle, look up free parameter
+                  splpar <- strsplit(splpri[2], "],")
+                  matpar <- splpar[[1]][1]
+                  fpar <- strsplit(TXT2, paste0(matpar, "] = "), fixed=TRUE)[[1]][2]
+                  fpar <- strsplit(fpar, ";")[[1]][1]
+                  jagpparm <- paste(fpar, splpar[[1]][2], sep = ",")
+                } else {
+                  jagpparm <- paste(splpri[-1], collapse = "(")
+                }
                 if(!vpri & (grepl("theta", partable$mat[i]) | grepl("psi", partable$mat[i]))){
                     sq <- ifelse(spri, "2", "-1")
                     TXT2 <- paste(TXT2, "pow(", partable$mat[i], "free[",

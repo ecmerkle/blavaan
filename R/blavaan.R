@@ -14,7 +14,7 @@ blavaan <- function(...,  # default lavaan arguments
                     target             = "stan",
                     save.lvs           = FALSE,
                     wiggle             = NULL,
-                    wiggle.sd          = 0.01,
+                    wiggle.sd          = 0.1,
                     jags.ic            = FALSE,
                     seed               = NULL,
                     bcontrol         = list()
@@ -51,6 +51,8 @@ blavaan <- function(...,  # default lavaan arguments
 
     # wiggle sd
     if(wiggle.sd <= 0L) stop("blavaan ERROR: wiggle.sd must be > 0.")
+
+    if(length(wiggle) > 0 & target == 'stancond') stop(paste0("blavaan ERROR: wiggle is currently not available for target ", target))
   
     # ensure rstan/runjags are here. if target is not installed but
     # the other is, then use the other instead.
@@ -421,8 +423,8 @@ blavaan <- function(...,  # default lavaan arguments
                                          lavdata = lavdata,
                                          dp = dp, n.chains = n.chains,
                                          mcmcextra = mcmcextra,
-                                         inits = initsin,
-                                         debug = mcdebug),
+                                         inits = initsin, wiggle = wiggle,
+                                         wiggle.sd = wiggle.sd, debug = mcdebug),
                                 silent = TRUE)
             } else if(target == "stancond"){
                 jagtrans <- try(lav2stancond(model = LAV,

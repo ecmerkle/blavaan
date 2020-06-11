@@ -1,4 +1,4 @@
-lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra = "", inits = "prior", debug = FALSE) {
+lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra = "", inits = "prior", wiggle = NULL, wiggle.sd = NULL, debug = FALSE) {
   ## lots of code is taken from lav_export_bugs.R
 
   if(inherits(model, "lavaan")){
@@ -88,6 +88,11 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
         stop("blavaan ERROR: latent variables are not the same in each group.")
       }
     }
+  }
+
+  ## deal with wiggle
+  if(length(wiggle) > 0){
+    partable <- wiglabels(partable, wiggle, wiggle.sd, target='stanclassic')$lavpartable
   }
 
   ## tabs
@@ -216,6 +221,16 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       } else {
         sum(x %in% parconst$rhs)
       }})
+
+    ## wiggle: find diff between == rows of partable and parconst
+    for(i in 1:NROW(parconst)){
+      plab <- partable$plabel[partable$free == parconst[i,3]]
+      ptrow <- which(partable$op == "==" & partable$rhs == plab)
+      if(length(ptrow) == 0){
+        pmat <- partable$mat[partable$free == parconst[i,3]]
+        nfree[pmat,1] <- nfree[pmat,1] + 1
+      }
+    }
   } else {
     nfix <- 0
   }

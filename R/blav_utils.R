@@ -713,10 +713,12 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
       }
       if(NROW(tmppt) == 0L) stop(paste0("blavaan ERROR: use of wiggle='", x, "' also requires group.equal='", x, "'."))
 
-      if(target == "stan"){
-        lapply(unique(tmppt$label), function(y){
+      out <- tmppt
+      if(grepl("stan", target)){
+        out <- lapply(unique(tmppt$label), function(y){
           tmppt$plabel[tmppt$label == y]
         })
+        out
       }
     } else {
       stop("blavaan ERROR: poorly-specified wiggle argument.")
@@ -728,7 +730,7 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
   if(length(tmplabs) == 1 & inherits(tmplabs[[1]], "list")){
     tmplabs <- tmplabs[[1]]
   }
-  
+
   for(i in 1:length(tmplabs)){
     if(inherits(tmplabs[[i]], "list")){
       tmpelem <- tmplabs[[i]]
@@ -742,8 +744,9 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
 
   ## prior for partable
   if(!("prior" %in% names(lavpartable))) lavpartable$prior <- rep("", length(lavpartable$lhs))
-  for(i in 1:length(wiggle)){
-    tmprows <- which(lavpartable$label == wiggle[i])
+  for(i in 1:length(outlist)){
+    tmprows <- which(lavpartable$plabel %in% outlist[[i]])
+    eqrows <- NULL
     if(target == "stan"){
       parname <- with(lavpartable, paste0(mat[tmprows[1]], "[", group[tmprows[1]], ",",
                                           row[tmprows[1]], ",", col[tmprows[1]], "]"))
@@ -757,12 +760,12 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
 
       ## nuke == rows
       eqrows <- with(lavpartable, which(op == "==" & (rhs %in% plabel[tmprows])))
-      if(length(eqrows) > 0){
-        lavpartable <- lavpartable[-eqrows,]
-      }
     }
     lavpartable$prior[tmprows] <- c(lavpartable$prior[tmprows[1]],
                                     rep(wigpri, length(tmprows) - 1))
+    if(length(eqrows) > 0){
+      lavpartable <- lavpartable[-eqrows,]
+    }
   }
 
   list(outlist = outlist, lavpartable = lavpartable)
