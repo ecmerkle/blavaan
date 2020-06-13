@@ -706,10 +706,10 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
       wname <- which(gqnames == x)
       tmppt <- lpt[lpt$op == gqops[wname],]
       if(x == 'intercepts'){
-        tmppt <- tmppt[!(lpt$lhs %in% lv.names),]
+        tmppt <- tmppt[!(tmppt$lhs %in% lv.names),]
       }
       if(x == 'means'){
-        tmppt <- tmppt[lpt$lhs %in% lv.names,]
+        tmppt <- tmppt[tmppt$lhs %in% lv.names,]
       }
       if(NROW(tmppt) == 0L) stop(paste0("blavaan ERROR: use of wiggle='", x, "' also requires group.equal='", x, "'."))
 
