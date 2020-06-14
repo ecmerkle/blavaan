@@ -713,13 +713,10 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
       }
       if(NROW(tmppt) == 0L) stop(paste0("blavaan ERROR: use of wiggle='", x, "' also requires group.equal='", x, "'."))
 
-      out <- tmppt
-      if(grepl("stan", target)){
-        out <- lapply(unique(tmppt$label), function(y){
-          tmppt$plabel[tmppt$label == y]
+      out <- lapply(unique(tmppt$label), function(y){
+        tmppt$plabel[tmppt$label == y]
         })
-        out
-      }
+      out
     } else {
       stop("blavaan ERROR: poorly-specified wiggle argument.")
     }

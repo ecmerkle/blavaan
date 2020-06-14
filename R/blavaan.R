@@ -53,6 +53,9 @@ blavaan <- function(...,  # default lavaan arguments
     if(wiggle.sd <= 0L) stop("blavaan ERROR: wiggle.sd must be > 0.")
 
     if(length(wiggle) > 0 & target == 'stancond') stop(paste0("blavaan ERROR: wiggle is currently not available for target ", target))
+
+    # no current functionality to generate initial values from approximately-equal prior
+    if(length(wiggle) > 0 & target %in% c('stanclassic', 'jags')) inits <- "simple"
   
     # ensure rstan/runjags are here. if target is not installed but
     # the other is, then use the other instead.
