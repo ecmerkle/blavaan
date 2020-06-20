@@ -110,10 +110,9 @@ blavInspect <- function(blavobject, what, ...) {
             ## how many lvs, excluding phantoms
             lvmn <- lavInspect(blavobject, "mean.lv")
             if(inherits(lvmn, "list")){
-                nlv <- length(lvmn[[1]])
-            } else {
-                nlv <- length(lvmn)
+                lvmn <- lvmn[[1]]
             }
+            nlv <- length(lvmn)
 
             nsamp <- sum(lavInspect(blavobject, "nobs"))
 
