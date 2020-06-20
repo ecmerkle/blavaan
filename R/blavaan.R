@@ -443,13 +443,16 @@ blavaan <- function(...,  # default lavaan arguments
                                         inits = initsin, wiggle = wiggle,
                                         wiggle.sd = wiggle.sd),
                            silent = TRUE)
+
                 if(!inherits(l2s, "try-error")){
+                    lavpartable$prior[as.numeric(rownames(l2s$lavpartable))] <- l2s$lavpartable$prior
                     ldargs <- c(l2s$dat, list(lavpartable = l2s$lavpartable, dumlv = l2s$dumlv,
                                               save_lvs = save.lvs))
 
                     ## add priors to lavpartable, including wiggle
                     if(length(wiggle) > 0){
-                      lavpartable$prior[as.numeric(rownames(l2s$lavpartable))] <- l2s$wigpris
+                      wigrows <- which(l2s$wigpris != "")
+                      lavpartable$prior[as.numeric(rownames(l2s$lavpartable))[wigrows]] <- l2s$wigpris[wigrows]
                     }
 
                     jagtrans <- try(do.call("stanmarg_data", ldargs), silent = TRUE)
