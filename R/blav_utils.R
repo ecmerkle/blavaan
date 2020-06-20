@@ -718,7 +718,7 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
         })
       out
     } else {
-      stop("blavaan ERROR: poorly-specified wiggle argument.")
+      stop("blavaan ERROR: poorly-specified wiggle argument (cannot be used on variances).")
     }
   })
 
