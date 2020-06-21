@@ -161,6 +161,7 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
                                slotCache = lavcache), silent=TRUE)
         if(!inherits(fit.samp, "try-error")){
             fit.samp@Options$se <- "standard" # for nonnest2
+            fit.samp@test[[1]]$test <- "standard" # for do.fit=FALSE
 
             if(casewise){
                 ll.samp <- llcont(fit.samp)
