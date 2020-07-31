@@ -250,13 +250,13 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$q <- dim(Lambda_x_skeleton)[2]
   dat$n <- dim(Lambda_x_skeleton)[3]
   tmpres <- group_sparse_skeleton(Lambda_x_skeleton)
-  dat$len_w2 <- max(tmpres$g_len)
-  dat$w2 <- tmpres$w
-  dat$v2 <- tmpres$v
-  dat$u2 <- tmpres$u
-  dat$wg2 <- array(tmpres$g_len, length(tmpres$g_len))
-  dat$w2skel <- w2skel
-  dat$lam_x_sign <- lam_x_sign
+  #dat$len_w2 <- max(tmpres$g_len)
+  #dat$w2 <- tmpres$w
+  #dat$v2 <- tmpres$v
+  #dat$u2 <- tmpres$u
+  #dat$wg2 <- array(tmpres$g_len, length(tmpres$g_len))
+  #dat$w2skel <- w2skel
+  #dat$lam_x_sign <- lam_x_sign
 
   tmpres <- group_sparse_skeleton(Gamma_skeleton)
   dat$len_w3 <- max(tmpres$g_len)
@@ -364,21 +364,21 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
     dPhi[g,,] <- tmpmat
   }
   tmpres <- group_sparse_skeleton(dPhi)
-  dat$len_w11 <- max(tmpres$g_len)
-  dat$w11 <- tmpres$w
-  dat$v11 <- tmpres$v
-  dat$u11 <- tmpres$u
-  dat$wg11 <- array(tmpres$g_len, length(tmpres$g_len))
-  dat$w11skel <- w11skel
+  #dat$len_w11 <- max(tmpres$g_len)
+  #dat$w11 <- tmpres$w
+  #dat$v11 <- tmpres$v
+  #dat$u11 <- tmpres$u
+  #dat$wg11 <- array(tmpres$g_len, length(tmpres$g_len))
+  #dat$w11skel <- w11skel
 
   tmpres <- group_sparse_skeleton(Phi_r_skeleton)
-  dat$len_w12 <- max(tmpres$g_len)
-  dat$w12 <- tmpres$w
-  dat$v12 <- tmpres$v
-  dat$u12 <- tmpres$u
-  dat$wg12 <- array(tmpres$g_len, length(tmpres$g_len))
-  dat$w12skel <- w12skel
-  dat$phi_r_sign <- phi_r_sign
+  #dat$len_w12 <- max(tmpres$g_len)
+  #dat$w12 <- tmpres$w
+  #dat$v12 <- tmpres$v
+  #dat$u12 <- tmpres$u
+  #dat$wg12 <- array(tmpres$g_len, length(tmpres$g_len))
+  #dat$w12skel <- w12skel
+  #dat$phi_r_sign <- phi_r_sign
 
   if(dat$has_data & is.null(Nu_skeleton)) stop("blavaan ERROR: Nu_skeleton not provided")
   tmpres <- group_sparse_skeleton(Nu_skeleton)
