@@ -87,7 +87,7 @@ test_that("blavaan object methods work", {
     fitlav <- cfa(HS.model, data=HolzingerSwineford1939,
                   meanstructure=TRUE)
     expect_true(cor(blavInspect(fitstanfs, 'lvmeans')[,1],
-                    lavPredict(fitlav, 'lv')[,1]) > .95)
+                    lavPredict(fitlav, type='lv')[,1]) > .95)
 
     ## plots
     expect_silent(p <- plot(fitstan, showplot = FALSE))
