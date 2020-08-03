@@ -1,3 +1,13 @@
+Changes in Version 0.3-10
+    o save.lvs=TRUE works for missing data under target="stan"
+
+    o new arguments "wiggle" and "wiggle.sd" for approximate equality constraints 
+      under target="stan"
+
+    o improvements to std.lv=TRUE for target="stan"
+
+    o bug fixes for blavCompare() and blavFitIndices()
+
 Changes in Version 0.3-9
     o improvements to save.lvs=TRUE for target="stan"
 
