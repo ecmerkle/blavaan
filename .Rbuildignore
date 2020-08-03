@@ -6,3 +6,4 @@
 ^.*\.so$
 ^.*\.o$
 ^src/stanmarg\.hpp$
+^\.github$
