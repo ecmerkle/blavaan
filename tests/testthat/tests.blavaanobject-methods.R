@@ -91,6 +91,7 @@ test_that("blavaan object methods work", {
 
     ## plots
     expect_silent(p <- plot(fitstan, showplot = FALSE))
+    expect_false(any(p$data$value[grep('~~', p$data$parameter)] < 0)) # check of parameter labels
     expect_silent(p <- plot(fitstan, 1:4, showplot = FALSE))
     expect_silent(p <- plot(fitstan, plot.type = "hist", showplot = FALSE))
     expect_silent(p <- plot(fitstan, 1:4, plot.type = "dens", showplot = FALSE))

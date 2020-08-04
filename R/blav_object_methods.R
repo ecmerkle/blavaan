@@ -333,25 +333,26 @@ plot.blavaan <- function(x, pars=NULL, plot.type="trace", showplot=TRUE, ...){
         pars <- x@ParTable$free
         pars <- pars[pars > 0 & !is.na(pars)]
     }
-    samps <- as.array(blavInspect(x, 'mcmc'), drop = FALSE)
 
     if(x@Options$target != "stan"){
+        samps <- as.array(blavInspect(x, 'mcmc'), drop = FALSE)
         parnames <- x@ParTable$pxnames[match(pars, x@ParTable$free)]
         samps <- samps[, match(parnames, colnames(samps)), , drop = FALSE]
+        ## samps dims must be "iteration, chain, parameter"
+        samps <- aperm(samps, c(1, 3, 2))
     } else {
+        samps <- as.array(x@external$mcmcout)
         parnums <- x@ParTable$stanpnum[match(pars, x@ParTable$free)]
-        samps <- samps[, parnums, , drop = FALSE]
+        samps <- samps[, , parnums, drop = FALSE]
     }
     if(blavInspect(x, 'ngroups') == 1L){
-        colnames(samps) <- with(x@ParTable, paste0(lhs,op,rhs)[match(pars, free)])
+        dimnames(samps)[[3]] <- with(x@ParTable, paste0(lhs,op,rhs)[match(pars, free)])
     } else {
-        colnames(samps) <- with(x@ParTable, paste0(lhs,op,rhs,".g",group)[match(pars, free)])
+        dimnames(samps)[[3]] <- with(x@ParTable, paste0(lhs,op,rhs,".g",group)[match(pars, free)])
     }
         
     plfun <- get(paste0("mcmc_", plot.type), asNamespace("bayesplot"))
 
-    ## samps dims must be "iteration, chain, parameter"
-    samps <- aperm(samps, c(1, 3, 2))
     pl <- do.call(plfun, c(list(x = samps), list(...)))
 
     if(showplot) plot(pl)
