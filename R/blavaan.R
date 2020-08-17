@@ -255,7 +255,14 @@ blavaan <- function(...,  # default lavaan arguments
     if(lavInspect(LAV, 'categorical')) {
         stop("blavaan ERROR: models with ordered variables are not yet available.")
     }
-    
+
+    # save.lvs in a model with no lvs
+    if(save.lvs){
+        clv <- lavInspect(LAV, 'cov.lv')
+        if(is.list(clv)) clv <- clv[[1]]
+        if(nrow(clv) == 0) warning("blavaan WARNING: save.lvs=TRUE, but there are no lvs in the model.")
+    }
+        
     # turn warnings back on by default
     LAV@Options$warn <- origwarn
 
