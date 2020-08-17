@@ -105,7 +105,6 @@ blavInspect <- function(blavobject, what, ...) {
             } else {
                 etas <- any(grepl("^eta", rownames(blavobject@external$stansumm)))
             }
-            if(!etas) stop("blavaan ERROR: factor scores not saved; set save.lvs=TRUE")
 
             ## how many lvs, excluding phantoms
             lvmn <- lavInspect(blavobject, "mean.lv")
@@ -114,6 +113,9 @@ blavInspect <- function(blavobject, what, ...) {
             }
             nlv <- length(lvmn)
 
+            if(nlv == 0) stop("blavaan ERROR: no latent variables are in the model")
+            if(!etas) stop("blavaan ERROR: factor scores not saved; set save.lvs=TRUE")
+            
             nsamp <- sum(lavInspect(blavobject, "nobs"))
 
             draws <- make_mcmc(blavobject@external$mcmcout)
