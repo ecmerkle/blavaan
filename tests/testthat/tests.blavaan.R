@@ -21,9 +21,6 @@ test_that("blavaan arguments", {
   ## cp/std.lv clash
   expect_error(bsem(model, data=Data, fixed.x=TRUE, std.lv=TRUE, cp="fa"))
 
-  ## try to save lvs in a model without them
-  expect_error(bsem(model, data=Data, fixed.x=TRUE, save.lvs=TRUE))
-  
   model2 <- ' y1 ~ b1*x1 + b2*x2
               b1 + b2 == 0 '
 
