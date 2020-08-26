@@ -725,6 +725,7 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
 
   ## fix list nesting, in case group.equal was used
   outlist <- NULL
+  outsd <- NULL
   if(length(tmplabs) == 1 & inherits(tmplabs[[1]], "list")){
     tmplabs <- tmplabs[[1]]
   }
@@ -735,21 +736,24 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
     } else {
       tmpelem <- list(tmplabs[[i]])
     }
-    if(length(tmpelem[[1]]) > 1){
-      outlist <- c(outlist, tmpelem)
+    multpars <- which(sapply(tmpelem, length) > 1)
+    if(length(multpars) > 1){
+      outlist <- c(outlist, tmpelem[multpars])
+      outsd <- c(outsd, rep(wiggle.sd[i], length(tmpelem[multpars])))
     }
   }
 
   ## prior for partable
   if(!("prior" %in% names(lavpartable))) lavpartable$prior <- rep("", length(lavpartable$lhs))
+  stanpris <- lavpartable$prior
   for(i in 1:length(outlist)){
     tmprows <- which(lavpartable$plabel %in% outlist[[i]])
     eqrows <- NULL
     if(target == "stan"){
       parname <- with(lavpartable, paste0(mat[tmprows[1]], "[", group[tmprows[1]], ",",
                                           row[tmprows[1]], ",", col[tmprows[1]], "]"))
-      wsd <- ifelse(length(wiggle.sd) > 1, wiggle.sd[i], wiggle.sd)
-      wigpri <- paste0("normal(", parname, ",", wsd, ")")
+      wigpri <- paste0("normal(", parname, ",", outsd[i], ")")
+      spri <- paste0("normal(0,", outsd[i], ")")
     } else {
       dname <- ifelse(grepl("stan", target), "normal(", "dnorm(")
       wigsc <- ifelse(grepl("stan", target), wiggle.sd, wiggle.sd^(-2))
@@ -762,11 +766,12 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
     }
     lavpartable$prior[tmprows] <- c(lavpartable$prior[tmprows[1]],
                                     rep(wigpri, length(tmprows) - 1))
+    stanpris[tmprows] <- c(stanpris[tmprows[1]], rep(spri, length(tmprows) - 1))
     if(length(eqrows) > 0){
       lavpartable <- lavpartable[-eqrows,]
     }
   }
 
-  list(outlist = outlist, lavpartable = lavpartable)
+  list(outlist = outlist, lavpartable = lavpartable, stanpris = stanpris)
 }
   
