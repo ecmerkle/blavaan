@@ -730,6 +730,8 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
     tmplabs <- tmplabs[[1]]
   }
 
+  if(length(wiggle.sd) == 1) wiggle.sd <- rep(wiggle.sd, length(tmplabs))
+  
   for(i in 1:length(tmplabs)){
     if(inherits(tmplabs[[i]], "list")){
       tmpelem <- tmplabs[[i]]
@@ -737,7 +739,7 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
       tmpelem <- list(tmplabs[[i]])
     }
     multpars <- which(sapply(tmpelem, length) > 1)
-    if(length(multpars) > 1){
+    if(length(multpars) > 0){
       outlist <- c(outlist, tmpelem[multpars])
       outsd <- c(outsd, rep(wiggle.sd[i], length(tmpelem[multpars])))
     }
@@ -759,7 +761,7 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
       wigsc <- ifelse(grepl("stan", target), wiggle.sd, wiggle.sd^(-2))
       parname <- with(lavpartable, paste0(mat[tmprows[1]], "[", row[tmprows[1]], ",",
                                           col[tmprows[1]], ",", group[tmprows[1]], "]"))
-      wigpri <- paste0(dname, parname, ",", wigsc, ")")
+      wigpri <- spri <- paste0(dname, parname, ",", wigsc, ")")
 
       ## nuke == rows
       eqrows <- with(lavpartable, which(op == "==" & (rhs %in% plabel[tmprows])))
