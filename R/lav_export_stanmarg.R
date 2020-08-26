@@ -644,7 +644,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   if (length(wig) > 0) {
     ## assign prior to wiggle params, (mean value is handled in stan)
     needpri <- (lavpartable$prior == "") & (lavpartable$plabel %in% wig)
-    lavpartable$prior[needpri] <- paste0("normal(0,", wiggle.sd, ")")
+    lavpartable$prior[needpri] <- paste0("normal(0,", wiggle.sd[1], ")")
     dat$wigind <- 1L
   }
 

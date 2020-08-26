@@ -61,9 +61,12 @@ test_that("blavaan arguments", {
   expect_error(bsem(model, data=Data, dp=dpriors(psi="mydist(1,.5)")))
 
   ## wiggle argument
-  expect_error(bsem(model, data=Data, wiggle='a', wiggle.sd=0))
-  expect_error(bsem(model, data=Data, wiggle='sponge'))
-
+  expect_error(bsem(model3, data=Data, wiggle='a', wiggle.sd=0))  ## sd=0 not allowed
+  expect_error(bsem(model3, data=Data, wiggle='sponge'))          ## sd is string
+  expect_error(bsem(model3, data=Data, wiggle='b', wiggle.sd=c(1,2))) ## 2 sds, but 1 wiggle
+  expect_error(bsem(model3, data=Data, wiggle=c('a','b'), wiggle.sd=c(.2,.3), target='jags'))
+  expect_error(bsem(model3, data=Data, wiggle=c('a','b'), wiggle.sd=c(.2,.3), target='stanclassic')) ## wiggle.sd of length > 1 not allowed for these targets
+  
   HS.model <- ' visual  =~ x1 + x2 + x3 '
 
   expect_s4_class(bcfa(HS.model, data=HolzingerSwineford1939, target="stan", do.fit=FALSE, group="school", group.equal=c("intercepts","loadings"), wiggle=c("intercepts"), wiggle.sd=.1), "blavaan")

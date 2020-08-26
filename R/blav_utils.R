@@ -748,7 +748,8 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
     if(target == "stan"){
       parname <- with(lavpartable, paste0(mat[tmprows[1]], "[", group[tmprows[1]], ",",
                                           row[tmprows[1]], ",", col[tmprows[1]], "]"))
-      wigpri <- paste0("normal(", parname, ",", wiggle.sd, ")")
+      wsd <- ifelse(length(wiggle.sd) > 1, wiggle.sd[i], wiggle.sd)
+      wigpri <- paste0("normal(", parname, ",", wsd, ")")
     } else {
       dname <- ifelse(grepl("stan", target), "normal(", "dnorm(")
       wigsc <- ifelse(grepl("stan", target), wiggle.sd, wiggle.sd^(-2))

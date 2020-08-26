@@ -50,10 +50,16 @@ blavaan <- function(...,  # default lavaan arguments
     if("cluster" %in% dotNames) stop("blavaan ERROR: two-level models are not yet available.")
 
     # wiggle sd
-    if(wiggle.sd <= 0L) stop("blavaan ERROR: wiggle.sd must be > 0.")
+    if(any(wiggle.sd <= 0L)) stop("blavaan ERROR: wiggle.sd must be > 0.")
 
     if(length(wiggle) > 0 & target == 'stancond') stop(paste0("blavaan ERROR: wiggle is currently not available for target ", target))
 
+    if(length(wiggle.sd) > 1){
+      if(target != 'stan') stop("blavaan ERROR: parameter-specific wiggle.sd is only available for target='stan'")
+      
+      if(length(wiggle.sd) != length(wiggle)) stop("blavaan ERROR: length of wiggle.sd must match length of wiggle")
+    }
+      
     # no current functionality to generate initial values from approximately-equal prior
     if(length(wiggle) > 0 & target %in% c('stanclassic', 'jags')) inits <- "simple"
   
