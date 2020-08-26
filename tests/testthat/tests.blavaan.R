@@ -62,7 +62,7 @@ test_that("blavaan arguments", {
 
   ## wiggle argument
   expect_error(bsem(model3, data=Data, wiggle='a', wiggle.sd=0))  ## sd=0 not allowed
-  expect_error(bsem(model3, data=Data, wiggle='sponge'))          ## sd is string
+  #expect_error(bsem(model3, data=Data, wiggle='sponge'))          ## sd is string
   expect_error(bsem(model3, data=Data, wiggle='b', wiggle.sd=c(1,2))) ## 2 sds, but 1 wiggle
   expect_error(bsem(model3, data=Data, wiggle=c('a','b'), wiggle.sd=c(.2,.3), target='jags'))
   expect_error(bsem(model3, data=Data, wiggle=c('a','b'), wiggle.sd=c(.2,.3), target='stanclassic')) ## wiggle.sd of length > 1 not allowed for these targets
