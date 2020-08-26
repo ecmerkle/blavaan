@@ -69,7 +69,8 @@ bcfa(..., cp = "srs",
   "approximately" equal. Can also be "intercepts", "loadings",
   "regressions", "means".}
 \item{wiggle.sd}{The prior sd (of normal distribution) to be used in approximate equality
-  constraints.}
+  constraints. Can be one value, or (for target="stan") a numeric vector
+  of values that is the same length as wiggle.}
 \item{jags.ic}{Should DIC be computed the JAGS way, in addition to the BUGS way? Logical; defaults to FALSE}
 \item{seed}{A vector of length \code{n.chains} (for target
   \code{"jags"}) or an integer (for target \code{"stan"}) containing random
