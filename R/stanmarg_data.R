@@ -193,6 +193,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
                           lavpartable = NULL, # for priors
                           dumlv = NULL, # for sampling lvs
                           wigind = NULL, # wiggle indicator
+                          pri_only = FALSE, # prior predictive sampling
                           ...) {
   
   dat <- list()
@@ -210,32 +211,41 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
 
   dat$YX <- YX
   stopifnot(nrow(dat$YX) == dat$Ntot)
-  
-  if (missing(YX)) {
-    dat$has_data <- 0L
-    if (is.null(S)) stop("S must be specified if YX is missing")
-    if (!is.list(S)) stop("S must be a list")
-    if (is.null(N)) stop("N must be specified if YX is missing")
-    if (miss) stop("blavaan ERROR: missingness requires raw data.")
-    dat$S <- array(NA, dim=c(Ng, nrow(S), nrow(S)))
-    for(i in 1:Ng) {
-      dat$S[i,,] <- (N[i] - 1) * S[[i]]
-    }
-    dat$YX <- array(NA_real_, dim = c(dat$Ntot, ncol(S)))
-  } else {
-    dat$has_data <- 1L
 
-    if (NROW(YX) != dat$Ntot) stop("blavaan ERROR: nrow(YX) != Ntot.")
+  dat$has_data <- dat$has_cov <- 0L
+  if (pri_only) {
+    dat$YX <- array(NA_real_, dim = c(0, ncol(YX)))
+    tmparr <- array(dim = c(dat$Ng, ncol(YX), ncol(YX)))
+    for (i in 1:Ng) {
+      tmparr[i,,] <- diag(nrow=ncol(YX))
+    }
+    dat$S <- tmparr
+  } else {
+    if (missing(YX)) {
+      dat$has_data <- 0L
+      if (is.null(S)) stop("S must be specified if YX is missing")
+      if (!is.list(S)) stop("S must be a list")
+      if (is.null(N)) stop("N must be specified if YX is missing")
+      if (miss) stop("blavaan ERROR: missingness requires raw data.")
+      dat$S <- array(NA, dim=c(Ng, nrow(S), nrow(S)))
+      for (i in 1:Ng) {
+        dat$S[i,,] <- (N[i] - 1) * S[[i]]
+      }
+      dat$YX <- array(NA_real_, dim = c(dat$Ntot, ncol(S)))
+    } else {
+      dat$has_data <- 1L
+
+      if (NROW(YX) != dat$Ntot) stop("blavaan ERROR: nrow(YX) != Ntot.")
     
-    dat$S <- array(NA, dim=c(Ng, NCOL(YX), NCOL(YX)))
-    for(i in 1:Ng) {
-      dat$S[i,,] <- diag(1, NCOL(YX))
-      ## not added because, if not pd, stan fails: (dat$N[i] - 1) * cov(YX[(startrow[i] : endrow[i]), , drop = FALSE]) # NB!! this multiplication is needed to use wishart_lpdf
+      dat$S <- array(NA, dim=c(Ng, NCOL(YX), NCOL(YX)))
+      for (i in 1:Ng) {
+        dat$S[i,,] <- diag(1, NCOL(YX))
+        ## not added because, if not pd, stan fails: (dat$N[i] - 1) * cov(YX[(startrow[i] : endrow[i]), , drop = FALSE]) # NB!! this multiplication is needed to use wishart_lpdf
+      }
     }
   }
-
   dat$save_lvs <- save_lvs
-
+  
   dat$p <- dim(Lambda_y_skeleton)[2]
   dat$m <- dim(Lambda_y_skeleton)[3]
   tmpres <- group_sparse_skeleton(Lambda_y_skeleton)

@@ -15,6 +15,7 @@ blavaan <- function(...,  # default lavaan arguments
                     save.lvs           = FALSE,
                     wiggle             = NULL,
                     wiggle.sd          = 0.1,
+                    pripred            = FALSE,
                     jags.ic            = FALSE,
                     seed               = NULL,
                     bcontrol         = list()
@@ -49,6 +50,12 @@ blavaan <- function(...,  # default lavaan arguments
     # multilevel functionality not available
     if("cluster" %in% dotNames) stop("blavaan ERROR: two-level models are not yet available.")
 
+    # prior predictives only for stan
+    if(pripred) {
+      if(target != 'stan') stop("blavaan ERROR: prior predictives currently only work for target='stan'.")
+      if(!('test' %in% dotdotdot)) dotdotdot$test <- 'none'
+    }
+  
     # wiggle sd
     if(any(wiggle.sd <= 0L)) stop("blavaan ERROR: wiggle.sd must be > 0.")
 
@@ -454,7 +461,7 @@ blavaan <- function(...,  # default lavaan arguments
                 l2s <- try(lav2stanmarg(lavobject = LAV, dp = dp,
                                         n.chains = n.chains,
                                         inits = initsin, wiggle = wiggle,
-                                        wiggle.sd = wiggle.sd),
+                                        wiggle.sd = wiggle.sd, pripred = pripred),
                            silent = TRUE)
 
                 if(!inherits(l2s, "try-error")){
