@@ -15,7 +15,7 @@ blavaan <- function(...,  # default lavaan arguments
                     save.lvs           = FALSE,
                     wiggle             = NULL,
                     wiggle.sd          = 0.1,
-                    pripred            = FALSE,
+                    prisamp            = FALSE,
                     jags.ic            = FALSE,
                     seed               = NULL,
                     bcontrol         = list()
@@ -51,7 +51,7 @@ blavaan <- function(...,  # default lavaan arguments
     if("cluster" %in% dotNames) stop("blavaan ERROR: two-level models are not yet available.")
 
     # prior predictives only for stan
-    if(pripred) {
+    if(prisamp) {
       if(target != 'stan') stop("blavaan ERROR: prior predictives currently only work for target='stan'.")
       if(!('test' %in% dotdotdot)) dotdotdot$test <- 'none'
     }
@@ -461,7 +461,7 @@ blavaan <- function(...,  # default lavaan arguments
                 l2s <- try(lav2stanmarg(lavobject = LAV, dp = dp,
                                         n.chains = n.chains,
                                         inits = initsin, wiggle = wiggle,
-                                        wiggle.sd = wiggle.sd, pripred = pripred),
+                                        wiggle.sd = wiggle.sd, prisamp = prisamp),
                            silent = TRUE)
 
                 if(!inherits(l2s, "try-error")){
@@ -880,7 +880,8 @@ bcfa <- bsem <- function(..., cp = "srs", dp = NULL,
     n.chains = 3, burnin, sample, adapt,
     mcmcfile = FALSE, mcmcextra = list(), inits = "prior",
     convergence = "manual", target = "stan", save.lvs = FALSE, wiggle = NULL,
-    wiggle.sd = 0.1, jags.ic = FALSE, seed = NULL, bcontrol = list()) {
+    wiggle.sd = 0.1, prisamp = FALSE, jags.ic = FALSE, seed = NULL,
+    bcontrol = list()) {
 
     dotdotdot <- list(...)
     std.lv <- ifelse(any(names(dotdotdot) == "std.lv"), dotdotdot$std.lv, FALSE)
@@ -924,7 +925,8 @@ bgrowth <- function(..., cp = "srs", dp = NULL,
     n.chains = 3, burnin, sample, adapt,
     mcmcfile = FALSE, mcmcextra = list(), inits = "prior",
     convergence = "manual", target = "stan", save.lvs = FALSE, wiggle = NULL,
-    wiggle.sd = 0.1, jags.ic = FALSE, seed = NULL, bcontrol = list()) {
+    wiggle.sd = 0.1, prisamp = FALSE, jags.ic = FALSE, seed = NULL,
+    bcontrol = list()) {
 
     dotdotdot <- list(...)
     std.lv <- ifelse(any(names(dotdotdot) == "std.lv"), dotdotdot$std.lv, FALSE)
