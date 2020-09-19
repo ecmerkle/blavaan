@@ -8,8 +8,8 @@ bcfa(..., cp = "srs",
      dp = NULL, n.chains = 3, burnin, sample,
      adapt, mcmcfile = FALSE, mcmcextra = list(), inits = "prior",
      convergence = "manual", target = "stan", save.lvs = FALSE,
-     wiggle = NULL, wiggle.sd = 0.1, jags.ic = FALSE, seed = NULL,
-     bcontrol = list())
+     wiggle = NULL, wiggle.sd = 0.1, prisamp = FALSE, jags.ic = FALSE,
+     seed = NULL, bcontrol = list())
 }
 \arguments{
 \item{...}{Default lavaan arguments.  See \code{\link{lavaan}}.}
