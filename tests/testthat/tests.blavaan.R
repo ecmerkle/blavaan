@@ -1,4 +1,5 @@
 test_that("blavaan arguments", {
+  set.seed(8675309)
   x1 <- rnorm(100)
   x2 <- rnorm(100)
   y1 <- 0.5 + 2*x1 + rnorm(100)
@@ -32,7 +33,7 @@ test_that("blavaan arguments", {
   fit <- bsem(model2, data=Data, target='jags', adapt=1,
               burnin=1, sample=3)
   ## ensure that == constraints are being respected
-  expect_true(round(2*coef(fit)[['b1']] + coef(fit)[['b2']], 5) == 0L)
+  expect_true(round(2*fit@Fit@x[1] + fit@Fit@x[2], 5) == 0L)
 
   ## do.fit=FALSE
   fit <- bsem(model, data=Data, fixed.x=TRUE, adapt=2,
