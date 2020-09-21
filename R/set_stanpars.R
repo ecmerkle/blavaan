@@ -24,7 +24,8 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
                        partable$op == "==") |
                        (grepl("rho", partable$mat[i]) &
                         is.na(partable$rhoidx[i])))
-        compeq <- which(partable$lhs == partable$plabel[i] &
+        compeq <- which((partable$lhs == partable$plabel[i] |
+                         partable$lhs == partable$label[i]) &
                         partable$op %in% c("==", ":=") &
                         grepl("\\+|-|/|\\*|\\(|\\)|\\^", partable$rhs))
         fixed <- partable$free[i] == 0 & partable$op[i] != ":="
@@ -48,7 +49,8 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
             ## rhs needs math expression
             defeq <- partable$op[i] %in% c("==", ":=") &
                      grepl("\\+|-|/|\\*|\\(|\\)|\\^", partable$rhs[i])
-            compeq <- which(partable$lhs == partable$plabel[i] &
+            compeq <- which((partable$lhs == partable$plabel[i] |
+                             partable$lhs == partable$label[i]) &
                             partable$op %in% c("==", ":=") &
                             grepl("\\+|-|/|\\*|\\(|\\)|\\^", partable$rhs))
 
@@ -75,7 +77,8 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
                                   sep="")
                 }
             } else if(length(eqpar) > 0){
-                eqpar <- which(partable$plabel == partable$lhs[eqpar])
+                eqpar <- which(partable$plabel == partable$lhs[eqpar] |
+                               partable$label == partable$lhs[eqpar])
                 if(partable$freeparnums[eqpar] == 0){
                     eqtxt <- paste(partable$mat[eqpar], "[",
                                    partable$row[eqpar], ",",
@@ -98,7 +101,7 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
                     TXT2 <- paste(TXT2, eqtxt, eolop, sep="")
                 }
             } else if(defeq | length(compeq) > 0){
-                if(length(compeq) == 0) compeq <- i
+                 if(length(compeq) == 0) compeq <- i
                 ## constraints with one parameter label on lhs
                 ## FIXME? cannot handle, e.g., b1 + b2 == 2
                 ## see lav_partable_constraints.R
@@ -108,6 +111,7 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
                     pvnum <- match(rhsvars, partable$label)
                 } else {
                     pvnum <- match(rhsvars, partable$plabel)
+                    if(is.na(pvnum[1])) pvnum <- match(rhsvars, partable$label)
                 }
                     
                 rhstrans <- paste(partable$mat[pvnum], "[", partable$row[pvnum],

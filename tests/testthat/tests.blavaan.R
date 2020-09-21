@@ -27,6 +27,13 @@ test_that("blavaan arguments", {
   ## equality constraint with multiple variables on lhs
   expect_error(bsem(model2, data=Data, fixed.x=TRUE))
 
+  model2 <- ' y1 ~ b1*x1 + b2*x2
+              b1 == -b2 '
+  fit <- bsem(model2, data=Data, fixed.x=TRUE, target='jags', adapt=1,
+              burnin=1, sample=1)
+  ## ensure that == constraints are being respected
+  expect_true(round(coef(fit)[['b1']] + coef(fit)[['b2']], 5) == 0L)
+
   ## do.fit=FALSE
   fit <- bsem(model, data=Data, fixed.x=TRUE, adapt=2,
               burnin=2, sample=2, do.fit=FALSE)

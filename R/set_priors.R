@@ -29,7 +29,8 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x, target="ja
                        partable$op == "==")
         defeq <- partable$op[i] %in% c("==", ":=") &
                  grepl("\\+|-|/|\\*|\\(|\\)|\\^", partable$rhs[i])
-        compeq <- which(partable$lhs == partable$plabel[i] &
+        compeq <- which((partable$lhs == partable$plabel[i] |
+                         partable$lhs == partable$label[i]) &
                         partable$op %in% c("==", ":=") &
                         grepl("\\+|-|/|\\*|\\(|\\)|\\^", partable$rhs))
         fixed <- partable$free[i] == 0 & partable$op[i] != ":="
@@ -52,7 +53,8 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x, target="ja
             ## rhs needs math expression
             defeq <- partable$op[i] %in% c("==", ":=") &
                      grepl("\\+|-|/|\\*|\\(|\\)|\\^", partable$rhs[i])
-            compeq <- which(partable$lhs == partable$plabel[i] &
+            compeq <- which((partable$lhs == partable$plabel[i] |
+                             partable$lhs == partable$label[i]) &
                             partable$op %in% c("==", ":=") &
                             grepl("\\+|-|/|\\*|\\(|\\)|\\^", partable$rhs))
             ## TODO block prior associated with lv.x.wish
@@ -86,7 +88,8 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x, target="ja
                                   sep="")
                 }
             } else if(length(eqpar) > 0){
-                eqpar <- which(partable$plabel == partable$lhs[eqpar])
+                eqpar <- which(partable$plabel == partable$lhs[eqpar] |
+                               partable$label == partable$lhs[eqpar])
                 ## in case it is an "expanded" variance
                 if(length(eqpar) > 1){
                     if(length(eqpar) > 2) stop("blavaan ERROR: problem with parameter equality constraints")
@@ -124,6 +127,7 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x, target="ja
                     pvnum <- match(rhsvars, partable$label)
                 } else {
                     pvnum <- match(rhsvars, partable$plabel)
+                    if(is.na(pvnum[1])) pvnum <- match(rhsvars, partable$label)
                 }
 
                 rhstrans <- paste(partable$mat[pvnum], "[",
