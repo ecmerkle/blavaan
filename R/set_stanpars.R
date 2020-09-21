@@ -79,6 +79,7 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
             } else if(length(eqpar) > 0){
                 eqpar <- which(partable$plabel == partable$lhs[eqpar] |
                                partable$label == partable$lhs[eqpar])
+                if(length(eqpar) > 1) eqpar <- eqpar[which(partable$label[eqpar] == partable$plabel[eqpar])]
                 if(partable$freeparnums[eqpar] == 0){
                     eqtxt <- paste(partable$mat[eqpar], "[",
                                    partable$row[eqpar], ",",
@@ -175,10 +176,13 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
                 }
                 vpri <- grepl("\\[var\\]", partable$prior[i])
                 spri <- grepl("\\[sd\\]", partable$prior[i])
+                ppri <- grepl("\\[prec\\]", partable$prior[i])
                 if(vpri){
                     jagpri <- strsplit(partable$prior[i], "\\[var")[[1]][1]
                 } else if(spri){
                     jagpri <- strsplit(partable$prior[i], "\\[sd")[[1]][1]
+                } else if(ppri){
+                    jagpri <- strsplit(partable$prior[i], "\\[prec")[[1]][1]
                 } else {
                     jagpri <- partable$prior[i]
                 }

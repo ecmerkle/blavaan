@@ -49,7 +49,8 @@ blavaan <- function(...,  # default lavaan arguments
 
     # multilevel functionality not available
     if("cluster" %in% dotNames) stop("blavaan ERROR: two-level models are not yet available.")
-
+    if("ordered" %in% dotNames) stop("blavaan ERROR: ordinal models are not yet available.")
+  
     # prior predictives only for stan
     if(prisamp) {
       if(target != 'stan') stop("blavaan ERROR: prior predictives currently only work for target='stan'.")
