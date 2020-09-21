@@ -341,7 +341,7 @@ set_blocks <- function(partable){
 eval_prior <- function(pricom, thetstar, pxname){
     ## check for truncation and [sd]/[var] modifiers
     trun <- which(pricom == "T")
-    sdvar <- which(pricom %in% c("[sd]","[var]"))
+    sdvar <- which(pricom %in% c("[sd]","[var]","[prec]"))
 
     if(length(trun) > 0 | length(sdvar) > 0){
         snip <- min(c(trun, sdvar))
@@ -366,9 +366,11 @@ eval_prior <- function(pricom, thetstar, pxname){
     ## thetstar modifications:
     ## convert to precision or sd, vs variance (depending on prior)
     if(grepl("theta", pxname) | grepl("psi", pxname)){
-        ## FIXME assumes correlation prior under srs is dbeta
-        if(length(sdvar) == 0 & pricom[1] != "dbeta") thetstar <- 1/thetstar
+        ## FIXME? assumes correlation prior under srs is beta or unif
+        if(length(sdvar) == 0 & !(grepl("beta", pricom[1])) &
+         !(grepl("unif", pricom[1]))) thetstar <- 1/thetstar
         if(any(grepl("\\[sd", pricom))) thetstar <- sqrt(thetstar)
+        if(any(grepl("\\[prec", pricom))) thetstar <- 1/thetstar
     }
     ## dt() in R assumes mean=0, precision=1
     if(pricom[1] == "dt"){
