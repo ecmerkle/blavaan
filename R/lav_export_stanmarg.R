@@ -136,7 +136,11 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
             psign <- min(parnums)
             ## if equality constraint, sign must involve the
             ## "free" parameter
-            if (wskel[psign,1] == 1L) psign <- wskel[psign,2]
+            if (wskel[psign,1] == 1L) {
+              psign <- wskel[psign,2]
+            } else {
+              psign <- psign - sum(wskel[1:(psign-1),1] == 1)
+            }
             sign[parnums, 1] <- 1L
             sign[parnums, 2] <- psign
           }
