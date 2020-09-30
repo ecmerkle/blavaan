@@ -189,7 +189,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
                           w9skel, w10skel, w11skel, w12skel, w13skel,
                           w14skel,
                           lam_y_sign, lam_x_sign, # sign constraint matrices
-                          gam_sign, b_sign, psi_r_sign, phi_r_sign,
+                          gam_sign, b_sign, psi_r_sign, fullpsi, phi_r_sign,
                           lavpartable = NULL, # for priors
                           dumlv = NULL, # for sampling lvs
                           wigind = NULL, # wiggle indicator
@@ -366,6 +366,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$wg10 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w10skel <- w10skel
   dat$psi_r_sign <- psi_r_sign
+  dat$fullpsi <- fullpsi
 
   dPhi <- Phi_skeleton
   for (g in 1:Ng) {

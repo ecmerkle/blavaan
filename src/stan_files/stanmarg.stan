@@ -125,8 +125,8 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   }
 
   // obtain covariance parameter vector for correlation/sd matrices
-  vector cor2cov(matrix[] cormat, matrix[] sdmat, vector free_elements, matrix[] matskel, int[,] wskel, int ngrp) {
-    vector[num_elements(free_elements)] out;
+  vector cor2cov(matrix[] cormat, matrix[] sdmat, int num_free_elements, matrix[] matskel, int[,] wskel, int ngrp) {
+    vector[num_free_elements] out;
     int R = rows(to_matrix(cormat[1]));
     int C = cols(to_matrix(cormat[1]));
     int pos = 1; // position of eq_skeleton
@@ -296,6 +296,7 @@ data {
   int<lower=0> len_psi_r;
   real<lower=0> psi_r_alpha[len_psi_r];
   real<lower=0> psi_r_beta[len_psi_r];
+  int<lower=0,upper=1> fullpsi;
   
   // same things but for Phi
   //int<lower=0> len_w11;
@@ -584,7 +585,8 @@ parameters {
   vector<lower=0,upper=1>[len_free[7]] Theta_r_free; // to use beta prior
   vector<lower=0,upper=1>[len_free[8]] Theta_x_r_free;
   vector<lower=0>[len_free[9]] Psi_sd_free;
-  vector<lower=0,upper=1>[len_free[10]] Psi_r_free;
+  corr_matrix[m] Psi_r_mat[Ng * fullpsi];
+  vector<lower=0,upper=1>[fullpsi ? 0 : len_free[10]] Psi_r_free;
   //vector<lower=0>[len_free[11]] Phi_sd_free;
   //vector<lower=0,upper=1>[len_free[12]] Phi_r_free;
   vector[len_free[13]] Nu_free;
@@ -639,8 +641,12 @@ transformed parameters {
   
     if (m > 0) {
       Psi_sd[g] = fill_matrix(Psi_sd_free, Psi_skeleton[g], w9skel, g_start9[g], f_start9[g]);
-      Psi_r_lower[g] = fill_matrix(2*Psi_r_free - 1, Psi_r_skeleton[g], w10skel, g_start10[g], f_start10[g]);
-      Psi_r[g] = Psi_r_lower[g] + transpose(Psi_r_lower[g]) - diag_matrix(rep_vector(1, m));
+      if (fullpsi) {
+	Psi_r[g] = Psi_r_mat[g];
+      } else {
+        Psi_r_lower[g] = fill_matrix(2*Psi_r_free - 1, Psi_r_skeleton[g], w10skel, g_start10[g], f_start10[g]);
+        Psi_r[g] = Psi_r_lower[g] + transpose(Psi_r_lower[g]) - diag_matrix(rep_vector(1, m));
+      }
       Psi[g] = quad_form_sym(Psi_r[g], Psi_sd[g]);
     }
 
@@ -779,7 +785,13 @@ model { // N.B.: things declared in the model block do not get saved in the outp
 
   target += beta_lpdf(Theta_r_free | theta_r_alpha, theta_r_beta);
   target += beta_lpdf(Theta_x_r_free | theta_x_r_alpha, theta_x_r_beta);
-  target += beta_lpdf(Psi_r_free | psi_r_alpha, psi_r_beta);
+  if (fullpsi) {
+    for (g in 1:Ng) {
+      target += lkj_corr_lpdf(Psi_r_mat[g] | psi_r_alpha[1]);
+    }
+  } else if (len_free[10] > 0) {
+    target += beta_lpdf(Psi_r_free | psi_r_alpha, psi_r_beta);
+  }
   //target += beta_lpdf(Phi_r_free | phi_r_alpha, phi_r_beta);
 }
 generated quantities { // these matrices are saved in the output but do not figure into the likelihood
@@ -820,7 +832,9 @@ generated quantities { // these matrices are saved in the output but do not figu
   //lx_sign = sign_constrain_load(Lambda_x_free, len_free[2], lam_x_sign);
   //g_sign = sign_constrain_reg(Gamma_free, len_free[3], gam_sign, Lambda_x_free, Lambda_y_free);
   bet_sign = sign_constrain_reg(B_free, len_free[4], b_sign, Lambda_y_free, Lambda_y_free);
-  P_r = sign_constrain_reg(2 * Psi_r_free - 1, len_free[10], psi_r_sign, Lambda_y_free, Lambda_y_free);
+  if (fullpsi == 0) {
+    P_r = sign_constrain_reg(2 * Psi_r_free - 1, len_free[10], psi_r_sign, Lambda_y_free, Lambda_y_free);
+  }
   //Ph_r = sign_constrain_reg(2 * Phi_r_free - 1, len_free[12], phi_r_sign, Lambda_x_free, Lambda_x_free);
   
   for (g in 1:Ng) {
@@ -839,8 +853,14 @@ generated quantities { // these matrices are saved in the output but do not figu
     }
 
     if (m > 0) {
-      PSmat[g] = fill_matrix(P_r, Psi_r_skeleton[g], w10skel, g_start10[g], f_start10[g]);
-      PS[g] = quad_form_sym(PSmat[g] + transpose(PSmat[g]) - diag_matrix(rep_vector(1, m)), Psi_sd[g]);
+      if (fullpsi) {
+	PSmat[g] = Psi_r_mat[g];
+	PS[g] = quad_form_sym(PSmat[g], Psi_sd[g]);
+      } else {
+	PSmat[g] = fill_matrix(P_r, Psi_r_skeleton[g], w10skel, g_start10[g], f_start10[g]);
+	PS[g] = quad_form_sym(PSmat[g] + transpose(PSmat[g]) - diag_matrix(rep_vector(1, m)), Psi_sd[g]);
+      }
+
     }
 
     /*
@@ -852,9 +872,9 @@ generated quantities { // these matrices are saved in the output but do not figu
   }
 
   // off-diagonal covariance parameter vectors, from cor/sd matrices:
-  Theta_cov = cor2cov(Theta_r, Theta_sd, Theta_r_free, Theta_r_skeleton, w7skel, Ng);
+  Theta_cov = cor2cov(Theta_r, Theta_sd, num_elements(Theta_r_free), Theta_r_skeleton, w7skel, Ng);
   Theta_var = Theta_sd_free .* Theta_sd_free;
-  Theta_x_cov = cor2cov(Theta_x_r, Theta_x_sd, Theta_x_r_free, Theta_x_r_skeleton, w8skel, Ng);
+  Theta_x_cov = cor2cov(Theta_x_r, Theta_x_sd, num_elements(Theta_x_r_free), Theta_x_r_skeleton, w8skel, Ng);
   Theta_x_var = Theta_x_sd_free .* Theta_x_sd_free;
   if (m > 0 && len_free[10] > 0) {
     /* iden is created so that we can re-use cor2cov, even though
@@ -863,7 +883,7 @@ generated quantities { // these matrices are saved in the output but do not figu
     for (g in 1:Ng) {
       iden[g] = diag_matrix(rep_vector(1, m));
     }
-    Psi_cov = cor2cov(PS, iden, P_r, Psi_r_skeleton, w10skel, Ng);
+    Psi_cov = cor2cov(PS, iden, len_free[10], Psi_r_skeleton, w10skel, Ng);
   } else {
     Psi_cov = P_r;
   }

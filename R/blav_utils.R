@@ -423,7 +423,7 @@ dist2r <- function(priors, target){
         pridist <- sapply(prisplit, function(x) x[1])
         newdist <- rosetta$RFunction[match(pridist, rosetta$StanFunction)]
         for(i in 1:length(newdist)){
-            prisplit[[i]][1] <- newdist[i]
+            if(!is.na(newdist[i])) prisplit[[i]][1] <- newdist[i]
         }
 
         out <- prisplit

@@ -479,6 +479,12 @@ blavaan <- function(...,  # default lavaan arguments
                     jagtrans <- try(do.call("stanmarg_data", ldargs), silent = TRUE)
 
                     if(inherits(jagtrans, "try-error")) stop(jagtrans)
+
+                    ## add lkj for unrestricted psi
+                    if(jagtrans$fullpsi == 1L){
+                      psirows <- which(l2s$lavpartable$mat == "lvrho")
+                      lavpartable$prior[as.numeric(rownames(l2s$lavpartable))[psirows]] <- paste0("lkj_corr(", jagtrans$psi_r_alpha[1], ")")
+                    }
                     
                     jagtrans <- list(data = jagtrans,
                                      monitors = c("ly_sign",

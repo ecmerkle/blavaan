@@ -148,7 +148,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
       }
     }
   }
-  
+
   out <- list(matskel = matskel, free2 = free2, free = free, wskel = wskel,
               sign = sign)
 
@@ -536,6 +536,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
                    free2 = lyfree2, sign = dat$lam_y_sign,
                    dest = dest)
 
+    dat$fullpsi <- 0L
     dat$Psi_r_skeleton <- res$matskel
     dat$w10skel <- res$wskel
     dat$psi_r_sign <- res$sign
@@ -547,6 +548,9 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       nfree <- c(nfree, list(lvrho = sum(fpars)))
       freeparnums[ptrows[fpars]] <- 1:sum(fpars)
     }
+    ## check for completely unrestricted correlation matrix, for lkj
+    fpars <- sapply(res$free2, function(x) as.numeric(x[lower.tri(x)]))
+    if(all(!duplicated(fpars)) & all(fpars > 0) & all(res$wskel[,1] == 0)) dat$fullpsi <- 1L
   } else {
     dat$Psi_r_skeleton <- array(0, dim = c(Ng, 0, 0))
     dat$w10skel <- matrix(0, 0, 3)
@@ -669,6 +673,13 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     for (i in 1:length(ini)) {
       nmidx <- match(names(ini[[i]]), mapping)
       names(ini[[i]]) <- names(mapping)[nmidx]
+      if(dat$fullpsi) {
+        ## remove Psi_r_free because handled as corr_mat
+        ini[[i]]$Psi_r_free <- array(0, 0)
+        psidim <- dim(dat$Psi_skeleton)[2]
+        psimat <- array(diag(1, psidim), dim = c(psidim, psidim, dat$Ng))
+        ini[[i]]$Psi_r_mat <- aperm(psimat, perm = c(3, 1, 2))
+      }
     }
   } else {
     ini <- NULL
