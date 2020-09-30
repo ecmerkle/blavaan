@@ -53,19 +53,29 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
   priloglik <- 0
 
   ## first deal with any wishart priors
-  wps <- which(sapply(pricom, function(x) x[1] == "dwish"))
+  wps <- which(sapply(pricom, function(x) x[1] %in% c("dwish", "lkj_corr")))
   if(length(wps) > 0){
     ngroups <- max(lavpartable$group)
+    targdist <- ifelse(grepl("stan", target), "lkj_corr", "dwish")
     for(k in 1:ngroups){
-      varpars <- which(grepl("dwish", lavpartable$prior) &
-                       lavpartable$group == k &
-                       lavpartable$lhs == lavpartable$rhs)
-      dimen <- length(varpars)
-      tmpmat <- diag(lavpartable$est[varpars])
       ## TODO? ensure that covpars are ordered the same as varpars?
-      covpars <- which(grepl("dwish", lavpartable$prior) &
+      covpars <- which(grepl(targdist, lavpartable$prior) &
                        lavpartable$group == k &
                        lavpartable$lhs != lavpartable$rhs)
+      if(targdist == "dwish"){
+        varpars <- which(grepl(targdist, lavpartable$prior) &
+                         lavpartable$group == k &
+                         lavpartable$lhs == lavpartable$rhs)
+      } else {
+        lvvars <- unique(c(lavpartable$lhs[covpars], lavpartable$rhs[covpars]))
+        varpars <- which((lavpartable$lhs %in% lvvars |
+                          lavpartable$rhs %in% lvvars) &
+                         lavpartable$group == k &
+                         lavpartable$lhs == lavpartable$rhs)
+      }
+      dimen <- length(varpars)
+      tmpmat <- diag(lavpartable$est[varpars])
+
       if(length(covpars) > 0){
         tmpmat[lower.tri(tmpmat)] <- lavpartable$est[covpars]
       }
@@ -75,7 +85,13 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
       ## TODO do we really need MCMCpack, or should we just
       ## compute the log density ourselves?
       ## NB wishart on precision matrix, so need to invert:
-      priloglik <- priloglik + log(MCMCpack::dwish(solve(tmpmat), (dimen+1), diag(dimen)))
+      if(targdist == "dwish"){
+        priloglik <- priloglik + log(MCMCpack::dwish(solve(tmpmat), (dimen+1), diag(dimen)))
+      } else {
+        etapar <- as.numeric(pricom[[wps[1]]][2])
+        ## etapar==1 has you adding 0, so avoid
+        if(etapar != 1) priloglik <- priloglik + (eta - 1) * log(det(cov2cor(tmpmat)))
+      }
     }
   } else {
     ## just put a 0 here to avoid the error
