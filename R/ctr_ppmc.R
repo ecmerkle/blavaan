@@ -1,5 +1,5 @@
 ### Terrence D. Jorgensen
-### Last updated: 1 July 2019
+### Last updated: 30 September 2020
 ### function to implement a posterior predictor model check using any
 ### discrepancy function that can be applied to a lavaan object
 
@@ -97,9 +97,13 @@ summary.blavPPMC <- function(object, discFUN, dist = c("obs","sim"),
       }
     }
     class(out) <- c("lavaan.data.frame","data.frame")
-    attr(out, "header") <- paste0("Posterior summary statistics and highest ",
-                                  "posterior density (HPD) ", round(prob*100, 2),
-                                  "% credible intervals for the posterior ",
+    attr(out, "header") <- paste0("Posterior summary statistics",
+                                  ifelse(hpd, {
+                                    paste0(" and highest posterior density (HPD) ",
+                                           round(prob*100, 2),
+                                           "% credible intervals")
+                                  }, ""),
+                                  " for the posterior ",
                                   if (dist == "sim") "predictive ",
                                   "distribution of ",
                                   if (dist == "obs") "realized ",
@@ -109,7 +113,7 @@ summary.blavPPMC <- function(object, discFUN, dist = c("obs","sim"),
                                     "data simulated from the posterior, "
                                   } else "data, ",
                                   "along with posterior predictive p values ",
-                                  "to test hypotheses in either direction:\n\n",
+                                  "to test hypotheses in either direction:\n",
                                   sep = "")
   } else {
     ## multidimensional array (including matrices)
@@ -119,40 +123,117 @@ summary.blavPPMC <- function(object, discFUN, dist = c("obs","sim"),
     out <- sapply(rownames(XXmat), function(n) XXmat[n,], simplify = FALSE)
     for (nn in seq_along(out)) attributes(out[[nn]]) <- attributes(XX[[1]])
 
-    if (isSymmetric(out[[1]]) && to.data.frame) {
-      ## store unique elements of symmetric matrix in data.frame
-      XXidx <- which(lower.tri(out[[1]], diag = diag), arr.ind = TRUE)
-      XXnames <- rownames(out[[1]])
-      DF <- data.frame(moment = paste0(XXnames[XXidx[,2]], "~~", XXnames[XXidx[,1]]))
-      for (nn in names(out)) DF[[nn]] <- out[[nn]][XXidx]
-      DF$PPP_sim_GreaterThan_obs <- object@PPP[[discFUN]][XXidx]
-      DF$PPP_sim_LessThan_obs <- 1 - object@PPP[[discFUN]][XXidx]
-      out <- DF
-      ## sort?
-      if (length(sort.by)) {
-        sort.by <- as.character(sort.by)[1]
-        if (sort.by %in% colnames(out)) {
-          ORD <- order(out[ , sort.by], decreasing = decreasing)
-          out <- out[ORD, ]
+    ## 2-dimensional matrix provides further options for customizing output
+    if (length(dim(XX[[1]])) == 2L) {
+
+      if (isSymmetric(out[[1]]) && to.data.frame) {
+        ## store unique elements of symmetric matrix in data.frame
+        XXidx <- which(lower.tri(out[[1]], diag = diag), arr.ind = TRUE)
+        XXnames <- rownames(out[[1]])
+        DF <- data.frame(moment = paste0(XXnames[XXidx[,2]], "~~", XXnames[XXidx[,1]]))
+        for (nn in names(out)) DF[[nn]] <- out[[nn]][XXidx]
+        DF$PPP_sim_GreaterThan_obs <- object@PPP[[discFUN]][XXidx]
+        DF$PPP_sim_LessThan_obs <- 1 - object@PPP[[discFUN]][XXidx]
+        out <- DF
+        ## sort?
+        if (length(sort.by)) {
+          sort.by <- as.character(sort.by)[1]
+          if (sort.by %in% colnames(out)) {
+            ORD <- order(out[ , sort.by], decreasing = decreasing)
+            out <- out[ORD, ]
+          }
         }
+        class(out) <- c("lavaan.data.frame","data.frame")
+        attr(out, "header") <- paste0("Posterior summary statistics",
+                                      ifelse(hpd, {
+                                        paste0(" and highest posterior density (HPD) ",
+                                               round(prob*100, 2),
+                                               "% credible intervals")
+                                      }, ""),
+                                      " for the posterior ",
+                                      if (dist == "sim") "predictive ",
+                                      "distribution of ",
+                                      if (dist == "obs") "realized ",
+                                      "discrepancy-function values based on ",
+                                      if (dist == "obs") "observed ",
+                                      if (dist == "sim") {
+                                        "data simulated from the posterior, "
+                                      } else "data, ",
+                                      "along with posterior predictive p values ",
+                                      "to test hypotheses in either direction:\n",
+                                      sep = "")
+
+      } else if (to.data.frame) {
+        ## add PPP matrices to list of output
+        out[["PPP_sim>obs"]] <- object@PPP[[discFUN]]
+        out[["PPP_sim<obs"]] <- 1 - object@PPP[[discFUN]]
+
+        ## asymmetric, but each matrix could be a (sortable) data.frame
+        for (mm in seq_along(out)) {
+          out[[mm]] <- as.data.frame(out[[mm]])
+          class(out[[mm]]) <- c("lavaan.data.frame","data.frame")
+          if (names(out)[[mm]] %in% c("EAP","Median","MAP","SD")) {
+            attr(out[[mm]], "header") <- paste0("The ",
+                                                ifelse(names(out)[[mm]] == "EAP", "mean",
+                                                ifelse(names(out)[[mm]] == "MAP", "mode",
+                                                ifelse(names(out)[[mm]] == "SD", "SD","median"))),
+                                          " of the posterior ",
+                                          if (dist == "sim") "predictive ",
+                                          "distribution of ",
+                                          if (dist == "obs") "realized ",
+                                          "discrepancy-function values based on ",
+                                          if (dist == "obs") "observed ",
+                                          if (dist == "sim") {
+                                            "data simulated from the posterior, "
+                                          } else "data:\n",
+                                          sep = "")
+          } else if (names(out)[[mm]] %in% c("lower","upper")) {
+            attr(out[[mm]], "header") <- paste0("Highest posterior density (HPD) ",
+                                                round(prob*100, 2), "% ",
+                                                toupper(names(out)[[mm]]),
+                                                " credible-interval limits for the posterior ",
+                                                if (dist == "sim") "predictive ",
+                                                "distribution of ",
+                                                if (dist == "obs") "realized ",
+                                                "discrepancy-function values based on ",
+                                                if (dist == "obs") "observed ",
+                                                if (dist == "sim") {
+                                                  "data simulated from the posterior, "
+                                                } else "data:\n",
+                                                sep = "")
+          } else {
+            attr(out[[mm]], "header") <- paste0("Posterior predictive p values for ",
+                                                "testing directional hypotheses:\n\n",
+                                                sep = "")
+          }
+
+          if (length(sort.by)) {
+            sort.by <- as.character(sort.by)[1]
+            if (sort.by %in% colnames(out[[mm]])) {
+              ORD <- order(out[[mm]][ , sort.by], decreasing = decreasing)
+              out[[mm]] <- out[[mm]][ORD, ]
+            }
+          }
+
+        }
+
+      } else {
+        ## add PPP matrices to list of output
+        out[["PPP_sim>obs"]] <- object@PPP[[discFUN]]
+        out[["PPP_sim<obs"]] <- 1 - object@PPP[[discFUN]]
+
+        ## convert all matrices to lavaan for printing options
+        for (mm in seq_along(out)) {
+          class(out[[mm]]) <- c(ifelse(isSymmetric(out[[mm]]),
+                                       "lavaan.matrix.symmetric",
+                                       "lavaan.matrix"), "matrix")
+        }
+
       }
-      class(out) <- c("lavaan.data.frame","data.frame")
-      attr(out, "header") <- paste0("Posterior summary statistics and highest ",
-                                    "posterior density (HPD) ", round(prob*100, 2),
-                                    "% credible intervals for the posterior ",
-                                    if (dist == "sim") "predictive ",
-                                    "distribution of ",
-                                    if (dist == "obs") "realized ",
-                                    "discrepancy-function values based on ",
-                                    if (dist == "obs") "observed ",
-                                    if (dist == "sim") {
-                                      "data simulated from the posterior, "
-                                    } else "data, ",
-                                    "along with posterior predictive p values ",
-                                    "to test hypotheses in either direction:\n\n",
-                                    sep = "")
+
     } else {
-      ## add PPP-arrays to list of output
+      ## must be a multidimensional array
+      ## add PPP to list of output
       out[["PPP_sim>obs"]] <- object@PPP[[discFUN]]
       out[["PPP_sim<obs"]] <- 1 - object@PPP[[discFUN]]
     }
