@@ -69,7 +69,7 @@ blavaan <- function(...,  # default lavaan arguments
     }
       
     # no current functionality to generate initial values from approximately-equal prior
-    if(length(wiggle) > 0 & target %in% c('stanclassic', 'jags')) inits <- "simple"
+    if(length(wiggle) > 0 & target %in% c('stanclassic', 'jags') & inherits(inits, 'character')) inits <- "simple"
   
     # ensure rstan/runjags are here. if target is not installed but
     # the other is, then use the other instead.
@@ -124,7 +124,7 @@ blavaan <- function(...,  # default lavaan arguments
       dotdotdot <- dotdotdot[-cplocs]; dotNames <- dotNames[-cplocs]
     }
     ## cannot use lavaan inits with fa priors; FIXME?
-    if(cp == "fa" & is.character(inits)){
+    if(cp == "fa" & inherits(inits, 'character')){
       if(inits[1] %in% c("simple", "default")) inits <- "jags"
     }
     if(cp == "fa" & grepl("stan", target)){
@@ -505,25 +505,6 @@ blavaan <- function(...,  # default lavaan arguments
         }
 
         if(!inherits(jagtrans, "try-error")){
-            if(mcmcfile){
-                dir.create(path=jagdir, showWarnings=FALSE)
-                fext <- ifelse(target=="jags", "jag", "stan")
-                fnm <- paste0(jagdir, "/sem.", fext)
-                if(target=="stan"){
-                    cat(stanmodels$stanmarg@model_code, file = fnm)
-                } else {
-                    cat(jagtrans$model, file = fnm)
-                }
-                if(target=="jags"){
-                    save(jagtrans, file = paste(jagdir, "/semjags.rda",
-                                                sep=""))
-                } else {
-                    stantrans <- jagtrans
-                    save(stantrans, file = paste(jagdir, "/semstan.rda",
-                                                 sep=""))
-                }
-            }
-
             ## add extras to monitor, if specified
             sampparms <- jagtrans$monitors
             if("monitor" %in% names(mcmcextra)){
@@ -550,6 +531,25 @@ blavaan <- function(...,  # default lavaan arguments
                 }
             }
 
+            if(mcmcfile){
+                dir.create(path=jagdir, showWarnings=FALSE)
+                fext <- ifelse(target=="jags", "jag", "stan")
+                fnm <- paste0(jagdir, "/sem.", fext)
+                if(target=="stan"){
+                    cat(stanmodels$stanmarg@model_code, file = fnm)
+                } else {
+                    cat(jagtrans$model, file = fnm)
+                }
+                if(target=="jags"){
+                    save(jagtrans, file = paste(jagdir, "/semjags.rda",
+                                                sep=""))
+                } else {
+                    stantrans <- jagtrans
+                    save(stantrans, file = paste(jagdir, "/semstan.rda",
+                                                 sep=""))
+                }
+            }
+          
             if(target == "jags"){
               rjarg <- with(jagtrans, list(model = paste(model),
                                            monitor = sampparms, 
