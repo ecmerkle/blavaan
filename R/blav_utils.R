@@ -200,7 +200,7 @@ samp_lls <- function(lavjags        = NULL,
 
     nchain <- length(lavmcmc)
 
-    loop.args <- list(X = 1:nsamps, FUN = function(i){
+    loop.args <- list(X = 1:nsamps, future.seed = TRUE, FUN = function(i){
       tmpmat <- matrix(NA, nchain, 2)
       for(j in 1:nchain){
         tmpmat[j,1:2] <- get_ll(lavmcmc[[j]][itnums[i],],

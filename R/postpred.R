@@ -47,7 +47,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
   mis <- FALSE
   if(any(is.na(unlist(lavdata@X)))) mis <- TRUE
 
-  loop.args <- list(X = 1:psamp, FUN = function(i){
+  loop.args <- list(X = 1:psamp, future.seed = TRUE, FUN = function(i){
     ## lists to store output (reduced after concatenated across chains)
     if (length(discFUN)) {
       ## Nested lists (iterations within discrepancy functions)
@@ -441,7 +441,10 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, ...){
 
   lapcomm <- "lapply"
   if("parallel" %in% names(ddd)){
-    if(ddd$parallel) lapcomm <- "future_lapply"
+    if(ddd$parallel){
+      lapcomm <- "future_lapply"
+      loop.args <- c(loop.args, future.seed = TRUE)
+    }
   }
   res <- do.call(lapcomm, loop.args)
 
