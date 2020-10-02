@@ -17,7 +17,7 @@ blavInspect <- function(blavobject, what, ...) {
     add.labels <- TRUE
     if(any(dotNames == "add.labels")) add.labels <- dotdotdot$add.labels
 
-    jagtarget <- inherits(blavobject@external$mcmcout, "runjags")
+    jagtarget <- lavInspect(blavobject, "options")$target == "jags"
   
     ## whats unique to blavaan
     blavwhats <- c("start", "starting.values", "inits", "psrf",

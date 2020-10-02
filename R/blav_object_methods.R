@@ -193,8 +193,8 @@ function(object, header       = TRUE,
     }
 
 
-    if(estimates) {
-        jagtarget <- inherits(object@external$mcmcout, "runjags")
+  if(estimates) {
+        jagtarget <- lavInspect(object, "options")$target == "jags"
         newpt <- object@ParTable
         newpt$group[newpt$group == 0] <- 1 # for defined parameters
 
