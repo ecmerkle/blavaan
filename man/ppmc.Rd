@@ -65,12 +65,18 @@ ppmc(object, thin = 1, fit.measures = c("srmr","chisq"), discFUN = NULL)
   \item{prob}{The "confidence" level of the credible interval(s).}
   \item{nd}{The number of digits to print in the scatter\code{plot}.}
   \item{to.data.frame}{\code{logical} indicating whether the \code{summary} of a
-    2-dimensional \code{matrix} returned by \code{discFUN} should have its
-    unique elements stored in rows of a \code{data.frame} that can be sorted
-    for convenience of identifying large discrepancies.}
+    symmetric 2-dimensional \code{matrix} returned by \code{discFUN} should have
+    its unique elements stored in rows of a \code{data.frame} that can be sorted
+    for convenience of identifying large discrepancies. If \code{discFUN}
+    returns an asymmetric 2-dimensional \code{matrix}, the list of matrices
+    returned by the \code{summary} can also be converted to a \code{data.frame}.}
   \item{diag}{Passed to \code{\link[base]{lower.tri}} if \code{to.data.frame=TRUE}.}
   \item{sort.by}{\code{character}. If \code{summary} returns a \code{data.frame},
-    it can be sorted by this column name using \code{\link[base]{order}}.}
+    it can be sorted by this column name using \code{\link[base]{order}}. Note
+    that if \code{discFUN} returns an asymmetric 2-dimensional \code{matrix},
+    each \code{data.frame} in the returned \code{list} will be sorted
+    independently, so the rows are unlikely to be consistent across
+    summary statistics.}
   \item{decreasing}{Passed to \code{\link[base]{order}} if
     \code{!is.null(sort.by)}.}
   \item{\dots}{Additional \code{graphical \link[graphics]{par}ameters} to be
