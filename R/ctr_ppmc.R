@@ -1,5 +1,5 @@
 ### Terrence D. Jorgensen
-### Last updated: 30 September 2020
+### Last updated: 6 October 2020
 ### function to implement a posterior predictor model check using any
 ### discrepancy function that can be applied to a lavaan object
 
@@ -57,9 +57,14 @@ summary.blavPPMC <- function(object, discFUN, dist = c("obs","sim"),
     if ("mode" %in% central.tendency || "map" %in% central.tendency) {
       ## can the modeest package be used?
       if (suppressMessages(requireNamespace("modeest", quietly = TRUE))) {
-        out <- c(out, MAP =  modeest::mlv(x, method = "kernel", na.rm = TRUE)[1])
-      } else {
-        ## if not, use the quick-and-dirty way
+        tryMode <- try(modeest::mlv(x, method = "kernel", na.rm = TRUE),
+                       silent = TRUE)
+        if (!inherits(tryMode, "try-error") && is.numeric(tryMode)) {
+          out <- c(out, MAP = tryMode[1])
+        }
+      }
+      ## if the mode was not obtained above, use the quick-and-dirty way
+      if (is.na(out["MAP"])) {
         dd <- density(x, na.rm = TRUE)
         out <- c(out, MAP = dd$x[which.max(dd$y)])
       }
