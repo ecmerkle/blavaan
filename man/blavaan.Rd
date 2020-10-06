@@ -42,14 +42,15 @@ blavaan(..., cp = "srs",
     parameter values are obtained based on the prior distributions
     (while also trying to ensure that the starting values will not crash
     the model estimation).  If \code{"jags"}, no starting values are
-    specified and JAGS will choose values on its own.
-    If \code{start} is a fitted
-    object of class \code{\linkS4class{lavaan}}, the estimated values of
-    the corresponding parameters will be extracted, then perturbed in
-    the manner described above. If it is a model list,
-    for example the output of the \code{paramaterEstimates()} function,
-    the values of the \code{est} or \code{start} or \code{ustart} column
-    (whichever is found first) will be extracted.}
+    specified and JAGS will choose values on its own (and this will probably
+    crash Stan targets). You can also supply
+    a list of starting values for each chain, where the list format can
+    be obtained from, e.g., \code{blavInspect(fit, "inits")}. Finally,
+    you can specify starting values in a similar way to lavaan,
+    using the lavaan \code{start} argument (see the lavaan
+    documentation for all the options there). In this case, you should also set
+    \code{inits="simple"}, and be aware that the same starting values
+    will be used for each chain.}
 \item{convergence}{Useful only for \code{target="jags"}. If \code{"auto"}, parameters are
   sampled until convergence is achieved (via \code{autorun.jags()}). In
   this case, the arguments \code{burnin} and \code{sample} are passed to
