@@ -111,10 +111,18 @@ test_that("blavaan object methods work", {
   }
 
   ## blavFit + ppmc
-  ppmc_res <- ppmc(fitstan)
+  discFUN <- list(global = function(fit) {
+    fitMeasures(fit, fit.measures = c("cfi","rmsea","srmr","chisq"))
+  },
+  std.cov.resid = function(fit) lavResiduals(fit, zstat = FALSE,
+                                             summary = FALSE)$`1`$cov)
+  ppmc_res <- ppmc(fitstan, discFUN = discFUN)
   expect_s4_class(ppmc_res, "blavPPMC")
-  ppmc_summ <- summary(ppmc_res)
+  ppmc_summ <- summary(ppmc_res, "global", cent = "EAP")
   expect_s3_class(ppmc_summ, "lavaan.data.frame")
+  ppmc_summ <- summary(ppmc_res, "std.cov.resid", cent = "MAP",
+                       to.data.frame = TRUE, sort.by = "MAP",
+                       decreasing = TRUE)
   bf_res <- blavFitIndices(fitstan)
   expect_s4_class(bf_res, "blavFitIndices")
   expect_s3_class(summary(bf_res), "lavaan.data.frame")
