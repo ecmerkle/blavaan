@@ -359,8 +359,13 @@ plot.blavPPMC <- function(x, ..., discFUN, element, central.tendency = "",
     if (any(central.tendency[1] %in% c("mode","map"))) {
       ## can the modeest package be used?
       if (suppressMessages(requireNamespace("modeest", quietly = TRUE))) {
-        out <- c(out, MAP =  modeest::mlv(x, method = "kernel", na.rm = TRUE)$M)
-      } else {
+        tryMode <- try(modeest::mlv(x, method = "kernel", na.rm = TRUE),
+                       silent = TRUE)
+        if (!inherits(tryMode, "try-error") && is.numeric(tryMode)) {
+          out <- c(out, MAP = tryMode[1])
+        }
+      }
+      if (is.na(out["MAP"])) {
         ## if not, use the quick-and-dirty way
         dd <- density(x, na.rm = TRUE)
         out <- c(out, MAP = dd$x[which.max(dd$y)])
