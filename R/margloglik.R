@@ -90,7 +90,7 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
       } else {
         etapar <- as.numeric(pricom[[wps[1]]][2])
         ## etapar==1 has you adding 0, so avoid
-        if(etapar != 1) priloglik <- priloglik + (eta - 1) * log(det(cov2cor(tmpmat)))
+        if(etapar != 1) priloglik <- priloglik + (etapar - 1) * log(det(cov2cor(tmpmat)))
       }
     }
   } else {
