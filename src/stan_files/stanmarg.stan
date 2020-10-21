@@ -717,9 +717,9 @@ model { // N.B.: things declared in the model block do not get saved in the outp
         Sigma[g, 1:p, 1:p] += quad_form_sym(GPG[g] + Psi[g], transpose(Lambda_y_A[g]));
 	Mu[g, 1:p] += to_vector(Lambda_y_A[g] * Alpha[g, 1:m, 1]);
       }
-      if (n > 0) {
-	Mu[g, 1:p] += to_vector(Lambda_y_A[g] * Gamma[g] * Alpha[g, (m + 1):(m + n), 1]);
-      }
+      //if (n > 0) {
+      //  Mu[g, 1:p] += to_vector(Lambda_y_A[g] * Gamma[g] * Alpha[g, (m + 1):(m + n), 1]);
+      //}
     }
   }
     
@@ -951,9 +951,9 @@ generated quantities { // these matrices are saved in the output but do not figu
 	if (m > 0) {
 	  ovmean[g, 1:p] += to_vector(L_Y_A[g] * Alpha[g, 1:m, 1]);
 	}
-	if (n > 0) {
-	  ovmean[g, 1:p] += to_vector(L_Y_A[g] * Gam[g] * Alpha[g, (m + 1):(m + n), 1]);
-	}
+	//if (n > 0) {
+	//  ovmean[g, 1:p] += to_vector(L_Y_A[g] * Gam[g] * Alpha[g, (m + 1):(m + n), 1]);
+	//}
       }
     }
     
@@ -966,11 +966,13 @@ generated quantities { // these matrices are saved in the output but do not figu
       total_eta_y = L_Y[grpidx] * A;
       indirect_eta_y = total_eta_y - L_Y[grpidx];
 
+      /*
       if (n > 0) {
 	total_xi_eta = A * Gam[grpidx];
 	indirect_xi_eta = total_xi_eta - Gam[grpidx];
 	total_xi_y = total_eta_y * Gam[grpidx];
       }
+      */
 
       Psi_star = quad_form_sym(PS[grpidx], transpose(A)); // original was: L_Psi);
       Pi_t = transpose(total_xi_eta);
