@@ -389,9 +389,9 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
     TXT <- paste0(TXT, t1, etaname, " ~ ")
 
     if(miss.psi){
-      TXT <- paste0(TXT, "sem_lv_missing_lpdf(")
+      TXT <- paste0(TXT, "sem_lv_missing(")
     } else {
-      TXT <- paste0(TXT, "sem_lv_lpdf(")
+      TXT <- paste0(TXT, "sem_lv(")
     }
 
     TXT <- paste0(TXT, "alpha, ", betaname, ", ", psiname, ", ")
