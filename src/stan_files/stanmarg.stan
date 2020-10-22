@@ -975,7 +975,7 @@ generated quantities { // these matrices are saved in the output but do not figu
       */
 
       Psi_star = quad_form_sym(PS[grpidx], transpose(A)); // original was: L_Psi);
-      Pi_t = transpose(total_xi_eta);
+      //Pi_t = transpose(total_xi_eta);
       L_Yt = transpose(L_Y[grpidx]);
       //L_Xt = transpose(L_X[grpidx]);
 
