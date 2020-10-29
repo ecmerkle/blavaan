@@ -93,6 +93,7 @@ samp_lvs <- function(mcobj, lavmodel, lavpartable, standata, thin = 1) {
           mm.in.group <- 1:nmat[g] + cumsum(c(0,nmat))[g]
 
           modmats[[g]] <- lavmodel@GLIST[ mm.in.group ]
+          if(!("beta" %in% names(modmats[[g]]))) modmats[[g]]$beta <- matrix(0, standata$m, standata$m)
         }
 
         tmpmat[j,,] <- lvgqs(modmats, standata)
