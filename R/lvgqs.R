@@ -73,19 +73,19 @@ lvgqs <- function(modmats, standata) {
   eta
 }
 
-samp_lvs <- function(object, standata, thin = 1) {
-  lavmcmc <- make_mcmc(blavInspect(object, 'mcobj'))
-  itnums <- sampnums(blavInspect(object, 'mcobj'), thin = thin)
+samp_lvs <- function(mcobj, lavmodel, lavpartable, standata, thin = 1) {
+  lavmcmc <- make_mcmc(mcobj)
+  itnums <- sampnums(mcobj, thin = thin)
   nsamps <- length(itnums)
   nchain <- length(lavmcmc)
 
-  nmat <- object@Model@nmat
-  nblocks <- object@Model@nblocks
+  nmat <- lavmodel@nmat
+  nblocks <- lavmodel@nblocks
 
   loop.args <- list(X = 1:nsamps, future.seed = TRUE, FUN = function(i){
       tmpmat <- array(NA, dim=c(nchain, standata$Ntot, standata$w9use + standata$w9no))
       for(j in 1:nchain){
-        lavmodel <- fill_params(lavmcmc[[j]][i,], object@Model, object@ParTable)
+        lavmodel <- fill_params(lavmcmc[[j]][i,], lavmodel, lavpartable)
 
         modmats <- vector("list", nblocks)
         for (g in 1:nblocks) {
@@ -101,8 +101,10 @@ samp_lvs <- function(object, standata, thin = 1) {
 
   etasamps <- do.call("future_lapply", loop.args)
   etasamps <- array(unlist(etasamps), with(standata, c(nchain, Ntot, w9use + w9no, nsamps)))
-  etasamps <- aperm(etasamps, c(1,4,2,3))
-  etasamps <- lapply(seq(dim(etasamps)[1]), function(x) etasamps[x,,,])
+  etasamps <- aperm(etasamps, c(4,1,2,3))
+  dim(etasamps) <- with(standata, c(nsamps, nchain, Ntot * (w9use + w9no)))
+  dimnames(etasamps)[[3]] <- with(standata, paste0("eta[", rep(1:Ntot, (w9use + w9no)), ",",
+                                                   rep(1:(w9use + w9no), each=Ntot), "]"))
   
   etasamps
 }
@@ -130,5 +132,5 @@ if(FALSE){
               mcmcfile = TRUE)
   load('lavExport/semstan.rda')
 
-  blavaan:::samp_lvs(fit, stantrans$data)
+  blavaan:::samp_lvs(fit@external$mcmcout, fit@Model, fit@ParTable, stantrans$data)
 }

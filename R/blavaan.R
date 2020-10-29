@@ -510,7 +510,7 @@ blavaan <- function(...,  # default lavaan arguments
             if("monitor" %in% names(mcmcextra)){
                 sampparms <- c(sampparms, mcmcextra$monitor)
             }
-            if(save.lvs) sampparms <- c(sampparms, "eta")
+            if(save.lvs & target != "stan") sampparms <- c(sampparms, "eta")
 
             if(initsin == "jags"){
                 jagtrans$inits <- vector("list", n.chains)
@@ -620,7 +620,7 @@ blavaan <- function(...,  # default lavaan arguments
                                                      sep=""))
                     }
                 }
-                stop("blavaan ERROR: problem with MCMC estimation.  The model syntax and data have been exported.")
+                stop("blavaan ERROR: problem with MCMC estimation. The model syntax and data have been exported.")
             }
         } else {
             print(jagtrans)
@@ -640,6 +640,15 @@ blavaan <- function(...,  # default lavaan arguments
         } else {
           parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free'), l2s$free2, jagtrans$data, res)
           stansumm <- parests$stansumm
+          ## TODO get these in @external$stansumm, then modify make_mcmc to have
+          ## optional lv samples to send in. inspect args: mcmc, lvs, lvmeans
+          ## see rstan::monitor
+          if(save.lvs){
+            stanlvs <- samp_lvs(res, lavmodel, parests$lavpartable, jagtrans$data)
+            lvsumm <- as.matrix(rstan::monitor(stanlvs, print=FALSE))
+            cmatch <- match(colnames(stansumm), colnames(lvsumm))
+            stansumm <- rbind(stansumm, lvsumm[,cmatch])
+          }
         }
         x <- parests$x
         lavpartable <- parests$lavpartable
