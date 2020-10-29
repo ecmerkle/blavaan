@@ -640,9 +640,7 @@ blavaan <- function(...,  # default lavaan arguments
         } else {
           parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free'), l2s$free2, jagtrans$data, res)
           stansumm <- parests$stansumm
-          ## TODO get these in @external$stansumm, then modify make_mcmc to have
-          ## optional lv samples to send in. inspect args: mcmc, lvs, lvmeans
-          ## see rstan::monitor
+          ## lvs now in R instead of Stan
           if(save.lvs){
             stanlvs <- samp_lvs(res, lavmodel, parests$lavpartable, jagtrans$data)
             lvsumm <- as.matrix(rstan::monitor(stanlvs, print=FALSE))
@@ -690,7 +688,7 @@ blavaan <- function(...,  # default lavaan arguments
                 if(target == "jags"){
                     fullpmeans <- summary(make_mcmc(res))[[1]][,"Mean"]
                 } else {
-                    fullpmeans <- rstan::summary(res)$summary[,"mean"]
+                    fullpmeans <- stansumm[,"mean"] #rstan::summary(res)$summary[,"mean"]
                 }
                 cfx <- get_ll(fullpmeans, lavmodel = lavmodel, lavpartable = lavpartable,
                               lavsamplestats = lavsamplestats, lavoptions = lavoptions,
@@ -736,6 +734,9 @@ blavaan <- function(...,  # default lavaan arguments
       }
       
       if(save.lvs) {
+        if(target == "stan"){
+          lavmcmc <- make_mcmc(res, stanlvs) ## add on lvs
+        }
         csamplls <- samp_lls(res, lavmodel, lavpartable,
                              lavsamplestats, lavoptions, lavcache,
                              lavdata, lavmcmc, lavobject = LAV,
@@ -844,7 +845,10 @@ blavaan <- function(...,  # default lavaan arguments
                     origpt = lavpartable, inits = jagtrans$inits,
                     pxpt = jagtrans$pxpartable, burnin = burnin,
                     sample = sample)
-    if(grepl("stan", target)) extslot <- c(extslot, list(stansumm = stansumm))
+    if(grepl("stan", target)){
+      extslot <- c(extslot, list(stansumm = stansumm))
+      if(save.lvs) extslot <- c(extslot, list(stanlvs = stanlvs))
+    }
     if(jags.ic) extslot <- c(extslot, list(sampkls = sampkls))
     if(save.lvs) {
       extslot <- c(extslot, list(cfx = cfx, csamplls = csamplls))

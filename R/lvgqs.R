@@ -101,10 +101,10 @@ samp_lvs <- function(mcobj, lavmodel, lavpartable, standata, thin = 1) {
 
   etasamps <- do.call("future_lapply", loop.args)
   etasamps <- array(unlist(etasamps), with(standata, c(nchain, Ntot, w9use + w9no, nsamps)))
-  etasamps <- aperm(etasamps, c(4,1,2,3))
+  etasamps <- aperm(etasamps, c(4,1,3,2))
   dim(etasamps) <- with(standata, c(nsamps, nchain, Ntot * (w9use + w9no)))
-  dimnames(etasamps)[[3]] <- with(standata, paste0("eta[", rep(1:Ntot, (w9use + w9no)), ",",
-                                                   rep(1:(w9use + w9no), each=Ntot), "]"))
+  dimnames(etasamps)[[3]] <- with(standata, paste0("eta[", rep(1:Ntot, each=(w9use + w9no)), ",",
+                                                   rep(1:(w9use + w9no), Ntot), "]"))
   
   etasamps
 }

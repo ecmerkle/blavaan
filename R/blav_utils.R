@@ -630,43 +630,7 @@ kl_und <- function(mn0, mn1, cov0, invcov0, cov1, invcov1,
   (1/2) * (kl01 + kl10)
 }
 
-## now defunct:
-## get various fit metrics from a fitted model for each
-## posterior draw
-samp_idx <- function(lavjags        = NULL,
-                     lavmodel       = NULL,
-                     lavpartable    = NULL,
-                     lavsamplestats = NULL,
-                     lavoptions     = NULL,
-                     lavcache       = NULL,
-                     lavdata        = NULL,
-                     lavmcmc        = NULL,
-                     thin           = 1,
-                     measure        = "logl"){
-    itnums <- sampnums(lavjags, thin = thin)
-    nsamps <- length(itnums)
-    lavmcmc <- make_mcmc(lavjags)
-
-    nchain <- length(lavmcmc)
-    idxmat <- matrix(NA, nsamps, nchain)
-
-    for(i in 1:nsamps){
-        for(j in 1:nchain){
-            idxmat[i,j] <- get_ll(lavmcmc[[j]][itnums[i],],
-                                  lavmodel,
-                                  lavpartable,
-                                  lavsamplestats,
-                                  lavoptions,
-                                  lavcache,
-                                  lavdata,
-                                  measure)[1]
-        }
-    }
-
-    idxmat
-}
-
-make_mcmc <- function(mcmcout){
+make_mcmc <- function(mcmcout, stanlvs = NULL){
   ## extract mcmc draws from jags/stan object
   if(inherits(mcmcout, "runjags")){
     lavmcmc <- mcmcout$mcmc
@@ -678,6 +642,11 @@ make_mcmc <- function(mcmcout){
     lavmcmc <- lapply(seq(dim(lavmcmc)[2]), function(x) lavmcmc[,x,])
     reord <- match(rownames(tmpsumm$summary), colnames(lavmcmc[[1]]))
     lavmcmc <- lapply(lavmcmc, function(x) x[,reord])
+
+    if(is.array(stanlvs)){
+      stanlvs <- lapply(seq(dim(stanlvs)[2]), function(x) stanlvs[,x,])
+      lavmcmc <- lapply(1:length(lavmcmc), function(x) cbind(lavmcmc[[x]], stanlvs[[x]]))
+    }
   }
   lavmcmc
 }

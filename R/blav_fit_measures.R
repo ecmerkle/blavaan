@@ -188,10 +188,15 @@ blav_fit_measures <- function(object, fit.measures = "all",
         indices["se_loo"] <- fitse[["looic"]]
 
         if("csamplls" %in% names(object@external)){
+            if("stanlvs" %in% names(object@external)){
+                samps <- make_mcmc(object@external$mcmcout, object@external$stanlvs)
+            } else {
+                samps <- make_mcmc(object@external$mcmcout)
+            }
             casells <- case_lls(object@external$mcmcout, object@Model,
                                 object@ParTable, object@SampleStats,
                                 lavopt, object@Cache,
-                                object@Data, make_mcmc(object@external$mcmcout),
+                                object@Data, samps,
                                 lavobject=object, conditional = TRUE)
 
             fitres <- waic(casells)
@@ -223,19 +228,4 @@ blav_fit_measures <- function(object, fit.measures = "all",
     }
 
     out
-}
-
-fit_idx <- function(BLAV, thin = 5, measure = "logl"){
-    res <- samp_idx(BLAV@external$mcmcout,
-                    BLAV@Model,
-                    BLAV@ParTable,
-                    BLAV@SampleStats,
-                    BLAV@Options,
-                    BLAV@Cache,
-                    BLAV@Data,
-                    make_mcmc(BLAV@external$mcmcout),
-                    thin = thin,
-                    measure = measure)
-
-    res
 }

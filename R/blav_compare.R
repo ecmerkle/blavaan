@@ -1,5 +1,6 @@
 blavCompare <- function(object1, object2, ...) {
   ## loo compare code from Mauricio Garnier-Villarreal + old BF() code
+  ## possible TODO: compare using conditional likelihoods, in addition to marginal
   if(blavInspect(object1, "Options")$test == "none" |
      blavInspect(object2, "Options")$test == "none"){
     stop("blavaan ERROR: Models cannot be compared when test='none'")

@@ -118,7 +118,7 @@ blavInspect <- function(blavobject, what, ...) {
             
             nsamp <- sum(lavInspect(blavobject, "nobs"))
 
-            draws <- make_mcmc(blavobject@external$mcmcout)
+            draws <- make_mcmc(blavobject@external$mcmcout, blavobject@external$stanlvs)
             drawcols <- grep("^eta", colnames(draws[[1]]))
 
             if(jagtarget){
