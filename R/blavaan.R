@@ -661,9 +661,11 @@ blavaan <- function(...,  # default lavaan arguments
                 ## lvs now in R instead of Stan
                 if(save.lvs){
                     stanlvs <- samp_lvs(res, lavmodel, parests$lavpartable, jagtrans$data)
-                    lvsumm <- as.matrix(rstan::monitor(stanlvs, print=FALSE))
-                    cmatch <- match(colnames(stansumm), colnames(lvsumm))
-                    stansumm <- rbind(stansumm, lvsumm[,cmatch])
+                    if(dim(stanlvs)[3L] > 0){
+                        lvsumm <- as.matrix(rstan::monitor(stanlvs, print=FALSE))
+                        cmatch <- match(colnames(stansumm), colnames(lvsumm))
+                        stansumm <- rbind(stansumm, lvsumm[,cmatch])
+                    }
                 }
                 # burnin + sample already defined, will be saved in
                 # @external so summary() can use it:

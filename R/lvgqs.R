@@ -15,6 +15,7 @@ lvgqs <- function(modmats, standata) {
   startrow <- standata$startrow
   endrow <- standata$endrow
   w9no <- standata$w9no
+  w9use <- standata$w9use
 
   I <- diag(m)
   precision <- matrix(0, (p+q), (p+q))
@@ -34,38 +35,40 @@ lvgqs <- function(modmats, standata) {
     }
   }
 
-  for (mm in 1:Np){
-    grpidx <- grpnum[mm]
+  if ((w9use + w9no) > 0) {
+    for (mm in 1:Np){
+      grpidx <- grpnum[mm]
 
-    A <- solve(I - modmats[[grpidx]]$beta)
-    total_eta_eta <- A - I
-    indirect_eta_eta <- total_eta_eta - modmats[[grpidx]]$beta
-    total_eta_y <- modmats[[grpidx]]$lambda %*% A
-    indirect_eta_y <- total_eta_y - modmats[[grpidx]]$lambda
+      A <- solve(I - modmats[[grpidx]]$beta)
+      total_eta_eta <- A - I
+      indirect_eta_eta <- total_eta_eta - modmats[[grpidx]]$beta
+      total_eta_y <- modmats[[grpidx]]$lambda %*% A
+      indirect_eta_y <- total_eta_y - modmats[[grpidx]]$lambda
 
-    Psi_star <- A %*% modmats[[grpidx]]$psi %*% t(A)
-    L_Yt <- t(modmats[[grpidx]]$lambda)
+      Psi_star <- A %*% modmats[[grpidx]]$psi %*% t(A)
+      L_Yt <- t(modmats[[grpidx]]$lambda)
 
-    cov_eta <- Psi_star
-    top_left <- modmats[[grpidx]]$lambda %*% cov_eta %*% L_Yt + modmats[[grpidx]]$theta
+      cov_eta <- Psi_star
+      top_left <- modmats[[grpidx]]$lambda %*% cov_eta %*% L_Yt + modmats[[grpidx]]$theta
 
-    corner <- cov_eta %*% L_Yt
-    bottom_right <- cov_eta
+      corner <- cov_eta %*% L_Yt
+      bottom_right <- cov_eta
 
-    ## FIXME?? what if obsidx also extends to x variables?
-    obsidx <- Obsvar[mm, ]
-    precision[1:Nobs[mm],1:Nobs[mm]] <- solve(top_left[obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]])
-    L <- chol(bottom_right[usepsi,usepsi] - (corner[,obsidx[1:Nobs[mm]]] %*% precision[1:Nobs[mm],1:Nobs[mm]] %*% t(corner[,obsidx[1:Nobs[mm]]]))[usepsi,usepsi])
-    beta <- corner[, obsidx[1:Nobs[mm]]] %*% precision[1:Nobs[mm], 1:Nobs[mm]]
+      ## FIXME?? what if obsidx also extends to x variables?
+      obsidx <- Obsvar[mm, ]
+      precision[1:Nobs[mm],1:Nobs[mm]] <- solve(top_left[obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]], drop=FALSE])
+      L <- chol(bottom_right[usepsi,usepsi,drop=FALSE] - (corner[,obsidx[1:Nobs[mm]],drop=FALSE] %*% precision[1:Nobs[mm],1:Nobs[mm]] %*% t(corner[,obsidx[1:Nobs[mm]],drop=FALSE]))[usepsi,usepsi,drop=FALSE])
+      beta <- corner[, obsidx[1:Nobs[mm]], drop=FALSE] %*% precision[1:Nobs[mm], 1:Nobs[mm], drop=FALSE]
 
-    r1 <- startrow[mm]
-    r2 <- endrow[mm]
+      r1 <- startrow[mm]
+      r2 <- endrow[mm]
 
-    for (idx in r1:r2){
-      lvmean <- modmats[[grpidx]]$alpha + beta[, 1:Nobs[mm]] %*% (YX[idx, 1:Nobs[mm]] - ovmean[[grpidx]][obsidx[1:Nobs[mm]]])
-      eta[idx,usepsi] <- t(rmnorm(1, lvmean[usepsi], sqrt = L));
-      if (w9no > 0) {
-        eta[idx,nopsi] <- eta[idx,usepsi] %*% t(A[nopsi,usepsi]);
+      for (idx in r1:r2){
+        lvmean <- modmats[[grpidx]]$alpha + beta[, 1:Nobs[mm], drop=FALSE] %*% (YX[idx, 1:Nobs[mm]] - ovmean[[grpidx]][obsidx[1:Nobs[mm]]])
+        eta[idx,usepsi] <- t(rmnorm(1, lvmean[usepsi], sqrt = L));
+        if (w9no > 0) {
+          eta[idx,nopsi] <- eta[idx,usepsi] %*% t(A[nopsi,usepsi]);
+        }
       }
     }
   }
@@ -104,8 +107,10 @@ samp_lvs <- function(mcobj, lavmodel, lavpartable, standata, thin = 1) {
   etasamps <- array(unlist(etasamps), with(standata, c(nchain, Ntot, w9use + w9no, nsamps)))
   etasamps <- aperm(etasamps, c(4,1,3,2))
   dim(etasamps) <- with(standata, c(nsamps, nchain, Ntot * (w9use + w9no)))
-  dimnames(etasamps)[[3]] <- with(standata, paste0("eta[", rep(1:Ntot, each=(w9use + w9no)), ",",
-                                                   rep(1:(w9use + w9no), Ntot), "]"))
+  if((standata$w9use + standata$w9no) > 0){
+    dimnames(etasamps)[[3]] <- with(standata, paste0("eta[", rep(1:Ntot, each=(w9use + w9no)), ",",
+                                                     rep(1:(w9use + w9no), Ntot), "]"))
+  }
   
   etasamps
 }

@@ -1,5 +1,7 @@
 /* This file is based on LERSIL.stan by Ben Goodrich.
-   https://github.com/bgoodri/LERSIL                  */
+   https://github.com/bgoodri/LERSIL                  
+   Some of the commented-out code could be useful in
+   certain situations, but it consumes too much memory for CRAN */
 functions { // you can use these in R following `rstan::expose_stan_functions("foo.stan")`
   /*
     Fills in the elements of a coefficient matrix containing some mix of 
@@ -900,71 +902,71 @@ generated quantities { // these matrices are saved in the output but do not figu
   //Ph_var = Phi_sd_free .* Phi_sd_free;
 
   // now use matrices with sign fixes to deal with lvs
-  if (save_lvs && (m + n) > 0) { // all matrices defined in this local block are not saved in the output
-    matrix[m, m] A;
-    matrix[m, n] total_xi_eta;
-    matrix[m, n] indirect_xi_eta;
-    matrix[m, m] total_eta_eta;
-    matrix[m, m] indirect_eta_eta;
-    matrix[p, m] total_eta_y;
-    matrix[p, m] indirect_eta_y;
-    matrix[p, n] total_xi_y; // = indirect_xi_y since there is no direct effect
+  //if (save_lvs && (m + n) > 0) { // all matrices defined in this local block are not saved in the output
+  //  matrix[m, m] A;
+  //  matrix[m, n] total_xi_eta;
+  //  matrix[m, n] indirect_xi_eta;
+  //  matrix[m, m] total_eta_eta;
+  //  matrix[m, m] indirect_eta_eta;
+  //  matrix[p, m] total_eta_y;
+  //  matrix[p, m] indirect_eta_y;
+  //  matrix[p, n] total_xi_y; // = indirect_xi_y since there is no direct effect
 
-    matrix[m, m] Psi_star; // original was: L_Psi);
-    matrix[n, m] Pi_t;
-    matrix[m, p] L_Yt;
-    matrix[p, m] L_Y_A[Ng];
+  //  matrix[m, m] Psi_star; // original was: L_Psi);
+  //  matrix[n, m] Pi_t;
+  //  matrix[m, p] L_Yt;
+  //  matrix[p, m] L_Y_A[Ng];
     //matrix[n, q] L_Xt;
-    matrix[n, m] cov_eta_xi;
-    matrix[q, m] cov_x_eta;
-    matrix[n, p] cov_y_xi;
-    matrix[q, p] cov_y_x;
-    matrix[n, q] cov_x_xi;
-    matrix[m, m] cov_eta;
+  //  matrix[n, m] cov_eta_xi;
+  //  matrix[q, m] cov_x_eta;
+  //  matrix[n, p] cov_y_xi;
+  //  matrix[q, p] cov_y_x;
+  //  matrix[n, q] cov_x_xi;
+  //  matrix[m, m] cov_eta;
     
-    matrix[p + q, p + q] top_left;
+  //  matrix[p + q, p + q] top_left;
       
-    matrix[m + n, p + q] corner;
+  //  matrix[m + n, p + q] corner;
     
-    matrix[m + n, m + n] bottom_right;
+  //  matrix[m + n, m + n] bottom_right;
     
-    matrix[p + q, p + q] precision;
-    matrix[w9use, w9use] L;
-    matrix[m + n, p + q] beta;
-    vector[m + n] lvmean;
-    vector[p + q] ovmean[Ng];
+  //  matrix[p + q, p + q] precision;
+  //  matrix[w9use, w9use] L;
+  //  matrix[m + n, p + q] beta;
+  //  vector[m + n] lvmean;
+  //  vector[p + q] ovmean[Ng];
 
-    int obsidx[p + q];
-    int r1 = 1;
-    int r2 = 1;
-    int grpidx = 1;
+  //  int obsidx[p + q];
+  //  int r1 = 1;
+  //  int r2 = 1;
+  //  int grpidx = 1;
 
-    for (g in 1:Ng) {
-      ovmean[g] = to_vector(Nu[g]);
+  //  for (g in 1:Ng) {
+  //    ovmean[g] = to_vector(Nu[g]);
 
       //if (q > 0 && n > 0) {
       //  ovmean[g, (p + 1):(p + q)] += to_vector(Lambda_x[g] * Alpha[g, (m + 1):(m + n), 1]);
       //}
 
-      if (p > 0) {
-	L_Y_A[g] = mdivide_right(L_Y[g], I - Bet[g]);
-	if (m > 0) {
-	  ovmean[g, 1:p] += to_vector(L_Y_A[g] * Alpha[g, 1:m, 1]);
-	}
+  //    if (p > 0) {
+  //      L_Y_A[g] = mdivide_right(L_Y[g], I - Bet[g]);
+  //      if (m > 0) {
+  //        ovmean[g, 1:p] += to_vector(L_Y_A[g] * Alpha[g, 1:m, 1]);
+  //      }
 	//if (n > 0) {
 	//  ovmean[g, 1:p] += to_vector(L_Y_A[g] * Gam[g] * Alpha[g, (m + 1):(m + n), 1]);
 	//}
-      }
-    }
+  //    }
+  //  }
     
-    for (mm in 1:Np) {
-      grpidx = grpnum[mm];
+  //  for (mm in 1:Np) {
+  //    grpidx = grpnum[mm];
 
-      A = mdivide_left(I - Bet[grpidx], I); // = (I - B)^{-1}
-      total_eta_eta = A - I;
-      indirect_eta_eta = total_eta_eta - Bet[grpidx];
-      total_eta_y = L_Y[grpidx] * A;
-      indirect_eta_y = total_eta_y - L_Y[grpidx];
+  //    A = mdivide_left(I - Bet[grpidx], I); // = (I - B)^{-1}
+  //    total_eta_eta = A - I;
+  //    indirect_eta_eta = total_eta_eta - Bet[grpidx];
+  //    total_eta_y = L_Y[grpidx] * A;
+  //    indirect_eta_y = total_eta_y - L_Y[grpidx];
 
       /*
       if (n > 0) {
@@ -974,9 +976,9 @@ generated quantities { // these matrices are saved in the output but do not figu
       }
       */
 
-      Psi_star = quad_form_sym(PS[grpidx], transpose(A)); // original was: L_Psi);
+  //    Psi_star = quad_form_sym(PS[grpidx], transpose(A)); // original was: L_Psi);
       //Pi_t = transpose(total_xi_eta);
-      L_Yt = transpose(L_Y[grpidx]);
+  //    L_Yt = transpose(L_Y[grpidx]);
       //L_Xt = transpose(L_X[grpidx]);
 
       /*
@@ -1000,30 +1002,30 @@ generated quantities { // these matrices are saved in the output but do not figu
         bottom_right = append_row(
           append_col(cov_eta, transpose(cov_eta_xi)), append_col(cov_eta_xi, PHI[grpidx]) );
 	  } else {*/
-      cov_eta = Psi_star;
-      top_left = quad_form_sym(cov_eta, L_Yt) + Theta[grpidx];
+  //    cov_eta = Psi_star;
+  //    top_left = quad_form_sym(cov_eta, L_Yt) + Theta[grpidx];
       
-      corner = cov_eta * L_Yt;
+  //    corner = cov_eta * L_Yt;
     
-      bottom_right = cov_eta;
+  //    bottom_right = cov_eta;
 	//}
 
       // FIXME?? what if obsidx also extends to x variables?
-      obsidx = Obsvar[mm, ];
-      precision[1:Nobs[mm],1:Nobs[mm]] = inverse_spd(top_left[obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
-      L = cholesky_decompose(bottom_right[usepsi,usepsi] - quad_form_sym(precision[1:Nobs[mm],1:Nobs[mm]], transpose(corner[,obsidx[1:Nobs[mm]]]))[usepsi,usepsi]);
-      beta[, 1:Nobs[mm]] = corner[, obsidx[1:Nobs[mm]]] * precision[1:Nobs[mm], 1:Nobs[mm]];
+  //    obsidx = Obsvar[mm, ];
+  //    precision[1:Nobs[mm],1:Nobs[mm]] = inverse_spd(top_left[obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+  //    L = cholesky_decompose(bottom_right[usepsi,usepsi] - quad_form_sym(precision[1:Nobs[mm],1:Nobs[mm]], transpose(corner[,obsidx[1:Nobs[mm]]]))[usepsi,usepsi]);
+  //    beta[, 1:Nobs[mm]] = corner[, obsidx[1:Nobs[mm]]] * precision[1:Nobs[mm], 1:Nobs[mm]];
 
-      r1 = startrow[mm];
-      r2 = endrow[mm];
+  //    r1 = startrow[mm];
+  //    r2 = endrow[mm];
 
-      for (idx in r1:r2){
-	lvmean = Alpha[grpidx, , 1] + beta[, 1:Nobs[mm]] * (YX[idx, 1:Nobs[mm]] - ovmean[grpidx, obsidx[1:Nobs[mm]]]);
-	eta[idx,usepsi] = transpose(multi_normal_cholesky_rng(lvmean[usepsi], L));
-	if (w9no > 0) {
-	  eta[idx,nopsi] = eta[idx,usepsi] * transpose(A[nopsi,usepsi]);
-	}
-      }
-    }
-  }
+  //    for (idx in r1:r2){
+  //      lvmean = Alpha[grpidx, , 1] + beta[, 1:Nobs[mm]] * (YX[idx, 1:Nobs[mm]] - ovmean[grpidx, obsidx[1:Nobs[mm]]]);
+  //      eta[idx,usepsi] = transpose(multi_normal_cholesky_rng(lvmean[usepsi], L));
+  //      if (w9no > 0) {
+  //        eta[idx,nopsi] = eta[idx,usepsi] * transpose(A[nopsi,usepsi]);
+  //      }
+  //    }
+  //  }
+  //}
 } // end a with a completely blank line (not even whitespace)
