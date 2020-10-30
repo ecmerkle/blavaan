@@ -640,13 +640,6 @@ blavaan <- function(...,  # default lavaan arguments
         } else {
           parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free'), l2s$free2, jagtrans$data, res)
           stansumm <- parests$stansumm
-          ## lvs now in R instead of Stan
-          if(save.lvs){
-            stanlvs <- samp_lvs(res, lavmodel, parests$lavpartable, jagtrans$data)
-            lvsumm <- as.matrix(rstan::monitor(stanlvs, print=FALSE))
-            cmatch <- match(colnames(stansumm), colnames(lvsumm))
-            stansumm <- rbind(stansumm, lvsumm[,cmatch])
-          }
         }
         x <- parests$x
         lavpartable <- parests$lavpartable
@@ -665,6 +658,13 @@ blavaan <- function(...,  # default lavaan arguments
                     ## defined variables come from delta method:
                     lavpartable$est <- lav_model_get_parameters(lavmodel = lavmodel, type = "user", extra = TRUE)
                 }
+                ## lvs now in R instead of Stan
+                if(save.lvs){
+                    stanlvs <- samp_lvs(res, lavmodel, parests$lavpartable, jagtrans$data)
+                    lvsumm <- as.matrix(rstan::monitor(stanlvs, print=FALSE))
+                    cmatch <- match(colnames(stansumm), colnames(lvsumm))
+                    stansumm <- rbind(stansumm, lvsumm[,cmatch])
+                }
                 # burnin + sample already defined, will be saved in
                 # @external so summary() can use it:
                 #burnin <- wrmup
@@ -677,6 +677,7 @@ blavaan <- function(...,  # default lavaan arguments
             attr(x, "converged") <- FALSE
             lavpartable$est <- lavpartable$start
             stansumm <- NULL
+            stanlvs <- NULL
         }
         attr(x, "control") <- bcontrol
 
