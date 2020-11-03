@@ -816,7 +816,7 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
       }
     }
 
-    vcorr <- cor(draw_mat[,rowidx2])
+    vcorr <- cor(draw_mat[, rowidx2, drop=FALSE])
 
     names(sdvec) <- colnames(vcorr)
 

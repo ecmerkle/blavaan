@@ -768,7 +768,8 @@ blavaan <- function(...,  # default lavaan arguments
     lavvcov <- list()
     VCOV <- NULL
     if(jag.do.fit){
-      dsd <- diag(parests$sd[names(parests$sd) %in% colnames(parests$vcorr)])
+      dsd <- parests$sd[names(parests$sd) %in% colnames(parests$vcorr)]
+      if(length(dsd) > 1) dsd <- diag(dsd)
       VCOV <- dsd %*% parests$vcorr %*% dsd
       rownames(VCOV) <- colnames(VCOV) <- colnames(parests$vcorr)
       #lavjags <- c(lavjags, list(vcov = VCOV))
