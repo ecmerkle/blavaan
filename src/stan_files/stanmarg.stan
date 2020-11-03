@@ -759,24 +759,28 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   if (len_free[5] > 0 && theta_pow != 1) {
     for (i in 1:len_free[5]) {
       Theta_pri[i] = Theta_sd_free[i]^(theta_pow);
+      target += log(abs(theta_pow)) + (theta_pow - 1)*log(Theta_sd_free[i]);
     }
   }
   Theta_x_pri = Theta_x_sd_free;
   if (len_free[6] > 0 && theta_x_pow != 1) {
     for (i in 1:len_free[6]) {
       Theta_x_pri[i] = Theta_x_sd_free[i]^(theta_x_pow);
+      target += log(abs(theta_x_pow)) + (theta_x_pow - 1)*log(Theta_x_sd_free[i]);
     }
   }
   Psi_pri = Psi_sd_free;
   if (len_free[9] > 0 && psi_pow != 1) {
     for (i in 1:len_free[9]) {
       Psi_pri[i] = Psi_sd_free[i]^(psi_pow);
+      target += log(abs(psi_pow)) + (psi_pow - 1)*log(Psi_sd_free[i]);
     }
   }
   //Phi_pri = Phi_sd_free;
   //if (len_free[11] > 0 && phi_pow != 1) {
   //  for (i in 1:len_free[11]) {    
   //    Phi_pri[i] = Phi_sd_free[i]^(phi_pow);
+  //    target += log(abs(phi_pow)) + (phi_pow - 1)*log(Phi_sd_free[i]);
   //  }
   //}
 
