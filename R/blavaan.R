@@ -659,7 +659,7 @@ blavaan <- function(...,  # default lavaan arguments
                     lavpartable$est <- lav_model_get_parameters(lavmodel = lavmodel, type = "user", extra = TRUE)
                 }
                 ## lvs now in R instead of Stan
-                if(save.lvs){
+                if(save.lvs & target == "stan"){
                     stanlvs <- samp_lvs(res, lavmodel, parests$lavpartable, jagtrans$data)
                     if(dim(stanlvs)[3L] > 0){
                         lvsumm <- as.matrix(rstan::monitor(stanlvs, print=FALSE))
@@ -851,7 +851,7 @@ blavaan <- function(...,  # default lavaan arguments
                     sample = sample)
     if(grepl("stan", target)){
       extslot <- c(extslot, list(stansumm = stansumm))
-      if(save.lvs) extslot <- c(extslot, list(stanlvs = stanlvs))
+      if(save.lvs & target=="stan") extslot <- c(extslot, list(stanlvs = stanlvs))
     }
     if(jags.ic) extslot <- c(extslot, list(sampkls = sampkls))
     if(save.lvs) {

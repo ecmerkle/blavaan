@@ -1176,7 +1176,7 @@ coeffun_stan <- function(lavpartable, pxpartable, rsob, fun = "mean") {
     ## vcorr
     draw_mat <- as.matrix(rsob)
     cmatch <- match(ptnames[pxpartable$free > 0][order(pxpartable$free[pxpartable$free > 0])], colnames(draw_mat))
-    vcorr <- cor(draw_mat[,cmatch])
+    vcorr <- cor(draw_mat[, cmatch, drop=FALSE])
 
     svmatch <- match(colnames(vcorr), names(sdvec), nomatch = 0)
     sdvec <- sdvec[svmatch]
