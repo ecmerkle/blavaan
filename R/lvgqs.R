@@ -57,7 +57,12 @@ lvgqs <- function(modmats, standata) {
       ## FIXME?? what if obsidx also extends to x variables?
       obsidx <- Obsvar[mm, ]
       precision[1:Nobs[mm],1:Nobs[mm]] <- solve(top_left[obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]], drop=FALSE])
-      L <- chol(bottom_right[usepsi,usepsi,drop=FALSE] - (corner[,obsidx[1:Nobs[mm]],drop=FALSE] %*% precision[1:Nobs[mm],1:Nobs[mm]] %*% t(corner[,obsidx[1:Nobs[mm]],drop=FALSE]))[usepsi,usepsi,drop=FALSE])
+      L <- bottom_right[usepsi,usepsi,drop=FALSE] - (corner[,obsidx[1:Nobs[mm]],drop=FALSE] %*% precision[1:Nobs[mm],1:Nobs[mm]] %*% t(corner[,obsidx[1:Nobs[mm]],drop=FALSE]))[usepsi,usepsi,drop=FALSE]
+      if (all(round(L, 6) == 0)) {
+        L <- matrix(0, nrow=NROW(L), ncol=NCOL(L))
+      } else {
+        L <- chol(L)
+      }
       beta <- corner[, obsidx[1:Nobs[mm]], drop=FALSE] %*% precision[1:Nobs[mm], 1:Nobs[mm], drop=FALSE]
 
       r1 <- startrow[mm]
@@ -65,9 +70,9 @@ lvgqs <- function(modmats, standata) {
 
       for (idx in r1:r2){
         lvmean <- modmats[[grpidx]]$alpha + beta[, 1:Nobs[mm], drop=FALSE] %*% (YX[idx, 1:Nobs[mm]] - ovmean[[grpidx]][obsidx[1:Nobs[mm]]])
-        eta[idx,usepsi] <- t(rmnorm(1, lvmean[usepsi], sqrt = L));
+        eta[idx,usepsi] <- t(rmnorm(1, lvmean[usepsi], sqrt = L))
         if (w9no > 0) {
-          eta[idx,nopsi] <- eta[idx,usepsi] %*% t(A[nopsi,usepsi]);
+          eta[idx,nopsi] <- eta[idx,usepsi,drop=FALSE] %*% t(A[nopsi,usepsi,drop=FALSE])
         }
       }
     }
