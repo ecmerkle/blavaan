@@ -35,6 +35,8 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
       ## to avoid warnings from mnormt::pd.solve
       covmat <- lapply(covmat, function(x){
         class(x) <- "matrix"
+        zvar <- which(diag(x) == 0L)
+        if(length(zvar > 0)) diag(x)[zvar] <- 1e-4
         x})
 
       ngroups <- lavsamplestats@ngroups
