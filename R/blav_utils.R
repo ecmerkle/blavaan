@@ -599,11 +599,19 @@ fill_eta <- function(postsamp, lavmodel, lavpartable, lavsamplestats, lavdata){
     etamat <- matrix(etavec, lavsamplestats@ntotal, foundlvs)
     if(foundlvs < nlv) etamat <- cbind(etamat, matrix(0, lavsamplestats@ntotal, (nlv - foundlvs)))
 
-    ngroups <- lavsamplestats@ngroups
+    ## fulleta needs to have rows for any excluded cases
+    if(lavdata@norig > lavsamplestats@ntotal){
+      fulleta <- matrix(NA, sum(unlist(lavdata@norig)), ncol(etamat))
+      empties <- as.numeric(sapply(lavdata@Mp, function(x) x$empty.idx))
+      fulleta[-empties,] <- etamat
+    } else {
+      fulleta <- etamat
+    }
 
+    ngroups <- lavsamplestats@ngroups
     eta <- vector("list", ngroups)
     for(g in 1:ngroups){
-      eta[[g]] <- etamat[lavdata@case.idx[[g]], 1:nlv, drop = FALSE]
+      eta[[g]] <- fulleta[lavdata@case.idx[[g]], 1:nlv, drop = FALSE]
 
       ## fill in eta with dummys, if needed
       dummyov <- c(lavmodel@ov.x.dummy.ov.idx[[g]], lavmodel@ov.y.dummy.ov.idx[[g]])
