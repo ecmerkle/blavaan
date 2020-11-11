@@ -1,3 +1,17 @@
+Changes in Version 0.3-11
+    o vector values of wiggle.sd are allowed for different priors on approximate
+      equality constraints
+
+    o logical argument "prisamp" added, for sampling from a model's prior
+
+    o for target="stan", lkj prior is used for unrestricted lv correlation matrices
+
+    o default priors for conditional approaches (jags and stanclassic) revert to
+      being placed on precisions (as opposed to sd), for improvement in sampling efficiency
+
+    o bug fixes for wiggle argument, stan plot labels, 
+      stanclassic and jags equality constraints, ppmc()
+
 Changes in Version 0.3-10
     o save.lvs=TRUE works for missing data under target="stan"
 

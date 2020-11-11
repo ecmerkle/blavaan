@@ -83,6 +83,8 @@ importFrom("bayesplot",
 
 import(Rcpp)
 
+importFrom("RcppParallel", "CxxFlags", "RcppParallelLibs")
+
 import(rstantools)
 
 export("blavaan", "bcfa", "bsem", "bgrowth", "dpriors", "BF", "blavCompare",

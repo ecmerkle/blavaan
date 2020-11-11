@@ -803,7 +803,7 @@ model { // N.B.: things declared in the model block do not get saved in the outp
 generated quantities { // these matrices are saved in the output but do not figure into the likelihood
   // see https://books.google.com/books?id=9AC-s50RjacC&lpg=PP1&dq=LISREL&pg=PA34#v=onepage&q=LISREL&f=false
 
-  matrix[Ntot, save_lvs ? w9use + w9no : 0] eta;
+  // matrix[Ntot, save_lvs ? w9use + w9no : 0] eta;
   // matrix[Ntot, has_data ? m : 0] eta;
   // matrix[Ntot, has_data ? n : 0] xi;
 
