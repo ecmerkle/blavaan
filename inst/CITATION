@@ -1,3 +1,26 @@
+citHeader("There are two publications about blavaan, one describing the Stan methods and one describing the JAGS methods.")
+
+bibentry(bibtype = "Article",
+  title        = "Efficient Bayesian Structural Equation Modeling in Stan",
+  author       = c(person(given = c("Edgar", "C."),
+                          family = "Merkle",
+                          email = "merklee@missouri.edu"),
+                   person(given = "Ellen",
+                          family = "Fitzsimmons"),
+                   person(given = "James",
+                          family = "Uanhoro"),
+                   person(given = "Ben",
+                          family = "Goodrich")),
+  journal      = "Journal of Statistical Software",
+  year         = "in press",
+  #volume       = "",
+  #number       = "",
+  #pages        = "",
+  #doi          = "",
+
+  header       = "If you use Stan, please cite:"
+)
+
 bibentry(bibtype = "Article",
   title        = "{blavaan}: Bayesian Structural Equation Models via Parameter Expansion",
   author       = c(person(given = c("Edgar", "C."),
@@ -12,6 +35,6 @@ bibentry(bibtype = "Article",
   pages        = "1--30",
   doi          = "10.18637/jss.v085.i04",
 
-  header       = "To cite blavaan in publications use:"
+  header       = "If you use target='jags', please cite:"
 )
 
