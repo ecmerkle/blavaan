@@ -1,4 +1,4 @@
-lvgqs <- function(modmats, standata) {
+lvgqs <- function(modmats, standata, getlvs = TRUE) {
   Ng <- length(modmats)
 
   ## stan data
@@ -19,7 +19,11 @@ lvgqs <- function(modmats, standata) {
 
   I <- diag(m)
   precision <- matrix(0, (p+q), (p+q))
-  eta <- with(standata, matrix(NA, Ntot, w9use + w9no))
+  if (getlvs) {
+    eta <- with(standata, matrix(NA, Ntot, w9use + w9no))
+  } else {
+    YXimp <- matrix(NA, NROW(YX), NCOL(YX))
+  }
   
   ## new matrices
   ovmean <- L_Y_A <- vector("list", Ng)
@@ -35,10 +39,21 @@ lvgqs <- function(modmats, standata) {
     }
   }
 
-  if ((w9use + w9no) > 0) {
-    for (mm in 1:Np){
+  if ((w9use + w9no) > 0 | !getlvs) {
+    if (!getlvs) {
+      ## find row/col of missing observations that we are monitoring
+      for (mm in 1:Np) {
+        obsidx <- Obsvar[mm, ]
+        r1 <- startrow[mm]
+        r2 <- endrow[mm]
+        YXimp[r1:r2, obsidx[1:Nobs[mm]]] <- YX[r1:r2, 1:Nobs[mm]]
+      }
+      misvals <- is.na(YXimp)
+    }
+    
+    for (mm in 1:Np) {
       grpidx <- grpnum[mm]
-
+      
       A <- solve(I - modmats[[grpidx]]$beta)
       total_eta_eta <- A - I
       indirect_eta_eta <- total_eta_eta - modmats[[grpidx]]$beta
@@ -51,34 +66,61 @@ lvgqs <- function(modmats, standata) {
       cov_eta <- Psi_star
       top_left <- modmats[[grpidx]]$lambda %*% cov_eta %*% L_Yt + modmats[[grpidx]]$theta
 
-      corner <- cov_eta %*% L_Yt
-      bottom_right <- cov_eta
-
       ## FIXME?? what if obsidx also extends to x variables?
       obsidx <- Obsvar[mm, ]
+      misidx <- (1:NROW(top_left))[-obsidx[1:Nobs[mm]]]
+      anymis <- Nobs[mm] < NROW(top_left)
+      
       precision[1:Nobs[mm],1:Nobs[mm]] <- solve(top_left[obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]], drop=FALSE])
-      L <- bottom_right[usepsi,usepsi,drop=FALSE] - (corner[,obsidx[1:Nobs[mm]],drop=FALSE] %*% precision[1:Nobs[mm],1:Nobs[mm]] %*% t(corner[,obsidx[1:Nobs[mm]],drop=FALSE]))[usepsi,usepsi,drop=FALSE]
-      if (all(round(L, 6) == 0)) {
-        L <- matrix(0, nrow=NROW(L), ncol=NCOL(L))
-      } else {
-        L <- chol(L)
+
+      if (getlvs) {
+        corner <- cov_eta %*% L_Yt
+        bottom_right <- cov_eta
+
+        L <- bottom_right[usepsi,usepsi,drop=FALSE] - (corner[,obsidx[1:Nobs[mm]],drop=FALSE] %*% precision[1:Nobs[mm],1:Nobs[mm]] %*% t(corner[,obsidx[1:Nobs[mm]],drop=FALSE]))[usepsi,usepsi,drop=FALSE]
+        if (all(round(L, 6) == 0)) {
+          L <- matrix(0, nrow=NROW(L), ncol=NCOL(L))
+        } else {
+          L <- chol(L)
+        }
+      } else if (anymis) {
+        ## impute missing observed values
+        corner <- top_left[misidx, obsidx[1:Nobs[mm]], drop=FALSE]
+        bottom_right <- top_left[misidx, misidx, drop=FALSE]
+        L <- bottom_right - (corner %*% precision[1:Nobs[mm],1:Nobs[mm],drop=FALSE] %*% t(corner))
       }
-      beta <- corner[, obsidx[1:Nobs[mm]], drop=FALSE] %*% precision[1:Nobs[mm], 1:Nobs[mm], drop=FALSE]
+
+      if (getlvs | anymis) {
+        beta <- corner %*% precision[1:Nobs[mm], 1:Nobs[mm], drop=FALSE]
+      }
 
       r1 <- startrow[mm]
       r2 <- endrow[mm]
 
       for (idx in r1:r2){
-        lvmean <- modmats[[grpidx]]$alpha + beta[, 1:Nobs[mm], drop=FALSE] %*% (YX[idx, 1:Nobs[mm]] - ovmean[[grpidx]][obsidx[1:Nobs[mm]]])
-        eta[idx,usepsi] <- t(rmnorm(1, lvmean[usepsi], sqrt = L))
-        if (w9no > 0) {
-          eta[idx,nopsi] <- eta[idx,usepsi,drop=FALSE] %*% t(A[nopsi,usepsi,drop=FALSE])
+        if (getlvs) {
+          lvmean <- modmats[[grpidx]]$alpha + beta[, 1:Nobs[mm], drop=FALSE] %*% (YX[idx, 1:Nobs[mm]] - ovmean[[grpidx]][obsidx[1:Nobs[mm]]])
+          eta[idx,usepsi] <- t(rmnorm(1, lvmean[usepsi], sqrt = L))
+          if (w9no > 0) {
+            eta[idx,nopsi] <- eta[idx,usepsi,drop=FALSE] %*% t(A[nopsi,usepsi,drop=FALSE])
+          }
+        } else if (anymis) {
+          ovreg <- ovmean[[grpidx]][misidx] + beta[, 1:Nobs[mm], drop=FALSE] %*% (YX[idx, 1:Nobs[mm]] - ovmean[[grpidx]][obsidx[1:Nobs[mm]]])
+          YXimp[idx, obsidx[1:Nobs[mm]]] <- YX[idx, 1:Nobs[mm]]
+          YXimp[idx, misidx] <- t(rmnorm(1, ovreg, sqrt = L))
         }
       }
     }
   }
-  
-  eta
+
+  if (getlvs) {
+    out <- eta
+  } else {
+    out <- YXimp[misvals]
+    names(out) <- apply(which(misvals, arr.ind = TRUE), 1, function(x){
+      paste0("x[", x[1], ",", x[2], "]")})
+  }
+  out
 }
 
 samp_lvs <- function(mcobj, lavmodel, lavpartable, standata, thin = 1) {
@@ -119,7 +161,46 @@ samp_lvs <- function(mcobj, lavmodel, lavpartable, standata, thin = 1) {
   
   etasamps
 }
-  
+
+samp_data <- function(mcobj, lavmodel, lavpartable, standata, thin = 1) {
+  lavmcmc <- make_mcmc(mcobj)
+  itnums <- sampnums(mcobj, thin = thin)
+  nsamps <- length(itnums)
+  nchain <- length(lavmcmc)
+
+  nmat <- lavmodel@nmat
+  nblocks <- lavmodel@nblocks
+
+  loop.args <- list(X = 1:nsamps, FUN = function(i){#future.seed = TRUE, FUN = function(i){
+      tmplist <- vector("list", nchain)
+      for(j in 1:nchain){
+        lavmodel <- fill_params(lavmcmc[[j]][i,], lavmodel, lavpartable)
+
+        modmats <- vector("list", nblocks)
+        for (g in 1:nblocks) {
+          ## which mm belong to group g?
+          mm.in.group <- 1:nmat[g] + cumsum(c(0,nmat))[g]
+
+          modmats[[g]] <- lavmodel@GLIST[ mm.in.group ]
+          if(!("beta" %in% names(modmats[[g]]))) modmats[[g]]$beta <- matrix(0, standata$m, standata$m)
+        }
+
+        tmplist[[j]] <- lvgqs(modmats, standata, getlvs = FALSE)
+      }
+      tmplist})
+
+  missamps <- do.call("lapply", loop.args) #"future_lapply", loop.args)
+  mvarnames <- names(missamps[[1]][[1]])
+  missamps <- array(unlist(missamps), with(standata, c(NROW(missamps[[1]][[1]]), nchain, nsamps)))
+  missamps <- aperm(missamps, c(3,2,1))
+  dimnames(missamps)[[3]] <- mvarnames
+
+  ## TODO need to re-index missing observations to correspond to original data.
+  ## see line 139 of blav_object_inspect, should be able to use stuff in Mp pretty easily.
+  missamps
+}
+
+
 if(FALSE){
   model <- ' 
        # latent variable definitions
