@@ -847,8 +847,8 @@ blavaan <- function(...,  # default lavaan arguments
 
     extslot <- list(mcmcout = lavjags, samplls = samplls,
                     origpt = lavpartable, inits = jagtrans$inits,
-                    pxpt = jagtrans$pxpartable, burnin = burnin,
-                    sample = sample)
+                    mcmcdata = jagtrans$data, pxpt = jagtrans$pxpartable,
+                    burnin = burnin, sample = sample)
     if(grepl("stan", target)){
       extslot <- c(extslot, list(stansumm = stansumm))
       if(save.lvs & target=="stan") extslot <- c(extslot, list(stanlvs = stanlvs))
