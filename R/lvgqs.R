@@ -117,8 +117,6 @@ lvgqs <- function(modmats, standata, getlvs = TRUE) {
     out <- eta
   } else {
     out <- YXimp[misvals]
-    names(out) <- apply(which(misvals, arr.ind = TRUE), 1, function(x){
-      paste0("x[", x[1], ",", x[2], "]")})
   }
   out
 }
@@ -162,7 +160,7 @@ samp_lvs <- function(mcobj, lavmodel, lavpartable, standata, thin = 1) {
   etasamps
 }
 
-samp_data <- function(mcobj, lavmodel, lavpartable, standata, thin = 1) {
+samp_data <- function(mcobj, lavmodel, lavpartable, standata, lavdata, thin = 1) {
   lavmcmc <- make_mcmc(mcobj)
   itnums <- sampnums(mcobj, thin = thin)
   nsamps <- length(itnums)
@@ -190,13 +188,36 @@ samp_data <- function(mcobj, lavmodel, lavpartable, standata, thin = 1) {
       tmplist})
 
   missamps <- do.call("lapply", loop.args) #"future_lapply", loop.args)
-  mvarnames <- names(missamps[[1]][[1]])
   missamps <- array(unlist(missamps), with(standata, c(NROW(missamps[[1]][[1]]), nchain, nsamps)))
   missamps <- aperm(missamps, c(3,2,1))
-  dimnames(missamps)[[3]] <- mvarnames
 
-  ## TODO need to re-index missing observations to correspond to original data.
-  ## see line 139 of blav_object_inspect, should be able to use stuff in Mp pretty easily.
+  ## reorder to correspond to original data, vs to missingness pattern
+  mp <- lavdata@Mp
+  idx <- matrix(NA, dim(missamps)[3], 2)
+  vnm <- rep(NA, dim(missamps)[3])
+
+  srow <- 0L
+  for (i in 1:length(mp)){
+    for (j in 1:mp[[i]]$npatterns){
+      misvars <- which(!mp[[i]]$pat[j,])
+      cidx <- mp[[i]]$case.idx[[j]]
+      nr <- length(misvars) * length(cidx)
+
+      if(nr > 0){
+        idx[(srow + 1):(srow + nr),1] <- rep(cidx, each = length(misvars))
+        idx[(srow + 1):(srow + nr),2] <- rep(misvars, length(cidx))
+        vnm[(srow + 1):(srow + nr)] <- rep(lavdata@ov.names[[i]][misvars], length(cidx))
+      }
+      srow <- srow + nr
+    }
+  }
+
+  vnm <- vnm[order(idx[,1])]
+  missamps[,,order(idx[,1])] <- missamps
+  idx <- idx[order(idx[,1]),]
+  dim(missamps) <- c(prod(dim(missamps)[1:2]), dim(missamps)[3])
+  dimnames(missamps)[[2]] <- paste0(vnm, "[", idx[,1], "]")
+
   missamps
 }
 
