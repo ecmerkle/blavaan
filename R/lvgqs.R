@@ -87,7 +87,7 @@ lvgqs <- function(modmats, standata, getlvs = TRUE) {
         ## impute missing observed values
         corner <- top_left[misidx, obsidx[1:Nobs[mm]], drop=FALSE]
         bottom_right <- top_left[misidx, misidx, drop=FALSE]
-        L <- bottom_right - (corner %*% precision[1:Nobs[mm],1:Nobs[mm],drop=FALSE] %*% t(corner))
+        L <- chol(bottom_right - (corner %*% precision[1:Nobs[mm],1:Nobs[mm],drop=FALSE] %*% t(corner)))
       }
 
       if (getlvs | anymis) {
