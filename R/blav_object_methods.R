@@ -238,8 +238,13 @@ function(object, header       = TRUE,
             PE$ci.upper[peentry] <- object@external$mcmcout$HPD[newpt$jagpnum[pte2],'Upper95']
         } else {
             parsumm <- rstan::summary(object@external$mcmcout)
-            PE$ci.lower[peentry] <- parsumm$summary[newpt$stansumnum[pte2],'2.5%']
-            PE$ci.upper[peentry] <- parsumm$summary[newpt$stansumnum[pte2],'97.5%']
+            if('2.5%' %in% colnames(parsumm) & '97.5%' %in% colnames(parsumm)){
+                PE$ci.lower[peentry] <- parsumm$summary[newpt$stansumnum[pte2],'2.5%']
+                PE$ci.upper[peentry] <- parsumm$summary[newpt$stansumnum[pte2],'97.5%']
+            } else {
+                PE$ci.lower[peentry] <- rep(NA, length(peentry))
+                PE$ci.upper[peentry] <- rep(NA, length(peentry))
+            }
         }
 
         ## NB This is done so that we can remove fixed parameter hpd intervals without
