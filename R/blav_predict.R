@@ -34,7 +34,7 @@ blavPredict <- function(blavobject, newdata = NULL, type = "lv") {
   ## ypred: posterior predictive distribution of ovs conditioned on lv samples; mcmc list
   ## ymis: posterior predictive distribution of missing values conditioned on observed values; matrix
   if(type == "lv") {
-    out <- blavInspect(blavobject, 'lvs')
+    out <- do.call("rbind", blavInspect(blavobject, 'lvs'))
   } else if(type == "lvmeans") {
     out <- blavInspect(blavobject, 'lvmeans')
   } else if(type %in% c("yhat", "ypred", "ymis")) {
