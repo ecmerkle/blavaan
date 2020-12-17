@@ -169,7 +169,7 @@ samp_data <- function(mcobj, lavmodel, lavpartable, standata, lavdata, thin = 1)
   nmat <- lavmodel@nmat
   nblocks <- lavmodel@nblocks
 
-  loop.args <- list(X = 1:nsamps, FUN = function(i){#future.seed = TRUE, FUN = function(i){
+  loop.args <- list(X = 1:nsamps, future.seed = TRUE, FUN = function(i){
       tmplist <- vector("list", nchain)
       for(j in 1:nchain){
         lavmodel <- fill_params(lavmcmc[[j]][i,], lavmodel, lavpartable)
@@ -187,7 +187,7 @@ samp_data <- function(mcobj, lavmodel, lavpartable, standata, lavdata, thin = 1)
       }
       tmplist})
 
-  missamps <- do.call("lapply", loop.args) #"future_lapply", loop.args)
+  missamps <- do.call("future_lapply", loop.args)
   missamps <- array(unlist(missamps), with(standata, c(NROW(missamps[[1]][[1]]), nchain, nsamps)))
   missamps <- aperm(missamps, c(3,2,1))
 

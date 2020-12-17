@@ -41,8 +41,17 @@ blavPredict <- function(blavobject, newdata = NULL, type = "lv") {
     if(!stantarget) stop(paste0("blavaan ERROR: '", type, "' is only supported for target='stan'"))
 
     if(type %in% c("yhat", "ypred")) {
-      ## TODO; ypred is yhat plus noise
-      out <- NULL
+      lavmcmc <- blavInspect(blavobject, 'lvs')
+      itnums <- sampnums(blavobject@external$mcmcout, thin = 1)
+      nsamps <- length(itnums)
+      nchain <- length(lavmcmc)
+
+      loop.args <- list(X = 1:nsamps, future.seed = TRUE, FUN = function(i){
+        ## TODO; ypred is yhat plus noise
+        ## new function, related to get_ll
+      })
+      yres <- do.call("future_lapply", loop.args)
+      out <- yres
     }
 
     if(type == "ymis") {
