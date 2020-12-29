@@ -10,6 +10,7 @@ blavPredict <- function(blavobject, newdata = NULL, type = "lv") {
   stopifnot(inherits(blavobject, "blavaan"))
   blavmodel <- blavobject@Model
   blavpartable <- blavobject@ParTable
+  blavsamplestats <- blavobject@SampleStats
   blavdata <- blavobject@Data
   standata <- blavobject@external$mcmcdata
   
@@ -23,12 +24,11 @@ blavPredict <- function(blavobject, newdata = NULL, type = "lv") {
   if(type %in% c("ymis", "ovmis"))
       type <- "ymis"
   
-  
   stantarget <- lavInspect(blavobject, "options")$target == "stan"
 
   if(!is.null(newdata)) stop("blavaan ERROR: posterior predictions for newdata are not currently supported")
   
-  ## lv: posterior dist of lvs (use blavInspect functionality); mcmc list
+  ## lv: posterior dist of lvs (use blavInspect functionality); data frame
   ## lvmeans: use blavInspect functionality; matrix
   ## yhat: posterior expected value of ovs conditioned on lv samples; mcmc list
   ## ypred: posterior predictive distribution of ovs conditioned on lv samples; mcmc list
@@ -41,16 +41,32 @@ blavPredict <- function(blavobject, newdata = NULL, type = "lv") {
     if(!stantarget) stop(paste0("blavaan ERROR: '", type, "' is only supported for target='stan'"))
 
     if(type %in% c("yhat", "ypred")) {
-      lavmcmc <- blavInspect(blavobject, 'lvs')
+      lavmcmc <- blavInspect(blavobject, 'mcmc')
       itnums <- sampnums(blavobject@external$mcmcout, thin = 1)
       nsamps <- length(itnums)
       nchain <- length(lavmcmc)
 
-      loop.args <- list(X = 1:nsamps, future.seed = TRUE, FUN = function(i){
-        ## TODO; ypred is yhat plus noise
-        ## new function, related to get_ll
-      })
-      yres <- do.call("future_lapply", loop.args)
+      tmpres <- vector("list", nchain)
+      for(j in 1:nchain) {
+        loop.args <- list(X = 1:nsamps, future.seed = TRUE, FUN = function(i, j){
+          ## TODO; ypred is yhat plus noise
+          ## new function, related to get_ll
+          cond_moments(lavmcmc[[j]][itnums[i,]],
+                       blavmodel,
+                       blavpartable,
+                       blavsamplestats,
+                       blavdata,
+                       blavobject)}, j = j)
+        tmpres[[j]] <- do.call("future_sapply", loop.args)
+      }
+
+      if(type == "ypred") {
+        ## use mean and cov from each entry of tmpres to randomly sample
+      }
+
+      ## rearrange to match original data
+      yres <- NULL
+      
       out <- yres
     }
 
