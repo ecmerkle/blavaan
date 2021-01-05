@@ -13,7 +13,9 @@ make_sparse_skeleton <- function(skeleton) {
   stopifnot(is.matrix(skeleton))
   #skeleton[is.na(skeleton)] <- 1L
   vals <- c(t(skeleton)) # vals needs to be in row-major order
-  parts <- rstan::extract_sparse_parts(!(skeleton==0L)) #is.na(skeleton))
+  ## addresses change to Matrix clashing with extract_sparse_parts
+  spmat <- Matrix::Matrix(!(skeleton==0L), doDiag=FALSE, sparse=TRUE)
+  parts <- rstan::extract_sparse_parts(spmat) #is.na(skeleton))
   parts$w <- as.array(vals[!(vals==0L)]) #is.na(vals)])
   parts$v <- as.array(parts$v)
   parts$u <- as.array(parts$u)

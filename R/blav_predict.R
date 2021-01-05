@@ -2,7 +2,7 @@
 ## overload standard R function `predict'
 setMethod("predict", "blavaan",
 function(object, newdata = NULL) {
-    blavPredict(object = object, newdata = newdata, type = "lv")
+    blavPredict(blavobject = object, newdata = newdata, type = "lv")
 })
 
 blavPredict <- function(blavobject, newdata = NULL, type = "lv") {
