@@ -58,6 +58,9 @@ importFrom("rstan",
 importFrom("loo",
            "loo", "waic", "loo_compare", "relative_eff")
 
+importFrom("Matrix",
+           "Matrix")
+
 importFrom("future.apply",
            "future_lapply", "future_sapply")
 
