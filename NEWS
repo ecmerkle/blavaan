@@ -1,4 +1,7 @@
-Changes in Version 0.3-11
+Changes in Version 0.3-13
+    o fix an error due to bug fix in the Matrix package
+
+Changes in Version 0.3-12 (and -11)
     o vector values of wiggle.sd are allowed for different priors on approximate
       equality constraints
 
