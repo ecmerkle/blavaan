@@ -1,6 +1,5 @@
 \name{blavaan}
 \alias{blavaan}
-\alias{blavaan-class}
 \title{Fit a Bayesian Latent Variable Model}
 \description{
 Fit a Bayesian latent variable model.}

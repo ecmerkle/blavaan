@@ -97,5 +97,7 @@ export("blavaan", "bcfa", "bsem", "bgrowth", "dpriors", "BF", "blavCompare",
 S3method(plot, blavaan)
 S3method(plot, blavPPMC)
 S3method(hist, blavPPMC)
+S3method(pairs, blavPPMC)
+exportMethods("summary", "coef", "show")
 
 useDynLib(blavaan, .registration = TRUE)
