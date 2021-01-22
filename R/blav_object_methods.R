@@ -159,8 +159,12 @@ function(object) {
 })
 
 
-setMethod("summary", "blavaan",
-function(object, header       = TRUE,
+summary.blavaan <- function(object, ...) {
+    long.summary(object, ...)
+}
+
+long.summary <- function(object,
+                 header       = TRUE,
                  fit.measures = FALSE,
                  estimates    = TRUE,
                  ci           = TRUE,
@@ -320,7 +324,9 @@ function(object, header       = TRUE,
 
         print(PE, nd = nd)
     } # parameter estimates
-})
+}
+
+setMethod("summary", "blavaan", summary.blavaan)
 
 
 # NB not absolutely necessary, except for
@@ -365,6 +371,7 @@ plot.blavaan <- function(x, pars=NULL, plot.type="trace", showplot=TRUE, ...){
     invisible(pl)
 }
 
+#setMethod("plot", "blavaan", plot.blavaan)
 
 ## function/environment for y-axis label of runjags plots
 labelfun <- function(var){

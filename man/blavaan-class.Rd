@@ -61,6 +61,8 @@ the independence model) (if available).}
       covariance matrix of the estimated parameters.}
     \item{show}{\code{signature(object = "blavaan")}: Print a short summary
       of the model fit}
+%    \item{plot}{\code{signature(object = "blavaan")}: S4 method for
+%      creating plots. Also see \code{?plot.blavaan}.}
     \item{summary}{\code{signature(object = "blavaan", header = TRUE,
      fit.measures = FALSE, estimates = TRUE, ci = TRUE, 
      standardized = FALSE, rsquare = FALSE, std.nox = FALSE,

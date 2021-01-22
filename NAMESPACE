@@ -95,6 +95,7 @@ export("blavaan", "bcfa", "bsem", "bgrowth", "dpriors", "BF", "blavCompare",
        "standardizedPosterior", "ppmc")
 
 S3method(plot, blavaan)
+S3method(summary, blavaan)
 S3method(plot, blavPPMC)
 S3method(hist, blavPPMC)
 S3method(pairs, blavPPMC)
