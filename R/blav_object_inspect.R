@@ -25,11 +25,11 @@ blavInspect <- function(blavobject, what, ...) {
                    "n.chains", "cp", "dp", "postmode", "postmean",
                    "postmedian", "hpd", "jagnames", "stannames",
                    "fscores", "lvs", "fsmeans", "lvmeans", "mcobj",
-                   "rhat", "n_eff")
+                   "rhat", "n_eff", "nchain", "nchains")
 
     ## blavwhats that don't require do.fit
     blavnofit <- c("start", "starting.values", "inits", "n.chains", "cp", "dp",
-                   "jagnames", "stannames")
+                   "jagnames", "stannames", "nchain", "nchains")
   
     ## whats that are not handled
     nowhats <- c("mi", "modindices", "modification.indices",
@@ -188,7 +188,7 @@ blavInspect <- function(blavobject, what, ...) {
                 }
             }
             draws
-        } else if(what == "n.chains"){
+        } else if(what %in% c("n.chains", "nchain", "nchains")){
             draws <- make_mcmc(blavobject@external$mcmcout)
             length(draws)
         } else if(what == "cp"){
