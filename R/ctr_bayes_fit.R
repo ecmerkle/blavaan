@@ -106,7 +106,7 @@ blavFitIndices <- function(object, thin = 1, pD = c("loo","waic","dic"),
     warning("blavaan WARNING: ",
             "Hoofs et al.'s proposed BRMSEA (and derivative indices based on",
             " the posterior predictive distribution) was only proposed for",
-            " evaluating models fit to very large samples (N > 1000).")
+            " evaluating models fit to very large samples (N > 1000).", call. = FALSE)
 
   chisqs <- as.numeric(apply(object@external$samplls, 2,
                              function(x) 2*(x[,2] - x[,1])))
@@ -119,7 +119,7 @@ blavFitIndices <- function(object, thin = 1, pD = c("loo","waic","dic"),
     warning('rescale="MCMC" is purely experimental, and surely inappropriate ',
             'with informative priors, to the degree that the estimated pD ',
             'deviates from the number of estimated parameters (the latter of ',
-            'which are used by lavaan::fitMeasures() to calculate the df).')
+            'which are used by lavaan::fitMeasures() to calculate the df).', call. = FALSE)
 
     ## no need to call hidden BayesChiFit(), use lavaan to calculate
     postDist <- postpred(lavpartable = object@ParTable,
@@ -177,7 +177,7 @@ blavFitIndices <- function(object, thin = 1, pD = c("loo","waic","dic"),
       pD_null <- NULL
       warning("Incremental fit indices were not calculated.",
               " Save equal number of draws from the posterior of both",
-              " the hypothesized and null models.")
+              " the hypothesized and null models.", call. = FALSE)
     } else {
       if (rescale == "ppmc") {
         reps_null <- postpred(lavpartable = baseline.model@ParTable,

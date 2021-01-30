@@ -126,7 +126,7 @@ transtables <- function(){
     hyloc <- which(disttrans$jags == "dhyper")
     jag2rfuns[[hyloc]] <- function(x){
         if(as.numeric(x[4]) != 1){
-            warning("blavaan WARNING: Fit measures with noncentral hypergeometric priors are inaccurate.")
+            warning("blavaan WARNING: Fit measures with noncentral hypergeometric priors are inaccurate.", call. = FALSE)
         }
         x[1:3]
     }

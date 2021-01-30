@@ -74,7 +74,7 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
                 basell <- try(dmnorm(lavdata@X[[g]], sampmn, sampcov, log=TRUE))
                 if(inherits(basell, "try-error")){
                   basell <- NA
-                  warning("blavaan WARNING: sample covariance matrix is not positive definite")
+                  warning("blavaan WARNING: sample covariance matrix is not positive definite.", call. = FALSE)
                 }
 
                 if(!is.null(x.idx) && length(x.idx) > 0L){

@@ -189,7 +189,7 @@ long.summary <- function(object,
     # only if requested, the fit measures
     if(fit.measures) {
         if(object@Options$test == "none") {
-            warning("lavaan WARNING: fit measures not available if test = \"none\"\n\n")
+            warning("lavaan WARNING: fit measures not available if test = \"none\"", call. = FALSE)
         } else {
             #print.fit.measures( fitMeasures(object, fit.measures="default") )
             # TODO: define proper print function for custom fit measures
@@ -293,9 +293,9 @@ long.summary <- function(object,
           PE$Post.Mode <- rep(NA, nrow(PE))
           if(jagtarget){
             PE$Post.Mode[peentry] <- object@external$mcmcout$summaries[newpt$jagpnum[pte2],'Mode']
-            if(all(is.na(PE$Post.Mode))) warning("blavaan WARNING: Posterior modes require installation of the modeest package.")
+            if(all(is.na(PE$Post.Mode))) warning("blavaan WARNING: Posterior modes require installation of the modeest package.", call. = FALSE)
           } else {
-            warning("blavaan WARNING: Posterior modes not available for target='stan'.")
+            warning("blavaan WARNING: Posterior modes not available for target='stan'.", call. = FALSE)
           }
         }
         if(bf){
