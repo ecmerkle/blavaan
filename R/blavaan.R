@@ -338,13 +338,13 @@ blavaan <- function(...,  # default lavaan arguments
     if(con.cov) LAV@Options$auto.cov.lv.x <- FALSE
     
     # if std.lv, truncate the prior of each lv's first loading
+    loadpt <- LAV@ParTable$op == "=~"
+    lvs <- unique(LAV@ParTable$lhs[loadpt])
     if(LAV@Options$std.lv){
         if(cp == "fa") stop("blavaan ERROR: 'fa' prior strategy cannot be used with std.lv=TRUE.")
         if(!prispec){
             LAV@ParTable$prior <- rep("", length(LAV@ParTable$id))
         }
-        loadpt <- LAV@ParTable$op == "=~"
-        lvs <- unique(LAV@ParTable$lhs[loadpt])
         fload <- NULL
         if(length(lvs) > 0){
             for(i in 1:length(lvs)){
@@ -365,6 +365,14 @@ blavaan <- function(...,  # default lavaan arguments
                     }
                 }
             }
+        }
+    } else {
+        ## check for lvs fixed to 1
+        if(any(LAV@ParTable$op == "~~" &
+               LAV@ParTable$free == 0 &
+               LAV@ParTable$lhs == LAV@ParTable$rhs &
+               LAV@ParTable$lhs %in% lvs)){
+            warning("blavaan WARNING: If you are manually fixing lvs to 1 for identification, please use std.lv=TRUE.", call. = FALSE)
         }
     }
 
