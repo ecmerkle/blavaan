@@ -372,7 +372,7 @@ blavaan <- function(...,  # default lavaan arguments
                LAV@ParTable$free == 0 &
                LAV@ParTable$lhs == LAV@ParTable$rhs &
                LAV@ParTable$lhs %in% lvs)){
-            warning("blavaan WARNING: If you are manually fixing lvs to 1 for identification,"
+            warning("blavaan WARNING: If you are manually fixing lvs to 1 for identification,",
                     "please use std.lv=TRUE.", call. = FALSE)
         }
     }
