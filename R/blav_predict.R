@@ -41,31 +41,41 @@ blavPredict <- function(blavobject, newdata = NULL, type = "lv") {
     if(!stantarget) stop(paste0("blavaan ERROR: '", type, "' is only supported for target='stan'"))
 
     if(type %in% c("yhat", "ypred")) {
-      lavmcmc <- blavInspect(blavobject, 'mcmc')
+      lavmcmc <- make_mcmc(blavInspect(blavobject, 'mcobj'), blavobject@external$stanlvs)
       itnums <- sampnums(blavobject@external$mcmcout, thin = 1)
       nsamps <- length(itnums)
       nchain <- length(lavmcmc)
+      ng <- blavInspect(blavobject, 'ngroups')
 
       tmpres <- vector("list", nchain)
       for(j in 1:nchain) {
         loop.args <- list(X = 1:nsamps, future.seed = TRUE, FUN = function(i, j){
-          ## TODO; ypred is yhat plus noise
-          ## new function, related to get_ll
-          cond_moments(lavmcmc[[j]][itnums[i,]],
+          cond_moments(lavmcmc[[j]][itnums[i],],
                        blavmodel,
                        blavpartable,
                        blavsamplestats,
                        blavdata,
                        blavobject)}, j = j)
-        tmpres[[j]] <- do.call("future_sapply", loop.args)
+        tmpres[[j]] <- do.call("future_lapply", loop.args)
       }
+      tmpres <- unlist(tmpres, recursive = FALSE)
 
       if(type == "ypred") {
         ## use mean and cov from each entry of tmpres to randomly sample
+        tmpres <- lapply(tmpres, function(x){
+          lapply(1:ng, function(g){
+            sigchol <- chol(x$cov[[g]])
+            t(apply(x$mean[[g]], 1, function(y) mnormt::rmnorm(n=1, mean=y, sqrt=sigchol)))
+          })
+        })
+      } else {
+        tmpres <- lapply(tmpres, function(x) x$mean)
       }
 
-      ## rearrange to match original data
-      yres <- NULL
+      ## these are now lists by group; rearrange to match original data
+      cids <- unlist(blavInspect(blavobject, 'case.idx'))
+      cnms <- lavNames(blavobject)
+      yres <- lapply(tmpres, function(x) do.call("rbind", x)[cids,])
       
       out <- yres
     }
