@@ -38,6 +38,6 @@ remotes::install_github("ecmerkle/blavaan", INSTALL_opts = "--no-multiarch")
 
 For further information, see:
 
-Merkle, E. C., Fitzsimmons, E., Uanhoro, J., & Goodrich, B. [Efficient Bayesian structural equation modeling in Stan](https://arxiv.org/abs/2008.07733). arXiv 2008.07733.
+Merkle, E. C., Fitzsimmons, E., Uanhoro, J., & Goodrich, B. (in press). [Efficient Bayesian structural equation modeling in Stan](https://arxiv.org/abs/2008.07733). Journal of Statistical Software.
 
 Merkle, E. C., & Rosseel, Y. (2018). [blavaan: Bayesian structural equation models via parameter expansion](https://doi.org/10.18637/jss.v085.i04). Journal of Statistical Software, 85(4), 1–30.
