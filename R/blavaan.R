@@ -371,8 +371,9 @@ blavaan <- function(...,  # default lavaan arguments
         if(any(LAV@ParTable$op == "~~" &
                LAV@ParTable$free == 0 &
                LAV@ParTable$lhs == LAV@ParTable$rhs &
+               LAV@ParTable$ustart == 1L &
                LAV@ParTable$lhs %in% lvs)){
-            warning("blavaan WARNING: If you are manually fixing lvs to 1 for identification,",
+            warning("blavaan WARNING: If you are manually fixing lv variances to 1 for identification, ",
                     "please use std.lv=TRUE.", call. = FALSE)
         }
     }
