@@ -109,7 +109,7 @@ fill_eta <- function(postsamp, lavmodel, lavpartable, lavsamplestats, lavdata){
     if(foundlvs < nlv) etamat <- cbind(etamat, matrix(0, lavsamplestats@ntotal, (nlv - foundlvs)))
 
     ## fulleta needs to have rows for any excluded cases
-    if(lavdata@norig > lavsamplestats@ntotal){
+    if(sum(unlist(lavdata@norig)) > lavsamplestats@ntotal){
       fulleta <- matrix(NA, sum(unlist(lavdata@norig)), ncol(etamat))
       empties <- as.numeric(sapply(lavdata@Mp, function(x) x$empty.idx))
       fulleta[-empties,] <- etamat
