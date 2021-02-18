@@ -78,10 +78,12 @@ lvgqs <- function(modmats, standata, getlvs = TRUE) {
         bottom_right <- cov_eta
 
         L <- bottom_right[usepsi,usepsi,drop=FALSE] - (corner[,obsidx[1:Nobs[mm]],drop=FALSE] %*% precision[1:Nobs[mm],1:Nobs[mm]] %*% t(corner[,obsidx[1:Nobs[mm]],drop=FALSE]))[usepsi,usepsi,drop=FALSE]
-        if (all(round(L, 6) == 0)) {
+        L <- try(chol(L))
+        if (inherits(L, 'try-error')) {
           L <- matrix(0, nrow=NROW(L), ncol=NCOL(L))
-        } else {
-          L <- chol(L)
+        }
+        if (anymis) {
+          corner <- corner[,obsidx[1:Nobs[mm]]]
         }
       } else if (anymis) {
         ## impute missing observed values
