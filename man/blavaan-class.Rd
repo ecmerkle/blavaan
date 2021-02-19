@@ -113,6 +113,7 @@ http://www.jstatsoft.org/v48/i02/.
 \code{\link{fitMeasures}}
 }
 \examples{
+\dontrun{
 HS.model <- ' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6
               speed   =~ x7 + x8 + x9 '
@@ -121,4 +122,5 @@ fit <- bcfa(HS.model, data=HolzingerSwineford1939)
 
 summary(fit, standardized=TRUE, fit.measures=TRUE, rsquare=TRUE)
 coef(fit)
+}
 }
