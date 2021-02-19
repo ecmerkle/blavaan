@@ -1,4 +1,9 @@
-Changes in Version 0.3-13
+Changes in Version 0.3-15
+    o bug fix related to interval estimates in summary()
+
+    o improved S3/S4 dispatch for summary.blavaan()
+
+Changes in Version 0.3-14 (and -13)
     o fix an error due to bug fix in the Matrix package
 
 Changes in Version 0.3-12 (and -11)
