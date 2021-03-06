@@ -3,7 +3,7 @@
 \alias{blavaan-class}
 \alias{coef,blavaan-method}
 \alias{show,blavaan-method}
-%\alias{predict,blavaan-method}
+\alias{predict,blavaan-method}
 %\alias{fitted,blavaan-method}
 %\alias{fitted.values,blavaan-method}    %% NOTE: no white space here!
 \alias{summary,blavaan-method}

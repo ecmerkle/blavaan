@@ -2,17 +2,17 @@
 ## overload standard R function `predict'
 setMethod("predict", "blavaan",
 function(object, newdata = NULL) {
-    blavPredict(blavobject = object, newdata = newdata, type = "lv")
+    blavPredict(object, newdata = newdata, type = "lv")
 })
 
-blavPredict <- function(blavobject, newdata = NULL, type = "lv") {
+blavPredict <- function(object, newdata = NULL, type = "lv") {
 
-  stopifnot(inherits(blavobject, "blavaan"))
-  blavmodel <- blavobject@Model
-  blavpartable <- blavobject@ParTable
-  blavsamplestats <- blavobject@SampleStats
-  blavdata <- blavobject@Data
-  standata <- blavobject@external$mcmcdata
+  stopifnot(inherits(object, "blavaan"))
+  blavmodel <- object@Model
+  blavpartable <- object@ParTable
+  blavsamplestats <- object@SampleStats
+  blavdata <- object@Data
+  standata <- object@external$mcmcdata
   
   type <- tolower(type)
   if(type %in% c("latent", "lv", "factor", "factor.score", "factorscore"))
@@ -24,7 +24,7 @@ blavPredict <- function(blavobject, newdata = NULL, type = "lv") {
   if(type %in% c("ymis", "ovmis"))
       type <- "ymis"
   
-  stantarget <- lavInspect(blavobject, "options")$target == "stan"
+  stantarget <- lavInspect(object, "options")$target == "stan"
 
   if(!is.null(newdata)) stop("blavaan ERROR: posterior predictions for newdata are not currently supported")
   
@@ -34,18 +34,18 @@ blavPredict <- function(blavobject, newdata = NULL, type = "lv") {
   ## ypred: posterior predictive distribution of ovs conditioned on lv samples; mcmc list
   ## ymis: posterior predictive distribution of missing values conditioned on observed values; matrix
   if(type == "lv") {
-    out <- do.call("rbind", blavInspect(blavobject, 'lvs'))
+    out <- do.call("rbind", blavInspect(object, 'lvs'))
   } else if(type == "lvmeans") {
-    out <- blavInspect(blavobject, 'lvmeans')
+    out <- blavInspect(object, 'lvmeans')
   } else if(type %in% c("yhat", "ypred", "ymis")) {
     if(!stantarget) stop(paste0("blavaan ERROR: '", type, "' is only supported for target='stan'"))
 
     if(type %in% c("yhat", "ypred")) {
-      lavmcmc <- make_mcmc(blavInspect(blavobject, 'mcobj'), blavobject@external$stanlvs)
-      itnums <- sampnums(blavobject@external$mcmcout, thin = 1)
+      lavmcmc <- make_mcmc(blavInspect(object, 'mcobj'), object@external$stanlvs)
+      itnums <- sampnums(object@external$mcmcout, thin = 1)
       nsamps <- length(itnums)
       nchain <- length(lavmcmc)
-      ng <- blavInspect(blavobject, 'ngroups')
+      ng <- blavInspect(object, 'ngroups')
 
       tmpres <- vector("list", nchain)
       for(j in 1:nchain) {
@@ -55,7 +55,7 @@ blavPredict <- function(blavobject, newdata = NULL, type = "lv") {
                        blavpartable,
                        blavsamplestats,
                        blavdata,
-                       blavobject)}, j = j)
+                       object)}, j = j)
         tmpres[[j]] <- do.call("future_lapply", loop.args)
       }
       tmpres <- unlist(tmpres, recursive = FALSE)
@@ -73,15 +73,15 @@ blavPredict <- function(blavobject, newdata = NULL, type = "lv") {
       }
 
       ## these are now lists by group; rearrange to match original data
-      cids <- unlist(blavInspect(blavobject, 'case.idx'))
-      cnms <- lavNames(blavobject)
+      cids <- unlist(blavInspect(object, 'case.idx'))
+      cnms <- lavNames(object)
       yres <- lapply(tmpres, function(x) do.call("rbind", x)[cids,])
       
       out <- yres
     }
 
     if(type == "ymis") {
-      out <- samp_data(blavobject@external$mcmcout, blavmodel, blavpartable, standata, blavdata)
+      out <- samp_data(object@external$mcmcout, blavmodel, blavpartable, standata, blavdata)
     }
   } else {
     stop("blavaan ERROR: unknown type supplied; use lv lvmeans yhat ypred ymis")
