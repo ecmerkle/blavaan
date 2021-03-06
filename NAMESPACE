@@ -92,13 +92,13 @@ import(rstantools)
 
 export("blavaan", "bcfa", "bsem", "bgrowth", "dpriors", "BF", "blavCompare",
        "blavTech", "blavInspect", "blavFitIndices", "labelfun", "standardizedposterior",
-       "standardizedPosterior", "ppmc")
+       "standardizedPosterior", "ppmc", "blavPredict")
 
 S3method(plot, blavaan)
 S3method(summary, blavaan)
 S3method(plot, blavPPMC)
 S3method(hist, blavPPMC)
 S3method(pairs, blavPPMC)
-exportMethods("summary", "coef", "show")
+exportMethods("summary", "coef", "show", "predict")
 
 useDynLib(blavaan, .registration = TRUE)

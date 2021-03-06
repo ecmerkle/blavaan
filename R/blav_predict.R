@@ -28,7 +28,7 @@ blavPredict <- function(blavobject, newdata = NULL, type = "lv") {
 
   if(!is.null(newdata)) stop("blavaan ERROR: posterior predictions for newdata are not currently supported")
   
-  ## lv: posterior dist of lvs (use blavInspect functionality); data frame
+  ## lv: posterior dist of lvs (use blavInspect functionality); matrix frame
   ## lvmeans: use blavInspect functionality; matrix
   ## yhat: posterior expected value of ovs conditioned on lv samples; mcmc list
   ## ypred: posterior predictive distribution of ovs conditioned on lv samples; mcmc list
