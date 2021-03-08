@@ -21,9 +21,11 @@ blavPredict <- function(object, newdata = NULL, type = "lv") {
       type <- "yhat"
   if(type %in% c("ypred", "ydist"))
       type <- "ypred"
-  if(type %in% c("ymis", "ovmis"))
+  if(type %in% c("ymis", "ovmis")){
       type <- "ymis"
-  
+      if(all(!is.na(unlist(blavdata@X)))) stop("blavaan ERROR: No missing data are present.", call. = FALSE)
+  }
+      
   stantarget <- lavInspect(object, "options")$target == "stan"
 
   if(!is.null(newdata)) stop("blavaan ERROR: posterior predictions for newdata are not currently supported")

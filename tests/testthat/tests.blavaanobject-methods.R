@@ -126,4 +126,14 @@ test_that("blavaan object methods work", {
   bf_res <- blavFitIndices(fitstan)
   expect_s4_class(bf_res, "blavFitIndices")
   expect_s3_class(summary(bf_res), "lavaan.data.frame")
+
+  ## blavPredict
+  expect_error(blavPredict(fitstanc))
+  expect_error(blavPredict(fitjags))
+
+  expect_true(dim(blavPredict(fitstanfs)), c(20,602))
+  expect_true(dim(blavPredict, type="lvmeans"), c(301,2))
+  expect_true(dim(blavPredict(fitstanfs, type="ov")[[1]]), c(301,6))
+  expect_true(dim(blavPredict(fitstanfs, type="ypred")[[1]]), c(301,6))
+  expect_error(blavPredict(fitstanfs, type="ymis"))
 })
