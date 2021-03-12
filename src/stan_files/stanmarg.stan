@@ -223,18 +223,6 @@ data {
   int<lower=0> w5use;
   int<lower=1> usethet[w5use];
 
-  // same things but for diag(Theta_x)
-  int<lower=0> len_w6;
-  int<lower=0> wg6[Ng];
-  vector[len_w6] w6[Ng];
-  int<lower=1> v6[Ng, len_w6];
-  int<lower=1> u6[Ng, q + 1];
-  int<lower=0> w6skel[sum(wg6), 3];
-  int<lower=0> len_thet_x_sd;
-  real<lower=0> theta_x_sd_shape[len_thet_x_sd];
-  real<lower=0> theta_x_sd_rate[len_thet_x_sd];
-  int<lower=-2, upper=2> theta_x_pow;
-
   // same things but for Theta_r
   int<lower=0> len_w7;
   int<lower=0> wg7[Ng];
@@ -314,9 +302,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
   matrix[m, n] Gamma_skeleton[Ng];
   matrix[m, m] B_skeleton[Ng];
   matrix[p, p] Theta_skeleton[Ng];
-  matrix[q, q] Theta_x_skeleton[Ng];
   matrix[p, p] Theta_r_skeleton[Ng];
-  matrix[q, q] Theta_x_r_skeleton[Ng];
   matrix[m, m] Psi_skeleton[Ng];
   matrix[m, m] Psi_r_skeleton[Ng];
   //matrix[n, n] Phi_skeleton[Ng];
@@ -369,9 +355,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
     Gamma_skeleton[g] = to_dense_matrix(m, n, w3[g], v3[g,], u3[g,]);
     B_skeleton[g] = to_dense_matrix(m, m, w4[g], v4[g,], u4[g,]);
     Theta_skeleton[g] = to_dense_matrix(p, p, w5[g], v5[g,], u5[g,]);
-    Theta_x_skeleton[g] = to_dense_matrix(q, q, w6[g], v6[g,], u6[g,]);
     Theta_r_skeleton[g] = to_dense_matrix(p, p, w7[g], v7[g,], u7[g,]);
-    Theta_x_r_skeleton[g] = to_dense_matrix(q, q, w8[g], v8[g,], u8[g,]);
     Psi_skeleton[g] = to_dense_matrix(m, m, w9[g], v9[g,], u9[g,]);
     Psi_r_skeleton[g] = to_dense_matrix(m, m, w10[g], v10[g,], u10[g,]);
     Nu_skeleton[g] = to_dense_matrix((p + q), 1, w13[g], v13[g,], u13[g,]);
@@ -423,16 +407,6 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
       }
     }
 
-    // same thing but for Theta_x_skeleton
-    g_start6[g] = len_free[6] + 1;
-    f_start6[g] = pos[6];
-    for (i in 1:q) {
-      if (is_inf(Theta_x_skeleton[g,i,i])) {
-	if (w6skel[pos[6],2] == 0 || w6skel[pos[6],3] == 1) len_free[6] += 1;
-	pos[6] += 1;
-      }
-    }
-
     // same thing but for Theta_r_skeleton
     g_start7[g] = len_free[7] + 1;
     f_start7[g] = pos[7];
@@ -441,18 +415,6 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
 	if (is_inf(Theta_r_skeleton[g,j,i])) {
 	  if (w7skel[pos[7],2] == 0 || w7skel[pos[7],3] == 1) len_free[7] += 1;
 	  pos[7] += 1;
-	}
-      }
-    }
-
-    // same thing but for Theta_x_r_skeleton
-    g_start8[g] = len_free[8] + 1;
-    f_start8[g] = pos[8];
-    for (i in 1:(q-1)) {
-      for (j in (i+1):q) {
-	if (is_inf(Theta_x_r_skeleton[g,j,i])) {
-	  if (w8skel[pos[8],2] == 0 || w8skel[pos[8],3] == 1) len_free[8] += 1;
-	  pos[8] += 1;
 	}
       }
     }
@@ -508,9 +470,7 @@ parameters {
   vector[len_free[3]] Gamma_free;
   vector[len_free[4]] B_free;
   vector<lower=0>[len_free[5]] Theta_sd_free;
-  vector<lower=0>[len_free[6]] Theta_x_sd_free;
   vector<lower=0,upper=1>[len_free[7]] Theta_r_free; // to use beta prior
-  vector<lower=0,upper=1>[len_free[8]] Theta_x_r_free;
   vector<lower=0>[len_free[9]] Psi_sd_free;
   corr_matrix[m] Psi_r_mat[Ng * fullpsi];
   vector<lower=0,upper=1>[fullpsi ? 0 : len_free[10]] Psi_r_free;
@@ -522,11 +482,8 @@ transformed parameters {
   matrix[m, n] Gamma[Ng];
   matrix[m, m] B[Ng];
   matrix[p, p] Theta_sd[Ng];
-  matrix[q, q] Theta_x_sd[Ng];
   matrix[p, p] T_r_lower[Ng];
   matrix[p, p] Theta_r[Ng];
-  matrix[q, q] T_x_r_lower[Ng];
-  matrix[q, q] Theta_x_r[Ng];
   matrix[p + q, 1] Nu[Ng];
   matrix[m + n, 1] Alpha[Ng];
 
@@ -540,6 +497,13 @@ transformed parameters {
   vector[len_free[4]] b_primn;
   vector[len_free[13]] nu_primn;
   vector[len_free[14]] alpha_primn;
+
+  matrix[p, m] Lambda_y_A[Ng];     // = Lambda_y * (I - B)^{-1}
+
+  vector[p + q] Mu[Ng];
+  matrix[p + q, p + q] Sigma[Ng];                                           // model covariance matrix
+
+  matrix[p, q] top_right[Ng];        // top right block of Sigma
   
   // Now fill them in
   for (g in 1:Ng) {
@@ -547,11 +511,8 @@ transformed parameters {
     Gamma[g] = fill_matrix(Gamma_free, Gamma_skeleton[g], w3skel, g_start3[g], f_start3[g]);
     B[g] = fill_matrix(B_free, B_skeleton[g], w4skel, g_start4[g], f_start4[g]);
     Theta_sd[g] = fill_matrix(Theta_sd_free, Theta_skeleton[g], w5skel, g_start5[g], f_start5[g]);
-    Theta_x_sd[g] = fill_matrix(Theta_x_sd_free, Theta_x_skeleton[g], w6skel, g_start6[g], f_start6[g]);
     T_r_lower[g] = fill_matrix(2*Theta_r_free - 1, Theta_r_skeleton[g], w7skel, g_start7[g], f_start7[g]);
     Theta_r[g] = T_r_lower[g] + transpose(T_r_lower[g]) - diag_matrix(rep_vector(1, p));
-    T_x_r_lower[g] = fill_matrix(2*Theta_x_r_free - 1, Theta_x_r_skeleton[g], w8skel, g_start8[g], f_start8[g]);
-    Theta_x_r[g] = T_x_r_lower[g] + transpose(T_x_r_lower[g]) - diag_matrix(rep_vector(1, q));
     Nu[g] = fill_matrix(Nu_free, Nu_skeleton[g], w13skel, g_start13[g], f_start13[g]);
     Alpha[g] = fill_matrix(Alpha_free, Alpha_skeleton[g], w14skel, g_start14[g], f_start14[g]);
 
@@ -580,22 +541,8 @@ transformed parameters {
     nu_primn = to_vector(nu_mn);
     alpha_primn = to_vector(alpha_mn);
   }
-}
-model { // N.B.: things declared in the model block do not get saved in the output, which is okay here
-  matrix[p, m] Lambda_y_A[Ng];     // = Lambda_y * (I - B)^{-1}
-  matrix[m, m] GPG[Ng];
-  matrix[n, q] Lambda_xt[Ng];                         // copies so do it just once
 
   // see https://books.google.com/books?id=9AC-s50RjacC&lpg=PP1&dq=LISREL&pg=PA3#v=onepage&q=LISREL&f=false
-  vector[p + q] Mu[Ng];
-  matrix[p + q, p + q] Sigma[Ng];                                           // model covariance matrix
-
-  matrix[p, q] top_right[Ng];        // top right block of Sigma
-  /* transformed sd parameters for priors */
-  vector[len_free[5]] Theta_pri;
-  vector[len_free[6]] Theta_x_pri;
-  vector[len_free[9]] Psi_pri;
-
   for (g in 1:Ng) {
     if (m > 0) {
       Lambda_y_A[g] = mdivide_right(Lambda_y[g], I - B[g]);     // = Lambda_y * (I - B)^{-1}
@@ -603,15 +550,20 @@ model { // N.B.: things declared in the model block do not get saved in the outp
 
     Mu[g] = to_vector(Nu[g]);
 
-    GPG[g] = diag_matrix(rep_vector(0, m));
     if (p > 0) {
       Sigma[g, 1:p, 1:p] = quad_form_sym(Theta_r[g], Theta_sd[g]);
       if (m > 0) {
-        Sigma[g, 1:p, 1:p] += quad_form_sym(GPG[g] + Psi[g], transpose(Lambda_y_A[g]));
+        Sigma[g, 1:p, 1:p] += quad_form_sym(Psi[g], transpose(Lambda_y_A[g]));
 	Mu[g, 1:p] += to_vector(Lambda_y_A[g] * Alpha[g, 1:m, 1]);
       }
     }
   }
+}
+model { // N.B.: things declared in the model block do not get saved in the output, which is okay here
+
+  /* transformed sd parameters for priors */
+  vector[len_free[5]] Theta_pri;
+  vector[len_free[9]] Psi_pri;
     
   /* log-likelihood */
   if (has_data) {
@@ -649,13 +601,6 @@ model { // N.B.: things declared in the model block do not get saved in the outp
       target += log(abs(theta_pow)) + (theta_pow - 1)*log(Theta_sd_free[i]);
     }
   }
-  Theta_x_pri = Theta_x_sd_free;
-  if (len_free[6] > 0 && theta_x_pow != 1) {
-    for (i in 1:len_free[6]) {
-      Theta_x_pri[i] = Theta_x_sd_free[i]^(theta_x_pow);
-      target += log(abs(theta_x_pow)) + (theta_x_pow - 1)*log(Theta_x_sd_free[i]);
-    }
-  }
   Psi_pri = Psi_sd_free;
   if (len_free[9] > 0 && psi_pow != 1) {
     for (i in 1:len_free[9]) {
@@ -665,11 +610,9 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   }
 
   target += gamma_lpdf(Theta_pri | theta_sd_shape, theta_sd_rate);
-  target += gamma_lpdf(Theta_x_pri | theta_x_sd_shape, theta_x_sd_rate);
   target += gamma_lpdf(Psi_pri | psi_sd_shape, psi_sd_rate);
 
   target += beta_lpdf(Theta_r_free | theta_r_alpha, theta_r_beta);
-  target += beta_lpdf(Theta_x_r_free | theta_x_r_alpha, theta_x_r_beta);
   if (fullpsi) {
     for (g in 1:Ng) {
       target += lkj_corr_lpdf(Psi_r_mat[g] | psi_r_alpha[1]);
@@ -691,17 +634,16 @@ generated quantities { // these matrices are saved in the output but do not figu
   vector[len_free[4]] bet_sign;
   matrix[m, m] Bet[Ng];
   matrix[p, p] Theta[Ng];
-  matrix[q, q] Theta_x[Ng];
   matrix[m, m] PSmat[Ng];
   matrix[m, m] PS[Ng];
   vector[len_free[7]] Theta_cov;
   vector[len_free[5]] Theta_var;
-  vector[len_free[8]] Theta_x_cov;
-  vector[len_free[6]] Theta_x_var;
   vector[len_free[10]] P_r;
   vector[len_free[10]] Psi_cov;
   vector[len_free[9]] Psi_var;
 
+  vector[Ntot] log_lik; // for loo, etc
+  
   // first deal with sign constraints:
   ly_sign = sign_constrain_load(Lambda_y_free, len_free[1], lam_y_sign);
   bet_sign = sign_constrain_reg(B_free, len_free[4], b_sign, Lambda_y_free, Lambda_y_free);
@@ -717,10 +659,6 @@ generated quantities { // these matrices are saved in the output but do not figu
     Bet[g] = fill_matrix(bet_sign, B_skeleton[g], w4skel, g_start4[g], f_start4[g]);
 
     Theta[g] = quad_form_sym(Theta_r[g], Theta_sd[g]);
-
-    if (q > 0) {
-      Theta_x[g] = quad_form_sym(Theta_x_r[g], Theta_x_sd[g]);
-    }
 
     if (m > 0) {
       if (fullpsi) {
@@ -738,8 +676,6 @@ generated quantities { // these matrices are saved in the output but do not figu
   // off-diagonal covariance parameter vectors, from cor/sd matrices:
   Theta_cov = cor2cov(Theta_r, Theta_sd, num_elements(Theta_r_free), Theta_r_skeleton, w7skel, Ng);
   Theta_var = Theta_sd_free .* Theta_sd_free;
-  Theta_x_cov = cor2cov(Theta_x_r, Theta_x_sd, num_elements(Theta_x_r_free), Theta_x_r_skeleton, w8skel, Ng);
-  Theta_x_var = Theta_x_sd_free .* Theta_x_sd_free;
   if (m > 0 && len_free[10] > 0) {
     /* iden is created so that we can re-use cor2cov, even though
        we don't need to multiply to get covariances */
@@ -753,4 +689,25 @@ generated quantities { // these matrices are saved in the output but do not figu
   }
   Psi_var = Psi_sd_free .* Psi_sd_free;
 
+  // log-likelihood
+  if (has_data) {
+    int obsidx[p + q];
+    int r1;
+    int r2;
+    int grpidx;
+    for (mm in 1:Np) {
+      obsidx = Obsvar[mm,];
+      r1 = startrow[mm];
+      r2 = endrow[mm];
+      grpidx = grpnum[mm];
+      for (jj in r1:r2) {
+	log_lik[jj] = multi_normal_lpdf(YX[jj,1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+      }
+    }
+  } else if (has_cov) {
+    for (g in 1:Ng) {
+      log_lik[g] =  wishart_lpdf(S[g] | N[g] - 1, Sigma[g]);
+    }
+  }
+  
 } // end a with a completely blank line (not even whitespace)
