@@ -158,7 +158,7 @@ blavaan <- function(...,  # default lavaan arguments
     }
   
     # which arguments do we override?
-    lavArgsOverride <- c("meanstructure", "missing", "estimator")
+    lavArgsOverride <- c("meanstructure", "missing", "estimator", "conditional.x")
     # always warn?
     warn.idx <- which(lavArgsOverride %in% dotNames)
     if(length(warn.idx) > 0L) {
@@ -192,7 +192,8 @@ blavaan <- function(...,  # default lavaan arguments
       dotdotdot$missing <- "pairwise" # needed to get missing patterns
     }
     dotdotdot$estimator <- "default"
-
+    dotdotdot$conditional.x <- FALSE
+  
     # jags args
     if("debug" %in% dotNames) {
         if(dotdotdot$debug)  {
