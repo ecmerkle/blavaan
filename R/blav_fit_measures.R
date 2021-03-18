@@ -197,7 +197,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
                                 object@ParTable, object@SampleStats,
                                 lavopt, object@Cache,
                                 object@Data, samps,
-                                lavobject=object, conditional = TRUE)
+                                lavobject = object, conditional = TRUE)
 
             fitres <- waic(casells)
             fitse <- fitres$estimates[,'SE']

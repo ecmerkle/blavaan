@@ -25,7 +25,7 @@
 
 postpred <- function(lavpartable, lavmodel, lavoptions,
                      lavsamplestats, lavdata, lavcache, lavjags,
-                     samplls, measure = "logl", thin = 1,
+                     samplls, lavobject = NULL, measure = "logl", thin = 1,
                      discFUN = NULL, probs = c(.025, .975)) {
 
   ## check custom discrepancy function(s)
@@ -129,17 +129,23 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
                                     lavdata = lavdata,
                                     measure = measure[1]))
 
-      ## chi-squared for (in)complete data, or any other measure/discFUN
+      ## chi-squared for (in)complete data
+      } else if (!length(discFUN) & measure[1] %in% c("logl", "chisq")) {
+        lavoptions$target <- "jags" ## because we need both h0 and h1 ll
+        lavdata@X <- dataX
+        chisq.boot <- 2*diff(get_ll(lavmodel = lavmodel,
+                                    lavsamplestats = lavsamplestats,
+                                    lavoptions = lavoptions,
+                                    lavdata = lavdata,
+                                    lavobject = lavobject,
+                                    measure = measure[1]))
       } else {
-        ## we need lavaan to get the saturated log-l for missing data (EM)
+        ## any other measure/discFUN
 
         # YR: ugly hack to avoid lav_samplestats_from_data:
         # reconstruct data + call lavaan()
-        # ed: if we need lavaan() anyway, might as well
-        #     get the chisq while we're here:
         # TDJ: this also enables us to apply custom "discFUN" argument to
         #     fitted lavaan object -- also use this hack when !is.null(discFUN)?
-        #     ed: yes, probably want to pull necessary stuff from "out" object below
         DATA.X <- do.call("rbind", dataX)
         colnames(DATA.X) <- lavdata@ov.names[[1L]]
         DATA.eXo <- do.call("rbind", dataeXo)

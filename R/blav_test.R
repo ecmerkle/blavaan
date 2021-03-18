@@ -7,6 +7,7 @@ blav_model_test <- function(lavmodel       = NULL,
                             lavcache       = NULL,
                             lavdata        = NULL,
                             lavjags        = NULL,
+                            lavobject      = NULL,
                             samplls        = NULL,
                             jagextra       = NULL,
                             stansumm       = NULL,
@@ -30,7 +31,7 @@ blav_model_test <- function(lavmodel       = NULL,
 
     ppp <- postpred(lavpartable, lavmodel, lavoptions,
                     lavsamplestats, lavdata, lavcache, lavjags,
-                    samplls)$ppval
+                    samplls, lavobject)$ppval
 
     TEST[[1]] <- list(test="mloglik",
                       stat=as.numeric(mll),
