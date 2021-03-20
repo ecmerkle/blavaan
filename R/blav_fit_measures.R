@@ -167,7 +167,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
         lavopt <- object@Options
         lavopt$estimator <- "ML"
         if(lavopt$target == "stan"){
-          casells <- loo::extract_log_lik(object2@external$mcmcout)
+          casells <- loo::extract_log_lik(object@external$mcmcout)
         } else {
           casells <- case_lls(object@external$mcmcout, object@Model,
                               object@ParTable, object@SampleStats,
