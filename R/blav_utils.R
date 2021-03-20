@@ -214,6 +214,16 @@ samp_lls <- function(lavjags        = NULL,
     llmat <- do.call("future_lapply", loop.args)
     llmat <- array(unlist(llmat), c(nchain, 2, nsamps)) ## logl + baseline logl
     llmat <- aperm(llmat, c(3,1,2))
+
+    if(lavoptions$target == "stan"){
+      ## the model log-likelihoods have already been computed in stan
+      lls <- loo::extract_log_lik(lavjags)
+      for(j in 1:nchain){
+        idx <- (j-1)*nsamps + itnums
+        llmat[itnums,j,1] <- rowSums(lls[idx,])
+      }
+    }
+    
     llmat
 }
 

@@ -1,10 +1,12 @@
 blavCompare <- function(object1, object2, ...) {
   ## loo compare code from Mauricio Garnier-Villarreal + old BF() code
   ## possible TODO: compare using conditional likelihoods, in addition to marginal
-  if(blavInspect(object1, "Options")$test == "none" |
-     blavInspect(object2, "Options")$test == "none"){
+  lavopt1 <- blavInspect(object1, "Options")
+  lavopt2 <- blavInspect(object2, "Options")
+  if(lavopt1$test == "none" | lavopt2$test == "none"){
     stop("blavaan ERROR: Models cannot be compared when test='none'")
   }
+  targ1 <- lavopt1$target; targ2 <- lavopt2$target
     
   ## Bayes factor approximation based on marginal log-likelihoods
   bf <- object1@test[[1]]$stat - object2@test[[1]]$stat
@@ -14,23 +16,29 @@ blavCompare <- function(object1, object2, ...) {
   ## FIXME? We already get case_lls in blav_fit_measures and should really
   ## only do it once. But, if we store it in the blavaan object, the size
   ## of that object can get much larger.
-  lavopt1 <- object1@Options
-  lavopt1$estimator <- "ML"
-  ll1 <- case_lls(object1@external$mcmcout, object1@Model,
-                  object1@ParTable, object1@SampleStats,
-                  lavopt1, object1@Cache,
-                  object1@Data, make_mcmc(object1@external$mcmcout))
+  if(targ1 == "stan"){
+    ll1 <- loo::extract_log_lik(object1@external$mcmcout)
+  } else {
+    lavopt1$estimator <- "ML"
+    ll1 <- case_lls(object1@external$mcmcout, object1@Model,
+                    object1@ParTable, object1@SampleStats,
+                    lavopt1, object1@Cache,
+                    object1@Data, make_mcmc(object1@external$mcmcout))
+  }
   nchain1 <- blavInspect(object1, "n.chains")
   niter1 <- nrow(ll1)/nchain1
   cid1 <- rep(1:nchain1, each=niter1)
   ref1 <- relative_eff(exp(ll1), chain_id = cid1)
 
-  lavopt2 <- object2@Options
-  lavopt2$estimator <- "ML"
-  ll2 <- case_lls(object2@external$mcmcout, object2@Model,
-                  object2@ParTable, object2@SampleStats,
-                  lavopt2, object2@Cache,
-                  object2@Data, make_mcmc(object2@external$mcmcout))
+  if(targ2 == "stan"){
+    ll2 <- loo::extract_log_lik(object2@external$mcmcout)
+  } else {
+    lavopt2$estimator <- "ML"
+    ll2 <- case_lls(object2@external$mcmcout, object2@Model,
+                    object2@ParTable, object2@SampleStats,
+                    lavopt2, object2@Cache,
+                    object2@Data, make_mcmc(object2@external$mcmcout))
+  }
   nchain2 <- blavInspect(object1, "n.chains")
   niter2 <- nrow(ll2)/nchain2
   cid2 <- rep(1:nchain2, each=niter2)

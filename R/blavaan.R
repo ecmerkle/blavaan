@@ -696,8 +696,11 @@ blavaan <- function(...,  # default lavaan arguments
         attr(x, "control") <- bcontrol
 
         if(!("ordered" %in% dotNames)) {
+            tmplo <- lavoptions
+            tmplo$target <- "jags" ## to ensure computation in R, vs extraction of the
+                                   ## log-likehoods from Stan
             attr(x, "fx") <- get_ll(lavmodel = lavmodel, lavpartable = lavpartable,
-                                    lavsamplestats = lavsamplestats, lavoptions = lavoptions,
+                                    lavsamplestats = lavsamplestats, lavoptions = tmplo,
                                     lavcache = lavcache, lavdata = lavdata,
                                     lavobject = LAV)[1]
             if(save.lvs & jag.do.fit) {
