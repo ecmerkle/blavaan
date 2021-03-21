@@ -166,6 +166,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   nvar <- ncol(YX[[1]])
   dat$N <- lavInspect(lavobject, 'nobs')
   dat$pri_only <- prisamp
+  xidx <- lavobject@SampleStats@x.idx[[1]]
 
   ## lavobject@SampleStats@missing.flag is TRUE when missing='ml',
   ## regardless of whether data are missing
@@ -190,9 +191,16 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     dat$Np <- length(unique(misgrps))
     dat$Ntot <- sum(dat$N)
     dat$Obsvar <- matrix(0, dat$Np, nvar)
+    dat$Nx <- rep(0, dat$Np)
+    dat$Xvar <- matrix(0, dat$Np, length(xidx))
     
     for (i in 1:dat$Np) {
       dat$Obsvar[i, 1:dat$Nobs[i]] <- Obsvar[[i]]
+      xpat <- xidx[xidx %in% Obsvar[[i]]]
+      if (length(xpat) > 0) {
+        dat$Nx[i] <- length(xpat)
+        dat$Xvar[i, 1:length(xpat)] <- xpat
+      }
     }
 
     for (g in 1:dat$Ng) {
@@ -208,6 +216,8 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     dat$Np <- dat$Ng
     dat$Nobs <- array(nvar, dat$Np)
     dat$Obsvar <- matrix(1:nvar, dat$Np, nvar, byrow=TRUE)
+    dat$Nx <- array(length(xidx), dat$Np)
+    dat$Xvar <- matrix(xidx, dat$Np, length(xidx), byrow=TRUE)
   }
   dat$YX <- do.call("rbind", YX)
   dat$grpnum <- array(dat$grpnum, length(dat$grpnum))

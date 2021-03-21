@@ -157,9 +157,9 @@ data {
   int<lower=0, upper=1> missing; // are there missing values?
   int<lower=0, upper=1> save_lvs; // should we save lvs?
   int<lower=1> Np; // number of group-by-missing patterns combos
-  int<lower= 1> N[Ng]; // number of observations per group
+  int<lower=1> N[Ng]; // number of observations per group
   int<lower=1> Nobs[Np]; // number of observed variables in each missing pattern
-  int<lower=0> Obsvar[Np, p + q];
+  int<lower=0> Obsvar[Np, p + q]; // indexing of observed variables
   int<lower=1> Ntot; // number of observations across all groups
   int<lower=1> startrow[Np]; // starting row for each missing pattern
   int<lower=1,upper=Ntot> endrow[Np]; // ending row for each missing pattern
@@ -167,6 +167,8 @@ data {
   int<lower=0,upper=1> wigind; // do any parameters have approx equality constraint ('wiggle')?
   int<lower=0, upper=1> has_data; // are the raw data on y and x available?
   vector[p + q] YX[has_data ? Ntot : 0]; // if data, include them
+  int<lower=0> Nx[Np]; // number of fixed.x variables
+  int<lower=0> Xvar[Np, max(Nx)]; // indexing of fixed.x variables
   int<lower=0, upper=1> has_cov;
   cov_matrix[p + q] S[Ng];     // sample covariance matrix among all manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
 
@@ -568,15 +570,21 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   /* log-likelihood */
   if (has_data) {
     int obsidx[p + q];
+    int xidx[max(Nx)];
     int r1;
     int r2;
     int grpidx;
     for (mm in 1:Np) {
       obsidx = Obsvar[mm,];
+      xidx = Xvar[mm,];
       r1 = startrow[mm];
       r2 = endrow[mm];
       grpidx = grpnum[mm];
       target += multi_normal_lpdf(YX[r1:r2,1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+
+      if (Nx[mm] > 0) {
+	target += -multi_normal_lpdf(YX[r1:r2,xidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+      }
     }
   } else if (has_cov) {
     for (g in 1:Ng) {
@@ -692,16 +700,22 @@ generated quantities { // these matrices are saved in the output but do not figu
   // log-likelihood
   if (has_data) {
     int obsidx[p + q];
+    int xidx[max(Nx)];
     int r1;
     int r2;
     int grpidx;
     for (mm in 1:Np) {
       obsidx = Obsvar[mm,];
+      xidx = Xvar[mm,];
       r1 = startrow[mm];
       r2 = endrow[mm];
       grpidx = grpnum[mm];
       for (jj in r1:r2) {
 	log_lik[jj] = multi_normal_lpdf(YX[jj,1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+
+	if (Nx[mm] > 0) {
+	  log_lik[jj] -= multi_normal_lpdf(YX[jj,xidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	}
       }
     }
   } else if (has_cov) {
