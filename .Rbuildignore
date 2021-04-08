@@ -7,3 +7,6 @@
 ^.*\.o$
 ^src/stanmarg\.hpp$
 ^\.github$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
