@@ -1,1 +1,22 @@
 url: http://ecmerkle.github.io/blavaan/
+
+destination: "."
+
+template:
+  params:
+    bootswatch: cerulean
+
+navbar:
+  title: "blavaan"
+  left:
+    - icon: fa-home fa-lg
+      href: index.html
+    - text: "Examples"
+      href: articles/index.html
+    - text: "Functions"
+      href: reference/index.html
+  right:
+   - icon: fa-github
+     href: https://github.com/ecmerkle/blavaan
+   - icon: fa-users
+     href: https://groups.google.com/d/forum/blavaan
