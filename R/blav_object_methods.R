@@ -317,7 +317,11 @@ long.summary <- function(object,
         ## require "est"
         #names(PE)[penames == "est"] <- "Post.Mean"
         #PE$est <- PE$Post.Mean
-        names(PE)[penames == "se"] <- "Post.SD"
+        if(blavInspect(object, 'options')$prisamp){
+          names(PE)[penames == "se"] <- "Pri.SD"
+        } else {
+          names(PE)[penames == "se"] <- "Post.SD"
+        }
         names(PE)[penames == "ci.lower"] <- "pi.lower"
         names(PE)[penames == "ci.upper"] <- "pi.upper"
         names(PE)[penames == "psrf"] <- "Rhat"

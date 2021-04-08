@@ -18,18 +18,23 @@ blav_fit_measures <- function(object, fit.measures = "all",
     # has the model converged?
     if(object@Fit@npar > 0L && !object@optim$converged &&
        class(object@external$mcmcout) != "NULL") {
-        warning("blavaan WARNING: the chains may not have converged.")
+        warning("blavaan WARNING: the chains may not have converged.", call. = FALSE)
     }
 
     # do we have a test statistic?
-    if(object@Options$test == "none") {
+    if(blavInspect(object, "options")$test == "none") {
         stop("blavaan ERROR: fit measures cannot be obtained when test=\"none\"")
     }
 
+    if(blavInspect(object, "options")$prisamp) {
+        warning("blavaan WARNING: These metrics are based on prior samples so may be meaningless.",
+                call. = FALSE)
+    }
+  
     if("all" %in% fit.measures) {
-       class.flag <- TRUE
+        class.flag <- TRUE
     } else {
-       class.flag <- FALSE
+        class.flag <- FALSE
     }
 
     # collect info from the lavaan slots
