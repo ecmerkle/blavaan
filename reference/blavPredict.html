@@ -80,14 +80,20 @@
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-        <li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+        <li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Examples
      
+    <span class="caret"></span>
   </a>
-</li>
-<li>
-  <a href="../articles/index.html">Examples</a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/converge.html">Estimation and Convergence</a>
+    </li>
+    <li>
+      <a href="../articles/prior.html">Prior Distributions</a>
+    </li>
+  </ul>
 </li>
 <li>
   <a href="../reference/index.html">Functions</a>
@@ -96,7 +102,7 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/ecmerkle/blavaan">
-    <span class="fas fa-github"></span>
+    <span class="fab fa-github"></span>
      
   </a>
 </li>
