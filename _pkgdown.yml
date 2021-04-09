@@ -9,14 +9,16 @@ template:
 navbar:
   title: "blavaan"
   left:
-    - icon: fa-home fa-lg
-      href: index.html
-    - text: "Examples"
-      href: articles/index.html
+    - text: Examples
+      menu:
+      - text: Estimation and Convergence
+        href: articles/converge.html
+      - text: Prior Distributions
+        href: articles/prior.html
     - text: "Functions"
       href: reference/index.html
   right:
-   - icon: fa-github
+   - icon: "fab fa-github"
      href: https://github.com/ecmerkle/blavaan
    - icon: fa-users
      href: https://groups.google.com/d/forum/blavaan
