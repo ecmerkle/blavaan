@@ -8,7 +8,7 @@ blavaan is a free, open source R package for Bayesian latent variable analysis. 
 
 The blavaan functions and syntax are similar to lavaan. For example, consider the Political Democracy example from Bollen (1989):
 
-```
+```r
 library(blavaan)
 
 model <- '
@@ -32,7 +32,7 @@ summary(fit)
 
 The development version of blavaan (containing updates not yet on CRAN) can be installed via the command below. Compilation is required; this may be a problem for users who currently rely on a binary version of blavaan from CRAN.
 
-```
+```r
 remotes::install_github("ecmerkle/blavaan", INSTALL_opts = "--no-multiarch")
 ```
 
