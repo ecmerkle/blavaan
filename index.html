@@ -89,9 +89,10 @@
 
 <p>blavaan is a free, open source R package for Bayesian latent variable analysis. It relies on JAGS and Stan to estimate models via MCMC.</p>
 <p>The blavaan functions and syntax are similar to lavaan. For example, consider the Political Democracy example from Bollen (1989):</p>
-<pre><code><a href="https://rdrr.io/r/base/library.html">library(blavaan)
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">blavaan</span><span class="op">)</span>
 
-model &lt;- '
+<span class="va">model</span> <span class="op">&lt;-</span> <span class="st">'
    # latent variable definitions
      ind60 =~ x1 + x2 + x3
      dem60 =~ y1 + y2 + y3 + y4
@@ -105,11 +106,12 @@ model &lt;- '
      y3 ~~ y7
      y4 ~~ y8
      y6 ~~ y8
-'
-fit &lt;- bsem(model, data = PoliticalDemocracy)
-summary(fit)</a></code></pre>
+'</span>
+<span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/bsem.html">bsem</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">PoliticalDemocracy</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></code></pre></div>
 <p>The development version of blavaan (containing updates not yet on CRAN) can be installed via the command below. Compilation is required; this may be a problem for users who currently rely on a binary version of blavaan from CRAN.</p>
-<pre><code><a href="https://remotes.r-lib.org/reference/install_github.html">remotes::install_github("ecmerkle/blavaan", INSTALL_opts = "--no-multiarch")</a></code></pre>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span><span class="op">(</span><span class="st">"ecmerkle/blavaan"</span>, INSTALL_opts <span class="op">=</span> <span class="st">"--no-multiarch"</span><span class="op">)</span></code></pre></div>
 <p>For further information, see:</p>
 <p>Merkle, E. C., Fitzsimmons, E., Uanhoro, J., &amp; Goodrich, B. (in press). <a href="https://arxiv.org/abs/2008.07733">Efficient Bayesian structural equation modeling in Stan</a>. Journal of Statistical Software.</p>
 <p>Merkle, E. C., &amp; Rosseel, Y. (2018). <a href="https://doi.org/10.18637/jss.v085.i04">blavaan: Bayesian structural equation models via parameter expansion</a>. Journal of Statistical Software, 85(4), 1–30.</p>
