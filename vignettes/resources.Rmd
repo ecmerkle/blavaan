@@ -1,0 +1,15 @@
+---
+title: "Resources"
+---
+
+Please use the blavaan discussion group for all questions/issues related to blavaan.  This can be found at
+
+<a target="_blank" href="https://groups.google.com/d/forum/blavaan">https://groups.google.com/d/forum/blavaan</a><br /><br />
+
+Other resources are listed below:
+
+- the <a href="http://lavaan.ugent.be/resources/index.html">lavaan resources page</a> is helpful for model specification examples; it is mostly the same specification that is used in blavaan, and the main blavaan commands just add the letter "b" to the start of the main lavaan commands.
+
+- "getting started with blavaan" materials by Rens van de Schoot and colleagues: <a href="https://www.rensvandeschoot.com/tutorials/blavaan-how-to-get-started/">html</a>
+
+- <a href="https://www.youtube.com/watch?v=zWA43-6taNA">A useR! 2020 virtual presentation</a> on blavaan (done early in the pandemic, and demonstrating the author's poor video editing skills).

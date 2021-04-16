@@ -17,10 +17,12 @@ navbar:
         href: articles/prior.html
       - text: Measurement Invariance
         href: articles/invariance.html
-    - text: Functions
-      href: reference/index.html
     - text: News
       href: news/index.html
+    - text: Resources
+      href: articles/resources.html
+    - text: Functions
+      href: reference/index.html
   right:
    - icon: "fab fa-github"
      href: https://github.com/ecmerkle/blavaan
