@@ -24,7 +24,7 @@ navbar:
     - text: Functions
       href: reference/index.html
   right:
-   - icon: "fab fa-github"
+   - icon: "fab fa-github fa-lg"
      href: https://github.com/ecmerkle/blavaan
    - icon: fa-users
      href: https://groups.google.com/d/forum/blavaan
