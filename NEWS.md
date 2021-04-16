@@ -1,6 +1,4 @@
 # Version 0.3-15
-* Released on CRAN: February 19, 2021
-
 ## New features
 * Added an S3 summary() method to reduce R confusion about lavaan vs blavaan objects
 
@@ -9,7 +7,7 @@
 
 
 # Version 0.3-14
-* Released on CRAN: January 20, 2021 (version 0.3-13 violated a CRAN policy)
+* (version 0.3-13 violated a CRAN policy)
 
 ## New features
 * This is a maintenance release in response to a change in package Matrix.
@@ -19,7 +17,7 @@
 	
 
 # Version 0.3-12
-* Released on CRAN: November 12, 2020 (version 0.3-11 failed Windows CRAN checks)
+* (version 0.3-11 failed Windows CRAN checks)
 
 ## New features
 * vector values of wiggle.sd are allowed for different priors on approximate
@@ -34,8 +32,6 @@
 
 
 # Version 0.3-10
-* Released on CRAN: August 3, 2020
-
 ## New features
 * save.lvs=TRUE works for missing data under target="stan"
 
@@ -52,8 +48,6 @@
 
 
 # Version 0.3-9
-* Released on CRAN: March 9, 2020
-
 ## New features
 * improvements to save.lvs=TRUE for target="stan".
    
@@ -70,8 +64,6 @@
 
 
 # Version 0.3-8
-* Released on CRAN: November 19, 2019
-
 ## New features
 * post-estimation, posterior predictive computations are sped up considerably.
 
@@ -87,8 +79,6 @@
 * The dpriors() issue from 0.3-3 remains.
 
 # Version 0.3-7
-* Released on CRAN: September 27, 2019
-
 ## New features
 * for target="stan", gamma priors can now be placed on user's choice of
       variances, standard deviations, or precisions.
@@ -108,8 +98,6 @@
 * The dpriors() issue from 0.3-3 remains.
 
 # Version 0.3-6
-* Released on CRAN: August 8, 2019
-
 ## New features
 * this fixes the stan plot bug from 0.3-5.
 
@@ -121,8 +109,6 @@
 * The dpriors() issue from 0.3-3 remains.
 
 # Version 0.3-5
-* Released on CRAN: August 3, 2019
-
 ## New features
 * target="stan" is now the default, using a pre-compiled Stan model instead of "on the fly" code.
 
@@ -136,8 +122,6 @@
 * The dpriors() issue from 0.3-3 remains.
 
 # Version 0.3-4
-* Released on CRAN: January 11, 2019
-
 ## New features
 * Add function standardizedPosterior() for standardizing posterior draws.
 
@@ -153,8 +137,6 @@
 * Use of plot() with target="stan" causes problems for future blavInspect() calls.
 
 # Version 0.3-3
-* Released on CRAN: October 31, 2018
-
 ## New features
 * For convergence="auto", max time was previously 5 min (undocumented). It is now Inf.
 	
@@ -170,8 +152,6 @@
 * Use of 'dpriors()': some observed variable precisions assigned latent precision (ipsi) prior; some latent means assigned observed mean (nu) prior.
 
 # Version 0.3-2
-* Released on CRAN: June 10, 2018
-
 ## New features
 * Conditional (on latent variables) information criteria available when save.lvs = TRUE.
 
@@ -190,8 +170,6 @@
 	
 
 # Version 0.3-1
-* Released on CRAN: January 12, 2018
-
 ## New features
 * Stan export now supported; use target="stan".
 
