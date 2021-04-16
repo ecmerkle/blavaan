@@ -6,11 +6,10 @@ title: "Measurement Invariance"
 library(blavaan, quietly=TRUE)
 ```
 
-### Measurement Invariance
 The overt intent of this example is to illustrate the use of blavaan for studying measurement invariance. Along the way, we will also see how to obtain Bayesian model selection measures and how to send a lavaan object directly to blavaan for re-estimation.
 
 
-#### Model Estimation
+### Model Estimation
 Consider a measurement invariance study of the Holzinger & Swineford (1939) data. In lavaan, we may first estimate two models:
 
 ```{r, eval=FALSE}
@@ -43,7 +42,7 @@ blavCompare(bfit1, bfit2)
 ```
 
 
-#### Approximate Invariance
+### Approximate Invariance
 In *approximate* measurement invariance studies, we replace the hard equality constraints with soft constraints by using informative prior distributions. The `wiggle` argument can be used to invoke these types of constraints. For example:
 
 ```{r, eval=FALSE}
