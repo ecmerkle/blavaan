@@ -1,0 +1,209 @@
+#### Version 0.3-15
+- Released on CRAN: February 19, 2021
+
+- New features
+    - Added an S3 summary() method to reduce R confusion about lavaan vs blavaan objects
+
+    - Posterior intervals summary() bug is fixed
+
+- Bugs/glitches discovered after the release: (just released)
+
+
+#### Version 0.3-14
+- Released on CRAN: January 20, 2021 (version 0.3-13 violated a CRAN policy)
+
+- New features
+    - This is a maintenance release in response to a change in package Matrix.
+
+- Bugs/glitches discovered after the release:
+    - Posterior intervals are NA in summary(). Workarounds are to use parameterEstimates() (intervals assuming posterior normality) or to compute them yourself using the posterior samples (`blavInspect(fit, "mcmc")')
+	
+
+#### Version 0.3-12
+- Released on CRAN: November 12, 2020 (version 0.3-11 failed Windows CRAN checks)
+
+- New features
+    - vector values of wiggle.sd are allowed for different priors on approximate
+      equality constraints
+
+    - logical argument "prisamp" added, for sampling from a model's prior
+
+    - for target="stan", lkj prior is used for unrestricted lv correlation matrices
+
+    - default priors for conditional approaches (targets jags and stanclassic) revert to being placed on precisions (as opposed to SDs), for improvement in sampling efficiency
+	
+	- fix bugs in 0.3-10
+
+
+#### Version 0.3-10
+- Released on CRAN: August 3, 2020
+
+- New features
+    - save.lvs=TRUE works for missing data under target="stan"
+
+    - new arguments "wiggle" and "wiggle.sd" for approximate equality constraints under target="stan"
+   
+    - bugs from 0.3-9 are fixed.
+   
+- Bugs/glitches discovered after the release:
+    - plot labels for target="stan" are sometimes incorrect (displaying a parameter different from the panel label).
+
+    - complex equality constraints are sometimes ignored (target="jags" or "stanclassic")
+	
+	- equality constraints with std.lv=TRUE sometimes fail (target="stan")
+	
+	- placing priors on variances or precisions yields incorrect results (target="stan"; reported by Roy Levy)
+
+#### Version 0.3-9
+- Released on CRAN: March 9, 2020
+
+- New features
+    - improvements to save.lvs=TRUE for target="stan".
+   
+    - target="stancond" is added, which is an experimental, noncentered Stan approach.
+   
+    - bug fixes for prior settings and std.lv in target="stan", and defined parameters.
+   
+- Bugs/glitches discovered after the release:
+    - For target="stan", problems with sampling lvs when there are multiple groups or missing data.
+	
+	- Errors for blavCompare() and blavFitIndices() due to version updates of other packages.
+	
+	- For target="stan", some models with std.lv=TRUE would not converge.
+
+#### Version 0.3-8
+- Released on CRAN: November 19, 2019
+
+- New features
+    - post-estimation, posterior predictive computations are sped up considerably.
+
+    - 0.3-7 bugs fixed.
+
+- Bugs/glitches discovered after the release:
+    - For target="stan" and std.lv=TRUE, estimation fails for certain (growth) models (reported by Mauricio Garnier-Villareal).
+
+	- Some defined variables fail for target="jags" and "stanclassic" (reported by Mariëlle Zondervan-Zwijnenburg).
+
+	- User-specified priors sometimes are placed on the wrong parameter, related to the 0.3-7 bug (reported by Mauricio Garnier-Villareal).
+
+    - The dpriors() issue from 0.3-3 remains.
+
+#### Version 0.3-7
+- Released on CRAN: September 27, 2019
+
+- New features
+    - for target="stan", gamma priors can now be placed on user's choice of
+      variances, standard deviations, or precisions.
+
+    - plot() now works uniformly across Stan and JAGS, relying on bayesplot.
+
+    - post-MCMC parallelization is now handled via future.apply package
+      (requires an extra "plan" command from user, but works on windows).
+
+    - 0.3-6 bugs fixed.
+
+- Bugs/glitches discovered after the release:
+    - blavInspect(, 'lvmeans') returns rows in the wrong order for target="stan" (reported by Mehdi Momen).
+
+	- User-specified priors sometimes are placed on the wrong parameter, for target="stan" (reported by Enrico Toffalini).
+
+    - The dpriors() issue from 0.3-3 remains.
+
+#### Version 0.3-6
+- Released on CRAN: August 8, 2019
+
+- New features
+    - this fixes the stan plot bug from 0.3-5.
+
+- Bugs/glitches discovered after the release:
+    - user-specified priors on correlation parameters are silently ignored for target="stan" (reported by James Uanhoro).
+
+    - save.lvs=TRUE does not work for target="stan" (reported by Mauricio Garnier-Villareal).
+
+    - The dpriors() issue from 0.3-3 remains.
+
+#### Version 0.3-5
+- Released on CRAN: August 3, 2019
+
+- New features
+    - target="stan" is now the default, using a pre-compiled Stan model instead of "on the fly" code.
+
+    - ppmc() function added by Terrence Jorgensen, facilitating posterior predictive checks.
+
+    - default priors are changed from gamma on precisions to gamma on standard deviations.
+
+- Bugs/glitches discovered after the release:
+    - The Stan plot method silently fails (reported by Matt Yalch).
+
+    - The dpriors() issue from 0.3-3 remains.
+
+#### Version 0.3-4
+- Released on CRAN: January 11, 2019
+
+- New features
+    - Add function standardizedPosterior() for standardizing posterior draws.
+
+    - Turn off posterior modes for target="jags", due to conflict between current versions of runjags and modeest.
+
+    - Rearrange posterior predictive internals.
+
+- Bugs/glitches discovered after the release:
+    - The dpriors() issue from 0.3-3 remains.
+
+	- For target="jags", lv means obtained from blavInspect() (via argument 'lvmeans') are incorrect. (reported by Mauricio Garnier-Villareal)
+
+	- Use of plot() with target="stan" causes problems for future blavInspect() calls.
+
+#### Version 0.3-3
+- Released on CRAN: October 31, 2018
+
+- New features
+    - For convergence="auto", max time was previously 5 min (undocumented). It is now Inf.
+	
+	- Axis labels (parameter names) are now more sensible on convergence plots.
+	
+	- Relative effective sample size now used to compute loo/waic SEs, and some SEs are now returned via fitMeasures().
+	
+	- Added unit testing via package testthat.
+	
+	- Fixed bugs from 0.3-2 (with exception of identity assignments using ':=')
+
+- Bugs/glitches discovered after the release:
+    - Use of 'dpriors()': some observed variable precisions assigned latent precision (ipsi) prior; some latent means assigned observed mean (nu) prior.
+
+#### Version 0.3-2
+- Released on CRAN: June 10, 2018
+
+- New features
+    - Conditional (on latent variables) information criteria available when save.lvs = TRUE.
+
+    - Experimental function 'blavFitIndices()' added for Bayesian versions of SEM metrics, contributed by Terrence Jorgensen.
+
+    - blavaan "intelligently" chooses target, if either runjags or rstan (but not both) is installed.
+
+    - Fixed bugs from 0.3-1, especially related to missing data in Stan.
+
+- Bugs/glitches discovered after the release:
+    - Errors for Stan models with std.lv=TRUE, and an observed variable regressed on a latent variable (reported by Bo Zhang).
+
+	- Error for identity assignments using ':=' (reported by Marco Tullio Liuzza).
+	
+	- Explicitly adding the argument 'do.fit=TRUE' fails (reported by Esteban Montenegro).
+	
+
+#### Version 0.3-1
+- Released on CRAN: January 12, 2018
+
+- New features
+    - Stan export now supported; use target="stan".
+
+    - Improved handling of complex models, including growth/change models.
+
+    - Sampling of factor scores (lvs) available via 'save.lvs=TRUE'. Samples/means can be obtained by supplying arguments 'lvs' and 'lvmeans' to 'blavInspect()'.
+
+    - Fixed bugs from 0.2-4.
+
+- Bugs/glitches discovered after the release:
+    - Errors for Stan models with missing data, when there are exogenous ("x") variables.
+
+    - Errors for multi-group Stan models with std.lv=TRUE.
