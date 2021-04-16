@@ -13,3 +13,5 @@ Other resources are listed below:
 - "getting started with blavaan" materials by Rens van de Schoot and colleagues: <a href="https://www.rensvandeschoot.com/tutorials/blavaan-how-to-get-started/">html</a>
 
 - <a href="https://www.youtube.com/watch?v=zWA43-6taNA">A useR! 2020 virtual presentation</a> on blavaan (done early in the pandemic, and demonstrating the author's poor video editing skills).
+
+- slides (blavaan and others) from a <a href="https://osf.io/bcy78/">symposium on the lavaan ecosystem</a> at the 2019 International Meeting of the Psychometric Society, Santiago, Chile.
