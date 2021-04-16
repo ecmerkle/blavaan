@@ -95,13 +95,10 @@
 
     
     
-<div id="prior-distributions" class="section level3">
-<h3 class="hasAnchor">
-<a href="#prior-distributions" class="anchor"></a>Prior Distributions</h3>
 <p>There are two ways to specify prior distributions in blavaan. First, each type of model parameter has a default prior distribution that may or may not be suitable for your specific situation. You are free to modify the defaults. Second, the priors for individual model parameters can be specified in the model syntax. Each is discussed below.</p>
-<div id="defaults" class="section level4">
-<h4 class="hasAnchor">
-<a href="#defaults" class="anchor"></a>Defaults</h4>
+<div id="defaults" class="section level3">
+<h3 class="hasAnchor">
+<a href="#defaults" class="anchor"></a>Defaults</h3>
 <p>The default priors can be seen via</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/dpriors.html">dpriors</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
@@ -129,9 +126,9 @@
 ## "normal(0,10^.5)" "gamma(1,.5)[sd]"</code></pre>
 <p>so that the default prior for loadings is now normal with mean 1 and standard deviation 2, and the rest of the parameters remain at the original defaults. The next time we estimate a model (via <code><a href="../reference/bsem.html">bsem()</a></code>, <code><a href="../reference/bcfa.html">bcfa()</a></code>, <code><a href="../reference/bgrowth.html">bgrowth()</a></code>, or <code><a href="../reference/blavaan.html">blavaan()</a></code>), we would add the argument <code>dp=mydp</code> to use this new set of default priors.</p>
 </div>
-<div id="individual-parameters" class="section level4">
-<h4 class="hasAnchor">
-<a href="#individual-parameters" class="anchor"></a>Individual Parameters</h4>
+<div id="individual-parameters" class="section level3">
+<h3 class="hasAnchor">
+<a href="#individual-parameters" class="anchor"></a>Individual Parameters</h3>
 <p>In addition to setting the prior for one type of model parameter, the user may wish to set the prior of a specific model parameter. This is accomplished by using the <code>prior()</code> modifier within the model specification. For example, consider the following syntax for the Holzinger &amp; Swineford (1939) confirmatory factor model:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">HS.model</span> <span class="op">&lt;-</span> <span class="st">' visual  =~ x1 + prior("normal(1,2)")*x2 + x3
@@ -141,9 +138,9 @@
 <p>The loading from <code>visual</code> to <code>x2</code> now has a normal prior with mean 1 and standard deviation 2, while the loading from <code>textual</code> to <code>x6</code> has a normal prior with mean 3 and standard deviation 1.5. All other loadings have the default prior distribution.</p>
 <p>In the above syntax, we have additionally specified a gamma(3,3) prior associated with the residual of <code>x1</code>. The <code>[sd]</code> text at the end of the distribution says that this prior goes on the residual standard deviation, as opposed to the residual precision or residual variance. There exist two more options here: a <code>[var]</code> option for the residual variance, and no brackets for the precision (or you could also use <code>[prec]</code>). This bracketed text can be used for any model variance/SD/precision parameter and could also be used in default prior specification if desired.</p>
 </div>
-<div id="covariance-parameters" class="section level4">
-<h4 class="hasAnchor">
-<a href="#covariance-parameters" class="anchor"></a>Covariance Parameters</h4>
+<div id="covariance-parameters" class="section level3">
+<h3 class="hasAnchor">
+<a href="#covariance-parameters" class="anchor"></a>Covariance Parameters</h3>
 <p>One additional note on covariance parameters defined in the model syntax: the <code>prior()</code> syntax specifies a prior on the correlation associated with the covariance parameter, as opposed to the covariance itself. The specified distribution should have support on (0,1), and blavaan automatically translates the prior to an equivalent distribution with support on (-1,1). It is safest to stick with beta priors here. For example, the syntax</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">HS.model</span> <span class="op">&lt;-</span> <span class="st">' visual  =~ x1 + x2 + x3
@@ -151,7 +148,6 @@
               speed   =~ x7 + x8 + x9 
               visual ~~ prior("beta(1,1)")*textual '</span></code></pre></div>
 <p>places a Beta(1,1) (uniform) prior on the correlation between the <code>visual</code> and <code>textual</code> factors. If desired, we could also specify priors on the standard deviations (or variances or precisions) of the <code>visual</code> and <code>textual</code> factors. Together with the prior on the correlation, these priors would imply a prior on the covariance between <code>visual</code> and <code>textual</code>.</p>
-</div>
 </div>
   </div>
 

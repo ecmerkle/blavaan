@@ -95,13 +95,10 @@
 
     
     
-<div id="measurement-invariance" class="section level3">
-<h3 class="hasAnchor">
-<a href="#measurement-invariance" class="anchor"></a>Measurement Invariance</h3>
 <p>The overt intent of this example is to illustrate the use of blavaan for studying measurement invariance. Along the way, we will also see how to obtain Bayesian model selection measures and how to send a lavaan object directly to blavaan for re-estimation.</p>
-<div id="model-estimation" class="section level4">
-<h4 class="hasAnchor">
-<a href="#model-estimation" class="anchor"></a>Model Estimation</h4>
+<div id="model-estimation" class="section level3">
+<h3 class="hasAnchor">
+<a href="#model-estimation" class="anchor"></a>Model Estimation</h3>
 <p>Consider a measurement invariance study of the Holzinger &amp; Swineford (1939) data. In lavaan, we may first estimate two models:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">HS.model</span> <span class="op">&lt;-</span> <span class="st">' visual  =~ x1 + x2 + x3
@@ -127,9 +124,9 @@
 
 <span class="fu"><a href="../reference/blavCompare.html">blavCompare</a></span><span class="op">(</span><span class="va">bfit1</span>, <span class="va">bfit2</span><span class="op">)</span></code></pre></div>
 </div>
-<div id="approximate-invariance" class="section level4">
-<h4 class="hasAnchor">
-<a href="#approximate-invariance" class="anchor"></a>Approximate Invariance</h4>
+<div id="approximate-invariance" class="section level3">
+<h3 class="hasAnchor">
+<a href="#approximate-invariance" class="anchor"></a>Approximate Invariance</h3>
 <p>In <em>approximate</em> measurement invariance studies, we replace the hard equality constraints with soft constraints by using informative prior distributions. The <code>wiggle</code> argument can be used to invoke these types of constraints. For example:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">HS.model</span> <span class="op">&lt;-</span> <span class="st">' visual  =~ x1 + c("a", "a")*x2 + c("b", "b")*x3
@@ -149,7 +146,6 @@
               group.equal <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"intercepts"</span>, <span class="st">"loadings"</span><span class="op">)</span>, wiggle <span class="op">=</span> <span class="st">"loadings"</span>,
               wiggle.sd <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></code></pre></div>
 <p>In the above example, the model intercepts and loadings have across-group constraints. The loadings are approximately equal across groups, due to the argument <code>wiggle = "loadings"</code>. And the intercepts are constrained to be exactly equal across groups. In this way, it becomes easy to use exact and approximate equality constraints in the same model, if desired.</p>
-</div>
 </div>
   </div>
 
