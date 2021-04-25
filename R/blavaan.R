@@ -49,7 +49,6 @@ blavaan <- function(...,  # default lavaan arguments
 
     # multilevel functionality not available
     if("cluster" %in% dotNames) stop("blavaan ERROR: two-level models are not yet available.")
-    if("ordered" %in% dotNames) stop("blavaan ERROR: ordinal models are not yet available.")
   
     # prior predictives only for stan
     if(prisamp) {
@@ -190,7 +189,14 @@ blavaan <- function(...,  # default lavaan arguments
     if("ordered" %in% dotNames |
        any(apply(dotdotdot$data, 2, function(x) inherits(x, "ordered")))){
       dotdotdot$missing <- "pairwise" # needed to get missing patterns
+
+      if("parameterization" %in% names(dotdotdot)){
+        if(dotdotdot$parameterization == "delta"){
+          warning("blavaan WARNING: the parameterization argument has no effect; theta parameterization will be used.", call. = FALSE)
+        }
+      }
     }
+    dotdotdot$parameterization <- "theta"
     dotdotdot$estimator <- "default"
     dotdotdot$conditional.x <- FALSE
   
@@ -266,11 +272,6 @@ blavaan <- function(...,  # default lavaan arguments
         stop("blavaan ERROR: full data are required. consider using kd() from package semTools.")
     }
 
-    # ordinal functionality not available
-    if(lavInspect(LAV, 'categorical')) {
-        stop("blavaan ERROR: models with ordered variables are not yet available.")
-    }
-
     # save.lvs in a model with no lvs
     if(save.lvs){
         clv <- lavInspect(LAV, 'cov.lv')
@@ -287,19 +288,10 @@ blavaan <- function(...,  # default lavaan arguments
     # check for conflicting mv names
     namecheck(LAV@Data@ov.names[[1]])
 
-    # deal with ordinal data, turn some options off
-    ordmod <- LAV@Options$categorical
-    if(ordmod){
-      ## this picks up variables of class ordered that were not
-      ## explicitly specified via ordered argument
-      dotdotdot$ordered <- LAV@Data@ordered
-      if(blavmis == "fi"){
-        stop("blavaan ERROR: missing='fi' cannot be used with ordinal data.")
-      }
-      dotdotdot$test <- "none"
-      dotNames <- names(dotdotdot)
-    }  
-  
+    # ordinal only for stan
+    ordmod <- lavInspect(LAV, 'categorical')
+    if(ordmod & target != "stan") stop("blavaan ERROR: ordinal variables only work for target='stan'.")
+        
     ineq <- which(LAV@ParTable$op %in% c("<",">"))
     if(length(ineq) > 0) {
         LAV@ParTable <- lapply(LAV@ParTable, function(x) x[-ineq])
@@ -696,29 +688,26 @@ blavaan <- function(...,  # default lavaan arguments
         }
         attr(x, "control") <- bcontrol
 
-        if(!("ordered" %in% dotNames)) {
-            tmplo <- lavoptions
-            tmplo$target <- "jags" ## to ensure computation in R, vs extraction of the
-                                   ## log-likehoods from Stan
-            attr(x, "fx") <- get_ll(lavmodel = lavmodel, lavpartable = lavpartable,
-                                    lavsamplestats = lavsamplestats, lavoptions = tmplo,
-                                    lavcache = lavcache, lavdata = lavdata,
-                                    lavobject = LAV)[1]
-            if(save.lvs & jag.do.fit) {
-                if(target == "jags"){
-                    fullpmeans <- summary(make_mcmc(res))[[1]][,"Mean"]
-                } else {
-                    fullpmeans <- stansumm[,"mean"] #rstan::summary(res)$summary[,"mean"]
-                }
-                cfx <- get_ll(fullpmeans, lavmodel = lavmodel, lavpartable = lavpartable,
-                              lavsamplestats = lavsamplestats, lavoptions = lavoptions,
-                              lavcache = lavcache, lavdata = lavdata,
-                              lavobject = LAV, conditional = TRUE)[1]
+        ## log-likelihoods
+        tmplo <- lavoptions
+        tmplo$target <- "jags" ## to ensure computation in R, vs extraction of the
+                               ## log-likehoods from Stan
+        attr(x, "fx") <- get_ll(lavmodel = lavmodel, lavpartable = lavpartable,
+                                lavsamplestats = lavsamplestats, lavoptions = tmplo,
+                                lavcache = lavcache, lavdata = lavdata,
+                                lavobject = LAV)[1]
+        if(save.lvs & jag.do.fit) {
+            if(target == "jags"){
+                fullpmeans <- summary(make_mcmc(res))[[1]][,"Mean"]
             } else {
-                cfx <- NULL
+                fullpmeans <- stansumm[,"mean"] #rstan::summary(res)$summary[,"mean"]
             }
+            cfx <- get_ll(fullpmeans, lavmodel = lavmodel, lavpartable = lavpartable,
+                          lavsamplestats = lavsamplestats, lavoptions = lavoptions,
+                          lavcache = lavcache, lavdata = lavdata,
+                          lavobject = LAV, conditional = TRUE)[1]
         } else {
-            attr(x, "fx") <- as.numeric(NA)
+            cfx <- NULL
         }
     }
 

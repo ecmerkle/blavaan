@@ -179,6 +179,7 @@ check_priors <- function(lavpartable) {
 #' # fill in
 stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
                           miss, Np, Nobs, Obsvar, # missing
+                          ord, ordidx, contidx, nlevs, neach, # ordinal
                           Xvar, Nx, # fixed.x
                           startrow, endrow, save_lvs = FALSE, 
                           Lambda_y_skeleton, # skeleton matrices
@@ -186,11 +187,11 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
                           Theta_skeleton, Theta_r_skeleton,
                           Theta_x_skeleton, Theta_x_r_skeleton,
                           Psi_skeleton, Psi_r_skeleton, Phi_skeleton,
-                          Phi_r_skeleton, Nu_skeleton, Alpha_skeleton,
+                          Phi_r_skeleton, Nu_skeleton, Alpha_skeleton, Tau_skeleton,
                           w1skel, w2skel, w3skel, # eq constraint matrices
                           w4skel, w5skel, w6skel, w7skel, w8skel,
                           w9skel, w10skel, w11skel, w12skel, w13skel,
-                          w14skel,
+                          w14skel, w15skel,
                           lam_y_sign, lam_x_sign, # sign constraint matrices
                           gam_sign, b_sign, psi_r_sign, fullpsi, phi_r_sign,
                           lavpartable = NULL, # for priors
@@ -209,6 +210,11 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$Np <- Np
   dat$Nobs <- array(Nobs, length(Nobs))
   dat$Obsvar <- Obsvar
+  dat$ord <- ord
+  dat$ordidx <- ordidx
+  dat$contidx <- contidx
+  dat$nlevs <- nlevs
+  dat$neach <- neach
   dat$startrow <- startrow
   dat$endrow <- endrow
   dat$Xvar <- Xvar
@@ -413,6 +419,14 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$wg14 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w14skel <- w14skel
 
+  tmpres <- group_sparse_skeleton(Tau_skeleton)
+  dat$len_w15 <- max(tmpres$g_len)
+  dat$w15 <- tmpres$w
+  dat$v15 <- tmpres$v
+  dat$u15 <- tmpres$u
+  dat$wg15 <- array(tmpres$g_len, length(tmpres$g_len))
+  dat$w15skel <- w15skel
+  
   ## priors; first make sure they match what is in the stan file
   check_priors(lavpartable)
   dat$wigind <- wigind
@@ -480,6 +494,10 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   pris <- format_priors(lavpartable, "alpha")
   dat$alpha_mn <- pris[['p1']]; dat$alpha_sd <- pris[['p2']]
   dat$len_alph <- length(dat$alpha_mn)
+
+  pris <- format_priors(lavpartable, "tau")
+  dat$tau_mn <- pris[['p1']]; dat$tau_sd <- pris[['p2']]
+  dat$len_tau <- length(dat$tau_mn)
   
   return(dat)
 }

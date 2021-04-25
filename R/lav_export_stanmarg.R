@@ -164,6 +164,8 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   Ng <- dat$Ng <- lavInspect(lavobject, 'ngroups')
   YX <- lavobject@Data@X
   nvar <- ncol(YX[[1]])
+  ord <- lavInspect(lavobject, 'categorical')
+  dat$ord <- ord
   dat$N <- lavInspect(lavobject, 'nobs')
   dat$pri_only <- prisamp
   xidx <- lavobject@SampleStats@x.idx[[1]]
@@ -222,10 +224,43 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   dat$YX <- do.call("rbind", YX)
   dat$grpnum <- array(dat$grpnum, length(dat$grpnum))
 
+  if (ord) {
+    pta <- lav_partable_attributes(parTable(fit))
+
+    ordidx <- pta$vidx$ov.ord[[1]]
+
+    nlevs <- rep(NA, length(ordidx))
+    neach <- vector("list", length(ordidx))
+    for(i in 1:length(ordidx)){
+      ordvar <- unlist(lapply(lavdata@X, function(x) x[,ordidx[i]]))
+      nlevs[i] <- length(unique(ordvar))
+    
+      neach[[i]] <- summary(factor(ordvar))
+    }
+
+    maxcat <- max(nlevs)
+
+    nemat <- matrix(0, length(ordidx), maxcat)
+    for(i in 1:length(ordidx)){
+      nemat[i,1:nlevs[i]] <- neach[[i]]
+    }
+
+    dat$ordidx <- array(ordidx, length(ordidx))
+    contidx <- (1:nvar)[-ordidx]
+    dat$contidx <- array(contidx, length(contidx))
+    dat$nlevs <- array(nlevs, nlevs)
+    dat$neach <- nemat
+  } else {
+    dat$ordidx <- array(0, 0)
+    dat$contidx <- array(1:nvar, nvar)
+    dat$nlevs <- array(0, 0)
+    dat$neach <- matrix(0, 0, 0)
+  }
+  
   ## model
   freemats <- lavInspect(lavobject, 'free')
   constrain <- attr(freemats, 'header')
-  if (any(constrain$op != "==")){
+  if (any(constrain$op != "==")) {
     ops <- unique(constrain$op)
     ops <- ops[ops != "=="]
     stop(paste("blavaan ERROR: cannot handle constraints with ",
@@ -638,6 +673,31 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     dat$w14skel <- matrix(0, 0, 3)
   }
 
+  ## 15. Tau
+  if ("tau" %in% names(freemats[[1]])) {
+    fr <- lapply(freemats, function(x) x$tau)
+    es <- lapply(estmats, function(x) x$tau)
+
+    frnums <- sapply(fr, function(x) as.numeric(x[x != 0]))
+    twsel <- lavpartable$free %in% frnums
+    tmpwig <- lavpartable[twsel,'free'][which(lavpartable[twsel, 'plabel'] %in% wig)]
+
+    res <- matattr(fr, es, constrain, mat = "Tau", Ng, opts$std.lv, tmpwig)
+    dat$Tau_skeleton <- res$matskel
+    dat$w15skel <- res$wskel
+    free2 <- c(free2, list(tau = res$free))
+    ptrows <- with(lavpartable, which(mat == "tau" & free > 0))
+    veclen <- length(ptrows)
+    if (veclen > 0) {
+      fpars <- res$wskel[1:veclen,1] == 0 | res$wskel[1:veclen,3] == 1
+      nfree <- c(nfree, list(alpha = sum(fpars)))
+      freeparnums[ptrows[fpars]] <- 1:sum(fpars)
+    }
+  } else {
+    dat$Tau_skeleton <- array(0, dim = c(Ng, 0, 0))
+    dat$w15skel <- matrix(0, 0, 3)
+  }
+  
   ## add priors by using set_stanpars() from classic approach
   ## needs some partable mods
   lavpartable$rhoidx <- rep(0, length(lavpartable$mat))
@@ -681,7 +741,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
                  Theta_r_free = "rhofree", Psi_sd_free = "psifree",
                  Psi_r_free = "lvrhofree", Theta_x_sd_free = "thetaxfree",
                  Theta_x_r_free = "cov.x", Nu_free = "nufree",
-                 Alpha_free = "alphafree")
+                 Alpha_free = "alphafree", Tau_free = "taufree")
     for (i in 1:length(ini)) {
       nmidx <- match(names(ini[[i]]), mapping)
       names(ini[[i]]) <- names(mapping)[nmidx]
