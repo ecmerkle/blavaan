@@ -245,12 +245,14 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       nemat[i,1:nlevs[i]] <- neach[[i]]
     }
 
+    dat$Nord <- length(ordidx)
     dat$ordidx <- array(ordidx, length(ordidx))
     contidx <- (1:nvar)[-ordidx]
     dat$contidx <- array(contidx, length(contidx))
     dat$nlevs <- array(nlevs, nlevs)
     dat$neach <- nemat
   } else {
+    dat$Nord <- 0L
     dat$ordidx <- array(0, 0)
     dat$contidx <- array(1:nvar, nvar)
     dat$nlevs <- array(0, 0)
