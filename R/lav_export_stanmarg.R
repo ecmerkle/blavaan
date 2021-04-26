@@ -164,7 +164,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   Ng <- dat$Ng <- lavInspect(lavobject, 'ngroups')
   YX <- lavobject@Data@X
   nvar <- ncol(YX[[1]])
-  ord <- lavInspect(lavobject, 'categorical')
+  ord <- as.numeric(lavInspect(lavobject, 'categorical'))
   dat$ord <- ord
   dat$N <- lavInspect(lavobject, 'nobs')
   dat$pri_only <- prisamp

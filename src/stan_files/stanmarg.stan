@@ -171,6 +171,12 @@ data {
   int<lower=0> Xvar[Np, max(Nx)]; // indexing of fixed.x variables
   int<lower=0, upper=1> has_cov;
   cov_matrix[p + q] S[Ng];     // sample covariance matrix among all manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
+  int<lower=0, upper=1> ord; // are there any ordinal variables?
+  int<lower=0> Nord; // how many ordinal variables?
+  int<lower=0> ordidx[Nord]; // indexing of ordinal variables
+  int<lower=0> contidx[p + q - Nord]; // indexing of continuous variables
+  int<lower=1> nlevs[Nord]; // how many levels does each ordinal variable have
+  vector[ord ? max(nlevs) : 0] neach[Nord]; // how many times do we observe each level of each ordinal variable?
 
   
   /* sparse matrix representations of skeletons of coefficient matrices, 
