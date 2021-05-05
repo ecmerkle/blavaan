@@ -113,7 +113,7 @@
 ##             theta               psi               rho             ibpsi 
 ## "gamma(1,.5)[sd]" "gamma(1,.5)[sd]"       "beta(1,1)" "wishart(3,iden)" 
 ##               tau             delta 
-## "normal(0,10^.5)" "gamma(1,.5)[sd]"</code></pre>
+##  "normal(0,3.16)" "gamma(1,.5)[sd]"</code></pre>
 <p>It is important to note that these prior distributions correspond to Stan parameterizations. These are similar to R parameterizations but not necessarily exactly the same. The Greek(ish) names above correspond to the following parameter types (where MV is manifest/observed variable and LV is latent variable):</p>
 <pre><code>##                  nu               alpha              lambda                beta 
 ##      "MV intercept"      "LV intercept"           "Loading"        "Regression" 
@@ -129,7 +129,7 @@
 ##             theta               psi               rho             ibpsi 
 ## "gamma(1,.5)[sd]" "gamma(1,.5)[sd]"       "beta(1,1)" "wishart(3,iden)" 
 ##               tau             delta 
-## "normal(0,10^.5)" "gamma(1,.5)[sd]"</code></pre>
+##  "normal(0,3.16)" "gamma(1,.5)[sd]"</code></pre>
 <p>so that the default prior for loadings is now normal with mean 1 and standard deviation 2, and the rest of the parameters remain at the original defaults. The next time we estimate a model (via <code><a href="../reference/bsem.html">bsem()</a></code>, <code><a href="../reference/bcfa.html">bcfa()</a></code>, <code><a href="../reference/bgrowth.html">bgrowth()</a></code>, or <code><a href="../reference/blavaan.html">blavaan()</a></code>), we would add the argument <code>dp=mydp</code> to use this new set of default priors.</p>
 </div>
 <div id="individual-parameters" class="section level3">
