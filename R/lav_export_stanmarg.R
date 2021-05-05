@@ -225,14 +225,14 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   dat$grpnum <- array(dat$grpnum, length(dat$grpnum))
 
   if (ord) {
-    pta <- lav_partable_attributes(parTable(fit))
+    pta <- lav_partable_attributes(parTable(lavobject))
 
     ordidx <- pta$vidx$ov.ord[[1]]
 
     nlevs <- rep(NA, length(ordidx))
     neach <- vector("list", length(ordidx))
     for(i in 1:length(ordidx)){
-      ordvar <- unlist(lapply(lavdata@X, function(x) x[,ordidx[i]]))
+      ordvar <- unlist(lapply(lavobject@Data@X, function(x) x[,ordidx[i]]))
       nlevs[i] <- length(unique(ordvar))
     
       neach[[i]] <- summary(factor(ordvar))
@@ -692,7 +692,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     veclen <- length(ptrows)
     if (veclen > 0) {
       fpars <- res$wskel[1:veclen,1] == 0 | res$wskel[1:veclen,3] == 1
-      nfree <- c(nfree, list(alpha = sum(fpars)))
+      nfree <- c(nfree, list(tau = sum(fpars)))
       freeparnums[ptrows[fpars]] <- 1:sum(fpars)
     }
   } else {
@@ -733,7 +733,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
 
   ## add inits (manipulate partable to re-use set_inits_stan)
   lavpartable$freeparnums <- freeparnums
-  
+
   ## FIXME theta_x, cov.x not handled
   if (!(inits %in% c("jags", "stan"))) {
     ini <- set_inits_stan(lavpartable, nfree, n.chains, inits)

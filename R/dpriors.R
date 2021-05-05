@@ -69,7 +69,7 @@ stanpriors <- function(nu="normal(0,32)",
                        beta="normal(0,10)", theta="gamma(1,.5)[sd]",
                        psi="gamma(1,.5)[sd]", rho="beta(1,1)",
                        ibpsi="wishart(3,iden)",
-                       tau="normal(0,10^.5)",
+                       tau="normal(0,3.16)",
                        delta="gamma(1,.5)[sd]"){
 
   dp <- c(nu=nu, alpha=alpha, lambda=lambda, beta=beta,
@@ -84,7 +84,7 @@ stanclassicpriors <- function(nu="normal(0,1000^.5)",
                               beta="normal(0,10)", itheta="gamma(1,.5)[prec]",
                               ipsi="gamma(1,.5)[prec]", rho="beta(1,1)",
                               ibpsi="wishart(3,iden)",
-                              tau="normal(0,10^.5)",
+                              tau="normal(0,3.16)",
                               delta="gamma(1,.5)[prec]"){
 
   dp <- c(nu=nu, alpha=alpha, lambda=lambda, beta=beta,

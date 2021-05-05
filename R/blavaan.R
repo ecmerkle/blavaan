@@ -489,7 +489,7 @@ blavaan <- function(...,  # default lavaan arguments
                       psirows <- which(l2s$lavpartable$mat == "lvrho")
                       lavpartable$prior[as.numeric(rownames(l2s$lavpartable))[psirows]] <- paste0("lkj_corr(", jagtrans$psi_r_alpha[1], ")")
                     }
-                    
+
                     jagtrans <- list(data = jagtrans,
                                      monitors = c("ly_sign",
                                            #"lx_sign",
