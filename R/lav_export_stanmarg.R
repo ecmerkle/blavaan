@@ -228,6 +228,9 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     pta <- lav_partable_attributes(parTable(lavobject))
 
     ordidx <- pta$vidx$ov.ord[[1]]
+    dat$YXo <- dat$YX[, ordidx, drop=FALSE]
+    mode(dat$YXo) <- "integer"
+    dat$YX <- dat$YX[, -ordidx, drop=FALSE]
 
     nlevs <- rep(NA, length(ordidx))
     neach <- vector("list", length(ordidx))
@@ -249,16 +252,18 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     dat$ordidx <- array(ordidx, length(ordidx))
     contidx <- (1:nvar)[-ordidx]
     dat$contidx <- array(contidx, length(contidx))
-    dat$nlevs <- array(nlevs, nlevs)
+    dat$nlevs <- array(nlevs, length(ordidx))
     dat$neach <- nemat
   } else {
+    dat$YXo <- matrix(0, dat$Ntot, 0)
+    mode(dat$YXo) <- "integer"
     dat$Nord <- 0L
     dat$ordidx <- array(0, 0)
     dat$contidx <- array(1:nvar, nvar)
     dat$nlevs <- array(0, 0)
     dat$neach <- matrix(0, 0, 0)
   }
-  
+
   ## model
   freemats <- lavInspect(lavobject, 'free')
   constrain <- attr(freemats, 'header')
@@ -793,7 +798,7 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
                Theta_var = "theta", Theta_x_cov = "cov.x",
                Theta_x_var = "cov.x", Psi_cov = "psi",
                Psi_var = "psi", Nu_free = "nu", ## includes mean.x!
-               Alpha_free = "alpha")
+               Alpha_free = "alpha", Tau_free = "tau")
 
   ## lavaan pars to w?skel (for equality constraints)
   mapping2 <- c("lambda", "gamma", "beta", "theta",
@@ -808,8 +813,8 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
                 dtheta = "Theta_var", rtheta_x = "Theta_x_cov",
                 dtheta_x = "Theta_x_var", rpsi = "Psi_cov",
                 dpsi = "Psi_var", nu = "Nu_free",
-                alpha = "Alpha_free")
-  
+                alpha = "Alpha_free", tau = "Tau_free")
+
   ## check names in lavfree
   if(!all(names(lavfree) %in% mapping)){
     ## multiple groups?

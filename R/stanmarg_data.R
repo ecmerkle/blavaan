@@ -173,7 +173,7 @@ check_priors <- function(lavpartable) {
 #' @param ... Further arguments
 #' @return A list of data
 #' @details Explain this
-stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
+stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           miss, Np, Nobs, Obsvar, # missing
                           ord, Nord, ordidx, contidx, nlevs, neach, # ordinal
                           Xvar, Nx, # fixed.x
@@ -218,6 +218,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, N, Ng, grpnum, # data
   dat$Nx <- array(Nx, length(Nx))
 
   dat$YX <- YX
+  dat$YXo <- YXo
   stopifnot(nrow(dat$YX) == dat$Ntot)
 
   dat$has_data <- dat$has_cov <- 0L
