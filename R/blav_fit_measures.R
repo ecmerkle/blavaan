@@ -22,11 +22,12 @@ blav_fit_measures <- function(object, fit.measures = "all",
     }
 
     # do we have a test statistic?
-    if(blavInspect(object, "options")$test == "none") {
+    bopts <- blavInspect(object, "options")
+    if(bopts$test == "none" & bopts$target != "stan") {
         stop("blavaan ERROR: fit measures cannot be obtained when test=\"none\"")
     }
 
-    if(blavInspect(object, "options")$prisamp) {
+    if(bopts$prisamp) {
         warning("blavaan WARNING: These metrics are based on prior samples so may be meaningless.",
                 call. = FALSE)
     }

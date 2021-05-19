@@ -188,7 +188,8 @@ long.summary <- function(object,
 
     # only if requested, the fit measures
     if(fit.measures) {
-        if(object@Options$test == "none") {
+        bopts <- blavInspect(object, "options")
+        if(bopts$test == "none" & bopts$target != "stan") {
             warning("lavaan WARNING: fit measures not available if test = \"none\"", call. = FALSE)
         } else {
             #print.fit.measures( fitMeasures(object, fit.measures="default") )

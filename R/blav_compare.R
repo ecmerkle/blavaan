@@ -3,7 +3,8 @@ blavCompare <- function(object1, object2, ...) {
   ## possible TODO: compare using conditional likelihoods, in addition to marginal
   lavopt1 <- blavInspect(object1, "Options")
   lavopt2 <- blavInspect(object2, "Options")
-  if(lavopt1$test == "none" | lavopt2$test == "none"){
+  if((lavopt1$test == "none" & lavopt1$target != "stan") |
+     (lavopt2$test == "none" & lavopt2$target != "stan")){
     stop("blavaan ERROR: Models cannot be compared when test='none'")
   }
   targ1 <- lavopt1$target; targ2 <- lavopt2$target
