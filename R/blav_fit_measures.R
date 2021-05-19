@@ -23,8 +23,13 @@ blav_fit_measures <- function(object, fit.measures = "all",
 
     # do we have a test statistic?
     bopts <- blavInspect(object, "options")
-    if(bopts$test == "none" & bopts$target != "stan") {
-        stop("blavaan ERROR: fit measures cannot be obtained when test=\"none\"")
+    if(bopts$test == "none") {
+        if(bopts$target != "stan") {
+            stop("blavaan ERROR: fit measures cannot be obtained when test=\"none\"")
+        } else {
+            warning("blavaan WARNING: not all fit measures are available when test=\"none\"",
+                    call. = FALSE)
+        }
     }
 
     if(bopts$prisamp) {
@@ -137,10 +142,10 @@ blav_fit_measures <- function(object, fit.measures = "all",
     }
     
     # posterior predictive p
-    if("ppp" %in% fit.measures) {
+    if("ppp" %in% fit.measures & bopts$test != "none") {
         indices["ppp"] <- object@Fit@test[[2]]$stat
     }
-    if(any(c("bic", "dic", "p_dic") %in% fit.measures)) {
+    if(any(c("bic", "dic", "p_dic") %in% fit.measures & bopts$test != "none")) {
         df <- 2*(object@Fit@fx - mean(as.numeric(object@external$samplls[,,1])))
         indices["bic"] <- -2*object@Fit@fx + npar*log(N)
         indices["dic"] <- -2*object@Fit@fx + 2*df
@@ -225,7 +230,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
             indices["se_loo_cond"] <- fitse[["looic"]]
         }
     }
-    if("margloglik" %in% fit.measures) {
+    if("margloglik" %in% fit.measures & test != "none") {
         indices["margloglik"] <- object@test[[1]]$stat
     }
     
