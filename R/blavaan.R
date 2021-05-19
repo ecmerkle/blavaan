@@ -53,7 +53,10 @@ blavaan <- function(...,  # default lavaan arguments
     # prior predictives only for stan
     if(prisamp) {
       if(target != 'stan') stop("blavaan ERROR: prior predictives currently only work for target='stan'.")
-      if(!('test' %in% dotdotdot)) dotdotdot$test <- 'none'
+      if(!('test' %in% dotNames)) {
+        dotdotdot$test <- 'none'
+        dotNames <- c(dotNames, "test")
+      }
     }
   
     # wiggle sd
@@ -189,7 +192,7 @@ blavaan <- function(...,  # default lavaan arguments
     if("ordered" %in% dotNames |
        any(apply(dotdotdot$data, 2, function(x) inherits(x, "ordered")))){
       dotdotdot$missing <- "pairwise" # needed to get missing patterns
-
+      
       if("parameterization" %in% names(dotdotdot)){
         if(dotdotdot$parameterization == "delta"){
           warning("blavaan WARNING: the parameterization argument has no effect; theta parameterization will be used.", call. = FALSE)
@@ -290,7 +293,9 @@ blavaan <- function(...,  # default lavaan arguments
 
     # ordinal only for stan
     ordmod <- lavInspect(LAV, 'categorical')
-    if(ordmod & target != "stan") stop("blavaan ERROR: ordinal variables only work for target='stan'.")
+    if(ordmod) {
+        if(target != "stan") stop("blavaan ERROR: ordinal variables only work for target='stan'.")
+    }
         
     ineq <- which(LAV@ParTable$op %in% c("<",">"))
     if(length(ineq) > 0) {
@@ -411,6 +416,11 @@ blavaan <- function(...,  # default lavaan arguments
     lavoptions$estimator <- "Bayes"
     lavoptions$se        <- "standard"
     lavoptions$test <- "standard"
+    if(ordmod) {
+        ## FIXME: remove when ppp is available:
+        cat("blavaan NOTE: ordinal models are under development and will use test=\"none\".\n\n")
+        lavoptions$test <- "none"
+    }
     if("test" %in% dotNames) {
         if(dotdotdot$test == "none") lavoptions$test <- "none"
     } else {
@@ -498,7 +508,7 @@ blavaan <- function(...,  # default lavaan arguments
                                            #"Theta_x_cov", "Theta_x_var",
                                            "Psi_cov", "Psi_var",
                                            #"Ph_cov", "Ph_var",
-                                           "Nu_free", "Alpha_free",
+                                           "Nu_free", "Alpha_free", "Tau_free",
                                            "log_lik"))
                     if("init" %in% names(l2s)){
                       jagtrans <- c(jagtrans, list(inits = l2s$init))

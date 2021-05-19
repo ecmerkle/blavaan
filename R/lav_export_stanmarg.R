@@ -255,7 +255,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     dat$nlevs <- array(nlevs, length(ordidx))
     dat$neach <- nemat
   } else {
-    dat$YXo <- matrix(0, dat$Ntot, 0)
+    dat$YXo <- matrix(0, NROW(dat$YX), 0)
     mode(dat$YXo) <- "integer"
     dat$Nord <- 0L
     dat$ordidx <- array(0, 0)
@@ -759,6 +759,25 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
         psimat <- array(diag(1, psidim), dim = c(psidim, psidim, dat$Ng))
         ini[[i]]$Psi_r_mat <- aperm(psimat, perm = c(3, 1, 2))
       }
+      ## tau needs a specific ordering, with augmented z's to match
+      tauvec <- which(names(ini[[i]]) == "Tau_free")
+      if(length(tauvec) > 0) {
+        names(ini[[i]])[tauvec] <- "Taumat"
+        ini[[i]]$Taumat <- matrix(seq(-2, 2, length.out = max(dat$nlevs) - 1), dat$Ng * dat$Nord,
+                                  max(dat$nlevs) - 1, byrow = TRUE)
+
+        z_aug <- matrix(.5, NROW(dat$YXo), dat$Nord)
+
+        for (j in 1:dat$Nord) {
+          tmpyx <- dat$YXo[,j]
+          hicat <- tmpyx == max(tmpyx)
+          locat <- tmpyx == min(tmpyx)
+          z_aug[hicat,j] <- .05
+          z_aug[locat,j] <- .95
+        }
+
+        ini[[i]] <- c(ini[[i]], list(z_aug = z_aug))
+      }
     }
   } else {
     ini <- NULL
@@ -803,9 +822,9 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
   ## lavaan pars to w?skel (for equality constraints)
   mapping2 <- c("lambda", "gamma", "beta", "theta",
                 "theta", "cov.x", "cov.x", "psi",
-                "psi", "nu", "alpha")
+                "psi", "nu", "alpha", "tau")
   names(mapping2) <- as.character(c(1, 3, 4, 7, 5, 8, 6, 10, 9,
-                                    13, 14))
+                                    13, 14, 15))
 
   ## stan pars to free2 pars
   mapping3 <- c(lambda = "ly_sign", gamma = "g_sign",
@@ -816,6 +835,8 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
                 alpha = "Alpha_free", tau = "Tau_free")
 
   ## check names in lavfree
+  deltloc <- which(names(lavfree) == "delta")
+  if(length(deltloc) > 0) lavfree <- lavfree[-deltloc]
   if(!all(names(lavfree) %in% mapping)){
     ## multiple groups?
     if(!all(names(lavfree[[1]]) %in% mapping)){

@@ -166,17 +166,18 @@ data {
   int<lower=1,upper=Ng> grpnum[Np]; // group number for each row of data
   int<lower=0,upper=1> wigind; // do any parameters have approx equality constraint ('wiggle')?
   int<lower=0, upper=1> has_data; // are the raw data on y and x available?
-  vector[p + q] YX[has_data ? Ntot : 0]; // if data, include them
-  int<lower=0> Nx[Np]; // number of fixed.x variables
-  int<lower=0> Xvar[Np, max(Nx)]; // indexing of fixed.x variables
-  int<lower=0, upper=1> has_cov;
-  cov_matrix[p + q] S[Ng];     // sample covariance matrix among all manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
   int<lower=0, upper=1> ord; // are there any ordinal variables?
   int<lower=0> Nord; // how many ordinal variables?
   int<lower=0> ordidx[Nord]; // indexing of ordinal variables
   int<lower=0> contidx[p + q - Nord]; // indexing of continuous variables
   int<lower=1> nlevs[Nord]; // how many levels does each ordinal variable have
   vector[ord ? max(nlevs) : 0] neach[Nord]; // how many times do we observe each level of each ordinal variable?
+  vector[p + q - Nord] YX[has_data ? Ntot : 0]; // continuous data
+  int YXo[has_data ? Ntot : 0, Nord]; // ordinal data
+  int<lower=0> Nx[Np]; // number of fixed.x variables
+  int<lower=0> Xvar[Np, max(Nx)]; // indexing of fixed.x variables
+  int<lower=0, upper=1> has_cov;
+  cov_matrix[p + q - Nord] S[Ng];     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
 
   
   /* sparse matrix representations of skeletons of coefficient matrices, 
@@ -303,6 +304,17 @@ data {
   int<lower=0> len_alph;
   real alpha_mn[len_alph];
   real<lower=0> alpha_sd[len_alph];
+
+  // same things but for Tau
+  int<lower=0> len_w15;
+  int<lower=0> wg15[Ng];
+  vector[len_w15] w15[Ng];
+  int<lower=0> v15[Ng, len_w15];
+  int<lower=1> u15[Ng, sum(nlevs) - Nord + 1];
+  int<lower=0> w15skel[sum(wg15), 3];
+  int<lower=0> len_tau;
+  real tau_mn[len_tau];
+  real<lower=0> tau_sd[len_tau];
 }
 transformed data { // (re)construct skeleton matrices in Stan (not that interesting)
   matrix[p, m] Lambda_y_skeleton[Ng];
@@ -317,9 +329,12 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
   //matrix[n, n] Phi_r_skeleton[Ng];
   matrix[(p + q), 1] Nu_skeleton[Ng];
   matrix[(m + n), 1] Alpha_skeleton[Ng];
+  matrix[sum(nlevs) - Nord, 1] Tau_skeleton[Ng];
 
   matrix[m, m] I = diag_matrix(rep_vector(1, m));
 
+  int Ncont = p + q - Nord;
+  
   int g_start1[Ng];
   int g_start2[Ng];
   int g_start3[Ng];
@@ -334,7 +349,8 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
   int g_start12[Ng];
   int g_start13[Ng];
   int g_start14[Ng];
-
+  int g_start15[Ng];
+  
   int f_start1[Ng];
   int f_start2[Ng];
   int f_start3[Ng];
@@ -349,11 +365,12 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
   int f_start12[Ng];
   int f_start13[Ng];
   int f_start14[Ng];
+  int f_start15[Ng];
   
-  int len_free[14];
-  int pos[14];
-
-  for (i in 1:14) {
+  int len_free[15];
+  int pos[15];
+  
+  for (i in 1:15) {
     len_free[i] = 0;
     pos[i] = 1;
   }
@@ -368,6 +385,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
     Psi_r_skeleton[g] = to_dense_matrix(m, m, w10[g], v10[g,], u10[g,]);
     Nu_skeleton[g] = to_dense_matrix((p + q), 1, w13[g], v13[g,], u13[g,]);
     Alpha_skeleton[g] = to_dense_matrix((m + n), 1, w14[g], v14[g,], u14[g,]);
+    Tau_skeleton[g] = to_dense_matrix(sum(nlevs) - Nord, 1, w15[g], v15[g,], u15[g,]);
     
     // count free elements in Lambda_y_skeleton
     g_start1[g] = len_free[1] + 1;
@@ -469,6 +487,16 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
 	pos[14] += 1;
       }
     }
+
+    // same thing but for Tau_skeleton
+    g_start15[g] = len_free[15] + 1;
+    f_start15[g] = pos[15];
+    for (i in 1:(sum(nlevs) - Nord)) {
+      if (is_inf(Tau_skeleton[g,i,1])) {
+	if (w15skel[pos[15],2] == 0 || w15skel[pos[15],3] == 1) len_free[15] += 1;
+	pos[15] += 1;
+      }
+    }    
   }
 }
 parameters {
@@ -484,6 +512,9 @@ parameters {
   vector<lower=0,upper=1>[fullpsi ? 0 : len_free[10]] Psi_r_free;
   vector[len_free[13]] Nu_free;
   vector[len_free[14]] Alpha_free;
+  ordered[ord ? max(nlevs) - 1 : 0] Taumat[Ng * Nord]; // extraneous parameters for nlevs not all equal
+
+  vector<lower=0,upper=1>[Nord] z_aug[Ntot]; //augmented ordinal data
 }
 transformed parameters {
   matrix[p, m] Lambda_y[Ng];
@@ -494,6 +525,9 @@ transformed parameters {
   matrix[p, p] Theta_r[Ng];
   matrix[p + q, 1] Nu[Ng];
   matrix[m + n, 1] Alpha[Ng];
+  vector[len_free[15]] Tau_free;
+  real tau_jacobian;
+  matrix[sum(nlevs) - Nord, 1] Tau[Ng];
 
   matrix[m, m] Psi[Ng];
   
@@ -505,6 +539,7 @@ transformed parameters {
   vector[len_free[4]] b_primn;
   vector[len_free[13]] nu_primn;
   vector[len_free[14]] alpha_primn;
+  vector[len_free[15]] tau_primn;
 
   matrix[p, m] Lambda_y_A[Ng];     // = Lambda_y * (I - B)^{-1}
 
@@ -512,9 +547,29 @@ transformed parameters {
   matrix[p + q, p + q] Sigma[Ng];                                           // model covariance matrix
 
   matrix[p, q] top_right[Ng];        // top right block of Sigma
-  
-  // Now fill them in
+  vector[p + q] YXstar[Ntot];
+
+  {
+  int frcnt = 1; // for thresholds in transformed parameters
   for (g in 1:Ng) {
+    // convert from ordered threshold parameters to free parameter vector
+    int ocnt = 0;
+    for (i in 1:Nord) {
+      for (j in 1:(nlevs[i] - 1)) {
+	ocnt += 1;
+	if (is_inf(Tau_skeleton[g,ocnt,1])) {
+	  if (w15skel[frcnt,2] == 0 || w15skel[frcnt,3] == 1){
+	    Tau_free[frcnt] = Taumat[g*i,j];
+	    frcnt += 1;
+	  }
+	}
+      }
+    }
+  }
+  }
+
+  for (g in 1:Ng) {
+    // model matrices
     Lambda_y[g] = fill_matrix(Lambda_y_free, Lambda_y_skeleton[g], w1skel, g_start1[g], f_start1[g]);
     Gamma[g] = fill_matrix(Gamma_free, Gamma_skeleton[g], w3skel, g_start3[g], f_start3[g]);
     B[g] = fill_matrix(B_free, B_skeleton[g], w4skel, g_start4[g], f_start4[g]);
@@ -523,6 +578,7 @@ transformed parameters {
     Theta_r[g] = T_r_lower[g] + transpose(T_r_lower[g]) - diag_matrix(rep_vector(1, p));
     Nu[g] = fill_matrix(Nu_free, Nu_skeleton[g], w13skel, g_start13[g], f_start13[g]);
     Alpha[g] = fill_matrix(Alpha_free, Alpha_skeleton[g], w14skel, g_start14[g], f_start14[g]);
+    Tau[g] = fill_matrix(Tau_free, Tau_skeleton[g], w15skel, g_start15[g], f_start15[g]);
 
     Psi[g] = diag_matrix(rep_vector(0, m));
   
@@ -543,11 +599,13 @@ transformed parameters {
     b_primn = fill_prior(B_free, b_mn, w4skel);
     nu_primn = fill_prior(Nu_free, nu_mn, w13skel);
     alpha_primn = fill_prior(Alpha_free, alpha_mn, w14skel);
+    tau_primn = fill_prior(Tau_free, tau_mn, w15skel);
   } else {
     lambda_y_primn = to_vector(lambda_y_mn);
     b_primn = to_vector(b_mn);
     nu_primn = to_vector(nu_mn);
     alpha_primn = to_vector(alpha_mn);
+    tau_primn = to_vector(tau_mn);
   }
 
   // see https://books.google.com/books?id=9AC-s50RjacC&lpg=PP1&dq=LISREL&pg=PA3#v=onepage&q=LISREL&f=false
@@ -566,13 +624,46 @@ transformed parameters {
       }
     }
   }
+
+  // continuous responses underlying ordinal data
+  if (ord) {
+    tau_jacobian = 0;
+    for (patt in 1:Np) {
+      for (i in startrow[patt]:endrow[patt]) {
+	for (j in 1:Nord) {
+	  int vecpos = YXo[i,j] - 1;
+	  if (j > 1) vecpos += sum(nlevs[1:(j - 1)]) - (j - 1);
+	  if (YXo[i,j] == 1) {
+	    YXstar[i, ordidx[j]] = -10 + (Tau[grpnum[patt], (vecpos + 1), 1] + 10) .* z_aug[i,j];
+	    tau_jacobian += log(Tau[grpnum[patt], (vecpos + 1), 1] + 10);  // must add log(U) to tau_jacobian
+	  } else if (YXo[i,j] == nlevs[j]) {
+	    YXstar[i, ordidx[j]] = Tau[grpnum[patt], vecpos, 1] + (10 - Tau[grpnum[patt], vecpos, 1]) .* z_aug[i,j];
+	    tau_jacobian += log(10 - Tau[grpnum[patt], vecpos, 1]);
+	  } else {
+	    YXstar[i, ordidx[j]] = Tau[grpnum[patt], vecpos, 1] + (Tau[grpnum[patt], (vecpos + 1), 1] - Tau[grpnum[patt], vecpos, 1]) .* z_aug[i,j];
+	    tau_jacobian += log(Tau[grpnum[patt], (vecpos + 1), 1] - Tau[grpnum[patt], vecpos, 1]);
+	  }
+	}
+      }
+    }
+  }
+
+  if (Ncont > 0) {
+    for (patt in 1:Np) {
+      for (i in startrow[patt]:endrow[patt]) {
+	for (j in 1:Ncont) {
+	  YXstar[i, contidx[j]] = YX[i,j];
+	}
+      }
+    }
+  }
 }
 model { // N.B.: things declared in the model block do not get saved in the output, which is okay here
 
   /* transformed sd parameters for priors */
   vector[len_free[5]] Theta_pri;
   vector[len_free[9]] Psi_pri;
-    
+
   /* log-likelihood */
   if (has_data) {
     int obsidx[p + q];
@@ -586,16 +677,20 @@ model { // N.B.: things declared in the model block do not get saved in the outp
       r1 = startrow[mm];
       r2 = endrow[mm];
       grpidx = grpnum[mm];
-      target += multi_normal_lpdf(YX[r1:r2,1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+      target += multi_normal_lpdf(YXstar[r1:r2,1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
 
       if (Nx[mm] > 0) {
-	target += -multi_normal_lpdf(YX[r1:r2,xidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	target += -multi_normal_lpdf(YXstar[r1:r2,xidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
       }
     }
   } else if (has_cov) {
     for (g in 1:Ng) {
       target += wishart_lpdf(S[g] | N[g] - 1, Sigma[g]);
     }
+  }
+
+  if (ord) {
+    target += tau_jacobian;
   }
   
   /* prior densities in log-units */
@@ -605,6 +700,7 @@ model { // N.B.: things declared in the model block do not get saved in the outp
 
   target += normal_lpdf(Nu_free       | nu_primn, nu_sd);
   target += normal_lpdf(Alpha_free    | alpha_primn, alpha_sd);
+  target += normal_lpdf(Tau_free      | tau_primn, tau_sd);
 
   /* transform sd parameters to var or prec, depending on
      what the user wants. */
@@ -717,10 +813,10 @@ generated quantities { // these matrices are saved in the output but do not figu
       r2 = endrow[mm];
       grpidx = grpnum[mm];
       for (jj in r1:r2) {
-	log_lik[jj] = multi_normal_lpdf(YX[jj,1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+	log_lik[jj] = multi_normal_lpdf(YXstar[jj,1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
 
 	if (Nx[mm] > 0) {
-	  log_lik[jj] -= multi_normal_lpdf(YX[jj,xidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	  log_lik[jj] -= multi_normal_lpdf(YXstar[jj,xidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
 	}
       }
     }
