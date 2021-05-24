@@ -762,10 +762,6 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       ## tau needs a specific ordering, with augmented z's to match
       tauvec <- which(names(ini[[i]]) == "Tau_free")
       if(length(tauvec) > 0) {
-        names(ini[[i]])[tauvec] <- "Taumat"
-        ini[[i]]$Taumat <- matrix(seq(-2, 2, length.out = max(dat$nlevs) - 1), dat$Ng * dat$Nord,
-                                  max(dat$nlevs) - 1, byrow = TRUE)
-
         z_aug <- matrix(.5, NROW(dat$YXo), dat$Nord)
 
         for (j in 1:dat$Nord) {

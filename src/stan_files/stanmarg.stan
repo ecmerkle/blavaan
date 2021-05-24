@@ -37,7 +37,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     }
     return out;
   }
-
+    
   vector fill_prior(vector free_elements, real[] pri_mean, int[,] eq_skeleton) {
     int R = size(eq_skeleton);
     int eqelem = 0;
@@ -512,7 +512,7 @@ parameters {
   vector<lower=0,upper=1>[fullpsi ? 0 : len_free[10]] Psi_r_free;
   vector[len_free[13]] Nu_free;
   vector[len_free[14]] Alpha_free;
-  ordered[ord ? max(nlevs) - 1 : 0] Taumat[Ng * Nord]; // extraneous parameters for nlevs not all equal
+  vector[len_free[15]] Tau_ufree;
 
   vector<lower=0,upper=1>[Nord] z_aug[Ntot]; //augmented ordinal data
 }
@@ -525,10 +525,12 @@ transformed parameters {
   matrix[p, p] Theta_r[Ng];
   matrix[p + q, 1] Nu[Ng];
   matrix[m + n, 1] Alpha[Ng];
+
+  matrix[sum(nlevs) - Nord, 1] Tau_un[Ng];
+  matrix[sum(nlevs) - Nord, 1] Tau[Ng];
   vector[len_free[15]] Tau_free;
   real tau_jacobian;
-  matrix[sum(nlevs) - Nord, 1] Tau[Ng];
-
+  
   matrix[m, m] Psi[Ng];
   
   matrix[m, m] Psi_sd[Ng];
@@ -549,23 +551,37 @@ transformed parameters {
   matrix[p, q] top_right[Ng];        // top right block of Sigma
   vector[p + q] YXstar[Ntot];
 
-  {
-  int frcnt = 1; // for thresholds in transformed parameters
-  for (g in 1:Ng) {
-    // convert from ordered threshold parameters to free parameter vector
-    int ocnt = 0;
-    for (i in 1:Nord) {
-      for (j in 1:(nlevs[i] - 1)) {
-	ocnt += 1;
-	if (is_inf(Tau_skeleton[g,ocnt,1])) {
-	  if (w15skel[frcnt,2] == 0 || w15skel[frcnt,3] == 1){
-	    Tau_free[frcnt] = Taumat[g*i,j];
-	    frcnt += 1;
+  // obtain vector of free ordered parameters for priors, and vector of all taus for likelihood
+  if (ord) {
+    int opos = 1;
+    int ofreepos = 1;
+    tau_jacobian = 0;
+    for (g in 1:Ng) {
+      int vecpos = 1;
+      Tau_un[g] = fill_matrix(Tau_ufree, Tau_skeleton[g], w15skel, g_start15[g], f_start15[g]);
+      for (i in 1:Nord) {
+	for (j in 1:(nlevs[i] - 1)) {
+	  real rc = Tau_skeleton[g, vecpos, 1];
+	  if (j == 1) {
+	    Tau[g, vecpos, 1] = Tau_un[g, vecpos, 1];
+	  } else {
+	    Tau[g, vecpos, 1] = Tau[g, (vecpos-1), 1] + exp(Tau_un[g, vecpos, 1]);
 	  }
+
+	  if (is_inf(rc)) {
+	    int eq = w15skel[opos, 1];
+	    int wig = w15skel[opos, 3];
+	    if (eq == 0 || wig == 1) {
+	      Tau_free[ofreepos] = Tau[g, vecpos, 1];
+	      tau_jacobian += Tau_un[g, vecpos, 1]; // see https://mc-stan.org/docs/2_24/reference-manual/ordered-vector.html
+	      ofreepos += 1;
+	    }
+	    opos += 1;
+	  }
+	  vecpos +=1;
 	}
       }
     }
-  }
   }
 
   for (g in 1:Ng) {
@@ -578,7 +594,6 @@ transformed parameters {
     Theta_r[g] = T_r_lower[g] + transpose(T_r_lower[g]) - diag_matrix(rep_vector(1, p));
     Nu[g] = fill_matrix(Nu_free, Nu_skeleton[g], w13skel, g_start13[g], f_start13[g]);
     Alpha[g] = fill_matrix(Alpha_free, Alpha_skeleton[g], w14skel, g_start14[g], f_start14[g]);
-    Tau[g] = fill_matrix(Tau_free, Tau_skeleton[g], w15skel, g_start15[g], f_start15[g]);
 
     Psi[g] = diag_matrix(rep_vector(0, m));
   
@@ -627,7 +642,6 @@ transformed parameters {
 
   // continuous responses underlying ordinal data
   if (ord) {
-    tau_jacobian = 0;
     for (patt in 1:Np) {
       for (i in startrow[patt]:endrow[patt]) {
 	for (j in 1:Nord) {
