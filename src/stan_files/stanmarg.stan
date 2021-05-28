@@ -573,7 +573,9 @@ transformed parameters {
 	    int wig = w15skel[opos, 3];
 	    if (eq == 0 || wig == 1) {
 	      Tau_free[ofreepos] = Tau[g, vecpos, 1];
-	      tau_jacobian += Tau_un[g, vecpos, 1]; // see https://mc-stan.org/docs/2_24/reference-manual/ordered-vector.html
+	      if (j > 1) {
+		tau_jacobian += log(1/(Tau[g, vecpos, 1] - Tau[g, (vecpos - 1), 1])); // see https://mc-stan.org/docs/2_24/reference-manual/ordered-vector.html
+	      }
 	      ofreepos += 1;
 	    }
 	    opos += 1;
@@ -649,13 +651,13 @@ transformed parameters {
 	  if (j > 1) vecpos += sum(nlevs[1:(j - 1)]) - (j - 1);
 	  if (YXo[i,j] == 1) {
 	    YXstar[i, ordidx[j]] = -10 + (Tau[grpnum[patt], (vecpos + 1), 1] + 10) .* z_aug[i,j];
-	    tau_jacobian += log(Tau[grpnum[patt], (vecpos + 1), 1] + 10);  // must add log(U) to tau_jacobian
+	    tau_jacobian += log(1/(Tau[grpnum[patt], (vecpos + 1), 1] + 10));  // must add log(U) to tau_jacobian
 	  } else if (YXo[i,j] == nlevs[j]) {
 	    YXstar[i, ordidx[j]] = Tau[grpnum[patt], vecpos, 1] + (10 - Tau[grpnum[patt], vecpos, 1]) .* z_aug[i,j];
-	    tau_jacobian += log(10 - Tau[grpnum[patt], vecpos, 1]);
+	    tau_jacobian += log(1/(10 - Tau[grpnum[patt], vecpos, 1]));
 	  } else {
 	    YXstar[i, ordidx[j]] = Tau[grpnum[patt], vecpos, 1] + (Tau[grpnum[patt], (vecpos + 1), 1] - Tau[grpnum[patt], vecpos, 1]) .* z_aug[i,j];
-	    tau_jacobian += log(Tau[grpnum[patt], (vecpos + 1), 1] - Tau[grpnum[patt], vecpos, 1]);
+	    tau_jacobian += log(1/(Tau[grpnum[patt], (vecpos + 1), 1] - Tau[grpnum[patt], vecpos, 1]));
 	  }
 	}
       }
@@ -704,7 +706,7 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   }
 
   if (ord) {
-    target += tau_jacobian;
+    target += fabs(tau_jacobian);
   }
   
   /* prior densities in log-units */
@@ -722,14 +724,14 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   if (len_free[5] > 0 && theta_pow != 1) {
     for (i in 1:len_free[5]) {
       Theta_pri[i] = Theta_sd_free[i]^(theta_pow);
-      target += log(abs(theta_pow)) + (theta_pow - 1)*log(Theta_sd_free[i]);
+      target += log(fabs(theta_pow)) + (theta_pow - 1)*log(Theta_sd_free[i]);
     }
   }
   Psi_pri = Psi_sd_free;
   if (len_free[9] > 0 && psi_pow != 1) {
     for (i in 1:len_free[9]) {
       Psi_pri[i] = Psi_sd_free[i]^(psi_pow);
-      target += log(abs(psi_pow)) + (psi_pow - 1)*log(Psi_sd_free[i]);
+      target += log(fabs(psi_pow)) + (psi_pow - 1)*log(Psi_sd_free[i]);
     }
   }
 
