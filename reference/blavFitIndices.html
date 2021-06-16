@@ -73,7 +73,7 @@ indices to assess the global fit of a latent variable model." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">blavaan</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3-16.772</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3-16.773</span>
       </span>
     </div>
 
@@ -279,12 +279,12 @@ indices to assess the global fit of a latent variable model.</p>
               textual =~ x4 + x5 + x6
               speed   =~ x7 + x8 + x9 '</span>
 <span class='co'>## fit target model</span>
-<span class='va'>fit1</span> <span class='op'>&lt;-</span> <span class='fu'><a href='bcfa.html'>bcfa</a></span><span class='op'>(</span><span class='va'>HS.model</span>, data <span class='op'>=</span> <span class='va'>HolzingerSwineford1939</span>, cp <span class='op'>=</span> <span class='st'>"fa"</span>,
+<span class='va'>fit1</span> <span class='op'>&lt;-</span> <span class='fu'><a href='bcfa.html'>bcfa</a></span><span class='op'>(</span><span class='va'>HS.model</span>, data <span class='op'>=</span> <span class='va'>HolzingerSwineford1939</span>, 
              n.chains <span class='op'>=</span> <span class='fl'>2</span>, burnin <span class='op'>=</span> <span class='fl'>1000</span>, sample <span class='op'>=</span> <span class='fl'>1000</span><span class='op'>)</span>
 
 <span class='co'>## fit null model to calculate CFI, TLI, and NFI</span>
 <span class='va'>null.model</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span><span class='op'>(</span><span class='st'>"x"</span>, <span class='fl'>1</span><span class='op'>:</span><span class='fl'>9</span>, <span class='st'>" ~~ x"</span>, <span class='fl'>1</span><span class='op'>:</span><span class='fl'>9</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span><span class='op'>(</span><span class='st'>"x"</span>, <span class='fl'>1</span><span class='op'>:</span><span class='fl'>9</span>, <span class='st'>" ~ 1"</span><span class='op'>)</span><span class='op'>)</span>
-<span class='va'>fit0</span> <span class='op'>&lt;-</span> <span class='fu'><a href='bcfa.html'>bcfa</a></span><span class='op'>(</span><span class='va'>null.model</span>, data <span class='op'>=</span> <span class='va'>HolzingerSwineford1939</span>, cp <span class='op'>=</span> <span class='st'>"fa"</span>,
+<span class='va'>fit0</span> <span class='op'>&lt;-</span> <span class='fu'><a href='bcfa.html'>bcfa</a></span><span class='op'>(</span><span class='va'>null.model</span>, data <span class='op'>=</span> <span class='va'>HolzingerSwineford1939</span>, 
              n.chains <span class='op'>=</span> <span class='fl'>2</span>, burnin <span class='op'>=</span> <span class='fl'>1000</span>, sample <span class='op'>=</span> <span class='fl'>1000</span><span class='op'>)</span>
 
 <span class='co'>## calculate posterior distributions of fit indices</span>
