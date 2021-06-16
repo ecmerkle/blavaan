@@ -115,12 +115,12 @@ HS.model <- ' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6
               speed   =~ x7 + x8 + x9 '
 ## fit target model
-fit1 <- bcfa(HS.model, data = HolzingerSwineford1939, cp = "fa",
+fit1 <- bcfa(HS.model, data = HolzingerSwineford1939, 
              n.chains = 2, burnin = 1000, sample = 1000)
 
 ## fit null model to calculate CFI, TLI, and NFI
 null.model <- c(paste0("x", 1:9, " ~~ x", 1:9), paste0("x", 1:9, " ~ 1"))
-fit0 <- bcfa(null.model, data = HolzingerSwineford1939, cp = "fa",
+fit0 <- bcfa(null.model, data = HolzingerSwineford1939, 
              n.chains = 2, burnin = 1000, sample = 1000)
 
 ## calculate posterior distributions of fit indices

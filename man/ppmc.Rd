@@ -132,12 +132,10 @@ HS.model <- ' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6
               speed   =~ x7 + x8 + x9 '
 ## fit single-group model
-fit <- bcfa(HS.model, data = HolzingerSwineford1939, cp = "fa",
-            target = "jags", bcontrol = list(method = "rjparallel"),
+fit <- bcfa(HS.model, data = HolzingerSwineford1939, 
             n.chains = 2, burnin = 1000, sample = 500)
 ## fit multigroup model
-fitg <- bcfa(HS.model, data = HolzingerSwineford1939, cp = "fa",
-             target = "jags", bcontrol = list(method = "rjparallel"),
+fitg <- bcfa(HS.model, data = HolzingerSwineford1939,
              n.chains = 2, burnin = 1000, sample = 500, group = "school")
 
 
