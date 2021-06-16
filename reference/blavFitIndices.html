@@ -73,7 +73,7 @@ indices to assess the global fit of a latent variable model." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">blavaan</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3-16.771</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3-16.772</span>
       </span>
     </div>
 
@@ -149,7 +149,9 @@ indices to assess the global fit of a latent variable model.</p>
 
 <span class='co'>## S4 method for signature 'blavFitIndices'</span>
 <span class='co'># S4 method for blavFitIndices</span>
-<span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>object</span>, central.tendency <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"mean"</span>,<span class='st'>"median"</span>,<span class='st'>"mode"</span><span class='op'>)</span>,
+<span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>object</span>, <span class='va'>...</span><span class='op'>)</span>
+
+<span class='fu'>summary.bfi</span><span class='op'>(</span><span class='va'>object</span>, central.tendency <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"mean"</span>,<span class='st'>"median"</span>,<span class='st'>"mode"</span><span class='op'>)</span>,
         hpd <span class='op'>=</span> <span class='cn'>TRUE</span>, prob <span class='op'>=</span> <span class='fl'>.90</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -208,21 +210,28 @@ indices to assess the global fit of a latent variable model.</p>
     <code>rescale = "MCMC"</code>.</p></td>
     </tr>
     <tr>
+      <th>...</th>
+      <td><p>Additional arguments to the summary method:</p></td>
+    </tr>
+    <tr>
       <th>central.tendency</th>
-      <td><p><code>character</code> indicating which statistics should
+      <td><p>Takes values "mean", "median", "mode", indicating which statistics should
     be used to characterize the location of the posterior distribution. By
     default, all 3 statistics are returned. The posterior mean is labeled
-    <code>EAP</code> for <em>expected a posteriori</em> estimate, and the mode is
-    labeled <code>MAP</code> for <em>modal a posteriori</em> estimate.</p></td>
+    EAP for <em>expected a posteriori</em> estimate, and the mode is
+    labeled MAP for <em>modal a posteriori</em>
+    estimate.</p></td>
     </tr>
     <tr>
       <th>hpd</th>
-      <td><p><code>logical</code> indicating whether to calculate the highest
-    posterior density (HPD) credible interval for each fit index.</p></td>
+      <td><p>A <code>logical</code> indicating whether to calculate the highest
+    posterior density (HPD) credible interval for each fit
+    index (defaults to TRUE).</p></td>
     </tr>
     <tr>
       <th>prob</th>
-      <td><p>The "confidence" level of the credible interval(s).</p></td>
+      <td><p>The "confidence" level of the
+  credible interval(s) (defaults to 0.9).</p></td>
     </tr>
     </table>
 
