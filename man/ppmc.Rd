@@ -3,6 +3,7 @@
 \alias{blavPPMC-class}
 \alias{show,blavPPMC-method}
 \alias{summary,blavPPMC-method}
+\alias{summary.ppmc}
 \alias{plot.blavPPMC}
 \alias{hist.blavPPMC}
 \alias{pairs.blavPPMC}
@@ -14,7 +15,9 @@ function that can be applied to a \code{\linkS4class{lavaan}} model.}
 \usage{
 ppmc(object, thin = 1, fit.measures = c("srmr","chisq"), discFUN = NULL)
 
-\S4method{summary}{blavPPMC}(object, discFUN, dist = c("obs","sim"),
+\S4method{summary}{blavPPMC}(object, ...)
+
+summary.ppmc(object, discFUN, dist = c("obs","sim"),
         central.tendency = c("mean","median","mode"),
         hpd = TRUE, prob = .95, to.data.frame = FALSE, diag = TRUE,
         sort.by = NULL, decreasing = FALSE)

@@ -16,9 +16,9 @@ setClass("blavFitIndices",
                         # list of vectors, each storing the posterior of 1 index
                         indices = "list"))
 
-summary.blavFitIndices <- function(object,
-                                   central.tendency = c("mean","median","mode"),
-                                   hpd = TRUE, prob = .90) {
+summary.bfi <- function(object,
+                        central.tendency = c("mean","median","mode"),
+                        hpd = TRUE, prob = .90) {
   if (!is.character(central.tendency)) {
     stop('blavaan ERROR: central.tendency must be a character vector')
   }
@@ -71,6 +71,11 @@ summary.blavFitIndices <- function(object,
                                 "-based fit indices:", sep = "")
   out
 }
+
+summary.blavFitIndices <- function(object, ...) {
+  summary.bfi(object, ...)
+}
+
 setMethod("summary", "blavFitIndices", summary.blavFitIndices)
 
 setMethod("show", "blavFitIndices", function(object) {

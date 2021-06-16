@@ -15,11 +15,11 @@ setClass("blavPPMC",
                         obsDist = "list",  # posterior distribution of realized values
                         simDist = "list")) # posterior predictive distribution
 
-summary.blavPPMC <- function(object, discFUN, dist = c("obs","sim"),
-                             central.tendency = c("mean","median","mode"),
-                             hpd = TRUE, prob = .95,
-                             to.data.frame = FALSE, diag = TRUE,
-                             sort.by = NULL, decreasing = FALSE) {
+summary.ppmc <- function(object, discFUN, dist = c("obs","sim"),
+                         central.tendency = c("mean","median","mode"),
+                         hpd = TRUE, prob = .95,
+                         to.data.frame = FALSE, diag = TRUE,
+                         sort.by = NULL, decreasing = FALSE) {
   ## check choices
   if (!is.character(central.tendency)) {
     stop('blavaan ERROR: central.tendency must be a character vector')
@@ -247,6 +247,11 @@ summary.blavPPMC <- function(object, discFUN, dist = c("obs","sim"),
 
   out
 }
+
+summary.blavPPMC <- function(object, ...) {
+  summary.ppmc(object, ...)
+}
+
 setMethod("summary", "blavPPMC", summary.blavPPMC)
 
 
