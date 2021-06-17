@@ -109,7 +109,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
             if (all(lampar1 == 0)) { # ov converted to lv
               l1 <- 1
             } else {
-              l1 <- min(lampar1[lampar1 != 0L])
+              l1 <- lampar1[which(lampar1 %in% lamsign[,2])]
               if (lamsign[l1,1] == 1) l1 <- lamsign[l1,2]
             }
 
@@ -117,7 +117,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
             if (all(lampar2 == 0)) {
               l2 <- 1
             } else {
-              l2 <- min(lampar2[lampar2 != 0])
+              l2 <- lampar2[which(lampar2 %in% lamsign[,2])]
               if (lamsign[l2,1] == 1) l2 <- lamsign[l2,2]
             }
 
@@ -130,10 +130,12 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
     } else if (lammat) {
       for (i in 1:length(free2)) {
         for (j in 1:NCOL(free2[[i]])) {
-          col <- free2[[i]][,j]
-          parnums <- col[col != 0L]
+          col <- free[[i]][,j]
+          col2 <- free2[[i]][,j]
+          porg <- col[col != 0L]
+          parnums <- col2[col2 != 0L]
           if (length(parnums) > 0) {
-            psign <- min(parnums)
+            psign <- parnums[which.min(porg)] # sign constrain the first loading from user syntax
             ## if equality constraint, sign must involve the
             ## "free" parameter
             if (wskel[psign,1] == 1L) {
