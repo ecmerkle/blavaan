@@ -156,14 +156,14 @@ blavFitIndices <- function(object, thin = 1, pD = c("loo","waic","dic"),
     ##        that iteration's model-implied variances?
 
   } else if (rescale == "ppmc") {
-    reps <- postpred(lavpartable = object@ParTable,
+    reps <- unlist(postpred(lavpartable = object@ParTable,
                      lavmodel = object@Model,
                      lavoptions = object@Options,
                      lavsamplestats = object@SampleStats,
                      lavdata = object@Data,
                      lavcache = object@Cache,
                      lavjags = object@external$mcmcout,
-                     samplls = object@external$samplls)$ppdist[["reps"]]
+                     samplls = object@external$samplls)$ppdist[["reps"]])
   } else reps <- NULL
 
   if (is.null(baseline.model)) {
