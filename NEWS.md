@@ -1,9 +1,22 @@
+# Version 0.3-16
+## New features
+* blavPredict() function added for predicting latent variables and missing data.
+
+* Some posterior summaries are sped up. (and fitMeasures are available when test="none")
+
+* bug fixes from the previous version.
+
+
 # Version 0.3-15
 ## New features
-* Added an S3 summary() method to reduce R confusion about lavaan vs blavaan objects
+* Added an S3 summary() method for ppmc
 
 * Posterior intervals summary() bug is fixed
 
+##  Bugs/glitches discovered after the release:
+* The summary() method for ppmc() and fitIndices() does not always work correctly.
+
+* A Jacobian was incorrect for target="stan", when (non-default) priors were placed on precisions or variances instead of on standard deviations. This could impact estimates of posterior variability.
 
 
 # Version 0.3-14
