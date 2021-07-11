@@ -8,8 +8,9 @@ Data <- data.frame(y1 = y1, x1 = x1, g = g)
 
 ## seemed to help if running this via R CMD check:
 ## Sys.unsetenv('R_TESTS')
-## NB! remove DBI package!
 library("blavaan")
+## NB! unload DBI package or problems with CRAN!
+unloadNamespace("DBI")
 
 ## don't care that models are not converged, keeping file size small
 model <- ' y1 ~ prior("dnorm(0,1)")*x1 '
