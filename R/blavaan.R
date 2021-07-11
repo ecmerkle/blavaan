@@ -294,6 +294,7 @@ blavaan <- function(...,  # default lavaan arguments
     # ordinal only for stan
     ordmod <- lavInspect(LAV, 'categorical')
     if(ordmod) {
+        stop("blavaan ERROR: ordinal models are not (yet) available.")
         if(target != "stan") stop("blavaan ERROR: ordinal variables only work for target='stan'.")
     }
         
