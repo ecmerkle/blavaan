@@ -80,7 +80,8 @@ lvgqs <- function(modmats, standata, getlvs = TRUE) {
         L <- bottom_right[usepsi,usepsi,drop=FALSE] - (corner[,obsidx[1:Nobs[mm]],drop=FALSE] %*% precision[1:Nobs[mm],1:Nobs[mm]] %*% t(corner[,obsidx[1:Nobs[mm]],drop=FALSE]))[usepsi,usepsi,drop=FALSE]
         L <- try(chol(L))
         if (inherits(L, 'try-error')) {
-          L <- matrix(0, nrow=NROW(L), ncol=NCOL(L))
+          ## occasionally negative variance
+          L <- matrix(0, nrow=length(usepsi), ncol=length(usepsi))
         }
         if (anymis) {
           corner <- corner[,obsidx[1:Nobs[mm]]]
