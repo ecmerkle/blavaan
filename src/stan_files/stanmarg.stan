@@ -745,6 +745,7 @@ model { // N.B.: things declared in the model block do not get saved in the outp
     }
   } else if (len_free[10] > 0) {
     target += beta_lpdf(Psi_r_free | psi_r_alpha, psi_r_beta);
+    target += log(2) * len_free[10]; // jacobian for moving from (0,1) to (-1,1)
   }
 }
 generated quantities { // these matrices are saved in the output but do not figure into the likelihood
