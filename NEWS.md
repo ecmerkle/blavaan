@@ -6,6 +6,9 @@
 
 * bug fixes from the previous version.
 
+##  Bugs/glitches discovered after the release:
+* For target="stan", some multiple group models fail when some cases are missing all observed variables (reported by DeAnne Hunter).
+
 
 # Version 0.3-15
 ## New features
