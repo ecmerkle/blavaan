@@ -148,6 +148,13 @@
 <li><p>bug fixes from the previous version.</p></li>
 </ul>
 </div>
+<div id="bugsglitches-discovered-after-the-release" class="section level2">
+<h2 class="hasAnchor">
+<a href="#bugsglitches-discovered-after-the-release" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
+<ul>
+<li>For target=“stan”, some multiple group models fail when some cases are missing all observed variables (reported by DeAnne Hunter).</li>
+</ul>
+</div>
 </div>
     <div id="version-03-15" class="section level1">
 <h1 class="page-header" data-toc-text="0.3-15">
@@ -161,9 +168,9 @@
 <li><p>Posterior intervals summary() bug is fixed</p></li>
 </ul>
 </div>
-<div id="bugsglitches-discovered-after-the-release" class="section level2">
+<div id="bugsglitches-discovered-after-the-release-1" class="section level2">
 <h2 class="hasAnchor">
-<a href="#bugsglitches-discovered-after-the-release" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
+<a href="#bugsglitches-discovered-after-the-release-1" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
 <ul>
 <li><p>The summary() method for ppmc() and fitIndices() does not always work correctly.</p></li>
 <li><p>A Jacobian was incorrect for target=“stan”, when (non-default) priors were placed on precisions or variances instead of on standard deviations. This could impact estimates of posterior variability.</p></li>
@@ -184,9 +191,9 @@
 <li>This is a maintenance release in response to a change in package Matrix.</li>
 </ul>
 </div>
-<div id="bugsglitches-discovered-after-the-release-1" class="section level2">
+<div id="bugsglitches-discovered-after-the-release-2" class="section level2">
 <h2 class="hasAnchor">
-<a href="#bugsglitches-discovered-after-the-release-1" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
+<a href="#bugsglitches-discovered-after-the-release-2" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
 <ul>
 <li>Posterior intervals are NA in summary(). Workarounds are to use parameterEstimates() (intervals assuming posterior normality) or to compute them yourself using the posterior samples (`blavInspect(fit, “mcmc”)’)</li>
 </ul>
@@ -222,9 +229,9 @@
 <li><p>new arguments “wiggle” and “wiggle.sd” for approximate equality constraints under target=“stan”</p></li>
 </ul>
 </div>
-<div id="bugsglitches-discovered-after-the-release-2" class="section level2">
+<div id="bugsglitches-discovered-after-the-release-3" class="section level2">
 <h2 class="hasAnchor">
-<a href="#bugsglitches-discovered-after-the-release-2" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
+<a href="#bugsglitches-discovered-after-the-release-3" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
 <ul>
 <li><p>plot labels for target=“stan” are sometimes incorrect (displaying a parameter different from the panel label).</p></li>
 <li><p>complex equality constraints are sometimes ignored (target=“jags” or “stanclassic”)</p></li>
@@ -246,9 +253,9 @@
 <li><p>bug fixes for prior settings and std.lv in target=“stan”, and defined parameters.</p></li>
 </ul>
 </div>
-<div id="bugsglitches-discovered-after-the-release-3" class="section level2">
+<div id="bugsglitches-discovered-after-the-release-4" class="section level2">
 <h2 class="hasAnchor">
-<a href="#bugsglitches-discovered-after-the-release-3" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
+<a href="#bugsglitches-discovered-after-the-release-4" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
 <ul>
 <li><p>For target=“stan”, problems with sampling lvs when there are multiple groups or missing data.</p></li>
 <li><p>Errors for blavCompare() and blavFitIndices() due to version updates of other packages.</p></li>
@@ -268,9 +275,9 @@
 <li><p>0.3-7 bugs fixed.</p></li>
 </ul>
 </div>
-<div id="bugsglitches-discovered-after-the-release-4" class="section level2">
+<div id="bugsglitches-discovered-after-the-release-5" class="section level2">
 <h2 class="hasAnchor">
-<a href="#bugsglitches-discovered-after-the-release-4" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
+<a href="#bugsglitches-discovered-after-the-release-5" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
 <ul>
 <li><p>For target=“stan” and std.lv=TRUE, estimation fails for certain (growth) models (reported by Mauricio Garnier-Villareal).</p></li>
 <li><p>Some defined variables fail for target=“jags” and “stanclassic” (reported by Mariëlle Zondervan-Zwijnenburg).</p></li>
@@ -293,9 +300,9 @@
 <li><p>0.3-6 bugs fixed.</p></li>
 </ul>
 </div>
-<div id="bugsglitches-discovered-after-the-release-5" class="section level2">
+<div id="bugsglitches-discovered-after-the-release-6" class="section level2">
 <h2 class="hasAnchor">
-<a href="#bugsglitches-discovered-after-the-release-5" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
+<a href="#bugsglitches-discovered-after-the-release-6" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
 <ul>
 <li><p>blavInspect(, ‘lvmeans’) returns rows in the wrong order for target=“stan” (reported by Mehdi Momen).</p></li>
 <li><p>User-specified priors sometimes are placed on the wrong parameter, for target=“stan” (reported by Enrico Toffalini).</p></li>
@@ -314,9 +321,9 @@
 <li>this fixes the stan plot bug from 0.3-5.</li>
 </ul>
 </div>
-<div id="bugsglitches-discovered-after-the-release-6" class="section level2">
+<div id="bugsglitches-discovered-after-the-release-7" class="section level2">
 <h2 class="hasAnchor">
-<a href="#bugsglitches-discovered-after-the-release-6" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
+<a href="#bugsglitches-discovered-after-the-release-7" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
 <ul>
 <li><p>user-specified priors on correlation parameters are silently ignored for target=“stan” (reported by James Uanhoro).</p></li>
 <li><p>save.lvs=TRUE does not work for target=“stan” (reported by Mauricio Garnier-Villareal).</p></li>
@@ -337,9 +344,9 @@
 <li><p>default priors are changed from gamma on precisions to gamma on standard deviations.</p></li>
 </ul>
 </div>
-<div id="bugsglitches-discovered-after-the-release-7" class="section level2">
+<div id="bugsglitches-discovered-after-the-release-8" class="section level2">
 <h2 class="hasAnchor">
-<a href="#bugsglitches-discovered-after-the-release-7" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
+<a href="#bugsglitches-discovered-after-the-release-8" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
 <ul>
 <li><p>The Stan plot method silently fails (reported by Matt Yalch).</p></li>
 <li><p>The dpriors() issue from 0.3-3 remains.</p></li>
@@ -359,9 +366,9 @@
 <li><p>Rearrange posterior predictive internals.</p></li>
 </ul>
 </div>
-<div id="bugsglitches-discovered-after-the-release-8" class="section level2">
+<div id="bugsglitches-discovered-after-the-release-9" class="section level2">
 <h2 class="hasAnchor">
-<a href="#bugsglitches-discovered-after-the-release-8" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
+<a href="#bugsglitches-discovered-after-the-release-9" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
 <ul>
 <li><p>The dpriors() issue from 0.3-3 remains.</p></li>
 <li><p>For target=“jags”, lv means obtained from blavInspect() (via argument ‘lvmeans’) are incorrect. (reported by Mauricio Garnier-Villareal)</p></li>
@@ -384,9 +391,9 @@
 <li><p>Fixed bugs from 0.3-2 (with exception of identity assignments using ‘:=’)</p></li>
 </ul>
 </div>
-<div id="bugsglitches-discovered-after-the-release-9" class="section level2">
+<div id="bugsglitches-discovered-after-the-release-10" class="section level2">
 <h2 class="hasAnchor">
-<a href="#bugsglitches-discovered-after-the-release-9" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
+<a href="#bugsglitches-discovered-after-the-release-10" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
 <ul>
 <li>Use of ‘dpriors()’: some observed variable precisions assigned latent precision (ipsi) prior; some latent means assigned observed mean (nu) prior.</li>
 </ul>
@@ -406,9 +413,9 @@
 <li><p>Fixed bugs from 0.3-1, especially related to missing data in Stan.</p></li>
 </ul>
 </div>
-<div id="bugsglitches-discovered-after-the-release-10" class="section level2">
+<div id="bugsglitches-discovered-after-the-release-11" class="section level2">
 <h2 class="hasAnchor">
-<a href="#bugsglitches-discovered-after-the-release-10" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
+<a href="#bugsglitches-discovered-after-the-release-11" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
 <ul>
 <li><p>Errors for Stan models with std.lv=TRUE, and an observed variable regressed on a latent variable (reported by Bo Zhang).</p></li>
 <li><p>Error for identity assignments using ‘:=’ (reported by Marco Tullio Liuzza).</p></li>
@@ -430,9 +437,9 @@
 <li><p>Fixed bugs from 0.2-4.</p></li>
 </ul>
 </div>
-<div id="bugsglitches-discovered-after-the-release-11" class="section level2">
+<div id="bugsglitches-discovered-after-the-release-12" class="section level2">
 <h2 class="hasAnchor">
-<a href="#bugsglitches-discovered-after-the-release-11" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
+<a href="#bugsglitches-discovered-after-the-release-12" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
 <ul>
 <li><p>Errors for Stan models with missing data, when there are exogenous (“x”) variables.</p></li>
 <li><p>Errors for multi-group Stan models with std.lv=TRUE.</p></li>
