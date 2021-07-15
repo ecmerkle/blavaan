@@ -30,8 +30,9 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
     if(any(is.na(unlist(lavdata@X)))){
       mis <- TRUE
       lavmvh1 <- getFromNamespace("lav_mvnorm_missing_h1_estimate_moments", "lavaan")
+      lavmvll <- getFromNamespace("lav_mvnorm_missing_loglik_data", "lavaan")
     }
-    
+
     if(measure[1] %in% c("logl", "chisq") & !mis){
         if(casewise){
             ll.samp <- rep(NA, sum(unlist(lavdata@nobs)))
@@ -131,10 +132,10 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
         tmpsat <- 0
         for(g in 1:length(implied$cov)){
           ## high tolerance speed boost
-          tmpsat <- tmpsat + lavmvh1(Y = lavdata@X[[g]],
-                                     Mp = lavdata@Mp[[g]],
-                                     #max.iter = 20,
-                                     tol = 1e-2)$fx
+          satmod <- lavmvh1(Y = lavdata@X[[g]], Mp = lavdata@Mp[[g]],
+                            #max.iter = 20,
+                            tol = 1e-2)
+          tmpsat <- tmpsat + lavmvll(Y = lavdata@X[[g]], Mu = satmod$Mu, Sigma = satmod$Sigma)
         }
         ll.samp <- c(tmpll, tmpsat)
     } else {
@@ -165,8 +166,8 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
             if(casewise){
                 ll.samp <- llcont(fit.samp)
             } else if(measure[1] == "logl"){
-              ll.samp <- fitMeasures(fit.samp,
-                                     c("logl", "unrestricted.logl"))
+                ll.samp <- fitMeasures(fit.samp,
+                                       c("logl", "unrestricted.logl"))
             } else {
                 ll.samp <- fitMeasures(fit.samp, measure)
             }
