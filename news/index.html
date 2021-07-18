@@ -152,7 +152,8 @@
 <h2 class="hasAnchor">
 <a href="#bugsglitches-discovered-after-the-release" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
 <ul>
-<li>For target=“stan”, some multiple group models fail when some cases are missing all observed variables (reported by DeAnne Hunter).</li>
+<li><p>For certain models with missing data, ppp-values are incorrect (sometimes equaling 1.0).</p></li>
+<li><p>For target=“stan”, some multiple group models fail when some cases are missing all observed variables (reported by DeAnne Hunter).</p></li>
 </ul>
 </div>
 </div>
@@ -173,7 +174,7 @@
 <a href="#bugsglitches-discovered-after-the-release-1" class="anchor"></a>Bugs/glitches discovered after the release:</h2>
 <ul>
 <li><p>The summary() method for ppmc() and fitIndices() does not always work correctly.</p></li>
-<li><p>A Jacobian was incorrect for target=“stan”, when (non-default) priors were placed on precisions or variances instead of on standard deviations. This could impact estimates of posterior variability.</p></li>
+<li><p>A Jacobian was incorrect for target=“stan”, when (non-default) priors were placed on precisions or variances instead of on standard deviations. This could impact estimates of posterior variability (reported by Roy Levy).</p></li>
 </ul>
 </div>
 </div>
