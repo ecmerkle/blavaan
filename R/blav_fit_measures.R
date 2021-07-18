@@ -202,7 +202,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
         indices["p_loo"] <- fitres[["p_loo"]]
         indices["se_loo"] <- fitse[["looic"]]
 
-        if("csamplls" %in% names(object@external)){
+        if("csamplls" %in% names(object@external) & bopts$target != "stan"){
             if("stanlvs" %in% names(object@external)){
                 samps <- make_mcmc(object@external$mcmcout, object@external$stanlvs)
             } else {
