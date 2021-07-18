@@ -46,7 +46,7 @@ lvgqs <- function(modmats, standata, getlvs = TRUE) {
         obsidx <- Obsvar[mm, ]
         r1 <- startrow[mm]
         r2 <- endrow[mm]
-        YXimp[r1:r2, obsidx[1:Nobs[mm]]] <- YX[r1:r2, 1:Nobs[mm]]
+        YXimp[r1:r2, obsidx[1:Nobs[mm]]] <- YX[r1:r2, obsidx[1:Nobs[mm]]]
       }
       misvals <- is.na(YXimp)
     }
@@ -102,14 +102,14 @@ lvgqs <- function(modmats, standata, getlvs = TRUE) {
 
       for (idx in r1:r2){
         if (getlvs) {
-          lvmean <- modmats[[grpidx]]$alpha + beta[, 1:Nobs[mm], drop=FALSE] %*% (YX[idx, 1:Nobs[mm]] - ovmean[[grpidx]][obsidx[1:Nobs[mm]]])
+          lvmean <- modmats[[grpidx]]$alpha + beta[, 1:Nobs[mm], drop=FALSE] %*% (YX[idx, obsidx[1:Nobs[mm]]] - ovmean[[grpidx]][obsidx[1:Nobs[mm]]])
           eta[idx,usepsi] <- t(rmnorm(1, lvmean[usepsi], sqrt = L))
           if (w9no > 0) {
             eta[idx,nopsi] <- eta[idx,usepsi,drop=FALSE] %*% t(A[nopsi,usepsi,drop=FALSE])
           }
         } else if (anymis) {
-          ovreg <- ovmean[[grpidx]][misidx] + beta[, 1:Nobs[mm], drop=FALSE] %*% (YX[idx, 1:Nobs[mm]] - ovmean[[grpidx]][obsidx[1:Nobs[mm]]])
-          YXimp[idx, obsidx[1:Nobs[mm]]] <- YX[idx, 1:Nobs[mm]]
+          ovreg <- ovmean[[grpidx]][misidx] + beta[, 1:Nobs[mm], drop=FALSE] %*% (YX[idx, obsidx[1:Nobs[mm]]] - ovmean[[grpidx]][obsidx[1:Nobs[mm]]])
+          YXimp[idx, obsidx[1:Nobs[mm]]] <- YX[idx, obsidx[1:Nobs[mm]]]
           YXimp[idx, misidx] <- t(rmnorm(1, ovreg, sqrt = L))
         }
       }
