@@ -42,6 +42,8 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
   n.chains <- length(lavmcmc)
   samp.indices <- sampnums(lavjags, thin=thin)
   psamp <- length(samp.indices)
+  lmorig <- lavmodel
+  ldorig <- lavdata
 
   ## check for missing, to see if we can easily get baseline ll for chisq
   mis <- FALSE
@@ -62,18 +64,6 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
     }
 
     for(j in 1:n.chains){
-      ## supply extra args to postdata so that we only generate
-      ## a single dataset
-      dataX <- postdata(samp.indices = samp.indices[i],
-                        chain.num = j,
-                        lavmodel = lavmodel, lavdata = lavdata,
-                        lavjags = lavjags, lavpartable = lavpartable,
-                        lavsamplestats = lavsamplestats)
-      lavmodel <- dataX$lavmod[[1]]
-      dataX <- dataX[[1]]
-      dataeXo <- lavdata@eXo
-
-
       ## compute (i) X2 of generated data and model-implied moments,
       ## along with (ii) X2 of real data and model-implied moments.
 
@@ -87,12 +77,12 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
         lavoptions1$test <- "standard"
         lavoptions1$optim.method <- "none"
         lavmodel1 <- fill_params(lavmcmc[[j]][i,], # update parameters
-                                 lavmodel, lavpartable)
+                                 lmorig, lavpartable)
         if ("control" %in% slotNames(lavmodel1)) {
           lavmodel1@control <- list(optim.method = "none")
         }
         fit <- lavaan(slotOptions = lavoptions1, slotModel = lavmodel1, # updated slots
-                      slotSampleStats = lavsamplestats, slotData = lavdata,
+                      slotSampleStats = lavsamplestats, slotData = ldorig,
                       slotParTable = lavpartable, slotCache = lavcache)
 
         ## Apply custom "discFUN" to observed data
@@ -112,14 +102,24 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
       } else {
         ## save alternative fit.measures=measure for observed data
         chisq.obs <- get_ll(postsamp = lavmcmc[[j]][i,],
-                            lavmodel = lavmodel,
+                            lavmodel = lmorig,
                             lavsamplestats = lavsamplestats,
-                            lavdata = lavdata,
+                            lavdata = ldorig,
                             lavpartable = lavpartable,
                             lavoptions = lavoptions,
                             measure = measure)
       }
 
+      ## supply extra args to postdata so that we only generate
+      ## a single dataset
+      dataX <- postdata(samp.indices = samp.indices[i],
+                        chain.num = j,
+                        lavmodel = lmorig, lavdata = ldorig,
+                        lavjags = lavjags, lavpartable = lavpartable,
+                        lavsamplestats = lavsamplestats)
+      lavmodel <- dataX$lavmod[[1]]
+      dataX <- dataX[[1]]
+      dataeXo <- lavdata@eXo
 
       ## SIMULATED DATA
       if (!mis & !length(discFUN) & measure[1] %in% c("logl", "chisq")) {

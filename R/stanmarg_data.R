@@ -176,7 +176,7 @@ check_priors <- function(lavpartable) {
 stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           miss, Np, Nobs, Obsvar, # missing
                           ord, Nord, ordidx, contidx, nlevs, neach, # ordinal
-                          Xvar, Nx, # fixed.x
+                          Xvar, Xdatvar, Nx, # fixed.x
                           startrow, endrow, save_lvs = FALSE, 
                           Lambda_y_skeleton, # skeleton matrices
                           Lambda_x_skeleton, Gamma_skeleton, B_skeleton,
@@ -215,6 +215,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$startrow <- startrow
   dat$endrow <- endrow
   dat$Xvar <- Xvar
+  dat$Xdatvar <- Xdatvar
   dat$Nx <- array(Nx, length(Nx))
 
   dat$YX <- YX

@@ -135,7 +135,8 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
           satmod <- lavmvh1(Y = lavdata@X[[g]], Mp = lavdata@Mp[[g]],
                             #max.iter = 20,
                             tol = 1e-2)
-          tmpsat <- tmpsat + lavmvll(Y = lavdata@X[[g]], Mu = satmod$Mu, Sigma = satmod$Sigma)
+          tmpsat <- tmpsat + lavmvll(Y = lavdata@X[[g]], Mu = satmod$Mu, Sigma = satmod$Sigma,
+                                     x.idx = lavsamplestats@x.idx[[g]])
         }
         ll.samp <- c(tmpll, tmpsat)
     } else {

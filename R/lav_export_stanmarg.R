@@ -196,20 +196,24 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     dat$Ntot <- sum(dat$N)
     dat$Obsvar <- matrix(0, dat$Np, nvar)
     dat$Nx <- rep(0, dat$Np)
-    dat$Xvar <- matrix(0, dat$Np, length(xidx))
-    
+    dat$Xvar <- dat$Xdatvar <- matrix(0, dat$Np, length(xidx))
+
     for (i in 1:dat$Np) {
       dat$Obsvar[i, 1:dat$Nobs[i]] <- Obsvar[[i]]
+      xdatidx <- match(xidx, Obsvar[[i]])
       xpat <- xidx[xidx %in% Obsvar[[i]]]
       if (length(xpat) > 0) {
         dat$Nx[i] <- length(xpat)
         dat$Xvar[i, 1:length(xpat)] <- xpat
+        dat$Xdatvar[i, 1:length(xpat)] <- xdatidx
       }
     }
 
     for (g in 1:dat$Ng) {
       YX[[g]] <- YX[[g]][cases[[g]],]
-      YX[[g]] <- t(apply(YX[[g]], 1, function(x) c(x[!is.na(x)], rep(0, sum(is.na(x))))))
+      YX[[g]][is.na(YX[[g]])] <- 0
+      ## pre-ordinal, when we already moved everything to the left before stan:
+      ## YX[[g]] <- t(apply(YX[[g]], 1, function(x) c(x[!is.na(x)], rep(0, sum(is.na(x))))))
     }
   } else {
     dat$miss <- 0L
@@ -221,7 +225,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     dat$Nobs <- array(nvar, dat$Np)
     dat$Obsvar <- matrix(1:nvar, dat$Np, nvar, byrow=TRUE)
     dat$Nx <- array(length(xidx), dat$Np)
-    dat$Xvar <- matrix(xidx, dat$Np, length(xidx), byrow=TRUE)
+    dat$Xvar <- dat$Xdatvar <- matrix(xidx, dat$Np, length(xidx), byrow=TRUE)
   }
   dat$YX <- do.call("rbind", YX)
   dat$grpnum <- array(dat$grpnum, length(dat$grpnum))
