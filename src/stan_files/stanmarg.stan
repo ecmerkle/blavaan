@@ -172,8 +172,8 @@ data {
   int<lower=0> contidx[p + q - Nord]; // indexing of continuous variables
   int<lower=1> nlevs[Nord]; // how many levels does each ordinal variable have
   vector[ord ? max(nlevs) : 0] neach[Nord]; // how many times do we observe each level of each ordinal variable?
-  vector[p + q - Nord] YX[has_data ? Ntot : 0]; // continuous data
-  int YXo[has_data ? Ntot : 0, Nord]; // ordinal data
+  vector[p + q - Nord] YX[Ntot]; // continuous data
+  int YXo[Ntot, Nord]; // ordinal data
   int<lower=0> Nx[Np]; // number of fixed.x variables
   int<lower=0> Xvar[Np, max(Nx)]; // indexing of fixed.x variables
   int<lower=0> Xdatvar[Np, max(Nx)]; // indexing of fixed.x in data (differs from Xvar when missing)
@@ -833,7 +833,11 @@ generated quantities { // these matrices are saved in the output but do not figu
   Psi_var = Psi_sd_free .* Psi_sd_free;
 
   // log-likelihood
-  if (has_data) {
+  if (has_cov) {
+    for (g in 1:Ng) {
+      log_lik[g] =  wishart_lpdf(S[g] | N[g] - 1, Sigma[g]);
+    }
+  } else {
     int obsidx[p + q];
     int xidx[max(Nx)];
     int xdatidx[max(Nx)];
@@ -854,10 +858,6 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  log_lik[jj] += -multi_normal_lpdf(YXstar[jj,xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
 	}
       }
-    }
-  } else if (has_cov) {
-    for (g in 1:Ng) {
-      log_lik[g] =  wishart_lpdf(S[g] | N[g] - 1, Sigma[g]);
     }
   }
   
