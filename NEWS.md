@@ -1,3 +1,8 @@
+# Version 0.3-17
+## New features
+* This is a maintenance release to correct major bugs from the previous version.
+
+
 # Version 0.3-16
 ## New features
 * blavPredict() function added for predicting latent variables and missing data.
