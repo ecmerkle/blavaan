@@ -247,9 +247,9 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
 
       if (NROW(YX) != dat$Ntot) stop("blavaan ERROR: nrow(YX) != Ntot.")
     
-      dat$S <- array(NA, dim=c(Ng, NCOL(YX), NCOL(YX)))
+      dat$S <- array(NA, dim=c(Ng, NCOL(YX) + 1, NCOL(YX) + 1))
       for (i in 1:Ng) {
-        dat$S[i,,] <- diag(1, NCOL(YX))
+        dat$S[i,,] <- diag(1, NCOL(YX) + 1)
         ## not added because, if not pd, stan fails: (dat$N[i] - 1) * cov(YX[(startrow[i] : endrow[i]), , drop = FALSE]) # NB!! this multiplication is needed to use wishart_lpdf
       }
     }

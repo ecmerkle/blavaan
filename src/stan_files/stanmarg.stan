@@ -178,7 +178,7 @@ data {
   int<lower=0> Xvar[Np, max(Nx)]; // indexing of fixed.x variables
   int<lower=0> Xdatvar[Np, max(Nx)]; // indexing of fixed.x in data (differs from Xvar when missing)
   int<lower=0, upper=1> has_cov;
-  cov_matrix[p + q - Nord] S[Ng];     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
+  cov_matrix[p + q - Nord + 1] S[Ng];     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
 
   
   /* sparse matrix representations of skeletons of coefficient matrices, 

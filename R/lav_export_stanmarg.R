@@ -244,7 +244,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       ordvar <- unlist(lapply(lavobject@Data@X, function(x) x[,ordidx[i]]))
       nlevs[i] <- length(unique(ordvar))
     
-      neach[[i]] <- summary(factor(ordvar))
+      neach[[i]] <- summary(factor(ordvar), maxsum=1e5)
     }
 
     maxcat <- max(nlevs)
