@@ -183,10 +183,11 @@ blavaan <- function(...,  # default lavaan arguments
     } else {
         origwarn <- TRUE
     }
-    dotdotdot$do.fit <- TRUE
+    dotdotdot$do.fit <- FALSE
     dotdotdot$se <- "none"; dotdotdot$test <- "none"
     # run for 1 iteration to obtain info about equality constraints, for npar
-    dotdotdot$control <- list(iter.max = 1); dotdotdot$warn <- FALSE
+    dotdotdot$control <- list(iter.max = 1); dotdotdot$warn <- TRUE
+    dotdotdot$optim.force.converged <- TRUE
     dotdotdot$meanstructure <- TRUE
     dotdotdot$missing <- "direct"   # direct/ml creates error? (bug in lavaan?)
     if("ordered" %in% dotNames |
@@ -269,6 +270,10 @@ blavaan <- function(...,  # default lavaan arguments
       mcdebug <- dotdotdot$debug
       dotdotdot <- dotdotdot[-which(dotNames == "debug")]
     }
+    # for warnings related to setting up model/data:
+    LAV <- do.call("lavaan", dotdotdot)
+    dotdotdot$do.fit <- TRUE; dotdotdot$warn <- FALSE
+    # for initial values/parameter setup:
     LAV <- do.call("lavaan", dotdotdot)
 
     if(LAV@Data@data.type == "moment") {
