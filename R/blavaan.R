@@ -183,6 +183,11 @@ blavaan <- function(...,  # default lavaan arguments
     } else {
         origwarn <- TRUE
     }
+    if("test" %in% dotNames){
+        origtest <- dotdotdot$test
+    } else {
+        origtest <- "standard"
+    }
     dotdotdot$do.fit <- FALSE
     dotdotdot$se <- "none"; dotdotdot$test <- "none"
     # run for 1 iteration to obtain info about equality constraints, for npar
@@ -290,8 +295,9 @@ blavaan <- function(...,  # default lavaan arguments
     # turn warnings back on by default
     LAV@Options$warn <- origwarn
 
-    # put original do.fit back
+    # put original do.fit + test back
     LAV@Options$do.fit <- jag.do.fit
+    dotdotdot$test <- origtest
   
     # check for conflicting mv names
     namecheck(LAV@Data@ov.names[[1]])
