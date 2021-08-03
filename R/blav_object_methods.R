@@ -318,10 +318,15 @@ long.summary <- function(object,
         ## require "est"
         #names(PE)[penames == "est"] <- "Post.Mean"
         #PE$est <- PE$Post.Mean
-        if(blavInspect(object, 'options')$prisamp){
-          names(PE)[penames == "se"] <- "Pri.SD"
-        } else {
+        if(!('prisamp' %in% names(blavInspect(object, 'options')))){
+          ## backwards compatibility before we had prisamp
           names(PE)[penames == "se"] <- "Post.SD"
+        } else {
+          if(blavInspect(object, 'options')$prisamp){
+            names(PE)[penames == "se"] <- "Pri.SD"
+          } else {
+            names(PE)[penames == "se"] <- "Post.SD"
+          }
         }
         names(PE)[penames == "ci.lower"] <- "pi.lower"
         names(PE)[penames == "ci.upper"] <- "pi.upper"

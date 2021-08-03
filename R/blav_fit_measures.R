@@ -32,9 +32,11 @@ blav_fit_measures <- function(object, fit.measures = "all",
         }
     }
 
-    if(bopts$prisamp) {
+    if('prisamp' %in% names(bopts)) {
+      if(bopts$prisamp) {
         warning("blavaan WARNING: These metrics are based on prior samples so may be meaningless.",
                 call. = FALSE)
+      }
     }
   
     if("all" %in% fit.measures) {
