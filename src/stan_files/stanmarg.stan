@@ -173,13 +173,13 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
 	matrix[Nobs[mm], Nobs[mm]] Sig22 = Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]];
 	matrix[Nmis, Nmis] Sig11 = Sigma[grpidx, obsidx[(Nobs[mm] + 1):p], obsidx[(Nobs[mm] + 1):p]];
 	matrix[Nmis, Nobs[mm]] Sig12 = Sigma[grpidx, obsidx[(Nobs[mm] + 1):p], obsidx[1:Nobs[mm]]];
-	matrix[Nobs[mm], Nobs[mm]] S22inv = inverse(Sig22[1:Nobs[mm], 1:Nobs[mm]]);
+	matrix[Nobs[mm], Nobs[mm]] S22inv = inverse_spd(Sig22);
 	matrix[Nmis, Nmis] T2p11 = Sig11 - (Sig12 * S22inv * Sig12');
 	
         // partition into observed/missing, compute Sigmas, add to out
 	for (jj in r1:r2) {
 	  vector[Nmis] ymis;
-	  ymis = Mu[grpidx, obsidx[(Nobs[mm] + 1):p]] + (Sig12 * S22inv * (YXstar[jj, obsidx[1:Nobs[mm]]] - Mu[grpidx, obsidx[1:Nobs[mm]]]));
+	  ymis = Mu[grpidx, obsidx[(Nobs[mm] + 1):p]] + (Sig12 * S22inv * (YXstar[jj, 1:Nobs[mm]] - Mu[grpidx, obsidx[1:Nobs[mm]]]));
 	  for (kk in 1:Nobs[mm]) {
 	    YXfull[jj, obsidx[kk]] = YXstar[jj, kk];
 	  }
