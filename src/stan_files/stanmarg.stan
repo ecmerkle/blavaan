@@ -145,6 +145,75 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     }
     return out;
   }
+
+  // E step of EM algorithm on latent continuous space
+  matrix estep(vector[] YXstar, vector[] Mu, matrix[] Sigma, int[] Nobs, int[,] Obsvar, int[] startrow, int[] endrow, int[] grpnum, int Np) {
+    int p = dims(YXstar)[2];
+    matrix[p, p + 1] out; //mean vec + cov mat
+    matrix[dims(YXstar)[1], p] YXfull; // columns consistenly ordered
+    matrix[p, p] T2pat;
+    int obsidx[p];
+    int r1;
+    int r2;
+    int grpidx;
+    int Nmis;
+
+    for (i in 1:(p + 1)) {
+      out[,i] = rep_vector(0, p);
+    }
+
+    for (mm in 1:Np) {
+      obsidx = Obsvar[mm,];
+      r1 = startrow[mm];
+      r2 = endrow[mm];
+      grpidx = grpnum[mm];
+      Nmis = p - Nobs[mm];
+
+      if (Nobs[mm] < p) {
+	matrix[Nobs[mm], Nobs[mm]] Sig22 = Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]];
+	matrix[Nmis, Nmis] Sig11 = Sigma[grpidx, obsidx[(Nobs[mm] + 1):p], obsidx[(Nobs[mm] + 1):p]];
+	matrix[Nmis, Nobs[mm]] Sig12 = Sigma[grpidx, obsidx[(Nobs[mm] + 1):p], obsidx[1:Nobs[mm]]];
+	matrix[Nobs[mm], Nobs[mm]] S22inv = inverse(Sig22[1:Nobs[mm], 1:Nobs[mm]]);
+	matrix[Nmis, Nmis] T2p11 = Sig11 - (Sig12 * S22inv * Sig12');
+	
+        // partition into observed/missing, compute Sigmas, add to out
+	for (jj in r1:r2) {
+	  vector[Nmis] ymis;
+	  ymis = Mu[grpidx, obsidx[(Nobs[mm] + 1):p]] + (Sig12 * S22inv * (YXstar[jj, obsidx[1:Nobs[mm]]] - Mu[grpidx, obsidx[1:Nobs[mm]]]));
+	  for (kk in 1:Nobs[mm]) {
+	    YXfull[jj, obsidx[kk]] = YXstar[jj, kk];
+	  }
+	  for (kk in (Nobs[mm] + 1):p) {
+	    YXfull[jj, obsidx[kk]] = ymis[kk - Nobs[mm]];
+	  }
+	}
+	T2pat = crossprod(YXfull[r1:r2,]);
+	// correction for missing cells/conditional covariances
+	for (jj in 1:Nmis) {
+	  for (kk in jj:Nmis) {
+	    T2pat[obsidx[Nobs[mm] + jj], obsidx[Nobs[mm] + kk]] = T2pat[obsidx[Nobs[mm] + jj], obsidx[Nobs[mm] + kk]] + (r2 - r1 + 1) * T2p11[jj, kk];
+	    if (kk > jj) {
+	      T2pat[obsidx[Nobs[mm] + kk], obsidx[Nobs[mm] + jj]] = T2pat[obsidx[Nobs[mm] + jj], obsidx[Nobs[mm] + kk]];
+	    }
+	  }
+	}
+      } else {
+	// complete data
+	for (jj in r1:r2) {
+	  for (kk in 1:Nobs[mm]) {
+	    YXfull[jj, obsidx[kk]] = YXstar[jj, kk];
+	  }
+	}
+	T2pat = crossprod(YXfull[r1:r2,]);
+      }
+      for (i in 1:p) {
+	out[i,1] += sum(YXfull[r1:r2,i]);
+      }
+      out[,2:(p+1)] += T2pat;
+    }
+    
+    return out;
+  }
   
 }
 data {

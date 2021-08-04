@@ -200,6 +200,11 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
 
     for (i in 1:dat$Np) {
       dat$Obsvar[i, 1:dat$Nobs[i]] <- Obsvar[[i]]
+      if (dat$Nobs[i] < nvar) {
+        ## missing idx is at end of Obsvar
+        allvars <- 1:nvar
+        dat$Obsvar[i, (dat$Nobs[i] + 1):nvar] <- allvars[!(allvars %in% Obsvar[[i]])]
+      }
       xdatidx <- match(xidx, Obsvar[[i]])
       xpat <- xidx[xidx %in% Obsvar[[i]]]
       if (length(xpat) > 0) {
