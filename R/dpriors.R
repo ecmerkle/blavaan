@@ -19,7 +19,8 @@ dpriors <- function(..., target="stan"){
 
     userjags <- sapply(jagdists, function(x) grep(x, userspec))
 
-    if(length(unlist(userjags)) == length(userspec)){
+    ## > 1 match can occur for things like ddexp:
+    if(length(unlist(userjags)) > length(userspec)){
       if(target == "jags"){
         dp <- do.call("jagpriors", userspec)
       } else {
