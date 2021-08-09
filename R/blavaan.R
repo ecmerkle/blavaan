@@ -436,7 +436,7 @@ blavaan <- function(...,  # default lavaan arguments
         if(dotdotdot$test == "none") lavoptions$test <- "none"
     } else {
         # if missing data, posterior predictives are way slow
-        if(any(is.na(unlist(LAV@Data@X)))) {
+        if(any(is.na(unlist(LAV@Data@X))) & target != "stan") {
             cat("blavaan NOTE: Posterior predictives with missing data are currently very slow.\n\tConsider setting test=\"none\".\n\n")
         }
     }
@@ -520,8 +520,7 @@ blavaan <- function(...,  # default lavaan arguments
                                            "Psi_cov", "Psi_var",
                                            #"Ph_cov", "Ph_var",
                                            "Nu_free", "Alpha_free", "Tau_free",
-                                           "log_lik", "log_lik_sat",
-                                           "log_lik_rep", "log_lik_rep_sat", "ppp"))
+                                           "log_lik", "log_lik_sat", "ppp"))
                     if("init" %in% names(l2s)){
                       jagtrans <- c(jagtrans, list(inits = l2s$init))
                     }

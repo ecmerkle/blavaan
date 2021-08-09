@@ -201,34 +201,36 @@ samp_lls <- function(lavjags        = NULL,
 
     nchain <- length(lavmcmc)
 
-    loop.args <- list(X = 1:nsamps, future.seed = TRUE, FUN = function(i){
-      tmpmat <- matrix(NA, nchain, 2)
-      for(j in 1:nchain){
-        tmpmat[j,1:2] <- get_ll(lavmcmc[[j]][itnums[i],],
-                               lavmodel,
-                               lavpartable,
-                               lavsamplestats,
-                               lavoptions,
-                               lavcache,
-                               lavdata,
-                               lavobject,
-                               conditional = conditional)
-      }
-      tmpmat})
+    if(lavoptions$target != "stan" | conditional) {
+      loop.args <- list(X = 1:nsamps, future.seed = TRUE, FUN = function(i){
+        tmpmat <- matrix(NA, nchain, 2)
+        for(j in 1:nchain){
+          tmpmat[j,1:2] <- get_ll(lavmcmc[[j]][itnums[i],],
+                                  lavmodel,
+                                  lavpartable,
+                                  lavsamplestats,
+                                  lavoptions,
+                                  lavcache,
+                                  lavdata,
+                                  lavobject,
+                                  conditional = conditional)
+        }
+        tmpmat})
 
-    llmat <- do.call("future_lapply", loop.args)
-    llmat <- array(unlist(llmat), c(nchain, 2, nsamps)) ## logl + baseline logl
-    llmat <- aperm(llmat, c(3,1,2))
-
-    if(lavoptions$target == "stan"){
+      llmat <- do.call("future_lapply", loop.args)
+      llmat <- array(unlist(llmat), c(nchain, 2, nsamps)) ## logl + baseline logl
+      llmat <- aperm(llmat, c(3,1,2))
+    } else {
       ## the model log-likelihoods have already been computed in stan
+      llmat <- array(NA, c(nsamps, nchain, 2))
       lls <- loo::extract_log_lik(lavjags)
+      llsat <- loo::extract_log_lik(lavjags, parameter_name = "log_lik_sat")
       for(j in 1:nchain){
         idx <- (j-1)*nsamps + itnums
         llmat[itnums,j,1] <- rowSums(lls[idx,])
+        llmat[itnums,j,2] <- rowSums(llsat[idx,]) + llmat[itnums,j,1]
       }
     }
-    
     llmat
 }
 

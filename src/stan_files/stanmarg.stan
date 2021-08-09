@@ -992,7 +992,9 @@ generated quantities { // these matrices are saved in the output but do not figu
       grpidx = grpnum[mm];
       for (jj in r1:r2) {
 	log_lik[jj] = multi_normal_lpdf(YXstar[jj, 1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
-	log_lik_sat[jj] = multi_normal_lpdf(YXstar[jj, 1:Nobs[mm]] | Mu_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_sat[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+	// we add loglik[jj] here so that _sat always varies and does not lead to
+	// problems with rhat and neff computations
+	log_lik_sat[jj] = -log_lik[jj] + multi_normal_lpdf(YXstar[jj, 1:Nobs[mm]] | Mu_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_sat[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
 	
 	log_lik_rep[jj] = multi_normal_lpdf(YXstar_rep[jj, 1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
 	log_lik_rep_sat[jj] = multi_normal_lpdf(YXstar_rep[jj, 1:Nobs[mm]] | Mu_rep_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_rep_sat[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
@@ -1000,7 +1002,8 @@ generated quantities { // these matrices are saved in the output but do not figu
 	// log_lik_sat, log_lik_sat_rep
 	if (Nx[mm] > 0) {
 	  log_lik[jj] += -multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
-	  log_lik_sat[jj] += -multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu_sat[grpidx, xidx[1:Nx[mm]]], Sigma_sat[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	  log_lik_sat[jj] += multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	  log_lik_sat[jj] += - multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu_sat[grpidx, xidx[1:Nx[mm]]], Sigma_sat[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
 	  
 	  log_lik_rep[jj] += -multi_normal_lpdf(YXstar_rep[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
 	  log_lik_rep_sat[jj] += -multi_normal_lpdf(YXstar_rep[jj, xdatidx[1:Nx[mm]]] | Mu_rep_sat[grpidx, xidx[1:Nx[mm]]], Sigma_rep_sat[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
@@ -1009,7 +1012,7 @@ generated quantities { // these matrices are saved in the output but do not figu
     }
 
     // for ppp, compare observed log_lik vs rep log_lik
-    ppp = step((-sum(log_lik_rep) + sum(log_lik_rep_sat)) - (-sum(log_lik) + sum(log_lik_sat)));
+    ppp = step((-sum(log_lik_rep) + sum(log_lik_rep_sat)) - (sum(log_lik_sat)));
   }
   
 } // end with a completely blank line (not even whitespace)
