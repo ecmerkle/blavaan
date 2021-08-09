@@ -171,6 +171,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   dat$N <- lavInspect(lavobject, 'nobs')
   dat$pri_only <- prisamp
   xidx <- lavobject@SampleStats@x.idx[[1]]
+  dat$emiter <- 20L ## TODO allow user change?
 
   ## lavobject@SampleStats@missing.flag is TRUE when missing='ml',
   ## regardless of whether data are missing

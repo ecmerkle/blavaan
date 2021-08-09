@@ -147,9 +147,9 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   }
 
   // E step of EM algorithm on latent continuous space
-  matrix estep(vector[] YXstar, vector[] Mu, matrix[] Sigma, int[] Nobs, int[,] Obsvar, int[] startrow, int[] endrow, int[] grpnum, int Np) {
+  matrix[] estep(vector[] YXstar, vector[] Mu, matrix[] Sigma, int[] Nobs, int[,] Obsvar, int[] startrow, int[] endrow, int[] grpnum, int Np, int Ng) {
     int p = dims(YXstar)[2];
-    matrix[p, p + 1] out; //mean vec + cov mat
+    matrix[p, p + 1] out[Ng]; //mean vec + cov mat
     matrix[dims(YXstar)[1], p] YXfull; // columns consistenly ordered
     matrix[p, p] T2pat;
     int obsidx[p];
@@ -158,8 +158,8 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     int grpidx;
     int Nmis;
 
-    for (i in 1:(p + 1)) {
-      out[,i] = rep_vector(0, p);
+    for (g in 1:Ng) {
+      out[g] = rep_matrix(0, p, p + 1);
     }
 
     for (mm in 1:Np) {
@@ -207,9 +207,9 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
 	T2pat = crossprod(YXfull[r1:r2,]);
       }
       for (i in 1:p) {
-	out[i,1] += sum(YXfull[r1:r2,i]);
+	out[grpidx,i,1] += sum(YXfull[r1:r2,i]);
       }
-      out[,2:(p+1)] += T2pat;
+      out[grpidx,,2:(p+1)] += T2pat;
     }
     
     return out;
@@ -246,6 +246,7 @@ data {
   int<lower=0> Nx[Np]; // number of fixed.x variables
   int<lower=0> Xvar[Np, max(Nx)]; // indexing of fixed.x variables
   int<lower=0> Xdatvar[Np, max(Nx)]; // indexing of fixed.x in data (differs from Xvar when missing)
+  int<lower=0> emiter; // number of em iterations for saturated model in ppp (missing data only)
   int<lower=0, upper=1> has_cov;
   cov_matrix[p + q - Nord + 1] S[Ng];     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
 
@@ -855,6 +856,17 @@ generated quantities { // these matrices are saved in the output but do not figu
   vector[len_free[9]] Psi_var;
 
   vector[Ntot] log_lik; // for loo, etc
+  vector[Ntot] log_lik_sat; // for ppp
+  vector[p + q] YXstar_rep[Ntot]; // artificial data
+  vector[Ntot] log_lik_rep; // for loo, etc
+  vector[Ntot] log_lik_rep_sat; // for ppp
+  matrix[p + q, p + q + 1] satout[Ng];
+  matrix[p + q, p + q + 1] satrep_out[Ng];
+  vector[p + q] Mu_sat[Ng];
+  matrix[p + q, p + q] Sigma_sat[Ng];
+  vector[p + q] Mu_rep_sat[Ng];
+  matrix[p + q, p + q] Sigma_rep_sat[Ng];
+  real<lower=0, upper=1> ppp;
   
   // first deal with sign constraints:
   ly_sign = sign_constrain_load(Lambda_y_free, len_free[1], lam_y_sign);
@@ -905,6 +917,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   if (has_cov) {
     for (g in 1:Ng) {
       log_lik[g] =  wishart_lpdf(S[g] | N[g] - 1, Sigma[g]);
+      log_lik_sat[g] = wishart_lpdf(S[g] | N[g] - 1, S[g]);
     }
   } else {
     int obsidx[p + q];
@@ -921,13 +934,82 @@ generated quantities { // these matrices are saved in the output but do not figu
       r2 = endrow[mm];
       grpidx = grpnum[mm];
       for (jj in r1:r2) {
-	log_lik[jj] = multi_normal_lpdf(YXstar[jj,1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+	YXstar_rep[jj, 1:Nobs[mm]] = multi_normal_rng(Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+      }
+    }
 
+    if (missing) {
+      // start values for Mu and Sigma
+      for (g in 1:Ng) {
+	Mu_sat[g] = rep_vector(0, p + q);
+	Mu_rep_sat[g] = Mu_sat[g];
+	Sigma_sat[g] = diag_matrix(rep_vector(1, p + q));
+	Sigma_rep_sat[g] = Sigma_sat[g];
+      }
+    
+      for (jj in 1:emiter) {
+	satout = estep(YXstar, Mu_sat, Sigma_sat, Nobs, Obsvar, startrow, endrow, grpnum, Np, Ng);
+	satrep_out = estep(YXstar_rep, Mu_rep_sat, Sigma_rep_sat, Nobs, Obsvar, startrow, endrow, grpnum, Np, Ng);
+
+	// M step
+	for (g in 1:Ng) {
+	  Mu_sat[g] = satout[g,,1]/N[g];
+	  Sigma_sat[g] = satout[g,,2:(p + q + 1)]/N[g] - Mu_sat[g] * Mu_sat[g]';
+	  Mu_rep_sat[g] = satrep_out[g,,1]/N[g];
+	  Sigma_rep_sat[g] = satrep_out[g,,2:(p + q + 1)]/N[g] - Mu_rep_sat[g] * Mu_rep_sat[g]';
+	}
+      }
+    } else {
+      // complete data; Np patterns must only correspond to groups
+      for (mm in 1:Np) {
+	int arr_dims[3] = dims(YXstar);
+	matrix[endrow[mm] - startrow[mm] + 1, arr_dims[2]] YXsmat; // crossprod needs matrix
+	matrix[endrow[mm] - startrow[mm] + 1, arr_dims[2]] YXsrepmat;
+	r1 = startrow[mm];
+	r2 = endrow[mm];
+	grpidx = grpnum[mm];
+	for (jj in 1:(p + q)) {
+	  Mu_sat[grpidx,jj] = mean(YXstar[r1:r2,jj]);
+	  Mu_rep_sat[grpidx,jj] = mean(YXstar_rep[r1:r2,jj]);
+	}
+	for (jj in r1:r2) {
+	  YXsmat[jj - r1 + 1] = YXstar[jj]';
+	  YXsrepmat[jj - r1 + 1] = YXstar_rep[jj]';
+	}
+	Sigma_sat[grpidx] = crossprod(YXsmat)/N[grpidx];
+	Sigma_rep_sat[grpidx] = crossprod(YXsrepmat)/N[grpidx];
+	// FIXME? Sigma_sat[grpidx] = tcrossprod(YXsmat); does not throw an error??
+      }
+    }
+    
+    // compute log-likelihoods
+    for (mm in 1:Np) {
+      obsidx = Obsvar[mm,];
+      xidx = Xvar[mm,];
+      xdatidx = Xdatvar[mm,];
+      r1 = startrow[mm];
+      r2 = endrow[mm];
+      grpidx = grpnum[mm];
+      for (jj in r1:r2) {
+	log_lik[jj] = multi_normal_lpdf(YXstar[jj, 1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+	log_lik_sat[jj] = multi_normal_lpdf(YXstar[jj, 1:Nobs[mm]] | Mu_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_sat[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+	
+	log_lik_rep[jj] = multi_normal_lpdf(YXstar_rep[jj, 1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+	log_lik_rep_sat[jj] = multi_normal_lpdf(YXstar_rep[jj, 1:Nobs[mm]] | Mu_rep_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_rep_sat[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+
+	// log_lik_sat, log_lik_sat_rep
 	if (Nx[mm] > 0) {
-	  log_lik[jj] += -multi_normal_lpdf(YXstar[jj,xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	  log_lik[jj] += -multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	  log_lik_sat[jj] += -multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu_sat[grpidx, xidx[1:Nx[mm]]], Sigma_sat[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	  
+	  log_lik_rep[jj] += -multi_normal_lpdf(YXstar_rep[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	  log_lik_rep_sat[jj] += -multi_normal_lpdf(YXstar_rep[jj, xdatidx[1:Nx[mm]]] | Mu_rep_sat[grpidx, xidx[1:Nx[mm]]], Sigma_rep_sat[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
 	}
       }
     }
+
+    // for ppp, compare observed log_lik vs rep log_lik
+    ppp = step((-sum(log_lik_rep) + sum(log_lik_rep_sat)) - (-sum(log_lik) + sum(log_lik_sat)));
   }
   
 } // end with a completely blank line (not even whitespace)

@@ -187,7 +187,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           w1skel, w2skel, w3skel, # eq constraint matrices
                           w4skel, w5skel, w6skel, w7skel, w8skel,
                           w9skel, w10skel, w11skel, w12skel, w13skel,
-                          w14skel, w15skel,
+                          w14skel, w15skel, emiter,
                           lam_y_sign, lam_x_sign, # sign constraint matrices
                           gam_sign, b_sign, psi_r_sign, fullpsi, phi_r_sign,
                           lavpartable = NULL, # for priors
@@ -217,6 +217,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$Xvar <- Xvar
   dat$Xdatvar <- Xdatvar
   dat$Nx <- array(Nx, length(Nx))
+  dat$emiter <- emiter
 
   dat$YX <- YX
   dat$YXo <- YXo

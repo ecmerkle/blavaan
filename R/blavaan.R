@@ -520,7 +520,8 @@ blavaan <- function(...,  # default lavaan arguments
                                            "Psi_cov", "Psi_var",
                                            #"Ph_cov", "Ph_var",
                                            "Nu_free", "Alpha_free", "Tau_free",
-                                           "log_lik"))
+                                           "log_lik", "log_lik_sat",
+                                           "log_lik_rep", "log_lik_rep_sat", "ppp"))
                     if("init" %in% names(l2s)){
                       jagtrans <- c(jagtrans, list(inits = l2s$init))
                     }
