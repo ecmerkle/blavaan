@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">blavaan</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3-18.802</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3-18.804</span>
       </span>
     </div>
 
@@ -193,10 +193,12 @@
     </tr>
     <tr>
       <th>mcmcextra</th>
-      <td><p>A list with potential names <code>syntax</code> and
-  <code>monitor</code>. The <code>syntax</code> object is a text string containing extra
-  code to insert in the JAGS/Stan model syntax, and the <code>monitor</code> object
-  is a character vector containing extra JAGS/Stan parameters to sample.</p></td>
+      <td><p>A list with potential names <code>syntax</code> (unavailable
+  for target=<code>"stan"</code>),
+  <code>monitor</code>, and <code>data</code>. The <code>syntax</code> object is a text string containing extra
+  code to insert in the JAGS/Stan model syntax. The <code>data</code> object
+  is a list of extra data to send to the JAGS/Stan model. The <code>monitor</code> object
+  is a character vector containing extra JAGS/Stan parameters to monitor.</p></td>
     </tr>
     <tr>
       <th>inits</th>
