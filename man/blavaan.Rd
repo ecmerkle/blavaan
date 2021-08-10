@@ -28,10 +28,12 @@ blavaan(..., cp = "srs",
 \item{mcmcfile}{If \code{TRUE}, the JAGS/Stan model and data will be written
   to files (in the lavExport directory). Can also supply a character
   string, which serves as the name of the directory to which files will be written.}
-\item{mcmcextra}{A list with potential names \code{syntax} and
-  \code{monitor}. The \code{syntax} object is a text string containing extra
-  code to insert in the JAGS/Stan model syntax, and the \code{monitor} object
-  is a character vector containing extra JAGS/Stan parameters to sample.}
+\item{mcmcextra}{A list with potential names \code{syntax} (unavailable
+  for target=\code{"stan"}),
+  \code{monitor}, and \code{data}. The \code{syntax} object is a text string containing extra
+  code to insert in the JAGS/Stan model syntax. The \code{data} object
+  is a list of extra data to send to the JAGS/Stan model. The \code{monitor} object
+  is a character vector containing extra JAGS/Stan parameters to monitor.}
 \item{inits}{If it is a character string, the options are currently
     \code{"simple"}, \code{"Mplus"}, \code{"prior"} (default), or \code{"jags"}.  In the first two
     cases, parameter values are set as though they will be estimated via

@@ -78,7 +78,9 @@ blavaan <- function(...,  # default lavaan arguments
     if(grepl("stan", target)){
       if(convergence == "auto") stop("blavaan ERROR: auto convergence is unavailable for Stan.")
 
-      if(target == "stan" & length(mcmcextra) > 0) stop("blavaan ERROR: mcmcextra is not available for target='stan'.")
+      if(target == "stan" & length(mcmcextra) > 0) {
+        if("syntax" %in% names(mcmcextra)) stop("blavaan ERROR: mcmcextra$syntax is not available for target='stan'.")
+      }
     } else if(target == "jags"){
       if(!pkgcheck("runjags")){
         ## go to rstan if they have it
@@ -521,6 +523,7 @@ blavaan <- function(...,  # default lavaan arguments
                                            #"Ph_cov", "Ph_var",
                                            "Nu_free", "Alpha_free", "Tau_free",
                                            "log_lik", "log_lik_sat", "ppp"))
+
                     if("init" %in% names(l2s)){
                       jagtrans <- c(jagtrans, list(inits = l2s$init))
                     }
@@ -531,11 +534,20 @@ blavaan <- function(...,  # default lavaan arguments
         }
 
         if(!inherits(jagtrans, "try-error")){
-            ## add extras to monitor, if specified
-            sampparms <- jagtrans$monitors
-            if("monitor" %in% names(mcmcextra)){
-                sampparms <- c(sampparms, mcmcextra$monitor)
+            ## add extras
+            if(length(mcmcextra) > 0){
+                if("monitor" %in% names(mcmcextra)){
+                    jagtrans$monitors <- c(jagtrans$monitors, mcmcextra$monitor)
+                }
+                if("data" %in% names(mcmcextra)){
+                    tmpdat <- c(jagtrans$data, mcmcextra$data)
+                    ## if a piece of data appears in both jagtrans and mcmcextra, prefer
+                    ## the one from mcmcextra:
+                    jagtrans$data <- tmpdat[!duplicated(names(tmpdat), fromLast = TRUE)]
+                }
             }
+
+            sampparms <- jagtrans$monitors
             if(save.lvs & target != "stan") sampparms <- c(sampparms, "eta")
 
             if(initsin == "jags"){
@@ -855,7 +867,7 @@ blavaan <- function(...,  # default lavaan arguments
     }
 
     ## add monitors in mcmcextra as defined variables (except reserved monitors)
-    if(length(mcmcextra$monitor) > 0){
+    if(length(mcmcextra$monitor) > 0 & target != "stan"){
         reservemons <- which(mcmcextra$monitor %in% c('deviance', 'pd', 'popt',
                                                      'dic', 'ped', 'full.pd', 'eta'))
 
