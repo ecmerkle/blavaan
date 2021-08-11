@@ -430,9 +430,7 @@ blavaan <- function(...,  # default lavaan arguments
     lavoptions$se        <- "standard"
     lavoptions$test <- "standard"
     if(ordmod) {
-        ## FIXME: remove when ppp is available:
-        cat("blavaan NOTE: ordinal models are under development and will use test=\"none\".\n\n")
-        lavoptions$test <- "none"
+        cat("blavaan NOTE: ordinal models are under development and may be unstable.\n\n")
     }
     if("test" %in% dotNames) {
         if(dotdotdot$test == "none") lavoptions$test <- "none"
