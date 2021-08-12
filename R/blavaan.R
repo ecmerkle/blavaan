@@ -72,6 +72,14 @@ blavaan <- function(...,  # default lavaan arguments
       
     # no current functionality to generate initial values from approximately-equal prior
     if(length(wiggle) > 0 & target %in% c('stanclassic', 'jags') & inherits(inits, 'character')) inits <- "simple"
+
+    # mcmcextra args
+    if(length(mcmcextra) > 0){
+      goodnm <- names(mcmcextra) %in% c('data', 'monitor', 'syntax')
+      if(!all(goodnm)){
+        stop(paste0("blavaan ERROR: invalid list names in mcmcextra:\n  ", paste(names(mcmcextra)[!goodnm], collapse=" ")))
+      }
+    }
   
     # ensure rstan/runjags are here. if target is not installed but
     # the other is, then use the other instead.
@@ -723,6 +731,8 @@ blavaan <- function(...,  # default lavaan arguments
         tmplo <- lavoptions
         tmplo$target <- "jags" ## to ensure computation in R, vs extraction of the
                                ## log-likehoods from Stan
+        ## FIXME: modify so that fx is commensurate with logl from Stan
+        ##        for ystar, could take means of truncated normals
         attr(x, "fx") <- get_ll(lavmodel = lavmodel, lavpartable = lavpartable,
                                 lavsamplestats = lavsamplestats, lavoptions = tmplo,
                                 lavcache = lavcache, lavdata = lavdata,
