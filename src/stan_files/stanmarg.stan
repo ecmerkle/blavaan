@@ -214,7 +214,37 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     
     return out;
   }
-  
+
+  // log-likelihood (also for call outside of model estimation)
+  vector get_ll(vector[] YXstar, vector[] Mu, matrix[] Sigma, int[] Nobs, int[,] Obsvar, int[,] Xvar, int[,] Xdatvar, int[] startrow, int[] endrow, int[] grpnum, int[] Nx, int Np, int Ng, int Ntot) {
+    int obsidx[dims(Sigma)[2]];
+    int xidx[max(Nx)];
+    int xdatidx[max(Nx)];
+    int r1;
+    int r2;
+    int grpidx;
+    vector[Ntot] out;
+    
+    for (mm in 1:Np) {
+      obsidx = Obsvar[mm,];
+      xidx = Xvar[mm,];
+      xdatidx = Xdatvar[mm,];
+      r1 = startrow[mm];
+      r2 = endrow[mm];
+      grpidx = grpnum[mm];
+      for (jj in r1:r2) {
+	out[jj] = multi_normal_lpdf(YXstar[jj, 1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+
+	// log_lik_sat, log_lik_sat_rep
+	if (Nx[mm] > 0) {
+	  out[jj] += -multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	}
+      }
+    }
+
+    return out;
+  }
+    
 }
 data {
   // see https://books.google.com/books?id=9AC-s50RjacC&lpg=PP1&dq=LISREL&pg=PA2#v=onepage&q=LISREL&f=false
@@ -982,7 +1012,8 @@ generated quantities { // these matrices are saved in the output but do not figu
       }
     }
     
-    // compute log-likelihoods
+    // compute log-likelihoods, primary in its own function and then others for ppp
+    log_lik = get_ll(YXstar, Mu, Sigma, Nobs, Obsvar, Xvar, Xdatvar, startrow, endrow, grpnum, Nx, Np, Ng, Ntot);
     for (mm in 1:Np) {
       obsidx = Obsvar[mm,];
       xidx = Xvar[mm,];
@@ -1003,7 +1034,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 	if (Nx[mm] > 0) {
 	  log_lik[jj] += -multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
 	  log_lik_sat[jj] += multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
-	  log_lik_sat[jj] += - multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu_sat[grpidx, xidx[1:Nx[mm]]], Sigma_sat[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	  log_lik_sat[jj] += -multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu_sat[grpidx, xidx[1:Nx[mm]]], Sigma_sat[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
 	  
 	  log_lik_rep[jj] += -multi_normal_lpdf(YXstar_rep[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
 	  log_lik_rep_sat[jj] += -multi_normal_lpdf(YXstar_rep[jj, xdatidx[1:Nx[mm]]] | Mu_rep_sat[grpidx, xidx[1:Nx[mm]]], Sigma_rep_sat[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
