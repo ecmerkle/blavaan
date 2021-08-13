@@ -651,6 +651,7 @@ transformed parameters {
 
   matrix[p, q] top_right[Ng];        // top right block of Sigma
   vector[p + q] YXstar[Ntot];
+  vector[Nord] YXostar[Ntot]; // ordinal data
 
   // obtain vector of free ordered parameters for priors, and vector of all taus for likelihood
   if (ord) {
@@ -751,15 +752,16 @@ transformed parameters {
 	  int vecpos = YXo[i,j] - 1;
 	  if (j > 1) vecpos += sum(nlevs[1:(j - 1)]) - (j - 1);
 	  if (YXo[i,j] == 1) {
-	    YXstar[i, ordidx[j]] = -10 + (Tau[grpnum[patt], (vecpos + 1), 1] + 10) .* z_aug[i,j];
+	    YXostar[i,j] = -10 + (Tau[grpnum[patt], (vecpos + 1), 1] + 10) .* z_aug[i,j];
 	    tau_jacobian += log(1/(Tau[grpnum[patt], (vecpos + 1), 1] + 10));  // must add log(U) to tau_jacobian
 	  } else if (YXo[i,j] == nlevs[j]) {
-	    YXstar[i, ordidx[j]] = Tau[grpnum[patt], vecpos, 1] + (10 - Tau[grpnum[patt], vecpos, 1]) .* z_aug[i,j];
+	    YXostar[i,j] = Tau[grpnum[patt], vecpos, 1] + (10 - Tau[grpnum[patt], vecpos, 1]) .* z_aug[i,j];
 	    tau_jacobian += log(1/(10 - Tau[grpnum[patt], vecpos, 1]));
 	  } else {
-	    YXstar[i, ordidx[j]] = Tau[grpnum[patt], vecpos, 1] + (Tau[grpnum[patt], (vecpos + 1), 1] - Tau[grpnum[patt], vecpos, 1]) .* z_aug[i,j];
+	    YXostar[i,j] = Tau[grpnum[patt], vecpos, 1] + (Tau[grpnum[patt], (vecpos + 1), 1] - Tau[grpnum[patt], vecpos, 1]) .* z_aug[i,j];
 	    tau_jacobian += log(1/(Tau[grpnum[patt], (vecpos + 1), 1] - Tau[grpnum[patt], vecpos, 1]));
 	  }
+	  YXstar[i, ordidx[j]] = YXostar[i, j];
 	}
       }
     }
