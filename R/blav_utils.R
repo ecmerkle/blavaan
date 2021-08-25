@@ -122,7 +122,7 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
 
         }
     } else if(measure[1] %in% c("logl", "chisq") & !casewise) {
-        if(lavoptions$target == "stan"){
+        if(lavoptions$target == "stan" | lavoptions$categorical){ ## FIXME for categorical
             tmpll <- NA # we'll get it from stan
         } else {
             tmpobj <- lavobject

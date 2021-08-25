@@ -241,6 +241,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
 
     ordidx <- pta$vidx$ov.ord[[1]]
     dat$YXo <- dat$YX[, ordidx, drop=FALSE]
+    dat$YXo[dat$YXo == 0L] <- 1L ## this does not get used but is needed to avoid threshold problems
     mode(dat$YXo) <- "integer"
     dat$YX <- dat$YX[, -ordidx, drop=FALSE]
 
@@ -248,6 +249,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     neach <- vector("list", length(ordidx))
     for(i in 1:length(ordidx)){
       ordvar <- unlist(lapply(lavobject@Data@X, function(x) x[,ordidx[i]]))
+      ordvar <- ordvar[!is.na(ordvar)]
       nlevs[i] <- length(unique(ordvar))
     
       neach[[i]] <- summary(factor(ordvar), maxsum=1e5)
