@@ -848,7 +848,9 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
   deltloc <- which(names(lavfree) == "delta")
   if(length(deltloc) > 0) lavfree <- lavfree[-deltloc]
   if(!all(names(lavfree) %in% mapping)){
-    ## multiple groups?
+    ## multiple groups? FIXME handle delta
+    deltloc <- which(names(lavfree[[1]]) == "delta")
+    if(length(deltloc) > 0) lavfree <- lapply(lavfree, function(x) x[-deltloc])
     if(!all(names(lavfree[[1]]) %in% mapping)){
       stop("blavaan ERROR: unrecognized lavaan model matrix.")
     }
