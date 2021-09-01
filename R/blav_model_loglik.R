@@ -119,24 +119,29 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
             ## }
 
         }
-    } else if(measure[1] %in% c("logl", "chisq") & !casewise) {
+    } else if(measure[1] %in% c("logl", "chisq")) {
         if(lavoptions$target == "stan" | lavoptions$categorical){ ## FIXME for categorical
             tmpll <- NA # we'll get it from stan
         } else {
             tmpobj <- lavobject
             tmpobj@implied <- lav_model_implied(lavmodel)
-            tmpll <- sum(llcont(tmpobj))
+            tmpobj@Options$estimator <- "ML"
+            tmpll <- llcont(tmpobj)
         }
-        tmpsat <- 0
-        for(g in 1:length(implied$cov)){
-          ## high tolerance speed boost
-          satmod <- lavmvh1(Y = lavdata@X[[g]], Mp = lavdata@Mp[[g]],
-                            #max.iter = 20,
-                            tol = 1e-2)
-          tmpsat <- tmpsat + lavmvll(Y = lavdata@X[[g]], Mu = satmod$Mu, Sigma = satmod$Sigma,
-                                     x.idx = lavsamplestats@x.idx[[g]])
+        if(casewise) {
+            ll.samp <- tmpll
+        } else {
+            tmpsat <- 0
+            for(g in 1:length(implied$cov)){
+                ## high tolerance speed boost
+                satmod <- lavmvh1(Y = lavdata@X[[g]], Mp = lavdata@Mp[[g]],
+                                  #max.iter = 20,
+                                  tol = 1e-2)
+                tmpsat <- tmpsat + lavmvll(Y = lavdata@X[[g]], Mu = satmod$Mu, Sigma = satmod$Sigma,
+                                           x.idx = lavsamplestats@x.idx[[g]])
+            }
+            ll.samp <- c(sum(tmpll), tmpsat)
         }
-        ll.samp <- c(tmpll, tmpsat)
     } else {
         ## other measures require us to run lavaan
         lavoptions$se <- "none"

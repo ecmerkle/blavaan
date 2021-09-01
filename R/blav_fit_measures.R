@@ -185,7 +185,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
           casells <- case_lls(object@external$mcmcout, object@Model,
                               object@ParTable, object@SampleStats,
                               lavopt, object@Cache,
-                              object@Data, make_mcmc(object@external$mcmcout))
+                              object@Data, make_mcmc(object@external$mcmcout), object)
         }
 
         fitres <- waic(casells)
