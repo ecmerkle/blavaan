@@ -975,8 +975,8 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  Mu_rep_sat[grpidx,jj] = mean(YXstar_rep[r1:r2,jj]);
 	}
 	for (jj in r1:r2) {
-	  YXsmat[jj - r1 + 1] = YXstar[jj]';
-	  YXsrepmat[jj - r1 + 1] = YXstar_rep[jj]';
+	  YXsmat[jj - r1 + 1] = (YXstar[jj] - Mu_sat[grpidx])';
+	  YXsrepmat[jj - r1 + 1] = (YXstar_rep[jj] - Mu_rep_sat[grpidx])';
 	}
 	Sigma_sat[grpidx] = crossprod(YXsmat)/N[grpidx];
 	Sigma_rep_sat[grpidx] = crossprod(YXsrepmat)/N[grpidx];
