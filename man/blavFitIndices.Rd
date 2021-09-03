@@ -99,7 +99,7 @@ Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@gmail.com})
 
 Garnier-Villarreal, M., & Jorgensen, T. D. (2020). 
 Adapting Fit Indices for Bayesian Structural Equation Modeling: Comparison to Maximum Likelihood. 
-\emph{Psychological Methods}, 25(1), 46–70. https://doi.org/dx.doi.org/10.1037/met0000224
+\emph{Psychological Methods}, 25(1), 46--70. https://doi.org/dx.doi.org/10.1037/met0000224
   (See also \url{https://osf.io/afkcw/})
 
   Other references:
