@@ -179,7 +179,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
     if(any(c("waic", "p_waic", "looic", "p_loo") %in% fit.measures)) {
         lavopt <- object@Options
         lavopt$estimator <- "ML"
-        if(lavopt$target == "stan"){
+        if(lavopt$target == "stan" && !lavopt$categorical){
           casells <- loo::extract_log_lik(object@external$mcmcout)
         } else {
           casells <- case_lls(object@external$mcmcout, object@Model,
