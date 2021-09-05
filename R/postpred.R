@@ -127,6 +127,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
         chisq.boot <- 2*diff(get_ll(lavmodel = lavmodel,
                                     lavsamplestats = lavsamplestats,
                                     lavdata = lavdata,
+                                    lavoptions = lavoptions,
                                     measure = measure[1]))
 
       ## chi-squared for (in)complete data

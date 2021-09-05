@@ -64,6 +64,9 @@ importFrom("Matrix",
 importFrom("future.apply",
            "future_lapply", "future_sapply")
 
+importFrom("tmvnsim",
+           "tmvnsim")
+
 ## need to import something, though others could be used
 importFrom("bayesplot",
            "mcmc_trace")
