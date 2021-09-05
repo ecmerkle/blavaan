@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">blavaan</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3-18.826</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3-18.827</span>
       </span>
     </div>
 
@@ -191,10 +191,17 @@ jags.ic <span class='op'>=</span> <span class='cn'>FALSE</span>, seed <span clas
     </tr>
     <tr>
       <th>mcmcextra</th>
-      <td><p>A list with potential names <code>syntax</code> and
-  <code>monitor</code>. The <code>syntax</code> object is a text string containing extra
-  code to insert in the JAGS/Stan model syntax, and the <code>monitor</code> object
-  is a character vector containing extra JAGS/Stan parameters to sample.</p></td>
+      <td><p>A list with potential names <code>syntax</code> (unavailable
+  for target=<code>"stan"</code>),
+  <code>monitor</code>, <code>data</code>, and <code>llnsamp</code>. The <code>syntax</code> object is a text string containing extra
+  code to insert in the JAGS/Stan model syntax. The <code>data</code> object
+  is a list of extra data to send to the JAGS/Stan model. The <code>monitor</code> object
+  is a character vector containing extra JAGS/Stan parameters to
+  monitor. The <code>llnsamp</code> object is only relevant to models with ordinal
+  variables, and specifies the number of samples that should be drawn to approximate
+  the model log-likelihood (larger numbers imply higher accuracy and
+  longer time). This log-likelihood is specifically used to compute
+  information criteria.</p></td>
     </tr>
     <tr>
       <th>inits</th>
