@@ -143,7 +143,7 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
 
         }
     } else if(measure[1] %in% c("logl", "chisq")) {
-        if(lavoptions$target == "stan" | lavoptions$categorical){ ## FIXME for categorical
+        if(lavoptions$target == "stan"){
             tmpll <- NA # we'll get it from stan
         } else {
             tmpobj <- lavobject
@@ -217,7 +217,7 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
                        lavoptions     = NULL,
                        lavcache       = NULL,
                        lavdata        = NULL,
-                       lavobject      = NULL, # just to use lavPredict()
+                       lavobject      = NULL,
                        measure        = "logl",
                        casewise       = FALSE,
                        conditional    = FALSE){
@@ -231,15 +231,22 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
     } else {
       implied <- lav_model_implied(lavmodel)
     }
-  
-    ## check for missing, to see if we can easily get baseline ll for chisq
+        
+    ## check for missing
     mis <- FALSE
     if(any(is.na(unlist(lavdata@X)))) mis <- TRUE
 
     ## continuous and ordinal indicators
     num.idx <- lavmodel@num.idx
     th.idx <- lavmodel@th.idx
-  
+
+    if("llnsamp" %in% names(lavoptions)){
+        llnsamp <- lavoptions$llnsamp
+    } else {
+        ## rule of thumb that can probably be improved...
+        llnsamp <- max(200, 20*length(unique(th.idx[[1]][th.idx[[1]] > 0])))
+    }
+        
     if(measure[1] %in% c("logl", "chisq") & !mis){
         if(casewise){
             ll.samp <- rep(NA, sum(unlist(lavdata@nobs)))
@@ -309,8 +316,8 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
                 if(length(num.idx[[g]]) > 0){
                     mu.ord <- mnvec[ord.idx] + s12s22i %*% (lavdata@X[[g]][i,num.idx[[g]]] - mnvec[num.idx[[g]]])
                 }
-                ## run tmvnsim; FIXME send in number of samples
-                lsigi <- tmvnsim::tmvnsim(50, nord, lower = lowtau[i,], upper = hitau[i,],
+                ## run tmvnsim to approximate marginal logl
+                lsigi <- tmvnsim::tmvnsim(llnsamp, nord, lower = lowtau[i,], upper = hitau[i,],
                                           means = mu.ord, sigma = cov.ord)
                 tmpll[i] <- tmpll[i] + log(mean(lsigi$wts))
             }
@@ -343,7 +350,7 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
     } else if(measure[1] %in% c("logl", "chisq")) {
         ## TODO!
         warning("need to implement logl with missing data!!")
-        tmpll <- NA # we'll get it from stan
+        tmpll <- NA
     } else {
         ## other measures require us to run lavaan
         lavoptions$se <- "none"

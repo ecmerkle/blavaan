@@ -159,7 +159,6 @@ cond_moments <- function(postsamp, lavmodel, lavpartable, lavsamplestats, lavdat
   mnvec <- lavPredict(lavobject, type="ov", ETA = eta)
   if(inherits(mnvec, "matrix")) mnvec <- list(mnvec)
 
-  ##covmat <- lavaan:::computeTHETA(lavmodel, lavmodel@GLIST)
   covmat <- lavInspect(lavobject, 'theta')
   if(inherits(covmat, "matrix")) covmat <- list(covmat)
   ## to avoid warnings from mnormt::pd.solve

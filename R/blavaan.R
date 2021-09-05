@@ -75,7 +75,7 @@ blavaan <- function(...,  # default lavaan arguments
 
     # mcmcextra args
     if(length(mcmcextra) > 0){
-      goodnm <- names(mcmcextra) %in% c('data', 'monitor', 'syntax')
+      goodnm <- names(mcmcextra) %in% c('data', 'monitor', 'syntax', 'llnsamp')
       if(!all(goodnm)){
         stop(paste0("blavaan ERROR: invalid list names in mcmcextra:\n  ", paste(names(mcmcextra)[!goodnm], collapse=" ")))
       }
@@ -457,7 +457,15 @@ blavaan <- function(...,  # default lavaan arguments
     lavoptions$dp        <- dp
     lavoptions$prisamp   <- prisamp
     lavoptions$target    <- target
-
+    if("llnsamp" %in% names(mcmcextra)){
+        if(length(mcmcextra$llnsamp) > 1 ||
+           (!inherits(mcmcextra$llnsamp, "numeric") &&
+            !(inherits(mcmcextra$llnsamp, "integer")))){
+            stop("blavaan ERROR: llnsamp must be a single integer.\n\n")
+        }
+        lavoptions$llnsamp <- mcmcextra$llnsamp
+    }
+        
     verbose <- lavoptions$verbose
 
     # redo estimation + vcov + test

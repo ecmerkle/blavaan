@@ -182,6 +182,10 @@ blav_fit_measures <- function(object, fit.measures = "all",
         if(lavopt$target == "stan" && !lavopt$categorical){
           casells <- loo::extract_log_lik(object@external$mcmcout)
         } else {
+          if(lavopt$categorical){
+            cat("blavaan NOTE: The ICs involve likelihood approximations that may be inaccurate.\n",
+                "Consider manually setting llnsamp in mcmcextra for greater accuracy (but also greater time).\n\n")
+          }
           casells <- case_lls(object@external$mcmcout, object@Model,
                               object@ParTable, object@SampleStats,
                               lavopt, object@Cache,
