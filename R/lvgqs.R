@@ -55,10 +55,10 @@ lvgqs <- function(modmats, standata, getlvs = TRUE) {
       grpidx <- grpnum[mm]
       
       A <- solve(I - modmats[[grpidx]]$beta)
-      total_eta_eta <- A - I
-      indirect_eta_eta <- total_eta_eta - modmats[[grpidx]]$beta
-      total_eta_y <- modmats[[grpidx]]$lambda %*% A
-      indirect_eta_y <- total_eta_y - modmats[[grpidx]]$lambda
+      #total_eta_eta <- A - I
+      #indirect_eta_eta <- total_eta_eta - modmats[[grpidx]]$beta
+      #total_eta_y <- modmats[[grpidx]]$lambda %*% A
+      #indirect_eta_y <- total_eta_y - modmats[[grpidx]]$lambda
 
       Psi_star <- A %*% modmats[[grpidx]]$psi %*% t(A)
       L_Yt <- t(modmats[[grpidx]]$lambda)
@@ -77,6 +77,7 @@ lvgqs <- function(modmats, standata, getlvs = TRUE) {
         corner <- cov_eta %*% L_Yt
         bottom_right <- cov_eta
 
+        ## NB SEM-specific expressions for this matrix also exist
         L <- bottom_right[usepsi,usepsi,drop=FALSE] - (corner[,obsidx[1:Nobs[mm]],drop=FALSE] %*% precision[1:Nobs[mm],1:Nobs[mm]] %*% t(corner[,obsidx[1:Nobs[mm]],drop=FALSE]))[usepsi,usepsi,drop=FALSE]
         L <- try(chol(L))
         if (inherits(L, 'try-error')) {
@@ -124,7 +125,7 @@ lvgqs <- function(modmats, standata, getlvs = TRUE) {
   out
 }
 
-samp_lvs <- function(mcobj, lavmodel, lavpartable, standata, thin = 1) {
+samp_lvs <- function(mcobj, lavmodel, lavpartable, standata, categorical, thin = 1) {
   lavmcmc <- make_mcmc(mcobj)
   itnums <- sampnums(mcobj, thin = thin)
   nsamps <- length(itnums)
@@ -139,7 +140,7 @@ samp_lvs <- function(mcobj, lavmodel, lavpartable, standata, thin = 1) {
         lavmodel <- fill_params(lavmcmc[[j]][i,], lavmodel, lavpartable)
 
         modmats <- vector("list", nblocks)
-        for (g in 1:nblocks) {
+        for(g in 1:nblocks) {
           ## which mm belong to group g?
           mm.in.group <- 1:nmat[g] + cumsum(c(0,nmat))[g]
 
@@ -147,7 +148,25 @@ samp_lvs <- function(mcobj, lavmodel, lavpartable, standata, thin = 1) {
           if(!("beta" %in% names(modmats[[g]]))) modmats[[g]]$beta <- matrix(0, standata$m, standata$m)
         }
 
-        tmpmat[j,,] <- lvgqs(modmats, standata)
+        standata2 <- standata
+        if(categorical) {
+          ## use standata and lavmcmc[[j]][i,] to create YX matrix that has both
+          ## continuous and ordinal
+          tmpsamp <- lavmcmc[[j]][i,]
+          YXo <- matrix(tmpsamp[grep("YXostar", names(tmpsamp))], standata$Ntot, standata$Nord,
+                        byrow = TRUE)
+          YXstar <- matrix(0, standata$Ntot, standata$p + standata$q)
+
+          YXstar[, standata$ordidx] <- YXo
+
+          if(with(standata, p + q - Nord) > 0){
+            YXstar[, standata$contidx] <- standata$YX
+          }
+
+          standata2$YX <- YXstar
+        }
+        
+        tmpmat[j,,] <- lvgqs(modmats, standata2)
       }
       tmpmat})
 

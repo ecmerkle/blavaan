@@ -541,6 +541,10 @@ blavaan <- function(...,  # default lavaan arguments
                     if("init" %in% names(l2s)){
                       jagtrans <- c(jagtrans, list(inits = l2s$init))
                     }
+
+                    if(ordmod && save.lvs){
+                      jagtrans$monitors <- c(jagtrans$monitors, "YXostar")
+                    }
                 } else {
                     jagtrans <- l2s
                 }  
@@ -712,7 +716,7 @@ blavaan <- function(...,  # default lavaan arguments
                 }
                 ## lvs now in R instead of Stan
                 if(save.lvs & target == "stan"){
-                    stanlvs <- samp_lvs(res, lavmodel, parests$lavpartable, jagtrans$data)
+                    stanlvs <- samp_lvs(res, lavmodel, parests$lavpartable, jagtrans$data, lavoptions$categorical)
                     if(dim(stanlvs)[3L] > 0){
                         lvsumm <- as.matrix(rstan::monitor(stanlvs, print=FALSE))
                         cmatch <- match(colnames(stansumm), colnames(lvsumm))
@@ -745,7 +749,7 @@ blavaan <- function(...,  # default lavaan arguments
                                 lavsamplestats = lavsamplestats, lavoptions = tmplo,
                                 lavcache = lavcache, lavdata = lavdata,
                                 lavobject = LAV)[1]
-        if(save.lvs & jag.do.fit) {
+        if(save.lvs & jag.do.fit & !ordmod) {
             if(target == "jags"){
                 fullpmeans <- summary(make_mcmc(res))[[1]][,"Mean"]
             } else {
@@ -791,7 +795,7 @@ blavaan <- function(...,  # default lavaan arguments
         sampkls <- NA
       }
       
-      if(save.lvs) {
+      if(save.lvs & !ordmod) {
         if(target == "stan"){
           lavmcmc <- make_mcmc(res, stanlvs) ## add on lvs
         }
@@ -910,7 +914,7 @@ blavaan <- function(...,  # default lavaan arguments
       if(save.lvs & target=="stan") extslot <- c(extslot, list(stanlvs = stanlvs))
     }
     if(jags.ic) extslot <- c(extslot, list(sampkls = sampkls))
-    if(save.lvs) {
+    if(save.lvs & !ordmod) {
       extslot <- c(extslot, list(cfx = cfx, csamplls = csamplls))
       if(jags.ic) extslot <- c(extslot, list(csampkls = csampkls))
     }
