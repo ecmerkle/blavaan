@@ -106,6 +106,9 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
             
             ## find sign-constrained loadings of the two lvs
             lampar1 <- lamfree[[i]][,fpar[j,2]]
+            ## see whether any are equality constrained
+            l1match <- match(lampar1, constraint$rhs, nomatch = 0L)
+            lampar1[l1match != 0] <- as.numeric(constraint$lhs[l1match])
             if (all(lampar1 == 0)) { # ov converted to lv
               l1 <- 1
             } else {
@@ -114,6 +117,8 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
             }
 
             lampar2 <- lamfree[[i]][,fpar[j,1]]
+            l2match <- match(lampar2, constraint$rhs, nomatch = 0L)
+            lampar2[l2match != 0] <- as.numeric(constraint$lhs[l2match])
             if (all(lampar2 == 0)) {
               l2 <- 1
             } else {
