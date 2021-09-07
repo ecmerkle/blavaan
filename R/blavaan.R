@@ -748,7 +748,7 @@ blavaan <- function(...,  # default lavaan arguments
         attr(x, "fx") <- get_ll(lavmodel = lavmodel, lavpartable = lavpartable,
                                 lavsamplestats = lavsamplestats, lavoptions = tmplo,
                                 lavcache = lavcache, lavdata = lavdata,
-                                lavobject = LAV)[1]
+                                lavobject = LAV, standata = rjarg$data)[1]
         if(save.lvs & jag.do.fit & !ordmod) {
             if(target == "jags"){
                 fullpmeans <- summary(make_mcmc(res))[[1]][,"Mean"]
@@ -786,7 +786,8 @@ blavaan <- function(...,  # default lavaan arguments
       cat("Computing posterior predictives...\n")
       lavmcmc <- make_mcmc(res)
       samplls <- samp_lls(res, lavmodel, lavpartable, lavsamplestats,
-                          lavoptions, lavcache, lavdata, lavmcmc, lavobject = LAV)
+                          lavoptions, lavcache, lavdata, lavmcmc, lavobject = LAV,
+                          standata = rjarg$data)
       if(jags.ic) {
         sampkls <- samp_kls(res, lavmodel, lavpartable,
                             lavsamplestats, lavoptions, lavcache,
