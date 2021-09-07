@@ -148,7 +148,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
         indices["ppp"] <- object@Fit@test[[2]]$stat
     }
     if(any(c("bic", "dic", "p_dic") %in% fit.measures & bopts$test != "none")) {
-        if(compareVersion(packageDescription('lavaan')$Version, '0.6-10') < 0) stop("blavaan ERROR: lavaan 0.6-10 or higher is needed (you may need to install from github)")
+        if(bopts$categorical && compareVersion(packageDescription('lavaan')$Version, '0.6-10') < 0) stop("blavaan ERROR: lavaan 0.6-10 or higher is needed (you may need to install from github)")
         df <- 2*(object@Fit@fx - mean(as.numeric(object@external$samplls[,,1])))
         indices["bic"] <- -2*object@Fit@fx + npar*log(N)
         indices["dic"] <- -2*object@Fit@fx + 2*df
@@ -184,7 +184,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
           casells <- loo::extract_log_lik(object@external$mcmcout)
         } else {
           if(lavopt$categorical){
-            if(compareVersion(packageDescription('lavaan')$Version, '0.6-10') < 0) stop("blavaan ERROR: lavaan 0.6-10 or higher is needed (you may need to install from github)")
+            if(bopts$categorical && compareVersion(packageDescription('lavaan')$Version, '0.6-10') < 0) stop("blavaan ERROR: lavaan 0.6-10 or higher is needed (you may need to install from github)")
             
             cat("blavaan NOTE: These criteria involve likelihood approximations that may be imprecise.\n",
                 "You could try running the model again to see how much the criteria fluctuate.\n",
