@@ -162,7 +162,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
   return(out)
 }
 
-lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=NULL, prisamp=FALSE) {
+lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=NULL, prisamp=FALSE, mcmcextra=NULL) {
   ## extract model and data characteristics from lavaan object
   dat <- list()
   opts <- lavInspect(lavobject, 'options')
@@ -176,7 +176,11 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   dat$N <- lavInspect(lavobject, 'nobs')
   dat$pri_only <- prisamp
   xidx <- lavobject@SampleStats@x.idx[[1]]
-  dat$emiter <- 20L ## TODO allow user change?
+  if ("emiter" %in% names(mcmcextra$data)) {
+    dat$emiter <- mcmcextra$data$emiter
+  } else {
+    dat$emiter <- 20L
+  }
 
   ## lavobject@SampleStats@missing.flag is TRUE when missing='ml',
   ## regardless of whether data are missing

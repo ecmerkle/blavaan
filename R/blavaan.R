@@ -457,13 +457,13 @@ blavaan <- function(...,  # default lavaan arguments
     lavoptions$dp        <- dp
     lavoptions$prisamp   <- prisamp
     lavoptions$target    <- target
-    if("llnsamp" %in% names(mcmcextra)){
-        if(length(mcmcextra$llnsamp) > 1 ||
-           (!inherits(mcmcextra$llnsamp, "numeric") &&
-            !(inherits(mcmcextra$llnsamp, "integer")))){
+    if("llnsamp" %in% names(mcmcextra$data)){
+        if(length(mcmcextra$data$llnsamp) > 1 ||
+           (!inherits(mcmcextra$data$llnsamp, "numeric") &&
+            !(inherits(mcmcextra$data$llnsamp, "integer")))){
             stop("blavaan ERROR: llnsamp must be a single integer.\n\n")
         }
-        lavoptions$llnsamp <- mcmcextra$llnsamp
+        lavoptions$llnsamp <- mcmcextra$data$llnsamp
     }
         
     verbose <- lavoptions$verbose
@@ -501,7 +501,7 @@ blavaan <- function(...,  # default lavaan arguments
                                 silent = TRUE)
             } else {
                 l2s <- try(lav2stanmarg(lavobject = LAV, dp = dp,
-                                        n.chains = n.chains,
+                                        n.chains = n.chains, mcmcextra = mcmcextra,
                                         inits = initsin, wiggle = wiggle,
                                         wiggle.sd = wiggle.sd, prisamp = prisamp),
                            silent = TRUE)
