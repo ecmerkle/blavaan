@@ -113,6 +113,8 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
               l1 <- 1
             } else {
               l1 <- lampar1[which(lampar1 %in% lamsign[,2])]
+              ## for across-group equality constraint:
+              if (length(l1) == 0) l1 <- lampar1[lampar1 != 0][1]
               if (lamsign[l1,1] == 1) l1 <- lamsign[l1,2]
             }
 
@@ -123,6 +125,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
               l2 <- 1
             } else {
               l2 <- lampar2[which(lampar2 %in% lamsign[,2])]
+              if (length(l2) == 0) l2 <- lampar2[lampar2 != 0][1]
               if (lamsign[l2,1] == 1) l2 <- lamsign[l2,2]
             }
 
