@@ -21,6 +21,8 @@ blav_model_test <- function(lavmodel       = NULL,
     if("syntax" %in% names(jagextra)){
         warning("blavaan WARNING: Marginal log-likelihood cannot be approximated when there is additional JAGS syntax.", call. = FALSE)
         mll <- NA
+    } else if(lavoptions$categorical){
+        mll <- NA # not tested, priors may cause problems
     } else {
         mll <- try(margloglik(lavpartable, lavmodel, lavoptions, 
                               lavsamplestats, lavdata, lavcache,
