@@ -637,7 +637,7 @@ transformed parameters {
 	  if (j == 1) {
 	    Tau[g, vecpos, 1] = Tau_un[g, vecpos, 1];
 	  } else {
-	    Tau[g, vecpos, 1] = Tau[g, (vecpos-1), 1] + exp(Tau_un[g, vecpos, 1]);
+	    Tau[g, vecpos, 1] = Tau[g, (vecpos - 1), 1] + exp(Tau_un[g, vecpos, 1]);
 	  }
 
 	  if (is_inf(rc)) {
@@ -645,9 +645,10 @@ transformed parameters {
 	    int wig = w15skel[opos, 3];
 	    if (eq == 0 || wig == 1) {
 	      Tau_free[ofreepos] = Tau[g, vecpos, 1];
-	      if (j > 1) {
-		tau_jacobian += log(1/(Tau[g, vecpos, 1] - Tau[g, (vecpos - 1), 1])); // see https://mc-stan.org/docs/2_24/reference-manual/ordered-vector.html
-	      }
+	      // this is used if a prior goes on Tau_free, instead of Tau_ufree:
+	      //if (j > 1) {
+	      //  tau_jacobian += Tau_un[g, vecpos, 1]; // see https://mc-stan.org/docs/2_24/reference-manual/ordered-vector.html
+	      // }
 	      ofreepos += 1;
 	    }
 	    opos += 1;
@@ -688,7 +689,7 @@ transformed parameters {
     b_primn = fill_prior(B_free, b_mn, w4skel);
     nu_primn = fill_prior(Nu_free, nu_mn, w13skel);
     alpha_primn = fill_prior(Alpha_free, alpha_mn, w14skel);
-    tau_primn = fill_prior(Tau_free, tau_mn, w15skel);
+    tau_primn = fill_prior(Tau_ufree, tau_mn, w15skel);
   } else {
     lambda_y_primn = to_vector(lambda_y_mn);
     b_primn = to_vector(b_mn);
@@ -723,13 +724,13 @@ transformed parameters {
 	  if (j > 1) vecpos += sum(nlevs[1:(j - 1)]) - (j - 1);
 	  if (YXo[i,j] == 1) {
 	    YXostar[i,j] = -10 + (Tau[grpnum[patt], (vecpos + 1), 1] + 10) .* z_aug[i,j];
-	    tau_jacobian += log(1/(Tau[grpnum[patt], (vecpos + 1), 1] + 10));  // must add log(U) to tau_jacobian
+	    tau_jacobian += log(fabs(Tau[grpnum[patt], (vecpos + 1), 1] + 10));  // must add log(U) to tau_jacobian
 	  } else if (YXo[i,j] == nlevs[j]) {
 	    YXostar[i,j] = Tau[grpnum[patt], vecpos, 1] + (10 - Tau[grpnum[patt], vecpos, 1]) .* z_aug[i,j];
-	    tau_jacobian += log(1/(10 - Tau[grpnum[patt], vecpos, 1]));
+	    tau_jacobian += log(fabs(10 - Tau[grpnum[patt], vecpos, 1]));
 	  } else {
 	    YXostar[i,j] = Tau[grpnum[patt], vecpos, 1] + (Tau[grpnum[patt], (vecpos + 1), 1] - Tau[grpnum[patt], vecpos, 1]) .* z_aug[i,j];
-	    tau_jacobian += log(1/(Tau[grpnum[patt], (vecpos + 1), 1] - Tau[grpnum[patt], vecpos, 1]));
+	    tau_jacobian += Tau_un[grpnum[patt], (vecpos + 1), 1]; // jacobian is log(exp(Tau_un))
 	  }
 	  YXstar[i, ordidx[j]] = YXostar[i, j];
 	}
@@ -794,7 +795,7 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   }
 
   if (ord) {
-    target += fabs(tau_jacobian);
+    target += tau_jacobian;
   }
   
   /* prior densities in log-units */
@@ -804,7 +805,7 @@ model { // N.B.: things declared in the model block do not get saved in the outp
 
   target += normal_lpdf(Nu_free       | nu_primn, nu_sd);
   target += normal_lpdf(Alpha_free    | alpha_primn, alpha_sd);
-  target += normal_lpdf(Tau_free      | tau_primn, tau_sd);
+  target += normal_lpdf(Tau_ufree      | tau_primn, tau_sd);
 
   /* transform sd parameters to var or prec, depending on
      what the user wants. */
