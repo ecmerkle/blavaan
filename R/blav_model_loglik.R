@@ -344,10 +344,14 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
                 }
                 ## run tmvnsim to approximate marginal logl
                 llidx <- i - r1 + 1
-                lsigi <- tmvnsim::tmvnsim(llnsamp, nord,
-                                          lower = lowtau[llidx,], upper = hitau[llidx,],
-                                          means = mu.ord, sigma = cov.ord)
-                tmpll[llidx] <- tmpll[llidx] + log(mean(lsigi$wts))
+                lsigi <- try(tmvnsim::tmvnsim(llnsamp, nord,
+                                              lower = lowtau[llidx,], upper = hitau[llidx,],
+                                              means = mu.ord, sigma = cov.ord))
+                if(inherits(lsigi, 'try-error')){
+                    tmpll[llidx] <- NA
+                } else {
+                    tmpll[llidx] <- tmpll[llidx] + log(mean(lsigi$wts))
+                }
             }
             
             if(casewise){
