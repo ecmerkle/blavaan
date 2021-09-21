@@ -6,6 +6,9 @@ template:
   params:
     bootswatch: cerulean
 
+resource_files:
+  - vignettes/refs.bib
+
 navbar:
   title: "blavaan"
   left:
