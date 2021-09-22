@@ -68,3 +68,7 @@ HS.model <- ' visual  =~ x1 + x2 + x3
 ```
 
 places a Beta(1,1) (uniform) prior on the correlation between the `visual` and `textual` factors.  If desired, we could also specify priors on the standard deviations (or variances or precisions) of the `visual` and `textual` factors.  Together with the prior on the correlation, these priors would imply a prior on the covariance between `visual` and `textual`.
+
+
+### References
+
