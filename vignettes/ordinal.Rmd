@@ -1,0 +1,115 @@
+---
+title: "Ordinal Models and Version 0.4 Updates"
+author: Ed Merkle
+bibliography:
+  - refs.bib
+---
+
+```{r echo=FALSE, message=FALSE}
+library(blavaan, quietly=TRUE)
+```
+
+### Introduction
+Structural equation models with ordinal observed variables are supported starting in *blavaan* 0.4-1 (`target="stan"` only). This document describes the overall approach, which includes model estimation, threshold parameters, log-likelihood calculation, posterior predictive p-values, and Jacobians. We assume that you are somewhat familiar with the layout of SEM; if not, some technical detail and examples are found in @merros18 and, more recently, @merfit21. We aim here to provide enough detail to elucidate the new blavaan features, while being informal enough for you to not get (too) bored.
+
+
+### Estimation
+Ordinal observed variables are handled via data augmentation, in the style of @chigre98. You might already know this, but the phrase *data augmentation* is imprecise in the context of SEM. This is because there are many possible things that could be augmented, each of which can make model estimation easier. We could be augmenting observed data with predictions of missing values, which is related to multiple imputation methods. We could be augmenting the observed data with the latent variables, which can simplify likelihood calculation (leading to what is sometimes called a *conditional* likelihood, though *conditional* also has many meanings). Or we could be augmenting categorical observed variables with underlying, latent continuous variables. This last type of augmentation is what we are doing here. In our testing, we found it to be faster and more efficient than other approaches that would sample latent variables alongside other model parameters (the latent variables are integrated out of our likelihoods here; similar to the description from @merfit21).
+
+In our data augmentation implementation, each ordinal observation (e.g., $y$) is used to generate a continuous, underlying counterpart (e.g., $y^\ast$). This $y^\ast$ must obey the model's threshold parameters, commonly denoted as $\bm \tau$, based on the value of the observed data. For example, ignoring subscripts and assuming an ordinal variable with 4 categories, we would have
+\begin{align*}
+y^* &< \tau_1 \text{if }y = 1 \\
+\tau_1 &< y^* < tau_2 \text{if }y = 2 \\
+\tau_2 &< y^* < \tau_3 \text{if }y = 3 \\
+\tau_3 &< y^* \text{if }y = 4
+\end{align*}
+where we require $\tau_1 < \tau_2 < \tau_3$. We generate such a $y^*$ separately for each ordinal observation in the dataset. These all become additional, bounded parameters in the Stan file. 
+
+The Stan User's Guide has a helpful example of multivariate probit regression using a related approach; see 
+https://mc-stan.org/docs/2_27/stan-users-guide/multivariate-outcomes.html
+The trickiest parts involve enforcing the boundaries of the $y^*$ variables, and ensuring that the threshold parameters for each ordinal variable are ordered correctly (while allowing for the possibility that different ordinal variables have different numbers of thresholds). These require some Jacobian adjustments that took a good deal of time to code correctly.
+
+Once the above parameters are defined and generated, the remainder of the model estimation is similar to the simpler situation where all observed variables are continuous. In terms of the Stan file, most of the ordinal overhead comes in the transformed parameters block. Once we get to the model block, most things operate as they would with continuous data.
+
+
+### Thresholds & Priors
+The prior distributions on the threshold ($\tau$) parameters are more involved than they may appear. This is because, as described in the previous section, the threshold parameters for a single variable must be ordered. So if we say, for example, that all thresholds have a normal(0,1) prior distribution, we are ignoring the fact that one threshold's value influences the size of other thresholds' values. As Michael Betancourt describes on Stan Discourse, such a prior "interacts with the (ordering) constraint to enforce a sort of uniform repulsion between the interior points, resulting in very rigid differences."
+
+quote from https://discourse.mc-stan.org/t/prior-choice-for-ordered-inverse-transformed-parameters/16378/3
+
+To address this issue, we first define an unconstrained, unordered parameter vector whose length equal the number of thresholds in the model. Call this vector $\bm{\tau}^*$. We then obtain ordered thresholds by exponentiating the unordered parameter vector in a specific manner. The manner in which this works is exactly the same as how Stan defines a parameter of type `ordered`. See https://mc-stan.org/docs/2_27/reference-manual/ordered-vector.html
+
+The idea is most easily shown via example. Say that we have an ordinal variable with 4 categories. Then the three thresholds for this variable are obtained via:
+\begin{align*}
+\tau_1 &= \tau^*_1 \\
+\tau_2 &= \tau^*_1 + \exp(\tau^*_2) \\
+\tau_3 &= \tau^*_1 + \exp(\tau^*_2) + \exp(\tau^*_3).
+\end{align*}
+We then place normal prior distributions on the unordered $\tau^*$ parameters, as opposed to placing priors on the ordered $\tau$ parameters. These normal priors imply that the lowest threshold ($\tau_1$ above) has a normal prior, while differences between successive $\tau$'s have log-normal priors. In blavaan, these priors can be specified in the usual two ways. First, we could add the `dp` argument to a model estimation command as follows.
+
+```{r}
+dp = dpriors(tau = "normal(0, .5)")
+```
+
+which would assign this prior to all the unordered $\tau^*$ parameters in the model. Second, we could specify priors for specific threshold parameters in the model specification syntax. For example, say that we have a 4-category observed variable called `x1`. Then unique priors for each the three thresholds could be specified in the model syntax via
+
+```{r}
+x1 | prior("normal(-1, 1)") * t1 + prior("normal(0, .5)") * t2 + prior("normal(0, 1)") * t3
+```
+
+It is not clear at this time that priors on the $\tau^*$ parameters are the best option. In a 2019 paper, Michael Betancourt describes a Dirichlet prior that regularizes the thresholds of an ordinal regression model. Such a strategy would seem to work for SEM, and it could be especially useful for datasets where some categories of the ordinal variable are unobserved. These issues warrant further study.
+
+https://betanalpha.github.io/assets/case_studies/ordinal_regression.html
+
+
+### Likelihood Computations
+Once we get to continuous data in the model block, it seems reasonable to expect simple likelihood computations. But it depends on what likelihood you want to compute. The likelihood used for sampling in Stan is a simple multivariate normal of the $y^*$ observations, combined with any continuous observed variables in the model. This is indeed simple to compute. But it is not the likelihood you want to use for model comparison. For one thing, all the $y^*$ parameters associated with ordinal data are involved in this likelihood, so quantities like the effective number of parameters become very inflated. The number of parameters involved in this likelihood also increases with sample size, which is generally bad in the land of model comparison metrics. See @merfur19 for more detail here.
+
+All this means that, for quantities like WAIC and PSIS-LOO, we must compute a second model likelihood that involves the observed, ordinal $y$ variables and that integrates over the latent $y^*$ variables. This is a difficult problem that amounts to evaluating the CDF of a sometimes-high-dimensional, multivariate normal distribution [see @chigre98, Equation 11]. We follow @chigre98 in approximating these integrals via Monte Carlo simulation, relying on the *tmvnsim* package [@tmvnsim]. For each case, we generate many random samples from the appropriate truncated multivariate normal and average over the resulting importance sampling weights. The procedure is computationally intensive and also time intensive, so we have to balance the number of random samples drawn with the amount of time that it takes. The number of samples currently defaults to 20 times the number of ordinal variables, with a maximum of 200. Users can also set the number of samples to draw at the time of model estimation, by setting `llnsamp` within the `mcmcextra$data` argument. For example, to draw 100 samples for the approximation, an argument to `bsem()` or similar functions would be
+
+```{r}
+mcmcextra = list(data = list(llnsamp = 100))
+```
+
+This is not the only way that we could compute the marginal likelihood. The gold standard would probably be a quadrature method that integrates over the latent variables, as opposed to a method that integrates over the $y^*$ variables. Quadrature over the latent variables would also reduce the dimension of integration for most models, so we may switch to this method in the future. 
+
+There also exists a relatively new method by CITE for evaluating the CDF of the multivariate normal, with an implementation of the method appearing in the package *TruncatedNormal* CITE. In our limited testing, the *TruncatedNormal* implementation was considerably slower than *tmvnsim* for our purposes. But we may revisit this issue in the future.
+
+TODO Bayes factor, use chib's identity?
+
+
+### Posterior Predictive p-values
+Posterior predictive p-value (ppp) computations also receive a speed boost in the 0.4 series. These computations now occur in Stan, whereas they previously occurred in R after model estimation. As discussed by CITE_mplus, the ppp computations needed for models with missing data can be excessively slow, requiring us to run an EM algorithm for each posterior sample in order to find the "H1" ("saturated") model covariance matrix. The solution by CITE_mplus is to realize that we do not need to use a fully-optimized H1 covariance matrix in order to compute the ppp. In *blavaan*, we consequently run an EM algorithm for a fixed number of iterations in order to compute an H1 covariance matrix that is "good enough" for the ppp. The default number of iterations it set to 20, and users can change the default by supplying an `emiter` value via the `mcmcextra` argument. For example,
+
+```{r}
+mcmcextra = list(data = list(emiter = 50))
+```
+
+
+### Jacobians
+*(This section is likely only relevant to you if you are editing/writing Stan models.)*  The Stan model underlying *blavaan* currently requires Jacobian adjustments in two places. This section briefly reviews the ideas underneath the adjustments, which my future self may wish to remember.
+
+We need a Jacobian adjustment when we place a prior on something that does not appear in the Stan `parameters` block. The Jacobian tells us about the implied priors of the things in the `parameters` block, based on the priors that appear in the `model` block.
+
+The Jacobian comes from the statistics literature on "change of variables": we are applying a function to some random variables, and finding the distribution of the function based on the original distribution of the random variables. When it comes to Stan models, this means we are starting with the priors from the `model` block and finding the implied priors for the `parameters` block. This confused me for a long time because, in the Stan file, the functions naturally go in the opposite direction: starting with the `parameters` block, and moving to the `model` block.
+
+The fact that our functions go from `model` to `parameters` is convenient, though, because Jacobian adjustments require the inverse functions. And the inverse functions move us from `parameters` to `model`, so they already exist in the Stan model. We just need to find the appropriate derivatives of these functions, which lead to the Jacobian.
+
+As an example, consider the fact that *blavaan* allows users to choose whether priors go on standard deviation, variance, or precision parameters. The standard deviations appear in the `parameters` block regardless of what the user chooses (the Stan model is precompiled at the time of package installation). Say that the user wants priors on precisions. We transform the standard deviations to precisions in the `model` block, then put the prior on the precision. In addition to this prior, we need the Jacobian of the function that starts with a standard deviation (call it $\sigma$) and transforms to precision ($\sigma^{-2}$). The derivative of $\sigma^{-2}$ with respect to $\sigma$ is $-2 \sigma^{-3}$. And because this is a simple function mapping a single parameter to a different value, the Jacobian is the absolute value of this derivative, which is $2 \sigma^{-3}$. In the Stan file, we would then add the log of this Jacobian to `target`:
+
+```{stan}
+target += log(2) - 3*log(sigma)
+```
+
+Further examples and discussion can be found in:
+
+https://mc-stan.org/users/documentation/case-studies/mle-params.html
+
+
+
+### Summary
+The *blavaan* 0.4 series offers enhanced functionality in a variety of areas. The computational decisions that we have made reflect a balance between estimation precision and estimation speed. It will be the case that the software defaults behave poorly in some situations. For example, the default prior distributions can be problematic in certain situations, the likelihood approximations for ordinal models may not be as precise as desired, and the new ppp computations may behave differently than previous computations. We encourage users to carry out sensitivity analyses, and also to report bugs!
+
+
+
+### References
