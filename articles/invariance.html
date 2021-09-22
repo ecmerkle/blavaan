@@ -105,7 +105,7 @@
 <div id="model-estimation" class="section level3">
 <h3 class="hasAnchor">
 <a href="#model-estimation" class="anchor"></a>Model Estimation</h3>
-<p>Consider a measurement invariance study of the Holzinger &amp; Swineford (1939) data. In lavaan, we may first estimate two models:</p>
+<p>Consider a measurement invariance study of the <span class="citation">Holzinger and Swineford (1939)</span> data. In lavaan, we may first estimate two models:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">HS.model</span> <span class="op">&lt;-</span> <span class="st">' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6
@@ -152,6 +152,15 @@
               group.equal <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"intercepts"</span>, <span class="st">"loadings"</span><span class="op">)</span>, wiggle <span class="op">=</span> <span class="st">"loadings"</span>,
               wiggle.sd <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></code></pre></div>
 <p>In the above example, the model intercepts and loadings have across-group constraints. The loadings are approximately equal across groups, due to the argument <code>wiggle = "loadings"</code>. And the intercepts are constrained to be exactly equal across groups. In this way, it becomes easy to use exact and approximate equality constraints in the same model, if desired.</p>
+</div>
+<div id="references" class="section level3 unnumbered">
+<h3 class="hasAnchor">
+<a href="#references" class="anchor"></a>References</h3>
+<div id="refs" class="references">
+<div id="ref-holswi39">
+<p>Holzinger, K. J., and F. A. Swineford. 1939. <em>A Study of Factor Analysis: The Stability of a Bi-Factor Solution</em>. Supplementary Educational Monograph 48. Chicago: University of Chicago Press.</p>
+</div>
+</div>
 </div>
   </div>
 
