@@ -47,13 +47,13 @@ The idea is most easily shown via example. Say that we have an ordinal variable 
 \end{align*}
 We then place normal prior distributions on the unordered $\tau^*$ parameters, as opposed to placing priors on the ordered $\tau$ parameters. These normal priors imply that the lowest threshold ($\tau_1$ above) has a normal prior, while differences between successive $\tau$'s have log-normal priors. In blavaan, these priors can be specified in the usual two ways. First, we could add the `dp` argument to a model estimation command as follows.
 
-```{r}
+```{r, eval = FALSE}
 dp = dpriors(tau = "normal(0, .5)")
 ```
 
 which would assign this prior to all the unordered $\tau^*$ parameters in the model. Second, we could specify priors for specific threshold parameters in the model specification syntax. For example, say that we have a 4-category observed variable called `x1`. Then unique priors for each the three thresholds could be specified in the model syntax via
 
-```{r}
+```{r, eval = FALSE}
 x1 | prior("normal(-1, 1)") * t1 + prior("normal(0, .5)") * t2 + prior("normal(0, 1)") * t3
 ```
 
@@ -67,7 +67,7 @@ Once we get to continuous data in the model block, it seems reasonable to expect
 
 All this means that, for quantities like WAIC and PSIS-LOO, we must compute a second model likelihood that involves the observed, ordinal $y$ variables and that integrates over the latent $y^*$ variables. This is a difficult problem that amounts to evaluating the CDF of a sometimes-high-dimensional, multivariate normal distribution [see @chigre98, Equation 11]. We follow @chigre98 in approximating these integrals via Monte Carlo simulation, relying on the *tmvnsim* package [@tmvnsim]. For each case, we generate many random samples from the appropriate truncated multivariate normal and average over the resulting importance sampling weights. The procedure is computationally intensive and also time intensive, so we have to balance the number of random samples drawn with the amount of time that it takes. The number of samples currently defaults to 20 times the number of ordinal variables, with a maximum of 200. Users can also set the number of samples to draw at the time of model estimation, by setting `llnsamp` within the `mcmcextra$data` argument. For example, to draw 100 samples for the approximation, an argument to `bsem()` or similar functions would be
 
-```{r}
+```{r, eval = FALSE}
 mcmcextra = list(data = list(llnsamp = 100))
 ```
 
@@ -81,7 +81,7 @@ TODO Bayes factor, use chib's identity?
 ### Posterior Predictive p-values
 Posterior predictive p-value (ppp) computations also receive a speed boost in the 0.4 series. These computations now occur in Stan, whereas they previously occurred in R after model estimation. As discussed by CITE_mplus, the ppp computations needed for models with missing data can be excessively slow, requiring us to run an EM algorithm for each posterior sample in order to find the "H1" ("saturated") model covariance matrix. The solution by CITE_mplus is to realize that we do not need to use a fully-optimized H1 covariance matrix in order to compute the ppp. In *blavaan*, we consequently run an EM algorithm for a fixed number of iterations in order to compute an H1 covariance matrix that is "good enough" for the ppp. The default number of iterations it set to 20, and users can change the default by supplying an `emiter` value via the `mcmcextra` argument. For example,
 
-```{r}
+```{r, eval = FALSE}
 mcmcextra = list(data = list(emiter = 50))
 ```
 
@@ -97,7 +97,7 @@ The fact that our functions go from `model` to `parameters` is convenient, thoug
 
 As an example, consider the fact that *blavaan* allows users to choose whether priors go on standard deviation, variance, or precision parameters. The standard deviations appear in the `parameters` block regardless of what the user chooses (the Stan model is precompiled at the time of package installation). Say that the user wants priors on precisions. We transform the standard deviations to precisions in the `model` block, then put the prior on the precision. In addition to this prior, we need the Jacobian of the function that starts with a standard deviation (call it $\sigma$) and transforms to precision ($\sigma^{-2}$). The derivative of $\sigma^{-2}$ with respect to $\sigma$ is $-2 \sigma^{-3}$. And because this is a simple function mapping a single parameter to a different value, the Jacobian is the absolute value of this derivative, which is $2 \sigma^{-3}$. In the Stan file, we would then add the log of this Jacobian to `target`:
 
-```{stan}
+```{stan, eval = FALSE}
 target += log(2) - 3*log(sigma)
 ```
 
