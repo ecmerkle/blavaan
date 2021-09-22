@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">blavaan</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3-18.838</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3-18.839</span>
       </span>
     </div>
 
@@ -135,7 +135,7 @@
 <div id="individual-parameters" class="section level3">
 <h3 class="hasAnchor">
 <a href="#individual-parameters" class="anchor"></a>Individual Parameters</h3>
-<p>In addition to setting the prior for one type of model parameter, the user may wish to set the prior of a specific model parameter. This is accomplished by using the <code>prior()</code> modifier within the model specification. For example, consider the following syntax for the Holzinger &amp; Swineford (1939) confirmatory factor model:</p>
+<p>In addition to setting the prior for one type of model parameter, the user may wish to set the prior of a specific model parameter. This is accomplished by using the <code>prior()</code> modifier within the model specification. For example, consider the following syntax for the <span class="citation">Holzinger and Swineford (1939)</span> confirmatory factor model:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">HS.model</span> <span class="op">&lt;-</span> <span class="st">' visual  =~ x1 + prior("normal(1,2)")*x2 + x3
               textual =~ x4 + x5 + prior("normal(3,1.5)")*x6
@@ -154,6 +154,11 @@
               speed   =~ x7 + x8 + x9 
               visual ~~ prior("beta(1,1)")*textual '</span></code></pre></div>
 <p>places a Beta(1,1) (uniform) prior on the correlation between the <code>visual</code> and <code>textual</code> factors. If desired, we could also specify priors on the standard deviations (or variances or precisions) of the <code>visual</code> and <code>textual</code> factors. Together with the prior on the correlation, these priors would imply a prior on the covariance between <code>visual</code> and <code>textual</code>.</p>
+<div id="refs" class="references">
+<div id="ref-holswi39">
+<p>Holzinger, K. J., and F. A. Swineford. 1939. <em>A Study of Factor Analysis: The Stability of a Bi-Factor Solution</em>. Supplementary Educational Monograph 48. Chicago: University of Chicago Press.</p>
+</div>
+</div>
 </div>
   </div>
 
