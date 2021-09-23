@@ -225,9 +225,9 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
 
   dat$has_data <- dat$has_cov <- 0L
   if (pri_only) {
-    tmparr <- array(dim = c(dat$Ng, ncol(YX), ncol(YX)))
+    tmparr <- array(dim = c(dat$Ng, ncol(YX) + 1, ncol(YX) + 1))
     for (i in 1:Ng) {
-      tmparr[i,,] <- diag(nrow=ncol(YX))
+      tmparr[i,,] <- diag(nrow=ncol(YX) + 1)
     }
     dat$S <- tmparr
   } else {
