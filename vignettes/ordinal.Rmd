@@ -10,24 +10,24 @@ library(blavaan, quietly=TRUE)
 ```
 
 ### Introduction
-Structural equation models with ordinal observed variables are supported starting in *blavaan* 0.4-1 (`target="stan"` only). This document describes the overall approach, which includes model estimation, threshold parameters, log-likelihood calculation, posterior predictive p-values, and Jacobians. We assume that you are somewhat familiar with the layout of SEM; if not, some technical detail and examples are found in @merros18 and, more recently, @merfit21. We aim here to provide enough detail to elucidate the new blavaan features, while being informal enough for you to not get (too) bored.
+Structural equation models with ordinal observed variables are supported starting in *blavaan* 0.4-1 (`target="stan"` only). This document describes the overall approach, which includes model estimation, threshold parameters, log-likelihood calculation, posterior predictive p-values, and Jacobians. We assume that you are somewhat familiar with the layout of SEM; if not, some technical detail and examples are found in @merros18 and, more recently, @merfit21 (links to these papers are in the references section). We aim here to provide enough detail to elucidate the new blavaan features, while being informal enough for you to not get (too) bored.
 
 
 ### Estimation
 Ordinal observed variables are handled via data augmentation, in the style of @chigre98. You might already know this, but the phrase *data augmentation* is imprecise in the context of SEM. This is because there are many possible things that could be augmented, each of which can make model estimation easier. We could be augmenting observed data with predictions of missing values, which is related to multiple imputation methods. We could be augmenting the observed data with the latent variables, which can simplify likelihood calculation (leading to what is sometimes called a *conditional* likelihood, though *conditional* also has many meanings). Or we could be augmenting categorical observed variables with underlying, latent continuous variables. This last type of augmentation is what we are doing here. In our testing, we found it to be faster and more efficient than other approaches that would sample latent variables alongside other model parameters (the latent variables are integrated out of our likelihoods here; similar to the description from @merfit21).
 
-In our data augmentation implementation, each ordinal observation (e.g., $y$) is used to generate a continuous, underlying counterpart (e.g., $y^\ast$). This $y^\ast$ must obey the model's threshold parameters, commonly denoted as $\bm \tau$, based on the value of the observed data. For example, ignoring subscripts and assuming an ordinal variable with 4 categories, we would have
+In our data augmentation implementation, each ordinal observation (e.g., $y$) is used to generate a continuous, underlying counterpart (e.g., $y^\ast$). This $y^\ast$ must obey the model's threshold parameters (commonly denoted $\mathbf{\tau}$), based on the value of the observed data. For example, ignoring subscripts on $y^\ast$ and assuming an ordinal variable with 4 categories, we would have
 \begin{align*}
-y^* &< \tau_1 \text{if }y = 1 \\
-\tau_1 &< y^* < tau_2 \text{if }y = 2 \\
-\tau_2 &< y^* < \tau_3 \text{if }y = 3 \\
-\tau_3 &< y^* \text{if }y = 4
+y^* < \tau_1 &\text{ if }y = 1 \\
+\tau_1 <\ y^* < \tau_2 &\text{ if }y = 2 \\
+\tau_2 <\ y^* < \tau_3 &\text{ if }y = 3 \\
+y^* >\ \tau_3 &\text{ if }y = 4
 \end{align*}
 where we require $\tau_1 < \tau_2 < \tau_3$. We generate such a $y^*$ separately for each ordinal observation in the dataset. These all become additional, bounded parameters in the Stan file. 
 
 The Stan User's Guide has a helpful example of multivariate probit regression using a related approach; see 
-https://mc-stan.org/docs/2_27/stan-users-guide/multivariate-outcomes.html
-The trickiest parts involve enforcing the boundaries of the $y^*$ variables, and ensuring that the threshold parameters for each ordinal variable are ordered correctly (while allowing for the possibility that different ordinal variables have different numbers of thresholds). These require some Jacobian adjustments that took a good deal of time to code correctly.
+https://mc-stan.org/docs/2_27/stan-users-guide/multivariate-outcomes.html.
+The trickiest parts involve enforcing the boundaries of the $y^*$ variables, and ensuring that the threshold parameters for each ordinal variable are ordered correctly (while allowing for the possibility that different ordinal variables have different numbers of thresholds). These require some Jacobian adjustments that took a good deal of time to code correctly (some further detail appears in a later section).
 
 Once the above parameters are defined and generated, the remainder of the model estimation is similar to the simpler situation where all observed variables are continuous. In terms of the Stan file, most of the ordinal overhead comes in the transformed parameters block. Once we get to the model block, most things operate as they would with continuous data.
 
@@ -37,7 +37,7 @@ The prior distributions on the threshold ($\tau$) parameters are more involved t
 
 quote from https://discourse.mc-stan.org/t/prior-choice-for-ordered-inverse-transformed-parameters/16378/3
 
-To address this issue, we first define an unconstrained, unordered parameter vector whose length equal the number of thresholds in the model. Call this vector $\bm{\tau}^*$. We then obtain ordered thresholds by exponentiating the unordered parameter vector in a specific manner. The manner in which this works is exactly the same as how Stan defines a parameter of type `ordered`. See https://mc-stan.org/docs/2_27/reference-manual/ordered-vector.html
+To address this issue, we first define an unconstrained, unordered parameter vector whose length equal the number of thresholds in the model. Call this vector $\mathbf{\tau}^*$. We then obtain ordered thresholds by exponentiating the unordered parameter vector in a specific manner. The manner in which this works is exactly the same as how Stan defines a parameter of type `ordered`. See https://mc-stan.org/docs/2_27/reference-manual/ordered-vector.html.
 
 The idea is most easily shown via example. Say that we have an ordinal variable with 4 categories. Then the three thresholds for this variable are obtained via:
 \begin{align*}
@@ -97,7 +97,7 @@ The fact that our functions go from `model` to `parameters` is convenient, thoug
 
 As an example, consider the fact that *blavaan* allows users to choose whether priors go on standard deviation, variance, or precision parameters. The standard deviations appear in the `parameters` block regardless of what the user chooses (the Stan model is precompiled at the time of package installation). Say that the user wants priors on precisions. We transform the standard deviations to precisions in the `model` block, then put the prior on the precision. In addition to this prior, we need the Jacobian of the function that starts with a standard deviation (call it $\sigma$) and transforms to precision ($\sigma^{-2}$). The derivative of $\sigma^{-2}$ with respect to $\sigma$ is $-2 \sigma^{-3}$. And because this is a simple function mapping a single parameter to a different value, the Jacobian is the absolute value of this derivative, which is $2 \sigma^{-3}$. In the Stan file, we would then add the log of this Jacobian to `target`:
 
-```{stan, eval = FALSE}
+```{Rcpp, eval = FALSE}
 target += log(2) - 3*log(sigma)
 ```
 
