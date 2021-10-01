@@ -57,7 +57,7 @@ which would assign this prior to all the unordered $\tau^*$ parameters in the mo
 x1 | prior("normal(-1, 1)") * t1 + prior("normal(0, .5)") * t2 + prior("normal(0, 1)") * t3
 ```
 
-It is not clear at this time that priors on the $\tau^*$ parameters are the best option. In a 2019 paper, Michael Betancourt describes a Dirichlet prior that regularizes the thresholds of an ordinal regression model. Such a strategy would seem to work for SEM, and it could be especially useful for datasets where some categories of the ordinal variable are unobserved. These issues warrant further study.
+It is not clear at this time that priors on the $\tau^*$ parameters are the best option. In a 2019 paper, Michael Betancourt describes a Dirichlet prior that regularizes the thresholds of an ordinal regression model. Such a strategy would seem to work for SEM, and it could be especially useful for datasets where some categories of the ordinal variable are sparse. These issues warrant further study.
 
 https://betanalpha.github.io/assets/case_studies/ordinal_regression.html
 
