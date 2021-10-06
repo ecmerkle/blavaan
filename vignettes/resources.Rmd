@@ -15,3 +15,5 @@ Other resources are listed below:
 - <a href="https://www.youtube.com/watch?v=zWA43-6taNA">A useR! 2020 virtual presentation</a> on blavaan (done early in the pandemic, and demonstrating the author's poor video editing skills).
 
 - slides (blavaan and others) from a <a href="https://osf.io/bcy78/">symposium on the lavaan ecosystem</a> at the 2019 International Meeting of the Psychometric Society, Santiago, Chile.
+
+- slides from an <a href="https://ecmerkle.github.io/pub/Merkle_msu21.pdf">hour-long seminar presentation</a> to the Michigan State Methods Group, October, 2021.
