@@ -346,7 +346,7 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
                 llidx <- i - r1 + 1
                 lsigi <- try(tmvnsim::tmvnsim(llnsamp, nord,
                                               lower = lowtau[llidx,], upper = hitau[llidx,],
-                                              means = mu.ord, sigma = cov.ord))
+                                              means = mu.ord, sigma = cov.ord), silent = TRUE)
                 if(inherits(lsigi, 'try-error')){
                     tmpll[llidx] <- NA
                 } else {
