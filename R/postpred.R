@@ -294,7 +294,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
 
 
 ## generate data from posterior predictive dist
-postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, ...){
+postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, type = "response", ...){
 
   ## parallel=TRUE can be sent here, but it slows everything down if
   ## used within postpred() because it leads to nested parallelization.
@@ -344,6 +344,14 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, ...){
   mis <- FALSE
   if(any(is.na(unlist(lavdata@X)))) mis <- TRUE
 
+  ## check for ordinal, which requires to chop the data
+  ordresp <- FALSE
+  if(length(lavdata@ordered) > 0 && type == "response"){
+    ordresp <- TRUE
+    ordidx <- which(lavdata@ov$type == "ordered")
+    thidx <- lavmodel@th.idx
+  }
+  
   postdat <- vector("list", psamp)
   lavmod <- vector("list", psamp)
 
@@ -434,13 +442,22 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, ...){
                                                  varcov = csig, mean = cmu))
         }
 
+        ## convert to ordinal if requested
+        if(ordresp){
+          for(oj in ordidx){
+            tmpth <- implied$th[[g]][thidx[[g]] == oj] * sqrt(implied$cov[[g]][oj, oj])
+            tmpth <- c(-Inf, tmpth, Inf)
+            dataX[[g]][, oj] <- cut(dataX[[g]][, oj], breaks = tmpth, labels = FALSE)
+          }
+        }
+        
         dataX[[g]][is.na(origlavdata@X[[g]])] <- NA
 
         ## get rid of completely missing
         if(length(origlavdata@Mp[[g]]$empty.idx) > 0){
           dataX[[g]] <- dataX[[g]][-origlavdata@Mp[[g]]$empty.idx,,drop=FALSE]
         }
-      }
+      } # g
 
       postdat[[i]] <- dataX
     }
