@@ -445,7 +445,7 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, type = "res
         ## convert to ordinal if requested
         if(ordresp){
           for(oj in ordidx){
-            tmpth <- implied$th[[g]][thidx[[g]] == oj] * sqrt(implied$cov[[g]][oj, oj])
+            tmpth <- implied$mean[[g]][oj] + implied$th[[g]][thidx[[g]] == oj] * sqrt(implied$cov[[g]][oj, oj])
             tmpth <- c(-Inf, tmpth, Inf)
             dataX[[g]][, oj] <- cut(dataX[[g]][, oj], breaks = tmpth, labels = FALSE)
           }
