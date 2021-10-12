@@ -623,7 +623,50 @@ transformed parameters {
   vector[p + q] YXstar[Ntot];
   vector[Nord] YXostar[Ntot]; // ordinal data
 
-  // obtain vector of free ordered parameters for priors, and vector of all taus for likelihood
+
+  for (g in 1:Ng) {
+    // model matrices
+    Lambda_y[g] = fill_matrix(Lambda_y_free, Lambda_y_skeleton[g], w1skel, g_start1[g], f_start1[g]);
+    Gamma[g] = fill_matrix(Gamma_free, Gamma_skeleton[g], w3skel, g_start3[g], f_start3[g]);
+    B[g] = fill_matrix(B_free, B_skeleton[g], w4skel, g_start4[g], f_start4[g]);
+    Theta_sd[g] = fill_matrix(Theta_sd_free, Theta_skeleton[g], w5skel, g_start5[g], f_start5[g]);
+    T_r_lower[g] = fill_matrix(2*Theta_r_free - 1, Theta_r_skeleton[g], w7skel, g_start7[g], f_start7[g]);
+    Theta_r[g] = T_r_lower[g] + transpose(T_r_lower[g]) - diag_matrix(rep_vector(1, p));
+    Nu[g] = fill_matrix(Nu_free, Nu_skeleton[g], w13skel, g_start13[g], f_start13[g]);
+    Alpha[g] = fill_matrix(Alpha_free, Alpha_skeleton[g], w14skel, g_start14[g], f_start14[g]);
+
+    Psi[g] = diag_matrix(rep_vector(0, m));
+  
+    if (m > 0) {
+      Psi_sd[g] = fill_matrix(Psi_sd_free, Psi_skeleton[g], w9skel, g_start9[g], f_start9[g]);
+      if (fullpsi) {
+	Psi_r[g] = Psi_r_mat[g];
+      } else {
+        Psi_r_lower[g] = fill_matrix(2*Psi_r_free - 1, Psi_r_skeleton[g], w10skel, g_start10[g], f_start10[g]);
+        Psi_r[g] = Psi_r_lower[g] + transpose(Psi_r_lower[g]) - diag_matrix(rep_vector(1, m));
+      }
+      Psi[g] = quad_form_sym(Psi_r[g], Psi_sd[g]);
+    }
+  }
+
+  // see https://books.google.com/books?id=9AC-s50RjacC&lpg=PP1&dq=LISREL&pg=PA3#v=onepage&q=LISREL&f=false
+  for (g in 1:Ng) {
+    if (m > 0) {
+      Lambda_y_A[g] = mdivide_right(Lambda_y[g], I - B[g]);     // = Lambda_y * (I - B)^{-1}
+    }
+
+    Mu[g] = to_vector(Nu[g]);
+
+    if (p > 0) {
+      Sigma[g, 1:p, 1:p] = quad_form_sym(Theta_r[g], Theta_sd[g]);
+      if (m > 0) {
+        Sigma[g, 1:p, 1:p] += quad_form_sym(Psi[g], transpose(Lambda_y_A[g]));
+	Mu[g, 1:p] += to_vector(Lambda_y_A[g] * Alpha[g, 1:m, 1]);
+      }
+    }
+  }
+
+  // obtain ordered thresholds
   if (ord) {
     int opos = 1;
     int ofreepos = 1;
@@ -659,31 +702,7 @@ transformed parameters {
     }
   }
 
-  for (g in 1:Ng) {
-    // model matrices
-    Lambda_y[g] = fill_matrix(Lambda_y_free, Lambda_y_skeleton[g], w1skel, g_start1[g], f_start1[g]);
-    Gamma[g] = fill_matrix(Gamma_free, Gamma_skeleton[g], w3skel, g_start3[g], f_start3[g]);
-    B[g] = fill_matrix(B_free, B_skeleton[g], w4skel, g_start4[g], f_start4[g]);
-    Theta_sd[g] = fill_matrix(Theta_sd_free, Theta_skeleton[g], w5skel, g_start5[g], f_start5[g]);
-    T_r_lower[g] = fill_matrix(2*Theta_r_free - 1, Theta_r_skeleton[g], w7skel, g_start7[g], f_start7[g]);
-    Theta_r[g] = T_r_lower[g] + transpose(T_r_lower[g]) - diag_matrix(rep_vector(1, p));
-    Nu[g] = fill_matrix(Nu_free, Nu_skeleton[g], w13skel, g_start13[g], f_start13[g]);
-    Alpha[g] = fill_matrix(Alpha_free, Alpha_skeleton[g], w14skel, g_start14[g], f_start14[g]);
-
-    Psi[g] = diag_matrix(rep_vector(0, m));
-  
-    if (m > 0) {
-      Psi_sd[g] = fill_matrix(Psi_sd_free, Psi_skeleton[g], w9skel, g_start9[g], f_start9[g]);
-      if (fullpsi) {
-	Psi_r[g] = Psi_r_mat[g];
-      } else {
-        Psi_r_lower[g] = fill_matrix(2*Psi_r_free - 1, Psi_r_skeleton[g], w10skel, g_start10[g], f_start10[g]);
-        Psi_r[g] = Psi_r_lower[g] + transpose(Psi_r_lower[g]) - diag_matrix(rep_vector(1, m));
-      }
-      Psi[g] = quad_form_sym(Psi_r[g], Psi_sd[g]);
-    }
-  }
-
+  // prior vectors
   if (wigind) {
     lambda_y_primn = fill_prior(Lambda_y_free, lambda_y_mn, w1skel);
     b_primn = fill_prior(B_free, b_mn, w4skel);
@@ -697,24 +716,7 @@ transformed parameters {
     alpha_primn = to_vector(alpha_mn);
     tau_primn = to_vector(tau_mn);
   }
-
-  // see https://books.google.com/books?id=9AC-s50RjacC&lpg=PP1&dq=LISREL&pg=PA3#v=onepage&q=LISREL&f=false
-  for (g in 1:Ng) {
-    if (m > 0) {
-      Lambda_y_A[g] = mdivide_right(Lambda_y[g], I - B[g]);     // = Lambda_y * (I - B)^{-1}
-    }
-
-    Mu[g] = to_vector(Nu[g]);
-
-    if (p > 0) {
-      Sigma[g, 1:p, 1:p] = quad_form_sym(Theta_r[g], Theta_sd[g]);
-      if (m > 0) {
-        Sigma[g, 1:p, 1:p] += quad_form_sym(Psi[g], transpose(Lambda_y_A[g]));
-	Mu[g, 1:p] += to_vector(Lambda_y_A[g] * Alpha[g, 1:m, 1]);
-      }
-    }
-  }
-
+  
   // continuous responses underlying ordinal data
   if (ord) {
     for (patt in 1:Np) {
