@@ -147,13 +147,13 @@ y^* &gt;\ \tau_3 &amp;\text{ if }y = 4
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">mcmcextra</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>llnsamp <span class="op">=</span> <span class="fl">100</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p>This is not the only way that we could compute the marginal likelihood. The gold standard would probably be a quadrature method that integrates over the latent variables, as opposed to a method that integrates over the <span class="math inline">\(y^*\)</span> variables. Quadrature over the latent variables would also reduce the dimension of integration for most models, so we may switch to this method in the future.</p>
-<p>There also exists a relatively new method by CITE for evaluating the CDF of the multivariate normal, with an implementation of the method appearing in the package <em>TruncatedNormal</em> CITE. In our limited testing, the <em>TruncatedNormal</em> implementation was considerably slower than <em>tmvnsim</em> for our purposes. But we may revisit this issue in the future.</p>
-<p>TODO Bayes factor, use chib’s identity?</p>
+<p>There also exists a relatively new method by <span class="citation">Botev (2017)</span> for evaluating the CDF of the multivariate normal, with an implementation of the method appearing in the package <em>TruncatedNormal</em> <span class="citation">(Botev and Belzile 2021)</span>. In our limited testing, the <em>TruncatedNormal</em> implementation was considerably slower than <em>tmvnsim</em> for our purposes. But we may revisit this issue in the future.</p>
+<!-- TODO Bayes factor, use chib's identity? -->
 </div>
 <div id="posterior-predictive-p-values" class="section level3">
 <h3 class="hasAnchor">
 <a href="#posterior-predictive-p-values" class="anchor"></a>Posterior Predictive p-values</h3>
-<p>Posterior predictive p-value (ppp) computations also receive a speed boost in the 0.4 series. These computations now occur in Stan, whereas they previously occurred in R after model estimation. As discussed by CITE_mplus, the ppp computations needed for models with missing data can be excessively slow, requiring us to run an EM algorithm for each posterior sample in order to find the “H1” (“saturated”) model covariance matrix. The solution by CITE_mplus is to realize that we do not need to use a fully-optimized H1 covariance matrix in order to compute the ppp. In <em>blavaan</em>, we consequently run an EM algorithm for a fixed number of iterations in order to compute an H1 covariance matrix that is “good enough” for the ppp. The default number of iterations it set to 20, and users can change the default by supplying an <code>emiter</code> value via the <code>mcmcextra</code> argument. For example,</p>
+<p>Posterior predictive p-value (ppp) computations also receive a speed boost in the 0.4 series. These computations now occur in Stan, whereas they previously occurred in R after model estimation. As discussed by <span class="citation">Asparouhov and Muthén (2021)</span>, the ppp computations needed for models with missing data can be excessively slow, requiring us to run an EM algorithm for each posterior sample in order to find the “H1” (“saturated”) model covariance matrix. The solution by <span class="citation">Asparouhov and Muthén (2021)</span> involves the realization that we do not need to use a fully-optimized H1 covariance matrix in order to compute the ppp. In <em>blavaan</em>, we consequently run an EM algorithm for a fixed number of iterations in order to compute an H1 covariance matrix that is “good enough” for the ppp. The default number of iterations it set to 20, and users can change the default by supplying an <code>emiter</code> value via the <code>mcmcextra</code> argument. For example,</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">mcmcextra</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>emiter <span class="op">=</span> <span class="fl">50</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 </div>
@@ -178,8 +178,17 @@ y^* &gt;\ \tau_3 &amp;\text{ if }y = 4
 <h3 class="hasAnchor">
 <a href="#references" class="anchor"></a>References</h3>
 <div id="refs" class="references">
+<div id="ref-aspmut21">
+<p>Asparouhov, Tihomir, and Bengt Muthén. 2021. “Advances in Bayesian Model Fit Evaluation for Structural Equation Models.” <em>Structural Equation Modeling: A Multidisciplinary Journal</em> 28 (1): 1–14. <a href="https://doi.org/10.1080/10705511.2020.1764360">https://doi.org/10.1080/10705511.2020.1764360</a>.</p>
+</div>
 <div id="ref-tmvnsim">
 <p>Bhattacjarjee, Samsiddhi. 2016. <em>tmvnsim: Truncated Multivariate Normal Simulation</em>. <a href="https://CRAN.R-project.org/package=tmvnsim">https://CRAN.R-project.org/package=tmvnsim</a>.</p>
+</div>
+<div id="ref-tn21">
+<p>Botev, Zdravko, and Leo Belzile. 2021. <em>TruncatedNormal: Truncated Multivariate Normal and Student Distributions</em>. <a href="https://CRAN.R-project.org/package=TruncatedNormal">https://CRAN.R-project.org/package=TruncatedNormal</a>.</p>
+</div>
+<div id="ref-bot17">
+<p>Botev, Z. I. 2017. “The Normal Law Under Linear Restrictions: Simulation and Estimation via Minimax Tilting.” <em>Journal of the Royal Statistical Society: Series B</em> 79 (1): 125–48. <a href="https://doi.org/https://doi.org/10.1111/rssb.12162">https://doi.org/https://doi.org/10.1111/rssb.12162</a>.</p>
 </div>
 <div id="ref-chigre98">
 <p>Chib, S., and E. Greenberg. 1998. “Analysis of Multivariate Probit Models.” <em>Biometrika</em> 85: 347–61.</p>
