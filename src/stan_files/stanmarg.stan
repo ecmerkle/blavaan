@@ -677,17 +677,18 @@ transformed parameters {
       for (i in 1:Nord) {
 	for (j in 1:(nlevs[i] - 1)) {
 	  real rc = Tau_skeleton[g, vecpos, 1];
-	  if (j == 1) {
-	    Tau[g, vecpos, 1] = Tau_un[g, vecpos, 1];
-	  } else {
-	    Tau[g, vecpos, 1] = Tau[g, (vecpos - 1), 1] + exp(Tau_un[g, vecpos, 1]);
-	  }
+	  int eq = w15skel[opos, 1];
+	  int wig = w15skel[opos, 3];
 
 	  if (is_inf(rc)) {
-	    int eq = w15skel[opos, 1];
-	    int wig = w15skel[opos, 3];
 	    if (eq == 0 || wig == 1) {
-	      Tau_free[ofreepos] = Tau[g, vecpos, 1];
+	      if (j == 1) {
+		Tau[g, vecpos, 1] = Tau_un[g, vecpos, 1];
+	      } else {
+		Tau[g, vecpos, 1] = Tau[g, (vecpos - 1), 1] + exp(Tau_un[g, vecpos, 1]);
+	      }
+
+	      Tau_free[ofreepos] = Tau[g, vecpos, 1];	      
 	      // this is used if a prior goes on Tau_free, instead of Tau_ufree:
 	      //if (j > 1) {
 	      //  tau_jacobian += Tau_un[g, vecpos, 1]; // see https://mc-stan.org/docs/2_24/reference-manual/ordered-vector.html
@@ -695,8 +696,11 @@ transformed parameters {
 	      ofreepos += 1;
 	    }
 	    opos += 1;
-	  }
-	  vecpos +=1;
+	  } else {
+	    // fixed value
+	    Tau[g, vecpos, 1] = Tau_un[g, vecpos, 1];
+	  }	  
+	  vecpos += 1;
 	}
       }
     }
