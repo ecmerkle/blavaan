@@ -584,7 +584,7 @@ pairs.blavPPMC <- function(x, discFUN, horInd = 1:DIM, verInd = 1:DIM,
 ## Public function, wrapper around hidden function postpred()
 ppmc <- function(object, thin = 1, fit.measures = c("srmr","chisq"),
                  #baseline.model = NULL,
-                 discFUN = NULL) {
+                 discFUN = NULL, conditional = FALSE) {
 
   ## check custom discrepancy function(s)
   if (!is.null(discFUN)) {
@@ -597,6 +597,20 @@ ppmc <- function(object, thin = 1, fit.measures = c("srmr","chisq"),
       stop('blavaan ERROR: The "discFUN" argument must be a (list of) function(s).')
   }
 
+  ## if we have lv samples, send the full object in for convenience functions involving lvs
+  fullobj <- NULL
+  jagtarget <- lavInspect(object, "options")$target == "jags"
+
+  if(jagtarget){
+    etas <- any(bobject@external$mcmcout$monitor == "eta")
+  } else {
+    etas <- any(grepl("^eta", rownames(object@external$stansumm)))
+  }
+  if (etas & conditional) {
+    if (!length(discFUN)) warning("blavaan WARNING: conditional=TRUE has no effect if you do not supply a discFUN.")
+    fullobj <- object
+  }
+  
   out <- postpred(lavpartable = object@ParTable,
                   lavmodel = object@Model,
                   lavoptions = object@Options,
@@ -605,6 +619,7 @@ ppmc <- function(object, thin = 1, fit.measures = c("srmr","chisq"),
                   lavcache = object@Cache,
                   lavjags = object@external$mcmcout,
                   samplls = object@external$samplls,
+                  lavobject = fullobj, 
                   measure = fit.measures, thin = thin, discFUN = discFUN)
 
   ## "out" is a list:
