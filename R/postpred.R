@@ -39,7 +39,11 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
   probs <- as.numeric(probs)
 
   ## add sampled lvs to posterior samples, if they exist
-  save_lvs <- (!is.null(lavobject)) & ("stanlvs" %in% names(lavobject@external)) & length(discFUN)
+  save_lvs <- FALSE
+  if (!is.null(lavobject)) {    
+    save_lvs <- ("stanlvs" %in% names(lavobject@external)) & length(discFUN)
+  }
+  
   if (save_lvs) {
     lavmcmc <- make_mcmc(lavjags, lavobject@external$stanlvs)
   } else {
