@@ -153,7 +153,7 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>...</th>
-      <td><p>Default lavaan arguments.  See <code>lavaan</code>.</p></td>
+      <td><p>Default lavaan arguments.  See <code><a href='https://rdrr.io/pkg/lavaan/man/lavaan.html'>lavaan</a></code>.</p></td>
     </tr>
     <tr>
       <th>cp</th>
@@ -209,7 +209,7 @@
       <td><p>If it is a character string, the options are currently
     <code>"simple"</code>, <code>"Mplus"</code>, <code>"prior"</code> (default), or <code>"jags"</code>.  In the first two
     cases, parameter values are set as though they will be estimated via
-    ML (see <code>lavaan</code>).  The starting parameter value for
+    ML (see <code><a href='https://rdrr.io/pkg/lavaan/man/lavaan.html'>lavaan</a></code>).  The starting parameter value for
     each chain is then perturbed from the original values through the
     addition of random uniform noise.  If <code>"prior"</code> is used, the starting
     parameter values are obtained based on the prior distributions
@@ -218,7 +218,7 @@
     specified and JAGS will choose values on its own (and this will probably
     crash Stan targets). You can also supply
     a list of starting values for each chain, where the list format can
-    be obtained from, e.g., <code><a href='blavInspect.html'>blavInspect(fit, "inits")</a></code>. Finally,
+    be obtained from, e.g., <code>blavInspect(fit, "inits")</code>. Finally,
     you can specify starting values in a similar way to lavaan,
     using the lavaan <code>start</code> argument (see the lavaan
     documentation for all the options there). In this case, you should also set
@@ -287,7 +287,7 @@
 
     <p>The <code>bsem</code> function is a wrapper for the more general
     <code><a href='blavaan.html'>blavaan</a></code> function, using the following default
-    <code>lavaan</code> arguments:
+    <code><a href='https://rdrr.io/pkg/lavaan/man/lavaan.html'>lavaan</a></code> arguments:
     <code>int.ov.free = TRUE</code>, <code>int.lv.free = FALSE</code>,
     <code>auto.fix.first = TRUE</code> (unless <code>std.lv = TRUE</code>),
     <code>auto.fix.single = TRUE</code>, <code>auto.var = TRUE</code>,
@@ -296,7 +296,7 @@
     and <code>auto.cov.y = TRUE</code>.</p>
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>An object of class <code>lavaan</code>, for which several methods
+    <p>An object of class <code><a href='https://rdrr.io/pkg/lavaan/man/lavaan-class.html'>lavaan</a></code>, for which several methods
   are available, including a <code>summary</code> method.</p>
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
@@ -311,33 +311,33 @@ Software, 85(4), 1-30. URL http://www.jstatsoft.org/v85/i04/.</p>
     <div class='dont-index'><p><code><a href='blavaan.html'>blavaan</a></code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
-<span class='co'>## The industrialization and Political Democracy Example</span>
-<span class='co'>## Bollen (1989), page 332</span>
-<span class='va'>model</span> <span class='op'>&lt;-</span> <span class='st'>'
-  # latent variable definitions
-     ind60 =~ x1 + x2 + x3
-     dem60 =~ y1 + a*y2 + b*y3 + c*y4
-     dem65 =~ y5 + a*y6 + b*y7 + c*y8
-
-  # regressions
-    dem60 ~ ind60
-    dem65 ~ ind60 + dem60
-
-  # residual correlations
-    y1 ~~ y5
-    y2 ~~ y4 + y6
-    y3 ~~ y7
-    y4 ~~ y8
-    y6 ~~ y8
-'</span>
-
-<span class='co'>## unique priors for mv intercepts; parallel chains</span>
-<span class='va'>fit</span> <span class='op'>&lt;-</span> <span class='fu'>bsem</span><span class='op'>(</span><span class='va'>model</span>, data<span class='op'>=</span><span class='va'>PoliticalDemocracy</span>,
-            dp<span class='op'>=</span><span class='fu'><a href='dpriors.html'>dpriors</a></span><span class='op'>(</span>nu<span class='op'>=</span><span class='st'>"normal(5,10)"</span><span class='op'>)</span><span class='op'>)</span>
-<span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span>
-<span class='op'>}</span>
-</div></pre>
+    <pre class="examples"><span class='r-in'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span class='r-in'><span class='co'>## The industrialization and Political Democracy Example</span></span>
+<span class='r-in'><span class='co'>## Bollen (1989), page 332</span></span>
+<span class='r-in'><span class='va'>model</span> <span class='op'>&lt;-</span> <span class='st'>'</span>
+<span class='r-in'>  # latent variable definitions</span>
+<span class='r-in'>     ind60 =~ x1 + x2 + x3</span>
+<span class='r-in'>     dem60 =~ y1 + a*y2 + b*y3 + c*y4</span>
+<span class='r-in'>     dem65 =~ y5 + a*y6 + b*y7 + c*y8</span>
+<span class='r-in'></span>
+<span class='r-in'>  # regressions</span>
+<span class='r-in'>    dem60 ~ ind60</span>
+<span class='r-in'>    dem65 ~ ind60 + dem60</span>
+<span class='r-in'></span>
+<span class='r-in'>  # residual correlations</span>
+<span class='r-in'>    y1 ~~ y5</span>
+<span class='r-in'>    y2 ~~ y4 + y6</span>
+<span class='r-in'>    y3 ~~ y7</span>
+<span class='r-in'>    y4 ~~ y8</span>
+<span class='r-in'>    y6 ~~ y8</span>
+<span class='r-in'>'</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'>## unique priors for mv intercepts; parallel chains</span></span>
+<span class='r-in'><span class='va'>fit</span> <span class='op'>&lt;-</span> <span class='fu'>bsem</span><span class='op'>(</span><span class='va'>model</span>, data<span class='op'>=</span><span class='va'>PoliticalDemocracy</span>,</span>
+<span class='r-in'>            dp<span class='op'>=</span><span class='fu'><a href='dpriors.html'>dpriors</a></span><span class='op'>(</span>nu<span class='op'>=</span><span class='st'>"normal(5,10)"</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span></span>
+<span class='r-in'><span class='op'>}</span></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

@@ -138,7 +138,7 @@
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, pars<span class="op">=</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, plot.type<span class="op">=</span><span class="st">"trace"</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, pars<span class="op">=</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, plot.type<span class="op">=</span><span class="st">"acf"</span><span class="op">)</span></code></pre></div>
-<p>These commands specify that we should draw a time series plot and an autocorrelation plot for the first four free parameters, as listed in <code><a href="https://rdrr.io/r/stats/coef.html">coef(fit)</a></code>.</p>
+<p>These commands specify that we should draw a time series plot and an autocorrelation plot for the first four free parameters, as listed in <code>coef(fit)</code>.</p>
 <p>If the model has definitely not converged (as judged by Rhat), blavaan will issue multiple warnings. Lack of convergence is sometimes caused by bad initial values (by default, blavaan generates random initial values), so it is occasionally helpful to re-estimate the model a second time. Otherwise, lack of convergence may imply implausible prior distributions or a complex model.</p>
 </div>
   </div>

@@ -142,7 +142,7 @@ function that can be applied to a lavaan model." />
     <div class="ref-description">
     <p>This function allows users to conduct a posterior predictive model check to
 assess the global or local fit of a latent variable model using any discrepancy
-function that can be applied to a <code>lavaan</code> model.</p>
+function that can be applied to a <code><a href='https://rdrr.io/pkg/lavaan/man/lavaan-class.html'>lavaan</a></code> model.</p>
     </div>
 
     <pre class="usage"><span class='fu'>ppmc</span><span class='op'>(</span><span class='va'>object</span>, thin <span class='op'>=</span> <span class='fl'>1</span>, fit.measures <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"srmr"</span>,<span class='st'>"chisq"</span><span class='op'>)</span>, discFUN <span class='op'>=</span> <span class='cn'>NULL</span>, conditional <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>
@@ -193,7 +193,7 @@ function that can be applied to a <code>lavaan</code> model.</p>
     <tr>
       <th>discFUN</th>
       <td><p><code>function</code>, or a <code>list</code> of functions, that can be
-    called on an object of class <code>lavaan</code>. Each function
+    called on an object of class <code><a href='https://rdrr.io/pkg/lavaan/man/lavaan-class.html'>lavaan</a></code>. Each function
     must return an object whose <code><a href='https://rdrr.io/r/base/mode.html'>mode</a></code> is <code>numeric</code>, but may
     be a <code>vector</code>, <code>matrix</code>, or multidimensional <code>array</code>. In
     the <code>summary</code> and <code>plot</code> methods, <code>discFUN</code> is a
@@ -333,83 +333,84 @@ function that can be applied to a <code>lavaan</code> model.</p>
   doi:10.1080/10705511.2011.607723</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'> <span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
-<span class='va'>HS.model</span> <span class='op'>&lt;-</span> <span class='st'>' visual  =~ x1 + x2 + x3
-              textual =~ x4 + x5 + x6
-              speed   =~ x7 + x8 + x9 '</span>
-<span class='co'>## fit single-group model</span>
-<span class='va'>fit</span> <span class='op'>&lt;-</span> <span class='fu'><a href='bcfa.html'>bcfa</a></span><span class='op'>(</span><span class='va'>HS.model</span>, data <span class='op'>=</span> <span class='va'>HolzingerSwineford1939</span>, 
-            n.chains <span class='op'>=</span> <span class='fl'>2</span>, burnin <span class='op'>=</span> <span class='fl'>1000</span>, sample <span class='op'>=</span> <span class='fl'>500</span><span class='op'>)</span>
-<span class='co'>## fit multigroup model</span>
-<span class='va'>fitg</span> <span class='op'>&lt;-</span> <span class='fu'><a href='bcfa.html'>bcfa</a></span><span class='op'>(</span><span class='va'>HS.model</span>, data <span class='op'>=</span> <span class='va'>HolzingerSwineford1939</span>,
-             n.chains <span class='op'>=</span> <span class='fl'>2</span>, burnin <span class='op'>=</span> <span class='fl'>1000</span>, sample <span class='op'>=</span> <span class='fl'>500</span>, group <span class='op'>=</span> <span class='st'>"school"</span><span class='op'>)</span>
-
-
-<span class='co'>## Use fit.measures as a shortcut for global fitMeasures only</span>
-<span class='co'>## - Note that indices calculated from the "df" are only appropriate under</span>
-<span class='co'>##   noninformative priors, such that pD approximates the number of estimated</span>
-<span class='co'>##   parameters counted under ML estimation; incremental fit indices</span>
-<span class='co'>##   introduce further complications)</span>
-
-<span class='va'>AFIs</span> <span class='op'>&lt;-</span> <span class='fu'>ppmc</span><span class='op'>(</span><span class='va'>fit</span>, thin <span class='op'>=</span> <span class='fl'>10</span>, fit.measures <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"srmr"</span>,<span class='st'>"chisq"</span>,<span class='st'>"rmsea"</span>,<span class='st'>"cfi"</span><span class='op'>)</span><span class='op'>)</span>
-<span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>AFIs</span><span class='op'>)</span>                 <span class='co'># summarize the whole vector in a data.frame</span>
-<span class='fu'><a href='https://rdrr.io/r/graphics/hist.html'>hist</a></span><span class='op'>(</span><span class='va'>AFIs</span>, element <span class='op'>=</span> <span class='st'>"rmsea"</span><span class='op'>)</span> <span class='co'># only plot one discrepancy function at a time</span>
-<span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span><span class='va'>AFIs</span>, element <span class='op'>=</span> <span class='st'>"srmr"</span><span class='op'>)</span>
-
-
-<span class='co'>## define a list of custom discrepancy functions</span>
-<span class='co'>## - (global) fit measures</span>
-<span class='co'>## - (local) standardized residuals</span>
-
-<span class='va'>discFUN</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>global <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span> <span class='op'>{</span>
-                  <span class='fu'>fitMeasures</span><span class='op'>(</span><span class='va'>fit</span>, fit.measures <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"cfi"</span>,<span class='st'>"rmsea"</span>,<span class='st'>"srmr"</span>,<span class='st'>"chisq"</span><span class='op'>)</span><span class='op'>)</span>
-                <span class='op'>}</span>,
-                std.cov.resid <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span> <span class='fu'>lavResiduals</span><span class='op'>(</span><span class='va'>fit</span>, zstat <span class='op'>=</span> <span class='cn'>FALSE</span>,
-                                                           summary <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span><span class='op'>$</span><span class='va'>cov</span>,
-                std.mean.resid <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span> <span class='fu'>lavResiduals</span><span class='op'>(</span><span class='va'>fit</span>, zstat <span class='op'>=</span> <span class='cn'>FALSE</span>,
-                                                            summary <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span><span class='op'>$</span><span class='va'>mean</span><span class='op'>)</span>
-<span class='va'>out1g</span> <span class='op'>&lt;-</span> <span class='fu'>ppmc</span><span class='op'>(</span><span class='va'>fit</span>, discFUN <span class='op'>=</span> <span class='va'>discFUN</span><span class='op'>)</span>
-
-<span class='co'>## summarize first discrepancy by default (fit indices)</span>
-<span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>out1g</span><span class='op'>)</span>
-<span class='co'>## some model-implied correlations look systematically over/underestimated</span>
-<span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>out1g</span>, discFUN <span class='op'>=</span> <span class='st'>"std.cov.resid"</span>, central.tendency <span class='op'>=</span> <span class='st'>"EAP"</span><span class='op'>)</span>
-<span class='fu'><a href='https://rdrr.io/r/graphics/hist.html'>hist</a></span><span class='op'>(</span><span class='va'>out1g</span>, discFUN <span class='op'>=</span> <span class='st'>"std.cov.resid"</span>, element <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>, <span class='fl'>7</span><span class='op'>)</span><span class='op'>)</span>
-<span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span><span class='va'>out1g</span>, discFUN <span class='op'>=</span> <span class='st'>"std.cov.resid"</span>, element <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"x1"</span>,<span class='st'>"x7"</span><span class='op'>)</span><span class='op'>)</span>
-<span class='co'>## For ease of investigation, optionally export summary as a data.frame,</span>
-<span class='co'>## sorted by size of average residual</span>
-<span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>out1g</span>, discFUN <span class='op'>=</span> <span class='st'>"std.cov.resid"</span>, central.tendency <span class='op'>=</span> <span class='st'>"EAP"</span>,
-        to.data.frame <span class='op'>=</span> <span class='cn'>TRUE</span>, sort.by <span class='op'>=</span> <span class='st'>"EAP"</span><span class='op'>)</span>
-<span class='co'>## or sorted by size of PPP</span>
-<span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>out1g</span>, discFUN <span class='op'>=</span> <span class='st'>"std.cov.resid"</span>, central.tendency <span class='op'>=</span> <span class='st'>"EAP"</span>,
-        to.data.frame <span class='op'>=</span> <span class='cn'>TRUE</span>, sort.by <span class='op'>=</span> <span class='st'>"PPP_sim_LessThan_obs"</span><span class='op'>)</span>
-
-<span class='co'>## define a list of custom discrepancy functions for multiple groups</span>
-<span class='co'>## (return each group's numeric output using a different function)</span>
-
-<span class='va'>disc2g</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>global <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span> <span class='op'>{</span>
-                 <span class='fu'>fitMeasures</span><span class='op'>(</span><span class='va'>fit</span>, fit.measures <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"cfi"</span>,<span class='st'>"rmsea"</span>,<span class='st'>"mfi"</span>,<span class='st'>"srmr"</span>,<span class='st'>"chisq"</span><span class='op'>)</span><span class='op'>)</span>
-               <span class='op'>}</span>,
-               cor.resid1 <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span> <span class='fu'>lavResiduals</span><span class='op'>(</span><span class='va'>fit</span>, zstat <span class='op'>=</span> <span class='cn'>FALSE</span>,
-                                                       type <span class='op'>=</span> <span class='st'>"cor.bollen"</span>,
-                                                       summary <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span><span class='op'>$</span><span class='va'>cov</span>,
-               cor.resid2 <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span> <span class='fu'>lavResiduals</span><span class='op'>(</span><span class='va'>fit</span>, zstat <span class='op'>=</span> <span class='cn'>FALSE</span>,
-                                                       type <span class='op'>=</span> <span class='st'>"cor.bollen"</span>,
-                                                       summary <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span><span class='op'>[[</span><span class='fl'>2</span><span class='op'>]</span><span class='op'>]</span><span class='op'>$</span><span class='va'>cov</span><span class='op'>)</span>
-<span class='va'>out2g</span> <span class='op'>&lt;-</span> <span class='fu'>ppmc</span><span class='op'>(</span><span class='va'>fitg</span>, discFUN <span class='op'>=</span> <span class='va'>disc2g</span>, thin <span class='op'>=</span> <span class='fl'>2</span><span class='op'>)</span>
-<span class='co'>## some residuals look like a bigger problem in one group than another</span>
-<span class='fu'><a href='https://rdrr.io/r/graphics/pairs.html'>pairs</a></span><span class='op'>(</span><span class='va'>out2g</span>, discFUN <span class='op'>=</span> <span class='st'>"cor.resid1"</span>, horInd <span class='op'>=</span> <span class='fl'>1</span><span class='op'>:</span><span class='fl'>3</span>, verInd <span class='op'>=</span> <span class='fl'>7</span><span class='op'>:</span><span class='fl'>9</span><span class='op'>)</span> <span class='co'># group 1</span>
-<span class='fu'><a href='https://rdrr.io/r/graphics/pairs.html'>pairs</a></span><span class='op'>(</span><span class='va'>out2g</span>, discFUN <span class='op'>=</span> <span class='st'>"cor.resid2"</span>, horInd <span class='op'>=</span> <span class='fl'>1</span><span class='op'>:</span><span class='fl'>3</span>, verInd <span class='op'>=</span> <span class='fl'>7</span><span class='op'>:</span><span class='fl'>9</span><span class='op'>)</span> <span class='co'># group 2</span>
-
-<span class='co'>## print all to file: must be a LARGE picture. First group 1 ...</span>
-<span class='fu'><a href='https://rdrr.io/r/grDevices/png.html'>png</a></span><span class='op'>(</span><span class='st'>"cor.resid1.png"</span>, width <span class='op'>=</span> <span class='fl'>1600</span>, height <span class='op'>=</span> <span class='fl'>1200</span><span class='op'>)</span>
-<span class='fu'><a href='https://rdrr.io/r/graphics/pairs.html'>pairs</a></span><span class='op'>(</span><span class='va'>out2g</span>, discFUN <span class='op'>=</span> <span class='st'>"cor.resid1"</span><span class='op'>)</span>
-<span class='fu'><a href='https://rdrr.io/r/grDevices/dev.html'>dev.off</a></span><span class='op'>(</span><span class='op'>)</span>
-<span class='co'>## ... then group 2</span>
-<span class='fu'><a href='https://rdrr.io/r/grDevices/png.html'>png</a></span><span class='op'>(</span><span class='st'>"cor.resid2.png"</span>, width <span class='op'>=</span> <span class='fl'>1600</span>, height <span class='op'>=</span> <span class='fl'>1200</span><span class='op'>)</span>
-<span class='fu'><a href='https://rdrr.io/r/graphics/pairs.html'>pairs</a></span><span class='op'>(</span><span class='va'>out2g</span>, discFUN <span class='op'>=</span> <span class='st'>"cor.resid2"</span><span class='op'>)</span>
-<span class='fu'><a href='https://rdrr.io/r/grDevices/dev.html'>dev.off</a></span><span class='op'>(</span><span class='op'>)</span>
-<span class='op'>}</span></div></pre>
+    <pre class="examples"><span class='r-in'> <span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span class='r-in'><span class='va'>HS.model</span> <span class='op'>&lt;-</span> <span class='st'>' visual  =~ x1 + x2 + x3</span>
+<span class='r-in'>              textual =~ x4 + x5 + x6</span>
+<span class='r-in'>              speed   =~ x7 + x8 + x9 '</span></span>
+<span class='r-in'><span class='co'>## fit single-group model</span></span>
+<span class='r-in'><span class='va'>fit</span> <span class='op'>&lt;-</span> <span class='fu'><a href='bcfa.html'>bcfa</a></span><span class='op'>(</span><span class='va'>HS.model</span>, data <span class='op'>=</span> <span class='va'>HolzingerSwineford1939</span>, </span>
+<span class='r-in'>            n.chains <span class='op'>=</span> <span class='fl'>2</span>, burnin <span class='op'>=</span> <span class='fl'>1000</span>, sample <span class='op'>=</span> <span class='fl'>500</span><span class='op'>)</span></span>
+<span class='r-in'><span class='co'>## fit multigroup model</span></span>
+<span class='r-in'><span class='va'>fitg</span> <span class='op'>&lt;-</span> <span class='fu'><a href='bcfa.html'>bcfa</a></span><span class='op'>(</span><span class='va'>HS.model</span>, data <span class='op'>=</span> <span class='va'>HolzingerSwineford1939</span>,</span>
+<span class='r-in'>             n.chains <span class='op'>=</span> <span class='fl'>2</span>, burnin <span class='op'>=</span> <span class='fl'>1000</span>, sample <span class='op'>=</span> <span class='fl'>500</span>, group <span class='op'>=</span> <span class='st'>"school"</span><span class='op'>)</span></span>
+<span class='r-in'></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'>## Use fit.measures as a shortcut for global fitMeasures only</span></span>
+<span class='r-in'><span class='co'>## - Note that indices calculated from the "df" are only appropriate under</span></span>
+<span class='r-in'><span class='co'>##   noninformative priors, such that pD approximates the number of estimated</span></span>
+<span class='r-in'><span class='co'>##   parameters counted under ML estimation; incremental fit indices</span></span>
+<span class='r-in'><span class='co'>##   introduce further complications)</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='va'>AFIs</span> <span class='op'>&lt;-</span> <span class='fu'>ppmc</span><span class='op'>(</span><span class='va'>fit</span>, thin <span class='op'>=</span> <span class='fl'>10</span>, fit.measures <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"srmr"</span>,<span class='st'>"chisq"</span>,<span class='st'>"rmsea"</span>,<span class='st'>"cfi"</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>AFIs</span><span class='op'>)</span>                 <span class='co'># summarize the whole vector in a data.frame</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/graphics/hist.html'>hist</a></span><span class='op'>(</span><span class='va'>AFIs</span>, element <span class='op'>=</span> <span class='st'>"rmsea"</span><span class='op'>)</span> <span class='co'># only plot one discrepancy function at a time</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span><span class='va'>AFIs</span>, element <span class='op'>=</span> <span class='st'>"srmr"</span><span class='op'>)</span></span>
+<span class='r-in'></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'>## define a list of custom discrepancy functions</span></span>
+<span class='r-in'><span class='co'>## - (global) fit measures</span></span>
+<span class='r-in'><span class='co'>## - (local) standardized residuals</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='va'>discFUN</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>global <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span class='r-in'>                  <span class='fu'><a href='https://rdrr.io/pkg/lavaan/man/fitMeasures.html'>fitMeasures</a></span><span class='op'>(</span><span class='va'>fit</span>, fit.measures <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"cfi"</span>,<span class='st'>"rmsea"</span>,<span class='st'>"srmr"</span>,<span class='st'>"chisq"</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-in'>                <span class='op'>}</span>,</span>
+<span class='r-in'>                std.cov.resid <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span> <span class='fu'><a href='https://rdrr.io/pkg/lavaan/man/lavResiduals.html'>lavResiduals</a></span><span class='op'>(</span><span class='va'>fit</span>, zstat <span class='op'>=</span> <span class='cn'>FALSE</span>,</span>
+<span class='r-in'>                                                           summary <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span><span class='op'>$</span><span class='va'>cov</span>,</span>
+<span class='r-in'>                std.mean.resid <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span> <span class='fu'><a href='https://rdrr.io/pkg/lavaan/man/lavResiduals.html'>lavResiduals</a></span><span class='op'>(</span><span class='va'>fit</span>, zstat <span class='op'>=</span> <span class='cn'>FALSE</span>,</span>
+<span class='r-in'>                                                            summary <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span><span class='op'>$</span><span class='va'>mean</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>out1g</span> <span class='op'>&lt;-</span> <span class='fu'>ppmc</span><span class='op'>(</span><span class='va'>fit</span>, discFUN <span class='op'>=</span> <span class='va'>discFUN</span><span class='op'>)</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'>## summarize first discrepancy by default (fit indices)</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>out1g</span><span class='op'>)</span></span>
+<span class='r-in'><span class='co'>## some model-implied correlations look systematically over/underestimated</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>out1g</span>, discFUN <span class='op'>=</span> <span class='st'>"std.cov.resid"</span>, central.tendency <span class='op'>=</span> <span class='st'>"EAP"</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/graphics/hist.html'>hist</a></span><span class='op'>(</span><span class='va'>out1g</span>, discFUN <span class='op'>=</span> <span class='st'>"std.cov.resid"</span>, element <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>, <span class='fl'>7</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span><span class='va'>out1g</span>, discFUN <span class='op'>=</span> <span class='st'>"std.cov.resid"</span>, element <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"x1"</span>,<span class='st'>"x7"</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-in'><span class='co'>## For ease of investigation, optionally export summary as a data.frame,</span></span>
+<span class='r-in'><span class='co'>## sorted by size of average residual</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>out1g</span>, discFUN <span class='op'>=</span> <span class='st'>"std.cov.resid"</span>, central.tendency <span class='op'>=</span> <span class='st'>"EAP"</span>,</span>
+<span class='r-in'>        to.data.frame <span class='op'>=</span> <span class='cn'>TRUE</span>, sort.by <span class='op'>=</span> <span class='st'>"EAP"</span><span class='op'>)</span></span>
+<span class='r-in'><span class='co'>## or sorted by size of PPP</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>out1g</span>, discFUN <span class='op'>=</span> <span class='st'>"std.cov.resid"</span>, central.tendency <span class='op'>=</span> <span class='st'>"EAP"</span>,</span>
+<span class='r-in'>        to.data.frame <span class='op'>=</span> <span class='cn'>TRUE</span>, sort.by <span class='op'>=</span> <span class='st'>"PPP_sim_LessThan_obs"</span><span class='op'>)</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'>## define a list of custom discrepancy functions for multiple groups</span></span>
+<span class='r-in'><span class='co'>## (return each group's numeric output using a different function)</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='va'>disc2g</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>global <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span class='r-in'>                 <span class='fu'><a href='https://rdrr.io/pkg/lavaan/man/fitMeasures.html'>fitMeasures</a></span><span class='op'>(</span><span class='va'>fit</span>, fit.measures <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"cfi"</span>,<span class='st'>"rmsea"</span>,<span class='st'>"mfi"</span>,<span class='st'>"srmr"</span>,<span class='st'>"chisq"</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-in'>               <span class='op'>}</span>,</span>
+<span class='r-in'>               cor.resid1 <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span> <span class='fu'><a href='https://rdrr.io/pkg/lavaan/man/lavResiduals.html'>lavResiduals</a></span><span class='op'>(</span><span class='va'>fit</span>, zstat <span class='op'>=</span> <span class='cn'>FALSE</span>,</span>
+<span class='r-in'>                                                       type <span class='op'>=</span> <span class='st'>"cor.bollen"</span>,</span>
+<span class='r-in'>                                                       summary <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span><span class='op'>$</span><span class='va'>cov</span>,</span>
+<span class='r-in'>               cor.resid2 <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span> <span class='fu'><a href='https://rdrr.io/pkg/lavaan/man/lavResiduals.html'>lavResiduals</a></span><span class='op'>(</span><span class='va'>fit</span>, zstat <span class='op'>=</span> <span class='cn'>FALSE</span>,</span>
+<span class='r-in'>                                                       type <span class='op'>=</span> <span class='st'>"cor.bollen"</span>,</span>
+<span class='r-in'>                                                       summary <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span><span class='op'>[[</span><span class='fl'>2</span><span class='op'>]</span><span class='op'>]</span><span class='op'>$</span><span class='va'>cov</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>out2g</span> <span class='op'>&lt;-</span> <span class='fu'>ppmc</span><span class='op'>(</span><span class='va'>fitg</span>, discFUN <span class='op'>=</span> <span class='va'>disc2g</span>, thin <span class='op'>=</span> <span class='fl'>2</span><span class='op'>)</span></span>
+<span class='r-in'><span class='co'>## some residuals look like a bigger problem in one group than another</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/graphics/pairs.html'>pairs</a></span><span class='op'>(</span><span class='va'>out2g</span>, discFUN <span class='op'>=</span> <span class='st'>"cor.resid1"</span>, horInd <span class='op'>=</span> <span class='fl'>1</span><span class='op'>:</span><span class='fl'>3</span>, verInd <span class='op'>=</span> <span class='fl'>7</span><span class='op'>:</span><span class='fl'>9</span><span class='op'>)</span> <span class='co'># group 1</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/graphics/pairs.html'>pairs</a></span><span class='op'>(</span><span class='va'>out2g</span>, discFUN <span class='op'>=</span> <span class='st'>"cor.resid2"</span>, horInd <span class='op'>=</span> <span class='fl'>1</span><span class='op'>:</span><span class='fl'>3</span>, verInd <span class='op'>=</span> <span class='fl'>7</span><span class='op'>:</span><span class='fl'>9</span><span class='op'>)</span> <span class='co'># group 2</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'>## print all to file: must be a LARGE picture. First group 1 ...</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/grDevices/png.html'>png</a></span><span class='op'>(</span><span class='st'>"cor.resid1.png"</span>, width <span class='op'>=</span> <span class='fl'>1600</span>, height <span class='op'>=</span> <span class='fl'>1200</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/graphics/pairs.html'>pairs</a></span><span class='op'>(</span><span class='va'>out2g</span>, discFUN <span class='op'>=</span> <span class='st'>"cor.resid1"</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/grDevices/dev.html'>dev.off</a></span><span class='op'>(</span><span class='op'>)</span></span>
+<span class='r-in'><span class='co'>## ... then group 2</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/grDevices/png.html'>png</a></span><span class='op'>(</span><span class='st'>"cor.resid2.png"</span>, width <span class='op'>=</span> <span class='fl'>1600</span>, height <span class='op'>=</span> <span class='fl'>1200</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/graphics/pairs.html'>pairs</a></span><span class='op'>(</span><span class='va'>out2g</span>, discFUN <span class='op'>=</span> <span class='st'>"cor.resid2"</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/grDevices/dev.html'>dev.off</a></span><span class='op'>(</span><span class='op'>)</span></span>
+<span class='r-in'><span class='op'>}</span></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

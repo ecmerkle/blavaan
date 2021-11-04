@@ -152,7 +152,7 @@ jags.ic <span class='op'>=</span> <span class='cn'>FALSE</span>, seed <span clas
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>...</th>
-      <td><p>Default lavaan arguments.  See <code>lavaan</code>.</p></td>
+      <td><p>Default lavaan arguments.  See <code><a href='https://rdrr.io/pkg/lavaan/man/lavaan.html'>lavaan</a></code>.</p></td>
     </tr>
     <tr>
       <th>cp</th>
@@ -208,7 +208,7 @@ jags.ic <span class='op'>=</span> <span class='cn'>FALSE</span>, seed <span clas
       <td><p>If it is a character string, the options are currently
     <code>"simple"</code>, <code>"Mplus"</code>, <code>"prior"</code> (default), or <code>"jags"</code>.  In the first two
     cases, parameter values are set as though they will be estimated via
-    ML (see <code>lavaan</code>).  The starting parameter value for
+    ML (see <code><a href='https://rdrr.io/pkg/lavaan/man/lavaan.html'>lavaan</a></code>).  The starting parameter value for
     each chain is then perturbed from the original values through the
     addition of random uniform noise.  If <code>"prior"</code> is used, the starting
     parameter values are obtained based on the prior distributions
@@ -217,7 +217,7 @@ jags.ic <span class='op'>=</span> <span class='cn'>FALSE</span>, seed <span clas
     specified and JAGS will choose values on its own (and this will probably
     crash Stan targets). You can also supply
     a list of starting values for each chain, where the list format can
-    be obtained from, e.g., <code><a href='blavInspect.html'>blavInspect(fit, "inits")</a></code>. Finally,
+    be obtained from, e.g., <code>blavInspect(fit, "inits")</code>. Finally,
     you can specify starting values in a similar way to lavaan,
     using the lavaan <code>start</code> argument (see the lavaan
     documentation for all the options there). In this case, you should also set
@@ -287,7 +287,7 @@ jags.ic <span class='op'>=</span> <span class='cn'>FALSE</span>, seed <span clas
 
     <p>The <code>bgrowth</code> function is a wrapper for the more general
       <code><a href='blavaan.html'>blavaan</a></code> function, using the following default
-      <code>lavaan</code> arguments:
+      <code><a href='https://rdrr.io/pkg/lavaan/man/lavaan.html'>lavaan</a></code> arguments:
     <code>meanstructure = TRUE</code>, 
     <code>int.ov.free = FALSE</code>, <code>int.lv.free = TRUE</code>,
     <code>auto.fix.first = TRUE</code> (unless <code>std.lv = TRUE</code>),
@@ -312,28 +312,28 @@ Software, 85(4), 1-30. URL http://www.jstatsoft.org/v85/i04/.</p>
     <div class='dont-index'><p><code><a href='blavaan.html'>blavaan</a></code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
-<span class='co'>## linear growth model with a time-varying covariate</span>
-<span class='va'>model.syntax</span> <span class='op'>&lt;-</span> <span class='st'>'
-  # intercept and slope with fixed coefficients
-    i =~ 1*t1 + 1*t2 + 1*t3 + 1*t4
-    s =~ 0*t1 + 1*t2 + 2*t3 + 3*t4
-
-  # regressions
-    i ~ x1 + x2
-    s ~ x1 + x2
-
-  # time-varying covariates
-    t1 ~ c1
-    t2 ~ c2
-    t3 ~ c3
-    t4 ~ c4
-'</span>
-
-<span class='va'>fit</span> <span class='op'>&lt;-</span> <span class='fu'>bgrowth</span><span class='op'>(</span><span class='va'>model.syntax</span>, data<span class='op'>=</span><span class='va'>Demo.growth</span><span class='op'>)</span>
-<span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span>
-<span class='op'>}</span>
-</div></pre>
+    <pre class="examples"><span class='r-in'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span class='r-in'><span class='co'>## linear growth model with a time-varying covariate</span></span>
+<span class='r-in'><span class='va'>model.syntax</span> <span class='op'>&lt;-</span> <span class='st'>'</span>
+<span class='r-in'>  # intercept and slope with fixed coefficients</span>
+<span class='r-in'>    i =~ 1*t1 + 1*t2 + 1*t3 + 1*t4</span>
+<span class='r-in'>    s =~ 0*t1 + 1*t2 + 2*t3 + 3*t4</span>
+<span class='r-in'></span>
+<span class='r-in'>  # regressions</span>
+<span class='r-in'>    i ~ x1 + x2</span>
+<span class='r-in'>    s ~ x1 + x2</span>
+<span class='r-in'></span>
+<span class='r-in'>  # time-varying covariates</span>
+<span class='r-in'>    t1 ~ c1</span>
+<span class='r-in'>    t2 ~ c2</span>
+<span class='r-in'>    t3 ~ c3</span>
+<span class='r-in'>    t4 ~ c4</span>
+<span class='r-in'>'</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='va'>fit</span> <span class='op'>&lt;-</span> <span class='fu'>bgrowth</span><span class='op'>(</span><span class='va'>model.syntax</span>, data<span class='op'>=</span><span class='va'>Demo.growth</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span></span>
+<span class='r-in'><span class='op'>}</span></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

@@ -153,7 +153,7 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>...</th>
-      <td><p>Default lavaan arguments.  See <code>lavaan</code>.</p></td>
+      <td><p>Default lavaan arguments.  See <code><a href='https://rdrr.io/pkg/lavaan/man/lavaan.html'>lavaan</a></code>.</p></td>
     </tr>
     <tr>
       <th>cp</th>
@@ -210,7 +210,7 @@
       <td><p>If it is a character string, the options are currently
     <code>"simple"</code>, <code>"Mplus"</code>, <code>"prior"</code> (default), or <code>"jags"</code>.  In the first two
     cases, parameter values are set as though they will be estimated via
-    ML (see <code>lavaan</code>).  The starting parameter value for
+    ML (see <code><a href='https://rdrr.io/pkg/lavaan/man/lavaan.html'>lavaan</a></code>).  The starting parameter value for
     each chain is then perturbed from the original values through the
     addition of random uniform noise.  If <code>"prior"</code> is used, the starting
     parameter values are obtained based on the prior distributions
@@ -219,7 +219,7 @@
     specified and JAGS will choose values on its own (and this will probably
     crash Stan targets). You can also supply
     a list of starting values for each chain, where the list format can
-    be obtained from, e.g., <code><a href='blavInspect.html'>blavInspect(fit, "inits")</a></code>. Finally,
+    be obtained from, e.g., <code>blavInspect(fit, "inits")</code>. Finally,
     you can specify starting values in a similar way to lavaan,
     using the lavaan <code>start</code> argument (see the lavaan
     documentation for all the options there). In this case, you should also set
@@ -287,7 +287,7 @@
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>An object that inherits from class <code>lavaan</code>, for which several methods
+    <p>An object that inherits from class <code><a href='https://rdrr.io/pkg/lavaan/man/lavaan-class.html'>lavaan</a></code>, for which several methods
   are available, including a <code>summary</code> method.</p>
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
@@ -302,19 +302,19 @@ Software, 85(4), 1-30. URL http://www.jstatsoft.org/v85/i04/.</p>
     <div class='dont-index'><p><code><a href='bcfa.html'>bcfa</a></code>, <code><a href='bsem.html'>bsem</a></code>, <code><a href='bgrowth.html'>bgrowth</a></code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
-<span class='co'># The Holzinger and Swineford (1939) example</span>
-<span class='va'>HS.model</span> <span class='op'>&lt;-</span> <span class='st'>' visual  =~ x1 + x2 + x3
-              textual =~ x4 + x5 + x6
-              speed   =~ x7 + x8 + x9 '</span>
-
-<span class='va'>fit</span> <span class='op'>&lt;-</span> <span class='fu'>blavaan</span><span class='op'>(</span><span class='va'>HS.model</span>, data<span class='op'>=</span><span class='va'>HolzingerSwineford1939</span>,
-               auto.var<span class='op'>=</span><span class='cn'>TRUE</span>, auto.fix.first<span class='op'>=</span><span class='cn'>TRUE</span>,
-               auto.cov.lv.x<span class='op'>=</span><span class='cn'>TRUE</span><span class='op'>)</span>
-<span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span>
-<span class='fu'><a href='https://rdrr.io/r/stats/coef.html'>coef</a></span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span>
-<span class='op'>}</span>
-</div></pre>
+    <pre class="examples"><span class='r-in'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span class='r-in'><span class='co'># The Holzinger and Swineford (1939) example</span></span>
+<span class='r-in'><span class='va'>HS.model</span> <span class='op'>&lt;-</span> <span class='st'>' visual  =~ x1 + x2 + x3</span>
+<span class='r-in'>              textual =~ x4 + x5 + x6</span>
+<span class='r-in'>              speed   =~ x7 + x8 + x9 '</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='va'>fit</span> <span class='op'>&lt;-</span> <span class='fu'>blavaan</span><span class='op'>(</span><span class='va'>HS.model</span>, data<span class='op'>=</span><span class='va'>HolzingerSwineford1939</span>,</span>
+<span class='r-in'>               auto.var<span class='op'>=</span><span class='cn'>TRUE</span>, auto.fix.first<span class='op'>=</span><span class='cn'>TRUE</span>,</span>
+<span class='r-in'>               auto.cov.lv.x<span class='op'>=</span><span class='cn'>TRUE</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/stats/coef.html'>coef</a></span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span></span>
+<span class='r-in'><span class='op'>}</span></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

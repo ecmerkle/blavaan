@@ -153,13 +153,13 @@
     <tr>
       <th>...</th>
       <td><p>Additional arguments passed to lavaan's
-  <code>standardizedSolution()</code></p></td>
+  <code><a href='https://rdrr.io/pkg/lavaan/man/standardizedSolution.html'>standardizedSolution()</a></code></p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="note"><a class="anchor" href="#note"></a>Note</h2>
 
-    <p>The only allowed <code>standardizedSolution()</code> arguments are type,
+    <p>The only allowed <code><a href='https://rdrr.io/pkg/lavaan/man/standardizedSolution.html'>standardizedSolution()</a></code> arguments are type,
 cov.std, remove.eq, remove.ineq, and remove.def. Other arguments are not
 immediately suited to posterior distributions.</p>
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
@@ -168,32 +168,32 @@ immediately suited to posterior distributions.</p>
   and columns are parameters.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
-<span class='va'>model</span> <span class='op'>&lt;-</span> <span class='st'>' 
-  # latent variable definitions
-     ind60 =~ x1 + x2 + x3
-     dem60 =~ y1 + a*y2 + b*y3 + c*y4
-     dem65 =~ y5 + a*y6 + b*y7 + c*y8
-
-  # regressions
-    dem60 ~ ind60
-    dem65 ~ ind60 + dem60
-
-  # residual correlations
-    y1 ~~ y5
-    y2 ~~ y4 + y6
-    y3 ~~ y7
-    y4 ~~ y8
-    y6 ~~ y8
-'</span>
-
-<span class='va'>fit</span> <span class='op'>&lt;-</span> <span class='fu'><a href='bsem.html'>bsem</a></span><span class='op'>(</span><span class='va'>model</span>, data<span class='op'>=</span><span class='va'>PoliticalDemocracy</span>,
-            dp<span class='op'>=</span><span class='fu'><a href='dpriors.html'>dpriors</a></span><span class='op'>(</span>nu<span class='op'>=</span><span class='st'>"dnorm(5,1e-2)"</span><span class='op'>)</span>,
-            bcontrol<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>method<span class='op'>=</span><span class='st'>"rjparallel"</span><span class='op'>)</span><span class='op'>)</span>
-
-<span class='fu'>standardizedPosterior</span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span>
-<span class='op'>}</span>
-</div></pre>
+    <pre class="examples"><span class='r-in'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span class='r-in'><span class='va'>model</span> <span class='op'>&lt;-</span> <span class='st'>' </span>
+<span class='r-in'>  # latent variable definitions</span>
+<span class='r-in'>     ind60 =~ x1 + x2 + x3</span>
+<span class='r-in'>     dem60 =~ y1 + a*y2 + b*y3 + c*y4</span>
+<span class='r-in'>     dem65 =~ y5 + a*y6 + b*y7 + c*y8</span>
+<span class='r-in'></span>
+<span class='r-in'>  # regressions</span>
+<span class='r-in'>    dem60 ~ ind60</span>
+<span class='r-in'>    dem65 ~ ind60 + dem60</span>
+<span class='r-in'></span>
+<span class='r-in'>  # residual correlations</span>
+<span class='r-in'>    y1 ~~ y5</span>
+<span class='r-in'>    y2 ~~ y4 + y6</span>
+<span class='r-in'>    y3 ~~ y7</span>
+<span class='r-in'>    y4 ~~ y8</span>
+<span class='r-in'>    y6 ~~ y8</span>
+<span class='r-in'>'</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='va'>fit</span> <span class='op'>&lt;-</span> <span class='fu'><a href='bsem.html'>bsem</a></span><span class='op'>(</span><span class='va'>model</span>, data<span class='op'>=</span><span class='va'>PoliticalDemocracy</span>,</span>
+<span class='r-in'>            dp<span class='op'>=</span><span class='fu'><a href='dpriors.html'>dpriors</a></span><span class='op'>(</span>nu<span class='op'>=</span><span class='st'>"dnorm(5,1e-2)"</span><span class='op'>)</span>,</span>
+<span class='r-in'>            bcontrol<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>method<span class='op'>=</span><span class='st'>"rjparallel"</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='fu'>standardizedPosterior</span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span></span>
+<span class='r-in'><span class='op'>}</span></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

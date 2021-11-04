@@ -219,7 +219,7 @@ the independence model) (if available).</p></dd>
       If <code>standardized = TRUE</code>,
       the standardized solution is also printed.  Note that <em>SE</em>s and
       tests are still based on unstandardized estimates. Use
-      <code>standardizedSolution</code> to obtain <em>SE</em>s and test
+      <code><a href='https://rdrr.io/pkg/lavaan/man/standardizedSolution.html'>standardizedSolution</a></code> to obtain <em>SE</em>s and test
       statistics for standardized estimates.
       If <code>rsquare=TRUE</code>, the R-Square values for the dependent variables
       in the model are printed.
@@ -251,20 +251,20 @@ http://www.jstatsoft.org/v48/i02/.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'><p><code><a href='bcfa.html'>bcfa</a></code>, <code><a href='bsem.html'>bsem</a></code>, <code><a href='bgrowth.html'>bgrowth</a></code>,
-<code>fitMeasures</code></p></div>
+<code><a href='https://rdrr.io/pkg/lavaan/man/fitMeasures.html'>fitMeasures</a></code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
-<span class='va'>HS.model</span> <span class='op'>&lt;-</span> <span class='st'>' visual  =~ x1 + x2 + x3
-              textual =~ x4 + x5 + x6
-              speed   =~ x7 + x8 + x9 '</span>
-
-<span class='va'>fit</span> <span class='op'>&lt;-</span> <span class='fu'><a href='bcfa.html'>bcfa</a></span><span class='op'>(</span><span class='va'>HS.model</span>, data<span class='op'>=</span><span class='va'>HolzingerSwineford1939</span><span class='op'>)</span>
-
-<span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>fit</span>, standardized<span class='op'>=</span><span class='cn'>TRUE</span>, fit.measures<span class='op'>=</span><span class='cn'>TRUE</span>, rsquare<span class='op'>=</span><span class='cn'>TRUE</span><span class='op'>)</span>
-<span class='fu'><a href='https://rdrr.io/r/stats/coef.html'>coef</a></span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span>
-<span class='op'>}</span>
-</div></pre>
+    <pre class="examples"><span class='r-in'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span class='r-in'><span class='va'>HS.model</span> <span class='op'>&lt;-</span> <span class='st'>' visual  =~ x1 + x2 + x3</span>
+<span class='r-in'>              textual =~ x4 + x5 + x6</span>
+<span class='r-in'>              speed   =~ x7 + x8 + x9 '</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='va'>fit</span> <span class='op'>&lt;-</span> <span class='fu'><a href='bcfa.html'>bcfa</a></span><span class='op'>(</span><span class='va'>HS.model</span>, data<span class='op'>=</span><span class='va'>HolzingerSwineford1939</span><span class='op'>)</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>fit</span>, standardized<span class='op'>=</span><span class='cn'>TRUE</span>, fit.measures<span class='op'>=</span><span class='cn'>TRUE</span>, rsquare<span class='op'>=</span><span class='cn'>TRUE</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/stats/coef.html'>coef</a></span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span></span>
+<span class='r-in'><span class='op'>}</span></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

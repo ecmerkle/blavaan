@@ -177,23 +177,23 @@ bayesplot package.</p>
   handled separately for JAGS and for Stan (using plot functionality in
   packages runjags and rstan, respectively). For uniformity, all
   plotting functionality is now handled by bayesplot. If users desire
-  additional functionality that is not immediately available, they can extract the matrix of MCMC draws via <code><a href='https://rdrr.io/r/base/matrix.html'>as.matrix(blavInspect(x, 'mcmc'))</a></code>.</p>
+  additional functionality that is not immediately available, they can extract the matrix of MCMC draws via <code>as.matrix(blavInspect(x, 'mcmc'))</code>.</p>
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>An invisible ggplot object that, if desired, can be further customized.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
-<span class='va'>HS.model</span> <span class='op'>&lt;-</span> <span class='st'>' visual  =~ x1 + x2 + x3
-              textual =~ x4 + x5 + x6
-              speed   =~ x7 + x8 + x9 '</span>
-
-<span class='va'>fit</span> <span class='op'>&lt;-</span> <span class='fu'><a href='bcfa.html'>bcfa</a></span><span class='op'>(</span><span class='va'>HS.model</span>, data<span class='op'>=</span><span class='va'>HolzingerSwineford1939</span><span class='op'>)</span>
-
-<span class='co'># trace plots of free loadings</span>
-<span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span><span class='va'>fit</span>, pars <span class='op'>=</span> <span class='fl'>1</span><span class='op'>:</span><span class='fl'>6</span><span class='op'>)</span>
-<span class='op'>}</span>
-</div></pre>
+    <pre class="examples"><span class='r-in'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span class='r-in'><span class='va'>HS.model</span> <span class='op'>&lt;-</span> <span class='st'>' visual  =~ x1 + x2 + x3</span>
+<span class='r-in'>              textual =~ x4 + x5 + x6</span>
+<span class='r-in'>              speed   =~ x7 + x8 + x9 '</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='va'>fit</span> <span class='op'>&lt;-</span> <span class='fu'><a href='bcfa.html'>bcfa</a></span><span class='op'>(</span><span class='va'>HS.model</span>, data<span class='op'>=</span><span class='va'>HolzingerSwineford1939</span><span class='op'>)</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># trace plots of free loadings</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span><span class='va'>fit</span>, pars <span class='op'>=</span> <span class='fl'>1</span><span class='op'>:</span><span class='fl'>6</span><span class='op'>)</span></span>
+<span class='r-in'><span class='op'>}</span></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
