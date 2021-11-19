@@ -67,6 +67,11 @@ jobs:
           remotes::install_cran("rcmdcheck")
         shell: Rscript {0}
 
+      - name: Use lavaan devel version
+        run: |
+	  remotes::install_github("yrosseel/lavaan")
+	shell: Rscript {0}
+
       - name: Check
         env:
           _R_CHECK_CRAN_INCOMING_REMOTE_: false
