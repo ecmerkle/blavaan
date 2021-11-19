@@ -45,7 +45,7 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
       implied <- cond_moments(postsamp, lavmodel, lavpartable, lavsamplestats,
                               lavdata, lavobject)
     } else {
-      implied <- lav_model_implied(lavmodel)
+      implied <- lav_model_implied(lavmodel, delta = (lavmodel@parameterization == "delta"))
     }
   
     ## check for missing, to see if we can easily get baseline ll for chisq
@@ -149,7 +149,7 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
             tmpll <- NA # we'll get it from stan
         } else {
             tmpobj <- lavobject
-            tmpobj@implied <- lav_model_implied(lavmodel)
+            tmpobj@implied <- lav_model_implied(lavmodel, delta = (lavmodel@parameterization == "delta"))
             tmpobj@Options$estimator <- "ML"
             tmpll <- llcont(tmpobj)
         }
@@ -232,7 +232,7 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
     if(conditional){
         stop("blavaan ERROR: conditional log-likelihoods not available for ordinal data.")
     } else {
-        implied <- lav_model_implied(lavmodel)
+        implied <- lav_model_implied(lavmodel, delta = (lavmodel@parameterization == "delta"))
     }
 
     if(is.null(standata)){

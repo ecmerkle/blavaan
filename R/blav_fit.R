@@ -42,7 +42,7 @@ blav_model_fit <- function(lavpartable = NULL,
     }
 
     # for convenience: compute lavmodel-implied Sigma and Mu
-    implied <- lav_model_implied(lavmodel)
+    implied <- lav_model_implied(lavmodel, delta = (lavmodel@parameterization == "delta"))
     # change names back if conditional.x (see lav_model_implied.R)
     if(lavmodel@conditional.x) {
         names(implied) <- c("cov", "mean", "slopes", "th", "group.w")

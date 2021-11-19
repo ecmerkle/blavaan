@@ -397,7 +397,7 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, type = "res
       if(conditional){
         implied <- lavobject@external$implied
       } else {
-        implied <- lav_model_implied(lavmodel)
+        implied <- lav_model_implied(lavmodel, delta = (lavmodel@parameterization == "delta"))
       }
       Sigma.hat <- implied$cov
       Mu.hat <- implied$mean

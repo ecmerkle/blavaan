@@ -767,7 +767,7 @@ blavaan <- function(...,  # default lavaan arguments
     ## parameter convergence + implied moments:
     lavimplied <- NULL
     ## compute/store some model-implied statistics
-    lavimplied <- lav_model_implied(lavmodel)
+    lavimplied <- lav_model_implied(lavmodel, delta = (lavmodel@parameterization == "delta"))
     if(jag.do.fit & n.chains > 1){
       ## this also checks convergence of monitors from mcmcextra, which may not be optimal
       psrfrows <- which(!is.na(lavpartable$psrf) &

@@ -58,8 +58,8 @@ samp_kls <- function(lavjags        = NULL,
                              th = vector("list", ngroups),
                              group.w = vector("list", ngroups))
         } else {
-            implied0 <- lav_model_implied(lavmodel0)
-            implied1 <- lav_model_implied(lavmodel1)
+            implied0 <- lav_model_implied(lavmodel0, delta = (lavmodel0@parameterization == "delta"))
+            implied1 <- lav_model_implied(lavmodel1, delta = (lavmodel1@parameterization == "delta"))
         }
 
         tmpkl <- 0
