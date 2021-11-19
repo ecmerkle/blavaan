@@ -65,12 +65,8 @@ jobs:
         run: |
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
+          remotes::install_github("yrosseel/lavaan")
         shell: Rscript {0}
-
-      - name: Use lavaan devel version
-        run: |
-	  remotes::install_github("yrosseel/lavaan")
-	shell: Rscript {0}
 
       - name: Check
         env:
