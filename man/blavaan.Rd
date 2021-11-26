@@ -86,13 +86,16 @@ blavaan(..., cp = "srs",
   are available, including a \code{summary} method.
 }
 \references{
-Yves Rosseel (2012). lavaan: An R Package for Structural Equation
-Modeling. Journal of Statistical Software, 48(2), 1-36. URL
-http://www.jstatsoft.org/v48/i02/.
+Edgar C. Merkle, Ellen Fitzsimmons, James Uanhoro, & Ben Goodrich (2021). Efficient Bayesian Structural Equation Modeling in Stan. Journal of Statistical
+Software, 100(6), 1-22. URL http://www.jstatsoft.org/v100/i06/.
 
 Edgar C. Merkle & Yves Rosseel (2018). blavaan: Bayesian Structural
 Equation Models via Parameter Expansion. Journal of Statistical
 Software, 85(4), 1-30. URL http://www.jstatsoft.org/v85/i04/.
+
+Yves Rosseel (2012). lavaan: An R Package for Structural Equation
+Modeling. Journal of Statistical Software, 48(2), 1-36. URL
+http://www.jstatsoft.org/v48/i02/.
 }
 \seealso{
 \code{\link{bcfa}}, \code{\link{bsem}}, \code{\link{bgrowth}}
