@@ -40,6 +40,9 @@ dpriors(..., target = "stan")
 A character vector containing the prior distribution for each type of parameter.
 }
 \references{
+Edgar C. Merkle, Ellen Fitzsimmons, James Uanhoro, & Ben Goodrich (2021). Efficient Bayesian Structural Equation Modeling in Stan. Journal of Statistical
+Software, 100(6), 1-22. URL http://www.jstatsoft.org/v100/i06/.
+
 Edgar C. Merkle & Yves Rosseel (2018). blavaan: Bayesian Structural
 Equation Models via Parameter Expansion. Journal of Statistical
 Software, 85(4), 1-30. URL http://www.jstatsoft.org/v85/i04/.
