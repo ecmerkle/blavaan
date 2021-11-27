@@ -1,3 +1,8 @@
+# Version 0.3-18
+## New features
+* This version adds a reference to the new JSS paper, including DOI, and corrects an inconsistent version dependency. There are no other changes as compared to 0.3-17.
+
+
 # Version 0.3-17
 ## New features
 * This is a maintenance release to correct major bugs from the previous version.
