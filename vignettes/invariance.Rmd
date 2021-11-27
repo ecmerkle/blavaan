@@ -1,5 +1,7 @@
 ---
 title: "Measurement Invariance"
+bibliography:
+  - refs.bib
 ---
 
 ```{r echo=FALSE, message=FALSE}
@@ -10,7 +12,7 @@ The overt intent of this example is to illustrate the use of blavaan for studyin
 
 
 ### Model Estimation
-Consider a measurement invariance study of the Holzinger & Swineford (1939) data. In lavaan, we may first estimate two models:
+Consider a measurement invariance study of the @holswi39 data. In lavaan, we may first estimate two models:
 
 ```{r, eval=FALSE}
 HS.model <- ' visual  =~ x1 + x2 + x3
@@ -69,3 +71,7 @@ bfit4 <- bcfa(HS.model, data = HolzingerSwineford1939, group = "school",
 ```
 
 In the above example, the model intercepts and loadings have across-group constraints. The loadings are approximately equal across groups, due to the argument `wiggle = "loadings"`. And the intercepts are constrained to be exactly equal across groups. In this way, it becomes easy to use exact and approximate equality constraints in the same model, if desired.
+
+
+### References
+

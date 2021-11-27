@@ -228,8 +228,6 @@ long.summary <- function(object,
         ## 95% HPD; FIXME display blanks for equality-constrained parameters
         ##                (like Std.Err column)
 
-        ## TODO put parameter priors in partable
-
         ## match jags names to partable, then partable to PE
         if(jagtarget){
             pte2 <- which(!is.na(newpt$jagpnum))
@@ -256,18 +254,20 @@ long.summary <- function(object,
         ##    making changes to lavaan's print.lavaan.parameterEstimates(). But maybe
         ##    this should actually go in the lavaan function.
         char.format <- paste("%", max(8, nd + 5), "s", sep="")
-        PE$ci.lower <- round(PE$ci.lower, nd)
-        PE$ci.lower[PE$ci.lower == PE$est] <- ""
+        PE$ci.lower <- formatC(PE$ci.lower, digits = nd, format = "f")
+        PE$ci.lower[PE$ci.lower == formatC(PE$est, digits = nd, format = "f")] <- ""
         PE$ci.lower <- sprintf(char.format, PE$ci.lower)
-        PE$ci.upper <- round(PE$ci.upper, nd)
-        PE$ci.upper[PE$ci.upper == PE$est] <- ""
+        PE$ci.upper <- formatC(PE$ci.upper, digits = nd, format = "f")
+        PE$ci.upper[PE$ci.upper == formatC(PE$est, digits = nd, format = "f")] <- ""
         PE$ci.upper <- sprintf(char.format, PE$ci.upper)
 
         ## FIXME defined parameters never get psrf + others;
         ## see line 200 of lav_print.R
         if(psrf){
           PE$psrf <- rep(NA, nrow(PE))
-          PE$psrf[peentry] <- newpt$psrf[pte2]
+          PE$psrf[peentry] <- formatC(newpt$psrf[pte2], digits = nd, format = "f")
+          PE$psrf[is.na(PE$psrf)] <- ""
+          PE$psrf <- sprintf(char.format, PE$psrf)
         }
         if(neff){
           PE$neff <- rep(NA, nrow(PE))
@@ -307,7 +307,7 @@ long.summary <- function(object,
             tmppri[peentry] <- newpt$prior[pte2]
             PE2$prior <- tmppri
           }
-          PE$logBF <- round(SDBF(PE2), nd)
+          PE$logBF <- formatC(SDBF(PE2), digits = nd, format = "f")
           PE$logBF[is.na(PE$logBF)] <- ""
           PE$logBF <- sprintf(char.format, PE$logBF)
         }
@@ -318,10 +318,15 @@ long.summary <- function(object,
         ## require "est"
         #names(PE)[penames == "est"] <- "Post.Mean"
         #PE$est <- PE$Post.Mean
-        if(blavInspect(object, 'options')$prisamp){
-          names(PE)[penames == "se"] <- "Pri.SD"
-        } else {
+        if(!('prisamp' %in% names(blavInspect(object, 'options')))){
+          ## backwards compatibility before we had prisamp
           names(PE)[penames == "se"] <- "Post.SD"
+        } else {
+          if(blavInspect(object, 'options')$prisamp){
+            names(PE)[penames == "se"] <- "Pri.SD"
+          } else {
+            names(PE)[penames == "se"] <- "Post.SD"
+          }
         }
         names(PE)[penames == "ci.lower"] <- "pi.lower"
         names(PE)[penames == "ci.upper"] <- "pi.upper"

@@ -58,8 +58,8 @@ samp_kls <- function(lavjags        = NULL,
                              th = vector("list", ngroups),
                              group.w = vector("list", ngroups))
         } else {
-            implied0 <- lav_model_implied(lavmodel0)
-            implied1 <- lav_model_implied(lavmodel1)
+            implied0 <- lav_model_implied(lavmodel0, delta = (lavmodel0@parameterization == "delta"))
+            implied1 <- lav_model_implied(lavmodel1, delta = (lavmodel1@parameterization == "delta"))
         }
 
         tmpkl <- 0
@@ -159,7 +159,6 @@ cond_moments <- function(postsamp, lavmodel, lavpartable, lavsamplestats, lavdat
   mnvec <- lavPredict(lavobject, type="ov", ETA = eta)
   if(inherits(mnvec, "matrix")) mnvec <- list(mnvec)
 
-  ##covmat <- lavaan:::computeTHETA(lavmodel, lavmodel@GLIST)
   covmat <- lavInspect(lavobject, 'theta')
   if(inherits(covmat, "matrix")) covmat <- list(covmat)
   ## to avoid warnings from mnormt::pd.solve

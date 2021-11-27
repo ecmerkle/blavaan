@@ -82,8 +82,8 @@ summary.bfi(object, central.tendency = c("mean","median","mode"),
   and (if requested) the HPD credible-interval limits.
 }
 \author{
-Mauricio Garnier-Villareal (Marquette University;
-\email{mauricio.garniervillarreal@marquette.edu})
+Mauricio Garnier-Villareal (Vrije Universiteit Amsterdam;
+\email{mgv@pm.me})
 
 Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@gmail.com})
 }
@@ -97,9 +97,9 @@ Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@gmail.com})
 
   \code{rescale = "devM"} based on:
 
-  Garnier-Villarreal, M., & Jorgensen, T. D. (in press).
-  Adapting fit indices for Bayesian SEM: Comparison to maximum likelihood.
-  \emph{Psychological Methods}. doi:10.1037/met0000224
+Garnier-Villarreal, M., & Jorgensen, T. D. (2020). 
+Adapting Fit Indices for Bayesian Structural Equation Modeling: Comparison to Maximum Likelihood. 
+\emph{Psychological Methods}, 25(1), 46--70. https://doi.org/dx.doi.org/10.1037/met0000224
   (See also \url{https://osf.io/afkcw/})
 
   Other references:

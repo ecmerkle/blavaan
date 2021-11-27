@@ -19,7 +19,8 @@ dpriors <- function(..., target="stan"){
 
     userjags <- sapply(jagdists, function(x) grep(x, userspec))
 
-    if(length(unlist(userjags)) == length(userspec)){
+    ## > 1 match can occur for things like ddexp:
+    if(length(unlist(userjags)) >= length(userspec)){
       if(target == "jags"){
         dp <- do.call("jagpriors", userspec)
       } else {
@@ -54,7 +55,7 @@ jagpriors <- function(nu="dnorm(0,1e-3)", alpha="dnorm(0,1e-2)",
                     lambda="dnorm(0,1e-2)", beta="dnorm(0,1e-2)",
                     itheta="dgamma(1,.5)[prec]", ipsi="dgamma(1,.5)[prec]",
                     rho="dbeta(1,1)", ibpsi="dwish(iden,3)",
-                    tau="dnorm(0,.1)", delta="dgamma(1,.5)[prec]"){
+                    tau="dnorm(0,.44)", delta="dgamma(1,.5)[prec]"){
 
   dp <- c(nu=nu, alpha=alpha, lambda=lambda, beta=beta,
           itheta=itheta, ipsi=ipsi, rho=rho, ibpsi=ibpsi,
@@ -69,7 +70,7 @@ stanpriors <- function(nu="normal(0,32)",
                        beta="normal(0,10)", theta="gamma(1,.5)[sd]",
                        psi="gamma(1,.5)[sd]", rho="beta(1,1)",
                        ibpsi="wishart(3,iden)",
-                       tau="normal(0,3.16)",
+                       tau="normal(0,1.5)",
                        delta="gamma(1,.5)[sd]"){
 
   dp <- c(nu=nu, alpha=alpha, lambda=lambda, beta=beta,
@@ -84,7 +85,7 @@ stanclassicpriors <- function(nu="normal(0,1000^.5)",
                               beta="normal(0,10)", itheta="gamma(1,.5)[prec]",
                               ipsi="gamma(1,.5)[prec]", rho="beta(1,1)",
                               ibpsi="wishart(3,iden)",
-                              tau="normal(0,3.16)",
+                              tau="normal(0,1.5)",
                               delta="gamma(1,.5)[prec]"){
 
   dp <- c(nu=nu, alpha=alpha, lambda=lambda, beta=beta,

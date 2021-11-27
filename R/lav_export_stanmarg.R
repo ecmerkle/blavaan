@@ -106,18 +106,26 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
             
             ## find sign-constrained loadings of the two lvs
             lampar1 <- lamfree[[i]][,fpar[j,2]]
+            ## see whether any are equality constrained
+            l1match <- match(lampar1, constraint$rhs, nomatch = 0L)
+            lampar1[l1match != 0] <- as.numeric(constraint$lhs[l1match])
             if (all(lampar1 == 0)) { # ov converted to lv
               l1 <- 1
             } else {
               l1 <- lampar1[which(lampar1 %in% lamsign[,2])]
+              ## for across-group equality constraint:
+              if (length(l1) == 0) l1 <- lampar1[lampar1 != 0][1]
               if (lamsign[l1,1] == 1) l1 <- lamsign[l1,2]
             }
 
             lampar2 <- lamfree[[i]][,fpar[j,1]]
+            l2match <- match(lampar2, constraint$rhs, nomatch = 0L)
+            lampar2[l2match != 0] <- as.numeric(constraint$lhs[l2match])
             if (all(lampar2 == 0)) {
               l2 <- 1
             } else {
               l2 <- lampar2[which(lampar2 %in% lamsign[,2])]
+              if (length(l2) == 0) l2 <- lampar2[lampar2 != 0][1]
               if (lamsign[l2,1] == 1) l2 <- lamsign[l2,2]
             }
 
@@ -157,7 +165,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
   return(out)
 }
 
-lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=NULL, prisamp=FALSE) {
+lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=NULL, prisamp=FALSE, mcmcextra=NULL) {
   ## extract model and data characteristics from lavaan object
   dat <- list()
   opts <- lavInspect(lavobject, 'options')
@@ -171,6 +179,11 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   dat$N <- lavInspect(lavobject, 'nobs')
   dat$pri_only <- prisamp
   xidx <- lavobject@SampleStats@x.idx[[1]]
+  if ("emiter" %in% names(mcmcextra$data)) {
+    dat$emiter <- mcmcextra$data$emiter
+  } else {
+    dat$emiter <- 20L
+  }
 
   ## lavobject@SampleStats@missing.flag is TRUE when missing='ml',
   ## regardless of whether data are missing
@@ -200,6 +213,11 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
 
     for (i in 1:dat$Np) {
       dat$Obsvar[i, 1:dat$Nobs[i]] <- Obsvar[[i]]
+      if (dat$Nobs[i] < nvar) {
+        ## missing idx is at end of Obsvar
+        allvars <- 1:nvar
+        dat$Obsvar[i, (dat$Nobs[i] + 1):nvar] <- allvars[!(allvars %in% Obsvar[[i]])]
+      }
       xdatidx <- match(xidx, Obsvar[[i]])
       xpat <- xidx[xidx %in% Obsvar[[i]]]
       if (length(xpat) > 0) {
@@ -235,6 +253,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
 
     ordidx <- pta$vidx$ov.ord[[1]]
     dat$YXo <- dat$YX[, ordidx, drop=FALSE]
+    dat$YXo[dat$YXo == 0L] <- 1L ## this does not get used but is needed to avoid threshold problems
     mode(dat$YXo) <- "integer"
     dat$YX <- dat$YX[, -ordidx, drop=FALSE]
 
@@ -242,9 +261,10 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     neach <- vector("list", length(ordidx))
     for(i in 1:length(ordidx)){
       ordvar <- unlist(lapply(lavobject@Data@X, function(x) x[,ordidx[i]]))
+      ordvar <- ordvar[!is.na(ordvar)]
       nlevs[i] <- length(unique(ordvar))
     
-      neach[[i]] <- summary(factor(ordvar))
+      neach[[i]] <- summary(factor(ordvar), maxsum=1e5)
     }
 
     maxcat <- max(nlevs)
@@ -840,7 +860,9 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
   deltloc <- which(names(lavfree) == "delta")
   if(length(deltloc) > 0) lavfree <- lavfree[-deltloc]
   if(!all(names(lavfree) %in% mapping)){
-    ## multiple groups?
+    ## multiple groups? FIXME handle delta
+    deltloc <- which(names(lavfree[[1]]) == "delta")
+    if(length(deltloc) > 0) lavfree <- lapply(lavfree, function(x) x[-deltloc])
     if(!all(names(lavfree[[1]]) %in% mapping)){
       stop("blavaan ERROR: unrecognized lavaan model matrix.")
     }

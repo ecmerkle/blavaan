@@ -13,7 +13,7 @@ This function allows users to conduct a posterior predictive model check to
 assess the global or local fit of a latent variable model using any discrepancy
 function that can be applied to a \code{\linkS4class{lavaan}} model.}
 \usage{
-ppmc(object, thin = 1, fit.measures = c("srmr","chisq"), discFUN = NULL)
+ppmc(object, thin = 1, fit.measures = c("srmr","chisq"), discFUN = NULL, conditional = FALSE)
 
 \S4method{summary}{blavPPMC}(object, ...)
 
@@ -48,7 +48,11 @@ summary.ppmc(object, discFUN, dist = c("obs","sim"),
     must return an object whose \code{\link{mode}} is \code{numeric}, but may
     be a \code{vector}, \code{matrix}, or multidimensional \code{array}. In
     the \code{summary} and \code{plot} methods, \code{discFUN} is a
-    \code{character} indicating which discrepancy function to summarize.}
+    \code{character} indicating which discrepancy function to
+    summarize.}
+  \item{conditional}{\code{logical} indicating whether or not, during artificial data
+    generation, we should condition on the estimated latent
+  variables. Requires the model to be estimated with \code{save.lvs = TRUE}.}
   \item{element}{\code{numeric} or \code{character} indicating the index (in
     each \code{dim}ension of the \code{discFUN} output, if multiple) to plot.}
   \item{horInd,verInd}{Similar to \code{element}, but a \code{numeric} or

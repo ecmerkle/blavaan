@@ -38,7 +38,17 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
   ## verify that probs is a numeric vector
   probs <- as.numeric(probs)
 
-  lavmcmc <- make_mcmc(lavjags)
+  ## add sampled lvs to posterior samples, if they exist
+  save_lvs <- FALSE
+  if (!is.null(lavobject)) {    
+    save_lvs <- ("stanlvs" %in% names(lavobject@external)) & length(discFUN)
+  }
+  
+  if (save_lvs) {
+    lavmcmc <- make_mcmc(lavjags, lavobject@external$stanlvs)
+  } else {
+    lavmcmc <- make_mcmc(lavjags)
+  }
   n.chains <- length(lavmcmc)
   samp.indices <- sampnums(lavjags, thin=thin)
   psamp <- length(samp.indices)
@@ -47,7 +57,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
 
   ## check for missing, to see if we can easily get baseline ll for chisq
   mis <- FALSE
-  if(any(is.na(unlist(lavdata@X)))) mis <- TRUE
+  if (any(is.na(unlist(lavdata@X)))) mis <- TRUE
 
   loop.args <- list(X = 1:psamp, future.seed = TRUE, FUN = function(i){
     ## lists to store output (reduced after concatenated across chains)
@@ -66,6 +76,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
     for(j in 1:n.chains){
       ## compute (i) X2 of generated data and model-implied moments,
       ## along with (ii) X2 of real data and model-implied moments.
+      fit <- lavobject
 
       ## REAL DATA
       if (length(discFUN)) {
@@ -85,6 +96,14 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
                       slotSampleStats = lavsamplestats, slotData = ldorig,
                       slotParTable = lavpartable, slotCache = lavcache)
 
+        if (save_lvs) {
+          eta <- fill_eta(lavmcmc[[j]][i,], lavmodel1, lavpartable, lavsamplestats, lavdata)
+          implied <- cond_moments(lavmcmc[[j]][i,], lavmodel1, lavpartable, lavsamplestats,
+                                  lavdata, fit)
+          fit@external$eta <- eta
+          fit@external$implied <- implied
+        }
+        
         ## Apply custom "discFUN" to observed data
         chisq.obs <- vector("list", length(discFUN))
         for (d in seq_along(discFUN)) {
@@ -116,7 +135,9 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
                         chain.num = j,
                         lavmodel = lmorig, lavdata = ldorig,
                         lavjags = lavjags, lavpartable = lavpartable,
-                        lavsamplestats = lavsamplestats)
+                        lavsamplestats = lavsamplestats,
+                        lavobject = fit,
+                        conditional = save_lvs)
       lavmodel <- dataX$lavmod[[1]]
       dataX <- dataX[[1]]
       dataeXo <- lavdata@eXo
@@ -127,6 +148,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
         chisq.boot <- 2*diff(get_ll(lavmodel = lavmodel,
                                     lavsamplestats = lavsamplestats,
                                     lavdata = lavdata,
+                                    lavoptions = lavoptions,
                                     measure = measure[1]))
 
       ## chi-squared for (in)complete data
@@ -190,6 +212,10 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
                         data = DATA)
         }
         # bootSampleStats <- out@SampleStats
+        if (save_lvs) {
+          out@external$eta <- eta
+          out@external$implied <- implied
+        }
         # end of ugly hack
 
         ## prioritize custom discrepancy function, so "logl" can remain default
@@ -293,15 +319,11 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
 
 
 ## generate data from posterior predictive dist
-postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, ...){
+postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, type = "response", ...){
 
   ## parallel=TRUE can be sent here, but it slows everything down if
   ## used within postpred() because it leads to nested parallelization.
   ddd <- list(...)
-
-  if(conditional){
-    stop("blavaan ERROR: conditional posterior predictives unavailable.")
-  }
 
   ## users can supply object; postpred() will supply the slots:
   if(length(object) == 0L){
@@ -314,14 +336,22 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, ...){
     lavjags <- ddd$lavjags
     lavpartable <- ddd$lavpartable
     lavsamplestats <- ddd$lavsamplestats
+    lavobject <- ddd$lavobject
   } else {
     lavmodel <- object@Model
     lavdata <- object@Data
     lavjags <- object@external$mcmcout
     lavpartable <- object@ParTable
     lavsamplestats <- object@SampleStats
+    lavobject <- object
   }
 
+  if(conditional){
+    if(!(("eta" %in% names(lavobject@external) & "implied" %in% names(lavobject@external)))){
+      stop("blavaan ERROR: could not find lvs.")
+    }
+  }
+  
   lavmcmc <- make_mcmc(lavjags)
   n.chains <- length(lavmcmc)
   chnums <- 1:n.chains
@@ -343,6 +373,14 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, ...){
   mis <- FALSE
   if(any(is.na(unlist(lavdata@X)))) mis <- TRUE
 
+  ## check for ordinal, which requires to chop the data
+  ordresp <- FALSE
+  if(length(lavdata@ordered) > 0 && type == "response"){
+    ordresp <- TRUE
+    ordidx <- which(lavdata@ov$type == "ordered")
+    thidx <- lavmodel@th.idx
+  }
+  
   postdat <- vector("list", psamp)
   lavmod <- vector("list", psamp)
 
@@ -356,7 +394,11 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, ...){
       lavmod[[i]] <- lavmodel
 
       ## generate data (some code from lav_bootstrap.R)
-      implied <- lav_model_implied(lavmodel)
+      if(conditional){
+        implied <- lavobject@external$implied
+      } else {
+        implied <- lav_model_implied(lavmodel, delta = (lavmodel@parameterization == "delta"))
+      }
       Sigma.hat <- implied$cov
       Mu.hat <- implied$mean
       dataeXo <- lavdata@eXo
@@ -366,17 +408,20 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, ...){
         x.idx <- lavsamplestats@x.idx[[g]]
         nox <- (1:nrow(Mu.hat[[g]]))[-x.idx]
         if(!is.null(x.idx) && length(x.idx) > 0L){
+          if(conditional) stop("blavaan ERROR: conditional=TRUE does not work for models with fixed.x")
+          
           ## for fixed.x, generate the other ovs
           ## conditional on the x values.
           ## can use approach similar to
           ## lav_mvnorm_missing_impute_pattern (lav_mvnorm_missing.R)
           if(!mis){
             tm1 <- Sigma.hat[[g]][nox,x.idx] %*% solve(Sigma.hat[[g]][x.idx,x.idx])
+            csig <- Sigma.hat[[g]][nox,nox] - tm1 %*% Sigma.hat[[g]][x.idx,nox]
+            sigchol <- chol(csig)
+
             cmu <- Mu.hat[[g]][nox,] +
               tm1 %*% apply(origlavdata@X[[g]][,x.idx,drop=FALSE], 1,
                             function(x) (x - Mu.hat[[g]][x.idx,]))
-            csig <- Sigma.hat[[g]][nox,nox] - tm1 %*% Sigma.hat[[g]][x.idx,nox]
-            sigchol <- chol(csig)
 
             dataX[[g]][,nox] <- t(apply(cmu, 2, function(x) mnormt::rmnorm(n=1,
                                                                            sqrt=sigchol,
@@ -425,21 +470,36 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, ...){
             }
           } # mis
         } else {
-          nox <- 1:nrow(Mu.hat[[g]])
           cmu <- Mu.hat[[g]]
           csig <- Sigma.hat[[g]]
 
-          dataX[[g]] <- as.matrix(mnormt::rmnorm(n = nrow(dataX[[g]]),
-                                                 varcov = csig, mean = cmu))
+          if(!conditional) {
+            dataX[[g]] <- as.matrix(mnormt::rmnorm(n = nrow(dataX[[g]]),
+                                                   varcov = csig, mean = cmu))
+          } else {
+            sigchol <- chol(csig)
+            dataX[[g]] <- t(sapply(1:NROW(cmu), function(i) mnormt::rmnorm(n=1,
+                                                                           sqrt=sigchol,
+                                                                           mean = cmu[i,])))
+          }
         }
 
+        ## convert to ordinal if requested
+        if(ordresp){
+          for(oj in ordidx){
+            tmpth <- implied$mean[[g]][oj] + implied$th[[g]][thidx[[g]] == oj] * sqrt(implied$cov[[g]][oj, oj])
+            tmpth <- c(-Inf, tmpth, Inf)
+            dataX[[g]][, oj] <- cut(dataX[[g]][, oj], breaks = tmpth, labels = FALSE)
+          }
+        }
+        
         dataX[[g]][is.na(origlavdata@X[[g]])] <- NA
 
         ## get rid of completely missing
         if(length(origlavdata@Mp[[g]]$empty.idx) > 0){
           dataX[[g]] <- dataX[[g]][-origlavdata@Mp[[g]]$empty.idx,,drop=FALSE]
         }
-      }
+      } # g
 
       postdat[[i]] <- dataX
     }

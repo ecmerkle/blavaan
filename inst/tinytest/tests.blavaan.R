@@ -36,9 +36,13 @@ fit <- bsem(model, data=Data, fixed.x=TRUE, adapt=2,
             burnin=2, sample=2, do.fit=FALSE)
 expect_equal(class(fit)[1], "blavaan")
 
-fit <- bsem(model, data=Data, save.lvs=TRUE, do.fit=FALSE)
+## mcmcextra
+fit <- bsem(model, data=Data, save.lvs=TRUE, do.fit=FALSE,
+            mcmcextra=list(data=list(emiter=101, llnsamp=78)))
 expect_equal(class(fit)[1], "blavaan")
-  
+expect_equal(fit@external$mcmcdata$emiter, 101L)
+expect_equal(fit@Options$llnsamp, 78L)
+
 ## named variable that clashes
 names(Data)[1] <- "lambda"
 model2 <- ' lambda ~ b1*x1 + b2*x2 '

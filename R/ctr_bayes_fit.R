@@ -106,6 +106,10 @@ blavFitIndices <- function(object, thin = 1, pD = c("loo","waic","dic"),
     stop('blavaan ERROR: Invalid choice of "pD" argument')
   }
 
+  if (blavInspect(object, "options")$test == "none") {
+    stop('blavaan ERROR: Cannot compute indices when the model was fit with test="none"')
+  }
+  
   rescale <- tolower(as.character(rescale[1])) #FIXME: make sure references to "devM" check for "devm"
   if (rescale == "ppmc" && blavInspect(object, 'ntotal') < 1000)
     warning("blavaan WARNING: ",
@@ -172,6 +176,9 @@ blavFitIndices <- function(object, thin = 1, pD = c("loo","waic","dic"),
     reps_null <- NULL
     pD_null <- NULL
   } else if (rescale != "mcmc") {
+    if (blavInspect(baseline.model, "options")$test == "none") {
+      stop('blavaan ERROR: Cannot use a baseline model fit with test="none"')
+    }
     null_model <- TRUE
     chisq_null <- as.numeric(apply(baseline.model@external$samplls, 2,
                                    function(x) 2*(x[,2] - x[,1])))

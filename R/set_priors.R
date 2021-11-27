@@ -88,8 +88,7 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x, target="ja
                                   sep="")
                 }
             } else if(length(eqpar) > 0){
-                eqpar <- which(partable$plabel == partable$lhs[eqpar] |
-                               partable$label == partable$lhs[eqpar])
+                eqpar <- which(partable$plabel == partable$lhs[eqpar]) # | partable$label == partable$lhs[eqpar])
                 ## in case it is an "expanded" variance
                 if(length(eqpar) > 1){
                     if(length(eqpar) > 2) stop("blavaan ERROR: problem with parameter equality constraints")

@@ -1,5 +1,7 @@
 ---
 title: "Specifying Prior Distributions"
+bibliography:
+  - refs.bib
 ---
 
 ```{r echo=FALSE, message=FALSE}
@@ -40,7 +42,7 @@ so that the default prior for loadings is now normal with mean 1 and standard de
 
 ### Individual Parameters
 
-In addition to setting the prior for one type of model parameter, the user may wish to set the prior of a specific model parameter.  This is accomplished by using the `prior()` modifier within the model specification.  For example, consider the following syntax for the Holzinger & Swineford (1939) confirmatory factor model:
+In addition to setting the prior for one type of model parameter, the user may wish to set the prior of a specific model parameter.  This is accomplished by using the `prior()` modifier within the model specification.  For example, consider the following syntax for the @holswi39 confirmatory factor model:
 
 ```{r eval=FALSE}
 HS.model <- ' visual  =~ x1 + prior("normal(1,2)")*x2 + x3
@@ -66,3 +68,7 @@ HS.model <- ' visual  =~ x1 + x2 + x3
 ```
 
 places a Beta(1,1) (uniform) prior on the correlation between the `visual` and `textual` factors.  If desired, we could also specify priors on the standard deviations (or variances or precisions) of the `visual` and `textual` factors.  Together with the prior on the correlation, these priors would imply a prior on the covariance between `visual` and `textual`.
+
+
+### References
+

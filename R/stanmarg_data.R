@@ -187,7 +187,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           w1skel, w2skel, w3skel, # eq constraint matrices
                           w4skel, w5skel, w6skel, w7skel, w8skel,
                           w9skel, w10skel, w11skel, w12skel, w13skel,
-                          w14skel, w15skel,
+                          w14skel, w15skel, emiter,
                           lam_y_sign, lam_x_sign, # sign constraint matrices
                           gam_sign, b_sign, psi_r_sign, fullpsi, phi_r_sign,
                           lavpartable = NULL, # for priors
@@ -217,6 +217,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$Xvar <- Xvar
   dat$Xdatvar <- Xdatvar
   dat$Nx <- array(Nx, length(Nx))
+  dat$emiter <- emiter
 
   dat$YX <- YX
   dat$YXo <- YXo
@@ -224,9 +225,9 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
 
   dat$has_data <- dat$has_cov <- 0L
   if (pri_only) {
-    tmparr <- array(dim = c(dat$Ng, ncol(YX), ncol(YX)))
+    tmparr <- array(dim = c(dat$Ng, ncol(YX) + 1, ncol(YX) + 1))
     for (i in 1:Ng) {
-      tmparr[i,,] <- diag(nrow=ncol(YX))
+      tmparr[i,,] <- diag(nrow=ncol(YX) + 1)
     }
     dat$S <- tmparr
   } else {
@@ -247,9 +248,9 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
 
       if (NROW(YX) != dat$Ntot) stop("blavaan ERROR: nrow(YX) != Ntot.")
     
-      dat$S <- array(NA, dim=c(Ng, NCOL(YX), NCOL(YX)))
+      dat$S <- array(NA, dim=c(Ng, NCOL(YX) + 1, NCOL(YX) + 1))
       for (i in 1:Ng) {
-        dat$S[i,,] <- diag(1, NCOL(YX))
+        dat$S[i,,] <- diag(1, NCOL(YX) + 1)
         ## not added because, if not pd, stan fails: (dat$N[i] - 1) * cov(YX[(startrow[i] : endrow[i]), , drop = FALSE]) # NB!! this multiplication is needed to use wishart_lpdf
       }
     }

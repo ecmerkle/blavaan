@@ -145,7 +145,76 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     }
     return out;
   }
-  
+
+  // E step of EM algorithm on latent continuous space
+  matrix[] estep(vector[] YXstar, vector[] Mu, matrix[] Sigma, int[] Nobs, int[,] Obsvar, int[] startrow, int[] endrow, int[] grpnum, int Np, int Ng) {
+    int p = dims(YXstar)[2];
+    matrix[p, p + 1] out[Ng]; //mean vec + cov mat
+    matrix[dims(YXstar)[1], p] YXfull; // columns consistenly ordered
+    matrix[p, p] T2pat;
+    int obsidx[p];
+    int r1;
+    int r2;
+    int grpidx;
+    int Nmis;
+
+    for (g in 1:Ng) {
+      out[g] = rep_matrix(0, p, p + 1);
+    }
+
+    for (mm in 1:Np) {
+      obsidx = Obsvar[mm,];
+      r1 = startrow[mm];
+      r2 = endrow[mm];
+      grpidx = grpnum[mm];
+      Nmis = p - Nobs[mm];
+
+      if (Nobs[mm] < p) {
+	matrix[Nobs[mm], Nobs[mm]] Sig22 = Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]];
+	matrix[Nmis, Nmis] Sig11 = Sigma[grpidx, obsidx[(Nobs[mm] + 1):p], obsidx[(Nobs[mm] + 1):p]];
+	matrix[Nmis, Nobs[mm]] Sig12 = Sigma[grpidx, obsidx[(Nobs[mm] + 1):p], obsidx[1:Nobs[mm]]];
+	matrix[Nobs[mm], Nobs[mm]] S22inv = inverse_spd(Sig22);
+	matrix[Nmis, Nmis] T2p11 = Sig11 - (Sig12 * S22inv * Sig12');
+	
+        // partition into observed/missing, compute Sigmas, add to out
+	for (jj in r1:r2) {
+	  vector[Nmis] ymis;
+	  ymis = Mu[grpidx, obsidx[(Nobs[mm] + 1):p]] + (Sig12 * S22inv * (YXstar[jj, 1:Nobs[mm]] - Mu[grpidx, obsidx[1:Nobs[mm]]]));
+	  for (kk in 1:Nobs[mm]) {
+	    YXfull[jj, obsidx[kk]] = YXstar[jj, kk];
+	  }
+	  for (kk in (Nobs[mm] + 1):p) {
+	    YXfull[jj, obsidx[kk]] = ymis[kk - Nobs[mm]];
+	  }
+	}
+	T2pat = crossprod(YXfull[r1:r2,]);
+	// correction for missing cells/conditional covariances
+	for (jj in 1:Nmis) {
+	  for (kk in jj:Nmis) {
+	    T2pat[obsidx[Nobs[mm] + jj], obsidx[Nobs[mm] + kk]] = T2pat[obsidx[Nobs[mm] + jj], obsidx[Nobs[mm] + kk]] + (r2 - r1 + 1) * T2p11[jj, kk];
+	    if (kk > jj) {
+	      T2pat[obsidx[Nobs[mm] + kk], obsidx[Nobs[mm] + jj]] = T2pat[obsidx[Nobs[mm] + jj], obsidx[Nobs[mm] + kk]];
+	    }
+	  }
+	}
+      } else {
+	// complete data
+	for (jj in r1:r2) {
+	  for (kk in 1:Nobs[mm]) {
+	    YXfull[jj, obsidx[kk]] = YXstar[jj, kk];
+	  }
+	}
+	T2pat = crossprod(YXfull[r1:r2,]);
+      }
+      for (i in 1:p) {
+	out[grpidx,i,1] += sum(YXfull[r1:r2,i]);
+      }
+      out[grpidx,,2:(p+1)] += T2pat;
+    }
+    
+    return out;
+  }
+    
 }
 data {
   // see https://books.google.com/books?id=9AC-s50RjacC&lpg=PP1&dq=LISREL&pg=PA2#v=onepage&q=LISREL&f=false
@@ -177,8 +246,9 @@ data {
   int<lower=0> Nx[Np]; // number of fixed.x variables
   int<lower=0> Xvar[Np, max(Nx)]; // indexing of fixed.x variables
   int<lower=0> Xdatvar[Np, max(Nx)]; // indexing of fixed.x in data (differs from Xvar when missing)
+  int<lower=0> emiter; // number of em iterations for saturated model in ppp (missing data only)
   int<lower=0, upper=1> has_cov;
-  cov_matrix[p + q - Nord] S[Ng];     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
+  cov_matrix[p + q - Nord + 1] S[Ng];     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
 
   
   /* sparse matrix representations of skeletons of coefficient matrices, 
@@ -551,41 +621,8 @@ transformed parameters {
 
   matrix[p, q] top_right[Ng];        // top right block of Sigma
   vector[p + q] YXstar[Ntot];
+  vector[Nord] YXostar[Ntot]; // ordinal data
 
-  // obtain vector of free ordered parameters for priors, and vector of all taus for likelihood
-  if (ord) {
-    int opos = 1;
-    int ofreepos = 1;
-    tau_jacobian = 0;
-    for (g in 1:Ng) {
-      int vecpos = 1;
-      Tau_un[g] = fill_matrix(Tau_ufree, Tau_skeleton[g], w15skel, g_start15[g], f_start15[g]);
-      for (i in 1:Nord) {
-	for (j in 1:(nlevs[i] - 1)) {
-	  real rc = Tau_skeleton[g, vecpos, 1];
-	  if (j == 1) {
-	    Tau[g, vecpos, 1] = Tau_un[g, vecpos, 1];
-	  } else {
-	    Tau[g, vecpos, 1] = Tau[g, (vecpos-1), 1] + exp(Tau_un[g, vecpos, 1]);
-	  }
-
-	  if (is_inf(rc)) {
-	    int eq = w15skel[opos, 1];
-	    int wig = w15skel[opos, 3];
-	    if (eq == 0 || wig == 1) {
-	      Tau_free[ofreepos] = Tau[g, vecpos, 1];
-	      if (j > 1) {
-		tau_jacobian += log(1/(Tau[g, vecpos, 1] - Tau[g, (vecpos - 1), 1])); // see https://mc-stan.org/docs/2_24/reference-manual/ordered-vector.html
-	      }
-	      ofreepos += 1;
-	    }
-	    opos += 1;
-	  }
-	  vecpos +=1;
-	}
-      }
-    }
-  }
 
   for (g in 1:Ng) {
     // model matrices
@@ -612,20 +649,6 @@ transformed parameters {
     }
   }
 
-  if (wigind) {
-    lambda_y_primn = fill_prior(Lambda_y_free, lambda_y_mn, w1skel);
-    b_primn = fill_prior(B_free, b_mn, w4skel);
-    nu_primn = fill_prior(Nu_free, nu_mn, w13skel);
-    alpha_primn = fill_prior(Alpha_free, alpha_mn, w14skel);
-    tau_primn = fill_prior(Tau_free, tau_mn, w15skel);
-  } else {
-    lambda_y_primn = to_vector(lambda_y_mn);
-    b_primn = to_vector(b_mn);
-    nu_primn = to_vector(nu_mn);
-    alpha_primn = to_vector(alpha_mn);
-    tau_primn = to_vector(tau_mn);
-  }
-
   // see https://books.google.com/books?id=9AC-s50RjacC&lpg=PP1&dq=LISREL&pg=PA3#v=onepage&q=LISREL&f=false
   for (g in 1:Ng) {
     if (m > 0) {
@@ -643,6 +666,61 @@ transformed parameters {
     }
   }
 
+  // obtain ordered thresholds
+  if (ord) {
+    int opos = 1;
+    int ofreepos = 1;
+    tau_jacobian = 0;
+    for (g in 1:Ng) {
+      int vecpos = 1;
+      Tau_un[g] = fill_matrix(Tau_ufree, Tau_skeleton[g], w15skel, g_start15[g], f_start15[g]);
+      for (i in 1:Nord) {
+	for (j in 1:(nlevs[i] - 1)) {
+	  real rc = Tau_skeleton[g, vecpos, 1];
+	  int eq = w15skel[opos, 1];
+	  int wig = w15skel[opos, 3];
+
+	  if (is_inf(rc)) {
+	    if (eq == 0 || wig == 1) {
+	      if (j == 1) {
+		Tau[g, vecpos, 1] = Tau_un[g, vecpos, 1];
+	      } else {
+		Tau[g, vecpos, 1] = Tau[g, (vecpos - 1), 1] + exp(Tau_un[g, vecpos, 1]);
+	      }
+
+	      Tau_free[ofreepos] = Tau[g, vecpos, 1];	      
+	      // this is used if a prior goes on Tau_free, instead of Tau_ufree:
+	      //if (j > 1) {
+	      //  tau_jacobian += Tau_un[g, vecpos, 1]; // see https://mc-stan.org/docs/2_24/reference-manual/ordered-vector.html
+	      // }
+	      ofreepos += 1;
+	    }
+	    opos += 1;
+	  } else {
+	    // fixed value
+	    Tau[g, vecpos, 1] = Tau_un[g, vecpos, 1];
+	  }	  
+	  vecpos += 1;
+	}
+      }
+    }
+  }
+
+  // prior vectors
+  if (wigind) {
+    lambda_y_primn = fill_prior(Lambda_y_free, lambda_y_mn, w1skel);
+    b_primn = fill_prior(B_free, b_mn, w4skel);
+    nu_primn = fill_prior(Nu_free, nu_mn, w13skel);
+    alpha_primn = fill_prior(Alpha_free, alpha_mn, w14skel);
+    tau_primn = fill_prior(Tau_ufree, tau_mn, w15skel);
+  } else {
+    lambda_y_primn = to_vector(lambda_y_mn);
+    b_primn = to_vector(b_mn);
+    nu_primn = to_vector(nu_mn);
+    alpha_primn = to_vector(alpha_mn);
+    tau_primn = to_vector(tau_mn);
+  }
+  
   // continuous responses underlying ordinal data
   if (ord) {
     for (patt in 1:Np) {
@@ -651,15 +729,16 @@ transformed parameters {
 	  int vecpos = YXo[i,j] - 1;
 	  if (j > 1) vecpos += sum(nlevs[1:(j - 1)]) - (j - 1);
 	  if (YXo[i,j] == 1) {
-	    YXstar[i, ordidx[j]] = -10 + (Tau[grpnum[patt], (vecpos + 1), 1] + 10) .* z_aug[i,j];
-	    tau_jacobian += log(1/(Tau[grpnum[patt], (vecpos + 1), 1] + 10));  // must add log(U) to tau_jacobian
+	    YXostar[i,j] = -10 + (Tau[grpnum[patt], (vecpos + 1), 1] + 10) .* z_aug[i,j];
+	    tau_jacobian += log(fabs(Tau[grpnum[patt], (vecpos + 1), 1] + 10));  // must add log(U) to tau_jacobian
 	  } else if (YXo[i,j] == nlevs[j]) {
-	    YXstar[i, ordidx[j]] = Tau[grpnum[patt], vecpos, 1] + (10 - Tau[grpnum[patt], vecpos, 1]) .* z_aug[i,j];
-	    tau_jacobian += log(1/(10 - Tau[grpnum[patt], vecpos, 1]));
+	    YXostar[i,j] = Tau[grpnum[patt], vecpos, 1] + (10 - Tau[grpnum[patt], vecpos, 1]) .* z_aug[i,j];
+	    tau_jacobian += log(fabs(10 - Tau[grpnum[patt], vecpos, 1]));
 	  } else {
-	    YXstar[i, ordidx[j]] = Tau[grpnum[patt], vecpos, 1] + (Tau[grpnum[patt], (vecpos + 1), 1] - Tau[grpnum[patt], vecpos, 1]) .* z_aug[i,j];
-	    tau_jacobian += log(1/(Tau[grpnum[patt], (vecpos + 1), 1] - Tau[grpnum[patt], vecpos, 1]));
+	    YXostar[i,j] = Tau[grpnum[patt], vecpos, 1] + (Tau[grpnum[patt], (vecpos + 1), 1] - Tau[grpnum[patt], vecpos, 1]) .* z_aug[i,j];
+	    tau_jacobian += Tau_un[grpnum[patt], (vecpos + 1), 1]; // jacobian is log(exp(Tau_un))
 	  }
+	  YXstar[i, ordidx[j]] = YXostar[i, j];
 	}
       }
     }
@@ -722,7 +801,7 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   }
 
   if (ord) {
-    target += fabs(tau_jacobian);
+    target += tau_jacobian;
   }
   
   /* prior densities in log-units */
@@ -732,7 +811,7 @@ model { // N.B.: things declared in the model block do not get saved in the outp
 
   target += normal_lpdf(Nu_free       | nu_primn, nu_sd);
   target += normal_lpdf(Alpha_free    | alpha_primn, alpha_sd);
-  target += normal_lpdf(Tau_free      | tau_primn, tau_sd);
+  target += normal_lpdf(Tau_ufree      | tau_primn, tau_sd);
 
   /* transform sd parameters to var or prec, depending on
      what the user wants. */
@@ -786,6 +865,17 @@ generated quantities { // these matrices are saved in the output but do not figu
   vector[len_free[9]] Psi_var;
 
   vector[Ntot] log_lik; // for loo, etc
+  vector[Ntot] log_lik_sat; // for ppp
+  vector[p + q] YXstar_rep[Ntot]; // artificial data
+  vector[Ntot] log_lik_rep; // for loo, etc
+  vector[Ntot] log_lik_rep_sat; // for ppp
+  matrix[p + q, p + q + 1] satout[Ng];
+  matrix[p + q, p + q + 1] satrep_out[Ng];
+  vector[p + q] Mu_sat[Ng];
+  matrix[p + q, p + q] Sigma_sat[Ng];
+  vector[p + q] Mu_rep_sat[Ng];
+  matrix[p + q, p + q] Sigma_rep_sat[Ng];
+  real<lower=0, upper=1> ppp;
   
   // first deal with sign constraints:
   ly_sign = sign_constrain_load(Lambda_y_free, len_free[1], lam_y_sign);
@@ -836,6 +926,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   if (has_cov) {
     for (g in 1:Ng) {
       log_lik[g] =  wishart_lpdf(S[g] | N[g] - 1, Sigma[g]);
+      log_lik_sat[g] = wishart_lpdf(S[g] | N[g] - 1, S[g]);
     }
   } else {
     int obsidx[p + q];
@@ -852,13 +943,85 @@ generated quantities { // these matrices are saved in the output but do not figu
       r2 = endrow[mm];
       grpidx = grpnum[mm];
       for (jj in r1:r2) {
-	log_lik[jj] = multi_normal_lpdf(YXstar[jj,1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+	YXstar_rep[jj, 1:Nobs[mm]] = multi_normal_rng(Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+      }
+    }
 
+    if (missing) {
+      // start values for Mu and Sigma
+      for (g in 1:Ng) {
+	Mu_sat[g] = rep_vector(0, p + q);
+	Mu_rep_sat[g] = Mu_sat[g];
+	Sigma_sat[g] = diag_matrix(rep_vector(1, p + q));
+	Sigma_rep_sat[g] = Sigma_sat[g];
+      }
+    
+      for (jj in 1:emiter) {
+	satout = estep(YXstar, Mu_sat, Sigma_sat, Nobs, Obsvar, startrow, endrow, grpnum, Np, Ng);
+	satrep_out = estep(YXstar_rep, Mu_rep_sat, Sigma_rep_sat, Nobs, Obsvar, startrow, endrow, grpnum, Np, Ng);
+
+	// M step
+	for (g in 1:Ng) {
+	  Mu_sat[g] = satout[g,,1]/N[g];
+	  Sigma_sat[g] = satout[g,,2:(p + q + 1)]/N[g] - Mu_sat[g] * Mu_sat[g]';
+	  Mu_rep_sat[g] = satrep_out[g,,1]/N[g];
+	  Sigma_rep_sat[g] = satrep_out[g,,2:(p + q + 1)]/N[g] - Mu_rep_sat[g] * Mu_rep_sat[g]';
+	}
+      }
+    } else {
+      // complete data; Np patterns must only correspond to groups
+      for (mm in 1:Np) {
+	int arr_dims[3] = dims(YXstar);
+	matrix[endrow[mm] - startrow[mm] + 1, arr_dims[2]] YXsmat; // crossprod needs matrix
+	matrix[endrow[mm] - startrow[mm] + 1, arr_dims[2]] YXsrepmat;
+	r1 = startrow[mm];
+	r2 = endrow[mm];
+	grpidx = grpnum[mm];
+	for (jj in 1:(p + q)) {
+	  Mu_sat[grpidx,jj] = mean(YXstar[r1:r2,jj]);
+	  Mu_rep_sat[grpidx,jj] = mean(YXstar_rep[r1:r2,jj]);
+	}
+	for (jj in r1:r2) {
+	  YXsmat[jj - r1 + 1] = (YXstar[jj] - Mu_sat[grpidx])';
+	  YXsrepmat[jj - r1 + 1] = (YXstar_rep[jj] - Mu_rep_sat[grpidx])';
+	}
+	Sigma_sat[grpidx] = crossprod(YXsmat)/N[grpidx];
+	Sigma_rep_sat[grpidx] = crossprod(YXsrepmat)/N[grpidx];
+	// FIXME? Sigma_sat[grpidx] = tcrossprod(YXsmat); does not throw an error??
+      }
+    }
+    
+    // compute log-likelihoods
+    for (mm in 1:Np) {
+      obsidx = Obsvar[mm,];
+      xidx = Xvar[mm,];
+      xdatidx = Xdatvar[mm,];
+      r1 = startrow[mm];
+      r2 = endrow[mm];
+      grpidx = grpnum[mm];
+      for (jj in r1:r2) {
+	log_lik[jj] = multi_normal_lpdf(YXstar[jj, 1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+	// we add loglik[jj] here so that _sat always varies and does not lead to
+	// problems with rhat and neff computations
+	log_lik_sat[jj] = -log_lik[jj] + multi_normal_lpdf(YXstar[jj, 1:Nobs[mm]] | Mu_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_sat[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+	
+	log_lik_rep[jj] = multi_normal_lpdf(YXstar_rep[jj, 1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+	log_lik_rep_sat[jj] = multi_normal_lpdf(YXstar_rep[jj, 1:Nobs[mm]] | Mu_rep_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_rep_sat[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+
+	// log_lik_sat, log_lik_sat_rep
 	if (Nx[mm] > 0) {
-	  log_lik[jj] += -multi_normal_lpdf(YXstar[jj,xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	  log_lik[jj] += -multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	  log_lik_sat[jj] += multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	  log_lik_sat[jj] += -multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu_sat[grpidx, xidx[1:Nx[mm]]], Sigma_sat[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	  
+	  log_lik_rep[jj] += -multi_normal_lpdf(YXstar_rep[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	  log_lik_rep_sat[jj] += -multi_normal_lpdf(YXstar_rep[jj, xdatidx[1:Nx[mm]]] | Mu_rep_sat[grpidx, xidx[1:Nx[mm]]], Sigma_rep_sat[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
 	}
       }
     }
+
+    // for ppp, compare observed log_lik vs rep log_lik
+    ppp = step((-sum(log_lik_rep) + sum(log_lik_rep_sat)) - (sum(log_lik_sat)));
   }
   
 } // end with a completely blank line (not even whitespace)

@@ -4,7 +4,7 @@ importFrom("methods",
 importFrom("utils",
            # "sessionInfo",
            "packageDescription", "str", "write.table", "packageVersion",
-           "capture.output", "head", "tail", "getFromNamespace")
+           "capture.output", "head", "tail", "getFromNamespace", "compareVersion")
 
 importFrom("stats",
            "approx", "density", "median", "dnorm", "pnorm", "rgamma", "rnorm",
@@ -63,6 +63,9 @@ importFrom("Matrix",
 
 importFrom("future.apply",
            "future_lapply", "future_sapply")
+
+importFrom("tmvnsim",
+           "tmvnsim")
 
 ## need to import something, though others could be used
 importFrom("bayesplot",
