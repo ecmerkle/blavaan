@@ -78,8 +78,17 @@ There also exists a relatively new method by @bot17 for evaluating the CDF of th
 <!-- TODO Bayes factor, use chib's identity? -->
 
 
+
+### Comparison to *lavaan*
+Ordinal SEM is associated with two types of model parameterizations: *delta* and *theta*. These refer to scale parameters of the $y^*$ variables: *delta* refers to the total standard deviation of $y^*$ (including variability due to latent variables), and *theta* refers to the residual standard deviation of $y^*$. 
+
+In *blavaan*, only the theta parameterization is implemented. So, if you want to compare *lavaan* results to *blavaan* results, you need to use the argument `parameterization = "theta"` when you estimate the *lavaan* model. 
+
+Also, the default *lavaan* estimator for ordinal models is a multiple-step procedure that involves a weighted least squares discrepancy function. The resulting parameter estimates are sometimes far from the posterior means reported by *blavaan*. The *blavaan* estimates are usually closer to `estimator="PML"` in *lavaan*.
+
+
 ### Posterior Predictive p-values
-Posterior predictive p-value (ppp) computations also receive a speed boost in the 0.4 series. These computations now occur in Stan, whereas they previously occurred in R after model estimation. As discussed by @aspmut21, the ppp computations needed for models with missing data can be excessively slow, requiring us to run an EM algorithm for each posterior sample in order to find the "H1" ("saturated") model covariance matrix. The solution by @aspmut21 involves the realization that we do not need to use a fully-optimized H1 covariance matrix in order to compute the ppp. In *blavaan*, we consequently run an EM algorithm for a fixed number of iterations in order to compute an H1 covariance matrix that is "good enough" for the ppp. The default number of iterations it set to 20, and users can change the default by supplying an `emiter` value via the `mcmcextra` argument. For example,
+Posterior predictive p-value (ppp) computations receive a speed boost in the 0.4 series. These computations now occur in Stan, whereas they previously occurred in R after model estimation. As discussed by @aspmut21, the ppp computations needed for models with missing data can be excessively slow, requiring us to run an EM algorithm for each posterior sample in order to find the "H1" ("saturated") model covariance matrix. The solution by @aspmut21 involves the realization that we do not need to use a fully-optimized H1 covariance matrix in order to compute the ppp. In *blavaan*, we consequently run an EM algorithm for a fixed number of iterations in order to compute an H1 covariance matrix that is "good enough" for the ppp. The default number of iterations it set to 20, and users can change the default by supplying an `emiter` value via the `mcmcextra` argument. For example,
 
 ```{r, eval = FALSE}
 mcmcextra = list(data = list(emiter = 50))
