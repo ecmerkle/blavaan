@@ -20,6 +20,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-home">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -32,7 +34,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">blavaan</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3-18.865</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3-18.865</span>
       </span>
     </div>
 
@@ -68,13 +70,13 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/ecmerkle/blavaan">
+  <a href="https://github.com/ecmerkle/blavaan" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
 <li>
-  <a href="https://groups.google.com/d/forum/blavaan">
+  <a href="https://groups.google.com/d/forum/blavaan" class="external-link">
     <span class="fa fa-users"></span>
      
   </a>
@@ -91,15 +93,15 @@
 
       </header><div class="row">
   <div class="contents col-md-9">
-<div id="blavaan" class="section level1">
-<div class="page-header"><h1 class="hasAnchor">
-<a href="#blavaan" class="anchor"></a>blavaan</h1></div>
+<div class="section level1">
+<div class="page-header"><h1 id="blavaan">blavaan<a class="anchor" aria-label="anchor" href="#blavaan"></a>
+</h1></div>
 <!-- badges: start -->
 
 <p>blavaan is a free, open source R package for Bayesian latent variable analysis. It relies on JAGS and Stan to estimate models via MCMC.</p>
 <p>The blavaan functions and syntax are similar to lavaan. For example, consider the Political Democracy example from Bollen (1989):</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">blavaan</span><span class="op">)</span>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">blavaan</span><span class="op">)</span>
 
 <span class="va">model</span> <span class="op">&lt;-</span> <span class="st">'
    # latent variable definitions
@@ -117,63 +119,69 @@
      y6 ~~ y8
 '</span>
 <span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/bsem.html">bsem</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">PoliticalDemocracy</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></code></pre></div>
 <p>The development version of blavaan (containing updates not yet on CRAN) can be installed via the command below. Compilation is required; this may be a problem for users who currently rely on a binary version of blavaan from CRAN.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span><span class="op">(</span><span class="st">"ecmerkle/blavaan"</span>, INSTALL_opts <span class="op">=</span> <span class="st">"--no-multiarch"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"ecmerkle/blavaan"</span>, INSTALL_opts <span class="op">=</span> <span class="st">"--no-multiarch"</span><span class="op">)</span></code></pre></div>
 <p>For further information, see:</p>
-<p>Merkle, E. C., Fitzsimmons, E., Uanhoro, J., &amp; Goodrich, B. (in press). <a href="https://arxiv.org/abs/2008.07733">Efficient Bayesian structural equation modeling in Stan</a>. Journal of Statistical Software.</p>
-<p>Merkle, E. C., &amp; Rosseel, Y. (2018). <a href="https://doi.org/10.18637/jss.v085.i04">blavaan: Bayesian structural equation models via parameter expansion</a>. Journal of Statistical Software, 85(4), 1–30.</p>
+<p>Merkle, E. C., Fitzsimmons, E., Uanhoro, J., &amp; Goodrich, B. (in press). <a href="https://arxiv.org/abs/2008.07733" class="external-link">Efficient Bayesian structural equation modeling in Stan</a>. Journal of Statistical Software.</p>
+<p>Merkle, E. C., &amp; Rosseel, Y. (2018). <a href="https://doi.org/10.18637/jss.v085.i04" class="external-link">blavaan: Bayesian structural equation models via parameter expansion</a>. Journal of Statistical Software, 85(4), 1–30.</p>
 <p>blavaan is supported by the Institute of Education Sciences, U.S. Department of Education, Grant R305D210044, as well as NSF grants SES-1061334 and 1460719.</p>
 </div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <div class="links">
-<h2>Links</h2>
+<h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li>Download from CRAN at <br><a href="https://cloud.r-project.org/package=blavaan">https://​cloud.r-project.org/​package=blavaan</a>
-</li>
+<li><a href="https://cloud.r-project.org/package=blavaan" class="external-link">View on CRAN</a></li>
 </ul>
 </div>
+
 <div class="license">
-<h2>License</h2>
+<h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
 <li>GPL (&gt;= 3)</li>
 </ul>
 </div>
+
+
 <div class="citation">
-<h2>Citation</h2>
+<h2 data-toc-skip>Citation</h2>
 <ul class="list-unstyled">
-<li><a href="authors.html">Citing blavaan</a></li>
-</ul>
-</div>
-<div class="developers">
-<h2>Developers</h2>
-<ul class="list-unstyled">
-<li>Edgar Merkle <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0000-0001-7158-0653" target="orcid.widget" aria-label="ORCID"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
-<li>Yves Rosseel <br><small class="roles"> Author </small>  </li>
-<li>Ben Goodrich <br><small class="roles"> Author </small>  </li>
-<li><a href="authors.html">All authors...</a></li>
+<li><a href="authors.html#citation">Citing blavaan</a></li>
 </ul>
 </div>
 
-  <div class="dev-status">
-<h2>Dev status</h2>
+<div class="developers">
+<h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li><a href="https://github.com/ecmerkle/blavaan/actions"><img src="https://github.com/ecmerkle/blavaan/workflows/R-CMD-check/badge.svg" alt="R build status"></a></li>
+<li>Edgar Merkle <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0000-0001-7158-0653" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
+<li>Yves Rosseel <br><small class="roles"> Author </small>  </li>
+<li>Ben Goodrich <br><small class="roles"> Author </small>  </li>
+<li><a href="authors.html">More about authors...</a></li>
 </ul>
 </div>
+
+<div class="dev-status">
+<h2 data-toc-skip>Dev status</h2>
+<ul class="list-unstyled">
+<li><a href="https://github.com/ecmerkle/blavaan/actions" class="external-link"><img src="https://github.com/ecmerkle/blavaan/workflows/R-CMD-check/badge.svg" alt="R build status"></a></li>
+</ul>
 </div>
+
+  </div>
 </div>
 
 
       <footer><div class="copyright">
-  <p>Developed by Edgar Merkle, Yves Rosseel, Ben Goodrich.</p>
+  <p></p>
+<p>Developed by Edgar Merkle, Yves Rosseel, Ben Goodrich.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
 </div>
 
       </footer>
@@ -181,6 +189,8 @@
 
   
 
+
+  
 
   </body>
 </html>
