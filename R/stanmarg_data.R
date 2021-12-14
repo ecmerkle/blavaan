@@ -177,7 +177,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           miss, Np, Nobs, Obsvar, # missing
                           ord, Nord, ordidx, contidx, nlevs, neach, # ordinal
                           Xvar, Xdatvar, Nx, # fixed.x
-                          startrow, endrow, save_lvs = FALSE, 
+                          startrow, endrow, save_lvs = FALSE, do_test = TRUE,
                           Lambda_y_skeleton, # skeleton matrices
                           Lambda_x_skeleton, Gamma_skeleton, B_skeleton,
                           Theta_skeleton, Theta_r_skeleton,
@@ -256,6 +256,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
     }
   }
   dat$save_lvs <- save_lvs
+  dat$do_test <- do_test
   
   dat$p <- dim(Lambda_y_skeleton)[2]
   dat$m <- dim(Lambda_y_skeleton)[3]

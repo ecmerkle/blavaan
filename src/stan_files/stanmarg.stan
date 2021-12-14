@@ -247,6 +247,7 @@ data {
   int<lower=0> Xvar[Np, max(Nx)]; // indexing of fixed.x variables
   int<lower=0> Xdatvar[Np, max(Nx)]; // indexing of fixed.x in data (differs from Xvar when missing)
   int<lower=0> emiter; // number of em iterations for saturated model in ppp (missing data only)
+  int<lower=0, upper=1> do_test; // should we do everything in generated quantities?
   int<lower=0, upper=1> has_cov;
   cov_matrix[p + q - Nord + 1] S[Ng];     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
 
@@ -935,59 +936,62 @@ generated quantities { // these matrices are saved in the output but do not figu
     int r1;
     int r2;
     int grpidx;
-    for (mm in 1:Np) {
-      obsidx = Obsvar[mm,];
-      xidx = Xvar[mm,];
-      xdatidx = Xdatvar[mm,];
-      r1 = startrow[mm];
-      r2 = endrow[mm];
-      grpidx = grpnum[mm];
-      for (jj in r1:r2) {
-	YXstar_rep[jj, 1:Nobs[mm]] = multi_normal_rng(Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
-      }
-    }
 
-    if (missing) {
-      // start values for Mu and Sigma
-      for (g in 1:Ng) {
-	Mu_sat[g] = rep_vector(0, p + q);
-	Mu_rep_sat[g] = Mu_sat[g];
-	Sigma_sat[g] = diag_matrix(rep_vector(1, p + q));
-	Sigma_rep_sat[g] = Sigma_sat[g];
-      }
-    
-      for (jj in 1:emiter) {
-	satout = estep(YXstar, Mu_sat, Sigma_sat, Nobs, Obsvar, startrow, endrow, grpnum, Np, Ng);
-	satrep_out = estep(YXstar_rep, Mu_rep_sat, Sigma_rep_sat, Nobs, Obsvar, startrow, endrow, grpnum, Np, Ng);
-
-	// M step
-	for (g in 1:Ng) {
-	  Mu_sat[g] = satout[g,,1]/N[g];
-	  Sigma_sat[g] = satout[g,,2:(p + q + 1)]/N[g] - Mu_sat[g] * Mu_sat[g]';
-	  Mu_rep_sat[g] = satrep_out[g,,1]/N[g];
-	  Sigma_rep_sat[g] = satrep_out[g,,2:(p + q + 1)]/N[g] - Mu_rep_sat[g] * Mu_rep_sat[g]';
-	}
-      }
-    } else {
-      // complete data; Np patterns must only correspond to groups
+    if (do_test) {
       for (mm in 1:Np) {
-	int arr_dims[3] = dims(YXstar);
-	matrix[endrow[mm] - startrow[mm] + 1, arr_dims[2]] YXsmat; // crossprod needs matrix
-	matrix[endrow[mm] - startrow[mm] + 1, arr_dims[2]] YXsrepmat;
+	obsidx = Obsvar[mm,];
+	xidx = Xvar[mm,];
+	xdatidx = Xdatvar[mm,];
 	r1 = startrow[mm];
 	r2 = endrow[mm];
 	grpidx = grpnum[mm];
-	for (jj in 1:(p + q)) {
-	  Mu_sat[grpidx,jj] = mean(YXstar[r1:r2,jj]);
-	  Mu_rep_sat[grpidx,jj] = mean(YXstar_rep[r1:r2,jj]);
-	}
 	for (jj in r1:r2) {
-	  YXsmat[jj - r1 + 1] = (YXstar[jj] - Mu_sat[grpidx])';
-	  YXsrepmat[jj - r1 + 1] = (YXstar_rep[jj] - Mu_rep_sat[grpidx])';
+	  YXstar_rep[jj, 1:Nobs[mm]] = multi_normal_rng(Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
 	}
-	Sigma_sat[grpidx] = crossprod(YXsmat)/N[grpidx];
-	Sigma_rep_sat[grpidx] = crossprod(YXsrepmat)/N[grpidx];
-	// FIXME? Sigma_sat[grpidx] = tcrossprod(YXsmat); does not throw an error??
+      }
+
+      if (missing) {
+	// start values for Mu and Sigma
+	for (g in 1:Ng) {
+	  Mu_sat[g] = rep_vector(0, p + q);
+	  Mu_rep_sat[g] = Mu_sat[g];
+	  Sigma_sat[g] = diag_matrix(rep_vector(1, p + q));
+	  Sigma_rep_sat[g] = Sigma_sat[g];
+	}
+    
+	for (jj in 1:emiter) {
+	  satout = estep(YXstar, Mu_sat, Sigma_sat, Nobs, Obsvar, startrow, endrow, grpnum, Np, Ng);
+	  satrep_out = estep(YXstar_rep, Mu_rep_sat, Sigma_rep_sat, Nobs, Obsvar, startrow, endrow, grpnum, Np, Ng);
+
+	  // M step
+	  for (g in 1:Ng) {
+	    Mu_sat[g] = satout[g,,1]/N[g];
+	    Sigma_sat[g] = satout[g,,2:(p + q + 1)]/N[g] - Mu_sat[g] * Mu_sat[g]';
+	    Mu_rep_sat[g] = satrep_out[g,,1]/N[g];
+	    Sigma_rep_sat[g] = satrep_out[g,,2:(p + q + 1)]/N[g] - Mu_rep_sat[g] * Mu_rep_sat[g]';
+	  }
+	}
+      } else {
+	// complete data; Np patterns must only correspond to groups
+	for (mm in 1:Np) {
+	  int arr_dims[3] = dims(YXstar);
+	  matrix[endrow[mm] - startrow[mm] + 1, arr_dims[2]] YXsmat; // crossprod needs matrix
+	  matrix[endrow[mm] - startrow[mm] + 1, arr_dims[2]] YXsrepmat;
+	  r1 = startrow[mm];
+	  r2 = endrow[mm];
+	  grpidx = grpnum[mm];
+	  for (jj in 1:(p + q)) {
+	    Mu_sat[grpidx,jj] = mean(YXstar[r1:r2,jj]);
+	    Mu_rep_sat[grpidx,jj] = mean(YXstar_rep[r1:r2,jj]);
+	  }
+	  for (jj in r1:r2) {
+	    YXsmat[jj - r1 + 1] = (YXstar[jj] - Mu_sat[grpidx])';
+	    YXsrepmat[jj - r1 + 1] = (YXstar_rep[jj] - Mu_rep_sat[grpidx])';
+	  }
+	  Sigma_sat[grpidx] = crossprod(YXsmat)/N[grpidx];
+	  Sigma_rep_sat[grpidx] = crossprod(YXsrepmat)/N[grpidx];
+	  // FIXME? Sigma_sat[grpidx] = tcrossprod(YXsmat); does not throw an error??
+	}
       }
     }
     
@@ -1001,27 +1005,37 @@ generated quantities { // these matrices are saved in the output but do not figu
       grpidx = grpnum[mm];
       for (jj in r1:r2) {
 	log_lik[jj] = multi_normal_lpdf(YXstar[jj, 1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
-	// we add loglik[jj] here so that _sat always varies and does not lead to
-	// problems with rhat and neff computations
-	log_lik_sat[jj] = -log_lik[jj] + multi_normal_lpdf(YXstar[jj, 1:Nobs[mm]] | Mu_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_sat[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+	if (do_test) {
+	  // we add loglik[jj] here so that _sat always varies and does not lead to
+	  // problems with rhat and neff computations
+	  log_lik_sat[jj] = -log_lik[jj] + multi_normal_lpdf(YXstar[jj, 1:Nobs[mm]] | Mu_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_sat[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
 	
-	log_lik_rep[jj] = multi_normal_lpdf(YXstar_rep[jj, 1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
-	log_lik_rep_sat[jj] = multi_normal_lpdf(YXstar_rep[jj, 1:Nobs[mm]] | Mu_rep_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_rep_sat[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+	  log_lik_rep[jj] = multi_normal_lpdf(YXstar_rep[jj, 1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+	  log_lik_rep_sat[jj] = multi_normal_lpdf(YXstar_rep[jj, 1:Nobs[mm]] | Mu_rep_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_rep_sat[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+	} else {
+	  log_lik_sat[jj] = 0;
+	}
 
 	// log_lik_sat, log_lik_sat_rep
 	if (Nx[mm] > 0) {
 	  log_lik[jj] += -multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
-	  log_lik_sat[jj] += multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
-	  log_lik_sat[jj] += -multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu_sat[grpidx, xidx[1:Nx[mm]]], Sigma_sat[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	  if (do_test) {
+	    log_lik_sat[jj] += multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	    log_lik_sat[jj] += -multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu_sat[grpidx, xidx[1:Nx[mm]]], Sigma_sat[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
 	  
-	  log_lik_rep[jj] += -multi_normal_lpdf(YXstar_rep[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
-	  log_lik_rep_sat[jj] += -multi_normal_lpdf(YXstar_rep[jj, xdatidx[1:Nx[mm]]] | Mu_rep_sat[grpidx, xidx[1:Nx[mm]]], Sigma_rep_sat[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	    log_lik_rep[jj] += -multi_normal_lpdf(YXstar_rep[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	    log_lik_rep_sat[jj] += -multi_normal_lpdf(YXstar_rep[jj, xdatidx[1:Nx[mm]]] | Mu_rep_sat[grpidx, xidx[1:Nx[mm]]], Sigma_rep_sat[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	  }
 	}
       }
     }
 
     // for ppp, compare observed log_lik vs rep log_lik
-    ppp = step((-sum(log_lik_rep) + sum(log_lik_rep_sat)) - (sum(log_lik_sat)));
+    if (do_test) {
+      ppp = step((-sum(log_lik_rep) + sum(log_lik_rep_sat)) - (sum(log_lik_sat)));
+    } else {
+      ppp = 0;
+    }
   }
   
 } // end with a completely blank line (not even whitespace)

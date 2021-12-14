@@ -509,7 +509,7 @@ blavaan <- function(...,  # default lavaan arguments
                 if(!inherits(l2s, "try-error")){
                     lavpartable$prior[as.numeric(rownames(l2s$lavpartable))] <- l2s$lavpartable$prior
                     ldargs <- c(l2s$dat, list(lavpartable = l2s$lavpartable, dumlv = l2s$dumlv,
-                                              save_lvs = save.lvs))
+                                              save_lvs = save.lvs, do_test = !(lavoptions$test == "none") ))
 
                     ## add priors to lavpartable, including wiggle
                     if(length(wiggle) > 0){
