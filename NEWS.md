@@ -1,3 +1,10 @@
+# Version 0.4-1
+## New features
+* Functionality for ordinal observed variables is now available.
+
+* For models with missing data, posterior summaries have been sped up (log-likelihood computations now done in Stan).
+
+
 # Version 0.3-18
 ## New features
 * This version adds a reference to the new JSS paper, including DOI, and corrects an inconsistent version dependency. There are no other changes as compared to 0.3-17.
