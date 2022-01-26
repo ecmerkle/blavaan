@@ -13,7 +13,8 @@ This function allows users to conduct a posterior predictive model check to
 assess the global or local fit of a latent variable model using any discrepancy
 function that can be applied to a \code{\linkS4class{lavaan}} model.}
 \usage{
-ppmc(object, thin = 1, fit.measures = c("srmr","chisq"), discFUN = NULL, conditional = FALSE)
+ppmc(object, thin = 1, fit.measures = c("srmr","chisq"), discFUN = NULL,
+     conditional = FALSE)
 
 \S4method{summary}{blavPPMC}(object, ...)
 

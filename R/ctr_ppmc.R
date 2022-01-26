@@ -602,7 +602,7 @@ ppmc <- function(object, thin = 1, fit.measures = c("srmr","chisq"),
   jagtarget <- lavInspect(object, "options")$target == "jags"
 
   if(jagtarget){
-    etas <- any(bobject@external$mcmcout$monitor == "eta")
+    etas <- any(object@external$mcmcout$monitor == "eta")
   } else {
     etas <- any(grepl("^eta", rownames(object@external$stansumm)))
   }
