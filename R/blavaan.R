@@ -438,7 +438,7 @@ blavaan <- function(...,  # default lavaan arguments
     lavoptions$se        <- "standard"
     lavoptions$test <- "standard"
     if(ordmod) {
-        cat("blavaan NOTE: ordinal models are under development and are unstable.\n\n")
+        cat("blavaan NOTE: ordinal models are new, please report bugs!\nhttps://github.com/ecmerkle/blavaan/issues\n\n")
     }
     if("test" %in% dotNames) {
         if(dotdotdot$test == "none") lavoptions$test <- "none"

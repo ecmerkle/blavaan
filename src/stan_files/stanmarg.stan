@@ -695,7 +695,10 @@ transformed parameters {
 	      //  tau_jacobian += Tau_un[g, vecpos, 1]; // see https://mc-stan.org/docs/2_24/reference-manual/ordered-vector.html
 	      // }
 	      ofreepos += 1;
-	    }
+	    } else if (eq == 1) {
+	      int eqent = w15skel[opos, 2];
+	      Tau[g, vecpos, 1] = Tau_free[eqent];
+	    }	    
 	    opos += 1;
 	  } else {
 	    // fixed value
@@ -721,7 +724,7 @@ transformed parameters {
     alpha_primn = to_vector(alpha_mn);
     tau_primn = to_vector(tau_mn);
   }
-  
+
   // continuous responses underlying ordinal data
   if (ord) {
     for (patt in 1:Np) {
