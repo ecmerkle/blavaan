@@ -65,6 +65,7 @@ jobs:
         run: |
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
+          remotes::install_github("r-lib/pillar")
           remotes::install_github("yrosseel/lavaan")
         shell: Rscript {0}
 
