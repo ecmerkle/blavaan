@@ -20,6 +20,8 @@ navbar:
         href: articles/prior.html
       - text: Measurement Invariance
         href: articles/invariance.html
+      - text: Estimation with Ordinal Data
+        href: articles/ordinal.html
     - text: News
       href: news/index.html
     - text: Resources
