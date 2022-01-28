@@ -45,6 +45,6 @@ jobs:
 
       - name: Install github packages
         run: |
-	  remotes::install_github("r-lib/pillar")
+          remotes::install_github("r-lib/pillar")
 
       - uses: r-lib/actions/check-r-package@v1
