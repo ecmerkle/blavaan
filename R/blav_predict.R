@@ -43,7 +43,7 @@ blavPredict <- function(object, newdata = NULL, type = "lv") {
     if(!stantarget) stop(paste0("blavaan ERROR: '", type, "' is only supported for target='stan'"))
 
     if(type %in% c("yhat", "ypred")) {
-      if(is.null(bfit@external$stanlvs)) stop("blavaan ERROR: for predictions, save.lvs must be TRUE during model estimation")
+      if(is.null(object@external$stanlvs)) stop("blavaan ERROR: for predictions, save.lvs must be TRUE during model estimation")
       lavmcmc <- make_mcmc(blavInspect(object, 'mcobj'), object@external$stanlvs)
       itnums <- sampnums(object@external$mcmcout, thin = 1)
       nsamps <- length(itnums)
