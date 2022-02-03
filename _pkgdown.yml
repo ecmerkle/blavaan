@@ -3,6 +3,7 @@ url: http://ecmerkle.github.io/blavaan/
 destination: "."
 
 template:
+  bootstrap: 5
   params:
     bootswatch: cerulean
 
