@@ -2,6 +2,8 @@ lvgqs <- function(modmats, standata, getlvs = TRUE) {
   Ng <- length(modmats)
 
   ## stan data
+  ## FIXME for getlvs=FALSE, YX only contains continuous data so dimensions
+  ## are wrong below
   p <- standata$p
   q <- standata$q
   m <- standata$m

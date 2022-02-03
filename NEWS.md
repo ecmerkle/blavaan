@@ -4,6 +4,9 @@
 
 * For models with missing data, posterior summaries have been sped up (log-likelihood computations now done in Stan).
 
+##  Bugs/glitches discovered after the release:
+* blavPredict(, type="ymis") is not working for models with ordinal variables
+
 
 # Version 0.3-18
 ## New features
