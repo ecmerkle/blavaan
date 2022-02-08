@@ -13,12 +13,16 @@ resource_files:
 navbar:
   title: "blavaan"
   left:
-    - text: Examples
+    - text: Tutorials
       menu:
-      - text: Estimation and Convergence
-        href: articles/converge.html
-      - text: Prior Distributions
+      - text: Getting Started
+        href: articles/start.html
+      - text: Prior Specification
         href: articles/prior.html
+      - text: Estimation and Convergence
+        href: articles/converge.html	
+    - text: Examples/Details
+      menu:
       - text: Measurement Invariance
         href: articles/invariance.html
       - text: Estimation with Ordinal Data
