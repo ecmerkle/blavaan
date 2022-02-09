@@ -1,13 +1,12 @@
 ---
-title: "Basic Model Estimation & Convergence Checks"
+title: "Model Summaries"
 ---
 
 ```{r echo=FALSE, message=FALSE}
 library(blavaan, quietly=TRUE)
 ```
 
-### Estimation
-Say that we specify a model of the Bollen political democracy data (included with lavaan):
+Say that we specify a model of the Bollen political democracy data and draw posterior samples using the *blavaan* default settings:
 
 ```{r eval=FALSE}
   model <- ' 
@@ -27,24 +26,22 @@ Say that we specify a model of the Bollen political democracy data (included wit
     y4 ~~ y8
     y6 ~~ y8
   '
+
+fit <- bsem(model, data=PoliticalDemocracy)
 ```
 
-Speed is always an issue when we sample via MCMC, especially using software like Stan or JAGS.  For computers with multiple cores, the estimation can be sped up by sending each MCMC chain to a separate core.  This is easily accomplished with the `bcontrol` argument:
+We describe here how to summarize the fitted model.
 
-```{r eval=FALSE}
-  fit <- bsem(model, data=PoliticalDemocracy, bcontrol=list(cores=3))
-```
 
-where the elements of the `bcontrol` list are arguments to the `stan()` or `run.jags()` function, depending on your `target`. Further arguments can be found via `?stan` or `?run.jags`.
 
 ### Convergence
-Following model estimation, we typically wish to look at the "goodness" of the sampled chains, including convergence to a stationary distribution and autocorrelation.  Popular metrics for studying these issues are available via the `summary()` and `plot()` functions.  The Rhat metric and effective sample size statistic are available via `summary()`:
+Following model estimation, we immediately wish to look at the "goodness" of the posterior samples, including convergence to a stationary distribution and autocorrelation. Popular metrics for studying these issues are available via the `summary()` and `plot()` functions. The Rhat metric and effective sample size statistic are available via `summary()`:
 
 ```{r eval=FALSE}
 summary(fit, neff=TRUE)
 ```
 
-while a variety of plots are also available.  We demonstrate time series plots and autocorrelation functions below; the options for `plot.type` come from the bayesplot package. For plotting functions in bayesplot that begin with `mcmc_`, the `plot.type` here would be the rest of the function name (without the leading `mcmc_`).
+while a variety of plots are also available. We demonstrate time series plots and autocorrelation functions below; the options for `plot.type` come from the bayesplot package. For plotting functions in bayesplot that begin with `mcmc_`, the `plot.type` here would be the rest of the function name (without the leading `mcmc_`).
 
 ```{r eval=FALSE}
 plot(fit, pars=1:4, plot.type="trace")
@@ -53,4 +50,4 @@ plot(fit, pars=1:4, plot.type="acf")
 
 These commands specify that we should draw a time series plot and an autocorrelation plot for the first four free parameters, as listed in `coef(fit)`.
 
-If the model has definitely not converged (as judged by Rhat), blavaan will issue multiple warnings.  Lack of convergence is sometimes caused by bad initial values (by default, blavaan generates random initial values), so it is occasionally helpful to re-estimate the model a second time.  Otherwise, lack of convergence may imply implausible prior distributions or a complex model.
+If the model has definitely not converged (as judged by Rhat), blavaan will issue multiple warnings. Lack of convergence is sometimes caused by bad initial values (by default, blavaan generates random initial values), so it is occasionally helpful to re-estimate the model a second time. Otherwise, lack of convergence may imply prior distributions that severely conflict with the data, or an ill-defined model. It is sometimes helpful to try to fit the same model in *lavaan*, to observe the types of errors that occur there.

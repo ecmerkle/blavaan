@@ -19,8 +19,10 @@ navbar:
         href: articles/start.html
       - text: Prior Specification
         href: articles/prior.html
-      - text: Estimation and Convergence
-        href: articles/converge.html	
+      - text: Estimation
+        href: articles/estimate.html
+      - text: Model Summaries
+        href: articles/converge.html
     - text: Examples/Details
       menu:
       - text: Measurement Invariance
