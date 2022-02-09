@@ -40,7 +40,8 @@
   <div class="dropdown-menu" aria-labelledby="dropdown-tutorials">
     <a class="dropdown-item" href="../articles/start.html">Getting Started</a>
     <a class="dropdown-item" href="../articles/prior.html">Prior Specification</a>
-    <a class="dropdown-item" href="../articles/converge.html">Estimation and Convergence</a>
+    <a class="dropdown-item" href="../articles/estimate.html">Estimation</a>
+    <a class="dropdown-item" href="../articles/converge.html">Model Summaries</a>
   </div>
 </li>
 <li class="active nav-item dropdown">
@@ -121,7 +122,7 @@ y^* &gt;\ \tau_3 &amp;\text{ if }y = 4
 </h3>
 <p>The prior distributions on the threshold (<span class="math inline">\(\tau\)</span>) parameters are more involved than they may appear. This is because, as described in the previous section, the threshold parameters for a single variable must be ordered. So if we say, for example, that all thresholds have a normal(0,1) prior distribution, we are ignoring the fact that one threshold’s value influences the size of other thresholds’ values. As Michael Betancourt describes on Stan Discourse, such a prior “interacts with the (ordering) constraint to enforce a sort of uniform repulsion between the interior points, resulting in very rigid differences.”</p>
 <p>quote from <a href="https://discourse.mc-stan.org/t/prior-choice-for-ordered-inverse-transformed-parameters/16378/3" class="external-link uri">https://discourse.mc-stan.org/t/prior-choice-for-ordered-inverse-transformed-parameters/16378/3</a></p>
-<p>To address this issue, we first define an unconstrained, unordered parameter vector whose length equal the number of thresholds in the model. Call this vector <span class="math inline">\(\mathbf{\tau}^*\)</span>. We then obtain ordered thresholds by exponentiating the unordered parameter vector in a specific manner. The manner in which this works is exactly the same as how Stan defines a parameter of type <code>ordered</code>. See <a href="https://mc-stan.org/docs/2_27/reference-manual/ordered-vector.html" class="external-link uri">https://mc-stan.org/docs/2_27/reference-manual/ordered-vector.html</a>.</p>
+<p>To address this issue, we first define an unconstrained, unordered parameter vector whose length equals the number of thresholds in the model. Call this vector <span class="math inline">\(\mathbf{\tau}^*\)</span>. We then obtain ordered thresholds by exponentiating the unordered parameter vector in a specific manner. The manner in which this works is exactly the same as how Stan defines a parameter of type <code>ordered</code>. See <a href="https://mc-stan.org/docs/2_28/reference-manual/ordered-vector.html" class="external-link uri">https://mc-stan.org/docs/2_28/reference-manual/ordered-vector.html</a>. Additionally, a similar idea has been independently developed for signal detection models by <span class="citation">Paulewicz and Blaut (2020)</span> (and see their <em>bhsdtr</em> package).</p>
 <p>The idea is most easily shown via example. Say that we have an ordinal variable with 4 categories. Then the three thresholds for this variable are obtained via: <span class="math display">\[\begin{align*}
 \tau_1 &amp;= \tau^*_1 \\
 \tau_2 &amp;= \tau^*_1 + \exp(\tau^*_2) \\
@@ -204,6 +205,9 @@ y^* &gt;\ \tau_3 &amp;\text{ if }y = 4
 </div>
 <div id="ref-merros18">
 <p>Merkle, E. C., and Y. Rosseel. 2018. “blavaan: Bayesian Structural Equation Models via Parameter Expansion.” <em>Journal of Statistical Software</em> 85 (4): 1–30. <a href="https://www.jstatsoft.org/article/view/v085i04" class="external-link">https://www.jstatsoft.org/article/view/v085i04</a>.</p>
+</div>
+<div id="ref-paubla20">
+<p>Paulewicz, B., and A. Blaut. 2020. “The Bhsdtr Package: A General-Purpose Method of Bayesian Inference for Signal Detection Theory Models.” <em>Behavior Research Methods</em> 52: 2122–41.</p>
 </div>
 </div>
 </div>

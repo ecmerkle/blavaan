@@ -3,12 +3,13 @@ pkgdown: 2.0.2
 pkgdown_sha: ~
 articles:
   converge: converge.html
+  estimate: estimate.html
   invariance: invariance.html
   ordinal: ordinal.html
   prior: prior.html
   resources: resources.html
   start: start.html
-last_built: 2022-02-08T18:37Z
+last_built: 2022-02-09T15:38Z
 urls:
   reference: http://ecmerkle.github.io/blavaan/reference
   article: http://ecmerkle.github.io/blavaan/articles
