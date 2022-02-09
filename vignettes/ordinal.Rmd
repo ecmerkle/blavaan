@@ -37,7 +37,7 @@ The prior distributions on the threshold ($\tau$) parameters are more involved t
 
 quote from https://discourse.mc-stan.org/t/prior-choice-for-ordered-inverse-transformed-parameters/16378/3
 
-To address this issue, we first define an unconstrained, unordered parameter vector whose length equal the number of thresholds in the model. Call this vector $\mathbf{\tau}^*$. We then obtain ordered thresholds by exponentiating the unordered parameter vector in a specific manner. The manner in which this works is exactly the same as how Stan defines a parameter of type `ordered`. See https://mc-stan.org/docs/2_27/reference-manual/ordered-vector.html.
+To address this issue, we first define an unconstrained, unordered parameter vector whose length equals the number of thresholds in the model. Call this vector $\mathbf{\tau}^*$. We then obtain ordered thresholds by exponentiating the unordered parameter vector in a specific manner. The manner in which this works is exactly the same as how Stan defines a parameter of type `ordered`. See https://mc-stan.org/docs/2_28/reference-manual/ordered-vector.html. Additionally, a similar idea has been independently developed for signal detection models by @paubla20 (and see their *bhsdtr* package).
 
 The idea is most easily shown via example. Say that we have an ordinal variable with 4 categories. Then the three thresholds for this variable are obtained via:
 \begin{align*}
