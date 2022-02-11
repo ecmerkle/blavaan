@@ -55,11 +55,11 @@ jagpriors <- function(nu="dnorm(0,1e-3)", alpha="dnorm(0,1e-2)",
                     lambda="dnorm(0,1e-2)", beta="dnorm(0,1e-2)",
                     itheta="dgamma(1,.5)[prec]", ipsi="dgamma(1,.5)[prec]",
                     rho="dbeta(1,1)", ibpsi="dwish(iden,3)",
-                    tau="dnorm(0,.44)", delta="dgamma(1,.5)[prec]"){
+                    tau="dnorm(0,.44)"){
 
   dp <- c(nu=nu, alpha=alpha, lambda=lambda, beta=beta,
           itheta=itheta, ipsi=ipsi, rho=rho, ibpsi=ibpsi,
-          tau=tau, delta=delta)
+          tau=tau)
   
   dp
 }
@@ -70,12 +70,11 @@ stanpriors <- function(nu="normal(0,32)",
                        beta="normal(0,10)", theta="gamma(1,.5)[sd]",
                        psi="gamma(1,.5)[sd]", rho="beta(1,1)",
                        ibpsi="wishart(3,iden)",
-                       tau="normal(0,1.5)",
-                       delta="gamma(1,.5)[sd]"){
+                       tau="normal(0,1.5)"){
 
   dp <- c(nu=nu, alpha=alpha, lambda=lambda, beta=beta,
           theta=theta, psi=psi, rho=rho, ibpsi=ibpsi,
-          tau=tau, delta=delta)
+          tau=tau)
 
   dp
 }
@@ -85,12 +84,11 @@ stanclassicpriors <- function(nu="normal(0,1000^.5)",
                               beta="normal(0,10)", itheta="gamma(1,.5)[prec]",
                               ipsi="gamma(1,.5)[prec]", rho="beta(1,1)",
                               ibpsi="wishart(3,iden)",
-                              tau="normal(0,1.5)",
-                              delta="gamma(1,.5)[prec]"){
+                              tau="normal(0,1.5)"){
 
   dp <- c(nu=nu, alpha=alpha, lambda=lambda, beta=beta,
           itheta=itheta, ipsi=ipsi, rho=rho, ibpsi=ibpsi,
-          tau=tau, delta=delta)
+          tau=tau)
 
   dp
 }

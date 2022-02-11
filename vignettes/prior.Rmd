@@ -22,10 +22,11 @@ It is important to note that these prior distributions correspond to Stan parame
 
 ```{r, echo=FALSE}
 pnames <- dpriors()
-pdesc <- c("MV intercept", "LV intercept", "Loading", "Regression", "MV precision", "LV precision", "Correlation", "Covariance matrix")
-pnames[1:8] <- pdesc
-pnames[1:8]
+pdesc <- c("MV intercept", "LV intercept", "Loading", "Regression", "MV precision", "LV precision", "Correlation", "Covariance matrix", "Threshold")
+pnames[1:9] <- pdesc
+pnames
 ```
+For further information about priors on thresholds, see the [ordinal modeling details](ordinal.html).
 
 For `target = "stan"` (the default), priors are currently restricted to one distribution per parameter type. You can change the prior distribution parameters (for example, the mean and standard deviation of a normal), but you cannot change the prior distribution type. The only exceptions here are the "theta" and "psi" parameters: for those, you can use the modifiers "[sd]", "[var]", or "[prec]" to specify whether you want the priors to apply to the standard deviation, variance, or precision. If you require more flexibility in prior specification, you change the target to either `"stanclassic"` (the old Stan approach) or `"jags"` (the JAGS approach). Alternatively, you can export the Stan model via `mcmcfile = TRUE`, edit the file as needed, then fit it via the rstan package.
 

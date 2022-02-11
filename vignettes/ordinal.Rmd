@@ -1,5 +1,5 @@
 ---
-title: "Ordinal Models in *blavaan*"
+title: "Ordinal Models in blavaan"
 author: Ed Merkle
 bibliography:
   - refs.bib
