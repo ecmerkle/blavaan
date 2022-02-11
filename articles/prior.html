@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-2.893</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-2.897</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -109,13 +109,16 @@
 <span class="co">##    "normal(0,32)"    "normal(0,10)"    "normal(0,10)"    "normal(0,10)" </span>
 <span class="co">##             theta               psi               rho             ibpsi </span>
 <span class="co">## "gamma(1,.5)[sd]" "gamma(1,.5)[sd]"       "beta(1,1)" "wishart(3,iden)" </span>
-<span class="co">##               tau             delta </span>
-<span class="co">##   "normal(0,1.5)" "gamma(1,.5)[sd]"</span></code></pre>
+<span class="co">##               tau </span>
+<span class="co">##   "normal(0,1.5)"</span></code></pre>
 <p>It is important to note that these prior distributions correspond to Stan parameterizations. These are similar to R parameterizations but not necessarily exactly the same. The Greek(ish) names above correspond to the following parameter types (where MV is manifest/observed variable and LV is latent variable):</p>
 <pre><code><span class="co">##                  nu               alpha              lambda                beta </span>
 <span class="co">##      "MV intercept"      "LV intercept"           "Loading"        "Regression" </span>
 <span class="co">##               theta                 psi                 rho               ibpsi </span>
-<span class="co">##      "MV precision"      "LV precision"       "Correlation" "Covariance matrix"</span></code></pre>
+<span class="co">##      "MV precision"      "LV precision"       "Correlation" "Covariance matrix" </span>
+<span class="co">##                 tau </span>
+<span class="co">##         "Threshold"</span></code></pre>
+<p>For further information about priors on thresholds, see the <a href="ordinal.html">ordinal modeling details</a>.</p>
 <p>For <code>target = "stan"</code> (the default), priors are currently restricted to one distribution per parameter type. You can change the prior distribution parameters (for example, the mean and standard deviation of a normal), but you cannot change the prior distribution type. The only exceptions here are the “theta” and “psi” parameters: for those, you can use the modifiers “[sd]”, “[var]”, or “[prec]” to specify whether you want the priors to apply to the standard deviation, variance, or precision. If you require more flexibility in prior specification, you change the target to either <code>"stanclassic"</code> (the old Stan approach) or <code>"jags"</code> (the JAGS approach). Alternatively, you can export the Stan model via <code>mcmcfile = TRUE</code>, edit the file as needed, then fit it via the rstan package.</p>
 <p>To modify prior distributions, we could simply supply a new text string to <code><a href="../reference/dpriors.html">dpriors()</a></code> like this:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
@@ -125,8 +128,8 @@
 <span class="co">##    "normal(0,32)"    "normal(0,10)"     "normal(1,2)"    "normal(0,10)" </span>
 <span class="co">##             theta               psi               rho             ibpsi </span>
 <span class="co">## "gamma(1,.5)[sd]" "gamma(1,.5)[sd]"       "beta(1,1)" "wishart(3,iden)" </span>
-<span class="co">##               tau             delta </span>
-<span class="co">##   "normal(0,1.5)" "gamma(1,.5)[sd]"</span></code></pre>
+<span class="co">##               tau </span>
+<span class="co">##   "normal(0,1.5)"</span></code></pre>
 <p>so that the default prior for loadings is now normal with mean 1 and standard deviation 2, and the rest of the parameters remain at the original defaults. The next time we estimate a model (via <code><a href="../reference/bsem.html">bsem()</a></code>, <code><a href="../reference/bcfa.html">bcfa()</a></code>, <code><a href="../reference/bgrowth.html">bgrowth()</a></code>, or <code><a href="../reference/blavaan.html">blavaan()</a></code>), we would add the argument <code>dp=mydp</code> to use this new set of default priors.</p>
 </div>
 <div class="section level3">
