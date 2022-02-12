@@ -1,4 +1,5 @@
 \name{blav_internal}
+\alias{blav_internal}
 \alias{blav_model_test}
 \alias{coeffun}
 \alias{set_phantoms}
