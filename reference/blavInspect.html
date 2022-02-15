@@ -23,12 +23,13 @@ fitted blavaan object. This is similar to lavaan's lavInspect() function."><!-- 
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item dropdown">
-  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-tutorials">Tutorials</a>
-  <div class="dropdown-menu" aria-labelledby="dropdown-tutorials">
+  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-basics">Basics</a>
+  <div class="dropdown-menu" aria-labelledby="dropdown-basics">
     <a class="dropdown-item" href="../articles/start.html">Getting Started</a>
     <a class="dropdown-item" href="../articles/prior.html">Prior Specification</a>
     <a class="dropdown-item" href="../articles/estimate.html">Estimation</a>
-    <a class="dropdown-item" href="../articles/converge.html">Model Summaries</a>
+    <a class="dropdown-item" href="../articles/summaries.html">Model Summaries</a>
+    <a class="dropdown-item" href="../articles/plotting.html">Plots</a>
   </div>
 </li>
 <li class="nav-item dropdown">
@@ -104,8 +105,9 @@ documentation.</p>
 <dl><dt><code>"start"</code>:</dt>
 <dd><p>A list of starting values for each chain, unless <code>inits="jags"</code> is used during model estimation. Aliases: <code>"starting.values"</code>, <code>"inits"</code>.</p></dd>
 
-  <dt><code>"psrf"</code>:</dt>
-<dd><p>Each parameter's Gelman-Rubin PSRF (potential scale reduction factor) for convergence assessment.</p></dd>
+  <dt><code>"rhat"</code>:</dt>
+<dd><p>Each parameter's potential scale reduction
+    factor for convergence assessment. Can also use "psrf" instead of "rhat"</p></dd>
 
   <dt><code>"ac.10"</code>:</dt>
 <dd><p>Each parameter's estimated lag-10 autocorrelation.</p></dd>
@@ -123,7 +125,9 @@ documentation.</p>
 <dd><p>The number of chains sampled.</p></dd>
 
   <dt><code>"cp"</code>:</dt>
-<dd><p>The approach used for estimating covariance parameters (<code>"srs"</code> or <code>"fa"</code>).</p></dd>
+<dd><p>The approach used for estimating covariance
+    parameters (<code>"srs"</code> or <code>"fa"</code>); these are only relevant if
+    using JAGS.</p></dd>
 
   <dt><code>"dp"</code>:</dt>
 <dd><p>Default prior distributions used for each type of model parameter.</p></dd>
@@ -163,12 +167,12 @@ documentation.</p>
 <span class="r-in">              textual =~ x4 + x5 + x6</span>
 <span class="r-in">              speed   =~ x7 + x8 + x9 '</span></span>
 <span class="r-in"></span>
-<span class="r-in"><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="bcfa.html">bcfa</a></span><span class="op">(</span><span class="va">HS.model</span>, data<span class="op">=</span><span class="va">HolzingerSwineford1939</span>,</span>
-<span class="r-in">            jagcontrol<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>method<span class="op">=</span><span class="st">"rjparallel"</span><span class="op">)</span><span class="op">)</span></span>
+<span class="r-in"><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="bcfa.html">bcfa</a></span><span class="op">(</span><span class="va">HS.model</span>, data <span class="op">=</span> <span class="va">HolzingerSwineford1939</span>,</span>
+<span class="r-in">            bcontrol <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>method <span class="op">=</span> <span class="st">"rjparallel"</span><span class="op">)</span><span class="op">)</span></span>
 <span class="r-in"></span>
 <span class="r-in"><span class="co"># extract information</span></span>
 <span class="r-in"><span class="fu">blavInspect</span><span class="op">(</span><span class="va">fit</span>, <span class="st">"psrf"</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu">blavInspect</span><span class="op">(</span><span class="va">fit</span>, <span class="st">"hpd"</span>, level<span class="op">=</span><span class="fl">.9</span><span class="op">)</span></span>
+<span class="r-in"><span class="fu">blavInspect</span><span class="op">(</span><span class="va">fit</span>, <span class="st">"hpd"</span>, level <span class="op">=</span> <span class="fl">.9</span><span class="op">)</span></span>
 <span class="r-in"><span class="op">}</span></span>
 </code></pre></div>
     </div>

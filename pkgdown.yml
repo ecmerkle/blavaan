@@ -2,14 +2,15 @@ pandoc: 2.7.3
 pkgdown: 2.0.2
 pkgdown_sha: ~
 articles:
-  converge: converge.html
   estimate: estimate.html
   invariance: invariance.html
   ordinal: ordinal.html
+  plotting: plotting.html
   prior: prior.html
   resources: resources.html
   start: start.html
-last_built: 2022-02-11T16:42Z
+  summaries: summaries.html
+last_built: 2022-02-15T19:22Z
 urls:
   reference: http://ecmerkle.github.io/blavaan/reference
   article: http://ecmerkle.github.io/blavaan/articles

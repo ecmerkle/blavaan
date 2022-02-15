@@ -36,12 +36,13 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="active nav-item dropdown">
-  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-tutorials">Tutorials</a>
-  <div class="dropdown-menu" aria-labelledby="dropdown-tutorials">
+  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-basics">Basics</a>
+  <div class="dropdown-menu" aria-labelledby="dropdown-basics">
     <a class="dropdown-item" href="../articles/start.html">Getting Started</a>
     <a class="dropdown-item" href="../articles/prior.html">Prior Specification</a>
     <a class="dropdown-item" href="../articles/estimate.html">Estimation</a>
-    <a class="dropdown-item" href="../articles/converge.html">Model Summaries</a>
+    <a class="dropdown-item" href="../articles/summaries.html">Model Summaries</a>
+    <a class="dropdown-item" href="../articles/plotting.html">Plots</a>
   </div>
 </li>
 <li class="nav-item dropdown">
@@ -87,18 +88,18 @@
 
 
 
-<script src="converge_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+<script src="summaries_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
   <main id="main"><div class="page-header">
       <img src="" class="logo" alt=""><h1>Model Summaries</h1>
             
       
       
-      <div class="d-none name"><code>converge.Rmd</code></div>
+      <div class="d-none name"><code>summaries.Rmd</code></div>
     </div>
 
     
     
-<p>Say that we specify a model of the Bollen political democracy data and draw posterior samples using the <em>blavaan</em> default settings:</p>
+<p>Say that we specify a model of the Bollen political democracy data and draw posterior samples using the following <em>blavaan</em> code (where <code>save.lvs</code> saves the latent variable samples for further use):</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R">  <span class="va">model</span> <span class="op">&lt;-</span> <span class="st">' 
     # latent variable definitions
@@ -118,20 +119,29 @@
     y6 ~~ y8
   '</span>
 
-<span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bsem.html">bsem</a></span><span class="op">(</span><span class="va">model</span>, data<span class="op">=</span><span class="va">PoliticalDemocracy</span><span class="op">)</span></code></pre></div>
-<p>We describe here how to summarize the fitted model.</p>
+<span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bsem.html">bsem</a></span><span class="op">(</span><span class="va">model</span>, data<span class="op">=</span><span class="va">PoliticalDemocracy</span>, save.lvs <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+<p>We describe here how to summarize the fitted model. The most obvious functions are <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>, <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code>, and <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code>, which all work in a manner similar to the analogous <em>lavaan</em> functions. But instead of maximum likelihood estimates and standard errors, <em>blavaan</em> reports posterior means and posterior standard deviations. Other summaries that are unique to Bayesian models include model convergence metrics, model fit/comparison metrics, and samples of latent variables. These are discussed below.</p>
 <div class="section level3">
 <h3 id="convergence">Convergence<a class="anchor" aria-label="anchor" href="#convergence"></a>
 </h3>
-<p>Following model estimation, we immediately wish to look at the “goodness” of the posterior samples, including convergence to a stationary distribution and autocorrelation. Popular metrics for studying these issues are available via the <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> and <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> functions. The Rhat metric and effective sample size statistic are available via <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>:</p>
+<p>Following model estimation, we immediately wish to look at the “goodness” of the posterior samples, including convergence to a stationary distribution and autocorrelation. Popular convergence metrics are available via the <code><a href="../reference/blavInspect.html">blavInspect()</a></code> function:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span>, neff<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
-<p>while a variety of plots are also available. We demonstrate time series plots and autocorrelation functions below; the options for <code>plot.type</code> come from the bayesplot package. For plotting functions in bayesplot that begin with <code>mcmc_</code>, the <code>plot.type</code> here would be the rest of the function name (without the leading <code>mcmc_</code>).</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span>, pars<span class="op">=</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, plot.type<span class="op">=</span><span class="st">"trace"</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span>, pars<span class="op">=</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, plot.type<span class="op">=</span><span class="st">"acf"</span><span class="op">)</span></code></pre></div>
-<p>These commands specify that we should draw a time series plot and an autocorrelation plot for the first four free parameters, as listed in <code>coef(fit)</code>.</p>
+<code class="sourceCode R"><span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">'rhat'</span><span class="op">)</span>
+<span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">'neff'</span><span class="op">)</span></code></pre></div>
+<p>where R-hat values near 1.00 indicate convergence, and large effective sample sizes (hundreds or above) are preferred. For details on these metrics, see, e.g., the Posterior Analysis section of the <a href="https://mc-stan.org/docs/2_28/reference-manual/index.html" class="external-link">Stan Reference Manual</a>.</p>
 <p>If the model has definitely not converged (as judged by Rhat), blavaan will issue multiple warnings. Lack of convergence is sometimes caused by bad initial values (by default, blavaan generates random initial values), so it is occasionally helpful to re-estimate the model a second time. Otherwise, lack of convergence may imply prior distributions that severely conflict with the data, or an ill-defined model. It is sometimes helpful to try to fit the same model in <em>lavaan</em>, to observe the types of errors that occur there.</p>
+</div>
+<div class="section level3">
+<h3 id="model-fit-comparison">Model Fit &amp; Comparison<a class="anchor" aria-label="anchor" href="#model-fit-comparison"></a>
+</h3>
+<p>Next, we may wish to examine some model fit metrics. While some metrics are available from the <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> output, more are available from the <code><a href="https://rdrr.io/pkg/lavaan/man/fitMeasures.html" class="external-link">fitMeasures()</a></code> function.</p>
+<p>For judging absolute fit, <em>blavaan</em> supplies a posterior predictive p-value that is based on the likelihood ratio statistic. Good-fitting models have values near 0.5 on this metric. For examining models’ relative fits, <em>blavaan</em> supplies the DIC, WAIC, and LOOIC. The latter two metrics are computed with the help of the <em>loo</em> package <span class="citation">[@loo]</span>. Comparison of multiple models on these criteria is facilitated via <code><a href="../reference/blavCompare.html">blavCompare()</a></code>, which provides standard errors of the difference between two criteria.</p>
+<p>Other notable functions include <code><a href="../reference/blavFitIndices.html">blavFitIndices()</a></code> for alternative measures of absolute fit and <code><a href="../reference/ppmc.html">ppmc()</a></code> for general posterior predictive checks.</p>
+</div>
+<div class="section level3">
+<h3 id="latent-variables-standardization">Latent Variables &amp; Standardization<a class="anchor" aria-label="anchor" href="#latent-variables-standardization"></a>
+</h3>
+<p>See <code><a href="../reference/blavInspect.html">blavInspect()</a></code>, <code><a href="../reference/blavPredict.html">blavPredict()</a></code>, <code><a href="../reference/standardizedPosterior.html">standardizedPosterior()</a></code></p>
 </div>
   </main>
 </div>
