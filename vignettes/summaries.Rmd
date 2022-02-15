@@ -1,0 +1,59 @@
+---
+title: "Model Summaries"
+---
+
+```{r echo=FALSE, message=FALSE}
+library(blavaan, quietly=TRUE)
+```
+
+Say that we specify a model of the Bollen political democracy data and draw posterior samples using the following *blavaan* code (where `save.lvs` saves the latent variable samples for further use):
+
+```{r eval=FALSE}
+  model <- ' 
+    # latent variable definitions
+    ind60 =~ x1 + x2 + x3
+    dem60 =~ y1 + a*y2 + b*y3 + c*y4
+    dem65 =~ y5 + a*y6 + b*y7 + c*y8
+     
+    # regressions
+    dem60 ~ ind60
+    dem65 ~ ind60 + dem60
+     
+    # residual correlations
+    y1 ~~ y5
+    y2 ~~ y4 + y6
+    y3 ~~ y7
+    y4 ~~ y8
+    y6 ~~ y8
+  '
+
+fit <- bsem(model, data=PoliticalDemocracy, save.lvs = TRUE)
+```
+
+We describe here how to summarize the fitted model. The most obvious functions are `summary()`, `coef()`, and `vcov()`, which all work in a manner similar to the analogous *lavaan* functions. But instead of maximum likelihood estimates and standard errors, *blavaan* reports posterior means and posterior standard deviations. Other summaries that are unique to Bayesian models include model convergence metrics, model fit/comparison metrics, and samples of latent variables. These are discussed below. 
+
+
+### Convergence
+Following model estimation, we immediately wish to look at the "goodness" of the posterior samples, including convergence to a stationary distribution and autocorrelation. Popular convergence metrics are available via the `blavInspect()` function:
+
+```{r eval=FALSE}
+blavInspect(fit, 'rhat')
+blavInspect(fit, 'neff')
+```
+
+where R-hat values near 1.00 indicate convergence, and large effective sample sizes (hundreds or above) are preferred. For details on these metrics, see, e.g., the Posterior Analysis section of the [Stan Reference Manual](https://mc-stan.org/docs/2_28/reference-manual/index.html).
+
+
+If the model has definitely not converged (as judged by Rhat), blavaan will issue multiple warnings. Lack of convergence is sometimes caused by bad initial values (by default, blavaan generates random initial values), so it is occasionally helpful to re-estimate the model a second time. Otherwise, lack of convergence may imply prior distributions that severely conflict with the data, or an ill-defined model. It is sometimes helpful to try to fit the same model in *lavaan*, to observe the types of errors that occur there.
+
+
+### Model Fit & Comparison
+Next, we may wish to examine some model fit metrics. While some metrics are available from the `summary()` output, more are available from the `fitMeasures()` function. 
+
+For judging absolute fit, *blavaan* supplies a posterior predictive p-value  that is based on the likelihood ratio statistic. Good-fitting models have values near 0.5 on this metric. For examining models' relative fits, *blavaan* supplies the DIC, WAIC, and LOOIC. The latter two metrics are computed with the help of the *loo* package [@loo]. Comparison of multiple models on these criteria is facilitated via `blavCompare()`, which provides standard errors of the difference between two criteria.
+
+Other notable functions include `blavFitIndices()` for alternative measures of absolute fit and `ppmc()` for general posterior predictive checks.
+
+
+### Latent Variables & Standardization
+See `blavInspect()`, `blavPredict()`, `standardizedPosterior()`

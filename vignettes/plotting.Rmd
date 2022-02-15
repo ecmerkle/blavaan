@@ -1,0 +1,44 @@
+---
+title: "Plot Functionality"
+---
+
+```{r echo=FALSE, message=FALSE}
+library(blavaan, quietly=TRUE)
+```
+
+A `plot()` method exists for *blavaan* objects, with this method making use of the *bayesplot* package [@bayesplot]. We provide details here about how this functionality works.
+
+### Basics
+Because many *blavaan* models will have many parameters, users generally need to specify which parameters they wish to plot. This is accomplished by supplying numbers to the `pars` argument, where the numbers correspond to the order of parameters from the `coef()` command (the numbers also appear in the `free` column of the parameter table). Users must also specify the type of plot that they desire via the `plot.type` argument. So, for example, a trace plot of the first four model parameters looks like
+
+```{r eval=FALSE}
+plot(fit, pars = 1:4, plot.type = "trace")
+```
+
+Many other plot types are available, coming from the *bayesplot* package. In general, for *bayesplot* functions that begin with `mcmc_`, the corresponding `plot.type` is the remainder of the function name without the leading `mcmc_`. Examples of many of these plots can be found in [this bayesplot vignette](https://cran.r-project.org/web/packages/bayesplot/vignettes/plotting-mcmc-draws.html).
+
+
+### Customization
+Users may wish to customize some aspects of the resulting plots. For this, the `plot()` function will output a *ggplot2* object:
+
+```{r eval=FALSE}
+p <- plot(fit, pars = 1:4, plot.type = "trace")
+```
+
+Now, it is possible to modify `p` as if it were any other *ggplot2* object.
+
+Alternatively, users may wish to create a plot that is entirely different from what is available via `plot()`. This can be facilitated by extracting the posterior samples or the Stan model, via `blavInspect()`:
+
+```{r eval=FALSE}
+## list of draws
+## (one list entry per chain):
+draws <- blavInspect(fit, "mcmc")
+
+## convert the list to a data.frame
+## (each row is a sample,
+##  each column is a parameter)
+draws <- do.call("rbind", draws)
+
+## Stan (or JAGS) model
+modobj <- blavInspect(fit, "mcobj")
+```

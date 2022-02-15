@@ -13,7 +13,7 @@ resource_files:
 navbar:
   title: "blavaan"
   left:
-    - text: Tutorials
+    - text: Basics
       menu:
       - text: Getting Started
         href: articles/start.html
@@ -22,7 +22,9 @@ navbar:
       - text: Estimation
         href: articles/estimate.html
       - text: Model Summaries
-        href: articles/converge.html
+        href: articles/summaries.html
+      - text: Plots
+        href: articles/plotting.html
     - text: Examples/Details
       menu:
       - text: Measurement Invariance
