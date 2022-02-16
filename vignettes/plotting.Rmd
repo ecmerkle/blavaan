@@ -1,5 +1,7 @@
 ---
 title: "Plot Functionality"
+bibliography:
+  - refs.bib
 ---
 
 ```{r echo=FALSE, message=FALSE}
@@ -42,3 +44,6 @@ draws <- do.call("rbind", draws)
 ## Stan (or JAGS) model
 modobj <- blavInspect(fit, "mcobj")
 ```
+
+
+### References

@@ -1,5 +1,7 @@
 ---
 title: "Model Summaries"
+bibliography:
+  - refs.bib
 ---
 
 ```{r echo=FALSE, message=FALSE}
@@ -57,3 +59,6 @@ Other notable functions include `blavFitIndices()` for alternative measures of a
 
 ### Latent Variables & Standardization
 See `blavInspect()`, `blavPredict()`, `standardizedPosterior()`
+
+
+### References
