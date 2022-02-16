@@ -135,13 +135,22 @@
 <h3 id="model-fit-comparison">Model Fit &amp; Comparison<a class="anchor" aria-label="anchor" href="#model-fit-comparison"></a>
 </h3>
 <p>Next, we may wish to examine some model fit metrics. While some metrics are available from the <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> output, more are available from the <code><a href="https://rdrr.io/pkg/lavaan/man/fitMeasures.html" class="external-link">fitMeasures()</a></code> function.</p>
-<p>For judging absolute fit, <em>blavaan</em> supplies a posterior predictive p-value that is based on the likelihood ratio statistic. Good-fitting models have values near 0.5 on this metric. For examining models’ relative fits, <em>blavaan</em> supplies the DIC, WAIC, and LOOIC. The latter two metrics are computed with the help of the <em>loo</em> package <span class="citation">[@loo]</span>. Comparison of multiple models on these criteria is facilitated via <code><a href="../reference/blavCompare.html">blavCompare()</a></code>, which provides standard errors of the difference between two criteria.</p>
+<p>For judging absolute fit, <em>blavaan</em> supplies a posterior predictive p-value that is based on the likelihood ratio statistic. Good-fitting models have values near 0.5 on this metric. For examining models’ relative fits, <em>blavaan</em> supplies the DIC, WAIC, and LOOIC. The latter two metrics are computed with the help of the <em>loo</em> package <span class="citation">(Vehtari et al. 2020)</span>. Comparison of multiple models on these criteria is facilitated via <code><a href="../reference/blavCompare.html">blavCompare()</a></code>, which provides standard errors of the difference between two criteria.</p>
 <p>Other notable functions include <code><a href="../reference/blavFitIndices.html">blavFitIndices()</a></code> for alternative measures of absolute fit and <code><a href="../reference/ppmc.html">ppmc()</a></code> for general posterior predictive checks.</p>
 </div>
 <div class="section level3">
 <h3 id="latent-variables-standardization">Latent Variables &amp; Standardization<a class="anchor" aria-label="anchor" href="#latent-variables-standardization"></a>
 </h3>
 <p>See <code><a href="../reference/blavInspect.html">blavInspect()</a></code>, <code><a href="../reference/blavPredict.html">blavPredict()</a></code>, <code><a href="../reference/standardizedPosterior.html">standardizedPosterior()</a></code></p>
+</div>
+<div class="section level3 unnumbered">
+<h3 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h3>
+<div id="refs" class="references">
+<div id="ref-loo">
+<p>Vehtari, Aki, Jonah Gabry, Mans Magnusson, Yuling Yao, Paul-Christian Bürkner, Topi Paananen, and Andrew Gelman. 2020. “Loo: Efficient Leave-One-Out Cross-Validation and Waic for Bayesian Models.” <a href="https://mc-stan.org/loo/" class="external-link">https://mc-stan.org/loo/</a>.</p>
+</div>
+</div>
 </div>
   </main>
 </div>
