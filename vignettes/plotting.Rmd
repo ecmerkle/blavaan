@@ -36,7 +36,7 @@ Alternatively, users may wish to create a plot that is entirely different from w
 ## (one list entry per chain):
 draws <- blavInspect(fit, "mcmc")
 
-## convert the list to a data.frame
+## convert the list to a matrix
 ## (each row is a sample,
 ##  each column is a parameter)
 draws <- do.call("rbind", draws)
