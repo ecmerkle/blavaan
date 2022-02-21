@@ -50,7 +50,12 @@ If the model has definitely not converged (as judged by Rhat), blavaan will issu
 
 
 ### Model Fit & Comparison
-Next, we may wish to examine some model fit metrics. While some metrics are available from the `summary()` output, more are available from the `fitMeasures()` function. 
+Next, we may wish to examine some model fit metrics. While many metrics are available from the `summary()` output, more are available from the `fitMeasures()` function:
+
+```{r eval=FALSE}
+summary(fit)
+fitMeasures(fit)
+```
 
 For judging absolute fit, *blavaan* supplies a posterior predictive p-value  that is based on the likelihood ratio statistic. Good-fitting models have values near 0.5 on this metric. For examining models' relative fits, *blavaan* supplies the DIC, WAIC, and LOOIC. The latter two metrics are computed with the help of the *loo* package [@loo]. Comparison of multiple models on these criteria is facilitated via `blavCompare()`, which provides standard errors of the difference between two criteria.
 
@@ -58,7 +63,31 @@ Other notable functions include `blavFitIndices()` for alternative measures of a
 
 
 ### Latent Variables & Standardization
-See `blavInspect()`, `blavPredict()`, `standardizedPosterior()`
+An often-discussed advantage of Bayesian models is their abilities to describe uncertainty in "random" parameters, including random effects and latent variables. To access this functionality in *blavaan*, users must set `save.lvs = TRUE` during model estimation, as is done at the top of this page. After model estimation, uses can access this information via `blavInspect()` or `blavPredict()`. Relevant arguments to `blavInspect()` include `lvmeans` and `lvs`. The former returns posterior means of latent variables, which are similar to the predictions supplied by frequentist models. The latter returns posterior samples of latent variables, so that users could summarize their uncertainties or other functions of latent variables. These posterior samples are returned as a list of length `n.chains`, where each list entry has a row per posterior sample (and number of columns is total number of latent variables in the model):
+
+```{r eval=FALSE}
+postmns <- blavInspect(fit, what = "lvmeans")
+postsamps <- blavInspect(fit, what = "lvs")
+```
+
+Some related, but different, information can be obtained by `blavPredict()`. This function will also return posterior samples of latent variables, but in a matrix instead of a list:
+
+```{r eval=FALSE}
+postsamps <- blavPredict(fit, type = "lv")
+```
+
+The `blavPredict()` function will also return predictions of observed variables conditioned on the sampled latent variables. The `type = "yhat"` argument returns expected values of observed variables conditioned on latent variable samples; the `type = "ypred"` argument returns posterior predictions of observed variables including residual noise (essentially `yhat` + error); and the `type = "ymis"` argument returns posterior predictions of missing variables conditioned on observed. These expected values and predictions are returned in list format; for a matrix, see the last line of code below.
+
+```{r eval=FALSE}
+evpreds <- blavPredict(fit, type = "yhat")
+postpreds <- blavPredict(fit, type = "ypred")
+mispreds <- blavPredict(fit, type = "ymis")
+
+## convert to matrix from list:
+evpreds <- do.call("rbind", evpreds)
+```
+
+Finally, not fully related to latent variables: the `standardizedPosterior()` function will return standardized posterior draws. It calls the *lavaan* function `standardizedSolution()` in the background and has some of that function's flexibility.
 
 
 ### References
