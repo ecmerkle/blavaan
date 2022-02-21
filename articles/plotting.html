@@ -121,7 +121,7 @@
 <span class="co">## (one list entry per chain):</span>
 <span class="va">draws</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"mcmc"</span><span class="op">)</span>
 
-<span class="co">## convert the list to a data.frame</span>
+<span class="co">## convert the list to a matrix</span>
 <span class="co">## (each row is a sample,</span>
 <span class="co">##  each column is a parameter)</span>
 <span class="va">draws</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="st">"rbind"</span>, <span class="va">draws</span><span class="op">)</span>
