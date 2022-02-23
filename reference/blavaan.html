@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-2.897</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-2.904</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -153,7 +153,8 @@
 <dt>target</dt>
 <dd><p>Desired MCMC sampling, with <code>"stan"</code> (pre-compiled
   marginal approach) as
-  default. Other options include <code>"jags"</code>, <code>"stancond"</code>, and
+  default. Also available is <code>"vb"</code>, which calls the rstan function
+  <code>vb()</code>. Other options include <code>"jags"</code>, <code>"stancond"</code>, and
   <code>"stanclassic"</code>, which sample latent variables and provide some
   greater functionality (because syntax is written "on the fly"). But
   they are slower and less efficient.</p></dd>
