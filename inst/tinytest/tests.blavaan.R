@@ -43,6 +43,10 @@ expect_equal(class(fit)[1], "blavaan")
 expect_equal(fit@external$mcmcdata$emiter, 101L)
 expect_equal(fit@Options$llnsamp, 78L)
 
+## vb
+fit <- bsem(model, data=Data, target="vb")
+expect_equal(class(fit)[1], "blavaan")
+
 ## named variable that clashes
 names(Data)[1] <- "lambda"
 model2 <- ' lambda ~ b1*x1 + b2*x2 '

@@ -24,11 +24,19 @@ blavaan <- function(...,  # default lavaan arguments
     ## start timer
     start.time0 <- proc.time()[3]
 
-    # store original call
+    ## store original call
     mc  <- match.call()
     # catch dot dot dot
     dotdotdot <- list(...); dotNames <- names(dotdotdot)
 
+    ## catch vb target
+    usevb <- FALSE
+    if(target == "vb"){
+      target <- "stan"
+      n.chains <- 1
+      usevb <- TRUE
+    }
+  
     # default priors
     if(length(dp) == 0) dp <- dpriors(target = target)
 
@@ -237,14 +245,19 @@ blavaan <- function(...,  # default lavaan arguments
     }
     if(grepl("stan", target)){
         names(mfj) <- c("warmup", "iter", "adapt")
-        ## stan iter argument includes warmup:
-        mfj$iter <- mfj$warmup + mfj$iter
-        mfj <- mfj[-which(names(mfj) == "adapt")]
+        if(usevb){
+          mfj <- mfj["iter"]
+          names(mfj) <- "output_samples"
+        } else {
+          ## stan iter argument includes warmup:
+          mfj$iter <- mfj$warmup + mfj$iter
+          mfj <- mfj[-which(names(mfj) == "adapt")]
+        }
     }
 
     if(target == "jags"){
         mfj <- c(mfj, list(n.chains = n.chains))
-    } else {
+    } else if(!usevb){
         mfj <- c(mfj, list(chains = n.chains))
     }
     if(convergence == "auto"){
@@ -638,6 +651,8 @@ blavaan <- function(...,  # default lavaan arguments
                 } else if(target %in% c("stanclassic", "stancond")){
                     cat("Compiling stan model...")
                     rjcall <- "stan"
+                } else if(usevb){
+                    rjcall <- "vb"
                 } else {
                     rjcall <- "sampling"
                 }
@@ -951,7 +966,7 @@ blavaan <- function(...,  # default lavaan arguments
         lavInspect(blavaan, "post.check")
     }
 
-    if(jag.do.fit & lavoptions$warn & !prisamp){
+    if(jag.do.fit & lavoptions$warn & !prisamp & !usevb){
         if(any(blavInspect(blavaan, 'neff') < 100)){
             warning("blavaan WARNING: Small effective sample sizes (< 100) for some parameters.", call. = FALSE)
         }

@@ -951,7 +951,11 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
 
     ## est + psrf
     lavpartable$est[lavpartable$free > 0] <- est
-    lavpartable$psrf[lavpartable$free > 0] <- rssumm$summary[rowidx2,"Rhat"]
+    if(rsob@stan_args[[1]]$method == "variational"){
+      lavpartable$psrf[lavpartable$free > 0] <- rssumm$summary[rowidx2,"khat"]
+    } else {
+      lavpartable$psrf[lavpartable$free > 0] <- rssumm$summary[rowidx2,"Rhat"]
+    }
     lavpartable$pxnames[lavpartable$free > 0] <- rownames(rssumm$summary)[rowidx2]
   } else {
     sdvec <- NULL

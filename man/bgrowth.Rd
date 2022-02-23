@@ -64,7 +64,8 @@ jags.ic = FALSE, seed = NULL, bcontrol = list())
   defaults).}
 \item{target}{Desired MCMC sampling, with \code{"stan"} (pre-compiled
   marginal approach) as
-  default. Other options include \code{"jags"}, \code{"stancond"}, and
+  default. Also available is \code{"vb"}, which calls the rstan function
+  \code{vb()}. Other options include \code{"jags"}, \code{"stancond"}, and
   \code{"stanclassic"}, which sample latent variables and provide some
   greater functionality (because syntax is written "on the fly"). But
   they are slower and less efficient.}
