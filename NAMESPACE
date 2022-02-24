@@ -53,7 +53,7 @@ importFrom("nonnest2",
            "llcont")
 
 importFrom("rstan",
-           "sampling", "stan")
+           "sampling", "stan", "vb")
 
 importFrom("loo",
            "loo", "waic", "loo_compare", "relative_eff")
