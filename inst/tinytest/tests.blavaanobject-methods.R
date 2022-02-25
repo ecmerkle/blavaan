@@ -125,6 +125,14 @@ if(requireNamespace("rstan", quietly = TRUE) &
   expect_equal(class(bf_res)[1], "blavFitIndices")
   expect_equal(class(summary(bf_res))[1], "lavaan.data.frame")
 
+  bf_res <- blavFitIndices(fitstan, rescale = "ppmc")
+  expect_equal(class(bf_res)[1], "blavFitIndices")
+  expect_equal(class(summary(bf_res))[1], "lavaan.data.frame")  
+
+  bf_res <- blavFitIndices(fitstan, rescale = "mcmc")
+  expect_equal(class(bf_res)[1], "blavFitIndices")
+  expect_equal(class(summary(bf_res))[1], "lavaan.data.frame")  
+  
   ## blavPredict
   expect_error(blavPredict(fitstanc))
   expect_error(blavPredict(fitjags))

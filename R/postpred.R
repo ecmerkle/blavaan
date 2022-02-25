@@ -25,7 +25,7 @@
 
 postpred <- function(lavpartable, lavmodel, lavoptions,
                      lavsamplestats, lavdata, lavcache, lavjags,
-                     samplls, lavobject = NULL, measure = "logl", thin = 1,
+                     samplls = NULL, lavobject = NULL, measure = "logl", thin = 1,
                      discFUN = NULL, probs = c(.025, .975)) {
 
   ## check custom discrepancy function(s)

@@ -42,18 +42,20 @@ summary.bfi <- function(object,
 
     if ("mode" %in% central.tendency || "map" %in% central.tendency) {
       ## can the modeest package be used?
-      if (suppressMessages(requireNamespace("modeest", quietly = TRUE))) {
+      if (suppressMessages(requireNamespace("modeest", quietly = TRUE)) & length(unique(x)) > 1) {
         out <- c(out, MAP =  modeest::mlv(x, method = "kernel", na.rm = TRUE))
-      } else {
+      } else if(!all(is.na(x))) {
         ## if not, use the quick-and-dirty way
         dd <- density(x, na.rm = TRUE)
         out <- c(out, MAP = dd$x[which.max(dd$y)])
+      } else {
+        out <- c(out, NA)
       }
     }
 
     out <- c(out, SD = sd(x, na.rm = TRUE))
 
-    if (hpd) {
+    if (hpd & !all(is.na(x))) {
       if (!"package:coda" %in% search()) attachNamespace("coda")
       out <- c(out, HPDinterval(as.mcmc(x), prob = prob)[1, ] )
     }
