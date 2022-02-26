@@ -84,3 +84,7 @@ HS.model <- ' visual  =~ x1 + x2 + x3 '
 expect_equal(class(bcfa(HS.model, data=HolzingerSwineford1939, target="stan", do.fit=FALSE, group="school", group.equal=c("intercepts","loadings"), wiggle=c("intercepts"), wiggle.sd=.1))[1], "blavaan")
 expect_equal(class(bcfa(HS.model, data=HolzingerSwineford1939, target="stanclassic", do.fit=FALSE, group="school", group.equal=c("intercepts","loadings"), wiggle=c("intercepts"), wiggle.sd=.1))[1], "blavaan")
 expect_equal(class(bcfa(HS.model, data=HolzingerSwineford1939, target="jags", do.fit=FALSE, group="school", group.equal=c("intercepts","loadings"), wiggle=c("intercepts"), wiggle.sd=.1))[1], "blavaan")
+
+## moment match mcmcextra
+
+expect_true("Lambda_y_free" %in% fitstanmomentmatch$mcmcdata$monitor)
