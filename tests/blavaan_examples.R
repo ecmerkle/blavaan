@@ -24,6 +24,18 @@ fitstan <- bsem(model, data=Data, fixed.x=TRUE, burnin=20,
 fitstanc <- bsem(model, data=Data, fixed.x=TRUE, burnin=20,
                  sample=20, target="stanclassic", group="g", seed=1)
 
+fitstanmomentmatch <- bsem(
+  model, 
+  data=Data, 
+  fixed.x=TRUE, 
+  burnin=20,
+  sample=20,
+  mcmcextra=list(data=list(moment_match_k_threshold=0.5)),
+  target="stan", 
+  group="g", 
+  seed=1
+)
+
 ## for checking factor score functionality
 HS.model <- ' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6 '
