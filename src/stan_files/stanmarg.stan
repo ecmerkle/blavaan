@@ -219,10 +219,10 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
 data {
   // see https://books.google.com/books?id=9AC-s50RjacC&lpg=PP1&dq=LISREL&pg=PA2#v=onepage&q=LISREL&f=false
   int<lower=0> p; // number of manifest response variables
-  int<lower=0> p2; // number of manifest level 2 variables
+  int<lower=0> p_c; // number of manifest level 2 variables
   int<lower=0> q; // number of manifest predictors
   int<lower=0> m; // number of latent endogenous variables
-  int<lower=0> m2; // number of latent level 2 variables
+  int<lower=0> m_c; // number of latent level 2 variables
   int<lower=0> n; // number of latent exogenous variables
   int<lower=1> Ng; // number of groups
   int<lower=1> Nclus; // number of clusters
@@ -293,8 +293,6 @@ data {
   real<lower=0> theta_sd_shape[len_thet_sd];
   real<lower=0> theta_sd_rate[len_thet_sd];
   int<lower=-2, upper=2> theta_pow;
-  int<lower=0> w5use;
-  int<lower=1> usethet[w5use];
 
   // same things but for Theta_r
   int<lower=0> len_w7;
@@ -307,17 +305,6 @@ data {
   real<lower=0> theta_r_alpha[len_thet_r];
   real<lower=0> theta_r_beta[len_thet_r];
   
-  // same things but for Theta_r_x
-  int<lower=0> len_w8;
-  int<lower=0> wg8[Ng];
-  vector[len_w8] w8[Ng];
-  int<lower=1> v8[Ng, len_w8];
-  int<lower=1> u8[Ng, q + 1];
-  int<lower=0> w8skel[sum(wg8), 3];
-  int<lower=0> len_thet_x_r;
-  real<lower=0> theta_x_r_alpha[len_thet_x_r];
-  real<lower=0> theta_x_r_beta[len_thet_x_r];
-  
   // same things but for Psi
   int<lower=0> len_w9;
   int<lower=0> wg9[Ng];
@@ -329,10 +316,6 @@ data {
   real<lower=0> psi_sd_shape[len_psi_sd];
   real<lower=0> psi_sd_rate[len_psi_sd];
   int<lower=-2,upper=2> psi_pow;
-  int<lower=0> w9use;
-  int<lower=1> usepsi[w9use];
-  int<lower=0> w9no;
-  int<lower=1> nopsi[w9no];
   
   // same things but for Psi_r
   int<lower=0> len_w10;
@@ -379,6 +362,101 @@ data {
   int<lower=0> len_tau;
   real tau_mn[len_tau];
   real<lower=0> tau_sd[len_tau];
+
+  // Level 2 matrices start here!!
+  // Lambda
+  int<lower=0> len_w1_c;
+  int<lower=0> wg1_c[Ng];
+  vector[len_w1] w1_c[Ng];
+  int<lower=1> v1_c[Ng, len_w1_c];
+  int<lower=1> u1_c[Ng, p_c + 1];
+  int<lower=0> w1skel_c[sum(wg1_c), 3];
+  int<lower=0> lam_y_sign_c[sum(wg1_c), 2];
+  int<lower=0> len_lam_y_c;
+  real lambda_y_mn_c[len_lam_y_c];
+  real<lower=0> lambda_y_sd_c[len_lam_y_c];
+
+  // same things but for B
+  int<lower=0> len_w4_c;
+  int<lower=0> wg4_c[Ng];
+  vector[len_w4] w4_c[Ng];
+  int<lower=1> v4_c[Ng, len_w4_c];
+  int<lower=1> u4_c[Ng, m_c + 1];
+  int<lower=0> w4skel_c[sum(wg4_c), 3];
+  int<lower=0> b_sign_c[sum(wg4_c), 3];
+  int<lower=0> len_b_c;
+  real b_mn_c[len_b_c];
+  real<lower=0> b_sd_c[len_b_c];
+  
+  // same things but for diag(Theta)
+  int<lower=0> len_w5_c;
+  int<lower=0> wg5_c[Ng];
+  vector[len_w5_c] w5_c[Ng];
+  int<lower=1> v5_c[Ng, len_w5_c];
+  int<lower=1> u5_c[Ng, p_c + 1];
+  int<lower=0> w5skel_c[sum(wg5_c), 3];
+  int<lower=0> len_thet_sd_c;
+  real<lower=0> theta_sd_shape_c[len_thet_sd_c];
+  real<lower=0> theta_sd_rate_c[len_thet_sd_c];
+  int<lower=-2, upper=2> theta_pow_c;
+
+  // same things but for Theta_r
+  int<lower=0> len_w7_c;
+  int<lower=0> wg7_c[Ng];
+  vector[len_w7_c] w7_c[Ng];
+  int<lower=1> v7_c[Ng, len_w7_c];
+  int<lower=1> u7_c[Ng, p_c + 1];
+  int<lower=0> w7skel_c[sum(wg7_c), 3];
+  int<lower=0> len_thet_r_c;
+  real<lower=0> theta_r_alpha_c[len_thet_r_c];
+  real<lower=0> theta_r_beta_c[len_thet_r_c];
+  
+  // same things but for Psi
+  int<lower=0> len_w9_c;
+  int<lower=0> wg9_c[Ng];
+  vector[len_w9_c] w9_c[Ng];
+  int<lower=1> v9_c[Ng, len_w9_c];
+  int<lower=1> u9_c[Ng, m_c + 1];
+  int<lower=0> w9skel_c[sum(wg9_c), 3];
+  int<lower=0> len_psi_sd_c;
+  real<lower=0> psi_sd_shape_c[len_psi_sd_c];
+  real<lower=0> psi_sd_rate_c[len_psi_sd_c];
+  int<lower=-2,upper=2> psi_pow_c;
+  
+  // same things but for Psi_r
+  int<lower=0> len_w10_c;
+  int<lower=0> wg10_c[Ng];
+  vector[len_w10_c] w10_c[Ng];
+  int<lower=1> v10_c[Ng, len_w10_c];
+  int<lower=1> u10_c[Ng, m_c + 1];
+  int<lower=0> w10skel_c[sum(wg10_c), 3];
+  int<lower=0> psi_r_sign_c[sum(wg10_c), 3];
+  int<lower=0> len_psi_r_c;
+  real<lower=0> psi_r_alpha_c[len_psi_r_c];
+  real<lower=0> psi_r_beta_c[len_psi_r_c];
+  int<lower=0,upper=1> fullpsi_c;
+    
+  // same things but for Nu
+  int<lower=0> len_w13_c;
+  int<lower=0> wg13_c[Ng];
+  vector[len_w13_c] w13_c[Ng];
+  int<lower=1> v13_c[Ng, len_w13_c];
+  int<lower=1> u13_c[Ng, p_c + 1];
+  int<lower=0> w13skel_c[sum(wg13_c), 3];
+  int<lower=0> len_nu_c;
+  real nu_mn_c[len_nu_c];
+  real<lower=0> nu_sd_c[len_nu_c];
+  
+  // same things but for Alpha
+  int<lower=0> len_w14_c;
+  int<lower=0> wg14_c[Ng];
+  vector[len_w14_c] w14_c[Ng];
+  int<lower=0> v14_c[Ng, len_w14_c];
+  int<lower=1> u14_c[Ng, m_c + 1];
+  int<lower=0> w14skel_c[sum(wg14_c), 3];
+  int<lower=0> len_alph_c;
+  real alpha_mn_c[len_alph_c];
+  real<lower=0> alpha_sd_c[len_alph_c];
 }
 transformed data { // (re)construct skeleton matrices in Stan (not that interesting)
   matrix[p, m] Lambda_y_skeleton[Ng];
