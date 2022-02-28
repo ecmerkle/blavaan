@@ -219,14 +219,18 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
 data {
   // see https://books.google.com/books?id=9AC-s50RjacC&lpg=PP1&dq=LISREL&pg=PA2#v=onepage&q=LISREL&f=false
   int<lower=0> p; // number of manifest response variables
+  int<lower=0> p2; // number of manifest level 2 variables
   int<lower=0> q; // number of manifest predictors
   int<lower=0> m; // number of latent endogenous variables
+  int<lower=0> m2; // number of latent level 2 variables
   int<lower=0> n; // number of latent exogenous variables
   int<lower=1> Ng; // number of groups
+  int<lower=1> Nclus; // number of clusters
   int<lower=0, upper=1> missing; // are there missing values?
   int<lower=0, upper=1> save_lvs; // should we save lvs?
   int<lower=1> Np; // number of group-by-missing patterns combos
   int<lower=1> N[Ng]; // number of observations per group
+  int<lower=1> Noc[Nclus]; // number of obs per cluster
   int<lower=1> Nobs[Np]; // number of observed variables in each missing pattern
   int<lower=0> Obsvar[Np, p + q]; // indexing of observed variables
   int<lower=1> Ntot; // number of observations across all groups
@@ -266,18 +270,6 @@ data {
   real lambda_y_mn[len_lam_y];           // prior
   real<lower=0> lambda_y_sd[len_lam_y];
 
-  // same things but for Gamma
-  int<lower=0> len_w3;
-  int<lower=0> wg3[Ng];
-  vector[len_w3] w3[Ng];
-  int<lower=1> v3[Ng, len_w3];
-  int<lower=1> u3[Ng, m + 1];
-  int<lower=0> w3skel[sum(wg3), 3];
-  int<lower=0> gam_sign[sum(wg3), 3];
-  int<lower=0> len_gam;
-  real gamma_mn[len_gam];
-  real<lower=0> gamma_sd[len_gam];
-  
   // same things but for B
   int<lower=0> len_w4;
   int<lower=0> wg4[Ng];
@@ -390,15 +382,12 @@ data {
 }
 transformed data { // (re)construct skeleton matrices in Stan (not that interesting)
   matrix[p, m] Lambda_y_skeleton[Ng];
-  //matrix[q, n] Lambda_x_skeleton[Ng];
   matrix[m, n] Gamma_skeleton[Ng];
   matrix[m, m] B_skeleton[Ng];
   matrix[p, p] Theta_skeleton[Ng];
   matrix[p, p] Theta_r_skeleton[Ng];
   matrix[m, m] Psi_skeleton[Ng];
   matrix[m, m] Psi_r_skeleton[Ng];
-  //matrix[n, n] Phi_skeleton[Ng];
-  //matrix[n, n] Phi_r_skeleton[Ng];
   matrix[(p + q), 1] Nu_skeleton[Ng];
   matrix[(m + n), 1] Alpha_skeleton[Ng];
   matrix[sum(nlevs) - Nord, 1] Tau_skeleton[Ng];
@@ -408,33 +397,21 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
   int Ncont = p + q - Nord;
   
   int g_start1[Ng];
-  int g_start2[Ng];
-  int g_start3[Ng];
   int g_start4[Ng];
   int g_start5[Ng];
-  int g_start6[Ng];
   int g_start7[Ng];
-  int g_start8[Ng];
   int g_start9[Ng];
   int g_start10[Ng];
-  int g_start11[Ng];
-  int g_start12[Ng];
   int g_start13[Ng];
   int g_start14[Ng];
   int g_start15[Ng];
   
   int f_start1[Ng];
-  int f_start2[Ng];
-  int f_start3[Ng];
   int f_start4[Ng];
   int f_start5[Ng];
-  int f_start6[Ng];
   int f_start7[Ng];
-  int f_start8[Ng];
   int f_start9[Ng];
   int f_start10[Ng];
-  int f_start11[Ng];
-  int f_start12[Ng];
   int f_start13[Ng];
   int f_start14[Ng];
   int f_start15[Ng];
@@ -449,7 +426,6 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
   
   for (g in 1:Ng) {
     Lambda_y_skeleton[g] = to_dense_matrix(p, m, w1[g], v1[g,], u1[g,]);
-    Gamma_skeleton[g] = to_dense_matrix(m, n, w3[g], v3[g,], u3[g,]);
     B_skeleton[g] = to_dense_matrix(m, m, w4[g], v4[g,], u4[g,]);
     Theta_skeleton[g] = to_dense_matrix(p, p, w5[g], v5[g,], u5[g,]);
     Theta_r_skeleton[g] = to_dense_matrix(p, p, w7[g], v7[g,], u7[g,]);
@@ -468,18 +444,6 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
 	  if (w1skel[pos[1],2] == 0 || w1skel[pos[1],3] == 1) len_free[1] += 1;
 	  pos[1] += 1;
         }
-      }
-    }
-
-    // same thing but for Gamma_skeleton
-    g_start3[g] = len_free[3] + 1;
-    f_start3[g] = pos[3];
-    for (i in 1:m) {
-      for (j in 1:n) {
-	if (is_inf(Gamma_skeleton[g,i,j])) {
-	  if (w3skel[pos[3],2] == 0 || w3skel[pos[3],3] == 1) len_free[3] += 1;
-	  pos[3] += 1;
-	}
       }
     }
 
@@ -574,8 +538,6 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
 parameters {
   // free elements (possibly with inequality constraints) for coefficient matrices
   vector[len_free[1]] Lambda_y_free;
-  //vector[len_free[2]] Lambda_x_free;
-  vector[len_free[3]] Gamma_free;
   vector[len_free[4]] B_free;
   vector<lower=0>[len_free[5]] Theta_sd_free;
   vector<lower=0,upper=1>[len_free[7]] Theta_r_free; // to use beta prior
@@ -590,7 +552,6 @@ parameters {
 }
 transformed parameters {
   matrix[p, m] Lambda_y[Ng];
-  matrix[m, n] Gamma[Ng];
   matrix[m, m] B[Ng];
   matrix[p, p] Theta_sd[Ng];
   matrix[p, p] T_r_lower[Ng];
@@ -628,7 +589,6 @@ transformed parameters {
   for (g in 1:Ng) {
     // model matrices
     Lambda_y[g] = fill_matrix(Lambda_y_free, Lambda_y_skeleton[g], w1skel, g_start1[g], f_start1[g]);
-    Gamma[g] = fill_matrix(Gamma_free, Gamma_skeleton[g], w3skel, g_start3[g], f_start3[g]);
     B[g] = fill_matrix(B_free, B_skeleton[g], w4skel, g_start4[g], f_start4[g]);
     Theta_sd[g] = fill_matrix(Theta_sd_free, Theta_skeleton[g], w5skel, g_start5[g], f_start5[g]);
     T_r_lower[g] = fill_matrix(2*Theta_r_free - 1, Theta_r_skeleton[g], w7skel, g_start7[g], f_start7[g]);
@@ -810,7 +770,6 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   
   /* prior densities in log-units */
   target += normal_lpdf(Lambda_y_free | lambda_y_primn, lambda_y_sd);
-  target += normal_lpdf(Gamma_free    | gamma_mn, gamma_sd);
   target += normal_lpdf(B_free        | b_primn, b_sd);
 
   target += normal_lpdf(Nu_free       | nu_primn, nu_sd);
@@ -853,10 +812,6 @@ generated quantities { // these matrices are saved in the output but do not figu
   // sign constraints and correlations
   vector[len_free[1]] ly_sign;
   matrix[p, m] L_Y[Ng];
-  //vector[len_free[2]] lx_sign;
-  //matrix[q, n] L_X[Ng];
-  vector[len_free[3]] g_sign;
-  matrix[m, n] Gam[Ng];
   vector[len_free[4]] bet_sign;
   matrix[m, m] Bet[Ng];
   matrix[p, p] Theta[Ng];
@@ -890,8 +845,6 @@ generated quantities { // these matrices are saved in the output but do not figu
   
   for (g in 1:Ng) {
     L_Y[g] = fill_matrix(ly_sign, Lambda_y_skeleton[g], w1skel, g_start1[g], f_start1[g]);
-
-    Gam[g] = fill_matrix(g_sign, Gamma_skeleton[g], w3skel, g_start3[g], f_start3[g]);
 
     Bet[g] = fill_matrix(bet_sign, B_skeleton[g], w4skel, g_start4[g], f_start4[g]);
 
