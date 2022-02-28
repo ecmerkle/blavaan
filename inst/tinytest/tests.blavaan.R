@@ -87,4 +87,8 @@ expect_equal(class(bcfa(HS.model, data=HolzingerSwineford1939, target="jags", do
 
 ## moment match mcmcextra
 
-expect_true("Lambda_y_free" %in% fitstanmomentmatch$mcmcdata$monitor)
+expect_true("Lambda_y_free" %in% fitstanmomentmatch@external$mcmcdata$monitor)
+expect_equal(
+  fitstanmomentmatch@external$mcmcdata$moment_match_k_threshold,
+  0.5
+)
