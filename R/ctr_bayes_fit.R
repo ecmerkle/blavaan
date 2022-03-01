@@ -42,7 +42,7 @@ summary.bfi <- function(object,
 
     if ("mode" %in% central.tendency || "map" %in% central.tendency) {
       ## can the modeest package be used?
-      if (suppressMessages(requireNamespace("modeest", quietly = TRUE)) & length(unique(x)) > 1) {
+      if (suppressMessages(requireNamespace("modeest", quietly = TRUE)) & length(unique(x[!is.na(x)])) > 1) {
         out <- c(out, MAP =  modeest::mlv(x, method = "kernel", na.rm = TRUE))
       } else if(!all(is.na(x))) {
         ## if not, use the quick-and-dirty way
