@@ -112,7 +112,7 @@ if(requireNamespace("rstan", quietly = TRUE) &
     fitMeasures(fit, fit.measures = c("cfi","rmsea","srmr","chisq"))
   },
   std.cov.resid = function(fit) lavResiduals(fit, zstat = FALSE,
-                                             summary = FALSE)$cov)
+                                             summary = FALSE)$`1`$cov)
 
   ppmc_res <- ppmc(fitstan, discFUN = discFUN)
   expect_equal(class(ppmc_res)[1], "blavPPMC")
