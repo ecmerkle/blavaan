@@ -500,7 +500,6 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
   int g_start10_c[Ng,2];
   int g_start13_c[Ng,2];
   int g_start14_c[Ng,2];
-  int g_start15_c[Ng,2];
   
   int len_free[15];
   int pos[15];
@@ -513,7 +512,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
     len_free_c[i] = 0;
     pos_c[i] = 1;
   }
-  // TODO add _c below:
+
   for (g in 1:Ng) {
     Lambda_y_skeleton[g] = to_dense_matrix(p, m, w1[g], v1[g,], u1[g,]);
     B_skeleton[g] = to_dense_matrix(m, m, w4[g], v4[g,], u4[g,]);
@@ -524,6 +523,15 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
     Nu_skeleton[g] = to_dense_matrix((p + q), 1, w13[g], v13[g,], u13[g,]);
     Alpha_skeleton[g] = to_dense_matrix((m + n), 1, w14[g], v14[g,], u14[g,]);
     Tau_skeleton[g] = to_dense_matrix(sum(nlevs) - Nord, 1, w15[g], v15[g,], u15[g,]);
+
+    Lambda_y_skeleton_c[g] = to_dense_matrix(p_c, m_c, w1_c[g], v1_c[g,], u1_c[g,]);
+    B_skeleton_c[g] = to_dense_matrix(m_c, m_c, w4_c[g], v4_c[g,], u4_c[g,]);
+    Theta_skeleton_c[g] = to_dense_matrix(p_c, p_c, w5_c[g], v5_c[g,], u5_c[g,]);
+    Theta_r_skeleton_c[g] = to_dense_matrix(p_c, p_c, w7_c[g], v7_c[g,], u7_c[g,]);
+    Psi_skeleton_c[g] = to_dense_matrix(m_c, m_c, w9_c[g], v9_c[g,], u9_c[g,]);
+    Psi_r_skeleton_c[g] = to_dense_matrix(m_c, m_c, w10_c[g], v10_c[g,], u10_c[g,]);
+    Nu_skeleton_c[g] = to_dense_matrix(p_c, 1, w13_c[g], v13_c[g,], u13_c[g,]);
+    Alpha_skeleton_c[g] = to_dense_matrix(m_c, 1, w14_c[g], v14_c[g,], u14_c[g,]);
     
     // count free elements in Lambda_y_skeleton
     g_start1[g,1] = len_free[1] + 1;
@@ -622,7 +630,97 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
 	if (w15skel[pos[15],2] == 0 || w15skel[pos[15],3] == 1) len_free[15] += 1;
 	pos[15] += 1;
       }
-    }    
+    }
+
+    // now level 2
+    // count free elements in Lambda_y_skeleton
+    g_start1_c[g,1] = len_free_c[1] + 1;
+    g_start1_c[g,2] = pos_c[1];
+    for (i in 1:p_c) {
+      for (j in 1:m_c) {
+        if (is_inf(Lambda_y_skeleton_c[g,i,j])) {
+	  if (w1skel_c[pos_c[1],2] == 0 || w1skel_c[pos_c[1],3] == 1) len_free_c[1] += 1;
+	  pos_c[1] += 1;
+        }
+      }
+    }
+
+    // same thing but for B_skeleton
+    g_start4_c[g,1] = len_free_c[4] + 1;
+    g_start4_c[g,2] = pos_c[4];
+    for (i in 1:m_c) {
+      for (j in 1:m_c) {
+	if (is_inf(B_skeleton_c[g,i,j])) {
+	  if (w4skel_c[pos_c[4],2] == 0 || w4skel_c[pos_c[4],3] == 1) len_free_c[4] += 1;
+	  pos_c[4] += 1;
+	}
+      }
+    }
+    
+    // same thing but for Theta_skeleton
+    g_start5_c[g,1] = len_free_c[5] + 1;
+    g_start5_c[g,2] = pos_c[5];
+    for (i in 1:p_c) {
+      if (is_inf(Theta_skeleton_c[g,i,i])) {
+	if (w5skel_c[pos_c[5],2] == 0 || w5skel_c[pos_c[5],3] == 1) len_free_c[5] += 1;
+	pos_c[5] += 1;
+      }
+    }
+
+    // same thing but for Theta_r_skeleton
+    g_start7_c[g,1] = len_free_c[7] + 1;
+    g_start7_c[g,2] = pos_c[7];
+    for (i in 1:(p_c-1)) {
+      for (j in (i+1):p_c) {
+	if (is_inf(Theta_r_skeleton_c[g,j,i])) {
+	  if (w7skel_c[pos_c[7],2] == 0 || w7skel_c[pos_c[7],3] == 1) len_free_c[7] += 1;
+	  pos_c[7] += 1;
+	}
+      }
+    }
+
+    // same thing but for Psi_skeleton
+    g_start9_c[g,1] = len_free_c[9] + 1;
+    g_start9_c[g,2] = pos_c[9];
+    for (i in 1:m_c) {
+      if (is_inf(Psi_skeleton_c[g,i,i])) {
+	if (w9skel_c[pos_c[9],2] == 0 || w9skel_c[pos_c[9],3] == 1) len_free_c[9] += 1;
+	pos_c[9] += 1;
+      }
+    }
+
+    // same thing but for Psi_r_skeleton
+    g_start10_c[g,1] = len_free_c[10] + 1;
+    g_start10_c[g,2] = pos_c[10];
+    for (i in 1:(m_c-1)) {
+      for (j in (i+1):m_c) {
+	if (is_inf(Psi_r_skeleton_c[g,j,i])) {
+	  if (w10skel_c[pos_c[10],2] == 0 || w10skel_c[pos_c[10],3] == 1) len_free_c[10] += 1;
+	  pos_c[10] += 1;
+	}
+      }
+    }
+
+    // same thing but for Nu_skeleton
+    // pos = len_free13 + 1;
+    g_start13_c[g,1] = len_free_c[13] + 1;
+    g_start13_c[g,2] = pos_c[13];
+    for (i in 1:p_c) {
+      if (is_inf(Nu_skeleton_c[g,i,1])) {
+	if (w13skel_c[pos_c[13],2] == 0 || w13skel_c[pos_c[13],3] == 1) len_free_c[13] += 1;
+	pos_c[13] += 1;
+      }
+    }
+
+    // same thing but for Alpha_skeleton
+    g_start14_c[g,1] = len_free_c[14] + 1;
+    g_start14_c[g,2] = pos_c[14];
+    for (i in 1:m_c) {
+      if (is_inf(Alpha_skeleton_c[g,i,1])) {
+	if (w14skel_c[pos_c[14],2] == 0 || w14skel_c[pos_c[14],3] == 1) len_free_c[14] += 1;
+	pos_c[14] += 1;
+      }
+    }
   }
 }
 parameters {
@@ -638,6 +736,16 @@ parameters {
   vector[len_free[14]] Alpha_free;
   vector[len_free[15]] Tau_ufree;
 
+  vector[len_free_c[1]] Lambda_y_free_c;
+  vector[len_free_c[4]] B_free_c;
+  vector<lower=0>[len_free_c[5]] Theta_sd_free_c;
+  vector<lower=0,upper=1>[len_free_c[7]] Theta_r_free_c; // to use beta prior
+  vector<lower=0>[len_free_c[9]] Psi_sd_free_c;
+  corr_matrix[m_c] Psi_r_mat_c[Ng * fullpsi_c];
+  vector<lower=0,upper=1>[fullpsi_c ? 0 : len_free_c[10]] Psi_r_free_c;
+  vector[len_free_c[13]] Nu_free_c;
+  vector[len_free_c[14]] Alpha_free_c;
+  
   vector<lower=0,upper=1>[Nord] z_aug[Ntot]; //augmented ordinal data
 }
 transformed parameters {
