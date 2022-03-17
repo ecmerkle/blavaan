@@ -7,7 +7,10 @@
 ##  Bugs/glitches discovered after the release:
 * blavPredict(, type="ymis") is not working for models with ordinal variables
 
+* blavFitIndices() and ppmc() are not working for models with ordinal variables, or may indicate excessively bad fit
+
 * blavFitIndices(, rescale="mcmc") fails
+
 
 
 # Version 0.3-18

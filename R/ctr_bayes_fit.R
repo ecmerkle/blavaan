@@ -111,6 +111,9 @@ blavFitIndices <- function(object, thin = 1, pD = c("loo","waic","dic"),
   if (blavInspect(object, "options")$test == "none") {
     stop('blavaan ERROR: Cannot compute indices when the model was fit with test="none"')
   }
+  if (blavInspect(object, "categorical")) {
+    stop('blavaan ERROR: Fit indices are currently unavailable for ordinal models')
+  }
   
   rescale <- tolower(as.character(rescale[1])) #FIXME: make sure references to "devM" check for "devm"
   if (rescale == "ppmc" && blavInspect(object, 'ntotal') < 1000)

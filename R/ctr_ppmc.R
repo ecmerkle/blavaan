@@ -1,7 +1,7 @@
-### Terrence D. Jorgensen
-### Last updated: 6 October 2020
+### Main author: Terrence D. Jorgensen
 ### function to implement a posterior predictor model check using any
 ### discrepancy function that can be applied to a lavaan object
+### Ed Merkle: various additions to keep things working with blavaan
 
 
 ## -----------------
@@ -608,6 +608,8 @@ ppmc <- function(object, thin = 1, fit.measures = c("srmr","chisq"),
   }
   if (etas & conditional) {
     if (!length(discFUN)) warning("blavaan WARNING: conditional=TRUE has no effect if you do not supply a discFUN.")
+    fullobj <- object
+  } else if (blavInspect(object, "categorical")) {
     fullobj <- object
   }
   
