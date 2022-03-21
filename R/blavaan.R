@@ -83,7 +83,7 @@ blavaan <- function(...,  # default lavaan arguments
 
     # mcmcextra args
     if(length(mcmcextra) > 0){
-      goodnm <- names(mcmcextra) %in% c('data', 'monitor', 'syntax', 'llnsamp')
+      goodnm <- names(mcmcextra) %in% c('data', 'monitor', 'syntax', 'llnsamp', 'moment_match_k_threshold')
       if(!all(goodnm)){
         stop(paste0("blavaan ERROR: invalid list names in mcmcextra:\n  ", paste(names(mcmcextra)[!goodnm], collapse=" ")))
       }
@@ -569,6 +569,18 @@ blavaan <- function(...,  # default lavaan arguments
             if(length(mcmcextra) > 0){
                 if("monitor" %in% names(mcmcextra)){
                     jagtrans$monitors <- c(jagtrans$monitors, mcmcextra$monitor)
+                }
+                if("moment_match_k_threshold" %in% names(mcmcextra)){
+                    moment_match_monitors <- c(
+                      c("Lambda_y_free", "Gamma_free", "B_free", 
+                        "Theta_sd_free", "Theta_r_free", "Psi_sd_free", 
+                        "Psi_r_mat", "Psi_r_free", "Tau_ufree", 
+                        "z_aug", "ly_sign", "bet_sign", "g_sign",
+                        "Theta_cov", "Theta_var", "Psi_cov", "Psi_var", 
+                        "Nu_free", "Alpha_free", "Tau_free", "log_lik", 
+                        "log_lik_sat", "ppp")
+                    )
+                    jagtrans$monitors <- c(jagtrans$monitors, moment_match_monitors)
                 }
                 if("data" %in% names(mcmcextra)){
                     tmpdat <- c(jagtrans$data, mcmcextra$data)

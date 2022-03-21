@@ -131,7 +131,13 @@ if(requireNamespace("rstan", quietly = TRUE) &
 
   bf_res <- blavFitIndices(fitstan, rescale = "mcmc")
   expect_equal(class(bf_res)[1], "blavFitIndices")
-  expect_equal(class(summary(bf_res))[1], "lavaan.data.frame")  
+  expect_equal(class(summary(bf_res))[1], "lavaan.data.frame")
+  
+  bf_mm_res <- blavFitIndices(fitstanmomentmatch)
+  expect_equal(class(bf_mm_res)[1], "blavFitIndices")
+  expect_equal(class(summary(bf_mm_res))[1], "lavaan.data.frame")
+  expect_true("looic_mm" %in% names(bf_mm_res))
+  
   
   ## blavPredict
   expect_error(blavPredict(fitstanc))
