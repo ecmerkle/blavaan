@@ -14,7 +14,7 @@ function that can be applied to a lavaan model."><!-- mathjax --><script src="ht
     
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-2.912</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-2.913</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -120,9 +120,8 @@ function that can be applied to a <code><a href="https://rdrr.io/pkg/lavaan/man/
     discrepancy measures returned by <code><a href="https://rdrr.io/pkg/lavaan/man/fitMeasures.html" class="external-link">fitMeasures</a></code>. Ignored
     unless <code>discFUN</code> is <code>NULL</code>, but users may include
     <code>fitMeasures</code> in the <code>list</code> of discrepancy functions in
-    <code>discFUN</code>. If the first measure is either <code>"logl"</code> or
-    <code>"chisq"</code>, only the \(\chi^2\) fit statistic's posterior (predictive)
-    distributions will be returned.</p></dd>
+    <code>discFUN</code>. For ordinal models, the <code>"logl"</code> or <code>"chisq"</code>
+    computations are done via lavaan.</p></dd>
 <dt>discFUN</dt>
 <dd><p><code>function</code>, or a <code>list</code> of functions, that can be
     called on an object of class <code><a href="https://rdrr.io/pkg/lavaan/man/lavaan-class.html" class="external-link">lavaan</a></code>. Each function
