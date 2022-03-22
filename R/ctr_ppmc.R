@@ -597,6 +597,18 @@ ppmc <- function(object, thin = 1, fit.measures = c("srmr","chisq"),
       stop('blavaan ERROR: The "discFUN" argument must be a (list of) function(s).')
   }
 
+  ## differentiate between multiple possible chisq stats
+  if (length(fit.measures) == 1L & blavInspect(object, "categorical")) {
+    if (fit.measures == "chisq") {
+      ## add another so that the dwls chisq from lavaan is used
+      ## (due to the way blav_model_loglik is structured)
+      fit.measures <- c("chisq", "chisq.scaled")
+    } else if (fit.measures == "marglogl") {
+      ## approximate the marginal lrt
+      fit.measures <- "chisq"
+    }
+  }
+
   ## if we have lv samples, send the full object in for convenience functions involving lvs
   fullobj <- NULL
   jagtarget <- lavInspect(object, "options")$target == "jags"
@@ -662,6 +674,7 @@ ppmc <- function(object, thin = 1, fit.measures = c("srmr","chisq"),
 
   ## names for each discFUN
   if (is.null(names(discFUN))) names(discFUN) <- paste0("discFUN", seq_along(discFUN))
+
   ## pass names to other lists
   for (d in seq_along(discFUN)) {
     names(DIMS) <- names(PPP) <- names(OBS) <- names(SIM) <- names(discFUN)

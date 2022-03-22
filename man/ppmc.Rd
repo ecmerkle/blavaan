@@ -41,9 +41,8 @@ summary.ppmc(object, discFUN, dist = c("obs","sim"),
     discrepancy measures returned by \code{\link[lavaan]{fitMeasures}}. Ignored
     unless \code{discFUN} is \code{NULL}, but users may include
     \code{fitMeasures} in the \code{list} of discrepancy functions in
-    \code{discFUN}. If the first measure is either \code{"logl"} or
-    \code{"chisq"}, only the \eqn{\chi^2} fit statistic's posterior (predictive)
-    distributions will be returned.}
+    \code{discFUN}. For ordinal models, the \code{"logl"} or \code{"chisq"}
+    computations are done via lavaan.}
   \item{discFUN}{\code{function}, or a \code{list} of functions, that can be
     called on an object of class \code{\linkS4class{lavaan}}. Each function
     must return an object whose \code{\link{mode}} is \code{numeric}, but may
