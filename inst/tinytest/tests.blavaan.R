@@ -95,8 +95,7 @@ fitstanmomentmatch <- bsem(
   burnin=20,
   sample=20,
   mcmcextra=list(data=list(moment_match_k_threshold=0.5)),
-  target="stan", 
-  group="g", 
+  target="stan",
   seed=1
 )
 momentmatch_mcobj <- blavInspect(fitstanmomentmatch, "mcobj")

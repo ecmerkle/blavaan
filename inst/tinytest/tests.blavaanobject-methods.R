@@ -141,13 +141,12 @@ if(requireNamespace("rstan", quietly = TRUE) &
     sample=20,
     mcmcextra=list(data=list(moment_match_k_threshold=0.5)),
     target="stan", 
-    group="g", 
     seed=1
   )
-  bf_mm_res <- blavFitIndices(fitstanmomentmatch)
+  bf_mm_res <- blavFitIndices(fitstanmomentmatch, fit.measures = c("looic"))
   expect_equal(class(bf_mm_res)[1], "blavFitIndices")
   expect_equal(class(summary(bf_mm_res))[1], "lavaan.data.frame")
-  expect_true("looic" %in% names(bf_mm_res))
+  expect_true("p_loo" %in% names(bf_mm_res))
   
   
   ## blavPredict
