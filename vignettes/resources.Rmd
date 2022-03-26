@@ -8,14 +8,17 @@ Please use the blavaan discussion group for all questions/issues related to blav
 
 Other resources are listed below:
 
-- the <a href="http://lavaan.ugent.be/resources/index.html">lavaan resources page</a> is helpful for model specification examples; it is mostly the same specification that is used in blavaan, and the main blavaan commands just add the letter "b" to the start of the main lavaan commands.
+- The <a href="http://lavaan.ugent.be/resources/index.html">lavaan resources page</a> is helpful for model specification examples; it is mostly the same specification that is used in blavaan, and the main blavaan commands just add the letter "b" to the start of the main lavaan commands.
 
-- "getting started with blavaan" materials by Rens van de Schoot and colleagues: <a href="https://www.rensvandeschoot.com/tutorials/blavaan-how-to-get-started/">html</a>
+- "Getting started with blavaan" materials by Rens van de Schoot and colleagues: <a href="https://www.rensvandeschoot.com/tutorials/blavaan-how-to-get-started/">html</a>
 
-- <a href="https://www.youtube.com/watch?v=Mm6oP_Ss6qg">A virtual presentation</a> on how blavaan works, along with some detailed examples, presented to the <a href="https://www.psychoco.org/2022/">2022 International Workshop on Psychometric Computing.</a>
+- Many recorded presentations are available on the internets:
+    - The longest talk with the most details: <a href="https://youtu.be/xJy5zIkzgvg">Presentation to the Oslo UseR Group,</a> including real-time coding examples near the end. (Code from those examples is <a href="https://ecmerkle.github.io/pub/merkle_oslo_script.R">here.</a>)
 
-- <a href="https://www.youtube.com/watch?v=zWA43-6taNA">A useR! 2020 virtual presentation</a> introducing blavaan (done early in the pandemic, and demonstrating the author's poor video editing skills).
+    - Details about how the package works: <a href="https://www.youtube.com/watch?v=Mm6oP_Ss6qg">A virtual presentation</a> to the <a href="https://www.psychoco.org/2022/">2022 International Workshop on Psychometric Computing.</a>
 
-- slides (blavaan and others) from a <a href="https://osf.io/bcy78/">symposium on the lavaan ecosystem</a> at the 2019 International Meeting of the Psychometric Society, Santiago, Chile.
+    - Basic overview of the package: <a href="https://www.youtube.com/watch?v=zWA43-6taNA">useR! 2020 virtual presentation</a> (done early in the pandemic, and demonstrating the author's poor video editing skills.)
 
-- slides from an <a href="https://ecmerkle.github.io/pub/Merkle_msu21.pdf">hour-long seminar presentation</a> to the Michigan State Methods Group, October, 2021.
+- Slides from an <a href="https://ecmerkle.github.io/pub/Merkle_msu21.pdf">hour-long seminar presentation</a> to the Michigan State Methods Group, October, 2021.
+
+- Slides (blavaan and others) from a <a href="https://osf.io/bcy78/">symposium on the lavaan ecosystem</a> at the 2019 International Meeting of the Psychometric Society, Santiago, Chile.

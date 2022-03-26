@@ -42,7 +42,7 @@ summary.bfi <- function(object,
 
     if ("mode" %in% central.tendency || "map" %in% central.tendency) {
       ## can the modeest package be used?
-      if (suppressMessages(requireNamespace("modeest", quietly = TRUE)) & length(unique(x)) > 1) {
+      if (suppressMessages(requireNamespace("modeest", quietly = TRUE)) & length(unique(x[!is.na(x)])) > 1) {
         out <- c(out, MAP =  modeest::mlv(x, method = "kernel", na.rm = TRUE))
       } else if(!all(is.na(x))) {
         ## if not, use the quick-and-dirty way
@@ -110,6 +110,9 @@ blavFitIndices <- function(object, thin = 1, pD = c("loo","waic","dic"),
 
   if (blavInspect(object, "options")$test == "none") {
     stop('blavaan ERROR: Cannot compute indices when the model was fit with test="none"')
+  }
+  if (blavInspect(object, "categorical")) {
+    stop('blavaan ERROR: Fit indices are currently unavailable for ordinal models')
   }
   
   rescale <- tolower(as.character(rescale[1])) #FIXME: make sure references to "devM" check for "devm"

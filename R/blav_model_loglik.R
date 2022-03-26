@@ -56,7 +56,7 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
       lavmvll <- getFromNamespace("lav_mvnorm_missing_loglik_data", "lavaan")
     }
 
-    if(measure[1] %in% c("logl", "chisq") & !mis){
+    if(measure[1] %in% c("logl", "chisq") & !mis & length(measure) == 1){
         if(casewise){
             ll.samp <- rep(NA, sum(unlist(lavdata@nobs)))
         } else if(conditional){
@@ -144,7 +144,7 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
             ## }
 
         }
-    } else if(measure[1] %in% c("logl", "chisq")) {
+    } else if(measure[1] %in% c("logl", "chisq") & length(measure) == 1) {
         if(lavoptions$target == "stan"){
             tmpll <- NA # we'll get it from stan
         } else {
@@ -172,6 +172,7 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
         lavoptions$se <- "none"
         lavoptions$test <- "standard"
         lavoptions$estimator <- "ML"
+        if(lavoptions$categorical) lavoptions$estimator <- "DWLS"
         ## control() is part of lavmodel (for now)
         lavoptions$optim.method <- "none"
         lavoptions$check.gradient <- FALSE
@@ -253,8 +254,8 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
         ## rule of thumb that can probably be improved...
         llnsamp <- max(200, 20*length(unique(th.idx[[1]][th.idx[[1]] > 0])))
     }
-        
-    if(measure[1] %in% c("logl", "chisq")){
+
+    if(measure[1] %in% c("logl", "chisq") & length(measure) == 1){
         if(casewise){
             ll.samp <- rep(NA, sum(unlist(lavdata@nobs)))
         } else {
@@ -270,7 +271,7 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
         endrow <- standata$endrow
 
         ## full data
-        YX <- matrix(NA, NROW(standata$YX), with(standata, p + q))
+        YX <- matrix(NA, NROW(standata$YX), NCOL(standata$YX) + NCOL(standata$YXo))
         YX[, standata$contidx] <- standata$YX
         YX[, standata$ordidx] <- standata$YXo
         
