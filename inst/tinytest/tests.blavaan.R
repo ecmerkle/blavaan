@@ -87,6 +87,18 @@ expect_equal(class(bcfa(HS.model, data=HolzingerSwineford1939, target="jags", do
 
 ## moment match mcmcextra
 
+
+fitstanmomentmatch <- bsem(
+  model, 
+  data=Data, 
+  fixed.x=TRUE, 
+  burnin=20,
+  sample=20,
+  mcmcextra=list(data=list(moment_match_k_threshold=0.5)),
+  target="stan", 
+  group="g", 
+  seed=1
+)
 momentmatch_mcobj <- blavInspect(fitstanmomentmatch, "mcobj")
 expect_true("Lambda_y_free" %in% names(momentmatch_mcobj@par_dims))
 expect_equal(

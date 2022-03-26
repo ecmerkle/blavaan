@@ -570,7 +570,7 @@ blavaan <- function(...,  # default lavaan arguments
                 if("monitor" %in% names(mcmcextra)){
                     jagtrans$monitors <- c(jagtrans$monitors, mcmcextra$monitor)
                 }
-                if("moment_match_k_threshold" %in% names(mcmcextra)){
+                if("data" %in% names(mcmcextra) & "moment_match_k_threshold" %in% names(mcmcextra$data)){
                     moment_match_monitors <- c(
                       c("Lambda_y_free", "Gamma_free", "B_free", 
                         "Theta_sd_free", "Theta_r_free", "Psi_sd_free", 

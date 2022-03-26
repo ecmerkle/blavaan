@@ -211,25 +211,19 @@ blav_fit_measures <- function(object, fit.measures = "all",
           bopts$target == "stan"
           ) {
           k_threshold <- object@external$mcmcdata$moment_match_k_threshold
-          fitres <- rstan::loo(
-            blavInspect(object, "mcobj"),
+          fitres <- loo::loo(
+            object@external$mcmcout,
             moment_match = TRUE,
             k_threshold = k_threshold
           )
-          fitse <- fitres$estimates[,'SE']
-          fitres <- fitres$estimates[,'Estimate']
-          indices["looic_mm"] <- fitres[["looic"]]
-          indices["p_loo_mm"] <- fitres[["p_loo"]]
-          indices["se_loo_mm"] <- fitse[["looic"]]
         } else {
           fitres <- loo(casells, r_eff = ref)
+        }
           fitse <- fitres$estimates[,'SE']
           fitres <- fitres$estimates[,'Estimate']
           indices["looic"] <- fitres[["looic"]]
           indices["p_loo"] <- fitres[["p_loo"]]
           indices["se_loo"] <- fitse[["looic"]]
-        }
-        
 
         if("csamplls" %in% names(object@external) & bopts$target != "stan"){
             if("stanlvs" %in% names(object@external)){

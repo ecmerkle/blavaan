@@ -133,10 +133,21 @@ if(requireNamespace("rstan", quietly = TRUE) &
   expect_equal(class(bf_res)[1], "blavFitIndices")
   expect_equal(class(summary(bf_res))[1], "lavaan.data.frame")
   
+  fitstanmomentmatch <- bsem(
+    model, 
+    data=Data, 
+    fixed.x=TRUE, 
+    burnin=20,
+    sample=20,
+    mcmcextra=list(data=list(moment_match_k_threshold=0.5)),
+    target="stan", 
+    group="g", 
+    seed=1
+  )
   bf_mm_res <- blavFitIndices(fitstanmomentmatch)
   expect_equal(class(bf_mm_res)[1], "blavFitIndices")
   expect_equal(class(summary(bf_mm_res))[1], "lavaan.data.frame")
-  expect_true("looic_mm" %in% names(bf_mm_res))
+  expect_true("looic" %in% names(bf_mm_res))
   
   
   ## blavPredict

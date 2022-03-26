@@ -24,18 +24,6 @@ fitstan <- bsem(model, data=Data, fixed.x=TRUE, burnin=20,
 fitstanc <- bsem(model, data=Data, fixed.x=TRUE, burnin=20,
                  sample=20, target="stanclassic", group="g", seed=1)
 
-fitstanmomentmatch <- bsem(
-  model, 
-  data=Data, 
-  fixed.x=TRUE, 
-  burnin=20,
-  sample=20,
-  mcmcextra=list(data=list(moment_match_k_threshold=0.5)),
-  target="stan", 
-  group="g", 
-  seed=1
-)
-
 ## for checking factor score functionality
 HS.model <- ' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6 '
@@ -48,10 +36,9 @@ fitstanfs <- bcfa(HS.model, data=HolzingerSwineford1939,
 attr(fitstan@external$mcmcout, 'stanmodel') <- NULL
 attr(fitstanc@external$mcmcout, 'stanmodel') <- NULL
 attr(fitstanfs@external$mcmcout, 'stanmodel') <- NULL
-attr(fitstanmomentmatch@external$mcmcout, 'stanmodel') <- NULL
 
 save(
-  list=c("fitjags", "fitstan", "fitstanc", "fitstanfs", "fitstanmomentmatch"), 
-  file="../inst/testdata/sysdata.rda"
+  list=c("fitjags", "fitstan", "fitstanc", "fitstanfs"), 
+  file="inst/testdata/sysdata.rda"
 )
 
