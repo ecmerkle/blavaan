@@ -146,7 +146,7 @@ if(requireNamespace("rstan", quietly = TRUE) &
   bf_mm_res <- blavFitIndices(fitstanmomentmatch, fit.measures = c("looic"))
   expect_equal(class(bf_mm_res)[1], "blavFitIndices")
   expect_equal(class(summary(bf_mm_res))[1], "lavaan.data.frame")
-  expect_true("p_loo" %in% names(bf_mm_res))
+  expect_true("p_loo" %in% names(bf_mm_res@details$pD))
   
   
   ## blavPredict
