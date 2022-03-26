@@ -133,6 +133,14 @@ if(requireNamespace("rstan", quietly = TRUE) &
   expect_equal(class(bf_res)[1], "blavFitIndices")
   expect_equal(class(summary(bf_res))[1], "lavaan.data.frame")
   
+  set.seed(341)
+  
+  x1 <- rnorm(100)
+  y1 <- 0.5 + 2*x1 + rnorm(100)
+  g <- rep(1:2, each=50)
+  Data <- data.frame(y1 = y1, x1 = x1, g = g)
+  
+  model <- ' y1 ~ prior("normal(0,1)")*x1 '
   fitstanmomentmatch <- bsem(
     model, 
     data=Data, 

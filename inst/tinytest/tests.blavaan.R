@@ -87,7 +87,14 @@ expect_equal(class(bcfa(HS.model, data=HolzingerSwineford1939, target="jags", do
 
 ## moment match mcmcextra
 
+set.seed(341)
 
+x1 <- rnorm(100)
+y1 <- 0.5 + 2*x1 + rnorm(100)
+g <- rep(1:2, each=50)
+Data <- data.frame(y1 = y1, x1 = x1, g = g)
+
+model <- ' y1 ~ prior("normal(0,1)")*x1 '
 fitstanmomentmatch <- bsem(
   model, 
   data=Data, 
