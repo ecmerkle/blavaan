@@ -42,7 +42,7 @@ jobs:
       - name: install non-cran packages
         run: |
           install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
-	shell: Rscript {0}
+        shell: Rscript {0}
 
       - uses: r-lib/actions/setup-r-dependencies@v1
         with:
