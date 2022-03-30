@@ -41,6 +41,10 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: rcmdcheck, cmdstanr=?ignore-before-r=7.0.0
+          extra-packages: |
+            rcmdcheck
+            cmdstanr=?ignore-before-r=4.5.0
 
       - uses: r-lib/actions/check-r-package@v2
+        env:
+          _R_CHECK_FORCE_SUGGESTS_: false
