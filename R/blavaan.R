@@ -94,8 +94,8 @@ blavaan <- function(...,  # default lavaan arguments
     if(grepl("stan", target)){
       if(convergence == "auto") stop("blavaan ERROR: auto convergence is unavailable for Stan.")
 
-      if(target == "stan" & length(mcmcextra) > 0) {
-        if("syntax" %in% names(mcmcextra)) stop("blavaan ERROR: mcmcextra$syntax is not available for target='stan'.")
+      if(target %in% c("stan", "cmdstan") & length(mcmcextra) > 0) {
+        if("syntax" %in% names(mcmcextra)) stop(paste0("blavaan ERROR: mcmcextra$syntax is not available for target='", target, "'."))
       }
     } else if(target == "jags"){
       if(!pkgcheck("runjags")){
@@ -243,7 +243,10 @@ blavaan <- function(...,  # default lavaan arguments
     if(convergence == "auto"){
         names(mfj) <- c("startburnin", "startsample", "adapt")
     }
-    if(grepl("stan", target)){
+    if(target == "cmdstan"){
+        names(mfj) <- c("iter_warmup", "iter_sampling", "adapt")
+        mfj <- mfj[-which(names(mfj) == "adapt")]
+    } else if(grepl("stan", target)){
         names(mfj) <- c("warmup", "iter", "adapt")
         if(usevb){
           mfj <- mfj["iter"]
@@ -328,7 +331,7 @@ blavaan <- function(...,  # default lavaan arguments
     # ordinal only for stan
     ordmod <- lavInspect(LAV, 'categorical')
     if(ordmod) {
-        if(target != "stan") stop("blavaan ERROR: ordinal variables only work for target='stan'.")
+        if(!(target %in% c("stan", "cmdstan"))) stop("blavaan ERROR: ordinal variables only work for target='stan' or 'cmdstan'.")
     }
         
     ineq <- which(LAV@ParTable$op %in% c("<",">"))
@@ -604,7 +607,7 @@ blavaan <- function(...,  # default lavaan arguments
                 dir.create(path=jagdir, showWarnings=FALSE)
                 fext <- ifelse(target=="jags", "jag", "stan")
                 fnm <- paste0(jagdir, "/sem.", fext)
-                if(target=="stan"){
+                if(target %in% c("stan", "cmdstan")){
                     cat(stanmodels$stanmarg@model_code, file = fnm)
                 } else {
                     cat(jagtrans$model, file = fnm)
@@ -628,6 +631,8 @@ blavaan <- function(...,  # default lavaan arguments
                                            pars = sampparms,
                                            data = data,
                                            init = inits))
+            } else if(target == "cmdstan"){
+              rjarg <- with(jagtrans, list(data = data, init = inits))
             } else {
               rjarg <- with(jagtrans, list(object = stanmodels$stanmarg,
                                            data = data,
@@ -653,6 +658,13 @@ blavaan <- function(...,  # default lavaan arguments
                     rjcall <- "stan"
                 } else if(usevb){
                     rjcall <- "vb"
+                } else if(target == "cmdstan"){
+                    fname <- paste0("stanmarg_", packageDescription("blavaan")["Version"])
+                    fdir <- paste0(cmdstanr::cmdstan_path(), "/")
+                    blavmod <- cmdstanr::cmdstan_model(cmdstanr::write_stan_file(stanmodels$stanmarg@model_code,
+                                                                                 dir = fdir,
+                                                                                 basename = fname) )
+                    rjcall <- blavmod$sample
                 } else {
                     rjcall <- "sampling"
                 }
@@ -701,6 +713,12 @@ blavaan <- function(...,  # default lavaan arguments
         timing$Estimate <- (proc.time()[3] - start.time)
         start.time <- proc.time()[3]
 
+        ## FIXME: there is no pars argument. this saves all parameters and uses unnecessary memory
+        ## see res@sim and line 284 of stan_csv.R... might cut it down manually
+        if(target == "cmdstan"){
+          res <- rstan::read_stan_csv(res$output_files())
+        }
+        
         if(target == "jags"){
           parests <- coeffun(lavpartable, jagtrans$pxpartable, res)
           stansumm <- NA
