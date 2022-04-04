@@ -1,5 +1,6 @@
 ## calculate model log-likelihood given some sampled parameter values
 ## (with lvs integrated out by default)
+## NB: column ordering of postsamp is obtained from make_mcmc()
 get_ll <- function(postsamp       = NULL, # one posterior sample
                    lavmodel       = NULL,
                    lavpartable    = NULL,
@@ -225,193 +226,206 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
                        casewise       = FALSE,
                        conditional    = FALSE,
                        standata       = NULL){
-  
-    if(length(postsamp) > 0){
-        lavmodel <- fill_params(postsamp, lavmodel, lavpartable)
-    }
 
-    if(conditional){
-        stop("blavaan ERROR: conditional log-likelihoods not available for ordinal data.")
+  if(length(postsamp) > 0){
+    lavmodel <- fill_params(postsamp, lavmodel, lavpartable)
+  }
+
+  if(conditional){
+    lavmodel@GLIST$delta <- NULL # or else predictions will be rescaled
+    implied <- cond_moments(postsamp, lavmodel, lavpartable, lavsamplestats,
+                            lavdata, lavobject)
+  } else {
+    implied <- lav_model_implied(lavmodel, delta = (lavmodel@parameterization == "delta"))
+  }
+
+  if(is.null(standata)){
+    if("mcmcdata" %in% names(lavobject@external)){
+      standata <- lavobject@external$mcmcdata
     } else {
-        implied <- lav_model_implied(lavmodel, delta = (lavmodel@parameterization == "delta"))
+      stop("blavaan ERROR: Problem approximating ordinal log-likelihood.")
     }
+  }
 
-    if(is.null(standata)){
-        if("mcmcdata" %in% names(lavobject@external)){
-            standata <- lavobject@external$mcmcdata
-        } else {
-            stop("blavaan ERROR: Problem approximating ordinal log-likelihood.")
-        }
-    }
+  ## continuous and ordinal indicators
+  num.idx <- lavmodel@num.idx
+  th.idx <- lavmodel@th.idx
 
-    ## continuous and ordinal indicators
-    num.idx <- lavmodel@num.idx
-    th.idx <- lavmodel@th.idx
+  if("llnsamp" %in% names(lavoptions)){
+    llnsamp <- lavoptions$llnsamp
+  } else {
+    ## rule of thumb that can probably be improved...
+    llnsamp <- max(200, 20*length(unique(th.idx[[1]][th.idx[[1]] > 0])))
+  }
 
-    if("llnsamp" %in% names(lavoptions)){
-        llnsamp <- lavoptions$llnsamp
+  if(measure[1] %in% c("logl", "chisq") & length(measure) == 1){
+    if(casewise){
+      ll.samp <- rep(NA, sum(unlist(lavdata@nobs)))
     } else {
-        ## rule of thumb that can probably be improved...
-        llnsamp <- max(200, 20*length(unique(th.idx[[1]][th.idx[[1]] > 0])))
+      ## logl + baseline logl
+      ll.samp <- c(0,0)
     }
 
-    if(measure[1] %in% c("logl", "chisq") & length(measure) == 1){
-        if(casewise){
-            ll.samp <- rep(NA, sum(unlist(lavdata@nobs)))
-        } else {
-            ## logl + baseline logl
-            ll.samp <- c(0,0)
-        }
+    Np <- standata$Np
+    grpnum <- standata$grpnum
+    Obsvar <- standata$Obsvar
+    Nobs <- standata$Nobs
+    startrow <- standata$startrow
+    endrow <- standata$endrow
 
-        Np <- standata$Np
-        grpnum <- standata$grpnum
-        Obsvar <- standata$Obsvar
-        Nobs <- standata$Nobs
-        startrow <- standata$startrow
-        endrow <- standata$endrow
-
-        ## full data
-        YX <- matrix(NA, NROW(standata$YX), NCOL(standata$YX) + NCOL(standata$YXo))
-        YX[, standata$contidx] <- standata$YX
-        YX[, standata$ordidx] <- standata$YXo
+    ## full data
+    YX <- matrix(NA, NROW(standata$YX), NCOL(standata$YX) + NCOL(standata$YXo))
+    YX[, standata$contidx] <- standata$YX
+    YX[, standata$ordidx] <- standata$YXo
         
-        for(mm in 1:Np) {
-            g <- grpnum[mm]
-            r1 <- startrow[mm]
-            r2 <- endrow[mm]
-            obsidx <- Obsvar[mm, ]
-            
-            mnvec <- as.numeric(implied$mean[[g]])
+    for(mm in 1:Np) {
+      g <- grpnum[mm]
+      r1 <- startrow[mm]
+      r2 <- endrow[mm]
+      obsidx <- Obsvar[mm, ]
 
-            ## ensure symmetric:
-            cmat <- (implied$cov[[g]] + t(implied$cov[[g]]))/2
+      mnvec <- implied$mean[[g]]
+      if(!conditional) {
+        mnvec <- as.numeric(mnvec)
+      }
 
-            obsnum <- num.idx[[g]][num.idx[[g]] %in% obsidx[1:Nobs[mm]]]
-            if(length(obsnum) > 0){
-                tmpll <- try(dmnorm(YX[r1:r2, obsnum, drop=FALSE],
-                                    mnvec[obsnum],
-                                    cmat[obsnum, obsnum], log=TRUE))
-                if(inherits(tmpll, "try-error")) tmpll <- NA
+      ## ensure symmetric:
+      cmat <- (implied$cov[[g]] + t(implied$cov[[g]]))/2
 
-                ## subtract logl.X; assume always observed
-                ## TODO: handle ordinal x.idx?
-                x.idx <- lavsamplestats@x.idx[[g]]
-                if(!is.null(x.idx) && length(x.idx) > 0L){
-                    Mu.X <- lavsamplestats@mean.x[[g]]
-                    Sigma.X <- lavsamplestats@cov.x[[g]]
-                    if(is.null(Mu.X)){
-                        Mu.X <- mnvec[x.idx]
-                    }
-                    if(is.null(Sigma.X)){
-                        Sigma.X <- cmat[x.idx, x.idx, drop=FALSE]
-                    }
-                    tmpll.x <- try(dmnorm(YX[r1:r2, x.idx, drop=FALSE], Mu.X, Sigma.X, log=TRUE))
-                    if(inherits(tmpll.x, "try-error")) tmpll.x <- NA
-                    tmpll <- tmpll - tmpll.x
-                }
-            }
-            ## baseline logliks only needed for ppp, which is now handled in Stan.
-            basell <- 0L
-            
-            ## now condition on continuous, get ordinal ll by tmvnsim()
-            TH.idx <- th.idx[[g]][th.idx[[g]] > 0]
-            ord.idx <- unique(TH.idx)
-            ord.idx <- ord.idx[ord.idx %in% obsidx[1:Nobs[mm]]]
-            nord <- length(ord.idx)
-            if(length(obsnum) > 0){
-                s12s22i <- cmat[ord.idx, obsnum] %*% chol2inv(chol(cmat[obsnum, obsnum]))
-                cov.ord <- cmat[ord.idx, ord.idx] - s12s22i %*% cmat[obsnum, ord.idx]
-            } else {
-                tmpll <- rep(0, r2 - r1 + 1)
-                cov.ord <- cmat[ord.idx, ord.idx, drop=FALSE]
-                mu.ord <- mnvec[ord.idx]
-            }
+      obsnum <- num.idx[[g]][num.idx[[g]] %in% obsidx[1:Nobs[mm]]]
+      if(length(obsnum) > 0){
+        tmpll <- try(dmnorm(YX[r1:r2, obsnum, drop=FALSE],
+                            mnvec[obsnum],
+                            cmat[obsnum, obsnum], log=TRUE))
+        if(inherits(tmpll, "try-error")) tmpll <- NA
 
-            mm.in.group <- 1:lavmodel@nmat[g] + cumsum(c(0,lavmodel@nmat[g]))[g]
-            mms <- lavmodel@GLIST[mm.in.group]
-            tau <- mms$tau
-
-            ## thresholds for all cases
-            lowtau <- hitau <- matrix(NA, NROW(YX[r1:r2,]), length(ord.idx))
-            for(j in seq_len(nord)){
-                tmptau <- c(-Inf, tau[TH.idx == ord.idx[j]], Inf)
-                lowtau[,j] <- tmptau[YX[r1:r2,ord.idx[j]]]
-                hitau[,j] <- tmptau[YX[r1:r2,ord.idx[j]] + 1]
-            }
-            
-            for(i in r1:r2){
-                if(length(obsnum) > 0){
-                    mu.ord <- mnvec[ord.idx] + s12s22i %*% (YX[i,obsnum] - mnvec[obsnum])
-                }
-                ## run tmvnsim to approximate marginal logl
-                llidx <- i - r1 + 1
-                lsigi <- try(tmvnsim::tmvnsim(llnsamp, nord,
-                                              lower = lowtau[llidx,], upper = hitau[llidx,],
-                                              means = mu.ord, sigma = cov.ord), silent = TRUE)
-                if(inherits(lsigi, 'try-error')){
-                    tmpll[llidx] <- NA
-                } else {
-                    tmpll[llidx] <- tmpll[llidx] + log(mean(lsigi$wts))
-                }
-            }
-            
-            if(casewise){
-                ll.samp[r1:r2] <- tmpll
-            } else {
-                tmpll <- c(sum(tmpll), sum(basell))
-                #tmpll <- -2*(sum(tmpll) - sum(basell))
-                ll.samp <- ll.samp + tmpll
-            }
+        ## subtract logl.X; assume always observed
+        ## TODO: handle ordinal x.idx?
+        x.idx <- lavsamplestats@x.idx[[g]]
+        if(!is.null(x.idx) && length(x.idx) > 0L){
+          Mu.X <- lavsamplestats@mean.x[[g]]
+          Sigma.X <- lavsamplestats@cov.x[[g]]
+          if(is.null(Mu.X)){
+            Mu.X <- mnvec[x.idx]
+          }
+          if(is.null(Sigma.X)){
+            Sigma.X <- cmat[x.idx, x.idx, drop=FALSE]
+          }
+          tmpll.x <- try(dmnorm(YX[r1:r2, x.idx, drop=FALSE], Mu.X, Sigma.X, log=TRUE))
+          if(inherits(tmpll.x, "try-error")) tmpll.x <- NA
+          tmpll <- tmpll - tmpll.x
         }
+      }
+      ## baseline logliks only needed for ppp, which is now handled in Stan.
+      basell <- 0L
 
-        ## reorder to match original data
-        if(casewise){
-          rorig <- sapply(lavdata@Mp, function(x) unlist(x$case.idx))
-          ll.samp[rorig] <- ll.samp
-        }
-    } else {
-        ## other measures require us to run lavaan
-        lavoptions$se <- "none"
-        lavoptions$test <- "standard"
-        lavoptions$estimator <- "ML"
-        ## control() is part of lavmodel (for now)
-        lavoptions$optim.method <- "none"
-        lavoptions$check.gradient <- FALSE
-        if("control" %in% slotNames(lavmodel)){
-            lavmodel@control <- list(optim.method="none")
-        }
-        ## FIXME: not sure when 'free' becomes numeric,
-        ## but S4 doesn't like it in the lavaan call
-        ## (only sometimes; related to extra monitors?)
-        lavpartable$free <- as.integer(lavpartable$free)
-        fit.samp <- try(lavaan(slotParTable = lavpartable,
-                               slotModel = lavmodel,
-                               slotOptions = lavoptions,
-                               slotSampleStats = lavsamplestats,
-                               slotData = lavdata,
-                               slotCache = lavcache), silent=TRUE)
-        if(!inherits(fit.samp, "try-error")){
-            fit.samp@Options$se <- "standard" # for nonnest2
-            fit.samp@test[[1]]$test <- "standard" # for do.fit=FALSE
+      ## now condition on continuous, get ordinal ll by tmvnsim()
+      TH.idx <- th.idx[[g]][th.idx[[g]] > 0]
+      ord.idx <- unique(TH.idx)
+      ord.idx <- ord.idx[ord.idx %in% obsidx[1:Nobs[mm]]]
+      nord <- length(ord.idx)
+      if(length(obsnum) > 0){
+        s12s22i <- cmat[ord.idx, obsnum] %*% chol2inv(chol(cmat[obsnum, obsnum]))
+        cov.ord <- cmat[ord.idx, ord.idx] - s12s22i %*% cmat[obsnum, ord.idx]
+      } else {
+        tmpll <- rep(0, r2 - r1 + 1)
+        cov.ord <- cmat[ord.idx, ord.idx, drop=FALSE]
+        mu.ord <- mnvec[ord.idx]
+      }
 
-            if(casewise){
-                ll.samp <- llcont(fit.samp)
-            } else if(measure[1] == "logl"){
-                ll.samp <- fitMeasures(fit.samp,
-                                       c("logl", "unrestricted.logl"))
-            } else {
-                ll.samp <- fitMeasures(fit.samp, measure)
-            }
+      mm.in.group <- 1:lavmodel@nmat[g] + cumsum(c(0,lavmodel@nmat[g]))[g]
+      mms <- lavmodel@GLIST[mm.in.group]
+      tau <- mms$tau
+
+      ## thresholds for all cases
+      lowtau <- hitau <- matrix(NA, NROW(YX[r1:r2,]), length(ord.idx))
+      for(j in seq_len(nord)){
+        tmptau <- c(-Inf, tau[TH.idx == ord.idx[j]], Inf)
+        lowtau[,j] <- tmptau[YX[r1:r2,ord.idx[j]]]
+        hitau[,j] <- tmptau[YX[r1:r2,ord.idx[j]] + 1]
+      }
+
+      for(i in r1:r2){
+        llidx <- i - r1 + 1
+
+        if(conditional){
+          catprob <- pnorm(hitau[llidx,], mean = mnvec[i,ord.idx], sd = sqrt(diag(cmat)[ord.idx])) -
+            pnorm(lowtau[llidx,], mean = mnvec[i,ord.idx], sd = sqrt(diag(cmat)[ord.idx]))
+          lsigi <- sum( dbinom(1, size = 1, prob = catprob, log = TRUE) )
+          tmpll[llidx] <- tmpll[llidx] + lsigi
         } else {
-            ll.samp <- NA
+          if(length(obsnum) > 0){
+            mu.ord <- mnvec[ord.idx] + s12s22i %*% (YX[i,obsnum] - mnvec[obsnum])
+          }
+          ## run tmvnsim to approximate marginal logl
+          lsigi <- try(tmvnsim::tmvnsim(llnsamp, nord,
+                                        lower = lowtau[llidx,], upper = hitau[llidx,],
+                                        means = mu.ord, sigma = cov.ord), silent = TRUE)
+          if(inherits(lsigi, 'try-error')){
+            tmpll[llidx] <- NA
+          } else {
+            tmpll[llidx] <- tmpll[llidx] + log(mean(lsigi$wts))
+          }
         }
+      }
+            
+      if(casewise){
+        ll.samp[r1:r2] <- tmpll
+      } else {
+        tmpll <- c(sum(tmpll), sum(basell))
+        #tmpll <- -2*(sum(tmpll) - sum(basell))
+        ll.samp <- ll.samp + tmpll
+      }
     }
 
-    ##TDJ: preserve names of other fitMeasures(), when requested by postpred()
-    ATTR <- attributes(ll.samp)
-    ll.samp <- as.numeric(ll.samp)
-    attributes(ll.samp) <- ATTR
-    ll.samp
+    ## reorder to match original data
+    if(casewise){
+      rorig <- sapply(lavdata@Mp, function(x) unlist(x$case.idx))
+      ll.samp[rorig] <- ll.samp
+    }
+  } else {
+    ## other measures require us to run lavaan
+    lavoptions$se <- "none"
+    lavoptions$test <- "standard"
+    lavoptions$estimator <- "ML"
+    ## control() is part of lavmodel (for now)
+    lavoptions$optim.method <- "none"
+    lavoptions$check.gradient <- FALSE
+    if("control" %in% slotNames(lavmodel)){
+      lavmodel@control <- list(optim.method="none")
+    }
+    ## FIXME: not sure when 'free' becomes numeric,
+    ## but S4 doesn't like it in the lavaan call
+    ## (only sometimes; related to extra monitors?)
+    lavpartable$free <- as.integer(lavpartable$free)
+    fit.samp <- try(lavaan(slotParTable = lavpartable,
+                           slotModel = lavmodel,
+                           slotOptions = lavoptions,
+                           slotSampleStats = lavsamplestats,
+                           slotData = lavdata,
+                           slotCache = lavcache), silent=TRUE)
+    if(!inherits(fit.samp, "try-error")){
+      fit.samp@Options$se <- "standard" # for nonnest2
+      fit.samp@test[[1]]$test <- "standard" # for do.fit=FALSE
+
+      if(casewise){
+        ll.samp <- llcont(fit.samp)
+      } else if(measure[1] == "logl"){
+        ll.samp <- fitMeasures(fit.samp,
+                               c("logl", "unrestricted.logl"))
+      } else {
+        ll.samp <- fitMeasures(fit.samp, measure)
+      }
+    } else {
+      ll.samp <- NA
+    }
+  }
+
+  ##TDJ: preserve names of other fitMeasures(), when requested by postpred()
+  ATTR <- attributes(ll.samp)
+  ll.samp <- as.numeric(ll.samp)
+  attributes(ll.samp) <- ATTR
+  ll.samp
 }
 
 ## get log-likelihoods for each sampled parameter
