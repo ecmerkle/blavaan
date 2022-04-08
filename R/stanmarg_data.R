@@ -224,7 +224,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   stopifnot(nrow(dat$YX) == dat$Ntot)
 
   dat$use_suff <- 0L # can we use sufficient stats?
-  if (!dat$missing & !dat$ord & dat$Nx == 0L) dat$use_suff <- 1L
+  if (!dat$missing & !dat$ord & dat$Nx[1] == 0L) dat$use_suff <- 1L
 
   dat$has_data <- 0L
   if (pri_only) {
