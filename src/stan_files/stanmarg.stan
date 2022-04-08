@@ -235,6 +235,7 @@ data {
   int<lower=1,upper=Ng> grpnum[Np]; // group number for each row of data
   int<lower=0,upper=1> wigind; // do any parameters have approx equality constraint ('wiggle')?
   int<lower=0, upper=1> has_data; // are the raw data on y and x available?
+  int<lower=0, upper=1> use_suff; // should we use sufficient stats?
   int<lower=0, upper=1> ord; // are there any ordinal variables?
   int<lower=0> Nord; // how many ordinal variables?
   int<lower=0> ordidx[Nord]; // indexing of ordinal variables
@@ -248,8 +249,8 @@ data {
   int<lower=0> Xdatvar[Np, max(Nx)]; // indexing of fixed.x in data (differs from Xvar when missing)
   int<lower=0> emiter; // number of em iterations for saturated model in ppp (missing data only)
   int<lower=0, upper=1> do_test; // should we do everything in generated quantities?
-  int<lower=0, upper=1> has_cov;
-  cov_matrix[p + q - Nord + 1] S[Ng];     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
+  vector[p + q - Nord] YXbar[Ng]; // sample means of continuous manifest variables
+  cov_matrix[use_suff ? p + q : p + q - Nord + 1] S[Ng];     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
 
   
   /* sparse matrix representations of skeletons of coefficient matrices, 
@@ -798,9 +799,11 @@ model { // N.B.: things declared in the model block do not get saved in the outp
 	target += -multi_normal_lpdf(YXstar[r1:r2,xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
       }
     }
-  } else if (has_cov) {
-    for (g in 1:Ng) {
-      target += wishart_lpdf(S[g] | N[g] - 1, Sigma[g]);
+  } else if (use_suff) {
+    for (mm in 1:Np) {
+      // mm is a proxy for group here
+      target += wishart_lpdf(S[mm, 1:Nobs[mm], 1:Nobs[mm]] | N[mm] - 1, Sigma[mm]);
+      target += multi_normal_lpdf(YXbar[mm,] | Mu[mm,], inv(N[mm]) * Sigma[mm]);
     }
   }
 
@@ -926,13 +929,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   }
   Psi_var = Psi_sd_free .* Psi_sd_free;
 
-  // log-likelihood
-  if (has_cov) {
-    for (g in 1:Ng) {
-      log_lik[g] =  wishart_lpdf(S[g] | N[g] - 1, Sigma[g]);
-      log_lik_sat[g] = wishart_lpdf(S[g] | N[g] - 1, S[g]);
-    }
-  } else {
+  { // log-likelihood
     int obsidx[p + q];
     int xidx[max(Nx)];
     int xdatidx[max(Nx)];

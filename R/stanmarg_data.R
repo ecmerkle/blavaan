@@ -223,35 +223,56 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$YXo <- YXo
   stopifnot(nrow(dat$YX) == dat$Ntot)
 
-  dat$has_data <- dat$has_cov <- 0L
+  dat$use_suff <- 0L # can we use sufficient stats?
+  if (!dat$missing & !dat$ord & dat$Nx == 0L) dat$use_suff <- 1L
+
+  dat$has_data <- 0L
   if (pri_only) {
+    dat$use_suff <- 0L
     tmparr <- array(dim = c(dat$Ng, ncol(YX) + 1, ncol(YX) + 1))
     for (i in 1:Ng) {
       tmparr[i,,] <- diag(nrow=ncol(YX) + 1)
     }
     dat$S <- tmparr
   } else {
+    dat$S <- array(NA, dim=c(Ng, nrow(S), nrow(S)))
     if (missing(YX)) {
       dat$has_data <- 0L
       if (is.null(S)) stop("S must be specified if YX is missing")
       if (!is.list(S)) stop("S must be a list")
       if (is.null(N)) stop("N must be specified if YX is missing")
       if (miss) stop("blavaan ERROR: missingness requires raw data.")
-      dat$S <- array(NA, dim=c(Ng, nrow(S), nrow(S)))
       for (i in 1:Ng) {
         dat$S[i,,] <- (N[i] - 1) * S[[i]]
       }
       dat$YX <- array(NA_real_, dim = c(dat$Ntot, ncol(S)))
       dat$YXo <- array(NA_real_, dim = c(0, ncol(YXo)))
     } else {
-      dat$has_data <- 1L
-
       if (NROW(YX) != dat$Ntot) stop("blavaan ERROR: nrow(YX) != Ntot.")
     
-      dat$S <- array(NA, dim=c(Ng, NCOL(YX) + 1, NCOL(YX) + 1))
-      for (i in 1:Ng) {
-        dat$S[i,,] <- diag(1, NCOL(YX) + 1)
-        ## not added because, if not pd, stan fails: (dat$N[i] - 1) * cov(YX[(startrow[i] : endrow[i]), , drop = FALSE]) # NB!! this multiplication is needed to use wishart_lpdf
+      dat$YXbar <- array(NA, dim=c(Ng, NCOL(YX)))
+
+      if (!dat$use_suff) {
+        dat$has_data <- 1L
+        dat$S <- array(NA, dim=c(Ng, NCOL(YX) + 1, NCOL(YX) + 1))
+        for (i in 1:Ng) {
+          dat$S[i,,] <- diag(1, NCOL(YX) + 1)
+          dat$YXbar[i,] <- 0
+        }
+      } else {
+        dat$has_data <- 0L
+        dat$S <- array(NA, dim=c(Ng, NCOL(YX), NCOL(YX)))
+        for (i in 1:Ng) {
+          tmpS <- (dat$N[i] - 1) * cov(YX[(startrow[i] : endrow[i]), , drop = FALSE])
+          dat$S[i,1:NCOL(YX),1:NCOL(YX)] <- tmpS
+          if(any(eigen(tmpS, only.values = TRUE)$values <= 0)) {
+            ## could model the "closest" PD matrix: dat$S[i,,] <- Matrix::nearPD(dat$S[i,,])
+            dat$use_suff <- 0L
+            dat$has_data <- 1L
+            dat$S[i,,] <- diag(1, NCOL(YX) + 1)
+          }
+          dat$YXbar[i,] <- colMeans(YX[(startrow[i] : endrow[i]), ])
+        }
       }
     }
   }

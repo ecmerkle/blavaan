@@ -27,8 +27,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
         if(bopts$target != "stan") {
             stop("blavaan ERROR: fit measures cannot be obtained when test=\"none\"")
         } else {
-            warning("blavaan WARNING: not all fit measures are available when test=\"none\"",
-                    call. = FALSE)
+            cat("blavaan NOTE: not all fit measures are available when test='none'\n")
         }
     }
 
