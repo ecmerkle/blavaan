@@ -269,7 +269,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
             ## could model the "closest" PD matrix: dat$S[i,,] <- Matrix::nearPD(dat$S[i,,])
             dat$use_suff <- 0L
             dat$has_data <- 1L
-            dat$S[i,,] <- diag(1, NCOL(YX) + 1)
+            dat$S[i,,] <- diag(1, NCOL(YX))
           }
           dat$YXbar[i,] <- colMeans(YX[(startrow[i] : endrow[i]), ])
         }
