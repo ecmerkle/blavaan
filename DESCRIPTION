@@ -1,6 +1,6 @@
 Package: blavaan
 Title: Bayesian Latent Variable Analysis
-Version: 0.4-2.931
+Version: 0.4-2.945
 Authors@R: c(person(given = "Edgar", family = "Merkle",
                     role = c("aut", "cre"),
                     email = "merklee@missouri.edu",
@@ -26,7 +26,9 @@ Authors@R: c(person(given = "Edgar", family = "Merkle",
              person(given = "Rens", family="van de Schoot",
                     role = "ctb", comment = "R/ctr_bayes_fit.R"),
              person(given = "Andrew", family="Johnson", role="ctb",
-                    comment = "Makevars")
+                    comment = "Makevars"),
+             person(given = "Matthew", family="Emery", role="ctb",
+                    comment = "loo moment_match")
             )
 Description: Fit a variety of Bayesian latent variable models, including confirmatory
    factor analysis, structural equation models, and latent growth curve models. References: Merkle & Rosseel (2018) <doi:10.18637/jss.v085.i04>; Merkle et al. (2021) <doi:10.18637/jss.v100.i06>.
