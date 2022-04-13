@@ -37,5 +37,7 @@ attr(fitstan@external$mcmcout, 'stanmodel') <- NULL
 attr(fitstanc@external$mcmcout, 'stanmodel') <- NULL
 attr(fitstanfs@external$mcmcout, 'stanmodel') <- NULL
 
-save(list=c("fitjags", "fitstan", "fitstanc", "fitstanfs"), file="../inst/testdata/sysdata.rda")
+save(list=c("fitjags", "fitstan", "fitstanc", "fitstanfs"), 
+     file="../inst/testdata/sysdata.rda"
+)
 
