@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-2.931</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-2.945</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -114,7 +114,9 @@ jags.ic <span class="op">=</span> <span class="cn">FALSE</span>, seed <span clas
   for target=<code>"stan"</code>),
   <code>monitor</code>, <code>data</code>, and <code>llnsamp</code>. The <code>syntax</code> object is a text string containing extra
   code to insert in the JAGS/Stan model syntax. The <code>data</code> object
-  is a list of extra data to send to the JAGS/Stan model. The <code>monitor</code> object
+  is a list of extra data to send to the JAGS/Stan model. If 
+  <code>moment_match_k_threshold</code> is specified within <code>data</code> the looic of 
+  the model will be calculated using moment matching. The <code>monitor</code> object
   is a character vector containing extra JAGS/Stan parameters to
   monitor. The <code>llnsamp</code> object is only relevant to models with ordinal
   variables, and specifies the number of samples that should be drawn to approximate
