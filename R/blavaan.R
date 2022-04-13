@@ -583,7 +583,7 @@ blavaan <- function(...,  # default lavaan arguments
                         "Nu_free", "Alpha_free", "Tau_free", "log_lik", 
                         "log_lik_sat", "ppp")
                     )
-                    jagtrans$monitors <- c(jagtrans$monitors, moment_match_monitors)
+                    jagtrans$monitors <- c(jagtrans$monitors, moment_match_monitors[!(moment_match_monitors %in% jagtrans$monitors)])
                 }
                 if("data" %in% names(mcmcextra)){
                     tmpdat <- c(jagtrans$data, mcmcextra$data)
