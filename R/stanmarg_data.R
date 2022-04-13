@@ -235,7 +235,6 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
     }
     dat$S <- tmparr
   } else {
-    dat$S <- array(NA, dim=c(Ng, nrow(S), nrow(S)))
     if (missing(YX)) {
       dat$has_data <- 0L
       if (is.null(S)) stop("S must be specified if YX is missing")
@@ -249,29 +248,32 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
       dat$YXo <- array(NA_real_, dim = c(0, ncol(YXo)))
     } else {
       if (NROW(YX) != dat$Ntot) stop("blavaan ERROR: nrow(YX) != Ntot.")
-    
-      dat$YXbar <- array(NA, dim=c(Ng, NCOL(YX)))
 
+      dat$YXbar <- array(0, dim=c(Ng, NCOL(YX)))
+      dat$S <- array(1, dim=c(Ng, NCOL(YX) + 1, NCOL(YX) + 1))
       if (!dat$use_suff) {
         dat$has_data <- 1L
-        dat$S <- array(NA, dim=c(Ng, NCOL(YX) + 1, NCOL(YX) + 1))
-        for (i in 1:Ng) {
-          dat$S[i,,] <- diag(1, NCOL(YX) + 1)
-          dat$YXbar[i,] <- 0
+        if (length(contidx) > 0) {
+          for (i in 1:Ng) {
+            dat$S[i,,] <- diag(1, NCOL(YX) + 1)
+            dat$YXbar[i,] <- 0
+          }
         }
       } else {
         dat$has_data <- 0L
-        dat$S <- array(NA, dim=c(Ng, NCOL(YX), NCOL(YX)))
-        for (i in 1:Ng) {
-          tmpS <- (dat$N[i] - 1) * cov(YX[(startrow[i] : endrow[i]), , drop = FALSE])
-          dat$S[i,1:NCOL(YX),1:NCOL(YX)] <- tmpS
-          if(any(eigen(tmpS, only.values = TRUE)$values <= 0)) {
-            ## could model the "closest" PD matrix: dat$S[i,,] <- Matrix::nearPD(dat$S[i,,])
-            dat$use_suff <- 0L
-            dat$has_data <- 1L
-            dat$S[i,,] <- diag(1, NCOL(YX))
+        if (length(contidx) > 0) {
+          for (i in 1:Ng) {
+            tmpS <- (dat$N[i] - 1) * cov(YX[(startrow[i] : endrow[i]), , drop = FALSE])
+            dat$S[i,1:NCOL(YX),1:NCOL(YX)] <- tmpS
+            if(any(eigen(tmpS, only.values = TRUE)$values <= 0)) {
+              stop("blavaan ERROR: sample cov matrix is not positive definite.")
+              ## could model the "closest" PD matrix: dat$S[i,,] <- Matrix::nearPD(dat$S[i,,])
+              ## dat$use_suff <- 0L
+              ## dat$has_data <- 1L
+              ## dat$S[i,,] <- diag(1, NCOL(YX))
+            }
+            dat$YXbar[i,] <- colMeans(YX[(startrow[i] : endrow[i]), ])
           }
-          dat$YXbar[i,] <- colMeans(YX[(startrow[i] : endrow[i]), ])
         }
       }
     }

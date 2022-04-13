@@ -250,7 +250,7 @@ data {
   int<lower=0> emiter; // number of em iterations for saturated model in ppp (missing data only)
   int<lower=0, upper=1> do_test; // should we do everything in generated quantities?
   vector[p + q - Nord] YXbar[Ng]; // sample means of continuous manifest variables
-  cov_matrix[use_suff ? p + q : p + q - Nord + 1] S[Ng];     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
+  cov_matrix[p + q - Nord + 1] S[Ng];     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
 
   
   /* sparse matrix representations of skeletons of coefficient matrices, 
@@ -624,6 +624,8 @@ transformed parameters {
   matrix[p, q] top_right[Ng];        // top right block of Sigma
   vector[p + q] YXstar[Ntot];
   vector[Nord] YXostar[Ntot]; // ordinal data
+  vector[p + q] YXbarstar[Ng]; // sufficient stats (continuous + ordinal)
+  matrix[p + q, p + q] Sstar[Ng];
 
 
   for (g in 1:Ng) {
@@ -746,6 +748,11 @@ transformed parameters {
 	  YXstar[i, ordidx[j]] = YXostar[i, j];
 	}
       }
+      if (use_suff && Nord > 0) { // no missing data, so patt is a proxy for groups!
+	for (j in 1:Nord) {
+	  YXbarstar[patt, ordidx[j]] = mean(YXostar[startrow[patt]:endrow[patt], j]);
+	}
+      }
     }
   }
 
@@ -768,6 +775,24 @@ transformed parameters {
 	for (j in 1:Nobs[patt]) {
 	  YXstar[i,j] = YXstar[i,obsidx[j]];
 	}
+      }
+    }
+  } else if (use_suff) {
+    // sufficient stats including augmented ordinal
+    for (patt in 1:Np) {
+      if (Ncont > 0) {
+	for (j in 1:Ncont) {
+	  YXbarstar[patt, contidx[j]] = YXbar[patt, j];
+	}
+      }
+      if (Nord > 0) {
+	Sstar[patt] = rep_matrix(0, p + q, p + q);
+	for (i in startrow[patt]:endrow[patt]) {
+	  // no tcrossprod for vectors
+	  Sstar[patt] += (YXstar[i] - YXbarstar[patt]) * (YXstar[i] - YXbarstar[patt])';
+	}
+      } else {
+	Sstar[patt] = S[patt, 1:(p + q), 1:(p + q)];
       }
     }
   }
@@ -802,11 +827,11 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   } else if (use_suff) {
     for (mm in 1:Np) {
       // mm is a proxy for group here
-      target += wishart_lpdf(S[mm, 1:Nobs[mm], 1:Nobs[mm]] | N[mm] - 1, Sigma[mm]);
-      target += multi_normal_lpdf(YXbar[mm,] | Mu[mm,], inv(N[mm]) * Sigma[mm]);
+      target += wishart_lpdf(Sstar[mm] | N[mm] - 1, Sigma[mm]);
+      target += multi_normal_lpdf(YXbarstar[mm] | Mu[mm], inv(N[mm]) * Sigma[mm]);
     }
   }
-
+  
   if (ord) {
     target += tau_jacobian;
   }
@@ -847,7 +872,6 @@ model { // N.B.: things declared in the model block do not get saved in the outp
     }
   } else if (len_free[10] > 0) {
     target += beta_lpdf(Psi_r_free | psi_r_alpha, psi_r_beta);
-    target += log(2) * len_free[10]; // jacobian for moving from (0,1) to (-1,1)
   }
 }
 generated quantities { // these matrices are saved in the output but do not figure into the likelihood
