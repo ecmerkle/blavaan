@@ -84,3 +84,30 @@ HS.model <- ' visual  =~ x1 + x2 + x3 '
 expect_equal(class(bcfa(HS.model, data=HolzingerSwineford1939, target="stan", do.fit=FALSE, group="school", group.equal=c("intercepts","loadings"), wiggle=c("intercepts"), wiggle.sd=.1))[1], "blavaan")
 expect_equal(class(bcfa(HS.model, data=HolzingerSwineford1939, target="stanclassic", do.fit=FALSE, group="school", group.equal=c("intercepts","loadings"), wiggle=c("intercepts"), wiggle.sd=.1))[1], "blavaan")
 expect_equal(class(bcfa(HS.model, data=HolzingerSwineford1939, target="jags", do.fit=FALSE, group="school", group.equal=c("intercepts","loadings"), wiggle=c("intercepts"), wiggle.sd=.1))[1], "blavaan")
+
+## moment match mcmcextra
+
+set.seed(341)
+
+x1 <- rnorm(100)
+y1 <- 0.5 + 2*x1 + rnorm(100)
+g <- rep(1:2, each=50)
+Data <- data.frame(y1 = y1, x1 = x1, g = g)
+
+model <- ' y1 ~ prior("normal(0,1)")*x1 '
+fitstanmomentmatch <- bsem(
+  model, 
+  data=Data, 
+  fixed.x=TRUE, 
+  burnin=20,
+  sample=20,
+  mcmcextra=list(data=list(moment_match_k_threshold=0.5)),
+  target="stan",
+  seed=1
+)
+momentmatch_mcobj <- blavInspect(fitstanmomentmatch, "mcobj")
+expect_true("Lambda_y_free" %in% names(momentmatch_mcobj@par_dims))
+expect_equal(
+  fitstanmomentmatch@external$mcmcdata$moment_match_k_threshold,
+  0.5
+)
