@@ -234,6 +234,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
       tmparr[i,,] <- diag(nrow=ncol(YX) + 1)
     }
     dat$S <- tmparr
+    dat$YXbar <- array(0, dim = c(dat$Ng, ncol(YX)))
   } else {
     if (missing(YX)) {
       dat$has_data <- 0L
@@ -246,6 +247,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
       }
       dat$YX <- array(NA_real_, dim = c(dat$Ntot, ncol(S)))
       dat$YXo <- array(NA_real_, dim = c(0, ncol(YXo)))
+      dat$YXbar <- array(NA_real_, dim = c(dat$Ng, ncol(S)))
     } else {
       if (NROW(YX) != dat$Ntot) stop("blavaan ERROR: nrow(YX) != Ntot.")
 
