@@ -136,14 +136,7 @@ blavFitIndices <- function(object, thin = 1, pD = c("loo","waic","dic"),
             'which are used by lavaan::fitMeasures() to calculate the df).', call. = FALSE)
 
     ## no need to call hidden BayesChiFit(), use lavaan to calculate
-    postDist <- postpred(lavpartable = object@ParTable,
-                         lavmodel = object@Model,
-                         lavoptions = object@Options,
-                         lavsamplestats = object@SampleStats,
-                         lavdata = object@Data,
-                         lavcache = object@Cache,
-                         lavjags = object@external$mcmcout,
-                         measure = fit.measures, thin = thin)$ppdist$obs
+    postDist <- postpred(lavobject = object, measure = fit.measures, thin = thin)$ppdist$obs
     indexMat <- do.call(rbind, postDist)
     indexList <- sapply(colnames(indexMat), function(cc) indexMat[ , cc],
                         simplify = FALSE)
@@ -165,14 +158,8 @@ blavFitIndices <- function(object, thin = 1, pD = c("loo","waic","dic"),
     ##        that iteration's model-implied variances?
 
   } else if (rescale == "ppmc") {
-    reps <- unlist(postpred(lavpartable = object@ParTable,
-                     lavmodel = object@Model,
-                     lavoptions = object@Options,
-                     lavsamplestats = object@SampleStats,
-                     lavdata = object@Data,
-                     lavcache = object@Cache,
-                     lavjags = object@external$mcmcout,
-                     samplls = object@external$samplls)$ppdist[["reps"]])
+    reps <- unlist(postpred(samplls = object@external$samplls,
+                            lavobject = object)$ppdist[["reps"]])
   } else reps <- NULL
 
   if (is.null(baseline.model)) {
@@ -197,14 +184,8 @@ blavFitIndices <- function(object, thin = 1, pD = c("loo","waic","dic"),
               " the hypothesized and null models.", call. = FALSE)
     } else {
       if (rescale == "ppmc") {
-        reps_null <- postpred(lavpartable = baseline.model@ParTable,
-                              lavmodel = baseline.model@Model,
-                              lavoptions = baseline.model@Options,
-                              lavsamplestats = baseline.model@SampleStats,
-                              lavdata = baseline.model@Data,
-                              lavcache = baseline.model@Cache,
-                              lavjags = baseline.model@external$mcmcout,
-                              samplls = baseline.model@external$samplls)$ppdist[["reps"]]
+        reps_null <- postpred(samplls = baseline.model@external$samplls,
+                              lavobject = baseline.model)$ppdist[["reps"]]
       }
       pD_null <- fitMeasures(baseline.model, paste0('p_', pD))
     }

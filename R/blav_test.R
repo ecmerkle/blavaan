@@ -34,9 +34,7 @@ blav_model_test <- function(lavmodel       = NULL,
     if(lavoptions$target == "stan") {
         ppp <- stansumm['ppp', 'mean']
     } else {
-        ppp <- postpred(lavpartable, lavmodel, lavoptions,
-                        lavsamplestats, lavdata, lavcache, lavjags,
-                        samplls, lavobject)$ppval
+        ppp <- postpred(samplls, lavobject)$ppval
     }
         
     TEST[[1]] <- list(test="mloglik",

@@ -189,10 +189,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
                 "You could try running the model again to see how much the criteria fluctuate.\n",
                 "You can also manually set llnsamp for greater accuracy (but also greater runtime).\n\n")
           }
-          casells <- case_lls(object@external$mcmcout, object@Model,
-                              object@ParTable, object@SampleStats,
-                              lavopt, object@Cache,
-                              object@Data, make_mcmc(object@external$mcmcout), object)
+          casells <- case_lls(object@external$mcmcout, make_mcmc(object@external$mcmcout), object)
         }
 
         fitres <- waic(casells)
@@ -230,10 +227,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
             } else {
                 samps <- make_mcmc(object@external$mcmcout)
             }
-            casells <- case_lls(object@external$mcmcout, object@Model,
-                                object@ParTable, object@SampleStats,
-                                lavopt, object@Cache,
-                                object@Data, samps,
+            casells <- case_lls(object@external$mcmcout, samps,
                                 lavobject = object, conditional = TRUE)
 
             fitres <- waic(casells)

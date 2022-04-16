@@ -785,25 +785,23 @@ blavaan <- function(...,  # default lavaan arguments
         attr(x, "control") <- bcontrol
 
         ## log-likelihoods
-        tmplo <- lavoptions
-        tmplo$target <- "jags" ## to ensure computation in R, vs extraction of the
-                               ## log-likehoods from Stan
+        LAV@ParTable <- lavpartable
+        LAV@Model <- lavmodel
+        LAV@Options$target <- "jags" ## to ensure computation in R, vs extraction of the
+                                     ## log-likehoods from Stan
         ## FIXME: modify so that fx is commensurate with logl from Stan
         ##        for ystar, could take means of truncated normals
-        attr(x, "fx") <- get_ll(lavmodel = lavmodel, lavpartable = lavpartable,
-                                lavsamplestats = lavsamplestats, lavoptions = tmplo,
-                                lavcache = lavcache, lavdata = lavdata,
-                                lavobject = LAV, standata = rjarg$data)[1]
+        attr(x, "fx") <- get_ll(lavobject = LAV, standata = rjarg$data)[1]
+        LAV@Options$target <- target
+
+
         if(save.lvs & jag.do.fit & !ordmod) {
             if(target == "jags"){
                 fullpmeans <- summary(make_mcmc(res))[[1]][,"Mean"]
             } else {
                 fullpmeans <- stansumm[,"mean"] #rstan::summary(res)$summary[,"mean"]
             }
-            cfx <- get_ll(fullpmeans, lavmodel = lavmodel, lavpartable = lavpartable,
-                          lavsamplestats = lavsamplestats, lavoptions = lavoptions,
-                          lavcache = lavcache, lavdata = lavdata,
-                          lavobject = LAV, conditional = TRUE)[1]
+            cfx <- get_ll(fullpmeans, lavobject = LAV, conditional = TRUE)[1]
         } else {
             cfx <- NULL
         }
@@ -830,9 +828,8 @@ blavaan <- function(...,  # default lavaan arguments
     if(lavoptions$test != "none") {
       cat("Computing posterior predictives...\n")
       lavmcmc <- make_mcmc(res)
-      samplls <- samp_lls(res, lavmodel, lavpartable, lavsamplestats,
-                          lavoptions, lavcache, lavdata, lavmcmc, lavobject = LAV,
-                          standata = rjarg$data)
+      LAV@Options <- lavoptions
+      samplls <- samp_lls(res, lavmcmc, lavobject = LAV, standata = rjarg$data)
       if(jags.ic) {
         sampkls <- samp_kls(res, lavmodel, lavpartable,
                             lavsamplestats, lavoptions, lavcache,
@@ -845,10 +842,7 @@ blavaan <- function(...,  # default lavaan arguments
         if(target == "stan"){
           lavmcmc <- make_mcmc(res, stanlvs) ## add on lvs
         }
-        csamplls <- samp_lls(res, lavmodel, lavpartable,
-                             lavsamplestats, lavoptions, lavcache,
-                             lavdata, lavmcmc, lavobject = LAV,
-                             conditional = TRUE)
+        csamplls <- samp_lls(res, lavmcmc, lavobject = LAV, conditional = TRUE)
         if(jags.ic) {
           csampkls <- samp_kls(res, lavmodel, lavpartable,
                                lavsamplestats, lavoptions, lavcache,

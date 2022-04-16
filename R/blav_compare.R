@@ -21,10 +21,8 @@ blavCompare <- function(object1, object2, ...) {
     ll1 <- loo::extract_log_lik(object1@external$mcmcout)
   } else {
     lavopt1$estimator <- "ML"
-    ll1 <- case_lls(object1@external$mcmcout, object1@Model,
-                    object1@ParTable, object1@SampleStats,
-                    lavopt1, object1@Cache,
-                    object1@Data, make_mcmc(object1@external$mcmcout))
+    ll1 <- case_lls(object1@external$mcmcout, make_mcmc(object1@external$mcmcout),
+                    object1)
   }
   nchain1 <- blavInspect(object1, "n.chains")
   niter1 <- nrow(ll1)/nchain1
@@ -35,10 +33,8 @@ blavCompare <- function(object1, object2, ...) {
     ll2 <- loo::extract_log_lik(object2@external$mcmcout)
   } else {
     lavopt2$estimator <- "ML"
-    ll2 <- case_lls(object2@external$mcmcout, object2@Model,
-                    object2@ParTable, object2@SampleStats,
-                    lavopt2, object2@Cache,
-                    object2@Data, make_mcmc(object2@external$mcmcout))
+    ll2 <- case_lls(object2@external$mcmcout, make_mcmc(object2@external$mcmcout),
+                    object2)
   }
   nchain2 <- blavInspect(object1, "n.chains")
   niter2 <- nrow(ll2)/nchain2

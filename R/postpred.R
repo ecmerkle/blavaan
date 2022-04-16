@@ -23,11 +23,17 @@
 ###   - for custom discFUN, updated simulated data to retain grouping variable
 ###     name and the group labels
 
-postpred <- function(lavpartable, lavmodel, lavoptions,
-                     lavsamplestats, lavdata, lavcache, lavjags,
-                     samplls = NULL, lavobject = NULL, measure = "logl", thin = 1,
+postpred <- function(samplls = NULL, lavobject = NULL, measure = "logl", thin = 1,
                      discFUN = NULL, probs = c(.025, .975)) {
 
+  lavpartable <- lavobject@ParTable
+  lavmodel <- lavobject@Model
+  lavoptions <- lavobject@Options
+  lavsamplestats <- lavobject@SampleStats
+  lavdata <- lavobject@Data
+  lavcache <- lavobject@Cache
+  lavjags <- lavobject@external$mcmcout
+  
   ## check custom discrepancy function(s)
   if (!is.null(discFUN)) {
     if (!is.list(discFUN)) discFUN <- list(discFUN)
@@ -123,12 +129,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
 
       } else {
         ## save alternative fit.measures=measure for observed data
-        chisq.obs <- get_ll(postsamp = lavmcmc[[j]][i,],
-                            lavmodel = lmorig,
-                            lavsamplestats = lavsamplestats,
-                            lavdata = ldorig,
-                            lavpartable = lavpartable,
-                            lavoptions = lavoptions,
+        chisq.obs <- get_ll(postsamp = lavmcmc[[j]][i,], lavobject = lavobject,
                             measure = measure, standata = standata)
       }
 
@@ -153,22 +154,15 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
 
       ## SIMULATED DATA
       if (!mis & !length(discFUN) & measure[1] %in% c("logl", "chisq") & length(measure) == 1) {
-        lavdata@X <- dataX
-        chisq.boot <- 2*diff(get_ll(lavmodel = lavmodel,
-                                    lavsamplestats = lavsamplestats,
-                                    lavdata = lavdata,
-                                    lavoptions = lavoptions,
+        lavobject@Data@X <- dataX
+        chisq.boot <- 2*diff(get_ll(lavobject = lavobject,
                                     measure = measure[1], standata = simstandata))
 
       ## chi-squared for (in)complete data
       } else if (!length(discFUN) & measure[1] %in% c("logl", "chisq") & length(measure) == 1) {
         lavoptions$target <- "jags" ## because we need both h0 and h1 ll
-        lavdata@X <- dataX
-        chisq.boot <- 2*diff(get_ll(lavmodel = lavmodel,
-                                    lavsamplestats = lavsamplestats,
-                                    lavoptions = lavoptions,
-                                    lavdata = lavdata,
-                                    lavobject = lavobject,
+        lavobject@Data@X <- dataX
+        chisq.boot <- 2*diff(get_ll(lavobject = lavobject,
                                     measure = measure[1], standata = simstandata))
       } else {
         ## any other measure/discFUN

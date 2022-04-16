@@ -609,8 +609,6 @@ ppmc <- function(object, thin = 1, fit.measures = c("srmr","chisq"),
     }
   }
 
-  ## if we have lv samples, send the full object in for convenience functions involving lvs
-  fullobj <- NULL
   jagtarget <- lavInspect(object, "options")$target == "jags"
 
   if(jagtarget){
@@ -620,20 +618,9 @@ ppmc <- function(object, thin = 1, fit.measures = c("srmr","chisq"),
   }
   if (etas & conditional) {
     if (!length(discFUN)) warning("blavaan WARNING: conditional=TRUE has no effect if you do not supply a discFUN.")
-    fullobj <- object
-  } else if (blavInspect(object, "categorical")) {
-    fullobj <- object
   }
   
-  out <- postpred(lavpartable = object@ParTable,
-                  lavmodel = object@Model,
-                  lavoptions = object@Options,
-                  lavsamplestats = object@SampleStats,
-                  lavdata = object@Data,
-                  lavcache = object@Cache,
-                  lavjags = object@external$mcmcout,
-                  samplls = object@external$samplls,
-                  lavobject = fullobj, 
+  out <- postpred(samplls = object@external$samplls, lavobject = object, 
                   measure = fit.measures, thin = thin, discFUN = discFUN)
 
   ## "out" is a list:

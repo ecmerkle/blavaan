@@ -274,7 +274,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
               ## dat$has_data <- 1L
               ## dat$S[i,,] <- diag(1, NCOL(YX))
             }
-            dat$YXbar[i,] <- colMeans(YX[(startrow[i] : endrow[i]), ])
+            dat$YXbar[i,] <- colMeans(YX[(startrow[i] : endrow[i]), , drop = FALSE])
           }
         }
       }
