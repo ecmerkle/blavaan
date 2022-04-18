@@ -787,6 +787,7 @@ blavaan <- function(...,  # default lavaan arguments
         ## log-likelihoods
         LAV@ParTable <- lavpartable
         LAV@Model <- lavmodel
+        LAV@external$mcmcout <- res
         LAV@Options$target <- "jags" ## to ensure computation in R, vs extraction of the
                                      ## log-likehoods from Stan
         ## FIXME: modify so that fx is commensurate with logl from Stan
