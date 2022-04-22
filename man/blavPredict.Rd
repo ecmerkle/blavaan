@@ -30,8 +30,9 @@ options only work for target="stan", and "number of samples" is defined
 as the number of posterior samples across all chains.
 
 \code{type="lv"}: The posterior distribution of latent variables
-conditioned on observed variables. Returns a matrix with
-"number of samples" rows and "number of latent variables" columns.
+conditioned on observed variables. Returns a list with
+"number of samples" entries, where each entry is a matrix where rows 
+are observations and columns are latent variables.
 
 \code{type="yhat"}: The posterior expected value of observed variables
 conditioned on the sampled latent variables. Returns a list with
