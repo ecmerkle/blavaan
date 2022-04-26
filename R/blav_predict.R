@@ -37,20 +37,12 @@ blavPredict <- function(object, newdata = NULL, type = "lv") {
   ## ymis: posterior predictive distribution of missing values conditioned on observed values; matrix
   if(type == "lv") {
     FS <- do.call("rbind", blavInspect(object, 'lvs'))
-    ## column names contain indices to store factor scores in matrix
-    eta.idx <- colnames(FS)
+
     ## N and latent variable names, to set dimensions
     N <- lavInspect(object, "ntotal")
-    etas <- lavNames(object, "lv") #FIXME: assumes same model in all groups. Problem?
-    
-    out <- list()
-    ## loop over rows (draws), assign columns to eta matrix, save to "out"
-    for (i in 1:nrow(FS)) {
-      ## has to be called "eta" to match column names (eta.idx)
-      eta <- matrix(NA, nrow = N, ncol = length(etas), dimnames = list(NULL, etas))
-      for (j in eta.idx) eval(parse(text = paste(j, "<-", FS[i, j]) ))
-      out[[i]] <- eta
-    }
+    etas <- lavNames(object, "lv")
+
+    out <- lapply(1:NROW(FS), function(i) matrix(FS[i,], N, length(etas)))
   } else if(type == "lvmeans") {
     out <- blavInspect(object, 'lvmeans')
   } else if(type %in% c("yhat", "ypred", "ymis")) {
