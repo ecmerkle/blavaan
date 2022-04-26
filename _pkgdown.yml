@@ -31,6 +31,8 @@ navbar:
         href: articles/invariance.html
       - text: Estimation with Ordinal Data
         href: articles/ordinal.html
+      - text: Approximate Fit Indices
+        href: articles/approx_fi.html
     - text: News
       href: news/index.html
     - text: Resources
