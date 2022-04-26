@@ -2,7 +2,7 @@ pandoc: 2.7.3
 pkgdown: 2.0.2
 pkgdown_sha: ~
 articles:
-  Approximate_fit_indices: Approximate_fit_indices.html
+  approx_fi: approx_fi.html
   estimate: estimate.html
   invariance: invariance.html
   ordinal: ordinal.html
@@ -11,7 +11,7 @@ articles:
   resources: resources.html
   start: start.html
   summaries: summaries.html
-last_built: 2022-04-26T15:02Z
+last_built: 2022-04-26T15:05Z
 urls:
   reference: http://ecmerkle.github.io/blavaan/reference
   article: http://ecmerkle.github.io/blavaan/articles
