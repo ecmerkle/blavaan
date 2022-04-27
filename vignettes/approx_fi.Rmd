@@ -12,15 +12,22 @@ library(bayesplot)
 
 
 ### Introduction
-In SEM, one of the first steps is to evaluate the models glbal fit. This is commonly done by presenting multiple fit indices, some of the most commonly use are based on the models $\chi^2$. We have developed Bayesian versions of these indices (@garnier_adapting_2020), and can be estimated with *blavaan*.
+In SEM, one of the first steps is to evaluate the model's global fit. This is commonly done by presenting multiple fit indices, with some of the most common being based on the model's $\chi^2$. We have developed Bayesian versions of these indices [@garnier_adapting_2020] that can be computed with *blavaan*.
 
 ### Noncentrality-Based Fit Indices
 
-This group of indices compare the hypothesis model against the perfect saturated model. Specifically with the noncentrality parameter $\hat{\lambda} = \chi^2 - df$, and adjusting it by different model/data characterictics
+This group of indices compares the hypothesized model against the perfect saturated model. It specifically uses the noncentrality parameter $\hat{\lambda} = \chi^2 - df$, with the df being adjusted by different model/data characterictics.
+Specific indices include Root Mean Square Error of approximation (RMSEA), McDonald’s centrality index (Mc), gamma-hat ($\hat{\Gamma}$), and adjusted gamma-hat ($\hat{\Gamma}_{adj}$).
 
-Indices like Root Mean Square Error of approximation (RMSEA), McDonald’s centrality index (Mc), gamma-hat ($\hat{\Gamma}$), and adjusted gamma-hat ($\hat{\Gamma}_{adj}$).
+We will show an example with the @holswi39 example. You first estimate your SEM/CFA model as usual
 
-We will show an example with the @holswi39 example. Once you have estimated your SEM/CFA model, as any other model in *blavaan*
+```{r, include=FALSE, cache=TRUE}
+HS.model <- ' visual  =~ x1 + x2 + x3
+              textual =~ x4 + x5 + x6
+              speed   =~ x7 + x8 + x9 '
+
+fit <- bcfa(HS.model, data=HolzingerSwineford1939, std.lv=TRUE)
+```
 
 ```{r, eval=F}
 HS.model <- ' visual  =~ x1 + x2 + x3
@@ -28,30 +35,43 @@ HS.model <- ' visual  =~ x1 + x2 + x3
               speed   =~ x7 + x8 + x9 '
 
 fit <- bcfa(HS.model, data=HolzingerSwineford1939, std.lv=TRUE)
-summary(fit)
-
 ```
 
 
-You need to pass the model to the ```blavFitIndices()``` function
+You then need to pass the model to the ```blavFitIndices()``` function
 
-```{r, eval=F}
+```{r bfi1, cache=TRUE}
 gl_fits <- blavFitIndices(fit)
 ```
 
-And can describe the posterior distribution for each of the indices with their ```summary()``` function. With this call, we see the 3 central tendency measures (mean median, and mode), the standard deviation, and the 90% Credible Interval 
+Finally, you can describe the posterior distribution for each of the indices with their ```summary()``` function. With this call, we see the 3 central tendency measures (mean median, and mode), the standard deviation, and the 90% Credible Interval 
 
-```{r, eval=F}
+```{r}
 summary(gl_fits, central.tendency = c("mean","median","mode"), prob = .90)
 ```
 
 ### Incremental Fit Indices
 
-Another group of fit indices compare the hypothesis model with the *worst* possible model, so called incremental indices. Such indices compare your models $\chi^2_H$ to the *null* models $\chi^2_0$ in different ways. With indices such as Comparative Fit Index (CFI), Tucker-Lewis Index (TLI), and Normed Fit Index (NFI). 
+Another group of fit indices compares the hypothesized model with the *worst* possible model, so they are called incremental indices. Such indices compare your model's $\chi^2_H$ to the *null* model's $\chi^2_0$ in different ways. Indices include the Comparative Fit Index (CFI), Tucker-Lewis Index (TLI), and Normed Fit Index (NFI). 
 
-To estimate these indices we need to defined and estimate the respective *null* model. The standard *null* model used by default in frequentist SEM programs (like *lavaan*) includes only the indicators variances and intercepts, and no covariance between all items. 
+To estimate these indices we need to defined and estimate the respective *null* model. The standard *null* model used by default in frequentist SEM programs (like *lavaan*) includes only the indicators variances and intercepts, and no covariances between items. 
 
-You can specify your *null* model by including only the respective indicator varianes in your model syntax, such as
+You can specify your *null* model by including only the respective indicator variances in your model syntax, such as
+
+```{r nmod, include=FALSE, cache=TRUE}
+HS.model_null <- '
+x1 ~~ x1 
+x2 ~~ x2 
+x3 ~~ x3
+x4 ~~ x4
+x5 ~~ x5
+x6 ~~ x6
+x7 ~~ x7
+x8 ~~ x8
+x9 ~~ x9 '
+
+fit_null <- bcfa(HS.model_null, data=HolzingerSwineford1939)
+```
 
 ```{r, eval=F}
 HS.model_null <- '
@@ -66,31 +86,31 @@ x8 ~~ x8
 x9 ~~ x9 '
 
 fit_null <- bcfa(HS.model_null, data=HolzingerSwineford1939)
-summary(fit_null)
 ```
 
 
-Once you have your hypothesis and null models, you pass both to the ```blavFitIndices``` function, and now it will provide both types of fit indices
+Once you have your hypothesized and null models, you pass both to the ```blavFitIndices``` function, and now it will provide both types of fit indices
 
-```{r, eval=F}
+```{r bfi2}
 gl_fits_all <- blavFitIndices(fit, baseline.model = fit_null)
+
 summary(gl_fits_all, central.tendency = c("mean","median","mode"), prob = .90)
 ```
 
-The ```summary()``` method presents the central tendicy measure you asked for, standar deviation, and credible interval for the noncentrality and incremental fit indices now. 
+The ```summary()``` method now presents the central tendicy measure you asked for, standard deviation, and credible interval for the noncentrality and incremental fit indices. 
 
 ### Access the indices posterior distributions
 
-You can also extract the posterior distributions for the respective indices, this way you can explore further details. For example, diagnostic plots using the ```bayesplot``` package 
+You can also extract the posterior distributions for the respective indices, this way you can explore further details. For example, diagnostic plots using the ```bayesplot``` package.
 
-```{r, eval=F}
+```{r expi}
 dist_fits <- data.frame(gl_fits_all@indices)
 head(dist_fits)
 ```
 
-Once we have saved the posterior distributions, we can explore the the historam and scatterplot between indices
+Once we have saved the posterior distributions, we can explore the the histogram and scatterplots between indices.
 
-```{r, eval=F}
+```{r plpi}
 mcmc_pairs(dist_fits, pars = c("BRMSEA","BGammaHat","BCFI","BTLI"),
            diag_fun = "hist")
 ```
@@ -98,11 +118,11 @@ mcmc_pairs(dist_fits, pars = c("BRMSEA","BGammaHat","BCFI","BTLI"),
 
 ### Summary
 
-You can estimate posterior distributions for $\chi^2$ based global fit indices. Notice that here we only presented the fit indices based on the recommended method *devM* and with the recommended number of parameters metric *loo*. While this can be adjusted by the user if desired. 
+You can estimate posterior distributions for $\chi^2$ based global fit indices. Notice that here we only presented the fit indices based on the recommended method *devM* and with the recommended number of parameters metric *loo*. These can be adjusted by the user if desired. 
 
 The general recommendation is to prefer $\hat{\Gamma}$ and CFI, as these have shown to be less sensitive to model and data characteristics. 
 
-These defaults, and recommendations are made based on previous simulation research, for more details about the fil indices please see @garnier_adapting_2020
+These defaults and recommendations are made based on previous simulation research. For more details about the fit indices please see @garnier_adapting_2020.
 
 ### References
 
