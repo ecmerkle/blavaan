@@ -104,35 +104,43 @@
 <div class="section level3">
 <h3 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h3>
-<p>In SEM, one of the first steps is to evaluate the models glbal fit. This is commonly done by presenting multiple fit indices, some of the most commonly use are based on the models <span class="math inline">\(\chi^2\)</span>. We have developed Bayesian versions of these indices (<span class="citation">Garnier-Villarreal and Jorgensen (2020)</span>), and can be estimated with <em>blavaan</em>.</p>
+<p>In SEM, one of the first steps is to evaluate the model’s global fit. This is commonly done by presenting multiple fit indices, with some of the most common being based on the model’s <span class="math inline">\(\chi^2\)</span>. We have developed Bayesian versions of these indices <span class="citation">(Garnier-Villarreal and Jorgensen 2020)</span> that can be computed with <em>blavaan</em>.</p>
 </div>
 <div class="section level3">
 <h3 id="noncentrality-based-fit-indices">Noncentrality-Based Fit Indices<a class="anchor" aria-label="anchor" href="#noncentrality-based-fit-indices"></a>
 </h3>
-<p>This group of indices compare the hypothesis model against the perfect saturated model. Specifically with the noncentrality parameter <span class="math inline">\(\hat{\lambda} = \chi^2 - df\)</span>, and adjusting it by different model/data characterictics</p>
-<p>Indices like Root Mean Square Error of approximation (RMSEA), McDonald’s centrality index (Mc), gamma-hat (<span class="math inline">\(\hat{\Gamma}\)</span>), and adjusted gamma-hat (<span class="math inline">\(\hat{\Gamma}_{adj}\)</span>).</p>
-<p>We will show an example with the <span class="citation">Holzinger and Swineford (1939)</span> example. Once you have estimated your SEM/CFA model, as any other model in <em>blavaan</em></p>
+<p>This group of indices compares the hypothesized model against the perfect saturated model. It specifically uses the noncentrality parameter <span class="math inline">\(\hat{\lambda} = \chi^2 - df\)</span>, with the df being adjusted by different model/data characterictics. Specific indices include Root Mean Square Error of approximation (RMSEA), McDonald’s centrality index (Mc), gamma-hat (<span class="math inline">\(\hat{\Gamma}\)</span>), and adjusted gamma-hat (<span class="math inline">\(\hat{\Gamma}_{adj}\)</span>).</p>
+<p>We will show an example with the <span class="citation">Holzinger and Swineford (1939)</span> example. You first estimate your SEM/CFA model as usual</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">HS.model</span> <span class="op">&lt;-</span> <span class="st">' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6
               speed   =~ x7 + x8 + x9 '</span>
 
-<span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcfa.html">bcfa</a></span><span class="op">(</span><span class="va">HS.model</span>, data<span class="op">=</span><span class="va">HolzingerSwineford1939</span>, std.lv<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></code></pre></div>
-<p>You need to pass the model to the <code><a href="../reference/blavFitIndices.html">blavFitIndices()</a></code> function</p>
+<span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcfa.html">bcfa</a></span><span class="op">(</span><span class="va">HS.model</span>, data<span class="op">=</span><span class="va">HolzingerSwineford1939</span>, std.lv<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+<p>You then need to pass the model to the <code><a href="../reference/blavFitIndices.html">blavFitIndices()</a></code> function</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">gl_fits</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blavFitIndices.html">blavFitIndices</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></code></pre></div>
-<p>And can describe the posterior distribution for each of the indices with their <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> function. With this call, we see the 3 central tendency measures (mean median, and mode), the standard deviation, and the 90% Credible Interval</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<pre><code><span class="co">## Warning: </span>
+<span class="co">## 10 (3.3%) p_waic estimates greater than 0.4. We recommend trying loo instead.</span></code></pre>
+<p>Finally, you can describe the posterior distribution for each of the indices with their <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> function. With this call, we see the 3 central tendency measures (mean median, and mode), the standard deviation, and the 90% Credible Interval</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">gl_fits</span>, central.tendency <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mean"</span>,<span class="st">"median"</span>,<span class="st">"mode"</span><span class="op">)</span>, prob <span class="op">=</span> <span class="fl">.90</span><span class="op">)</span></code></pre></div>
+<pre><code><span class="co">## </span>
+<span class="co">## Posterior summary statistics and highest posterior density (HPD) 90% credible intervals for devm-based fit indices:</span>
+<span class="co">## </span>
+<span class="co">##                EAP Median   MAP    SD lower upper</span>
+<span class="co">## BRMSEA       0.099  0.098 0.098 0.006 0.089 0.109</span>
+<span class="co">## BGammaHat    0.956  0.957 0.957 0.005 0.948 0.965</span>
+<span class="co">## adjBGammaHat 0.888  0.889 0.891 0.014 0.866 0.909</span>
+<span class="co">## BMc          0.902  0.903 0.905 0.012 0.883 0.921</span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="incremental-fit-indices">Incremental Fit Indices<a class="anchor" aria-label="anchor" href="#incremental-fit-indices"></a>
 </h3>
-<p>Another group of fit indices compare the hypothesis model with the <em>worst</em> possible model, so called incremental indices. Such indices compare your models <span class="math inline">\(\chi^2_H\)</span> to the <em>null</em> models <span class="math inline">\(\chi^2_0\)</span> in different ways. With indices such as Comparative Fit Index (CFI), Tucker-Lewis Index (TLI), and Normed Fit Index (NFI).</p>
-<p>To estimate these indices we need to defined and estimate the respective <em>null</em> model. The standard <em>null</em> model used by default in frequentist SEM programs (like <em>lavaan</em>) includes only the indicators variances and intercepts, and no covariance between all items.</p>
-<p>You can specify your <em>null</em> model by including only the respective indicator varianes in your model syntax, such as</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<p>Another group of fit indices compares the hypothesized model with the <em>worst</em> possible model, so they are called incremental indices. Such indices compare your model’s <span class="math inline">\(\chi^2_H\)</span> to the <em>null</em> model’s <span class="math inline">\(\chi^2_0\)</span> in different ways. Indices include the Comparative Fit Index (CFI), Tucker-Lewis Index (TLI), and Normed Fit Index (NFI).</p>
+<p>To estimate these indices we need to defined and estimate the respective <em>null</em> model. The standard <em>null</em> model used by default in frequentist SEM programs (like <em>lavaan</em>) includes only the indicators variances and intercepts, and no covariances between items.</p>
+<p>You can specify your <em>null</em> model by including only the respective indicator variances in your model syntax, such as</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">HS.model_null</span> <span class="op">&lt;-</span> <span class="st">'
 x1 ~~ x1 
 x2 ~~ x2 
@@ -144,32 +152,56 @@ x7 ~~ x7
 x8 ~~ x8
 x9 ~~ x9 '</span>
 
-<span class="va">fit_null</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcfa.html">bcfa</a></span><span class="op">(</span><span class="va">HS.model_null</span>, data<span class="op">=</span><span class="va">HolzingerSwineford1939</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit_null</span><span class="op">)</span></code></pre></div>
-<p>Once you have your hypothesis and null models, you pass both to the <code>blavFitIndices</code> function, and now it will provide both types of fit indices</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">gl_fits_all</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blavFitIndices.html">blavFitIndices</a></span><span class="op">(</span><span class="va">fit</span>, baseline.model <span class="op">=</span> <span class="va">fit_null</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">gl_fits_all</span>, central.tendency <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mean"</span>,<span class="st">"median"</span>,<span class="st">"mode"</span><span class="op">)</span>, prob <span class="op">=</span> <span class="fl">.90</span><span class="op">)</span></code></pre></div>
-<p>The <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> method presents the central tendicy measure you asked for, standar deviation, and credible interval for the noncentrality and incremental fit indices now.</p>
+<span class="va">fit_null</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcfa.html">bcfa</a></span><span class="op">(</span><span class="va">HS.model_null</span>, data<span class="op">=</span><span class="va">HolzingerSwineford1939</span><span class="op">)</span></code></pre></div>
+<p>Once you have your hypothesized and null models, you pass both to the <code>blavFitIndices</code> function, and now it will provide both types of fit indices</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">gl_fits_all</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blavFitIndices.html">blavFitIndices</a></span><span class="op">(</span><span class="va">fit</span>, baseline.model <span class="op">=</span> <span class="va">fit_null</span><span class="op">)</span></code></pre></div>
+<pre><code><span class="co">## Warning: </span>
+<span class="co">## 10 (3.3%) p_waic estimates greater than 0.4. We recommend trying loo instead.</span></code></pre>
+<pre><code><span class="co">## Warning: </span>
+<span class="co">## 4 (1.3%) p_waic estimates greater than 0.4. We recommend trying loo instead.</span></code></pre>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">gl_fits_all</span>, central.tendency <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mean"</span>,<span class="st">"median"</span>,<span class="st">"mode"</span><span class="op">)</span>, prob <span class="op">=</span> <span class="fl">.90</span><span class="op">)</span></code></pre></div>
+<pre><code><span class="co">## </span>
+<span class="co">## Posterior summary statistics and highest posterior density (HPD) 90% credible intervals for devm-based fit indices:</span>
+<span class="co">## </span>
+<span class="co">##                EAP Median   MAP    SD lower upper</span>
+<span class="co">## BRMSEA       0.099  0.098 0.098 0.006 0.089 0.109</span>
+<span class="co">## BGammaHat    0.956  0.957 0.957 0.005 0.948 0.965</span>
+<span class="co">## adjBGammaHat 0.888  0.889 0.891 0.014 0.866 0.909</span>
+<span class="co">## BMc          0.902  0.903 0.905 0.012 0.883 0.921</span>
+<span class="co">## BCFI         0.930  0.931 0.932 0.009 0.916 0.944</span>
+<span class="co">## BTLI         0.882  0.884 0.885 0.015 0.859 0.907</span>
+<span class="co">## BNFI         0.910  0.910 0.911 0.009 0.897 0.924</span></code></pre>
+<p>The <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> method now presents the central tendicy measure you asked for, standard deviation, and credible interval for the noncentrality and incremental fit indices.</p>
 </div>
 <div class="section level3">
 <h3 id="access-the-indices-posterior-distributions">Access the indices posterior distributions<a class="anchor" aria-label="anchor" href="#access-the-indices-posterior-distributions"></a>
 </h3>
-<p>You can also extract the posterior distributions for the respective indices, this way you can explore further details. For example, diagnostic plots using the <code>bayesplot</code> package</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<p>You can also extract the posterior distributions for the respective indices, this way you can explore further details. For example, diagnostic plots using the <code>bayesplot</code> package.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">dist_fits</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="va">gl_fits_all</span><span class="op">@</span><span class="va">indices</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">dist_fits</span><span class="op">)</span></code></pre></div>
-<p>Once we have saved the posterior distributions, we can explore the the historam and scatterplot between indices</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<pre><code><span class="co">##       BRMSEA BGammaHat adjBGammaHat       BMc      BCFI      BTLI      BNFI</span>
+<span class="co">## 1 0.09000203 0.9634407    0.9063494 0.9181634 0.9413199 0.9014146 0.9204687</span>
+<span class="co">## 2 0.08746138 0.9654052    0.9113817 0.9225372 0.9450426 0.9076689 0.9242131</span>
+<span class="co">## 3 0.10019088 0.9550874    0.8849516 0.8995998 0.9281203 0.8792386 0.9080076</span>
+<span class="co">## 4 0.09362492 0.9605566    0.8989614 0.9117477 0.9369738 0.8941129 0.9164397</span>
+<span class="co">## 5 0.09292989 0.9611174    0.9003979 0.9129947 0.9376991 0.8953315 0.9170712</span>
+<span class="co">## 6 0.09675424 0.9579884    0.8923828 0.9060404 0.9332380 0.8878366 0.9130076</span></code></pre>
+<p>Once we have saved the posterior distributions, we can explore the the histogram and scatterplots between indices.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-scatterplots.html" class="external-link">mcmc_pairs</a></span><span class="op">(</span><span class="va">dist_fits</span>, pars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BRMSEA"</span>,<span class="st">"BGammaHat"</span>,<span class="st">"BCFI"</span>,<span class="st">"BTLI"</span><span class="op">)</span>,
            diag_fun <span class="op">=</span> <span class="st">"hist"</span><span class="op">)</span></code></pre></div>
+<pre><code><span class="co">## Warning: Only one chain in 'x'. This plot is more useful with multiple chains.</span></code></pre>
+<p><img src="approx_fi_files/figure-html/plpi-1.png" width="700"></p>
 </div>
 <div class="section level3">
 <h3 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
 </h3>
-<p>You can estimate posterior distributions for <span class="math inline">\(\chi^2\)</span> based global fit indices. Notice that here we only presented the fit indices based on the recommended method <em>devM</em> and with the recommended number of parameters metric <em>loo</em>. While this can be adjusted by the user if desired.</p>
+<p>You can estimate posterior distributions for <span class="math inline">\(\chi^2\)</span> based global fit indices. Notice that here we only presented the fit indices based on the recommended method <em>devM</em> and with the recommended number of parameters metric <em>loo</em>. These can be adjusted by the user if desired.</p>
 <p>The general recommendation is to prefer <span class="math inline">\(\hat{\Gamma}\)</span> and CFI, as these have shown to be less sensitive to model and data characteristics.</p>
-<p>These defaults, and recommendations are made based on previous simulation research, for more details about the fil indices please see <span class="citation">Garnier-Villarreal and Jorgensen (2020)</span></p>
+<p>These defaults and recommendations are made based on previous simulation research. For more details about the fit indices please see <span class="citation">Garnier-Villarreal and Jorgensen (2020)</span>.</p>
 </div>
 <div class="section level3 unnumbered">
 <h3 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
