@@ -36,7 +36,62 @@ adapted_ghq <- function(fit, ngq, samprow = NULL) {
 
   return( log( rowSums(out) ) )
 }
+
+## fixed gauss-hermite quadrature, to reuse quadrature points across cases
+fixed_ghq <- function(fit, ngq, samprow = NULL) {
+  GLIST <- fit@Model@GLIST
+  if (any(GLIST$theta[lower.tri(GLIST$theta)] != 0L)) stop("blavaan ERROR: The quadrature method cannot be used with non-diagonal theta matrix.")
+  ndim <- NROW(GLIST$alpha)
   
+  samps <- do.call("rbind", make_mcmc(fit@external$mcmcout, fit@external$stanlvs))
+  if(length(samprow) > 1) samps <- samps[samprow, , drop = FALSE]
+
+  XW <- lavaan:::lav_integration_gauss_hermite(n = ngq, ndim = ndim, dnorm = TRUE)
+  x.star <- XW$x
+  x.star.eval <- apply(XW$x, 2, unique)
+  w.star <- XW$w
+
+  ## response patterns
+  standata <- fit@external$mcmcdata
+  YX <- matrix(NA, NROW(standata$YX), NCOL(standata$YX) + NCOL(standata$YXo))
+  YX[, standata$contidx] <- standata$YX
+  YX[, standata$ordidx] <- standata$YXo
+  rpatts <- apply(standata$YXo, 1, paste0)
+  upatts <- as.numeric(as.factor(rpatts))
+  YXou <- standata$YXo[!duplicated(upatts), , drop = FALSE]
+  deltas <- which(names(fit@Model@GLIST) == "delta")
+
+  origlm <- fit@Model
+
+  out <- matrix(NA, NROW(samps), NROW(YX))
+  
+  for(i in 1:NROW(samps)) {
+    lavmodel <- fill_params(samps[i, , drop = FALSE], origlm, fit@ParTable)
+    lavmodel@GLIST[[deltas]] <- NULL
+    fit@Model <- lavmodel
+    mnvec <- lavPredict(fit, type = "ov", ETA = x.star.eval)
+    if(inherits(mnvec, "matrix")) mnvec <- list(mnvec)
+
+    ## for each entry in mnvec, do line 345 of model_loglik for each set of thresholds
+    ## a matrix per column of mnvec: number of rows in x.star.eval by number of ordered categories
+
+    ## check for continuous data and throw error for now
+
+    ## for each response pattern, use x.star to pull values out of the above matrices and sum
+    qpt.uniq <- matrix(NA, NROW(YXou), NROW(x.star))
+
+
+
+    qpt.uniq <- sweep(exp(qpt.uniq), 2, w.star, FUN = "*")
+      
+    ## assign values to full data matrix, for each response pattern
+
+    out[i,] <- above
+  }
+
+  out
+}
+
 adapted_weights <- function(samps, ngq, alphas, psis, grpidx, etamns, etacovs, N) {
   ## adapt gh nodes/weights to each case
   ndim <- NROW(alphas[[1]])

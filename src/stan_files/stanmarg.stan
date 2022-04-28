@@ -435,6 +435,8 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
   matrix[(p + q), 1] Nu_skeleton[Ng];
   matrix[(m + n), 1] Alpha_skeleton[Ng];
   matrix[sum(nlevs) - Nord, 1] Tau_skeleton[Ng];
+  vector[ord ? 0 : (p + q)] YXbarstar[Np];
+  matrix[ord ? 0 : (p + q), ord ? 0 : (p + q)] Sstar[Np];
 
   matrix[m, m] I = diag_matrix(rep_vector(1, m));
 
@@ -603,6 +605,18 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
       }
     }    
   }
+
+  if (!ord) {
+    // sufficient stat matrices by pattern, moved to left for missing
+    for (patt in 1:Np) {
+      Sstar[patt] = rep_matrix(0, p + q, p + q);
+      Sstar[patt, 1:Nobs[patt], 1:Nobs[patt]] = S[patt, Obsvar[patt, 1:Nobs[patt]], Obsvar[patt, 1:Nobs[patt]]];
+
+      for (j in 1:Nobs[patt]) {
+	YXbarstar[patt,j] = YXbar[patt, Obsvar[patt,j]];
+      }
+    }
+  }
 }
 parameters {
   // free elements (possibly with inequality constraints) for coefficient matrices
@@ -656,9 +670,6 @@ transformed parameters {
   matrix[p, q] top_right[Ng]; // top right block of Sigma
   vector[p + q] YXstar[Ntot];
   vector[Nord] YXostar[Ntot]; // ordinal data
-  vector[p + q] YXbarstar[Np]; // sufficient stats (continuous + ordinal)
-  matrix[p + q, p + q] Sstar[Np];
-
 
   for (g in 1:Ng) {
     // model matrices
@@ -780,19 +791,11 @@ transformed parameters {
 	  YXstar[i, ordidx[j]] = YXostar[i, j];
 	}
       }
-      
-      for (j in 1:Nord) {
-        YXbarstar[patt, ordidx[j]] = mean(YXostar[startrow[patt]:endrow[patt], j]);
-      }
     }
   }
 
   if (Ncont > 0) {
     for (patt in 1:Np) {
-      for (j in 1:Ncont) {
-        YXbarstar[patt, contidx[j]] = YXbar[patt, j];
-      }
-
       // FIXME could be removed after generated quantities uses multi_normal_suff
       for (i in startrow[patt]:endrow[patt]) {
 	for (j in 1:Ncont) {
@@ -801,29 +804,12 @@ transformed parameters {
       }
     }
   }
-  
-  // cross-products
-  if (Nord > 0) {
+
+  // move observations to the left for ordinal case
+  if (missing && Nord > 0) {
     for (patt in 1:Np) {
-      Sstar[patt] = rep_matrix(0, p + q, p + q);
       for (i in startrow[patt]:endrow[patt]) {
-	Sstar[patt] += inv(endrow[patt] - startrow[patt] + 1) * (YXstar[i] - YXbarstar[patt]) * (YXstar[i] - YXbarstar[patt])';
-      }
-    }
-  } else {
-    for (patt in 1:Np) {
-      Sstar[patt] = rep_matrix(0, p + q, p + q);
-      Sstar[patt, 1:Nobs[patt], 1:Nobs[patt]] = S[patt, Obsvar[patt, 1:Nobs[patt]], Obsvar[patt, 1:Nobs[patt]]];
-    }
-  }
-
-  // move observations to the left for YXbar and YX
-  if (missing) {
-    for (patt in 1:Np) {
-      for (j in 1:Nobs[patt]) {
-	YXbarstar[patt,j] = YXbarstar[patt, Obsvar[patt,j]];
-
-	for (i in startrow[patt]:endrow[patt]) {
+	for (j in 1:Nobs[patt]) {
 	  YXstar[i,j] = YXstar[i, Obsvar[patt,j]];
 	}
       }
@@ -857,10 +843,22 @@ model { // N.B.: things declared in the model block do not get saved in the outp
       xdatidx = Xdatvar[mm,];
       grpidx = grpnum[mm];
 
-      target += multi_normal_suff(YXbarstar[mm, 1:Nobs[mm]], Sstar[mm, 1:Nobs[mm], 1:Nobs[mm]], Mu[grpidx, obsidx[1:Nobs[mm]]], Sigmainv[grpidx], logdetSigma[grpidx], obsidx, endrow[mm] - startrow[mm] + 1);
+      if (ord) {
+        int r1 = startrow[mm];
+	int r2 = endrow[mm];
+	
+	target += multi_normal_lpdf(YXstar[r1:r2,1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+
+	if (Nx[mm] > 0) {
+	  target += -multi_normal_lpdf(YXstar[r1:r2,xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	}
+      } else {
+	// sufficient stats
+	target += multi_normal_suff(YXbarstar[mm, 1:Nobs[mm]], Sstar[mm, 1:Nobs[mm], 1:Nobs[mm]], Mu[grpidx, obsidx[1:Nobs[mm]]], Sigmainv[grpidx], logdetSigma[grpidx], obsidx, endrow[mm] - startrow[mm] + 1);
       
-      if (Nx[mm] > 0) {
-	target += -multi_normal_suff(YXbarstar[mm, xdatidx[1:Nx[mm]]], Sstar[mm, xdatidx[1:Nx[mm]], xdatidx[1:Nx[mm]]], Mu[grpidx, xidx[1:Nx[mm]]], inverse_spd(Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]), log_determinant(Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]), xidx, endrow[mm] - startrow[mm] + 1);
+	if (Nx[mm] > 0) {
+	  target += -multi_normal_suff(YXbarstar[mm, xdatidx[1:Nx[mm]]], Sstar[mm, xdatidx[1:Nx[mm]], xdatidx[1:Nx[mm]]], Mu[grpidx, xidx[1:Nx[mm]]], inverse_spd(Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]), log_determinant(Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]), xidx, endrow[mm] - startrow[mm] + 1);
+	}
       }
     }
   }
