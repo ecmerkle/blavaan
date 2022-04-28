@@ -4,9 +4,10 @@ bibliography:
   - refs.bib
 ---
 
-```{r include=FALSE}
+```{r pld, include=FALSE}
 library(blavaan, quietly=TRUE)
 library(ggplot2, quietly=TRUE)
+library(bayesplot, quietly=TRUE)
 ```
 
 ```{r modfit, include=FALSE, cache=TRUE}
@@ -14,7 +15,7 @@ HS.model <- ' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6
               speed   =~ x7 + x8 + x9 '
      
-fit <- bcfa(HS.model, data=HolzingerSwineford1939)
+fit <- bcfa(HS.model, data=HolzingerSwineford1939, seed=959)
 ```
 
 A `plot()` method exists for *blavaan* objects, with this method making use of the *bayesplot* package [@bayesplot]. We provide details here about how this functionality works. We will use a 3-factor model for demonstration:
@@ -38,12 +39,12 @@ Many other plot types are available, coming from the *bayesplot* package. In gen
 
 
 ### Customization
-Users may wish to customize some aspects of the resulting plots. For this, the `plot()` function will output a *ggplot2* object. This makes it possible to modify the plot as if it were any other *ggplot2* object.
+Users may wish to customize some aspects of the resulting plots. For this, the `plot()` function will output a *ggplot* object. This makes it possible to modify the plot as if it were any other *ggplot* object.
 
 ```{r p2}
-p <- plot(fit, pars = 1:4, plot.type = "trace")
+p <- plot(fit, pars = 1:4, plot.type = "trace", showplot = FALSE)
 
-p + theme_bw()
+p + facet_text(size=15) + legend_none()
 ```
 
 Alternatively, users may wish to create a plot that is entirely different from what is available via `plot()`. This can be facilitated by extracting the posterior samples or the Stan model, via `blavInspect()`:
