@@ -223,9 +223,6 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$YXo <- YXo
   stopifnot(nrow(dat$YX) == dat$Ntot)
 
-  dat$use_suff <- 0L # can we use sufficient stats?
-  if (!dat$missing & !dat$ord & dat$Nx[1] == 0L) dat$use_suff <- 1L
-
   dat$has_data <- 0L
   if (pri_only) {
     dat$use_suff <- 0L
@@ -251,35 +248,27 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
     } else {
       if (NROW(YX) != dat$Ntot) stop("blavaan ERROR: nrow(YX) != Ntot.")
 
-      dat$YXbar <- array(0, dim=c(Ng, NCOL(YX)))
-      dat$S <- array(1, dim=c(Ng, NCOL(YX) + 1, NCOL(YX) + 1))
-      if (!dat$use_suff) {
-        dat$has_data <- 1L
-        if (length(contidx) > 0) {
-          for (i in 1:Ng) {
-            dat$S[i,,] <- diag(1, NCOL(YX) + 1)
-            dat$YXbar[i,] <- 0
+      dat$YXbar <- array(0, dim=c(Np, NCOL(YX)))
+      dat$S <- array(1, dim=c(Np, NCOL(YX) + 1, NCOL(YX) + 1))
+      dat$has_data <- 1L
+      if (length(contidx) > 0) {
+        for (i in 1:dat$Np) {
+          tmpyxbar <- colMeans(YX[(startrow[i] : endrow[i]), , drop = FALSE])
+          tmpyxbar[is.na(tmpyxbar)] <- 0
+          dat$YXbar[i,] <- tmpyxbar
+
+          tmpN <- endrow[i] - startrow[i] + 1
+          if(tmpN > 1) {
+            tmpS <- cov(YX[(startrow[i] : endrow[i]), , drop = FALSE]) * (tmpN - 1) / tmpN
+          } else {
+            tmpS <- matrix(0, NCOL(YX), NCOL(YX))
           }
-        }
-      } else {
-        dat$has_data <- 0L
-        if (length(contidx) > 0) {
-          for (i in 1:Ng) {
-            tmpS <- (dat$N[i] - 1) * cov(YX[(startrow[i] : endrow[i]), , drop = FALSE])
-            dat$S[i,1:NCOL(YX),1:NCOL(YX)] <- tmpS
-            if(any(eigen(tmpS, only.values = TRUE)$values <= 0)) {
-              stop("blavaan ERROR: sample cov matrix is not positive definite.")
-              ## could model the "closest" PD matrix: dat$S[i,,] <- Matrix::nearPD(dat$S[i,,])
-              ## dat$use_suff <- 0L
-              ## dat$has_data <- 1L
-              ## dat$S[i,,] <- diag(1, NCOL(YX))
-            }
-            dat$YXbar[i,] <- colMeans(YX[(startrow[i] : endrow[i]), , drop = FALSE])
-          }
+          dat$S[i,1:NCOL(YX),1:NCOL(YX)] <- tmpS
         }
       }
     }
   }
+
   dat$save_lvs <- save_lvs
   dat$do_test <- do_test
   

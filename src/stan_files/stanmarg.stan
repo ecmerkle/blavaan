@@ -214,7 +214,40 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     
     return out;
   }
+
+  matrix sig_inv_update(matrix Sigmainv, int[] obsidx, int Nobs, int np, real logdet) {
+    matrix[Nobs + 1, Nobs + 1] out;
+    int nrm = np - Nobs;
+    matrix[nrm, nrm] H;
+    matrix[nrm, Nobs] A;
+
+    H = Sigmainv[obsidx[(Nobs + 1):np], obsidx[(Nobs + 1):np]];
+    A = Sigmainv[obsidx[(Nobs + 1):np], obsidx[1:Nobs]];
+
+    out[1:Nobs, 1:Nobs] = Sigmainv[obsidx[1:Nobs], obsidx[1:Nobs]] - A' * mdivide_left_spd(H, A);
+    out[Nobs + 1, Nobs + 1] = logdet + log_determinant(H);
+
+    return out;
+  }
+  
+  real multi_normal_suff(vector xbar, matrix S, vector Mu, matrix Sigmainv, real logdetS, int[] obsidx, int N) {
+    int np = dims(Sigmainv)[1];
+    int Nobs = dims(S)[1];
+    matrix[Nobs + 1, Nobs + 1] Supdate;
+    real out;
+
+    if (Nobs < np) {
+      Supdate = sig_inv_update(Sigmainv, obsidx, Nobs, np, logdetS);
+    } else {
+      Supdate[1:Nobs, 1:Nobs] = Sigmainv;
+      Supdate[Nobs + 1, Nobs + 1] = logdetS;
+    }
     
+    // using elementwise multiplication + sum here for efficiency
+    out = -.5 * N * ( sum(Supdate[1:Nobs, 1:Nobs] .* (S + (xbar - Mu) * (xbar - Mu)')) + Supdate[Nobs + 1, Nobs + 1] + np * log(2 * pi()) );
+
+    return(out);
+  }
 }
 data {
   // see https://books.google.com/books?id=9AC-s50RjacC&lpg=PP1&dq=LISREL&pg=PA2#v=onepage&q=LISREL&f=false
@@ -235,7 +268,6 @@ data {
   int<lower=1,upper=Ng> grpnum[Np]; // group number for each row of data
   int<lower=0,upper=1> wigind; // do any parameters have approx equality constraint ('wiggle')?
   int<lower=0, upper=1> has_data; // are the raw data on y and x available?
-  int<lower=0, upper=1> use_suff; // should we use sufficient stats?
   int<lower=0, upper=1> ord; // are there any ordinal variables?
   int<lower=0> Nord; // how many ordinal variables?
   int<lower=0> ordidx[Nord]; // indexing of ordinal variables
@@ -249,8 +281,8 @@ data {
   int<lower=0> Xdatvar[Np, max(Nx)]; // indexing of fixed.x in data (differs from Xvar when missing)
   int<lower=0> emiter; // number of em iterations for saturated model in ppp (missing data only)
   int<lower=0, upper=1> do_test; // should we do everything in generated quantities?
-  vector[p + q - Nord] YXbar[Ng]; // sample means of continuous manifest variables
-  cov_matrix[p + q - Nord + 1] S[Ng];     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
+  vector[p + q - Nord] YXbar[Np]; // sample means of continuous manifest variables
+  matrix[p + q - Nord + 1, p + q - Nord + 1] S[Np];     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
 
   
   /* sparse matrix representations of skeletons of coefficient matrices, 
@@ -619,13 +651,13 @@ transformed parameters {
   matrix[p, m] Lambda_y_A[Ng];     // = Lambda_y * (I - B)^{-1}
 
   vector[p + q] Mu[Ng];
-  matrix[p + q, p + q] Sigma[Ng];                                           // model covariance matrix
+  matrix[p + q, p + q] Sigma[Ng];  // model covariance matrix
 
-  matrix[p, q] top_right[Ng];        // top right block of Sigma
+  matrix[p, q] top_right[Ng]; // top right block of Sigma
   vector[p + q] YXstar[Ntot];
   vector[Nord] YXostar[Ntot]; // ordinal data
-  vector[p + q] YXbarstar[Ng]; // sufficient stats (continuous + ordinal)
-  matrix[p + q, p + q] Sstar[Ng];
+  vector[p + q] YXbarstar[Np]; // sufficient stats (continuous + ordinal)
+  matrix[p + q, p + q] Sstar[Np];
 
 
   for (g in 1:Ng) {
@@ -748,16 +780,20 @@ transformed parameters {
 	  YXstar[i, ordidx[j]] = YXostar[i, j];
 	}
       }
-      if (use_suff && Nord > 0) { // no missing data, so patt is a proxy for groups!
-	for (j in 1:Nord) {
-	  YXbarstar[patt, ordidx[j]] = mean(YXostar[startrow[patt]:endrow[patt], j]);
-	}
+      
+      for (j in 1:Nord) {
+        YXbarstar[patt, ordidx[j]] = mean(YXostar[startrow[patt]:endrow[patt], j]);
       }
     }
   }
 
   if (Ncont > 0) {
     for (patt in 1:Np) {
+      for (j in 1:Ncont) {
+        YXbarstar[patt, contidx[j]] = YXbar[patt, j];
+      }
+
+      // FIXME could be removed after generated quantities uses multi_normal_suff
       for (i in startrow[patt]:endrow[patt]) {
 	for (j in 1:Ncont) {
 	  YXstar[i, contidx[j]] = YX[i,j];
@@ -765,34 +801,31 @@ transformed parameters {
       }
     }
   }
-
-  // now move everything to the left, if missing
-  if (missing) {
-    int obsidx[p + q];
+  
+  // cross-products
+  if (Nord > 0) {
     for (patt in 1:Np) {
-      obsidx = Obsvar[patt,];
-      for (i in startrow[patt]:endrow[patt]) {    
-	for (j in 1:Nobs[patt]) {
-	  YXstar[i,j] = YXstar[i,obsidx[j]];
-	}
+      Sstar[patt] = rep_matrix(0, p + q, p + q);
+      for (i in startrow[patt]:endrow[patt]) {
+	Sstar[patt] += inv(endrow[patt] - startrow[patt] + 1) * (YXstar[i] - YXbarstar[patt]) * (YXstar[i] - YXbarstar[patt])';
       }
     }
-  } else if (use_suff) {
-    // sufficient stats including augmented ordinal
+  } else {
     for (patt in 1:Np) {
-      if (Ncont > 0) {
-	for (j in 1:Ncont) {
-	  YXbarstar[patt, contidx[j]] = YXbar[patt, j];
-	}
-      }
-      if (Nord > 0) {
-	Sstar[patt] = rep_matrix(0, p + q, p + q);
+      Sstar[patt] = rep_matrix(0, p + q, p + q);
+      Sstar[patt, 1:Nobs[patt], 1:Nobs[patt]] = S[patt, Obsvar[patt, 1:Nobs[patt]], Obsvar[patt, 1:Nobs[patt]]];
+    }
+  }
+
+  // move observations to the left for YXbar and YX
+  if (missing) {
+    for (patt in 1:Np) {
+      for (j in 1:Nobs[patt]) {
+	YXbarstar[patt,j] = YXbarstar[patt, Obsvar[patt,j]];
+
 	for (i in startrow[patt]:endrow[patt]) {
-	  // no tcrossprod for vectors
-	  Sstar[patt] += (YXstar[i] - YXbarstar[patt]) * (YXstar[i] - YXbarstar[patt])';
+	  YXstar[i,j] = YXstar[i, Obsvar[patt,j]];
 	}
-      } else {
-	Sstar[patt] = S[patt, 1:(p + q), 1:(p + q)];
       }
     }
   }
@@ -802,33 +835,33 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   /* transformed sd parameters for priors */
   vector[len_free[5]] Theta_pri;
   vector[len_free[9]] Psi_pri;
-
+  
   /* log-likelihood */
   if (has_data) {
     int obsidx[p + q];
     int xidx[max(Nx)];
     int xdatidx[max(Nx)];
-    int r1;
-    int r2;
     int grpidx;
+    
+    /* for updating S^-1 by missing data pattern */
+    matrix[p + q, p + q] Sigmainv[Ng];
+    real logdetSigma[Ng];
+    for (g in 1:Ng) {
+      Sigmainv[g] = inverse_spd(Sigma[g]);
+      logdetSigma[g] = log_determinant(Sigma[g]);
+    }
+    
     for (mm in 1:Np) {
       obsidx = Obsvar[mm,];
       xidx = Xvar[mm,];
       xdatidx = Xdatvar[mm,];
-      r1 = startrow[mm];
-      r2 = endrow[mm];
       grpidx = grpnum[mm];
-      target += multi_normal_lpdf(YXstar[r1:r2,1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
 
+      target += multi_normal_suff(YXbarstar[mm, 1:Nobs[mm]], Sstar[mm, 1:Nobs[mm], 1:Nobs[mm]], Mu[grpidx, obsidx[1:Nobs[mm]]], Sigmainv[grpidx], logdetSigma[grpidx], obsidx, endrow[mm] - startrow[mm] + 1);
+      
       if (Nx[mm] > 0) {
-	target += -multi_normal_lpdf(YXstar[r1:r2,xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	target += -multi_normal_suff(YXbarstar[mm, xdatidx[1:Nx[mm]]], Sstar[mm, xdatidx[1:Nx[mm]], xdatidx[1:Nx[mm]]], Mu[grpidx, xidx[1:Nx[mm]]], inverse_spd(Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]), log_determinant(Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]), xidx, endrow[mm] - startrow[mm] + 1);
       }
-    }
-  } else if (use_suff) {
-    for (mm in 1:Np) {
-      // mm is a proxy for group here
-      target += wishart_lpdf(Sstar[mm] | N[mm] - 1, Sigma[mm]);
-      target += multi_normal_lpdf(YXbarstar[mm] | Mu[mm], inv(N[mm]) * Sigma[mm]);
     }
   }
   
