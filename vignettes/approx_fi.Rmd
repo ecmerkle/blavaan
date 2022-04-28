@@ -40,7 +40,7 @@ fit <- bcfa(HS.model, data=HolzingerSwineford1939, std.lv=TRUE)
 
 You then need to pass the model to the ```blavFitIndices()``` function
 
-```{r bfi1, cache=TRUE}
+```{r bfi1, cache=TRUE, warning=FALSE}
 gl_fits <- blavFitIndices(fit)
 ```
 
@@ -91,7 +91,7 @@ fit_null <- bcfa(HS.model_null, data=HolzingerSwineford1939)
 
 Once you have your hypothesized and null models, you pass both to the ```blavFitIndices``` function, and now it will provide both types of fit indices
 
-```{r bfi2}
+```{r bfi2, cache = TRUE, warning = FALSE}
 gl_fits_all <- blavFitIndices(fit, baseline.model = fit_null)
 
 summary(gl_fits_all, central.tendency = c("mean","median","mode"), prob = .90)
@@ -110,7 +110,7 @@ head(dist_fits)
 
 Once we have saved the posterior distributions, we can explore the the histogram and scatterplots between indices.
 
-```{r plpi}
+```{r plpi, warning = FALSE}
 mcmc_pairs(dist_fits, pars = c("BRMSEA","BGammaHat","BCFI","BTLI"),
            diag_fun = "hist")
 ```
