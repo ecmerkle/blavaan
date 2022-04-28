@@ -6,6 +6,7 @@ bibliography:
 
 ```{r include=FALSE}
 library(blavaan, quietly=TRUE)
+library(ggplot2, quietly=TRUE)
 ```
 
 ```{r modfit, include=FALSE, cache=TRUE}
