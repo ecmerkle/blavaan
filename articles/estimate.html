@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-2.965</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-2.967</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -118,7 +118,12 @@
 <div class="section level3">
 <h3 id="parallelization">Parallelization<a class="anchor" aria-label="anchor" href="#parallelization"></a>
 </h3>
-<p>Speed is always an issue when we sample via MCMC, especially using software like Stan or JAGS. For computers with multiple cores, the estimation can be sped up by sending each MCMC chain to a separate core. This is accomplished with the <code>bcontrol</code> argument, which is a list whose elements correspond to <code>stan()</code> or <code>run.jags()</code> arguments. For parallelizing the chains in Stan, we would want to use the argument <code>bcontrol = list(cores = 3)</code>. Many other arguments are available here; see <code>?stan</code> or <code>?run.jags</code> for all the possibilities.</p>
+<p>Speed is always an issue when we sample via MCMC, especially using software like Stan or JAGS. For computers with multiple cores, the estimation can be sped up by sending each MCMC chain to a separate core. This is accomplished with the <code>bcontrol</code> argument, which is a list whose elements correspond to <code>stan()</code> or <code>run.jags()</code> arguments. For parallelizing the chains in Stan, we would want to use the argument <code>bcontrol = list(cores = 3)</code>. Many other arguments are available here to control other aspects of estimation; see <code>?stan</code> or <code>?run.jags</code> for all the possibilities.</p>
+<p>Parallelization can also be helpful to speed up post-estimation computations. The <em>future</em> package controls this parallelization, which requires an extra command prior to estimation. The most common commands would be</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://future.futureverse.org" class="external-link">"future"</a></span><span class="op">)</span>
+<span class="fu"><a href="https://future.futureverse.org/reference/plan.html" class="external-link">plan</a></span><span class="op">(</span><span class="st">"multicore"</span><span class="op">)</span> <span class="co">## mac or linux</span>
+<span class="fu"><a href="https://future.futureverse.org/reference/plan.html" class="external-link">plan</a></span><span class="op">(</span><span class="st">"multisession"</span><span class="op">)</span> <span class="co">## windows</span></code></pre></div>
 </div>
   </main>
 </div>
