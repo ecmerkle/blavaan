@@ -873,6 +873,7 @@ lav2standata <- function(lavobject) {
   dat$N <- lavInspect(lavobject, 'nobs')
 
   xidx <- lavobject@SampleStats@x.idx[[1]]
+  allvars <- 1:nvar
 
   ## lavobject@SampleStats@missing.flag is TRUE when missing='ml',
   ## regardless of whether data are missing
@@ -898,13 +899,12 @@ lav2standata <- function(lavobject) {
     dat$Ntot <- sum(dat$N)
     dat$Obsvar <- matrix(0, dat$Np, nvar)
     dat$Nx <- rep(0, dat$Np)
-    dat$Xvar <- dat$Xdatvar <- matrix(0, dat$Np, length(xidx))
+    dat$Xvar <- dat$Xdatvar <- matrix(0, dat$Np, nvar)
 
     for (i in 1:dat$Np) {
       dat$Obsvar[i, 1:dat$Nobs[i]] <- Obsvar[[i]]
       if (dat$Nobs[i] < nvar) {
         ## missing idx is at end of Obsvar
-        allvars <- 1:nvar
         dat$Obsvar[i, (dat$Nobs[i] + 1):nvar] <- allvars[!(allvars %in% Obsvar[[i]])]
       }
       xdatidx <- match(xidx, Obsvar[[i]])
@@ -913,6 +913,11 @@ lav2standata <- function(lavobject) {
         dat$Nx[i] <- length(xpat)
         dat$Xvar[i, 1:length(xpat)] <- xpat
         dat$Xdatvar[i, 1:length(xpat)] <- xdatidx
+
+        if (dat$Nx[i] < nvar) {
+          dat$Xvar[i, (length(xpat) + 1):nvar] <- allvars[!(allvars %in% xpat)]
+          dat$Xdatvar[i, (length(xpat) + 1):nvar] <- allvars[!(allvars %in% xdatidx)]
+        }
       }
     }
 
@@ -933,6 +938,11 @@ lav2standata <- function(lavobject) {
     dat$Obsvar <- matrix(1:nvar, dat$Np, nvar, byrow=TRUE)
     dat$Nx <- array(length(xidx), dat$Np)
     dat$Xvar <- dat$Xdatvar <- matrix(xidx, dat$Np, length(xidx), byrow=TRUE)
+    if (length(xidx) < nvar) {
+      dat$Xvar <- dat$Xdatvar <- cbind(dat$Xvar,
+                                       matrix(allvars[!(allvars %in% xidx)], dat$Np,
+                                              nvar - length(xidx), byrow = TRUE))
+    }
   }
   dat$YX <- do.call("rbind", YX)
   dat$grpnum <- array(dat$grpnum, length(dat$grpnum))

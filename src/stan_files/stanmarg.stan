@@ -216,35 +216,31 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   }
 
   matrix sig_inv_update(matrix Sigmainv, int[] obsidx, int Nobs, int np, real logdet) {
-    matrix[Nobs + 1, Nobs + 1] out;
+    matrix[Nobs + 1, Nobs + 1] out = rep_matrix(0, Nobs + 1, Nobs + 1);
     int nrm = np - Nobs;
     matrix[nrm, nrm] H;
     matrix[nrm, Nobs] A;
 
-    H = Sigmainv[obsidx[(Nobs + 1):np], obsidx[(Nobs + 1):np]];
-    A = Sigmainv[obsidx[(Nobs + 1):np], obsidx[1:Nobs]];
+    if (nrm == 0) {
+      out[1:Nobs, 1:Nobs] = Sigmainv;
+      out[Nobs + 1, Nobs + 1] = logdet;
+    } else {
+      H = Sigmainv[obsidx[(Nobs + 1):np], obsidx[(Nobs + 1):np]];
+      A = Sigmainv[obsidx[(Nobs + 1):np], obsidx[1:Nobs]];
 
-    out[1:Nobs, 1:Nobs] = Sigmainv[obsidx[1:Nobs], obsidx[1:Nobs]] - A' * mdivide_left_spd(H, A);
-    out[Nobs + 1, Nobs + 1] = logdet + log_determinant(H);
+      out[1:Nobs, 1:Nobs] = Sigmainv[obsidx[1:Nobs], obsidx[1:Nobs]] - A' * mdivide_left_spd(H, A);
+      out[Nobs + 1, Nobs + 1] = logdet + log_determinant(H);
+    }
 
     return out;
   }
   
-  real multi_normal_suff(vector xbar, matrix S, vector Mu, matrix Sigmainv, real logdetS, int[] obsidx, int N) {
-    int np = dims(Sigmainv)[1];
+  real multi_normal_suff(vector xbar, matrix S, vector Mu, matrix Supdate, int N) {
     int Nobs = dims(S)[1];
-    matrix[Nobs + 1, Nobs + 1] Supdate;
     real out;
 
-    if (Nobs < np) {
-      Supdate = sig_inv_update(Sigmainv, obsidx, Nobs, np, logdetS);
-    } else {
-      Supdate[1:Nobs, 1:Nobs] = Sigmainv;
-      Supdate[Nobs + 1, Nobs + 1] = logdetS;
-    }
-    
     // using elementwise multiplication + sum here for efficiency
-    out = -.5 * N * ( sum(Supdate[1:Nobs, 1:Nobs] .* (S + (xbar - Mu) * (xbar - Mu)')) + Supdate[Nobs + 1, Nobs + 1] + np * log(2 * pi()) );
+    out = -.5 * N * ( sum(Supdate[1:Nobs, 1:Nobs] .* (S + (xbar - Mu) * (xbar - Mu)')) + Supdate[Nobs + 1, Nobs + 1] + Nobs * log(2 * pi()) );
 
     return(out);
   }
@@ -277,9 +273,10 @@ data {
   vector[p + q - Nord] YX[Ntot]; // continuous data
   int YXo[Ntot, Nord]; // ordinal data
   int<lower=0> Nx[Np]; // number of fixed.x variables
-  int<lower=0> Xvar[Np, max(Nx)]; // indexing of fixed.x variables
-  int<lower=0> Xdatvar[Np, max(Nx)]; // indexing of fixed.x in data (differs from Xvar when missing)
+  int<lower=0> Xvar[Np, p + q]; // indexing of fixed.x variables
+  int<lower=0> Xdatvar[Np, p + q]; // indexing of fixed.x in data (differs from Xvar when missing)
   int<lower=0> emiter; // number of em iterations for saturated model in ppp (missing data only)
+  int<lower=0, upper=1> use_suff; // should we compute likelihood via mvn sufficient stats?
   int<lower=0, upper=1> do_test; // should we do everything in generated quantities?
   vector[p + q - Nord] YXbar[Np]; // sample means of continuous manifest variables
   matrix[p + q - Nord + 1, p + q - Nord + 1] S[Np];     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
@@ -666,7 +663,10 @@ transformed parameters {
 
   vector[p + q] Mu[Ng];
   matrix[p + q, p + q] Sigma[Ng];  // model covariance matrix
-
+  matrix[p + q, p + q] Sigmainv_grp[Ng];
+  real logdetSigma_grp[Ng];
+  matrix[p + q + 1, p + q + 1] Sigmainv[Np];  // for updating S^-1 by missing data pattern
+  
   matrix[p, q] top_right[Ng]; // top right block of Sigma
   vector[p + q] YXstar[Ntot];
   vector[Nord] YXostar[Ntot]; // ordinal data
@@ -796,7 +796,6 @@ transformed parameters {
 
   if (Ncont > 0) {
     for (patt in 1:Np) {
-      // FIXME could be removed after generated quantities uses multi_normal_suff
       for (i in startrow[patt]:endrow[patt]) {
 	for (j in 1:Ncont) {
 	  YXstar[i, contidx[j]] = YX[i,j];
@@ -805,8 +804,8 @@ transformed parameters {
     }
   }
 
-  // move observations to the left for ordinal case
-  if (missing && Nord > 0) {
+  // move observations to the left
+  if (missing) {
     for (patt in 1:Np) {
       for (i in startrow[patt]:endrow[patt]) {
 	for (j in 1:Nobs[patt]) {
@@ -814,6 +813,15 @@ transformed parameters {
 	}
       }
     }
+  }
+
+  // for computing mvn with sufficient stats
+  for (g in 1:Ng) {
+    Sigmainv_grp[g] = inverse_spd(Sigma[g]);
+    logdetSigma_grp[g] = log_determinant(Sigma[g]);
+  }
+  for (patt in 1:Np) {    
+    Sigmainv[patt, 1:(Nobs[patt] + 1), 1:(Nobs[patt] + 1)] = sig_inv_update(Sigmainv_grp[grpnum[patt]], Obsvar[patt,], Nobs[patt], p + q, logdetSigma_grp[grpnum[patt]]);
   }
 }
 model { // N.B.: things declared in the model block do not get saved in the output, which is okay here
@@ -825,28 +833,21 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   /* log-likelihood */
   if (has_data) {
     int obsidx[p + q];
-    int xidx[max(Nx)];
-    int xdatidx[max(Nx)];
+    int xidx[p + q];
+    int xdatidx[p + q];
     int grpidx;
-    
-    /* for updating S^-1 by missing data pattern */
-    matrix[p + q, p + q] Sigmainv[Ng];
-    real logdetSigma[Ng];
-    for (g in 1:Ng) {
-      Sigmainv[g] = inverse_spd(Sigma[g]);
-      logdetSigma[g] = log_determinant(Sigma[g]);
-    }
-    
+    int r1;
+    int r2;
+        
     for (mm in 1:Np) {
       obsidx = Obsvar[mm,];
       xidx = Xvar[mm,];
       xdatidx = Xdatvar[mm,];
       grpidx = grpnum[mm];
+      r1 = startrow[mm];
+      r2 = endrow[mm];
 
-      if (ord) {
-        int r1 = startrow[mm];
-	int r2 = endrow[mm];
-	
+      if (!use_suff) {
 	target += multi_normal_lpdf(YXstar[r1:r2,1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
 
 	if (Nx[mm] > 0) {
@@ -854,10 +855,10 @@ model { // N.B.: things declared in the model block do not get saved in the outp
 	}
       } else {
 	// sufficient stats
-	target += multi_normal_suff(YXbarstar[mm, 1:Nobs[mm]], Sstar[mm, 1:Nobs[mm], 1:Nobs[mm]], Mu[grpidx, obsidx[1:Nobs[mm]]], Sigmainv[grpidx], logdetSigma[grpidx], obsidx, endrow[mm] - startrow[mm] + 1);
+	target += multi_normal_suff(YXbarstar[mm, 1:Nobs[mm]], Sstar[mm, 1:Nobs[mm], 1:Nobs[mm]], Mu[grpidx, obsidx[1:Nobs[mm]]], Sigmainv[mm, 1:(Nobs[mm] + 1), 1:(Nobs[mm] + 1)], r2 - r1 + 1);
       
 	if (Nx[mm] > 0) {
-	  target += -multi_normal_suff(YXbarstar[mm, xdatidx[1:Nx[mm]]], Sstar[mm, xdatidx[1:Nx[mm]], xdatidx[1:Nx[mm]]], Mu[grpidx, xidx[1:Nx[mm]]], inverse_spd(Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]), log_determinant(Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]), xidx, endrow[mm] - startrow[mm] + 1);
+	  target += -multi_normal_suff(YXbarstar[mm, xdatidx[1:Nx[mm]]], Sstar[mm, xdatidx[1:Nx[mm]], xdatidx[1:Nx[mm]]], Mu[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigmainv[grpidx], xidx, Nx[mm], p + q, logdetSigma_grp[grpidx]), r2 - r1 + 1);
 	}
       }
     }
@@ -935,8 +936,15 @@ generated quantities { // these matrices are saved in the output but do not figu
   matrix[p + q, p + q + 1] satrep_out[Ng];
   vector[p + q] Mu_sat[Ng];
   matrix[p + q, p + q] Sigma_sat[Ng];
+  matrix[p + q, p + q] Sigma_sat_inv_grp[Ng];
+  real logdetS_sat_grp[Ng];
+  matrix[p + q + 1, p + q + 1] Sigma_sat_inv[Np];
   vector[p + q] Mu_rep_sat[Ng];
   matrix[p + q, p + q] Sigma_rep_sat[Ng];
+  matrix[p + q, p + q] Sigma_rep_sat_inv_grp[Ng];
+  matrix[p + q + 1, p + q + 1] Sigma_rep_sat_inv[Np];
+  real logdetS_rep_sat_grp[Ng];
+  matrix[p + q, p + q] zmat;
   real<lower=0, upper=1> ppp;
   
   // first deal with sign constraints:
@@ -986,8 +994,8 @@ generated quantities { // these matrices are saved in the output but do not figu
 
   { // log-likelihood
     int obsidx[p + q];
-    int xidx[max(Nx)];
-    int xdatidx[max(Nx)];
+    int xidx[p + q];
+    int xdatidx[p + q];
     int r1;
     int r2;
     int grpidx;
@@ -1013,7 +1021,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  Sigma_sat[g] = diag_matrix(rep_vector(1, p + q));
 	  Sigma_rep_sat[g] = Sigma_sat[g];
 	}
-    
+
 	for (jj in 1:emiter) {
 	  satout = estep(YXstar, Mu_sat, Sigma_sat, Nobs, Obsvar, startrow, endrow, grpnum, Np, Ng);
 	  satrep_out = estep(YXstar_rep, Mu_rep_sat, Sigma_rep_sat, Nobs, Obsvar, startrow, endrow, grpnum, Np, Ng);
@@ -1048,9 +1056,23 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  // FIXME? Sigma_sat[grpidx] = tcrossprod(YXsmat); does not throw an error??
 	}
       }
+
+      for (g in 1:Ng) {
+	Sigma_sat_inv_grp[g] = inverse_spd(Sigma_sat[g]);
+	logdetS_sat_grp[g] = log_determinant(Sigma_sat[g]);
+
+	Sigma_rep_sat_inv_grp[g] = inverse_spd(Sigma_rep_sat[g]);
+	logdetS_rep_sat_grp[g] = log_determinant(Sigma_rep_sat[g]);
+      }
+
+      for (mm in 1:Np) {
+	Sigma_sat_inv[mm, 1:(Nobs[mm] + 1), 1:(Nobs[mm] + 1)] = sig_inv_update(Sigma_sat_inv_grp[grpnum[mm]], Obsvar[mm,], Nobs[mm], p + q, logdetS_sat_grp[grpnum[mm]]);
+	Sigma_rep_sat_inv[mm, 1:(Nobs[mm] + 1), 1:(Nobs[mm] + 1)] = sig_inv_update(Sigma_rep_sat_inv_grp[grpnum[mm]], Obsvar[mm,], Nobs[mm], p + q, logdetS_rep_sat_grp[grpnum[mm]]);
+      }
     }
     
     // compute log-likelihoods
+    zmat = rep_matrix(0, p + q, p + q);
     for (mm in 1:Np) {
       obsidx = Obsvar[mm,];
       xidx = Xvar[mm,];
@@ -1058,28 +1080,30 @@ generated quantities { // these matrices are saved in the output but do not figu
       r1 = startrow[mm];
       r2 = endrow[mm];
       grpidx = grpnum[mm];
+      
       for (jj in r1:r2) {
-	log_lik[jj] = multi_normal_lpdf(YXstar[jj, 1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+	log_lik[jj] = multi_normal_suff(YXstar[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu[grpidx, obsidx[1:Nobs[mm]]], Sigmainv[mm], 1);
 	if (do_test) {
 	  // we add loglik[jj] here so that _sat always varies and does not lead to
 	  // problems with rhat and neff computations
-	  log_lik_sat[jj] = -log_lik[jj] + multi_normal_lpdf(YXstar[jj, 1:Nobs[mm]] | Mu_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_sat[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+	  log_lik_sat[jj] = -log_lik[jj] + multi_normal_suff(YXstar[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_sat_inv[mm], 1);
 	
-	  log_lik_rep[jj] = multi_normal_lpdf(YXstar_rep[jj, 1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
-	  log_lik_rep_sat[jj] = multi_normal_lpdf(YXstar_rep[jj, 1:Nobs[mm]] | Mu_rep_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_rep_sat[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+	  log_lik_rep[jj] = multi_normal_suff(YXstar_rep[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu[grpidx, obsidx[1:Nobs[mm]]], Sigmainv[mm], 1);
+	  log_lik_rep_sat[jj] = multi_normal_suff(YXstar_rep[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu_rep_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_rep_sat_inv[mm], 1);
 	} else {
 	  log_lik_sat[jj] = 0;
 	}
 
 	// log_lik_sat, log_lik_sat_rep
 	if (Nx[mm] > 0) {
-	  log_lik[jj] += -multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	  log_lik[jj] += -multi_normal_suff(YXstar[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigmainv[grpidx], xidx, Nx[mm], p + q, logdetSigma_grp[grpidx]), 1);
 	  if (do_test) {
-	    log_lik_sat[jj] += multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
-	    log_lik_sat[jj] += -multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu_sat[grpidx, xidx[1:Nx[mm]]], Sigma_sat[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	    log_lik_sat[jj] += multi_normal_suff(YXstar[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigmainv[grpidx], xidx, Nx[mm], p + q, logdetSigma_grp[grpidx]), 1);
+	    log_lik_sat[jj] += -multi_normal_suff(YXstar[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu_sat[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigma_sat_inv[grpidx], xidx, Nx[mm], p + q, logdetS_sat_grp[grpidx]), 1);
 	  
-	    log_lik_rep[jj] += -multi_normal_lpdf(YXstar_rep[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
-	    log_lik_rep_sat[jj] += -multi_normal_lpdf(YXstar_rep[jj, xdatidx[1:Nx[mm]]] | Mu_rep_sat[grpidx, xidx[1:Nx[mm]]], Sigma_rep_sat[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	    log_lik_rep[jj] += -multi_normal_suff(YXstar_rep[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigmainv[grpidx], xidx, Nx[mm], p + q, logdetSigma_grp[grpidx]), 1);
+
+	    log_lik_rep_sat[jj] += -multi_normal_suff(YXstar_rep[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu_rep_sat[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigma_rep_sat_inv[grpidx], xidx, Nx[mm], p + q, logdetS_rep_sat_grp[grpidx]), 1);
 	  }
 	}
       }

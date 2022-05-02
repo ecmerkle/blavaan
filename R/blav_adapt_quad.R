@@ -38,6 +38,7 @@ adapted_ghq <- function(fit, ngq, samprow = NULL) {
 }
 
 ## fixed gauss-hermite quadrature, to reuse quadrature points across cases
+## FIXME this is unfinished!!
 fixed_ghq <- function(fit, ngq, samprow = NULL) {
   GLIST <- fit@Model@GLIST
   if (any(GLIST$theta[lower.tri(GLIST$theta)] != 0L)) stop("blavaan ERROR: The quadrature method cannot be used with non-diagonal theta matrix.")
