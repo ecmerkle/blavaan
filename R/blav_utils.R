@@ -342,3 +342,16 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
   list(outlist = outlist, lavpartable = lavpartable, stanpris = stanpris)
 }
   
+## wishart log-density
+ldwish <- function(S, df, V){
+  p <- NROW(S)
+
+  logdetS <- log(det(S))
+
+  chV <- chol(V)
+  invV <- chol2inv(chV)
+  logdetV <- 2*sum(log(diag(chV)))
+  lmvgamma <- sum(log(gamma((df + 1 - 1:p)/2)))
+  
+  return(.5 * ((df - p - 1) * logdetS - sum(diag(invV %*% S)) - df*p*log(2) - df * logdetV - log(pi) * p * (p - 1)/2) - lmvgamma)
+}

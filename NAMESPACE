@@ -37,9 +37,6 @@ importFrom("lavaan",
            "modificationIndices", "parTable", "parameterEstimates",
            "lavPredict", "standardizedSolution")
 
-importFrom("MCMCpack",
-           "dwish")
-
 importFrom("coda",
            "mcmc.list",
            "mcmc", "as.mcmc",
