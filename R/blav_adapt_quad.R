@@ -83,7 +83,7 @@ fixed_ghq <- function(fit, ngq, samprow = NULL) {
     ## for each entry in mnvec, compute univariate likelihoods for each set of thresholds
     ## a matrix per column of mnvec: number of rows in x.star.eval by number of ordered categories
     likevals <- array(NA, dim = c(NROW(x.star.eval), max(standata$YXo), NCOL(standata$YXo), Ng))
-
+browser()
     for(g in 1:Ng) {
       mm.in.group <- 1:lavmodel@nmat[g] + cumsum(c(0,lavmodel@nmat[g]))[g]
       mms <- lavmodel@GLIST[mm.in.group]

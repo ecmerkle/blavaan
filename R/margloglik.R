@@ -84,7 +84,7 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
 
       ## NB wishart on precision matrix, so need to invert:
       if(targdist == "dwish"){
-        priloglik <- priloglik + ldwish(solve(tmpmat), (dimen+1), diag(dimen)))
+        priloglik <- priloglik + ldwish(solve(tmpmat), (dimen+1), diag(dimen))
       } else {
         etapar <- as.numeric(pricom[[wps[1]]][2])
         ## etapar==1 has you adding 0, so avoid
