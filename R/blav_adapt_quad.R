@@ -38,14 +38,15 @@ adapted_ghq <- function(fit, ngq, samprow = NULL) {
 }
 
 ## fixed gauss-hermite quadrature, to reuse quadrature points across cases
-## FIXME this is unfinished!!
 fixed_ghq <- function(fit, ngq, samprow = NULL) {
   GLIST <- fit@Model@GLIST
   if (any(GLIST$theta[lower.tri(GLIST$theta)] != 0L)) stop("blavaan ERROR: The quadrature method cannot be used with non-diagonal theta matrix.")
   ndim <- NROW(GLIST$alpha)
+
+  if (blavInspect(fit, 'ngroups') > 1) stop("blavaan ERROR: The quadrature method currently does not support multiple groups.")
   
   samps <- do.call("rbind", make_mcmc(fit@external$mcmcout, fit@external$stanlvs))
-  if(length(samprow) > 1) samps <- samps[samprow, , drop = FALSE]
+  if(length(samprow) > 0) samps <- samps[samprow, , drop = FALSE]
 
   XW <- lavaan:::lav_integration_gauss_hermite(n = ngq, ndim = ndim, dnorm = TRUE)
   x.star <- XW$x
@@ -54,40 +55,75 @@ fixed_ghq <- function(fit, ngq, samprow = NULL) {
 
   ## response patterns
   standata <- fit@external$mcmcdata
+  if(length(standata$YX) > 0) stop("blavaan ERROR: The fixed quadrature method cannot handle mixes of continuous variables yet.")
   YX <- matrix(NA, NROW(standata$YX), NCOL(standata$YX) + NCOL(standata$YXo))
   YX[, standata$contidx] <- standata$YX
   YX[, standata$ordidx] <- standata$YXo
-  rpatts <- apply(standata$YXo, 1, paste0)
+  rpatts <- apply(standata$YXo, 1, paste0, collapse = "")
   upatts <- as.numeric(as.factor(rpatts))
+  ulocs <- which(!duplicated(upatts))
+  ## FIXME: also need to consider Ng > 1 in response patterns:
   YXou <- standata$YXo[!duplicated(upatts), , drop = FALSE]
   deltas <- which(names(fit@Model@GLIST) == "delta")
+  th.idx <- fit@Model@th.idx
+  Ng <- blavInspect(fit, 'ngroups')
+  TH.idx <- lapply(1:Ng, function(g) th.idx[[g]][th.idx[[g]] > 0])
 
   origlm <- fit@Model
-
   out <- matrix(NA, NROW(samps), NROW(YX))
   
   for(i in 1:NROW(samps)) {
     lavmodel <- fill_params(samps[i, , drop = FALSE], origlm, fit@ParTable)
     lavmodel@GLIST[[deltas]] <- NULL
-    fit@Model <- lavmodel
-    mnvec <- lavPredict(fit, type = "ov", ETA = x.star.eval)
-    if(inherits(mnvec, "matrix")) mnvec <- list(mnvec)
+    ## fit@Model <- lavmodel
+    ## mnvec <- lavPredict(fit, type = "ov", newdata = fakedat,
+    ##                     ETA = x.star.eval)
+    ## if(inherits(mnvec, "matrix")) mnvec <- list(mnvec)
 
-    ## for each entry in mnvec, do line 345 of model_loglik for each set of thresholds
+    ## for each entry in mnvec, compute univariate likelihoods for each set of thresholds
     ## a matrix per column of mnvec: number of rows in x.star.eval by number of ordered categories
+    likevals <- array(NA, dim = c(NROW(x.star.eval), max(standata$YXo), NCOL(standata$YXo), Ng))
 
-    ## check for continuous data and throw error for now
+    for(g in 1:Ng) {
+      mm.in.group <- 1:lavmodel@nmat[g] + cumsum(c(0,lavmodel@nmat[g]))[g]
+      mms <- lavmodel@GLIST[mm.in.group]
+      mnvec <- mms$lambda %*% t(x.star.eval)
+      mnvec <- sweep(mnvec, 1, mms$nu, FUN = "+")
+
+      for(j in 1:NCOL(standata$YXo)) {
+        tmpidx <- unique(TH.idx[[g]])[j]
+        tau <- c(-Inf, mms$tau[TH.idx[[g]] == tmpidx], Inf)
+        utau <- rep(tau[2:length(tau)], ncol(mnvec))
+        ltau <- rep(tau[1:(length(tau) - 1)], ncol(mnvec))
+        tmpprob <- pnorm(utau, mean = mnvec[tmpidx,], sd = sqrt(mms$theta[tmpidx, tmpidx])) -
+          pnorm(ltau, mean = mnvec[tmpidx,], sd = sqrt(mms$theta[tmpidx, tmpidx]))
+
+        likevals[, 1:max(standata$YXo[,tmpidx]), j, g] <- log(tmpprob)
+      }
+    }
 
     ## for each response pattern, use x.star to pull values out of the above matrices and sum
     qpt.uniq <- matrix(NA, NROW(YXou), NROW(x.star))
 
-
+    for(p in 1:NROW(x.star)) {
+      tmpmatch <- sapply(1:ndim, function(j) match(x.star[p,j], x.star.eval[,j]))
+      tmplik <- sapply(1:ndim, function(j) likevals[tmpmatch[j], YXou[,j], j, 1])
+    
+      qpt.uniq[,p] <- rowSums(tmplik)
+    }
 
     qpt.uniq <- sweep(exp(qpt.uniq), 2, w.star, FUN = "*")
-      
-    ## assign values to full data matrix, for each response pattern
 
-    out[i,] <- above
+    ## FIXME deal with continuous data here
+    
+    ## assign values to full data matrix, for each response pattern
+    full.lik <- rep(NA, NROW(YX))
+    for(j in 1:length(ulocs)) {
+      tmpidx <- match(upatts[ulocs[j]], upatts)
+      full.lik[tmpidx] <- log(sum(qpt.uniq[j,]))
+    }
+
+    out[i,] <- full.lik
   }
 
   out
