@@ -83,7 +83,7 @@ fixed_ghq <- function(fit, ngq, samprow = NULL) {
     ## for each entry in mnvec, compute univariate likelihoods for each set of thresholds
     ## a matrix per column of mnvec: number of rows in x.star.eval by number of ordered categories
     likevals <- array(NA, dim = c(NROW(x.star.eval), max(standata$YXo), NCOL(standata$YXo), Ng))
-browser()
+
     for(g in 1:Ng) {
       mm.in.group <- 1:lavmodel@nmat[g] + cumsum(c(0,lavmodel@nmat[g]))[g]
       mms <- lavmodel@GLIST[mm.in.group]
@@ -93,23 +93,31 @@ browser()
       for(j in 1:NCOL(standata$YXo)) {
         tmpidx <- unique(TH.idx[[g]])[j]
         tau <- c(-Inf, mms$tau[TH.idx[[g]] == tmpidx], Inf)
-        utau <- rep(tau[2:length(tau)], ncol(mnvec))
-        ltau <- rep(tau[1:(length(tau) - 1)], ncol(mnvec))
-        tmpprob <- pnorm(utau, mean = mnvec[tmpidx,], sd = sqrt(mms$theta[tmpidx, tmpidx])) -
-          pnorm(ltau, mean = mnvec[tmpidx,], sd = sqrt(mms$theta[tmpidx, tmpidx]))
+        utau <- tau[2:length(tau)]
+        ltau <- tau[1:(length(tau) - 1)]
 
-        likevals[, 1:max(standata$YXo[,tmpidx]), j, g] <- log(tmpprob)
+        for(k in 1:max(standata$YXo[,tmpidx])) {
+          tmpprob <- pnorm(utau[k], mean = mnvec[tmpidx,], sd = sqrt(mms$theta[tmpidx, tmpidx])) -
+            pnorm(ltau[k], mean = mnvec[tmpidx,], sd = sqrt(mms$theta[tmpidx, tmpidx]))
+
+          likevals[, k, j, g] <- log(tmpprob)
+        }
       }
     }
 
     ## for each response pattern, use x.star to pull values out of the above matrices and sum
     qpt.uniq <- matrix(NA, NROW(YXou), NROW(x.star))
+    diment <- apply(mms$lambda != 0, 1, which) ## FIXME only works for no cross-loadings
+    tmpmatch <- sapply(1:ndim, function(j) match(x.star[,j], x.star.eval[,j]))
 
     for(p in 1:NROW(x.star)) {
-      tmpmatch <- sapply(1:ndim, function(j) match(x.star[p,j], x.star.eval[,j]))
-      tmplik <- sapply(1:ndim, function(j) likevals[tmpmatch[j], YXou[,j], j, 1])
-    
-      qpt.uniq[,p] <- rowSums(tmplik)
+      tmpeval <- matrix(0, NROW(YXou), NCOL(YXou))
+      for(ii in 1:NROW(YXou)) {
+        for(jj in 1:NCOL(YXou)) {
+          tmpeval[ii, jj] <- likevals[tmpmatch[p, diment[jj]], YXou[ii,jj], jj, 1]
+        }
+      }
+      qpt.uniq[,p] <- rowSums(tmpeval)
     }
 
     qpt.uniq <- sweep(exp(qpt.uniq), 2, w.star, FUN = "*")
@@ -119,7 +127,7 @@ browser()
     ## assign values to full data matrix, for each response pattern
     full.lik <- rep(NA, NROW(YX))
     for(j in 1:length(ulocs)) {
-      tmpidx <- match(upatts[ulocs[j]], upatts)
+      tmpidx <- which(rpatts == rpatts[ulocs[j]])
       full.lik[tmpidx] <- log(sum(qpt.uniq[j,]))
     }
 
