@@ -22,7 +22,7 @@ adapted_ghq <- function(fit, ngq, samprow = NULL) {
   ## loop thru quadrature points
   nqpt <- NROW(x.star.list[[1]])
   out <- matrix(NA, length(etamncov[[1]]), nqpt)
-  
+
   for(i in 1:nqpt){
     samps[samprow,grep("^eta", colnames(samps))] <- as.numeric( sapply(1:length(etamncov[[1]]), function(k) x.star.list[[k]][i,]) )
 
@@ -30,10 +30,8 @@ adapted_ghq <- function(fit, ngq, samprow = NULL) {
                                 casewise = TRUE, conditional = TRUE)
   }
 
-  for(i in 1:nrow(out)){
-    out[i,] <- exp(out[i,]) * w.star.list[[i]]
-  }
-
+  out <- exp(out) * do.call("rbind", w.star.list)
+  
   return( log( rowSums(out) ) )
 }
 
@@ -100,6 +98,8 @@ fixed_ghq <- function(fit, ngq, samprow = NULL) {
           tmpprob <- pnorm(utau[k], mean = mnvec[tmpidx,], sd = sqrt(mms$theta[tmpidx, tmpidx])) -
             pnorm(ltau[k], mean = mnvec[tmpidx,], sd = sqrt(mms$theta[tmpidx, tmpidx]))
 
+          #tmpprob[tmpprob == 0] <- 1e-300
+
           likevals[, k, j, g] <- log(tmpprob)
         }
       }
@@ -110,13 +110,14 @@ fixed_ghq <- function(fit, ngq, samprow = NULL) {
     diment <- apply(mms$lambda != 0, 1, which) ## FIXME only works for no cross-loadings
     tmpmatch <- sapply(1:ndim, function(j) match(x.star[,j], x.star.eval[,j]))
 
+    ## all entries we need, which could replace the loop. but summing the right entries
+    ## might take just as long.
+    ##tmpent <- cbind(as.numeric(t(tmpmatch[,diment])), rep(as.numeric(t(YXou)), nrow(x.star)),
+    ##                rep(1:9, nrow(x.star) * nrow(YXou)), 1)
+    ## tmpeval <- likevals[tmpent]
     for(p in 1:NROW(x.star)) {
-      tmpeval <- matrix(0, NROW(YXou), NCOL(YXou))
-      for(ii in 1:NROW(YXou)) {
-        for(jj in 1:NCOL(YXou)) {
-          tmpeval[ii, jj] <- likevals[tmpmatch[p, diment[jj]], YXou[ii,jj], jj, 1]
-        }
-      }
+      tmpeval <- t(sapply(1:NROW(YXou), function(ii) likevals[cbind(tmpmatch[p,diment], YXou[ii,], 1:NCOL(YXou), 1)])) ## FIXME last index is currently fixed at 1 for group
+
       qpt.uniq[,p] <- rowSums(tmpeval)
     }
 
@@ -146,7 +147,7 @@ adapted_weights <- function(samps, ngq, alphas, psis, grpidx, etamns, etacovs, N
   x.star.list <- vector("list", length(etamns))
   w.star.list <- vector("list", length(etamns))
   XW2pi <- XW$w * (2*pi)^(ndim/2)
-  
+
   for(i in 1:N) {
     C <- t(chol(etacovs[[j]]))
     tmpmn <- as.numeric(etamns[[i]])
