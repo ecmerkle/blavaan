@@ -44,7 +44,8 @@ importFrom("coda",
 
 importFrom("mnormt",
            "dmnorm",
-           "rmnorm")
+           "rmnorm",
+           "sadmvn")
 
 importFrom("nonnest2",
            "llcont")
