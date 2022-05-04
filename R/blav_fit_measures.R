@@ -182,7 +182,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
         if(lavopt$target == "stan" && !lavopt$categorical){
           casells <- loo::extract_log_lik(object@external$mcmcout)
         } else {
-          if(lavopt$categorical){
+          if(lavopt$categorical & lavopt$test != "none"){
             if(bopts$categorical && compareVersion(packageDescription('lavaan')$Version, '0.6-10') < 0) stop("blavaan ERROR: lavaan 0.6-10 or higher is needed (you may need to install from github)")
 
             if("llnsamp" %in% names(lavopt)){
