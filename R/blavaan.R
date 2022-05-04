@@ -830,7 +830,17 @@ blavaan <- function(...,  # default lavaan arguments
       cat("Computing posterior predictives...\n")
       lavmcmc <- make_mcmc(res)
       LAV@Options <- lavoptions
-      samplls <- samp_lls(res, lavmcmc, lavobject = LAV, standata = rjarg$data)
+
+      if(!lavoptions$categorical) {
+        samplls <- samp_lls(res, lavmcmc, lavobject = LAV, standata = rjarg$data)
+        casells <- NULL
+      } else {
+        LAV@external$mcmcdata <- rjarg$data
+        casells <- case_lls(res, lavmcmc, lavobject = LAV)
+        samplls <- array(0, dim = c(sample, n.chains, 2))
+        samplls[,,1] <- rowSums(casells)
+      }
+      
       if(jags.ic) {
         sampkls <- samp_kls(res, lavmodel, lavpartable,
                             lavsamplestats, lavoptions, lavcache,
@@ -946,7 +956,7 @@ blavaan <- function(...,  # default lavaan arguments
     lavoptim <- lapply(optnames, function(x) slot(lavfit, x))
     names(lavoptim) <- optnames
 
-    extslot <- list(mcmcout = lavjags, samplls = samplls,
+    extslot <- list(mcmcout = lavjags, samplls = samplls, casells = casells,
                     origpt = lavpartable, inits = jagtrans$inits,
                     mcmcdata = jagtrans$data, pxpt = jagtrans$pxpartable,
                     burnin = burnin, sample = sample)

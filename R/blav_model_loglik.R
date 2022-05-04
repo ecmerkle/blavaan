@@ -247,8 +247,10 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
   if("llnsamp" %in% names(lavoptions)){
     llnsamp <- lavoptions$llnsamp
   } else {
-    ## rule of thumb that can probably be improved...
-    llnsamp <- max(200, 20*length(unique(th.idx[[1]][th.idx[[1]] > 0])))
+    ## we need to use tmvnsim for more than 20 dimensions
+    if(length(unique(th.idx[[1]][th.idx[[1]] > 0])) > 20) {
+      llnsamp <- lavoptions$llnsamp <- 100
+    }
   }
 
   if(measure[1] %in% c("logl", "chisq") & length(measure) == 1){

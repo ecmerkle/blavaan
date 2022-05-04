@@ -184,12 +184,16 @@ blav_fit_measures <- function(object, fit.measures = "all",
         } else {
           if(lavopt$categorical){
             if(bopts$categorical && compareVersion(packageDescription('lavaan')$Version, '0.6-10') < 0) stop("blavaan ERROR: lavaan 0.6-10 or higher is needed (you may need to install from github)")
-            
-            cat("blavaan NOTE: These criteria involve likelihood approximations that may be imprecise.\n",
-                "You could try running the model again to see how much the criteria fluctuate.\n",
-                "You can also manually set llnsamp for greater accuracy (but also greater runtime).\n\n")
+
+            if("llnsamp" %in% names(lavopt)){
+              cat("blavaan NOTE: These criteria involve likelihood approximations that may be imprecise.\n",
+                  "You could try running the model again to see how much the criteria fluctuate.\n",
+                  "You can also manually set llnsamp for greater accuracy (but also greater runtime).\n\n")
+            }
+            casells <- object@external$casells
+          } else {
+            casells <- case_lls(object@external$mcmcout, make_mcmc(object@external$mcmcout), object)
           }
-          casells <- case_lls(object@external$mcmcout, make_mcmc(object@external$mcmcout), object)
         }
 
         fitres <- waic(casells)
