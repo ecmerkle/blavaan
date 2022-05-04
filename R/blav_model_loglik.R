@@ -312,7 +312,7 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
       ## baseline logliks only needed for ppp, which is now handled in Stan.
       basell <- 0L
 
-      ## now condition on continuous, get ordinal ll by tmvnsim()
+      ## now condition on continuous, get ordinal ll by mnormt::sadmvn() or tmvnsim()
       TH.idx <- th.idx[[g]][th.idx[[g]] > 0]
       ord.idx <- unique(TH.idx)
       ord.idx <- ord.idx[ord.idx %in% obsidx[1:Nobs[mm]]]
@@ -350,14 +350,21 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
           if(length(obsnum) > 0){
             mu.ord <- mnvec[ord.idx] + s12s22i %*% (YX[i,obsnum] - mnvec[obsnum])
           }
-          ## run tmvnsim to approximate marginal logl
-          lsigi <- try(tmvnsim::tmvnsim(llnsamp, nord,
-                                        lower = lowtau[llidx,], upper = hitau[llidx,],
-                                        means = mu.ord, sigma = cov.ord), silent = TRUE)
+
+          if("llnsamp" %in% names(lavoptions)){
+            ## run tmvnsim to approximate marginal logl
+            lsigi <- try(tmvnsim::tmvnsim(llnsamp, nord,
+                                          lower = lowtau[llidx,], upper = hitau[llidx,],
+                                          means = mu.ord, sigma = cov.ord), silent = TRUE)
+            if(!inherits(lsigi, 'try-error')) lsigi <- mean(lsigi$wts)
+          } else {
+            lsigi <- try(mnormt::sadmvn(lowtau[llidx,], hitau[llidx,], mean = mu.ord, varcov = cov.ord, abseps = 1e-2))
+          }
+
           if(inherits(lsigi, 'try-error')){
             tmpll[llidx] <- NA
           } else {
-            tmpll[llidx] <- tmpll[llidx] + log(mean(lsigi$wts))
+            tmpll[llidx] <- tmpll[llidx] + log(lsigi)
           }
         }
       }
