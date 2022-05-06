@@ -826,19 +826,19 @@ blavaan <- function(...,  # default lavaan arguments
     }
 
     ## fx is mean ll, where ll is marginal log-likelihood (integrate out lvs)
+    casells <- NULL
     if(lavoptions$test != "none") {
       cat("Computing posterior predictives...\n")
       lavmcmc <- make_mcmc(res)
       LAV@Options <- lavoptions
 
-      if(!lavoptions$categorical) {
-        samplls <- samp_lls(res, lavmcmc, lavobject = LAV, standata = rjarg$data)
-        casells <- NULL
-      } else {
+      if(lavoptions$categorical) {
         LAV@external$mcmcdata <- rjarg$data
         casells <- case_lls(res, lavmcmc, lavobject = LAV)
         samplls <- array(0, dim = c(sample, n.chains, 2))
         samplls[,,1] <- rowSums(casells)
+      } else {
+        samplls <- samp_lls(res, lavmcmc, lavobject = LAV, standata = rjarg$data)
       }
       
       if(jags.ic) {
