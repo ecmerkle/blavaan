@@ -257,6 +257,7 @@ data {
   int<lower=1> Np; // number of group-by-missing patterns combos
   int<lower=1> N[Ng]; // number of observations per group
   int<lower=1> Nobs[Np]; // number of observed variables in each missing pattern
+  int<lower=0> Nordobs[Np]; // number of ordinal observed variables in each missing pattern
   int<lower=0> Obsvar[Np, p + q]; // indexing of observed variables
   int<lower=1> Ntot; // number of observations across all groups
   int<lower=1> startrow[Np]; // starting row for each missing pattern
@@ -267,9 +268,10 @@ data {
   int<lower=0, upper=1> ord; // are there any ordinal variables?
   int<lower=0> Nord; // how many ordinal variables?
   int<lower=0> ordidx[Nord]; // indexing of ordinal variables
+  int<lower=0> OrdObsvar[Np, Nord]; // indexing of observed ordinal variables in YXo
+  int<lower=0> Noent; // how many observed entries of ordinal variables (for data augmentation)
   int<lower=0> contidx[p + q - Nord]; // indexing of continuous variables
   int<lower=1> nlevs[Nord]; // how many levels does each ordinal variable have
-  vector[ord ? max(nlevs) : 0] neach[Nord]; // how many times do we observe each level of each ordinal variable?
   vector[p + q - Nord] YX[Ntot]; // continuous data
   int YXo[Ntot, Nord]; // ordinal data
   int<lower=0> Nx[Np]; // number of fixed.x variables
@@ -630,7 +632,7 @@ parameters {
   vector[len_free[14]] Alpha_free;
   vector[len_free[15]] Tau_ufree;
 
-  vector<lower=0,upper=1>[Nord] z_aug[Ntot]; //augmented ordinal data
+  vector<lower=0,upper=1>[Noent] z_aug; //augmented ordinal data
 }
 transformed parameters {
   matrix[p, m] Lambda_y[Ng];
@@ -773,22 +775,25 @@ transformed parameters {
 
   // continuous responses underlying ordinal data
   if (ord) {
+    int idxvec = 0;
     for (patt in 1:Np) {
       for (i in startrow[patt]:endrow[patt]) {
-	for (j in 1:Nord) {
-	  int vecpos = YXo[i,j] - 1;
-	  if (j > 1) vecpos += sum(nlevs[1:(j - 1)]) - (j - 1);
-	  if (YXo[i,j] == 1) {
-	    YXostar[i,j] = -10 + (Tau[grpnum[patt], (vecpos + 1), 1] + 10) .* z_aug[i,j];
+	for (j in 1:Nordobs[patt]) {
+	  int obspos = OrdObsvar[patt,j];
+	  int vecpos = YXo[i,obspos] - 1;
+	  idxvec += 1;
+	  if (obspos > 1) vecpos += sum(nlevs[1:(obspos - 1)]) - (obspos - 1);
+	  if (YXo[i,obspos] == 1) {
+	    YXostar[i,obspos] = -10 + (Tau[grpnum[patt], (vecpos + 1), 1] + 10) .* z_aug[idxvec];
 	    tau_jacobian += log(fabs(Tau[grpnum[patt], (vecpos + 1), 1] + 10));  // must add log(U) to tau_jacobian
-	  } else if (YXo[i,j] == nlevs[j]) {
-	    YXostar[i,j] = Tau[grpnum[patt], vecpos, 1] + (10 - Tau[grpnum[patt], vecpos, 1]) .* z_aug[i,j];
+	  } else if (YXo[i,obspos] == nlevs[obspos]) {
+	    YXostar[i,obspos] = Tau[grpnum[patt], vecpos, 1] + (10 - Tau[grpnum[patt], vecpos, 1]) .* z_aug[idxvec];
 	    tau_jacobian += log(fabs(10 - Tau[grpnum[patt], vecpos, 1]));
 	  } else {
-	    YXostar[i,j] = Tau[grpnum[patt], vecpos, 1] + (Tau[grpnum[patt], (vecpos + 1), 1] - Tau[grpnum[patt], vecpos, 1]) .* z_aug[i,j];
+	    YXostar[i,obspos] = Tau[grpnum[patt], vecpos, 1] + (Tau[grpnum[patt], (vecpos + 1), 1] - Tau[grpnum[patt], vecpos, 1]) .* z_aug[idxvec];
 	    tau_jacobian += Tau_un[grpnum[patt], (vecpos + 1), 1]; // jacobian is log(exp(Tau_un))
 	  }
-	  YXstar[i, ordidx[j]] = YXostar[i, j];
+	  YXstar[i, ordidx[obspos]] = YXostar[i, obspos];
 	}
       }
     }

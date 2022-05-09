@@ -821,7 +821,7 @@ blavaan <- function(...,  # default lavaan arguments
 
       ## warn if psrf is large
       if(!attr(x, "converged") && lavoptions$warn) {
-        warning("blavaan WARNING: at least one parameter has a psrf > 1.2.", call. = FALSE)
+        warning("blavaan WARNING: at least one parameter has a rhat > 1.2.", call. = FALSE)
       }
     }
 

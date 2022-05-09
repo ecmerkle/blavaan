@@ -328,7 +328,7 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
         mu.ord <- mnvec[ord.idx]
       }
 
-      mm.in.group <- 1:lavmodel@nmat[g] + cumsum(c(0,lavmodel@nmat[g]))[g]
+      mm.in.group <- 1:lavmodel@nmat[g] + cumsum(c(0,lavmodel@nmat))[g]
       mms <- lavmodel@GLIST[mm.in.group]
       tau <- mms$tau
 
@@ -383,6 +383,13 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
     ## reorder to match original data
     if(casewise){
       rorig <- sapply(lavdata@Mp, function(x) unlist(x$case.idx))
+      if(inherits(rorig, "list")){
+        ## multiple groups
+        for(ii in length(rorig)){
+          rorig[[ii]] <- lavdata@case.idx[[ii]][rorig[[ii]]]
+        }
+        rorig <- unlist(rorig)
+      }
       ll.samp[rorig] <- ll.samp
     }
   } else {

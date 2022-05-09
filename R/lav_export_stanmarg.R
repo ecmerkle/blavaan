@@ -677,15 +677,15 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       ## tau needs a specific ordering, with augmented z's to match
       tauvec <- which(names(ini[[i]]) == "Tau_free")
       if(length(tauvec) > 0) {
-        z_aug <- matrix(.5, NROW(dat$YXo), dat$Nord)
+        z_aug <- rep(.5, dat$Noent)
 
-        for (j in 1:dat$Nord) {
-          tmpyx <- dat$YXo[,j]
-          hicat <- tmpyx == max(tmpyx)
-          locat <- tmpyx == min(tmpyx)
-          z_aug[hicat,j] <- .05
-          z_aug[locat,j] <- .95
-        }
+        ## for (j in 1:dat$Nord) {
+        ##   tmpyx <- dat$YXo[,j]
+        ##   hicat <- tmpyx == max(tmpyx)
+        ##   locat <- tmpyx == min(tmpyx)
+        ##   z_aug[hicat,j] <- .05
+        ##   z_aug[locat,j] <- .95
+        ## }
 
         ini[[i]] <- c(ini[[i]], list(z_aug = z_aug))
       }
@@ -952,9 +952,29 @@ lav2standata <- function(lavobject) {
 
     ordidx <- pta$vidx$ov.ord[[1]]
     dat$YXo <- dat$YX[, ordidx, drop=FALSE]
+    if (misflag) {
+      dat$Noent <- sum(dat$YXo > 0)
+      dat$Nordobs <- do.call("c", lapply(Mp, function(x) rowSums(x$pat[,ordidx])))
+      OrdObsvar <- do.call("c", lapply(Mp, function(x) apply(x$pat[,ordidx], 1, which)))
+
+      dat$OrdObsvar <- matrix(0, dat$Np, ncol(dat$YXo))
+      allvars <- 1:ncol(dat$YXo)
+      for (i in 1:dat$Np) {
+        dat$OrdObsvar[i, 1:dat$Nordobs[i]] <- OrdObsvar[[i]]
+        if (dat$Nordobs[i] < ncol(dat$YXo)) {
+          dat$OrdObsvar[i, (dat$Nordobs[i] + 1):ncol(dat$YXo)] <- allvars[!(allvars %in% OrdObsvar[[i]])]
+        }
+      }
+    } else {
+      dat$Noent <- length(ordidx) * nrow(dat$YXo)
+      dat$Nordobs <- array(length(ordidx), dat$Np)
+      dat$OrdObsvar <- matrix(1:length(ordidx), dat$Np, length(ordidx), byrow = TRUE)
+    }
+    
     dat$YXo[dat$YXo == 0L] <- 1L ## this does not get used but is needed to avoid threshold problems
     mode(dat$YXo) <- "integer"
     dat$YX <- dat$YX[, -ordidx, drop=FALSE]
+
 
     nlevs <- rep(NA, length(ordidx))
     neach <- vector("list", length(ordidx))
@@ -962,28 +982,23 @@ lav2standata <- function(lavobject) {
       ordvar <- unlist(lapply(lavobject@Data@X, function(x) x[,ordidx[i]]))
       ordvar <- ordvar[!is.na(ordvar)]
       nlevs[i] <- length(unique(ordvar))
-    
-      neach[[i]] <- summary(factor(ordvar), maxsum=1e5)
     }
 
     maxcat <- max(nlevs)
-
-    nemat <- matrix(0, length(ordidx), maxcat)
-    for(i in 1:length(ordidx)){
-      nemat[i,1:nlevs[i]] <- neach[[i]]
-    }
 
     dat$Nord <- length(ordidx)
     dat$ordidx <- array(ordidx, length(ordidx))
     contidx <- (1:nvar)[-ordidx]
     dat$contidx <- array(contidx, length(contidx))
     dat$nlevs <- array(nlevs, length(ordidx))
-    dat$neach <- nemat
   } else {
     dat$YXo <- matrix(0, NROW(dat$YX), 0)
     mode(dat$YXo) <- "integer"
     dat$Nord <- 0L
     dat$ordidx <- array(0, 0)
+    dat$Noent <- 0L
+    dat$Nordobs <- array(0, dat$Np)
+    dat$OrdObsvar <- matrix(0, dat$Np, 0)
     dat$contidx <- array(1:nvar, nvar)
     dat$nlevs <- array(0, 0)
     dat$neach <- matrix(0, 0, 0)

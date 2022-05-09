@@ -39,7 +39,7 @@ blavPredict <- function(object, newdata = NULL, type = "lv") {
     FS <- do.call("rbind", blavInspect(object, 'lvs'))
 
     ## N and latent variable names, to set dimensions
-    N <- lavInspect(object, "ntotal")
+    N <- sum(lavInspect(object, "ntotal"))
     etas <- lavNames(object, "lv")
 
     out <- lapply(1:NROW(FS), function(i) matrix(FS[i,], N, length(etas)))
