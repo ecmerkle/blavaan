@@ -7,6 +7,8 @@
 ##  Bugs/glitches discovered after the release:
 * blavPredict(, type="ymis") is not working for models with ordinal variables
 
+* blavInspect(, 'lvs') or (, 'lvmeans') can fail for models with a combination of multiple groups, missing values, and excluded cases
+
 * blavFitIndices() and ppmc() are not working for models with ordinal variables, or may indicate excessively bad fit
 
 * blavFitIndices(, rescale="mcmc") fails

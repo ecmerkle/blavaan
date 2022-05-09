@@ -135,35 +135,28 @@ blavInspect <- function(blavobject, what, ...) {
             ## for target="stan" + missing, use @Data@Mp to reorder rows to correspond
             ## to original data
             mis <- any(is.na(unlist(blavobject@Data@X)))
+            Mp <- blavobject@Data@Mp
             if(blavobject@Options$target == "stan" & mis){
-                rorig <- sapply(blavobject@Data@Mp, function(x) unlist(x$case.idx))
-                cids <- sapply(blavobject@Data@Mp, function(x) x$case.idx)
-                ## reordering for lvmeans:
-                if(nlv > 1){
-                    norig <- length(rorig)
-                    rord <- rep(NA, nlv*norig)
-                    for(i in 1:nlv){
-                        rord[((i-1)*norig + 1):(i*norig)] <- i*rorig
+                rorig <- sapply(Mp, function(x) unlist(x$case.idx))
+                empties <- sapply(Mp, function(x) x$empty.idx)
+                if(inherits(rorig, "list")){
+                    ## multiple groups
+                    for(ii in length(rorig)){
+                        rorig[[ii]] <- blavobject@Data@case.idx[[ii]][rorig[[ii]]]
                     }
-                } else {
-                    rord <- rorig
+                    rorig <- unlist(rorig)
                 }
-                ## for lvs
-                rsamps <- rep(NA, nlv*norig)
+                cids <- Mp2dataidx(Mp, blavobject@Data@case.idx)
+
+                ## reordering for lvs:
+                nfit <- sum(lavInspect(blavobject, 'nobs'))
+                rsamps <- rep(NA, nlv*nfit)
                 for(j in 1:nlv){
-                    tmpsamp <- rep(NA, norig)
-                    cumn <- 0
-                    for(i in 1:length(cids)){
-                      tmpids <- cids[[i]]
-                      ncase <- length(tmpids)
-                      tmpsamp[(cumn + 1):(cumn + ncase)] <- (j-1)*norig + tmpids
-                      cumn <- cumn + ncase
-                    }
-                    rsamps[((j-1)*norig + 1):(j*norig)] <- tmpsamp
+                    rsamps[((j-1)*nfit + 1):(j*nfit)] <- (j-1)*nfit + cids
                 }
 
                 for(j in 1:length(draws)){
-                    draws[[j]][,rsamps] <- draws[[j]]#[,rsamps]
+                    draws[[j]][,rsamps] <- draws[[j]]
                 }
             }
             draws <- mcmc.list(draws)
@@ -183,8 +176,9 @@ blavInspect <- function(blavobject, what, ...) {
                 draws <- matrix(summ[mnrows,summname], nsamp,
                                 length(mnrows)/nsamp, byrow=br)[,1:nlv,drop=FALSE]
                 colnames(draws) <- names(lvmn)
+
                 if(blavobject@Options$target == "stan" & mis){
-                    draws[rorig,] <- draws
+                    draws[rank(rorig),] <- draws
                 }
             }
             draws
