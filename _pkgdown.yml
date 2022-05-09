@@ -10,6 +10,9 @@ template:
 resource_files:
   - vignettes/refs.bib
 
+news:
+  one_page: false
+
 navbar:
   title: "blavaan"
   left:
