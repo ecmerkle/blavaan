@@ -26,8 +26,8 @@ adapted_ghq <- function(fit, ngq, samprow = NULL) {
   for(i in 1:nqpt){
     samps[samprow,grep("^eta", colnames(samps))] <- as.numeric( sapply(1:length(etamncov[[1]]), function(k) x.star.list[[k]][i,]) )
 
-    out[,i] <- blavaan:::get_ll(postsamp = samps[samprow,], fit,
-                                casewise = TRUE, conditional = TRUE)
+    out[,i] <- get_ll(postsamp = samps[samprow,], fit,
+                      casewise = TRUE, conditional = TRUE)
   }
 
   out <- exp(out) * do.call("rbind", w.star.list)
@@ -46,7 +46,8 @@ fixed_ghq <- function(fit, ngq, samprow = NULL) {
   samps <- do.call("rbind", make_mcmc(fit@external$mcmcout, fit@external$stanlvs))
   if(length(samprow) > 0) samps <- samps[samprow, , drop = FALSE]
 
-  XW <- lavaan:::lav_integration_gauss_hermite(n = ngq, ndim = ndim, dnorm = TRUE)
+  lavigh <- getFromNamespace("lav_integration_gauss_hermite", "lavaan")
+  XW <- lavigh(n = ngq, ndim = ndim, dnorm = TRUE)
   x.star <- XW$x
   x.star.eval <- apply(XW$x, 2, unique)
   w.star <- XW$w
@@ -141,7 +142,10 @@ fixed_ghq <- function(fit, ngq, samprow = NULL) {
 adapted_weights <- function(samps, ngq, alphas, psis, grpidx, etamns, etacovs, N) {
   ## adapt gh nodes/weights to each case
   ndim <- NROW(alphas[[1]])
-  XW <- lavaan:::lav_integration_gauss_hermite(n = ngq, ndim = ndim, dnorm = TRUE)
+  lavigh <- getFromNamespace("lav_integration_gauss_hermite", "lavaan")
+  lavdmvnorm <- getFromNamespace("lav_mvnorm_dmvnorm", "lavaan")
+  
+  XW <- lavigh(n = ngq, ndim = ndim, dnorm = TRUE)
   eXWxcp <- exp(0.5 * apply(XW$x, 1, crossprod))
 
   x.star.list <- vector("list", length(etamns))
@@ -149,13 +153,13 @@ adapted_weights <- function(samps, ngq, alphas, psis, grpidx, etamns, etacovs, N
   XW2pi <- XW$w * (2*pi)^(ndim/2)
 
   for(i in 1:N) {
-    C <- t(chol(etacovs[[j]]))
+    C <- t(chol(etacovs[[i]]))
     tmpmn <- as.numeric(etamns[[i]])
 
     x.star.list[[i]] <- t(as.matrix(C %*% t(XW$x)) + tmpmn)
     w.star.list[[i]] <- XW2pi * eXWxcp * prod(diag(C)) * ## = det(C) for triangular matrix
-      lavaan:::lav_mvnorm_dmvnorm(x.star.list[[i]], Mu = alphas[[grpidx[i]]],
-                                  Sigma = psis[[grpidx[i]]], log = FALSE)
+      lavdmvnorm(x.star.list[[i]], Mu = alphas[[grpidx[i]]],
+                 Sigma = psis[[grpidx[i]]], log = FALSE)
   }
   
   list(x.star.list, w.star.list)

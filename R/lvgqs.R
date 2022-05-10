@@ -269,5 +269,5 @@ if(FALSE){
               mcmcfile = TRUE)
   load('lavExport/semstan.rda')
 
-  blavaan:::samp_lvs(fit@external$mcmcout, fit@Model, fit@ParTable, stantrans$data)
+  samp_lvs(fit@external$mcmcout, fit@Model, fit@ParTable, stantrans$data)
 }

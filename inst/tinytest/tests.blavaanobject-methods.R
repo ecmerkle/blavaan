@@ -161,7 +161,8 @@ if(requireNamespace("rstan", quietly = TRUE) &
   expect_error(blavPredict(fitstanc))
   expect_error(blavPredict(fitjags))
   
-  expect_equal(dim(blavPredict(fitstanfs)), c(20,602))
+  expect_equal(dim(blavPredict(fitstanfs)[[1]]), c(301,2))
+  expect_equal(length(blavPredict(fitstanfs)), 20)
   expect_equal(dim(blavPredict(fitstanfs, type="lvmeans")), c(301,2))
   expect_equal(dim(blavPredict(fitstanfs, type="ov")[[1]]), c(301,6))
   expect_equal(dim(blavPredict(fitstanfs, type="ypred")[[1]]), c(301,6))

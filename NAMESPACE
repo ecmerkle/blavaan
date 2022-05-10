@@ -7,7 +7,8 @@ importFrom("utils",
            "capture.output", "head", "tail", "getFromNamespace", "compareVersion")
 
 importFrom("stats",
-           "approx", "density", "median", "dnorm", "pnorm", "rgamma", "rnorm",
+           "approx", "density", "median",
+           "dbinom", "dnorm", "pnorm", "rgamma", "rnorm",
            "runif", "sd", "quantile", "rWishart", "cov", "cor",
            "coef", "logLik",
            "residuals", "resid",

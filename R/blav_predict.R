@@ -25,9 +25,12 @@ blavPredict <- function(object, newdata = NULL, type = "lv") {
       type <- "ymis"
       if(all(!is.na(unlist(blavdata@X)))) stop("blavaan ERROR: No missing data are present.", call. = FALSE)
   }
-      
-  stantarget <- lavInspect(object, "options")$target == "stan"
 
+  lavopt <- lavInspect(object, "options")
+  stantarget <- lavopt$target == "stan"
+
+  if(lavopt$categorical & type == "ymis") stop("blavaan ERROR: ymis is not yet implemented for ordinal models.", call. = FALSE)
+  
   if(!is.null(newdata)) stop("blavaan ERROR: posterior predictions for newdata are not currently supported")
   
   ## lv: posterior dist of lvs (use blavInspect functionality); matrix frame
