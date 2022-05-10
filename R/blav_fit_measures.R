@@ -17,7 +17,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
 
     # has the model converged?
     if(object@Fit@npar > 0L && !object@optim$converged &&
-       class(object@external$mcmcout) != "NULL") {
+       !inherits(object@external$mcmcout, "NULL")) {
         warning("blavaan WARNING: the chains may not have converged.", call. = FALSE)
     }
 
