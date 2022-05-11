@@ -1,3 +1,24 @@
+# Version 0.4-2
+## New features
+* For target = "stan", most models should run faster than they did in earlier versions (use of sufficient statistics)
+
+* Posterior summaries are faster for ordinal models (using mnormt::sadmvn() by default)
+
+* Variational Bayes option added: target="vb", which uses rstan::vb()
+
+* cmdstanr functionality added: target="cmdstanr", which uses the model from target="stan"
+
+* Fix blavInspect(., "lvs"/"lvmeans") for multiple groups + missing data
+
+* Fixes to ppmc() for ordinal models; blavFitIndices() turned off for ordinal models (more research needed)
+
+* loo() moment matching available by passing mcmcextra = list(data = list(moment_match_k_threshold))
+
+## Bugs/glitches discovered after the release:
+* blavPredict(, type="ymis") still not available for models with ordinal variables
+
+
+
 # Version 0.4-1
 ## New features
 * Functionality for ordinal observed variables is now available.
