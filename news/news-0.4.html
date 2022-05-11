@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-2.991</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-2</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,6 +85,22 @@
 <li><p>blavFitIndices() and ppmc() are not working for models with ordinal variables, or may indicate excessively bad fit</p></li>
 <li><p>blavFitIndices(, rescale=“mcmc”) fails</p></li>
 </ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4-2" id="version-04-2">Version 0.4-2<a class="anchor" aria-label="anchor" href="#version-04-2"></a></h2>
+<div class="section level3">
+<h3 id="new-features-0-4-2">New features<a class="anchor" aria-label="anchor" href="#new-features-0-4-2"></a></h3>
+<ul><li><p>For target = “stan”, most models should run faster than they did in earlier versions (use of sufficient statistics)</p></li>
+<li><p>Posterior summaries are faster for ordinal models (using mnormt::sadmvn() by default)</p></li>
+<li><p>Variational Bayes option added: target=“vb”, which uses rstan::vb()</p></li>
+<li><p>cmdstanr functionality added: target=“cmdstanr”, which uses the model from target=“stan”</p></li>
+<li><p>Fix blavInspect(., “lvs”/“lvmeans”) for multiple groups + missing data</p></li>
+<li><p>Fixes to ppmc() for ordinal models; blavFitIndices() turned off for ordinal models (more research needed)</p></li>
+<li><p>loo() moment matching available by passing mcmcextra = list(data = list(moment_match_k_threshold))</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="bugsglitches-discovered-after-the-release-0-4-2">Bugs/glitches discovered after the release:<a class="anchor" aria-label="anchor" href="#bugsglitches-discovered-after-the-release-0-4-2"></a></h3>
+<ul><li>blavPredict(, type=“ymis”) still not available for models with ordinal variables</li></ul></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside></div>
