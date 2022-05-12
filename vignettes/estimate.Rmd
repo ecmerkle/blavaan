@@ -25,4 +25,12 @@ The `inits` argument is used to control the starting values for MCMC estimation.
 
 
 ### Parallelization
-Speed is always an issue when we sample via MCMC, especially using software like Stan or JAGS.  For computers with multiple cores, the estimation can be sped up by sending each MCMC chain to a separate core. This is accomplished with the `bcontrol` argument, which is a list whose elements correspond to `stan()` or `run.jags()` arguments. For parallelizing the chains in Stan, we would want to use the argument `bcontrol = list(cores = 3)`. Many other arguments are available here; see `?stan` or `?run.jags` for all the possibilities.
+Speed is always an issue when we sample via MCMC, especially using software like Stan or JAGS.  For computers with multiple cores, the estimation can be sped up by sending each MCMC chain to a separate core. This is accomplished with the `bcontrol` argument, which is a list whose elements correspond to `stan()` or `run.jags()` arguments. For parallelizing the chains in Stan, we would want to use the argument `bcontrol = list(cores = 3)`. Many other arguments are available here to control other aspects of estimation; see `?stan` or `?run.jags` for all the possibilities.
+
+Parallelization can also be helpful to speed up post-estimation computations. The *future* package controls this parallelization, which requires an extra command prior to estimation. The most common commands would be
+
+```{r parallel, eval = FALSE}
+library("future")
+plan("multicore") ## mac or linux
+plan("multisession") ## windows
+```

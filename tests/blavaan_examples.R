@@ -34,8 +34,15 @@ fitstanfs <- bcfa(HS.model, data=HolzingerSwineford1939,
 
 ## this really blows up file size if kept:
 attr(fitstan@external$mcmcout, 'stanmodel') <- NULL
+attr(fitstan@external$mcmcout, 'sim') <- NULL
+attr(fitstan@external$mcmcout, 'inits') <- NULL
 attr(fitstanc@external$mcmcout, 'stanmodel') <- NULL
+attr(fitstanc@external$mcmcout, 'sim') <- NULL
+attr(fitstanc@external$mcmcout, 'inits') <- NULL
 attr(fitstanfs@external$mcmcout, 'stanmodel') <- NULL
+attr(fitstanfs@external$mcmcout, 'sim') <- NULL
+attr(fitstanfs@external$mcmcout, 'inits') <- NULL
 
-save(list=c("fitjags", "fitstan", "fitstanc", "fitstanfs"), file="../inst/testdata/sysdata.rda")
+save(list=c("fitjags", "fitstan", "fitstanc", "fitstanfs"), 
+     file="../inst/testdata/sysdata.rda")
 

@@ -1,7 +1,7 @@
 #
-# initial version: YR 25/03/2009
+# much of this comes from lav_object_methods.R
 
-short.summary <- function(object) {
+bl.short.summary <- function(object) {
 
     # catch FAKE run
     FAKE <- FALSE
@@ -154,16 +154,16 @@ setMethod("show", "blavaan",
 function(object) {
 
     # show only basic information
-    short.summary(object)
+    bl.short.summary(object)
 
 })
 
 
 summary.blavaan <- function(object, ...) {
-    long.summary(object, ...)
+    bl.long.summary(object, ...)
 }
 
-long.summary <- function(object,
+bl.long.summary <- function(object,
                  header       = TRUE,
                  fit.measures = FALSE,
                  estimates    = TRUE,
@@ -183,7 +183,7 @@ long.summary <- function(object,
 
     # print the 'short' summary
     if(header) {
-        short.summary(object)
+        bl.short.summary(object)
     }
 
     # only if requested, the fit measures

@@ -17,7 +17,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
 
     # has the model converged?
     if(object@Fit@npar > 0L && !object@optim$converged &&
-       class(object@external$mcmcout) != "NULL") {
+       !inherits(object@external$mcmcout, "NULL")) {
         warning("blavaan WARNING: the chains may not have converged.", call. = FALSE)
     }
 
@@ -27,8 +27,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
         if(bopts$target != "stan") {
             stop("blavaan ERROR: fit measures cannot be obtained when test=\"none\"")
         } else {
-            warning("blavaan WARNING: not all fit measures are available when test=\"none\"",
-                    call. = FALSE)
+            cat("blavaan NOTE: not all fit measures are available when test='none'\n")
         }
     }
 
@@ -183,17 +182,18 @@ blav_fit_measures <- function(object, fit.measures = "all",
         if(lavopt$target == "stan" && !lavopt$categorical){
           casells <- loo::extract_log_lik(object@external$mcmcout)
         } else {
-          if(lavopt$categorical){
+          if(lavopt$categorical & lavopt$test != "none"){
             if(bopts$categorical && compareVersion(packageDescription('lavaan')$Version, '0.6-10') < 0) stop("blavaan ERROR: lavaan 0.6-10 or higher is needed (you may need to install from github)")
-            
-            cat("blavaan NOTE: These criteria involve likelihood approximations that may be imprecise.\n",
-                "You could try running the model again to see how much the criteria fluctuate.\n",
-                "You can also manually set llnsamp for greater accuracy (but also greater runtime).\n\n")
+
+            if("llnsamp" %in% names(lavopt)){
+              cat("blavaan NOTE: These criteria involve likelihood approximations that may be imprecise.\n",
+                  "You could try running the model again to see how much the criteria fluctuate.\n",
+                  "You can also manually set llnsamp for greater accuracy (but also greater runtime).\n\n")
+            }
+            casells <- object@external$casells
+          } else {
+            casells <- case_lls(object@external$mcmcout, make_mcmc(object@external$mcmcout), object)
           }
-          casells <- case_lls(object@external$mcmcout, object@Model,
-                              object@ParTable, object@SampleStats,
-                              lavopt, object@Cache,
-                              object@Data, make_mcmc(object@external$mcmcout), object)
         }
 
         fitres <- waic(casells)
@@ -205,12 +205,25 @@ blav_fit_measures <- function(object, fit.measures = "all",
         nchain <- blavInspect(object, "n.chains")
         ref <- relative_eff(casells, chain_id =
                             rep(1:nchain, each = nrow(casells)/nchain))
-        fitres <- loo(casells, r_eff = ref)
-        fitse <- fitres$estimates[,'SE']
-        fitres <- fitres$estimates[,'Estimate']
-        indices["looic"] <- fitres[["looic"]]
-        indices["p_loo"] <- fitres[["p_loo"]]
-        indices["se_loo"] <- fitse[["looic"]]
+        if (
+          "mcmcdata" %in% names(object@external) &
+          "moment_match_k_threshold" %in% names(object@external$mcmcdata) & 
+          bopts$target == "stan"
+          ) {
+          k_threshold <- object@external$mcmcdata$moment_match_k_threshold
+          fitres <- loo::loo(
+            object@external$mcmcout,
+            moment_match = TRUE,
+            k_threshold = k_threshold
+          )
+        } else {
+          fitres <- loo(casells, r_eff = ref)
+        }
+          fitse <- fitres$estimates[,'SE']
+          fitres <- fitres$estimates[,'Estimate']
+          indices["looic"] <- fitres[["looic"]]
+          indices["p_loo"] <- fitres[["p_loo"]]
+          indices["se_loo"] <- fitse[["looic"]]
 
         if("csamplls" %in% names(object@external) & bopts$target != "stan"){
             if("stanlvs" %in% names(object@external)){
@@ -218,10 +231,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
             } else {
                 samps <- make_mcmc(object@external$mcmcout)
             }
-            casells <- case_lls(object@external$mcmcout, object@Model,
-                                object@ParTable, object@SampleStats,
-                                lavopt, object@Cache,
-                                object@Data, samps,
+            casells <- case_lls(object@external$mcmcout, samps,
                                 lavobject = object, conditional = TRUE)
 
             fitres <- waic(casells)
@@ -232,6 +242,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
             indices["se_waic_cond"] <- fitse[["waic"]]
             ref <- relative_eff(casells, chain_id =
                                 rep(1:nchain, each = nrow(casells)/nchain))
+            
             fitres <- loo(casells, r_eff = ref)
             fitse <- fitres$estimates[,'SE']
             fitres <- fitres$estimates[,'Estimate']

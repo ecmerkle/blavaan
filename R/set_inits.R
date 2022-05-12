@@ -65,7 +65,7 @@ set_inits <- function(partable, ov.cp, lv.cp, n.chains, inits){
       ## FIXME do something smarter upon failure
       ivs <- try(do.call(pricom[1], list(n.chains, as.numeric(pricom[2]),
                                      as.numeric(pricom[3]))), silent = TRUE)
-      if(inherits(ivs, "try-error")) ivs <- rep(partable$start[i], n.chains)
+      if(inherits(ivs, "try-error") | all(is.na(ivs))) ivs <- rep(partable$start[i], n.chains)
     } else {
       ivs <- rep(partable$start[i], n.chains)
     }
@@ -75,8 +75,8 @@ set_inits <- function(partable, ov.cp, lv.cp, n.chains, inits){
     if(grepl("\\[sd\\]", partable$prior[i]) |
        grepl("\\[var\\]", partable$prior[i])){
       powval <- ifelse(grepl("\\[sd\\]", partable$prior[i]), -.5, -1)
-      ivs <- ivs^powval
       ivs[ivs <= 0] <- -ivs[ivs <= 0]
+      ivs <- ivs^powval
     }
     if(grepl("dbeta", partable$prior[i])){
       ivs <- rep(.5, n.chains)

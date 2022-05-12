@@ -1,6 +1,6 @@
 Package: blavaan
 Title: Bayesian Latent Variable Analysis
-Version: 0.4-2.906
+Version: 0.4-3
 Authors@R: c(person(given = "Edgar", family = "Merkle",
                     role = c("aut", "cre"),
                     email = "merklee@missouri.edu",
@@ -15,24 +15,29 @@ Authors@R: c(person(given = "Edgar", family = "Merkle",
                     role = "ctb",
                     email = "mgv@pm.me",
 		                comment = c(ORCID = "0000-0002-2951-6647",
-                                            "R/blav_compare.R","R/ctr_bayes_fit.R")),
+                                            "R/blav_compare.R", "R/ctr_bayes_fit.R", "vignettes/approx_fi.Rmd")),
              person(given = c("Terrence", "D."), family = "Jorgensen",
                     role = "ctb",
                     email = "TJorgensen314@gmail.com",
 		                comment = c(ORCID = "0000-0001-5111-6773",
-		                            "R/ctr_bayes_fit.R", "R/ctr_ppmc.R")),
+		                            "R/ctr_bayes_fit.R", "R/ctr_ppmc.R", "R/blav_predict.R")),
              person(given = "Huub", family="Hoofs", role = "ctb",
 	                  comment = "R/ctr_bayes_fit.R"),
              person(given = "Rens", family="van de Schoot",
-                    role = "ctb", comment = "R/ctr_bayes_fit.R")
+                    role = "ctb", comment = "R/ctr_bayes_fit.R"),
+             person(given = "Andrew", family="Johnson", role="ctb",
+                    comment = "Makevars"),
+             person(given = "Matthew", family="Emery", role="ctb",
+                    comment = "loo moment_match")
             )
 Description: Fit a variety of Bayesian latent variable models, including confirmatory
    factor analysis, structural equation models, and latent growth curve models. References: Merkle & Rosseel (2018) <doi:10.18637/jss.v085.i04>; Merkle et al. (2021) <doi:10.18637/jss.v100.i06>.
 License: GPL (>= 3)
 ByteCompile: true
 Depends: R(>= 3.5.0), methods, lavaan(>= 0.6-10), Rcpp(>= 0.12.15)
-Imports: stats, utils, graphics, MCMCpack, coda, mnormt, nonnest2(>= 0.5-5), loo(>= 2.0), rstan(>= 2.21.2), rstantools(>= 1.5.0), RcppParallel (>= 5.0.1), bayesplot, Matrix, future.apply, tmvnsim
+Imports: stats, utils, graphics, coda, mnormt, nonnest2(>= 0.5-5), loo(>= 2.0), rstan(>= 2.21.2), rstantools(>= 1.5.0), RcppParallel (>= 5.0.1), bayesplot, Matrix, future.apply, tmvnsim
 LinkingTo: StanHeaders (>= 2.18.1), rstan (>= 2.21.2), BH (>= 1.69.0), Rcpp (>= 0.12.15), RcppEigen (>= 0.3.3.4.0), RcppParallel (>= 5.0.1)
-Suggests: runjags(>= 2.0.4-4), modeest(>= 2.3.3), rjags, semTools, tinytest
+Suggests: runjags(>= 2.0.4-4), modeest(>= 2.3.3), rjags, cmdstanr, semTools, tinytest
 SystemRequirements: GNU make
 NeedsCompilation: yes
+Additional_repositories: https://mc-stan.org/r-packages/

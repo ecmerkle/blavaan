@@ -131,13 +131,38 @@ if(requireNamespace("rstan", quietly = TRUE) &
 
   bf_res <- blavFitIndices(fitstan, rescale = "mcmc")
   expect_equal(class(bf_res)[1], "blavFitIndices")
-  expect_equal(class(summary(bf_res))[1], "lavaan.data.frame")  
+  expect_equal(class(summary(bf_res))[1], "lavaan.data.frame")
+  
+  set.seed(341)
+  
+  x1 <- rnorm(100)
+  y1 <- 0.5 + 2*x1 + rnorm(100)
+  g <- rep(1:2, each=50)
+  Data <- data.frame(y1 = y1, x1 = x1, g = g)
+  
+  model <- ' y1 ~ prior("normal(0,1)")*x1 '
+  fitstanmomentmatch <- bsem(
+    model, 
+    data=Data, 
+    fixed.x=TRUE, 
+    burnin=20,
+    sample=20,
+    mcmcextra=list(data=list(moment_match_k_threshold=0.5)),
+    target="stan", 
+    seed=1
+  )
+  bf_mm_res <- blavFitIndices(fitstanmomentmatch, fit.measures = c("looic"))
+  expect_equal(class(bf_mm_res)[1], "blavFitIndices")
+  expect_equal(class(summary(bf_mm_res))[1], "lavaan.data.frame")
+  expect_true("p_loo" %in% names(bf_mm_res@details$pD))
+  
   
   ## blavPredict
   expect_error(blavPredict(fitstanc))
   expect_error(blavPredict(fitjags))
   
-  expect_equal(dim(blavPredict(fitstanfs)), c(20,602))
+  expect_equal(dim(blavPredict(fitstanfs)[[1]]), c(301,2))
+  expect_equal(length(blavPredict(fitstanfs)), 20)
   expect_equal(dim(blavPredict(fitstanfs, type="lvmeans")), c(301,2))
   expect_equal(dim(blavPredict(fitstanfs, type="ov")[[1]]), c(301,6))
   expect_equal(dim(blavPredict(fitstanfs, type="ypred")[[1]]), c(301,6))

@@ -23,11 +23,17 @@
 ###   - for custom discFUN, updated simulated data to retain grouping variable
 ###     name and the group labels
 
-postpred <- function(lavpartable, lavmodel, lavoptions,
-                     lavsamplestats, lavdata, lavcache, lavjags,
-                     samplls = NULL, lavobject = NULL, measure = "logl", thin = 1,
+postpred <- function(samplls = NULL, lavobject = NULL, measure = "logl", thin = 1,
                      discFUN = NULL, probs = c(.025, .975)) {
 
+  lavpartable <- lavobject@ParTable
+  lavmodel <- lavobject@Model
+  lavoptions <- lavobject@Options
+  lavsamplestats <- lavobject@SampleStats
+  lavdata <- lavobject@Data
+  lavcache <- lavobject@Cache
+  lavjags <- lavobject@external$mcmcout
+  
   ## check custom discrepancy function(s)
   if (!is.null(discFUN)) {
     if (!is.list(discFUN)) discFUN <- list(discFUN)
@@ -39,11 +45,14 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
   probs <- as.numeric(probs)
 
   ## add sampled lvs to posterior samples, if they exist
+  ## and add stan data, too
   save_lvs <- FALSE
+  standata <- NULL
   if (!is.null(lavobject)) {    
     save_lvs <- ("stanlvs" %in% names(lavobject@external)) & length(discFUN)
+    standata <- lavobject@external$mcmcdata
   }
-  
+
   if (save_lvs) {
     lavmcmc <- make_mcmc(lavjags, lavobject@external$stanlvs)
   } else {
@@ -113,20 +122,15 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
                  'mode (e.g., vector, matrix, or array)')
         }
 
-      } else if (measure[1] %in% c("logl", "chisq")) {
+      } else if (measure[1] %in% c("logl", "chisq") & length(measure) == 1) {
         ## standard chi-squared-based PPP
         chisq.obs <- -2*(samplls[samp.indices[i], j, 1] -
                          samplls[samp.indices[i], j, 2])
 
       } else {
         ## save alternative fit.measures=measure for observed data
-        chisq.obs <- get_ll(postsamp = lavmcmc[[j]][i,],
-                            lavmodel = lmorig,
-                            lavsamplestats = lavsamplestats,
-                            lavdata = ldorig,
-                            lavpartable = lavpartable,
-                            lavoptions = lavoptions,
-                            measure = measure)
+        chisq.obs <- get_ll(postsamp = lavmcmc[[j]][i,], lavobject = lavobject,
+                            measure = measure, standata = standata)
       }
 
       ## supply extra args to postdata so that we only generate
@@ -142,25 +146,24 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
       dataX <- dataX[[1]]
       dataeXo <- lavdata@eXo
 
+      simstandata <- NULL
+      if(!is.null(standata)) {
+        fit@Data@X <- dataX
+        simstandata <- lav2standata(fit)
+      }
+
       ## SIMULATED DATA
-      if (!mis & !length(discFUN) & measure[1] %in% c("logl", "chisq")) {
-        lavdata@X <- dataX
-        chisq.boot <- 2*diff(get_ll(lavmodel = lavmodel,
-                                    lavsamplestats = lavsamplestats,
-                                    lavdata = lavdata,
-                                    lavoptions = lavoptions,
-                                    measure = measure[1]))
+      if (!mis & !length(discFUN) & measure[1] %in% c("logl", "chisq") & length(measure) == 1) {
+        lavobject@Data@X <- dataX
+        chisq.boot <- 2*diff(get_ll(lavobject = lavobject,
+                                    measure = measure[1], standata = simstandata))
 
       ## chi-squared for (in)complete data
-      } else if (!length(discFUN) & measure[1] %in% c("logl", "chisq")) {
+      } else if (!length(discFUN) & measure[1] %in% c("logl", "chisq") & length(measure) == 1) {
         lavoptions$target <- "jags" ## because we need both h0 and h1 ll
-        lavdata@X <- dataX
-        chisq.boot <- 2*diff(get_ll(lavmodel = lavmodel,
-                                    lavsamplestats = lavsamplestats,
-                                    lavoptions = lavoptions,
-                                    lavdata = lavdata,
-                                    lavobject = lavobject,
-                                    measure = measure[1]))
+        lavobject@Data@X <- dataX
+        chisq.boot <- 2*diff(get_ll(lavobject = lavobject,
+                                    measure = measure[1], standata = simstandata))
       } else {
         ## any other measure/discFUN
 
@@ -189,6 +192,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
         lavoptions2 <- lavoptions
         lavoptions2$verbose <- FALSE
         lavoptions2$estimator <- "ML"
+        if(lavoptions2$categorical) lavoptions2$estimator <- "DWLS"
         lavoptions2$se <- "none"
         lavoptions2$test <- "standard"
         lavoptions2$optim.method <- "none"
@@ -229,7 +233,7 @@ postpred <- function(lavpartable, lavmodel, lavoptions,
             #        'mode (e.g., vector, matrix, or array)')
           }
 
-        } else if (measure[1] %in% c("logl", "chisq")) {
+        } else if (measure[1] %in% c("logl", "chisq") & length(measure) == 1) {
           ## standard chi-squared-based PPP
           chisq.boot <- fitMeasures(out, "chisq")
 

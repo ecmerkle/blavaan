@@ -30,8 +30,9 @@ options only work for target="stan", and "number of samples" is defined
 as the number of posterior samples across all chains.
 
 \code{type="lv"}: The posterior distribution of latent variables
-conditioned on observed variables. Returns a matrix with
-"number of samples" rows and "number of latent variables" columns.
+conditioned on observed variables. Returns a list with
+"number of samples" entries, where each entry is a matrix where rows 
+are observations and columns are latent variables.
 
 \code{type="yhat"}: The posterior expected value of observed variables
 conditioned on the sampled latent variables. Returns a list with
@@ -65,14 +66,14 @@ HS.model <- ' visual  =~ x1 + x2 + x3
               speed   =~ x7 + x8 + x9 '
 
 fit <- bcfa(HS.model, data = HolzingerSwineford1939, save.lvs = TRUE)
-head(blavPredict(fit)[,1:10]) # first 6 rows, first 10 columns
-head(blavPredict(fit, type = "yhat")[[1]])
+lapply(blavPredict(fit)[1:2], head) # first 6 rows of first 10 posterior samples
+head(blavPredict(fit, type = "yhat")[[1]]) # top of first posterior sample
 
 ## multigroup models return a list of factor scores (one per group)
 mgfit <- bcfa(HS.model, data = HolzingerSwineford1939, group = "school",
               group.equal = c("loadings","intercepts"), save.lvs = TRUE)
 
-head(blavPredict(fit)[,1:10])
+lapply(blavPredict(fit)[1:2], head)
 head(blavPredict(fit, type = "ypred")[[1]])
 }
 }

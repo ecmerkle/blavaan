@@ -1,7 +1,7 @@
-### Terrence D. Jorgensen
-### Last updated: 6 October 2020
+### Main author: Terrence D. Jorgensen
 ### function to implement a posterior predictor model check using any
 ### discrepancy function that can be applied to a lavaan object
+### Ed Merkle: various additions to keep things working with blavaan
 
 
 ## -----------------
@@ -597,8 +597,18 @@ ppmc <- function(object, thin = 1, fit.measures = c("srmr","chisq"),
       stop('blavaan ERROR: The "discFUN" argument must be a (list of) function(s).')
   }
 
-  ## if we have lv samples, send the full object in for convenience functions involving lvs
-  fullobj <- NULL
+  ## differentiate between multiple possible chisq stats
+  if (length(fit.measures) == 1L & blavInspect(object, "categorical")) {
+    if (fit.measures == "chisq") {
+      ## add another so that the dwls chisq from lavaan is used
+      ## (due to the way blav_model_loglik is structured)
+      fit.measures <- c("chisq", "chisq.scaled")
+    } else if (fit.measures == "marglogl") {
+      ## approximate the marginal lrt
+      fit.measures <- "chisq"
+    }
+  }
+
   jagtarget <- lavInspect(object, "options")$target == "jags"
 
   if(jagtarget){
@@ -608,18 +618,9 @@ ppmc <- function(object, thin = 1, fit.measures = c("srmr","chisq"),
   }
   if (etas & conditional) {
     if (!length(discFUN)) warning("blavaan WARNING: conditional=TRUE has no effect if you do not supply a discFUN.")
-    fullobj <- object
   }
   
-  out <- postpred(lavpartable = object@ParTable,
-                  lavmodel = object@Model,
-                  lavoptions = object@Options,
-                  lavsamplestats = object@SampleStats,
-                  lavdata = object@Data,
-                  lavcache = object@Cache,
-                  lavjags = object@external$mcmcout,
-                  samplls = object@external$samplls,
-                  lavobject = fullobj, 
+  out <- postpred(samplls = object@external$samplls, lavobject = object, 
                   measure = fit.measures, thin = thin, discFUN = discFUN)
 
   ## "out" is a list:
@@ -660,6 +661,7 @@ ppmc <- function(object, thin = 1, fit.measures = c("srmr","chisq"),
 
   ## names for each discFUN
   if (is.null(names(discFUN))) names(discFUN) <- paste0("discFUN", seq_along(discFUN))
+
   ## pass names to other lists
   for (d in seq_along(discFUN)) {
     names(DIMS) <- names(PPP) <- names(OBS) <- names(SIM) <- names(discFUN)

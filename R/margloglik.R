@@ -82,11 +82,9 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
       tmpmat <- tmpmat + t(tmpmat)
       diag(tmpmat) <- diag(tmpmat)/2
 
-      ## TODO do we really need MCMCpack, or should we just
-      ## compute the log density ourselves?
       ## NB wishart on precision matrix, so need to invert:
       if(targdist == "dwish"){
-        priloglik <- priloglik + log(MCMCpack::dwish(solve(tmpmat), (dimen+1), diag(dimen)))
+        priloglik <- priloglik + ldwish(solve(tmpmat), (dimen+1), diag(dimen))
       } else {
         etapar <- as.numeric(pricom[[wps[1]]][2])
         ## etapar==1 has you adding 0, so avoid

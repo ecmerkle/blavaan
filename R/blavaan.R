@@ -83,7 +83,7 @@ blavaan <- function(...,  # default lavaan arguments
 
     # mcmcextra args
     if(length(mcmcextra) > 0){
-      goodnm <- names(mcmcextra) %in% c('data', 'monitor', 'syntax', 'llnsamp')
+      goodnm <- names(mcmcextra) %in% c('data', 'monitor', 'syntax', 'llnsamp', 'moment_match_k_threshold')
       if(!all(goodnm)){
         stop(paste0("blavaan ERROR: invalid list names in mcmcextra:\n  ", paste(names(mcmcextra)[!goodnm], collapse=" ")))
       }
@@ -94,8 +94,8 @@ blavaan <- function(...,  # default lavaan arguments
     if(grepl("stan", target)){
       if(convergence == "auto") stop("blavaan ERROR: auto convergence is unavailable for Stan.")
 
-      if(target == "stan" & length(mcmcextra) > 0) {
-        if("syntax" %in% names(mcmcextra)) stop("blavaan ERROR: mcmcextra$syntax is not available for target='stan'.")
+      if(target %in% c("stan", "cmdstan") & length(mcmcextra) > 0) {
+        if("syntax" %in% names(mcmcextra)) stop(paste0("blavaan ERROR: mcmcextra$syntax is not available for target='", target, "'."))
       }
     } else if(target == "jags"){
       if(!pkgcheck("runjags")){
@@ -243,7 +243,10 @@ blavaan <- function(...,  # default lavaan arguments
     if(convergence == "auto"){
         names(mfj) <- c("startburnin", "startsample", "adapt")
     }
-    if(grepl("stan", target)){
+    if(target == "cmdstan"){
+        names(mfj) <- c("iter_warmup", "iter_sampling", "adapt")
+        mfj <- mfj[-which(names(mfj) == "adapt")]
+    } else if(grepl("stan", target)){
         names(mfj) <- c("warmup", "iter", "adapt")
         if(usevb){
           mfj <- mfj["iter"]
@@ -328,7 +331,7 @@ blavaan <- function(...,  # default lavaan arguments
     # ordinal only for stan
     ordmod <- lavInspect(LAV, 'categorical')
     if(ordmod) {
-        if(target != "stan") stop("blavaan ERROR: ordinal variables only work for target='stan'.")
+        if(!(target %in% c("stan", "cmdstan"))) stop("blavaan ERROR: ordinal variables only work for target='stan' or 'cmdstan'.")
     }
         
     ineq <- which(LAV@ParTable$op %in% c("<",">"))
@@ -570,6 +573,18 @@ blavaan <- function(...,  # default lavaan arguments
                 if("monitor" %in% names(mcmcextra)){
                     jagtrans$monitors <- c(jagtrans$monitors, mcmcextra$monitor)
                 }
+                if("data" %in% names(mcmcextra) & "moment_match_k_threshold" %in% names(mcmcextra$data)){
+                    moment_match_monitors <- c(
+                      c("Lambda_y_free", "Gamma_free", "B_free", 
+                        "Theta_sd_free", "Theta_r_free", "Psi_sd_free", 
+                        "Psi_r_mat", "Psi_r_free", "Tau_ufree", 
+                        "z_aug", "ly_sign", "bet_sign", "g_sign",
+                        "Theta_cov", "Theta_var", "Psi_cov", "Psi_var", 
+                        "Nu_free", "Alpha_free", "Tau_free", "log_lik", 
+                        "log_lik_sat", "ppp")
+                    )
+                    jagtrans$monitors <- c(jagtrans$monitors, moment_match_monitors[!(moment_match_monitors %in% jagtrans$monitors)])
+                }
                 if("data" %in% names(mcmcextra)){
                     tmpdat <- c(jagtrans$data, mcmcextra$data)
                     ## if a piece of data appears in both jagtrans and mcmcextra, prefer
@@ -604,7 +619,7 @@ blavaan <- function(...,  # default lavaan arguments
                 dir.create(path=jagdir, showWarnings=FALSE)
                 fext <- ifelse(target=="jags", "jag", "stan")
                 fnm <- paste0(jagdir, "/sem.", fext)
-                if(target=="stan"){
+                if(target %in% c("stan", "cmdstan")){
                     cat(stanmodels$stanmarg@model_code, file = fnm)
                 } else {
                     cat(jagtrans$model, file = fnm)
@@ -628,6 +643,8 @@ blavaan <- function(...,  # default lavaan arguments
                                            pars = sampparms,
                                            data = data,
                                            init = inits))
+            } else if(target == "cmdstan"){
+              rjarg <- with(jagtrans, list(data = data, init = inits))
             } else {
               rjarg <- with(jagtrans, list(object = stanmodels$stanmarg,
                                            data = data,
@@ -653,6 +670,13 @@ blavaan <- function(...,  # default lavaan arguments
                     rjcall <- "stan"
                 } else if(usevb){
                     rjcall <- "vb"
+                } else if(target == "cmdstan"){
+                    fname <- paste0("stanmarg_", packageDescription("blavaan")["Version"])
+                    fdir <- paste0(cmdstanr::cmdstan_path(), "/")
+                    blavmod <- cmdstanr::cmdstan_model(cmdstanr::write_stan_file(stanmodels$stanmarg@model_code,
+                                                                                 dir = fdir,
+                                                                                 basename = fname) )
+                    rjcall <- blavmod$sample
                 } else {
                     rjcall <- "sampling"
                 }
@@ -701,6 +725,12 @@ blavaan <- function(...,  # default lavaan arguments
         timing$Estimate <- (proc.time()[3] - start.time)
         start.time <- proc.time()[3]
 
+        ## FIXME: there is no pars argument. this saves all parameters and uses unnecessary memory
+        ## see res@sim and line 284 of stan_csv.R... might cut it down manually
+        if(target == "cmdstan"){
+          res <- rstan::read_stan_csv(res$output_files())
+        }
+        
         if(target == "jags"){
           parests <- coeffun(lavpartable, jagtrans$pxpartable, res)
           stansumm <- NA
@@ -755,25 +785,24 @@ blavaan <- function(...,  # default lavaan arguments
         attr(x, "control") <- bcontrol
 
         ## log-likelihoods
-        tmplo <- lavoptions
-        tmplo$target <- "jags" ## to ensure computation in R, vs extraction of the
-                               ## log-likehoods from Stan
+        LAV@ParTable <- lavpartable
+        LAV@Model <- lavmodel
+        LAV@external$mcmcout <- res
+        LAV@Options$target <- "jags" ## to ensure computation in R, vs extraction of the
+                                     ## log-likehoods from Stan
         ## FIXME: modify so that fx is commensurate with logl from Stan
         ##        for ystar, could take means of truncated normals
-        attr(x, "fx") <- get_ll(lavmodel = lavmodel, lavpartable = lavpartable,
-                                lavsamplestats = lavsamplestats, lavoptions = tmplo,
-                                lavcache = lavcache, lavdata = lavdata,
-                                lavobject = LAV, standata = rjarg$data)[1]
+        attr(x, "fx") <- get_ll(lavobject = LAV, standata = rjarg$data)[1]
+        LAV@Options$target <- target
+
+
         if(save.lvs & jag.do.fit & !ordmod) {
             if(target == "jags"){
                 fullpmeans <- summary(make_mcmc(res))[[1]][,"Mean"]
             } else {
                 fullpmeans <- stansumm[,"mean"] #rstan::summary(res)$summary[,"mean"]
             }
-            cfx <- get_ll(fullpmeans, lavmodel = lavmodel, lavpartable = lavpartable,
-                          lavsamplestats = lavsamplestats, lavoptions = lavoptions,
-                          lavcache = lavcache, lavdata = lavdata,
-                          lavobject = LAV, conditional = TRUE)[1]
+            cfx <- get_ll(fullpmeans, lavobject = LAV, conditional = TRUE)[1]
         } else {
             cfx <- NULL
         }
@@ -792,17 +821,26 @@ blavaan <- function(...,  # default lavaan arguments
 
       ## warn if psrf is large
       if(!attr(x, "converged") && lavoptions$warn) {
-        warning("blavaan WARNING: at least one parameter has a psrf > 1.2.", call. = FALSE)
+        warning("blavaan WARNING: at least one parameter has a rhat > 1.2.", call. = FALSE)
       }
     }
 
     ## fx is mean ll, where ll is marginal log-likelihood (integrate out lvs)
+    casells <- NULL
     if(lavoptions$test != "none") {
       cat("Computing posterior predictives...\n")
       lavmcmc <- make_mcmc(res)
-      samplls <- samp_lls(res, lavmodel, lavpartable, lavsamplestats,
-                          lavoptions, lavcache, lavdata, lavmcmc, lavobject = LAV,
-                          standata = rjarg$data)
+      LAV@Options <- lavoptions
+
+      if(lavoptions$categorical) {
+        LAV@external$mcmcdata <- rjarg$data
+        casells <- case_lls(res, lavmcmc, lavobject = LAV)
+        samplls <- array(0, dim = c(sample, n.chains, 2))
+        samplls[,,1] <- rowSums(casells)
+      } else {
+        samplls <- samp_lls(res, lavmcmc, lavobject = LAV, standata = rjarg$data)
+      }
+      
       if(jags.ic) {
         sampkls <- samp_kls(res, lavmodel, lavpartable,
                             lavsamplestats, lavoptions, lavcache,
@@ -815,10 +853,7 @@ blavaan <- function(...,  # default lavaan arguments
         if(target == "stan"){
           lavmcmc <- make_mcmc(res, stanlvs) ## add on lvs
         }
-        csamplls <- samp_lls(res, lavmodel, lavpartable,
-                             lavsamplestats, lavoptions, lavcache,
-                             lavdata, lavmcmc, lavobject = LAV,
-                             conditional = TRUE)
+        csamplls <- samp_lls(res, lavmcmc, lavobject = LAV, conditional = TRUE)
         if(jags.ic) {
           csampkls <- samp_kls(res, lavmodel, lavpartable,
                                lavsamplestats, lavoptions, lavcache,
@@ -921,7 +956,7 @@ blavaan <- function(...,  # default lavaan arguments
     lavoptim <- lapply(optnames, function(x) slot(lavfit, x))
     names(lavoptim) <- optnames
 
-    extslot <- list(mcmcout = lavjags, samplls = samplls,
+    extslot <- list(mcmcout = lavjags, samplls = samplls, casells = casells,
                     origpt = lavpartable, inits = jagtrans$inits,
                     mcmcdata = jagtrans$data, pxpt = jagtrans$pxpartable,
                     burnin = burnin, sample = sample)

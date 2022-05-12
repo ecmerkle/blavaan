@@ -342,3 +342,38 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
   list(outlist = outlist, lavpartable = lavpartable, stanpris = stanpris)
 }
   
+## wishart log-density
+ldwish <- function(S, df, V){
+  p <- NROW(S)
+
+  logdetS <- log(det(S))
+
+  chV <- chol(V)
+  invV <- chol2inv(chV)
+  logdetV <- 2*sum(log(diag(chV)))
+  lmvgamma <- sum(log(gamma((df + 1 - 1:p)/2)))
+  
+  return(.5 * ((df - p - 1) * logdetS - sum(diag(invV %*% S)) - df*p*log(2) - df * logdetV - log(pi) * p * (p - 1)/2) - lmvgamma)
+}
+
+## for missing data, index row in data matrix based on index in Mp
+## tricky because some cases can be fully missing, so they are excluded from the model
+## Mp is @Data@Mp; case.idx is @Data@case.idx
+## if exclude.empty, indexes are decreased to go from 1 to sum(lavInspect(,"nobs"))
+## if !exclude.empty, indexes can go from 1 to sum(lavInspect(,"norig"))
+Mp2dataidx <- function(Mp, case.idx, exclude.empty = TRUE){
+  Ng <- length(Mp)
+
+  for(g in 1:Ng){
+    for(j in 1:length(Mp[[g]]$case.idx)){
+      Mp[[g]]$case.idx[[j]] <- case.idx[[g]][Mp[[g]]$case.idx[[j]]]
+    }
+  }
+
+  out <- unlist(sapply(Mp, function(x) unlist(x$case.idx)))
+  if(exclude.empty){
+    out <- rank(out)
+  }
+
+  out
+}

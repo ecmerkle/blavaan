@@ -7,7 +7,7 @@ blav_model_fit <- function(lavpartable = NULL,
 
     stopifnot(is.list(lavpartable), inherits(lavmodel, c("Model",
                                                            "lavModel")))
-    if(class(lavjags) != "NULL"){
+    if(!inherits(lavjags, "NULL")){
         lavmcmc <- make_mcmc(lavjags)
     } else {
         lavmcmc <- NULL

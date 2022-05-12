@@ -32,7 +32,9 @@ bcfa(..., cp = "srs",
   for target=\code{"stan"}),
   \code{monitor}, \code{data}, and \code{llnsamp}. The \code{syntax} object is a text string containing extra
   code to insert in the JAGS/Stan model syntax. The \code{data} object
-  is a list of extra data to send to the JAGS/Stan model. The \code{monitor} object
+  is a list of extra data to send to the JAGS/Stan model. If 
+  \code{moment_match_k_threshold} is specified within \code{data} the looic of 
+  the model will be calculated using moment matching. The \code{monitor} object
   is a character vector containing extra JAGS/Stan parameters to
   monitor. The \code{llnsamp} object is only relevant to models with ordinal
   variables, and specifies the number of samples that should be drawn to approximate

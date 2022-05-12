@@ -167,130 +167,19 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
 
 lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=NULL, prisamp=FALSE, mcmcextra=NULL) {
   ## extract model and data characteristics from lavaan object
-  dat <- list()
   opts <- lavInspect(lavobject, 'options')
 
-  ## data
-  Ng <- dat$Ng <- lavInspect(lavobject, 'ngroups')
-  YX <- lavobject@Data@X
-  nvar <- ncol(YX[[1]])
-  ord <- as.numeric(lavInspect(lavobject, 'categorical'))
-  dat$ord <- ord
-  dat$N <- lavInspect(lavobject, 'nobs')
-  dat$pri_only <- prisamp
-  xidx <- lavobject@SampleStats@x.idx[[1]]
+  ## data characteristics
+  dat <- lav2standata(lavobject)
+  Ng <- dat$Ng
+  
+  ## model
   if ("emiter" %in% names(mcmcextra$data)) {
     dat$emiter <- mcmcextra$data$emiter
   } else {
     dat$emiter <- 20L
   }
-
-  ## lavobject@SampleStats@missing.flag is TRUE when missing='ml',
-  ## regardless of whether data are missing
-  misflag <- any(sapply(lavobject@Data@X, function(x) any(is.na(x))))
-  if (misflag) {
-    dat$miss <- 1L
-    Mp <- lavobject@Data@Mp
-    cases <- lapply(Mp, function(x) do.call("c", x$case.idx))
-    misgrps <- lapply(Mp, function(x) x$freq)
-
-    misgrps <- do.call("c", misgrps)
-
-    misgrps <- rep(1:length(misgrps), misgrps)
-    npatt <- sapply(Mp, function(x) NROW(x$pat))
-    dat$startrow <- tapply(1:NROW(misgrps), misgrps, head, 1)
-    dat$endrow <- tapply(1:NROW(misgrps), misgrps, tail, 1)
-    dat$grpnum <- rep(1:dat$Ng, npatt)
-
-    dat$Nobs <- do.call("c", lapply(Mp, function(x) rowSums(x$pat)))
-    Obsvar <- do.call("c", lapply(Mp, function(x) apply(x$pat, 1, which)))
-    
-    dat$Np <- length(unique(misgrps))
-    dat$Ntot <- sum(dat$N)
-    dat$Obsvar <- matrix(0, dat$Np, nvar)
-    dat$Nx <- rep(0, dat$Np)
-    dat$Xvar <- dat$Xdatvar <- matrix(0, dat$Np, length(xidx))
-
-    for (i in 1:dat$Np) {
-      dat$Obsvar[i, 1:dat$Nobs[i]] <- Obsvar[[i]]
-      if (dat$Nobs[i] < nvar) {
-        ## missing idx is at end of Obsvar
-        allvars <- 1:nvar
-        dat$Obsvar[i, (dat$Nobs[i] + 1):nvar] <- allvars[!(allvars %in% Obsvar[[i]])]
-      }
-      xdatidx <- match(xidx, Obsvar[[i]])
-      xpat <- xidx[xidx %in% Obsvar[[i]]]
-      if (length(xpat) > 0) {
-        dat$Nx[i] <- length(xpat)
-        dat$Xvar[i, 1:length(xpat)] <- xpat
-        dat$Xdatvar[i, 1:length(xpat)] <- xdatidx
-      }
-    }
-
-    for (g in 1:dat$Ng) {
-      YX[[g]] <- YX[[g]][cases[[g]],]
-      YX[[g]][is.na(YX[[g]])] <- 0
-      ## pre-ordinal, when we already moved everything to the left before stan:
-      ## YX[[g]] <- t(apply(YX[[g]], 1, function(x) c(x[!is.na(x)], rep(0, sum(is.na(x))))))
-    }
-  } else {
-    dat$miss <- 0L
-    dat$grpnum <- rep(1:dat$Ng, dat$N)
-    dat$startrow <- tapply(1:NROW(dat$grpnum), dat$grpnum, head, 1)
-    dat$endrow <- tapply(1:NROW(dat$grpnum), dat$grpnum, tail, 1)
-    dat$grpnum <- unique(dat$grpnum)
-    dat$Np <- dat$Ng
-    dat$Nobs <- array(nvar, dat$Np)
-    dat$Obsvar <- matrix(1:nvar, dat$Np, nvar, byrow=TRUE)
-    dat$Nx <- array(length(xidx), dat$Np)
-    dat$Xvar <- dat$Xdatvar <- matrix(xidx, dat$Np, length(xidx), byrow=TRUE)
-  }
-  dat$YX <- do.call("rbind", YX)
-  dat$grpnum <- array(dat$grpnum, length(dat$grpnum))
-
-  if (ord) {
-    pta <- lav_partable_attributes(parTable(lavobject))
-
-    ordidx <- pta$vidx$ov.ord[[1]]
-    dat$YXo <- dat$YX[, ordidx, drop=FALSE]
-    dat$YXo[dat$YXo == 0L] <- 1L ## this does not get used but is needed to avoid threshold problems
-    mode(dat$YXo) <- "integer"
-    dat$YX <- dat$YX[, -ordidx, drop=FALSE]
-
-    nlevs <- rep(NA, length(ordidx))
-    neach <- vector("list", length(ordidx))
-    for(i in 1:length(ordidx)){
-      ordvar <- unlist(lapply(lavobject@Data@X, function(x) x[,ordidx[i]]))
-      ordvar <- ordvar[!is.na(ordvar)]
-      nlevs[i] <- length(unique(ordvar))
-    
-      neach[[i]] <- summary(factor(ordvar), maxsum=1e5)
-    }
-
-    maxcat <- max(nlevs)
-
-    nemat <- matrix(0, length(ordidx), maxcat)
-    for(i in 1:length(ordidx)){
-      nemat[i,1:nlevs[i]] <- neach[[i]]
-    }
-
-    dat$Nord <- length(ordidx)
-    dat$ordidx <- array(ordidx, length(ordidx))
-    contidx <- (1:nvar)[-ordidx]
-    dat$contidx <- array(contidx, length(contidx))
-    dat$nlevs <- array(nlevs, length(ordidx))
-    dat$neach <- nemat
-  } else {
-    dat$YXo <- matrix(0, NROW(dat$YX), 0)
-    mode(dat$YXo) <- "integer"
-    dat$Nord <- 0L
-    dat$ordidx <- array(0, 0)
-    dat$contidx <- array(1:nvar, nvar)
-    dat$nlevs <- array(0, 0)
-    dat$neach <- matrix(0, 0, 0)
-  }
-
-  ## model
+  dat$pri_only <- prisamp
   freemats <- lavInspect(lavobject, 'free')
   constrain <- attr(freemats, 'header')
   if (any(constrain$op != "==")) {
@@ -788,15 +677,15 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       ## tau needs a specific ordering, with augmented z's to match
       tauvec <- which(names(ini[[i]]) == "Tau_free")
       if(length(tauvec) > 0) {
-        z_aug <- matrix(.5, NROW(dat$YXo), dat$Nord)
+        z_aug <- rep(.5, dat$Noent)
 
-        for (j in 1:dat$Nord) {
-          tmpyx <- dat$YXo[,j]
-          hicat <- tmpyx == max(tmpyx)
-          locat <- tmpyx == min(tmpyx)
-          z_aug[hicat,j] <- .05
-          z_aug[locat,j] <- .95
-        }
+        ## for (j in 1:dat$Nord) {
+        ##   tmpyx <- dat$YXo[,j]
+        ##   hicat <- tmpyx == max(tmpyx)
+        ##   locat <- tmpyx == min(tmpyx)
+        ##   z_aug[hicat,j] <- .05
+        ##   z_aug[locat,j] <- .95
+        ## }
 
         ini[[i]] <- c(ini[[i]], list(z_aug = z_aug))
       }
@@ -970,4 +859,150 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
        lavpartable = lavpartable,
        vcorr = vcorr, sd = sdvec,
        stansumm = rssumm$summary)
+}
+
+## organize information about the observed data for Stan (separately from model information)
+lav2standata <- function(lavobject) {
+  dat <- list()
+
+  Ng <- dat$Ng <- lavInspect(lavobject, 'ngroups')
+  YX <- lavobject@Data@X
+  nvar <- ncol(YX[[1]])
+  ord <- as.numeric(lavInspect(lavobject, 'categorical'))
+  dat$ord <- ord
+  dat$N <- lavInspect(lavobject, 'nobs')
+
+  xidx <- lavobject@SampleStats@x.idx[[1]]
+  allvars <- 1:nvar
+
+  ## lavobject@SampleStats@missing.flag is TRUE when missing='ml',
+  ## regardless of whether data are missing
+  misflag <- any(sapply(lavobject@Data@X, function(x) any(is.na(x))))
+  if (misflag) {
+    dat$miss <- 1L
+    Mp <- lavobject@Data@Mp
+    cases <- lapply(Mp, function(x) do.call("c", x$case.idx))
+    misgrps <- lapply(Mp, function(x) x$freq)
+
+    misgrps <- do.call("c", misgrps)
+
+    misgrps <- rep(1:length(misgrps), misgrps)
+    npatt <- sapply(Mp, function(x) NROW(x$pat))
+    dat$startrow <- tapply(1:NROW(misgrps), misgrps, head, 1)
+    dat$endrow <- tapply(1:NROW(misgrps), misgrps, tail, 1)
+    dat$grpnum <- rep(1:dat$Ng, npatt)
+
+    dat$Nobs <- do.call("c", lapply(Mp, function(x) rowSums(x$pat)))
+    Obsvar <- do.call("c", lapply(Mp, function(x) apply(x$pat, 1, which)))
+    
+    dat$Np <- length(unique(misgrps))
+    dat$Ntot <- sum(dat$N)
+    dat$Obsvar <- matrix(0, dat$Np, nvar)
+    dat$Nx <- rep(0, dat$Np)
+    dat$Xvar <- dat$Xdatvar <- matrix(0, dat$Np, nvar)
+
+    for (i in 1:dat$Np) {
+      dat$Obsvar[i, 1:dat$Nobs[i]] <- Obsvar[[i]]
+      if (dat$Nobs[i] < nvar) {
+        ## missing idx is at end of Obsvar
+        dat$Obsvar[i, (dat$Nobs[i] + 1):nvar] <- allvars[!(allvars %in% Obsvar[[i]])]
+      }
+      xdatidx <- match(xidx, Obsvar[[i]])
+      xpat <- xidx[xidx %in% Obsvar[[i]]]
+      if (length(xpat) > 0) {
+        dat$Nx[i] <- length(xpat)
+        dat$Xvar[i, 1:length(xpat)] <- xpat
+        dat$Xdatvar[i, 1:length(xpat)] <- xdatidx
+
+        if (dat$Nx[i] < nvar) {
+          dat$Xvar[i, (length(xpat) + 1):nvar] <- allvars[!(allvars %in% xpat)]
+          dat$Xdatvar[i, (length(xpat) + 1):nvar] <- allvars[!(allvars %in% xdatidx)]
+        }
+      }
+    }
+
+    for (g in 1:dat$Ng) {
+      YX[[g]] <- YX[[g]][cases[[g]],]
+      YX[[g]][is.na(YX[[g]])] <- 0
+      ## pre-ordinal, when we already moved everything to the left before stan:
+      ## YX[[g]] <- t(apply(YX[[g]], 1, function(x) c(x[!is.na(x)], rep(0, sum(is.na(x))))))
+    }
+  } else {
+    dat$miss <- 0L
+    dat$grpnum <- rep(1:dat$Ng, dat$N)
+    dat$startrow <- tapply(1:NROW(dat$grpnum), dat$grpnum, head, 1)
+    dat$endrow <- tapply(1:NROW(dat$grpnum), dat$grpnum, tail, 1)
+    dat$grpnum <- unique(dat$grpnum)
+    dat$Np <- dat$Ng
+    dat$Nobs <- array(nvar, dat$Np)
+    dat$Obsvar <- matrix(1:nvar, dat$Np, nvar, byrow=TRUE)
+    dat$Nx <- array(length(xidx), dat$Np)
+    dat$Xvar <- dat$Xdatvar <- matrix(xidx, dat$Np, length(xidx), byrow=TRUE)
+    if (length(xidx) < nvar) {
+      dat$Xvar <- dat$Xdatvar <- cbind(dat$Xvar,
+                                       matrix(allvars[!(allvars %in% xidx)], dat$Np,
+                                              nvar - length(xidx), byrow = TRUE))
+    }
+  }
+  dat$YX <- do.call("rbind", YX)
+  dat$grpnum <- array(dat$grpnum, length(dat$grpnum))
+
+  if (ord) {
+    pta <- lav_partable_attributes(parTable(lavobject))
+
+    ordidx <- pta$vidx$ov.ord[[1]]
+    dat$YXo <- dat$YX[, ordidx, drop=FALSE]
+    if (misflag) {
+      dat$Noent <- sum(dat$YXo > 0)
+      dat$Nordobs <- do.call("c", lapply(Mp, function(x) rowSums(x$pat[,ordidx])))
+      OrdObsvar <- do.call("c", lapply(Mp, function(x) apply(x$pat[,ordidx], 1, which)))
+
+      dat$OrdObsvar <- matrix(0, dat$Np, ncol(dat$YXo))
+      allvars <- 1:ncol(dat$YXo)
+      for (i in 1:dat$Np) {
+        dat$OrdObsvar[i, 1:dat$Nordobs[i]] <- OrdObsvar[[i]]
+        if (dat$Nordobs[i] < ncol(dat$YXo)) {
+          dat$OrdObsvar[i, (dat$Nordobs[i] + 1):ncol(dat$YXo)] <- allvars[!(allvars %in% OrdObsvar[[i]])]
+        }
+      }
+    } else {
+      dat$Noent <- length(ordidx) * nrow(dat$YXo)
+      dat$Nordobs <- array(length(ordidx), dat$Np)
+      dat$OrdObsvar <- matrix(1:length(ordidx), dat$Np, length(ordidx), byrow = TRUE)
+    }
+    
+    dat$YXo[dat$YXo == 0L] <- 1L ## this does not get used but is needed to avoid threshold problems
+    mode(dat$YXo) <- "integer"
+    dat$YX <- dat$YX[, -ordidx, drop=FALSE]
+
+
+    nlevs <- rep(NA, length(ordidx))
+    neach <- vector("list", length(ordidx))
+    for(i in 1:length(ordidx)){
+      ordvar <- unlist(lapply(lavobject@Data@X, function(x) x[,ordidx[i]]))
+      ordvar <- ordvar[!is.na(ordvar)]
+      nlevs[i] <- length(unique(ordvar))
+    }
+
+    maxcat <- max(nlevs)
+
+    dat$Nord <- length(ordidx)
+    dat$ordidx <- array(ordidx, length(ordidx))
+    contidx <- (1:nvar)[-ordidx]
+    dat$contidx <- array(contidx, length(contidx))
+    dat$nlevs <- array(nlevs, length(ordidx))
+  } else {
+    dat$YXo <- matrix(0, NROW(dat$YX), 0)
+    mode(dat$YXo) <- "integer"
+    dat$Nord <- 0L
+    dat$ordidx <- array(0, 0)
+    dat$Noent <- 0L
+    dat$Nordobs <- array(0, dat$Np)
+    dat$OrdObsvar <- matrix(0, dat$Np, 0)
+    dat$contidx <- array(1:nvar, nvar)
+    dat$nlevs <- array(0, 0)
+    dat$neach <- matrix(0, 0, 0)
+  }
+
+  return(dat)
 }

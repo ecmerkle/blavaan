@@ -25,9 +25,12 @@ blavPredict <- function(object, newdata = NULL, type = "lv") {
       type <- "ymis"
       if(all(!is.na(unlist(blavdata@X)))) stop("blavaan ERROR: No missing data are present.", call. = FALSE)
   }
-      
-  stantarget <- lavInspect(object, "options")$target == "stan"
 
+  lavopt <- lavInspect(object, "options")
+  stantarget <- lavopt$target == "stan"
+
+  if(lavopt$categorical & type == "ymis") stop("blavaan ERROR: ymis is not yet implemented for ordinal models.", call. = FALSE)
+  
   if(!is.null(newdata)) stop("blavaan ERROR: posterior predictions for newdata are not currently supported")
   
   ## lv: posterior dist of lvs (use blavInspect functionality); matrix frame
@@ -36,7 +39,13 @@ blavPredict <- function(object, newdata = NULL, type = "lv") {
   ## ypred: posterior predictive distribution of ovs conditioned on lv samples; mcmc list
   ## ymis: posterior predictive distribution of missing values conditioned on observed values; matrix
   if(type == "lv") {
-    out <- do.call("rbind", blavInspect(object, 'lvs'))
+    FS <- do.call("rbind", blavInspect(object, 'lvs'))
+
+    ## N and latent variable names, to set dimensions
+    N <- sum(lavInspect(object, "ntotal"))
+    etas <- lavNames(object, "lv")
+
+    out <- lapply(1:NROW(FS), function(i) matrix(FS[i,], N, length(etas)))
   } else if(type == "lvmeans") {
     out <- blavInspect(object, 'lvmeans')
   } else if(type %in% c("yhat", "ypred", "ymis")) {

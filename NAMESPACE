@@ -7,7 +7,8 @@ importFrom("utils",
            "capture.output", "head", "tail", "getFromNamespace", "compareVersion")
 
 importFrom("stats",
-           "approx", "density", "median", "dnorm", "pnorm", "rgamma", "rnorm",
+           "approx", "density", "median",
+           "dbinom", "dnorm", "pnorm", "rgamma", "rnorm",
            "runif", "sd", "quantile", "rWishart", "cov", "cor",
            "coef", "logLik",
            "residuals", "resid",
@@ -37,9 +38,6 @@ importFrom("lavaan",
            "modificationIndices", "parTable", "parameterEstimates",
            "lavPredict", "standardizedSolution")
 
-importFrom("MCMCpack",
-           "dwish")
-
 importFrom("coda",
            "mcmc.list",
            "mcmc", "as.mcmc",
@@ -47,7 +45,8 @@ importFrom("coda",
 
 importFrom("mnormt",
            "dmnorm",
-           "rmnorm")
+           "rmnorm",
+           "sadmvn")
 
 importFrom("nonnest2",
            "llcont")
