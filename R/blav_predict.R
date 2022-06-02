@@ -45,7 +45,10 @@ blavPredict <- function(object, newdata = NULL, type = "lv") {
     N <- sum(lavInspect(object, "ntotal"))
     etas <- lavNames(object, "lv")
 
-    out <- lapply(1:NROW(FS), function(i) matrix(FS[i,], N, length(etas)))
+    out <- lapply(1:NROW(FS), function(i) {
+      rowmat <- matrix(FS[i,], N, length(etas))
+      colnames(rowmat) <- etas
+      rowmat } )
   } else if(type == "lvmeans") {
     out <- blavInspect(object, 'lvmeans')
   } else if(type %in% c("yhat", "ypred", "ymis")) {
