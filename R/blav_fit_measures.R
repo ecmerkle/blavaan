@@ -71,7 +71,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
     fx <- object@Fit@fx
     fx.group <- object@Fit@fx.group
     meanstructure <- object@Model@meanstructure
-    categorical   <- object@Model@categorical
+    categorical   <- lavInspect(object, "categorical")
     multigroup    <- object@Data@ngroups > 1L
     estimator     <- "ML" #object@Options$estimator
     test          <- object@Options$test
@@ -147,7 +147,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
         indices["ppp"] <- object@Fit@test[[2]]$stat
     }
     if(any(c("bic", "dic", "p_dic") %in% fit.measures & bopts$test != "none")) {
-        if(bopts$categorical && compareVersion(packageDescription('lavaan')$Version, '0.6-10') < 0) stop("blavaan ERROR: lavaan 0.6-10 or higher is needed (you may need to install from github)")
+        if(lavInspect(object, "categorical") && compareVersion(packageDescription('lavaan')$Version, '0.6-10') < 0) stop("blavaan ERROR: lavaan 0.6-10 or higher is needed (you may need to install from github)")
         df <- 2*(object@Fit@fx - mean(as.numeric(object@external$samplls[,,1])))
         indices["bic"] <- -2*object@Fit@fx + npar*log(N)
         indices["dic"] <- -2*object@Fit@fx + 2*df
@@ -178,12 +178,13 @@ blav_fit_measures <- function(object, fit.measures = "all",
     }
     if(any(c("waic", "p_waic", "looic", "p_loo") %in% fit.measures)) {
         lavopt <- object@Options
+        catmod <- lavInspect(object, "categorical")
         lavopt$estimator <- "ML"
-        if(lavopt$target == "stan" && !lavopt$categorical){
+        if(lavopt$target == "stan" && !catmod){
           casells <- loo::extract_log_lik(object@external$mcmcout)
         } else {
-          if(lavopt$categorical & lavopt$test != "none"){
-            if(bopts$categorical && compareVersion(packageDescription('lavaan')$Version, '0.6-10') < 0) stop("blavaan ERROR: lavaan 0.6-10 or higher is needed (you may need to install from github)")
+          if(catmod & lavopt$test != "none"){
+            if(catmod && compareVersion(packageDescription('lavaan')$Version, '0.6-10') < 0) stop("blavaan ERROR: lavaan 0.6-10 or higher is needed (you may need to install from github)")
 
             if("llnsamp" %in% names(lavopt)){
               cat("blavaan NOTE: These criteria involve likelihood approximations that may be imprecise.\n",

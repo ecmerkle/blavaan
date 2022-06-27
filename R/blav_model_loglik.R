@@ -8,7 +8,7 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
                    conditional    = FALSE,
                    standata       = NULL){
 
-    if(lavobject@Options$categorical){
+    if(lavInspect(lavobject, "categorical")){
       ll.samp <- get_ll_ord(postsamp, lavobject, measure, casewise, conditional, standata)
     } else {
       ll.samp <- get_ll_cont(postsamp, lavobject, measure, casewise, conditional)

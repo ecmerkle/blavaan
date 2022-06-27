@@ -29,7 +29,7 @@ blavPredict <- function(object, newdata = NULL, type = "lv") {
   lavopt <- lavInspect(object, "options")
   stantarget <- lavopt$target == "stan"
 
-  if(lavopt$categorical & type == "ymis") stop("blavaan ERROR: ymis is not yet implemented for ordinal models.", call. = FALSE)
+  if(lavInspect(object, "categorical") & type == "ymis") stop("blavaan ERROR: ymis is not yet implemented for ordinal models.", call. = FALSE)
   
   if(!is.null(newdata)) stop("blavaan ERROR: posterior predictions for newdata are not currently supported")
   
