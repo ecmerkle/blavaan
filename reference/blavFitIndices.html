@@ -12,7 +12,7 @@ indices to assess the global fit of a latent variable model."><!-- mathjax --><s
     
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-4.998</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-4.1000</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,31 +81,34 @@ indices to assess the global fit of a latent variable model.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">blavFitIndices</span><span class="op">(</span><span class="va">object</span>, thin <span class="op">=</span> <span class="fl">1L</span>, pD <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"loo"</span>,<span class="st">"waic"</span>,<span class="st">"dic"</span><span class="op">)</span>,
-               rescale <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"devM"</span>,<span class="st">"ppmc"</span>,<span class="st">"mcmc"</span><span class="op">)</span>,
-               fit.measures <span class="op">=</span> <span class="st">"all"</span>, baseline.model <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>
-
-<span class="co">## S4 method for signature 'blavFitIndices'</span>
-<span class="co"># S4 method for blavFitIndices</span>
-<span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span>
-
-<span class="fu">summary.bfi</span><span class="op">(</span><span class="va">object</span>, central.tendency <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mean"</span>,<span class="st">"median"</span>,<span class="st">"mode"</span><span class="op">)</span>,
-        hpd <span class="op">=</span> <span class="cn">TRUE</span>, prob <span class="op">=</span> <span class="fl">.90</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">blavFitIndices</span><span class="op">(</span><span class="va">object</span>, thin <span class="op">=</span> <span class="fl">1L</span>, pD <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"loo"</span>,<span class="st">"waic"</span>,<span class="st">"dic"</span><span class="op">)</span>,</span>
+<span>               rescale <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"devM"</span>,<span class="st">"ppmc"</span>,<span class="st">"mcmc"</span><span class="op">)</span>,</span>
+<span>               fit.measures <span class="op">=</span> <span class="st">"all"</span>, baseline.model <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## S4 method for signature 'blavFitIndices'</span></span>
+<span><span class="co"># S4 method for blavFitIndices</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">summary.bfi</span><span class="op">(</span><span class="va">object</span>, central.tendency <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mean"</span>,<span class="st">"median"</span>,<span class="st">"mode"</span><span class="op">)</span>,</span>
+<span>        hpd <span class="op">=</span> <span class="cn">TRUE</span>, prob <span class="op">=</span> <span class="fl">.90</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
     <dl><dt>object</dt>
 <dd><p>An object of class <code><a href="blavaan-class.html">blavaan</a></code>.</p></dd>
-<dt>thin</dt>
+
+  <dt>thin</dt>
 <dd><p>Optional <code>integer</code> indicating how much to thin each chain.
     Default is <code>1L</code>, indicating not to thin the chains.</p></dd>
-<dt>pD</dt>
+
+  <dt>pD</dt>
 <dd><p><code>character</code> indicating from which information criterion
     returned by <code>fitMeasures(object)</code> to use the estimated number of
     parameters. The default is from the leave-one-out information criterion
     (LOO-IC), which is most highly recommended by Vehtari et al. (2017).</p></dd>
-<dt>rescale</dt>
+
+  <dt>rescale</dt>
 <dd><p><code>character</code> indicating the method used to calculate
     fit indices. If <code>rescale = "devM"</code> (default), the Bayesian analog of
     the \(\chi^2\) statistic (the deviance evaluated at the posterior mean
@@ -120,7 +123,8 @@ indices to assess the global fit of a latent variable model.</p>
     when the model includes informative priors, in which case the model's
     estimated <em>pD</em> will deviate from the number of parameters used to
     calculate <em>df</em> in <code><a href="https://rdrr.io/pkg/lavaan/man/fitMeasures.html" class="external-link">fitMeasures</a></code>).</p></dd>
-<dt>fit.measures</dt>
+
+  <dt>fit.measures</dt>
 <dd><p>If <code>"all"</code>, all fit measures available will be
     returned. If only a single or a few fit measures are specified by name,
     only those are computed and returned. If <code>rescale = "devM"</code> or
@@ -129,40 +133,51 @@ indices to assess the global fit of a latent variable model.</p>
     <code>"BTLI"</code>, or <code>"BNFI"</code>. If <code>rescale = "MCMC"</code>, the user may
     request any indices returned by <code><a href="https://rdrr.io/pkg/lavaan/man/fitMeasures.html" class="external-link">fitMeasures</a></code> for
     objects of class <code><a href="https://rdrr.io/pkg/lavaan/man/lavaan-class.html" class="external-link">lavaan</a></code>.</p></dd>
-<dt>baseline.model</dt>
+
+  <dt>baseline.model</dt>
 <dd><p>If not <code>NULL</code>, an object of class
     <code><a href="blavaan-class.html">blavaan</a></code>, representing a user-specified baseline model.
     If a <code>baseline.model</code> is provided, incremental fit indices (BCFI,
     BTLI, or BNFI) can be requested in <code>fit.measures</code>. Ignored if
     <code>rescale = "MCMC"</code>.</p></dd>
-<dt>...</dt>
+
+  <dt>...</dt>
 <dd><p>Additional arguments to the summary method:</p></dd>
-<dt>central.tendency</dt>
+
+  <dt>central.tendency</dt>
 <dd><p>Takes values "mean", "median", "mode", indicating which statistics should
     be used to characterize the location of the posterior distribution. By
     default, all 3 statistics are returned. The posterior mean is labeled
     EAP for <em>expected a posteriori</em> estimate, and the mode is
     labeled MAP for <em>modal a posteriori</em>
     estimate.</p></dd>
-<dt>hpd</dt>
+
+  <dt>hpd</dt>
 <dd><p>A <code>logical</code> indicating whether to calculate the highest
     posterior density (HPD) credible interval for each fit
     index (defaults to TRUE).</p></dd>
-<dt>prob</dt>
+
+  <dt>prob</dt>
 <dd><p>The "confidence" level of the
   credible interval(s) (defaults to 0.9).</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An S4 object of class <code>blavFitIndices</code> consisting of 2 slots:</p>
+    
+
+<p>An S4 object of class <code>blavFitIndices</code> consisting of 2 slots:</p>
 <dl><dt><code>@details</code></dt>
 <dd><p>A <code>list</code> containing the choices made by the user
     (or defaults; e.g., which values of <code>pD</code> and <code>rescale</code> were set),
     as well as the posterior distribution of the \(\chi^2\) (deviance)
     statistic (rescaled, if <code>rescale = "devM"</code> or <code>"PPMC"</code>).</p></dd>
-<dt><code>@indices</code></dt>
+
+  <dt><code>@indices</code></dt>
 <dd><p>A <code>list</code> containing the posterior distribution
     of each requested <code>fit.measure</code>.</p></dd>
+
+
 </dl><p>The <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> method returns a <code>data.frame</code> containing one row
   for each requested <code>fit.measure</code>, and columns containing the specified
   measure(s) of <code>central.tendency</code>, the posterior <em>SD</em>,
@@ -195,63 +210,63 @@ Adapting Fit Indices for Bayesian Structural Equation Modeling: Comparison to Ma
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"> <span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span>
-<span class="r-in"><span class="va">HS.model</span> <span class="op">&lt;-</span> <span class="st">' visual  =~ x1 + x2 + x3</span>
-<span class="r-in">              textual =~ x4 + x5 + x6</span>
-<span class="r-in">              speed   =~ x7 + x8 + x9 '</span></span>
-<span class="r-in"><span class="co">## fit target model</span></span>
-<span class="r-in"><span class="va">fit1</span> <span class="op">&lt;-</span> <span class="fu"><a href="bcfa.html">bcfa</a></span><span class="op">(</span><span class="va">HS.model</span>, data <span class="op">=</span> <span class="va">HolzingerSwineford1939</span>, </span>
-<span class="r-in">             n.chains <span class="op">=</span> <span class="fl">2</span>, burnin <span class="op">=</span> <span class="fl">1000</span>, sample <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co">## fit null model to calculate CFI, TLI, and NFI</span></span>
-<span class="r-in"><span class="va">null.model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">9</span>, <span class="st">" ~~ x"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">9</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">9</span>, <span class="st">" ~ 1"</span><span class="op">)</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">fit0</span> <span class="op">&lt;-</span> <span class="fu"><a href="bcfa.html">bcfa</a></span><span class="op">(</span><span class="va">null.model</span>, data <span class="op">=</span> <span class="va">HolzingerSwineford1939</span>, </span>
-<span class="r-in">             n.chains <span class="op">=</span> <span class="fl">2</span>, burnin <span class="op">=</span> <span class="fl">1000</span>, sample <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co">## calculate posterior distributions of fit indices</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co">## The default method mimics fit indices derived from ML estimation</span></span>
-<span class="r-in"><span class="va">ML</span> <span class="op">&lt;-</span> <span class="fu">blavFitIndices</span><span class="op">(</span><span class="va">fit1</span>, baseline.model <span class="op">=</span> <span class="va">fit0</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">ML</span></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">ML</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co">## other options:</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co">## - use Hoofs et al.'s (2017) PPMC-based method</span></span>
-<span class="r-in"><span class="co">## - use the estimated number of parameters from WAIC instead of LOO-IC</span></span>
-<span class="r-in"><span class="va">PPMC</span> <span class="op">&lt;-</span> <span class="fu">blavFitIndices</span><span class="op">(</span><span class="va">fit1</span>, baseline.model <span class="op">=</span> <span class="va">fit0</span>,</span>
-<span class="r-in">                       pD <span class="op">=</span> <span class="st">"waic"</span>, rescale <span class="op">=</span> <span class="st">"PPMC"</span><span class="op">)</span></span>
-<span class="r-in"><span class="co">## issues a warning about using rescale="PPMC" with N &lt; 1000 (see Hoofs et al.)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co">## - specify only the desired measures of central tendency</span></span>
-<span class="r-in"><span class="co">## - specify a different "confidence" level for the credible intervals</span></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">PPMC</span>, central.tendency <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mean"</span>,<span class="st">"mode"</span><span class="op">)</span>, prob <span class="op">=</span> <span class="fl">.95</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co">## Access the posterior distributions for further investigation</span></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">distML</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="va">ML</span><span class="op">@</span><span class="va">indices</span><span class="op">)</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co">## For example, diagnostic plots using the bayesplot package:</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co">## distinguish chains</span></span>
-<span class="r-in"><span class="va">nChains</span> <span class="op">&lt;-</span> <span class="fu"><a href="blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit1</span>, <span class="st">"n.chains"</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">distML</span><span class="op">$</span><span class="va">Chain</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">nChains</span>, each <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">distML</span><span class="op">)</span> <span class="op">/</span> <span class="va">nChains</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/bayesplot/" class="external-link">bayesplot</a></span><span class="op">)</span></span>
-<span class="r-in"><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-scatterplots.html" class="external-link">mcmc_pairs</a></span><span class="op">(</span><span class="va">distML</span>, pars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BRMSEA"</span>,<span class="st">"BMc"</span>,<span class="st">"BGammaHat"</span>,<span class="st">"BCFI"</span>,<span class="st">"BTLI"</span><span class="op">)</span>,</span>
-<span class="r-in">           diag_fun <span class="op">=</span> <span class="st">"hist"</span><span class="op">)</span></span>
-<span class="r-in"><span class="co">## Indices are highly correlated across iterations in both chains</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co">## Compare to PPMC method</span></span>
-<span class="r-in"><span class="va">distPPMC</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="va">PPMC</span><span class="op">@</span><span class="va">indices</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">distPPMC</span><span class="op">$</span><span class="va">Chain</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">nChains</span>, each <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">distPPMC</span><span class="op">)</span> <span class="op">/</span> <span class="va">nChains</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-scatterplots.html" class="external-link">mcmc_pairs</a></span><span class="op">(</span><span class="va">distPPMC</span>, pars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BRMSEA"</span>,<span class="st">"BMc"</span>,<span class="st">"BGammaHat"</span>,<span class="st">"BCFI"</span>,<span class="st">"BTLI"</span><span class="op">)</span>,</span>
-<span class="r-in">           diag_fun <span class="op">=</span> <span class="st">"dens"</span><span class="op">)</span></span>
-<span class="r-in"><span class="co">## nonlinear relation between BRMSEA, related to the floor effect of BRMSEA</span></span>
-<span class="r-in"><span class="co">## that Hoofs et al. found for larger (12-indicator) models</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="op">}</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span> <span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span><span class="va">HS.model</span> <span class="op">&lt;-</span> <span class="st">' visual  =~ x1 + x2 + x3</span></span></span>
+<span class="r-in"><span><span class="st">              textual =~ x4 + x5 + x6</span></span></span>
+<span class="r-in"><span><span class="st">              speed   =~ x7 + x8 + x9 '</span></span></span>
+<span class="r-in"><span><span class="co">## fit target model</span></span></span>
+<span class="r-in"><span><span class="va">fit1</span> <span class="op">&lt;-</span> <span class="fu"><a href="bcfa.html">bcfa</a></span><span class="op">(</span><span class="va">HS.model</span>, data <span class="op">=</span> <span class="va">HolzingerSwineford1939</span>, </span></span>
+<span class="r-in"><span>             n.chains <span class="op">=</span> <span class="fl">2</span>, burnin <span class="op">=</span> <span class="fl">1000</span>, sample <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## fit null model to calculate CFI, TLI, and NFI</span></span></span>
+<span class="r-in"><span><span class="va">null.model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">9</span>, <span class="st">" ~~ x"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">9</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">9</span>, <span class="st">" ~ 1"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">fit0</span> <span class="op">&lt;-</span> <span class="fu"><a href="bcfa.html">bcfa</a></span><span class="op">(</span><span class="va">null.model</span>, data <span class="op">=</span> <span class="va">HolzingerSwineford1939</span>, </span></span>
+<span class="r-in"><span>             n.chains <span class="op">=</span> <span class="fl">2</span>, burnin <span class="op">=</span> <span class="fl">1000</span>, sample <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## calculate posterior distributions of fit indices</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## The default method mimics fit indices derived from ML estimation</span></span></span>
+<span class="r-in"><span><span class="va">ML</span> <span class="op">&lt;-</span> <span class="fu">blavFitIndices</span><span class="op">(</span><span class="va">fit1</span>, baseline.model <span class="op">=</span> <span class="va">fit0</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ML</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">ML</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## other options:</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## - use Hoofs et al.'s (2017) PPMC-based method</span></span></span>
+<span class="r-in"><span><span class="co">## - use the estimated number of parameters from WAIC instead of LOO-IC</span></span></span>
+<span class="r-in"><span><span class="va">PPMC</span> <span class="op">&lt;-</span> <span class="fu">blavFitIndices</span><span class="op">(</span><span class="va">fit1</span>, baseline.model <span class="op">=</span> <span class="va">fit0</span>,</span></span>
+<span class="r-in"><span>                       pD <span class="op">=</span> <span class="st">"waic"</span>, rescale <span class="op">=</span> <span class="st">"PPMC"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">## issues a warning about using rescale="PPMC" with N &lt; 1000 (see Hoofs et al.)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## - specify only the desired measures of central tendency</span></span></span>
+<span class="r-in"><span><span class="co">## - specify a different "confidence" level for the credible intervals</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">PPMC</span>, central.tendency <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mean"</span>,<span class="st">"mode"</span><span class="op">)</span>, prob <span class="op">=</span> <span class="fl">.95</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Access the posterior distributions for further investigation</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">distML</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="va">ML</span><span class="op">@</span><span class="va">indices</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## For example, diagnostic plots using the bayesplot package:</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## distinguish chains</span></span></span>
+<span class="r-in"><span><span class="va">nChains</span> <span class="op">&lt;-</span> <span class="fu"><a href="blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit1</span>, <span class="st">"n.chains"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">distML</span><span class="op">$</span><span class="va">Chain</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">nChains</span>, each <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">distML</span><span class="op">)</span> <span class="op">/</span> <span class="va">nChains</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/bayesplot/" class="external-link">bayesplot</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-scatterplots.html" class="external-link">mcmc_pairs</a></span><span class="op">(</span><span class="va">distML</span>, pars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BRMSEA"</span>,<span class="st">"BMc"</span>,<span class="st">"BGammaHat"</span>,<span class="st">"BCFI"</span>,<span class="st">"BTLI"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>           diag_fun <span class="op">=</span> <span class="st">"hist"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">## Indices are highly correlated across iterations in both chains</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Compare to PPMC method</span></span></span>
+<span class="r-in"><span><span class="va">distPPMC</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="va">PPMC</span><span class="op">@</span><span class="va">indices</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">distPPMC</span><span class="op">$</span><span class="va">Chain</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">nChains</span>, each <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">distPPMC</span><span class="op">)</span> <span class="op">/</span> <span class="va">nChains</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-scatterplots.html" class="external-link">mcmc_pairs</a></span><span class="op">(</span><span class="va">distPPMC</span>, pars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BRMSEA"</span>,<span class="st">"BMc"</span>,<span class="st">"BGammaHat"</span>,<span class="st">"BCFI"</span>,<span class="st">"BTLI"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>           diag_fun <span class="op">=</span> <span class="st">"dens"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">## nonlinear relation between BRMSEA, related to the floor effect of BRMSEA</span></span></span>
+<span class="r-in"><span><span class="co">## that Hoofs et al. found for larger (12-indicator) models</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
@@ -263,7 +278,7 @@ Adapting Fit Indices for Bayesian Structural Equation Modeling: Comparison to Ma
 </div>
 
 <div class="pkgdown-footer-right">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
     </footer></div>

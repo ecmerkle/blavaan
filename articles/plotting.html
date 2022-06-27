@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-4.998</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-4.1000</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -90,7 +90,7 @@
 
 
 <script src="plotting_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
-  <main id="main"><div class="page-header">
+  <main id="main" class="col-md-9"><div class="page-header">
       <img src="" class="logo" alt=""><h1>Plot Functionality</h1>
             
       
@@ -102,42 +102,42 @@
     
 <p>A <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> method exists for <em>blavaan</em> objects, with this method making use of the <em>bayesplot</em> package <span class="citation">(Gabry and Mahr 2021)</span>. We provide details here about how this functionality works. We will use a 3-factor model for demonstration:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">HS.model</span> <span class="op">&lt;-</span> <span class="st">' visual  =~ x1 + x2 + x3
-              textual =~ x4 + x5 + x6
-              speed   =~ x7 + x8 + x9 '</span>
-     
-<span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcfa.html">bcfa</a></span><span class="op">(</span><span class="va">HS.model</span>, data<span class="op">=</span><span class="va">HolzingerSwineford1939</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">HS.model</span> <span class="op">&lt;-</span> <span class="st">' visual  =~ x1 + x2 + x3</span></span>
+<span><span class="st">              textual =~ x4 + x5 + x6</span></span>
+<span><span class="st">              speed   =~ x7 + x8 + x9 '</span></span>
+<span>     </span>
+<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcfa.html">bcfa</a></span><span class="op">(</span><span class="va">HS.model</span>, data<span class="op">=</span><span class="va">HolzingerSwineford1939</span><span class="op">)</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="basics">Basics<a class="anchor" aria-label="anchor" href="#basics"></a>
 </h3>
 <p>Because many <em>blavaan</em> models will have many parameters, users generally need to specify which parameters they wish to plot. This is accomplished by supplying numbers to the <code>pars</code> argument, where the numbers correspond to the order of parameters from the <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code> command (the numbers also appear in the <code>free</code> column of the parameter table). Users must also specify the type of plot that they desire via the <code>plot.type</code> argument. So, for example, a trace plot of the first four model parameters looks like</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span>, pars <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, plot.type <span class="op">=</span> <span class="st">"trace"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span>, pars <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, plot.type <span class="op">=</span> <span class="st">"trace"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="plotting_files/figure-html/p1-1.png" width="700"></p>
 <p>Many other plot types are available, coming from the <em>bayesplot</em> package. In general, for <em>bayesplot</em> functions that begin with <code>mcmc_</code>, the corresponding <code>plot.type</code> is the remainder of the function name without the leading <code>mcmc_</code>. Examples of many of these plots can be found in <a href="https://cran.r-project.org/web/packages/bayesplot/vignettes/plotting-mcmc-draws.html" class="external-link">this bayesplot vignette</a>.</p>
 </div>
 <div class="section level3">
 <h3 id="customization">Customization<a class="anchor" aria-label="anchor" href="#customization"></a>
 </h3>
-<p>Users may wish to customize some aspects of the resulting plots. For this, the <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> function will output a <em>ggplot</em> object. This makes it possible to modify the plot as if it were any other <em>ggplot</em> object.</p>
+<p>Users may wish to customize some aspects of the resulting plots. For this, the <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> function will output a <em>ggplot</em> object. This makes it possible to modify the plot as if it were any other <em>ggplot</em> object, which allows for many possibilities. One starting point for exploring <em>ggplot2</em> is <a href="https://ggplot2.tidyverse.org/" class="external-link">here</a>.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span>, pars <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, plot.type <span class="op">=</span> <span class="st">"trace"</span>, showplot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
-
-<span class="va">p</span> <span class="op">+</span> <span class="fu"><a href="https://mc-stan.org/bayesplot/reference/bayesplot-helpers.html" class="external-link">facet_text</a></span><span class="op">(</span>size<span class="op">=</span><span class="fl">15</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://mc-stan.org/bayesplot/reference/bayesplot-helpers.html" class="external-link">legend_none</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span>, pars <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, plot.type <span class="op">=</span> <span class="st">"trace"</span>, showplot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">p</span> <span class="op">+</span> <span class="fu"><a href="https://mc-stan.org/bayesplot/reference/bayesplot-helpers.html" class="external-link">facet_text</a></span><span class="op">(</span>size<span class="op">=</span><span class="fl">15</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://mc-stan.org/bayesplot/reference/bayesplot-helpers.html" class="external-link">legend_none</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><img src="plotting_files/figure-html/p2-1.png" width="700"></p>
 <p>Alternatively, users may wish to create a plot that is entirely different from what is available via <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>. This can be facilitated by extracting the posterior samples or the Stan model, via <code><a href="../reference/blavInspect.html">blavInspect()</a></code>:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co">## list of draws</span>
-<span class="co">## (one list entry per chain):</span>
-<span class="va">draws</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"mcmc"</span><span class="op">)</span>
-
-<span class="co">## convert the list to a matrix</span>
-<span class="co">## (each row is a sample,</span>
-<span class="co">##  each column is a parameter)</span>
-<span class="va">draws</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="st">"rbind"</span>, <span class="va">draws</span><span class="op">)</span>
-
-<span class="co">## Stan (or JAGS) model</span>
-<span class="va">modobj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"mcobj"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="co">## list of draws</span></span>
+<span><span class="co">## (one list entry per chain):</span></span>
+<span><span class="va">draws</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"mcmc"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## convert the list to a matrix</span></span>
+<span><span class="co">## (each row is a sample,</span></span>
+<span><span class="co">##  each column is a parameter)</span></span>
+<span><span class="va">draws</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="st">"rbind"</span>, <span class="va">draws</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Stan (or JAGS) model</span></span>
+<span><span class="va">modobj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"mcobj"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3 unnumbered">
 <h3 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
@@ -148,7 +148,8 @@
 </div>
 </div>
 </div>
-  </main>
+  </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 
@@ -160,7 +161,7 @@
 
 <div class="pkgdown-footer-right">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
     </footer>

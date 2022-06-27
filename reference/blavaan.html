@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-4.998</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-4.1000</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,40 +78,48 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">blavaan</span><span class="op">(</span><span class="va">...</span>, cp <span class="op">=</span> <span class="st">"srs"</span>,
-    dp <span class="op">=</span> <span class="cn">NULL</span>, n.chains <span class="op">=</span> <span class="fl">3</span>, <span class="va">burnin</span>, <span class="va">sample</span>,
-    <span class="va">adapt</span>, mcmcfile <span class="op">=</span> <span class="cn">FALSE</span>, mcmcextra <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, inits <span class="op">=</span> <span class="st">"prior"</span>,
-    convergence <span class="op">=</span> <span class="st">"manual"</span>, target <span class="op">=</span> <span class="st">"stan"</span>, save.lvs <span class="op">=</span> <span class="cn">FALSE</span>,
-    wiggle <span class="op">=</span> <span class="cn">NULL</span>, wiggle.sd <span class="op">=</span> <span class="fl">0.1</span>, prisamp <span class="op">=</span> <span class="cn">FALSE</span>, jags.ic <span class="op">=</span> <span class="cn">FALSE</span>,
-    seed <span class="op">=</span> <span class="cn">NULL</span>, bcontrol <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">blavaan</span><span class="op">(</span><span class="va">...</span>, cp <span class="op">=</span> <span class="st">"srs"</span>,</span>
+<span>    dp <span class="op">=</span> <span class="cn">NULL</span>, n.chains <span class="op">=</span> <span class="fl">3</span>, <span class="va">burnin</span>, <span class="va">sample</span>,</span>
+<span>    <span class="va">adapt</span>, mcmcfile <span class="op">=</span> <span class="cn">FALSE</span>, mcmcextra <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, inits <span class="op">=</span> <span class="st">"prior"</span>,</span>
+<span>    convergence <span class="op">=</span> <span class="st">"manual"</span>, target <span class="op">=</span> <span class="st">"stan"</span>, save.lvs <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>    wiggle <span class="op">=</span> <span class="cn">NULL</span>, wiggle.sd <span class="op">=</span> <span class="fl">0.1</span>, prisamp <span class="op">=</span> <span class="cn">FALSE</span>, jags.ic <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>    seed <span class="op">=</span> <span class="cn">NULL</span>, bcontrol <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
     <dl><dt>...</dt>
 <dd><p>Default lavaan arguments.  See <code><a href="https://rdrr.io/pkg/lavaan/man/lavaan.html" class="external-link">lavaan</a></code>.</p></dd>
+
 <dt>cp</dt>
 <dd><p>Handling of prior distributions on covariance parameters:
   possible values are <code>"srs"</code> (default) or <code>"fa"</code>.  Option
   <code>"fa"</code> is only available for <code>target="jags"</code>.</p></dd>
+
 <dt>dp</dt>
 <dd><p>Default prior distributions on different types of
     parameters, typically the result of a call to <code><a href="dpriors.html">dpriors()</a></code>.
     See the <code><a href="dpriors.html">dpriors()</a></code> help file for more information.</p></dd>
+
 <dt>n.chains</dt>
 <dd><p>Number of desired MCMC chains.</p></dd>
+
 <dt>burnin</dt>
 <dd><p>Number of burnin iterations, NOT including the adaptive
   iterations.</p></dd>
+
 <dt>sample</dt>
 <dd><p>The total number of samples to take after burnin.</p></dd>
+
 <dt>adapt</dt>
 <dd><p>The number of adaptive iterations to use at the start of
   the simulation.</p></dd>
+
 <dt>mcmcfile</dt>
 <dd><p>If <code>TRUE</code>, the JAGS/Stan model and data will be written
   to files (in the lavExport directory). Can also supply a character
   string, which serves as the name of the directory to which files will be written.</p></dd>
+
 <dt>mcmcextra</dt>
 <dd><p>A list with potential names <code>syntax</code> (unavailable
   for target=<code>"stan"</code>),
@@ -126,6 +134,7 @@
   the model log-likelihood (larger numbers imply higher accuracy and
   longer time). This log-likelihood is specifically used to compute
   information criteria.</p></dd>
+
 <dt>inits</dt>
 <dd><p>If it is a character string, the options are currently
     <code>"simple"</code>, <code>"Mplus"</code>, <code>"prior"</code> (default), or <code>"jags"</code>.  In the first two
@@ -145,6 +154,7 @@
     documentation for all the options there). In this case, you should also set
     <code>inits="simple"</code>, and be aware that the same starting values
     will be used for each chain.</p></dd>
+
 <dt>convergence</dt>
 <dd><p>Useful only for <code>target="jags"</code>. If <code>"auto"</code>, parameters are
   sampled until convergence is achieved (via <code>autorun.jags()</code>). In
@@ -153,6 +163,7 @@
   respectively. Otherwise, parameters
   are sampled as specified by the user (or by the <code>run.jags</code>
   defaults).</p></dd>
+
 <dt>target</dt>
 <dd><p>Desired MCMC sampling, with <code>"stan"</code> (pre-compiled
   marginal approach) as
@@ -161,34 +172,44 @@
   <code>"stanclassic"</code>, which sample latent variables and provide some
   greater functionality (because syntax is written "on the fly"). But
   they are slower and less efficient.</p></dd>
+
 <dt>save.lvs</dt>
 <dd><p>Should sampled latent variables (factor scores) be
   saved? Logical; defaults to FALSE</p></dd>
+
 <dt>wiggle</dt>
 <dd><p>Labels of equality-constrained parameters that should be
   "approximately" equal. Can also be "intercepts", "loadings",
   "regressions", "means".</p></dd>
+
 <dt>wiggle.sd</dt>
 <dd><p>The prior sd (of normal distribution) to be used in approximate equality
   constraints. Can be one value, or (for target="stan") a numeric vector
   of values that is the same length as wiggle.</p></dd>
+
 <dt>prisamp</dt>
 <dd><p>Should samples be drawn from the prior, instead of the
   posterior (<code>target="stan"</code> only)? Logical; defaults to FALSE</p></dd>
+
 <dt>jags.ic</dt>
 <dd><p>Should DIC be computed the JAGS way, in addition to the BUGS way? Logical; defaults to FALSE</p></dd>
+
 <dt>seed</dt>
 <dd><p>A vector of length <code>n.chains</code> (for target
   <code>"jags"</code>) or an integer (for target <code>"stan"</code>) containing random
   seeds for the MCMC run. If <code>NULL</code>, seeds will be chosen randomly.</p></dd>
+
 <dt>bcontrol</dt>
 <dd><p>A list containing additional parameters passed to
     <code>run.jags</code> (or <code>autorun.jags</code>) or <code>stan</code>.  See the manpage of those functions for an
     overview of the additional parameters that can be set.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An object that inherits from class <code><a href="https://rdrr.io/pkg/lavaan/man/lavaan-class.html" class="external-link">lavaan</a></code>, for which several methods
+    
+
+<p>An object that inherits from class <code><a href="https://rdrr.io/pkg/lavaan/man/lavaan-class.html" class="external-link">lavaan</a></code>, for which several methods
   are available, including a <code>summary</code> method.</p>
     </div>
     <div class="section level2">
@@ -209,18 +230,18 @@ http://www.jstatsoft.org/v48/i02/.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span>
-<span class="r-in"><span class="co"># The Holzinger and Swineford (1939) example</span></span>
-<span class="r-in"><span class="va">HS.model</span> <span class="op">&lt;-</span> <span class="st">' visual  =~ x1 + x2 + x3</span>
-<span class="r-in">              textual =~ x4 + x5 + x6</span>
-<span class="r-in">              speed   =~ x7 + x8 + x9 '</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu">blavaan</span><span class="op">(</span><span class="va">HS.model</span>, data<span class="op">=</span><span class="va">HolzingerSwineford1939</span>,</span>
-<span class="r-in">               auto.var<span class="op">=</span><span class="cn">TRUE</span>, auto.fix.first<span class="op">=</span><span class="cn">TRUE</span>,</span>
-<span class="r-in">               auto.cov.lv.x<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
-<span class="r-in"><span class="op">}</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span><span class="co"># The Holzinger and Swineford (1939) example</span></span></span>
+<span class="r-in"><span><span class="va">HS.model</span> <span class="op">&lt;-</span> <span class="st">' visual  =~ x1 + x2 + x3</span></span></span>
+<span class="r-in"><span><span class="st">              textual =~ x4 + x5 + x6</span></span></span>
+<span class="r-in"><span><span class="st">              speed   =~ x7 + x8 + x9 '</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu">blavaan</span><span class="op">(</span><span class="va">HS.model</span>, data<span class="op">=</span><span class="va">HolzingerSwineford1939</span>,</span></span>
+<span class="r-in"><span>               auto.var<span class="op">=</span><span class="cn">TRUE</span>, auto.fix.first<span class="op">=</span><span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>               auto.cov.lv.x<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
@@ -232,7 +253,7 @@ http://www.jstatsoft.org/v48/i02/.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
     </footer></div>

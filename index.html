@@ -28,7 +28,7 @@
     
     <a class="navbar-brand me-2" href="index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-4.998</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-4.1000</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -96,28 +96,28 @@
 <p>blavaan is a free, open source R package for Bayesian latent variable analysis. It relies on JAGS and Stan to estimate models via MCMC.</p>
 <p>The blavaan functions and syntax are similar to lavaan. For example, consider the Political Democracy example from Bollen (1989):</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">blavaan</span><span class="op">)</span>
-
-<span class="va">model</span> <span class="op">&lt;-</span> <span class="st">'
-   # latent variable definitions
-     ind60 =~ x1 + x2 + x3
-     dem60 =~ y1 + y2 + y3 + y4
-     dem65 =~ y5 + y6 + y7 + y8
-   # regressions
-     dem60 ~ ind60
-     dem65 ~ ind60 + dem60
-   # residual covariances
-     y1 ~~ y5
-     y2 ~~ y4 + y6
-     y3 ~~ y7
-     y4 ~~ y8
-     y6 ~~ y8
-'</span>
-<span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/bsem.html">bsem</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">PoliticalDemocracy</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">blavaan</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">model</span> <span class="op">&lt;-</span> <span class="st">'</span></span>
+<span><span class="st">   # latent variable definitions</span></span>
+<span><span class="st">     ind60 =~ x1 + x2 + x3</span></span>
+<span><span class="st">     dem60 =~ y1 + y2 + y3 + y4</span></span>
+<span><span class="st">     dem65 =~ y5 + y6 + y7 + y8</span></span>
+<span><span class="st">   # regressions</span></span>
+<span><span class="st">     dem60 ~ ind60</span></span>
+<span><span class="st">     dem65 ~ ind60 + dem60</span></span>
+<span><span class="st">   # residual covariances</span></span>
+<span><span class="st">     y1 ~~ y5</span></span>
+<span><span class="st">     y2 ~~ y4 + y6</span></span>
+<span><span class="st">     y3 ~~ y7</span></span>
+<span><span class="st">     y4 ~~ y8</span></span>
+<span><span class="st">     y6 ~~ y8</span></span>
+<span><span class="st">'</span></span>
+<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/bsem.html">bsem</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">PoliticalDemocracy</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p>The development version of blavaan (containing updates not yet on CRAN) can be installed via the command below. Compilation is required; this may be a problem for users who currently rely on a binary version of blavaan from CRAN.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"ecmerkle/blavaan"</span>, INSTALL_opts <span class="op">=</span> <span class="st">"--no-multiarch"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"ecmerkle/blavaan"</span>, INSTALL_opts <span class="op">=</span> <span class="st">"--no-multiarch"</span><span class="op">)</span></span></code></pre></div>
 <p>For further information, see:</p>
 <p>Merkle, E. C., Fitzsimmons, E., Uanhoro, J., &amp; Goodrich, B. (2021). <a href="https://doi.org/10.18637/jss.v100.i06" class="external-link">Efficient Bayesian structural equation modeling in Stan</a>. Journal of Statistical Software, 100(6), 1–22.</p>
 <p>Merkle, E. C., &amp; Rosseel, Y. (2018). <a href="https://doi.org/10.18637/jss.v085.i04" class="external-link">blavaan: Bayesian structural equation models via parameter expansion</a>. Journal of Statistical Software, 85(4), 1–30.</p>
@@ -173,7 +173,7 @@
 
 <div class="pkgdown-footer-right">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
     </footer>
