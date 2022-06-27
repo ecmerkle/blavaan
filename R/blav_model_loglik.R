@@ -165,7 +165,7 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
     lavoptions$se <- "none"
     lavoptions$test <- "standard"
     lavoptions$estimator <- "ML"
-    if(lavoptions$categorical) lavoptions$estimator <- "DWLS"
+    if(lavInspect(lavobject, "categorical")) lavoptions$estimator <- "DWLS"
     ## control() is part of lavmodel (for now)
     lavoptions$optim.method <- "none"
     lavoptions$check.gradient <- FALSE
@@ -450,7 +450,7 @@ samp_lls <- function(lavjags        = NULL,
 
   nchain <- length(lavmcmc)
 
-  if(lavoptions$target != "stan" | conditional | lavoptions$categorical) {
+  if(lavoptions$target != "stan" | conditional | lavInspect(lavobject, "categorical")) {
     loop.args <- list(X = 1:nsamps, future.seed = TRUE, FUN = function(i){
       tmpmat <- matrix(NA, nchain, 2)
       for(j in 1:nchain){

@@ -761,7 +761,7 @@ blavaan <- function(...,  # default lavaan arguments
                 }
                 ## lvs now in R instead of Stan
                 if(save.lvs & target == "stan"){
-                    stanlvs <- samp_lvs(res, lavmodel, parests$lavpartable, jagtrans$data, lavoptions$categorical)
+                    stanlvs <- samp_lvs(res, lavmodel, parests$lavpartable, jagtrans$data, lavInspect(LAV, "categorical"))
                     if(dim(stanlvs)[3L] > 0){
                         lvsumm <- as.matrix(rstan::monitor(stanlvs, print=FALSE))
                         cmatch <- match(colnames(stansumm), colnames(lvsumm))
@@ -832,7 +832,7 @@ blavaan <- function(...,  # default lavaan arguments
       lavmcmc <- make_mcmc(res)
       LAV@Options <- lavoptions
 
-      if(lavoptions$categorical) {
+      if(lavInspect(LAV, "categorical")) {
         LAV@external$mcmcdata <- rjarg$data
         casells <- case_lls(res, lavmcmc, lavobject = LAV)
         samplls <- array(0, dim = c(sample, n.chains, 2))
