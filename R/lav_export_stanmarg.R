@@ -527,7 +527,8 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     ## check for completely unrestricted correlation matrix, for lkj
     fpars <- sapply(res$free2, function(x) as.numeric(x[lower.tri(x)]))
     if (length(unlist(fpars)) > 0) {
-      if (all(!duplicated(fpars)) & all(fpars > 0) & all(res$wskel[,1] == 0)) dat$fullpsi <- 1L
+      if (all(!duplicated(fpars)) & all(fpars > 0) & all(res$wskel[,1] == 0) &
+          all(lavpartable[ptrows, 'prior'] == "")) dat$fullpsi <- 1L
     }
   } else {
     dat$Psi_r_skeleton <- array(0, dim = c(Ng, 0, 0))
