@@ -188,6 +188,12 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   } else {
     dat$emiter <- 20L
   }
+  if ("use_dirch" %in% names(mcmcextra$data)) {
+    dat$use_dirch <- 1L
+  } else {
+    dat$use_dirch <- 0L
+  }
+  
   dat$pri_only <- prisamp
   freemats <- lavInspect(lavobject, 'free')
   constrain <- attr(freemats, 'header')

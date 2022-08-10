@@ -244,6 +244,30 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
 
     return(out);
   }
+
+  // for dirichlet priors on thresholds (see https://betanalpha.github.io/assets/case_studies/ordinal_regression.html)
+  real induced_dirichlet_lpdf(vector c, vector alpha, real phi) {
+    int K = num_elements(c) + 1;
+    vector[K - 1] sigma = Phi_approx(phi - c);
+    vector[K] p;
+    real logdetJ;
+    
+    // Induced ordinal probabilities
+    p[1] = 1 - sigma[1];
+    for (k in 2:(K - 1))
+      p[k] = sigma[k - 1] - sigma[k];
+    p[K] = sigma[K - 1];
+
+    // Jacobian
+    logdetJ = log(K);
+    logdetJ += std_normal_lpdf(phi - c);
+    // looping through Diagonal entries
+    //for (k in 2:K) {
+    //  logdetJ += std_normal_lpdf(phi - c[k-1]);
+    //}
+    
+    return dirichlet_lpdf(p | alpha) + logdetJ;
+  }  
 }
 data {
   // see https://books.google.com/books?id=9AC-s50RjacC&lpg=PP1&dq=LISREL&pg=PA2#v=onepage&q=LISREL&f=false
@@ -417,6 +441,7 @@ data {
   int<lower=1> u15[Ng, sum(nlevs) - Nord + 1];
   int<lower=0> w15skel[sum(wg15), 3];
   int<lower=0> len_tau;
+  int<lower=0, upper=1> use_dirch;
   real tau_mn[len_tau];
   real<lower=0> tau_sd[len_tau];
 }
@@ -739,9 +764,9 @@ transformed parameters {
 
 	      Tau_free[ofreepos] = Tau[g, vecpos, 1];	      
 	      // this is used if a prior goes on Tau_free, instead of Tau_ufree:
-	      //if (j > 1) {
-	      //  tau_jacobian += Tau_un[g, vecpos, 1]; // see https://mc-stan.org/docs/2_24/reference-manual/ordered-vector.html
-	      // }
+	      if (j > 1) {
+	        tau_jacobian += Tau_un[g, vecpos, 1]; // see https://mc-stan.org/docs/2_24/reference-manual/ordered-vector.html
+	      }
 	      ofreepos += 1;
 	    } else if (eq == 1) {
 	      int eqent = w15skel[opos, 2];
@@ -880,7 +905,29 @@ model { // N.B.: things declared in the model block do not get saved in the outp
 
   target += normal_lpdf(Nu_free       | nu_primn, nu_sd);
   target += normal_lpdf(Alpha_free    | alpha_primn, alpha_sd);
-  target += normal_lpdf(Tau_ufree      | tau_primn, tau_sd);
+
+  if (use_dirch) {
+    // this will fail for partial equality constraints:
+    int totvars = len_tau / (sum(nlevs) - Nord);
+    int varidx;
+    int gidx;
+    int vecidx = 1;
+
+    for (i in 1:totvars) {
+      if (i > Nord) {
+	varidx = i % Nord;
+	gidx = i / Nord; // we want integer division
+      } else {
+	varidx = i;
+	gidx = 1;
+      }
+
+      target += induced_dirichlet_lpdf(Tau_free[vecidx:(nlevs[varidx] - 1)] | append_col(tau_primn[vecidx:(nlevs[varidx] - 1)]', tau_sd[vecidx])', Mu[gidx, varidx]);
+    }
+
+  } else {
+    target += normal_lpdf(Tau_ufree      | tau_primn, tau_sd);
+  }
 
   /* transform sd parameters to var or prec, depending on
      what the user wants. */
