@@ -764,7 +764,7 @@ transformed parameters {
 
 	      Tau_free[ofreepos] = Tau[g, vecpos, 1];	      
 	      // this is used if a prior goes on Tau_free, instead of Tau_ufree:
-	      if (j > 1 & use_dirch) {
+	      if (j > 1 && use_dirch) {
 	        tau_jacobian += Tau_un[g, vecpos, 1]; // see https://mc-stan.org/docs/2_24/reference-manual/ordered-vector.html
 	      }
 	      ofreepos += 1;
