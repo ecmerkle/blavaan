@@ -903,7 +903,7 @@ lav2standata <- function(lavobject) {
     dat$grpnum <- rep(1:dat$Ng, npatt)
 
     dat$Nobs <- do.call("c", lapply(Mp, function(x) rowSums(x$pat)))
-    Obsvar <- do.call("c", lapply(Mp, function(x) apply(x$pat, 1, which)))
+    Obsvar <- do.call("c", lapply(Mp, function(x) apply(x$pat, 1, which, simplify = FALSE)))
     
     dat$Np <- length(unique(misgrps))
     dat$Ntot <- sum(dat$N)
@@ -965,7 +965,7 @@ lav2standata <- function(lavobject) {
     if (misflag) {
       dat$Noent <- sum(dat$YXo > 0)
       dat$Nordobs <- do.call("c", lapply(Mp, function(x) rowSums(x$pat[,ordidx])))
-      OrdObsvar <- do.call("c", lapply(Mp, function(x) apply(x$pat[,ordidx], 1, which)))
+      OrdObsvar <- do.call("c", lapply(Mp, function(x) apply(x$pat[,ordidx], 1, which, simplify = FALSE)))
 
       dat$OrdObsvar <- matrix(0, dat$Np, ncol(dat$YXo))
       allvars <- 1:ncol(dat$YXo)
