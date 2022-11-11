@@ -1,5 +1,5 @@
 pandoc: 2.7.3
-pkgdown: 2.0.5
+pkgdown: 2.0.6
 pkgdown_sha: ~
 articles:
   approx_fi: approx_fi.html
@@ -11,7 +11,7 @@ articles:
   resources: resources.html
   start: start.html
   summaries: summaries.html
-last_built: 2022-06-30T03:27Z
+last_built: 2022-11-11T23:37Z
 urls:
   reference: http://ecmerkle.github.io/blavaan/reference
   article: http://ecmerkle.github.io/blavaan/articles
