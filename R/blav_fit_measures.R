@@ -258,6 +258,10 @@ blav_fit_measures <- function(object, fit.measures = "all",
     
     out <- unlist(indices[fit.measures])
 
+    ## warn for p_D computations < 0
+    pds <- names(out) %in% paste0('p_', c('dic', 'waic', 'loo'))
+    if(any(out[pds] < 0)) warning("blavaan WARNING: some effective number of parameter computations are < 0. This may indicate prior-data conflict or other model problems.", call. = FALSE)
+  
     if(length(out) > 0L) {
         class(out) <- c("lavaan.vector", "numeric")
     } else {

@@ -15,6 +15,8 @@
 * loo() moment matching available by passing mcmcextra = list(data = list(moment_match_k_threshold))
 
 ## Bugs/glitches discovered after the release:
+* target = "stan" fails when there are complete data in one group and missing data in another group
+
 * blavPredict(, type="ymis") still not available for models with ordinal variables
 
 
