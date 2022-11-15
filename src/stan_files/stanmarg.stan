@@ -1062,9 +1062,13 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   /* transformed sd parameters for priors */
   vector[len_free[5]] Theta_pri;
   vector[len_free[9]] Psi_pri;
+  vector[len_free_c[5]] Theta_pri_c;
+  vector[len_free_c[9]] Psi_pri_c;
   
   /* log-likelihood */
-  if (has_data) {
+  if (Nclus > 1 & has_data) {
+    target += twolevel_logdens();
+  } else if (has_data) {
     int obsidx[p + q];
     int xidx[p + q];
     int xdatidx[p + q];
@@ -1104,11 +1108,15 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   /* prior densities in log-units */
   target += normal_lpdf(Lambda_y_free | lambda_y_primn, lambda_y_sd);
   target += normal_lpdf(B_free        | b_primn, b_sd);
-
   target += normal_lpdf(Nu_free       | nu_primn, nu_sd);
   target += normal_lpdf(Alpha_free    | alpha_primn, alpha_sd);
   target += normal_lpdf(Tau_ufree      | tau_primn, tau_sd);
 
+  target += normal_lpdf(Lambda_y_free_c | lambda_y_primn_c, lambda_y_sd_c);
+  target += normal_lpdf(B_free_c        | b_primn_c, b_sd_c);
+  target += normal_lpdf(Nu_free_c       | nu_primn_c, nu_sd_c);
+  target += normal_lpdf(Alpha_free_c    | alpha_primn_c, alpha_sd_c);
+  
   /* transform sd parameters to var or prec, depending on
      what the user wants. */
   Theta_pri = Theta_sd_free;
@@ -1136,6 +1144,34 @@ model { // N.B.: things declared in the model block do not get saved in the outp
     }
   } else if (len_free[10] > 0) {
     target += beta_lpdf(Psi_r_free | psi_r_alpha, psi_r_beta);
+  }
+
+  // and the same for level 2
+  Theta_pri_c = Theta_sd_free_c;
+  if (len_free_c[5] > 0 && theta_pow_c != 1) {
+    for (i in 1:len_free_c[5]) {
+      Theta_pri_c[i] = Theta_sd_free_c[i]^(theta_pow_c);
+      target += log(fabs(theta_pow_c)) + (theta_pow_c - 1)*log(Theta_sd_free_c[i]);
+    }
+  }
+  Psi_pri_c = Psi_sd_free_c;
+  if (len_free_c[9] > 0 && psi_pow_c != 1) {
+    for (i in 1:len_free_c[9]) {
+      Psi_pri_c[i] = Psi_sd_free_c[i]^(psi_pow_c);
+      target += log(fabs(psi_pow_c)) + (psi_pow_c - 1)*log(Psi_sd_free_c[i]);
+    }
+  }
+
+  target += gamma_lpdf(Theta_pri_c | theta_sd_shape_c, theta_sd_rate_c);
+  target += gamma_lpdf(Psi_pri_c | psi_sd_shape_c, psi_sd_rate_c);
+
+  target += beta_lpdf(Theta_r_free_c | theta_r_alpha_c, theta_r_beta_c);
+  if (fullpsi_c) {
+    for (g in 1:Ng) {
+      target += lkj_corr_lpdf(Psi_r_mat_c[g] | psi_r_alpha_c[1]);
+    }
+  } else if (len_free_c[10] > 0) {
+    target += beta_lpdf(Psi_r_free_c | psi_r_alpha_c, psi_r_beta_c);
   }
 }
 generated quantities { // these matrices are saved in the output but do not figure into the likelihood
