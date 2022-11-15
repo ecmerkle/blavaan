@@ -1,6 +1,194 @@
 /* This file is based on LERSIL.stan by Ben Goodrich.
    https://github.com/bgoodri/LERSIL */
 functions { // you can use these in R following `rstan::expose_stan_functions("foo.stan")`
+  // mimics lav_mvnorm_cluster_implied22l():
+  matrix calc_W_tilde(matrix sigma_w, vector mu_w, int[] var1_idx, int p_tilde) {
+    matrix[p_tilde, p_tilde + 1] out = rep_matrix(0, p_tilde, p_tilde + 1); // first column is mean vector
+    vector[p_tilde] mu1 = rep_vector(0, p_tilde);
+    matrix[p_tilde, p_tilde] sig1 = rep_matrix(0, p_tilde, p_tilde);
+
+    mu1[var1_idx] = mu_w;
+    sig1[var1_idx, var1_idx] = sigma_w;
+
+    out = append_col(mu1, sig1);
+  
+    return out;
+  }
+
+  matrix calc_B_tilde(matrix sigma_b, vector mu_b, int[] var2_idx, int p_tilde) {
+    matrix[p_tilde, p_tilde + 1] out = rep_matrix(0, p_tilde, p_tilde + 1);
+    vector[p_tilde] mu2 = rep_vector(0, p_tilde);
+    matrix[p_tilde, p_tilde] sig2 = rep_matrix(0, p_tilde, p_tilde);
+
+    mu2[var2_idx] = mu_b;
+    sig2[var2_idx, var2_idx] = sigma_b;
+
+    out = append_col(mu2, sig2);
+  
+    return out;
+  }
+
+
+  real twolevel_logdens(vector[] mean_d, matrix[] cov_d, matrix S_PW, int[] nclus, int[] clus_size, int[] clus_sizes, int nclus_sizes, int[] clus_size_ns, vector impl_Muw, matrix impl_Sigmaw, vector impl_Mub, matrix impl_Sigmab, int[] ov_idx1, int[] ov_idx2, int[] within_idx, int[] between_idx, int[] both_idx, int[] ov_x_idx, int p_tilde, int N_within, int N_between, int N_both, real loglik_x){
+    matrix[p_tilde, p_tilde + 1] W_tilde;
+    matrix[p_tilde, p_tilde] W_tilde_cov;
+    matrix[p_tilde, p_tilde + 1] B_tilde;
+    matrix[p_tilde, p_tilde] B_tilde_cov;
+    vector[p_tilde] Mu_WB_tilde;
+    vector[N_between] Mu_z;
+    int N_wo_b = p_tilde - N_between;
+    vector[N_wo_b] Mu_y;
+    vector[N_wo_b] Mu_w;
+    vector[N_wo_b] Mu_b;
+    vector[N_between + N_wo_b] Mu_full;
+    matrix[N_between, N_between] Sigma_zz;
+    matrix[N_between, N_between] Sigma_zz_inv;
+    real Sigma_zz_ld;
+    matrix[N_wo_b, N_between] Sigma_yz;
+    matrix[N_wo_b, N_between] Sigma_yz_zi;
+    matrix[N_wo_b, N_wo_b] Sigma_b;
+    matrix[N_wo_b, N_wo_b] Sigma_b_z;
+    matrix[N_wo_b, N_wo_b] Sigma_w;
+    matrix[N_wo_b, N_wo_b] Sigma_w_inv;
+    real Sigma_w_ld;
+    matrix[N_wo_b, N_wo_b] Sigma_j;
+    matrix[N_wo_b, N_wo_b] Sigma_j_inv;
+    matrix[N_wo_b, N_between] Sigma_ji_yz_zi;
+    matrix[N_between, N_between] Vinv_11;
+    real Sigma_j_ld;
+    vector[nclus[2]] L;
+    vector[nclus[2]] B;
+    int bidx[N_between];
+    int notbidx[p_tilde - N_between];
+    real q_zz;
+    real q_yz;
+    real q_yyc;
+    real P;
+    real q_W;
+    real L_W;
+    real loglik;
+
+    // 1. compute necessary vectors/matrices, like lav_mvnorm_cluster_implied22l() of lav_mvnorm_cluster.R
+    W_tilde = calc_W_tilde(impl_Sigmaw, impl_Muw, ov_idx1, p_tilde);
+    W_tilde_cov = block(W_tilde, 1, 2, p_tilde, p_tilde);
+    B_tilde = calc_B_tilde(impl_Sigmab, impl_Mub, ov_idx2, p_tilde);
+    B_tilde_cov = block(B_tilde, 1, 2, p_tilde, p_tilde);
+    Mu_WB_tilde = rep_vector(0, p_tilde);
+
+    if (N_within > 0) {
+      for (i in 1:N_within) {
+	Mu_WB_tilde[within_idx[i]] = W_tilde[within_idx[i], 1];
+	B_tilde[within_idx[i], 1] = 0;
+      }
+    }
+  
+    if (N_both > 0) {
+      for (i in 1:N_both) {
+	Mu_WB_tilde[both_idx[i]] = B_tilde[both_idx[i], 1] + W_tilde[both_idx[i], 1];
+      }
+    }
+
+    // around line 71 of lav_mvnorm_cluster.R
+    if (N_between > 0) {
+      bidx = between_idx[1:N_between];
+      notbidx = between_idx[(N_between + 1):p_tilde];
+      
+      Mu_z = to_vector(B_tilde[bidx, 1]);
+      Mu_y = Mu_WB_tilde[notbidx];
+      Mu_w = to_vector(W_tilde[notbidx, 1]);
+      Mu_b = to_vector(B_tilde[notbidx, 1]);
+      Sigma_zz = B_tilde_cov[bidx, bidx];
+      Sigma_yz = B_tilde_cov[notbidx, bidx];
+      Sigma_b = B_tilde_cov[notbidx, notbidx];
+      Sigma_w = W_tilde_cov[notbidx, notbidx];
+    } else {
+      Mu_y = Mu_WB_tilde;
+      Mu_w = W_tilde[,1];
+      Mu_b = B_tilde[,1];
+      Sigma_b = B_tilde_cov;
+      Sigma_w = W_tilde_cov;
+    }
+
+    // 2. compute lpdf, around line 203 of lav_mvnorm_cluster
+    Sigma_w_inv = inverse_spd(Sigma_w);
+    Sigma_w_ld = log_determinant(Sigma_w);
+
+    if (N_between > 0) {
+      Sigma_zz_inv = inverse_spd(Sigma_zz);
+      Sigma_zz_ld = log_determinant(Sigma_zz);
+      Sigma_yz_zi = Sigma_yz * Sigma_zz_inv;
+      Sigma_b_z = Sigma_b - Sigma_yz * Sigma_yz_zi';
+    } else {
+      Sigma_zz_ld = 0;
+      Sigma_b_z = Sigma_b;
+    }
+  
+    Mu_full = append_row(Mu_z, Mu_y);
+    for (clz in 1:nclus_sizes) {
+      int nj = clus_sizes[clz];
+    
+      matrix[N_between + N_wo_b, N_between + N_wo_b] Y2Yc = cov_d[clz] + crossprod(to_matrix(mean_d[clz] - Mu_full)');
+      matrix[N_between, N_between] Y2Yc_zz;
+      matrix[N_wo_b, N_between] Y2Yc_yz;
+      matrix[N_wo_b, N_wo_b] Y2Yc_yy;
+
+      if (N_between > 0) {
+	int uord_bidx[N_between];
+	int uord_notbidx[N_wo_b];
+
+	for (k in 1:N_between) {
+	  uord_bidx[k] = k;
+	}
+	if (N_wo_b > 0) {
+	  for (k in 1:N_wo_b) {
+	    uord_notbidx[k] = N_between + k;
+	  }
+	}
+	Y2Yc_zz = Y2Yc[uord_bidx, uord_bidx];
+	Y2Yc_yz = Y2Yc[uord_notbidx, uord_bidx];
+	Y2Yc_yy = Y2Yc[uord_notbidx, uord_notbidx];
+      } else {
+	Y2Yc_yy = Y2Yc;
+      }
+
+      Sigma_j = (nj * Sigma_b_z) + Sigma_w;
+      Sigma_j_inv = inverse_spd(Sigma_j);
+      Sigma_j_ld = log_determinant(Sigma_j);
+    
+      L[clz] = Sigma_zz_ld + Sigma_j_ld;
+    
+      if (N_between > 0) {
+	Sigma_ji_yz_zi = Sigma_j_inv * Sigma_yz_zi;
+	Vinv_11 = Sigma_zz_inv + nj * (Sigma_yz_zi' * Sigma_ji_yz_zi);
+	q_zz = sum(Vinv_11 .* Y2Yc_zz);
+      
+	q_yz = -nj * sum(Sigma_ji_yz_zi .* Y2Yc_yz);
+      } else {
+	q_zz = 0;
+	q_yz = 0;
+      }
+    
+      q_yyc =  -nj * sum(Sigma_j_inv .* Y2Yc_yy);
+
+      B[clz] = q_zz + 2 * q_yz - q_yyc;
+    }
+
+    q_W = (sum(clus_size) - size(clus_size)) * sum(Sigma_w_inv .* S_PW);
+    L_W = (sum(clus_size) - size(clus_size)) * Sigma_w_ld;
+
+    loglik = -.5 * (sum(L .* to_vector(clus_size_ns)) + sum(B .* to_vector(clus_size_ns)) + q_W + L_W);
+    // add constant, line 300 lav_mvnorm_cluster
+    P = nclus[1] * (N_within + N_both) + nclus[2] * N_between;
+
+    loglik += -.5 * (P * log(2 * pi()));
+    if (size(ov_x_idx) > 0) {
+      loglik += -loglik_x;
+    }
+
+    return loglik;
+  }
+
+
   /*
     Fills in the elements of a coefficient matrix containing some mix of 
     totally free, free subject to a sign constraint, and fixed elements
@@ -254,12 +442,10 @@ data {
   int<lower=0> m_c; // number of latent level 2 variables
   int<lower=0> n; // number of latent exogenous variables
   int<lower=1> Ng; // number of groups
-  int<lower=1> Nclus; // number of clusters
   int<lower=0, upper=1> missing; // are there missing values?
   int<lower=0, upper=1> save_lvs; // should we save lvs?
   int<lower=1> Np; // number of group-by-missing patterns combos
   int<lower=1> N[Ng]; // number of observations per group
-  int<lower=1> Noc[Nclus]; // number of obs per cluster
   int<lower=1> Nobs[Np]; // number of observed variables in each missing pattern
   int<lower=0> Nordobs[Np]; // number of ordinal observed variables in each missing pattern
   int<lower=0> Obsvar[Np, p + q]; // indexing of observed variables
@@ -286,7 +472,26 @@ data {
   int<lower=0, upper=1> do_test; // should we do everything in generated quantities?
   vector[p + q - Nord] YXbar[Np]; // sample means of continuous manifest variables
   matrix[p + q - Nord + 1, p + q - Nord + 1] S[Np];     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
-
+  
+  int<lower=1> nclus[2]; // number of level 1 + level 2 variables
+  int<lower=1> cluster_size[nclus[2]]; // number of obs per cluster
+  int<lower=1> ncluster_sizes; // number of unique cluster sizes
+  int<lower=1> cluster_sizes[ncluster_sizes]; // unique cluster sizes
+  int<lower=1> cluster_size_ns[ncluster_sizes]; // number of clusters of each size
+  vector[p_c] mean_d[nclus[2]]; // sample means by cluster
+  matrix[p_c, p_c] cov_d[nclus[2]]; // sample covariances by cluster
+  int N_within; // number of within variables
+  int N_between; // number of between variables
+  int N_both; // number of variables at both levels
+  int N_lev[2]; // number of observed variables at each level
+  int p_tilde; // total number of variables
+  int within_idx[N_within];
+  int between_idx[N_between];
+  int ov_idx1[N_lev[1]];
+  int ov_idx2[N_lev[2]];
+  int both_idx[N_both];
+  int all_idx[p_tilde]; // between indexing, followed by within/both
+  
   
   /* sparse matrix representations of skeletons of coefficient matrices, 
      which is not that interesting but necessary because you cannot pass
@@ -803,13 +1008,13 @@ transformed parameters {
   matrix[p + q, 1] Nu[Ng];
   matrix[m + n, 1] Alpha[Ng];
 
-  matrix[p_c, m_c] Lambda_y[Ng];
-  matrix[m_c, m_c] B[Ng];
-  matrix[p_c, p_c] Theta_sd[Ng];
-  matrix[p_c, p_c] T_r_lower[Ng];
-  matrix[p_c, p_c] Theta_r[Ng];
-  matrix[p_c, 1] Nu[Ng];
-  matrix[m_c, 1] Alpha[Ng];
+  matrix[p_c, m_c] Lambda_y_c[Ng];
+  matrix[m_c, m_c] B_c[Ng];
+  matrix[p_c, p_c] Theta_sd_c[Ng];
+  matrix[p_c, p_c] T_r_lower_c[Ng];
+  matrix[p_c, p_c] Theta_r_c[Ng];
+  matrix[p_c, 1] Nu_c[Ng];
+  matrix[m_c, 1] Alpha_c[Ng];
   
   matrix[sum(nlevs) - Nord, 1] Tau_un[Ng];
   matrix[sum(nlevs) - Nord, 1] Tau[Ng];
@@ -838,7 +1043,7 @@ transformed parameters {
   vector[len_free_c[14]] alpha_primn_c;
   
   matrix[p, m] Lambda_y_A[Ng];     // = Lambda_y * (I - B)^{-1}
-  matrix[p_c, m_c] Lambda_y_A[Ng];
+  matrix[p_c, m_c] Lambda_y_A_c[Ng];
   
   vector[p + q] Mu[Ng];
   matrix[p + q, p + q] Sigma[Ng];  // model covariance matrix
@@ -848,6 +1053,7 @@ transformed parameters {
 
   vector[p_c] Mu_c[Ng];
   matrix[p_c, p_c] Sigma_c[Ng];  // level 2 model covariance matrix
+  matrix[N_both + N_within, N_both + N_within] S_PW[Ng];
   
   vector[p + q] YXstar[Ntot];
   vector[Nord] YXostar[Ntot]; // ordinal data
@@ -926,9 +1132,13 @@ transformed parameters {
         Sigma_c[g, 1:p_c, 1:p_c] += quad_form_sym(Psi_c[g], transpose(Lambda_y_A_c[g]));
 	Mu_c[g, 1:p_c] += to_vector(Lambda_y_A_c[g] * Alpha_c[g, 1:m_c, 1]);
       }
+
+      // remove between variables, for likelihood computations
+      S_PW[g] = Sigma_c[g, all_idx[(N_between + 1):p_tilde], all_idx[(N_between + 1):p_tilde]];
     }
   }
 
+  
   // obtain ordered thresholds; NB untouched for two-level models
   if (ord) {
     int opos = 1;
@@ -984,7 +1194,6 @@ transformed parameters {
     b_primn_c = fill_prior(B_free_c, b_mn_c, w4skel_c);
     nu_primn_c = fill_prior(Nu_free_c, nu_mn_c, w13skel_c);
     alpha_primn_c = fill_prior(Alpha_free_c, alpha_mn_c, w14skel_c);
-    tau_primn_c = fill_prior(Tau_ufree_c, tau_mn_c, w15skel_c);
   } else {
     lambda_y_primn = to_vector(lambda_y_mn);
     b_primn = to_vector(b_mn);
@@ -996,7 +1205,6 @@ transformed parameters {
     b_primn_c = to_vector(b_mn_c);
     nu_primn_c = to_vector(nu_mn_c);
     alpha_primn_c = to_vector(alpha_mn_c);
-    tau_primn_c = to_vector(tau_mn_c);
   }
 
   // NB nothing below this will be used for two level, because we need other tricks to
@@ -1066,8 +1274,14 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   vector[len_free_c[9]] Psi_pri_c;
   
   /* log-likelihood */
-  if (Nclus > 1 & has_data) {
-    target += twolevel_logdens();
+  if (nclus[2] > 1 && has_data) {
+    // TODO compute loglik_x if we have fixed.x
+
+    // FIXME change Nx[1] for missing data/etc; S_PW for multiple groups; the final 0 is for loglik_x
+    target += twolevel_logdens(mean_d, cov_d, S_PW[1], nclus, cluster_size, cluster_sizes,
+			       ncluster_sizes, cluster_size_ns, Mu[1], Sigma[1], Mu_c[1], Sigma_c[1],
+			       ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
+			       Xvar[1], p_tilde, N_within, N_between, N_both, 0.0);
   } else if (has_data) {
     int obsidx[p + q];
     int xidx[p + q];
