@@ -316,7 +316,6 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   vector cor2cov(matrix[] cormat, matrix[] sdmat, int num_free_elements, matrix[] matskel, int[,] wskel, int ngrp) {
     vector[num_free_elements] out;
     int R = rows(to_matrix(cormat[1]));
-    int C = cols(to_matrix(cormat[1]));
     int pos = 1; // position of eq_skeleton
     int freepos = 1; // position of free_elements
     
