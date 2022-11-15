@@ -513,7 +513,8 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
   matrix[m_c, 1] Alpha_skeleton_c[Ng];
   
   matrix[m, m] I = diag_matrix(rep_vector(1, m));
-
+  matrix[m_c, m_c] I_c = diag_matrix(rep_vector(1, m_c));
+  
   int Ncont = p + q - Nord;
   
   int g_start1[Ng,2];
@@ -802,32 +803,52 @@ transformed parameters {
   matrix[p + q, 1] Nu[Ng];
   matrix[m + n, 1] Alpha[Ng];
 
+  matrix[p_c, m_c] Lambda_y[Ng];
+  matrix[m_c, m_c] B[Ng];
+  matrix[p_c, p_c] Theta_sd[Ng];
+  matrix[p_c, p_c] T_r_lower[Ng];
+  matrix[p_c, p_c] Theta_r[Ng];
+  matrix[p_c, 1] Nu[Ng];
+  matrix[m_c, 1] Alpha[Ng];
+  
   matrix[sum(nlevs) - Nord, 1] Tau_un[Ng];
   matrix[sum(nlevs) - Nord, 1] Tau[Ng];
   vector[len_free[15]] Tau_free;
   real tau_jacobian;
   
   matrix[m, m] Psi[Ng];
-  
   matrix[m, m] Psi_sd[Ng];
   matrix[m, m] Psi_r_lower[Ng];
   matrix[m, m] Psi_r[Ng];
 
+  matrix[m_c, m_c] Psi_c[Ng];
+  matrix[m_c, m_c] Psi_sd_c[Ng];
+  matrix[m_c, m_c] Psi_r_lower_c[Ng];
+  matrix[m_c, m_c] Psi_r_c[Ng];
+  
   vector[len_free[1]] lambda_y_primn;
   vector[len_free[4]] b_primn;
   vector[len_free[13]] nu_primn;
   vector[len_free[14]] alpha_primn;
   vector[len_free[15]] tau_primn;
 
+  vector[len_free_c[1]] lambda_y_primn_c;
+  vector[len_free_c[4]] b_primn_c;
+  vector[len_free_c[13]] nu_primn_c;
+  vector[len_free_c[14]] alpha_primn_c;
+  
   matrix[p, m] Lambda_y_A[Ng];     // = Lambda_y * (I - B)^{-1}
-
+  matrix[p_c, m_c] Lambda_y_A[Ng];
+  
   vector[p + q] Mu[Ng];
   matrix[p + q, p + q] Sigma[Ng];  // model covariance matrix
   matrix[p + q, p + q] Sigmainv_grp[Ng];
   real logdetSigma_grp[Ng];
   matrix[p + q + 1, p + q + 1] Sigmainv[Np];  // for updating S^-1 by missing data pattern
+
+  vector[p_c] Mu_c[Ng];
+  matrix[p_c, p_c] Sigma_c[Ng];  // level 2 model covariance matrix
   
-  matrix[p, q] top_right[Ng]; // top right block of Sigma
   vector[p + q] YXstar[Ntot];
   vector[Nord] YXostar[Ntot]; // ordinal data
 
@@ -853,6 +874,28 @@ transformed parameters {
       }
       Psi[g] = quad_form_sym(Psi_r[g], Psi_sd[g]);
     }
+
+    // level 2 matrices
+    Lambda_y_c[g] = fill_matrix(Lambda_y_free_c, Lambda_y_skeleton_c[g], w1skel_c, g_start1_c[g,1], g_start1_c[g,2]);
+    B_c[g] = fill_matrix(B_free_c, B_skeleton_c[g], w4skel_c, g_start4_c[g,1], g_start4_c[g,2]);
+    Theta_sd_c[g] = fill_matrix(Theta_sd_free_c, Theta_skeleton_c[g], w5skel_c, g_start5_c[g,1], g_start5_c[g,2]);
+    T_r_lower_c[g] = fill_matrix(2*Theta_r_free_c - 1, Theta_r_skeleton_c[g], w7skel_c, g_start7_c[g,1], g_start7_c[g,2]);
+    Theta_r_c[g] = T_r_lower_c[g] + transpose(T_r_lower_c[g]) - diag_matrix(rep_vector(1, p_c));
+    Nu_c[g] = fill_matrix(Nu_free_c, Nu_skeleton_c[g], w13skel_c, g_start13_c[g,1], g_start13_c[g,2]);
+    Alpha_c[g] = fill_matrix(Alpha_free_c, Alpha_skeleton_c[g], w14skel_c, g_start14_c[g,1], g_start14_c[g,2]);
+
+    Psi_c[g] = diag_matrix(rep_vector(0, m_c));
+  
+    if (m_c > 0) {
+      Psi_sd_c[g] = fill_matrix(Psi_sd_free_c, Psi_skeleton_c[g], w9skel_c, g_start9_c[g,1], g_start9_c[g,2]);
+      if (fullpsi_c) {
+	Psi_r_c[g] = Psi_r_mat_c[g];
+      } else {
+        Psi_r_lower_c[g] = fill_matrix(2*Psi_r_free_c - 1, Psi_r_skeleton_c[g], w10skel_c, g_start10_c[g,1], g_start10_c[g,2]);
+        Psi_r_c[g] = Psi_r_lower_c[g] + transpose(Psi_r_lower_c[g]) - diag_matrix(rep_vector(1, m_c));
+      }
+      Psi_c[g] = quad_form_sym(Psi_r_c[g], Psi_sd_c[g]);
+    }
   }
 
   // see https://books.google.com/books?id=9AC-s50RjacC&lpg=PP1&dq=LISREL&pg=PA3#v=onepage&q=LISREL&f=false
@@ -870,9 +913,23 @@ transformed parameters {
 	Mu[g, 1:p] += to_vector(Lambda_y_A[g] * Alpha[g, 1:m, 1]);
       }
     }
+
+    if (m_c > 0) {
+      Lambda_y_A_c[g] = mdivide_right(Lambda_y_c[g], I_c - B_c[g]);     // = Lambda_y * (I - B)^{-1}
+    }
+
+    Mu_c[g] = to_vector(Nu_c[g]);
+
+    if (p_c > 0) {
+      Sigma_c[g, 1:p_c, 1:p_c] = quad_form_sym(Theta_r_c[g], Theta_sd_c[g]);
+      if (m_c > 0) {
+        Sigma_c[g, 1:p_c, 1:p_c] += quad_form_sym(Psi_c[g], transpose(Lambda_y_A_c[g]));
+	Mu_c[g, 1:p_c] += to_vector(Lambda_y_A_c[g] * Alpha_c[g, 1:m_c, 1]);
+      }
+    }
   }
 
-  // obtain ordered thresholds
+  // obtain ordered thresholds; NB untouched for two-level models
   if (ord) {
     int opos = 1;
     int ofreepos = 1;
@@ -922,14 +979,28 @@ transformed parameters {
     nu_primn = fill_prior(Nu_free, nu_mn, w13skel);
     alpha_primn = fill_prior(Alpha_free, alpha_mn, w14skel);
     tau_primn = fill_prior(Tau_ufree, tau_mn, w15skel);
+
+    lambda_y_primn_c = fill_prior(Lambda_y_free_c, lambda_y_mn_c, w1skel_c);
+    b_primn_c = fill_prior(B_free_c, b_mn_c, w4skel_c);
+    nu_primn_c = fill_prior(Nu_free_c, nu_mn_c, w13skel_c);
+    alpha_primn_c = fill_prior(Alpha_free_c, alpha_mn_c, w14skel_c);
+    tau_primn_c = fill_prior(Tau_ufree_c, tau_mn_c, w15skel_c);
   } else {
     lambda_y_primn = to_vector(lambda_y_mn);
     b_primn = to_vector(b_mn);
     nu_primn = to_vector(nu_mn);
     alpha_primn = to_vector(alpha_mn);
     tau_primn = to_vector(tau_mn);
+
+    lambda_y_primn_c = to_vector(lambda_y_mn_c);
+    b_primn_c = to_vector(b_mn_c);
+    nu_primn_c = to_vector(nu_mn_c);
+    alpha_primn_c = to_vector(alpha_mn_c);
+    tau_primn_c = to_vector(tau_mn_c);
   }
 
+  // NB nothing below this will be used for two level, because we need other tricks to
+  //    compute the likelihood
   // continuous responses underlying ordinal data
   if (ord) {
     int idxvec = 0;
