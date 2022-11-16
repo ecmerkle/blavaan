@@ -1063,10 +1063,6 @@ generated quantities { // these matrices are saved in the output but do not figu
       }
 
       for (g in 1:Ng) {
-	// ensure pd
-	Sigma_sat[g] = .5 * (Sigma_sat[g] + Sigma_sat[g]');
-	Sigma_rep_sat[g] = .5 * (Sigma_rep_sat[g] + Sigma_rep_sat[g]');
-	
 	Sigma_sat_inv_grp[g] = inverse_spd(Sigma_sat[g]);
 	logdetS_sat_grp[g] = log_determinant(Sigma_sat[g]);
 
