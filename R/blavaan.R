@@ -9,7 +9,7 @@ blavaan <- function(...,  # default lavaan arguments
                     adapt              ,
                     mcmcfile            = FALSE,
                     mcmcextra           = list(),
-                    inits              = "prior",
+                    inits              = "simple",
                     convergence        = "manual",
                     target             = "stan",
                     save.lvs           = FALSE,
@@ -1013,7 +1013,7 @@ blavaan <- function(...,  # default lavaan arguments
 ## cfa + sem
 bcfa <- bsem <- function(..., cp = "srs", dp = NULL,
     n.chains = 3, burnin, sample, adapt,
-    mcmcfile = FALSE, mcmcextra = list(), inits = "prior",
+    mcmcfile = FALSE, mcmcextra = list(), inits = "simple",
     convergence = "manual", target = "stan", save.lvs = FALSE, wiggle = NULL,
     wiggle.sd = 0.1, prisamp = FALSE, jags.ic = FALSE, seed = NULL,
     bcontrol = list()) {
@@ -1058,7 +1058,7 @@ bcfa <- bsem <- function(..., cp = "srs", dp = NULL,
 # simple growth models
 bgrowth <- function(..., cp = "srs", dp = NULL,
     n.chains = 3, burnin, sample, adapt,
-    mcmcfile = FALSE, mcmcextra = list(), inits = "prior",
+    mcmcfile = FALSE, mcmcextra = list(), inits = "simple",
     convergence = "manual", target = "stan", save.lvs = FALSE, wiggle = NULL,
     wiggle.sd = 0.1, prisamp = FALSE, jags.ic = FALSE, seed = NULL,
     bcontrol = list()) {

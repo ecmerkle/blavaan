@@ -6,7 +6,7 @@ Fit a Confirmatory Factor Analysis (CFA) model.}
 \usage{
 bcfa(..., cp = "srs",
      dp = NULL, n.chains = 3, burnin, sample,
-     adapt, mcmcfile = FALSE, mcmcextra = list(), inits = "prior",
+     adapt, mcmcfile = FALSE, mcmcextra = list(), inits = "simple",
      convergence = "manual", target = "stan", save.lvs = FALSE,
      wiggle = NULL, wiggle.sd = 0.1, prisamp = FALSE, jags.ic = FALSE,
      seed = NULL, bcontrol = list())
@@ -42,7 +42,7 @@ bcfa(..., cp = "srs",
   longer time). This log-likelihood is specifically used to compute
   information criteria.}
 \item{inits}{If it is a character string, the options are currently
-    \code{"simple"}, \code{"Mplus"}, \code{"prior"} (default), or \code{"jags"}.  In the first two
+    \code{"simple"} (default), \code{"Mplus"}, \code{"prior"}, or \code{"jags"}.  In the first two
     cases, parameter values are set as though they will be estimated via
     ML (see \code{\link{lavaan}}).  The starting parameter value for
     each chain is then perturbed from the original values through the
