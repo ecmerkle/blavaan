@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-4.1003</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-4.1006</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,7 +80,7 @@
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">bgrowth</span><span class="op">(</span><span class="va">...</span>, cp <span class="op">=</span> <span class="st">"srs"</span>, dp <span class="op">=</span> <span class="cn">NULL</span>, n.chains <span class="op">=</span> <span class="fl">3</span>,</span>
 <span><span class="va">burnin</span>, <span class="va">sample</span>, <span class="va">adapt</span>, mcmcfile <span class="op">=</span> <span class="cn">FALSE</span>, mcmcextra <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, </span>
-<span>inits <span class="op">=</span> <span class="st">"prior"</span>, convergence <span class="op">=</span> <span class="st">"manual"</span>, target <span class="op">=</span> <span class="st">"stan"</span>,</span>
+<span>inits <span class="op">=</span> <span class="st">"simple"</span>, convergence <span class="op">=</span> <span class="st">"manual"</span>, target <span class="op">=</span> <span class="st">"stan"</span>,</span>
 <span>save.lvs <span class="op">=</span> <span class="cn">FALSE</span>, wiggle <span class="op">=</span> <span class="cn">NULL</span>, wiggle.sd <span class="op">=</span> <span class="fl">0.1</span>, prisamp <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>jags.ic <span class="op">=</span> <span class="cn">FALSE</span>, seed <span class="op">=</span> <span class="cn">NULL</span>, bcontrol <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -135,7 +135,7 @@
 
 <dt>inits</dt>
 <dd><p>If it is a character string, the options are currently
-    <code>"simple"</code>, <code>"Mplus"</code>, <code>"prior"</code> (default), or <code>"jags"</code>.  In the first two
+    <code>"simple"</code> (default), <code>"Mplus"</code>, <code>"prior"</code>, or <code>"jags"</code>.  In the first two
     cases, parameter values are set as though they will be estimated via
     ML (see <code><a href="https://rdrr.io/pkg/lavaan/man/lavaan.html" class="external-link">lavaan</a></code>).  The starting parameter value for
     each chain is then perturbed from the original values through the
