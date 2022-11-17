@@ -55,8 +55,8 @@ blavaan <- function(...,  # default lavaan arguments
         }
     }
 
-    # multilevel functionality not available
-    if("cluster" %in% dotNames) stop("blavaan ERROR: two-level models are not yet available.")
+    # multilevel functionality
+    if("cluster" %in% dotNames) warning("blavaan WARNING: two-level models are under development and may be unstable.")
   
     # prior predictives only for stan
     if(prisamp) {

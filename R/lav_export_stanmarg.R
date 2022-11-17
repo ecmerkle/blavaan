@@ -869,6 +869,7 @@ lav2standata <- function(lavobject) {
   YX <- lavobject@Data@X
   nvar <- ncol(YX[[1]])
   ord <- as.numeric(lavInspect(lavobject, 'categorical'))
+  levels <- lavInspect(lavobject, 'nlevels')
   dat$ord <- ord
   dat$N <- lavInspect(lavobject, 'nobs')
 
@@ -947,6 +948,58 @@ lav2standata <- function(lavobject) {
   dat$YX <- do.call("rbind", YX)
   dat$grpnum <- array(dat$grpnum, length(dat$grpnum))
 
+  if (levels == 2L) {
+    Lp <- lavobject@Data@Lp[[1]]
+    
+    dat$nclus <- as.integer(unlist(Lp$nclusters))
+    dat$cluster_size <- Lp$cluster.size[[2]]
+    dat$cluster_sizes <- Lp$cluster.sizes[[2]]
+    dat$ncluster_sizes <- length(dat$cluster_sizes)
+    dat$cluster_size_ns <- Lp$cluster.size.ns[[2]]
+    dat$between_idx <- Lp$between.idx[[2]]
+    dat$N_between <- length(dat$between_idx)
+    dat$within_idx <- Lp$within.idx[[2]]
+    dat$N_within <- length(dat$within_idx)
+    dat$both_idx <- Lp$both.idx[[2]]
+    dat$N_both <- length(dat$both_idx)
+    dat$ov_idx1 <- Lp$ov.idx[[1]]
+    dat$ov_idx2 <- Lp$ov.idx[[2]]
+    dat$p_tilde <- length(unique(c(dat$ov_idx1, dat$ov_idx2)))
+    dat$N_lev <- c(length(dat$ov_idx1), length(dat$ov_idx2))
+    dat$all_idx <- c(dat$between_idx, sort(c(dat$within_idx, dat$both_idx)))
+
+    
+    YLp <- lavobject@SampleStats@YLp[[1]]
+    dat$mean_d <- YLp[[2]]$mean.d
+
+    cov_d <- YLp[[2]]$cov.d
+    for (i in 1:length(cov_d)) {
+      if (!inherits(cov_d[[i]], "matrix")) cov_d[[i]] <- with(dat,
+                                                              matrix(0, N_between + N_both + N_within,
+                                                                     N_between + N_both + N_within))
+    }
+  } else {
+    dat$nclus <- array(0, 2)
+    dat$cluster_size <- array(0, 0)
+    dat$ncluster_sizes <- 0
+    dat$cluster_sizes <- array(0, 0)
+    dat$cluster_size_ns <- array(0, 0)
+    dat$between_idx <- array(0, 0)
+    dat$N_between <- 0
+    dat$within_idx <- array(0, 0)
+    dat$N_within <- 0
+    dat$both_idx <- array(0, 0)
+    dat$N_both <- 0
+    dat$ov_idx1 <- array(0, 0)
+    dat$ov_idx2 <- array(0, 0)
+    dat$p_tilde <- 0
+    dat$N_lev <- array(0, 2)
+    dat$all_idx <- array(0, 0)
+    
+    dat$mean_d <- array(0, 0)
+    dat$cov_d <- matrix(0, 0, 0)
+  } # levels
+  
   if (ord) {
     pta <- lav_partable_attributes(parTable(lavobject))
 

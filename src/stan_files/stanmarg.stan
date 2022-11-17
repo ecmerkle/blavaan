@@ -472,7 +472,7 @@ data {
   vector[p + q - Nord] YXbar[Np]; // sample means of continuous manifest variables
   matrix[p + q - Nord + 1, p + q - Nord + 1] S[Np];     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
   
-  int<lower=1> nclus[2]; // number of level 1 + level 2 variables
+  int<lower=1> nclus[2]; // number of level 1 + level 2 observations
   int<lower=1> cluster_size[nclus[2]]; // number of obs per cluster
   int<lower=1> ncluster_sizes; // number of unique cluster sizes
   int<lower=1> cluster_sizes[ncluster_sizes]; // unique cluster sizes
