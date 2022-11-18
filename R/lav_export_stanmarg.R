@@ -185,9 +185,9 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       dat$emiter <- 20L
     }
     dat$pri_only <- prisamp
-  } else {
-    Ng <- dat$Ng
   }
+  
+  Ng <- dat$Ng
 
   freemats <- lavInspect(lavobject, 'free')
   if (inherits(freemats[[1]], 'list')) freemats <- freemats[[level]]
@@ -709,27 +709,32 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     for (i in 1:length(ini)) {
       nmidx <- match(names(ini[[i]]), mapping)
       names(ini[[i]]) <- names(mapping)[nmidx]
-      if(dat$fullpsi) {
+      if (dat$fullpsi) {
         ## remove Psi_r_free because handled as corr_mat
         ini[[i]]$Psi_r_free <- array(0, 0)
         psidim <- dim(dat$Psi_skeleton)[2]
         psimat <- array(diag(1, psidim), dim = c(psidim, psidim, dat$Ng))
         ini[[i]]$Psi_r_mat <- aperm(psimat, perm = c(3, 1, 2))
       }
-      ## tau needs a specific ordering, with augmented z's to match
-      tauvec <- which(names(ini[[i]]) == "Tau_free")
-      if(length(tauvec) > 0) {
-        z_aug <- rep(.5, dat$Noent)
 
-        ## for (j in 1:dat$Nord) {
-        ##   tmpyx <- dat$YXo[,j]
-        ##   hicat <- tmpyx == max(tmpyx)
-        ##   locat <- tmpyx == min(tmpyx)
-        ##   z_aug[hicat,j] <- .05
-        ##   z_aug[locat,j] <- .95
-        ## }
+      if (level == 2L) {
+        names(ini[[i]]) <- paste0(names(ini[[i]]), "_c")
+      } else {
+        ## if ordinal, tau needs a specific ordering, with augmented z's to match
+        tauvec <- which(names(ini[[i]]) == "Tau_free")
+        if(length(tauvec) > 0) {
+          z_aug <- rep(.5, dat$Noent)
 
-        ini[[i]] <- c(ini[[i]], list(z_aug = z_aug))
+          ## for (j in 1:dat$Nord) {
+          ##   tmpyx <- dat$YXo[,j]
+          ##   hicat <- tmpyx == max(tmpyx)
+          ##   locat <- tmpyx == min(tmpyx)
+          ##   z_aug[hicat,j] <- .05
+          ##   z_aug[locat,j] <- .95
+          ## }
+
+          ini[[i]] <- c(ini[[i]], list(z_aug = z_aug))
+        }
       }
     }
   } else {
@@ -737,8 +742,8 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   }
 
   ## index of dummy lvs, for sampling lvs
-  dumlv <- c(lavobject@Model@ov.x.dummy.lv.idx[[1]],
-             lavobject@Model@ov.y.dummy.lv.idx[[1]])
+  dumlv <- c(lavobject@Model@ov.x.dummy.lv.idx[[level]],
+             lavobject@Model@ov.y.dummy.lv.idx[[level]])
   
   return(list(dat = dat, free2 = free2, lavpartable = lavpartable,
               init = ini, dumlv = dumlv, wigpris = wigpris))
