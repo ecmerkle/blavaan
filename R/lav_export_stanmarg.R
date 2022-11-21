@@ -165,18 +165,15 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
   return(out)
 }
 
-lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=NULL, prisamp=FALSE, mcmcextra=NULL, level=1L, dat=NULL) {
+lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=NULL, prisamp=FALSE, mcmcextra=NULL, level=1L, indat=NULL) {
   ## extract model and data characteristics from lavaan object
   opts <- lavInspect(lavobject, 'options')
   multilevel <- opts$multilevel
   
   if (!multilevel & level > 1) stop("blavaan ERROR: higher levels requested, but this is not a multilevel model.")
 
-  matmod <- ""
-  if (level == 2L) matmod <- "_c"
-  
   ## data characteristics
-  if (length(dat) == 0) {
+  if (length(indat) == 0) {
     dat <- lav2standata(lavobject)
     ## model
     if ("emiter" %in% names(mcmcextra$data)) {
@@ -185,10 +182,12 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       dat$emiter <- 20L
     }
     dat$pri_only <- prisamp
+    Ng <- dat$Ng
+  } else {
+    dat <- list()
+    Ng <- indat$Ng
   }
   
-  Ng <- dat$Ng
-
   freemats <- lavInspect(lavobject, 'free')
   if (inherits(freemats[[1]], 'list')) freemats <- freemats[[level]]
   constrain <- attr(freemats, 'header')
@@ -237,24 +236,23 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     tmpwig <- lavpartable[twsel,'free'][which(lavpartable[twsel, 'plabel'] %in% wig)]
     res <- matattr(fr, es, constrain, mat = "Lambda_y", Ng, opts$std.lv, tmpwig)
 
-    dat[[paste0('Lambda_y_skeleton', matmod)]] <- res$matskel
-    dat[[paste0('w1skel', matmod)]] <- res$wskel
-    dat[[paste0('lam_y_sign', matmod)]] <- res$sign
+    dat$Lambda_y_skeleton <- res$matskel
+    dat$w1skel <- res$wskel
+    dat$lam_y_sign <- res$sign
     lyfree2 <- res$free2
-    free2 <- c(free2, list(res$free))
-    names(free2)[length(free2)] <- paste0('lambda', matmod)
+    free2 <- c(free2, list(lambda = res$free))
     ptrows <- which(lavpartable$mat == "lambda" & lavpartable$free > 0)
     veclen <- length(ptrows)
     if (veclen > 0) {
       fpars <- res$wskel[1:veclen,1] == 0 | res$wskel[1:veclen,3] == 1
       nfree <- c(nfree, list(sum(fpars)))
-      names(nfree)[length(nfree)] <- paste0('lambda', matmod)      
+      names(nfree)[length(nfree)] <- 'lambda'
       freeparnums[ptrows[fpars]] <- 1:sum(fpars)
     }
   } else {
-    dat[[paste0("Lambda_y_skeleton", matmod)]] <- array(0, dim = c(Ng, 0, 0))
-    dat[[paste0("w1skel", matmod)]] <- matrix(0, 0, 3)
-    dat[[paste0("lam_y_sign", matmod)]] <- matrix(0, 0, 2)
+    dat$Lambda_y_skeleton <- array(0, dim = c(Ng, 0, 0))
+    dat$w1skel <- matrix(0, 0, 3)
+    dat$lam_y_sign <- matrix(0, 0, 2)
   }
 
   ## 2. Lambda_x; never used because x only pops up in
@@ -303,23 +301,22 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     res <- matattr(fr, es, constrain, mat = "B", Ng, opts$std.lv, tmpwig,
                    free2 = lyfree2, sign = dat[[paste0('lam_y_sign', matmod)]])
 
-    dat[[paste0('B_skeleton', matmod)]] <- res$matskel
-    dat[[paste0('w4skel', matmod)]] <- res$wskel
-    dat[[paste0('b_sign', matmod)]] <- res$sign
-    free2 <- c(free2, list(res$free))
-    names(free2)[length(free2)] <- paste0('beta', matmod)
+    dat$B_skeleton <- res$matskel
+    dat$w4skel <- res$wskel
+    dat$b_sign <- res$sign
+    free2 <- c(free2, list(beta = res$free))
     ptrows <- which(lavpartable$mat == "beta" & lavpartable$free > 0)
     veclen <- length(ptrows)
     if (veclen > 0) {
       fpars <- res$wskel[1:veclen,1] == 0 | res$wskel[1:veclen,3] == 1
       nfree <- c(nfree, list(sum(fpars)))
-      names(nfree)[length(nfree)] <- paste0('beta', matmod)
+      names(nfree)[length(nfree)] <- 'beta'
       freeparnums[ptrows[fpars]] <- 1:sum(fpars)
     }
   } else {
-    dat[[paste0('B_skeleton', matmod)]] <- array(0, dim = c(Ng, dim(dat[[paste0('Lambda_y_skeleton', matmod)]])[3], 0))
-    dat[[paste0('w4skel', matmod)]] <- matrix(0, 0, 3)
-    dat[[paste0('b_sign', matmod)]] <- matrix(0, 0, 3)
+    dat$B_skeleton <- array(0, dim = c(Ng, dim(dat$Lambda_y_skeleton)[3], 0))
+    dat$w4skel <- matrix(0, 0, 3)
+    dat$b_sign <- matrix(0, 0, 3)
   }
 
   ## 5. diag(Theta)
@@ -343,21 +340,20 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     
     res <- matattr(fr, es, constrain, mat = "Theta", Ng, opts$std.lv, tmpwig)
 
-    dat[[paste0('Theta_skeleton', matmod)]] <- res$matskel
-    dat[[paste0('w5skel', matmod)]] <- res$wskel
-    free2 <- c(free2, list(res$free))
-    names(free2)[length(free2)] <- paste0('dtheta', matmod) 
+    dat$Theta_skeleton <- res$matskel
+    dat$w5skel <- res$wskel
+    free2 <- c(free2, list(dtheta = res$free))
     ptrows <- with(lavpartable, which(mat == "theta" & free > 0 & row == col))
     veclen <- length(ptrows)
     if (veclen > 0) {
       fpars <- res$wskel[1:veclen,1] == 0 | res$wskel[1:veclen,3] == 1
       nfree <- c(nfree, list(sum(fpars)))
-      names(nfree)[length(nfree)] <- paste0('theta', matmod) 
+      names(nfree)[length(nfree)] <- 'theta' 
       freeparnums[ptrows[fpars]] <- 1:sum(fpars)
     }
   } else {
-    dat[[paste0('Theta_skeleton', matmod)]] <- array(0, dim = c(Ng, 0, 0))
-    dat[[paste0('w5skel', matmod)]] <- matrix(0, 0, 3)
+    dat$Theta_skeleton <- array(0, dim = c(Ng, 0, 0))
+    dat$w5skel <- matrix(0, 0, 3)
   }
 
   ## 7. Theta_r
@@ -381,21 +377,20 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     
     res <- matattr(fr, es, constrain, mat = "Theta_r", Ng, opts$std.lv, tmpwig, dest = dest)
 
-    dat[[paste0('Theta_r_skeleton', matmod)]] <- res$matskel
-    dat[[paste0('w7skel', matmod)]] <- res$wskel
-    free2 <- c(free2, list(res$free))
-    names(free2)[length(free2)] <- paste0('rtheta', matmod)
+    dat$Theta_r_skeleton <- res$matskel
+    dat$w7skel <- res$wskel
+    free2 <- c(free2, list(rtheta = res$free))
     ptrows <- with(lavpartable, which(mat == "theta" & free > 0 & row != col))
     veclen <- length(ptrows)
     if (veclen > 0) {
       fpars <- res$wskel[1:veclen,1] == 0 | res$wskel[1:veclen,3] == 1
       nfree <- c(nfree, list(sum(fpars)))
-      names(nfree)[length(nfree)] <- paste0('rho', matmod)
+      names(nfree)[length(nfree)] <- 'rho'
       freeparnums[ptrows[fpars]] <- 1:sum(fpars)
     }
   } else {
-    dat[[paste0('Theta_r_skeleton', matmod)]] <- array(0, dim = c(Ng, 0, 0))
-    dat[[paste0('w7skel', matmod)]] <- matrix(0, 0, 3)
+    dat$Theta_r_skeleton <- array(0, dim = c(Ng, 0, 0))
+    dat$w7skel <- matrix(0, 0, 3)
   }
 
   if (level == 1L) {
@@ -495,21 +490,20 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     ## std.lv only matters for off-diagonals
     res <- matattr(fr, es, constrain, mat = "Psi", Ng, FALSE, tmpwig)
 
-    dat[[paste0('Psi_skeleton', matmod)]] <- res$matskel
-    dat[[paste0('w9skel', matmod)]] <- res$wskel
-    free2 <- c(free2, list(res$free))
-    names(free2)[length(free2)] <- paste0('dpsi', matmod)
+    dat$Psi_skeleton <- res$matskel
+    dat$w9skel <- res$wskel
+    free2 <- c(free2, list(dpsi = res$free))
     ptrows <- with(lavpartable, which(mat == "psi" & free > 0 & row == col))
     veclen <- length(ptrows)
     if(veclen > 0) {
       fpars <- res$wskel[1:veclen,1] == 0 | res$wskel[1:veclen,3] == 1
       nfree <- c(nfree, list(sum(fpars)))
-      names(nfree)[length(nfree)] <- paste0('psi', matmod)
+      names(nfree)[length(nfree)] <- 'psi'
       freeparnums[ptrows[fpars]] <- 1:sum(fpars)
     }
   } else {
-    dat[[paste0('Psi_skeleton', matmod)]] <- array(0, dim = c(Ng, 0, 0))
-    dat[[paste0('w9skel', matmod)]] <- matrix(0, 0, 3)
+    dat$Psi_skeleton <- array(0, dim = c(Ng, 0, 0))
+    dat$w9skel <- matrix(0, 0, 3)
   }
 
   ## 10. Psi_r
@@ -535,29 +529,28 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
                    free2 = lyfree2, sign = dat$lam_y_sign,
                    dest = dest)
 
-    dat[[paste0('fullpsi', matmod)]] <- 0L
-    dat[[paste0('Psi_r_skeleton', matmod)]] <- res$matskel
-    dat[[paste0('w10skel', matmod)]] <- res$wskel
-    dat[[paste0('psi_r_sign', matmod)]] <- res$sign
-    free2 <- c(free2, list(res$free))
-    names(free2)[length(free2)] <- paste0('rpsi', matmod)
+    dat$fullpsi <- 0L
+    dat$Psi_r_skeleton <- res$matskel
+    dat$w10skel <- res$wskel
+    dat$psi_r_sign <- res$sign
+    free2 <- c(free2, list(rpsi = res$free))
     ptrows <- with(lavpartable, which(mat == "psi" & free > 0 & row != col))
     veclen <- length(ptrows)
     if (veclen > 0) {
       fpars <- res$wskel[1:veclen,1] == 0 | res$wskel[1:veclen,3] == 1
       nfree <- c(nfree, list(sum(fpars)))
-      names(nfree)[length(nfree)] <- paste0('lvrho', matmod)
+      names(nfree)[length(nfree)] <- 'lvrho'
       freeparnums[ptrows[fpars]] <- 1:sum(fpars)
     }
     ## check for completely unrestricted correlation matrix, for lkj
     fpars <- sapply(res$free2, function(x) as.numeric(x[lower.tri(x)]))
     if (length(unlist(fpars)) > 0) {
-      if (all(!duplicated(fpars)) & all(fpars > 0) & all(res$wskel[,1] == 0)) dat[[paste0('fullpsi', matmod)]] <- 1L
+      if (all(!duplicated(fpars)) & all(fpars > 0) & all(res$wskel[,1] == 0)) dat$fullpsi <- 1L
     }
   } else {
-    dat[[paste0('Psi_r_skeleton', matmod)]] <- array(0, dim = c(Ng, 0, 0))
-    dat[[paste0('w10skel', matmod)]] <- matrix(0, 0, 3)
-    dat[[paste0('psi_r_sign', matmod)]] <- matrix(0, 0, 3)
+    dat$Psi_r_skeleton <- array(0, dim = c(Ng, 0, 0))
+    dat$w10skel <- matrix(0, 0, 3)
+    dat$psi_r_sign <- matrix(0, 0, 3)
   }
 
   if (level == 1L) {
@@ -590,21 +583,20 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
 
     res <- matattr(fr, es, constrain, mat = "Nu", Ng, opts$std.lv, tmpwig)
 
-    dat[[paste0('Nu_skeleton', matmod)]] <- res$matskel
-    dat[[paste0('w13skel', matmod)]] <- res$wskel
-    free2 <- c(free2, list(res$free))
-    names(free2)[length(free2)] <- paste0('nu', matmod)
+    dat$Nu_skeleton <- res$matskel
+    dat$w13skel <- res$wskel
+    free2 <- c(free2, list(nu = res$free))
     ptrows <- with(lavpartable, which(mat %in% c("nu", "mean.x") & free > 0))
     veclen <- length(ptrows)
     if (veclen > 0) {
       fpars <- res$wskel[1:veclen,1] == 0 | res$wskel[1:veclen,3] == 1
       nfree <- c(nfree, list(sum(fpars)))
-      names(nfree)[length(nfree)] <- paste0('nu', matmod)
+      names(nfree)[length(nfree)] <- 'nu'
       freeparnums[ptrows[fpars]] <- 1:sum(fpars)      
     }
   } else {
-    dat[[paste0('Nu_skeleton', matmod)]] <- array(0, dim = c(Ng, 0, 0))
-    dat[[paste0('w13skel', matmod)]] <- matrix(0, 0, 3)
+    dat$Nu_skeleton <- array(0, dim = c(Ng, 0, 0))
+    dat$w13skel <- matrix(0, 0, 3)
   }
 
   ## 14. Alpha
@@ -618,21 +610,20 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     
     res <- matattr(fr, es, constrain, mat = "Alpha", Ng, opts$std.lv, tmpwig)
 
-    dat[[paste0('Alpha_skeleton', matmod)]] <- res$matskel
-    dat[[paste0('w14skel', matmod)]] <- res$wskel
-    free2 <- c(free2, list(res$free))
-    names(free2)[length(free2)] <- paste0('alpha', matmod)
+    dat$Alpha_skeleton <- res$matskel
+    dat$w14skel <- res$wskel
+    free2 <- c(free2, list(alpha = res$free))
     ptrows <- with(lavpartable, which(mat == "alpha" & free > 0))
     veclen <- length(ptrows)
     if (veclen > 0) {
       fpars <- res$wskel[1:veclen,1] == 0 | res$wskel[1:veclen,3] == 1
       nfree <- c(nfree, list(sum(fpars)))
-      names(nfree)[length(nfree)] <- paste0('alpha', matmod)
+      names(nfree)[length(nfree)] <- 'alpha'
       freeparnums[ptrows[fpars]] <- 1:sum(fpars)
     }
   } else {
-    dat[[paste0('Alpha_skeleton', matmod)]] <- array(0, dim = c(Ng, 0, 0))
-    dat[[paste0('w14skel', matmod)]] <- matrix(0, 0, 3)
+    dat$Alpha_skeleton <- array(0, dim = c(Ng, 0, 0))
+    dat$w14skel <- matrix(0, 0, 3)
   }
 
   ## 15. Tau
@@ -744,6 +735,12 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   ## index of dummy lvs, for sampling lvs
   dumlv <- c(lavobject@Model@ov.x.dummy.lv.idx[[level]],
              lavobject@Model@ov.y.dummy.lv.idx[[level]])
+
+  ## for level 2, add _c to names
+  if (level == 2L) {
+    names(dat) <- paste0(names(dat), "_c")
+    names(free2) <- paste0(names(free2), "_c")
+  }
   
   return(list(dat = dat, free2 = free2, lavpartable = lavpartable,
               init = ini, dumlv = dumlv, wigpris = wigpris))
