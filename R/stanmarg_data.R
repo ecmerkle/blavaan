@@ -277,176 +277,38 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
 
   dat$save_lvs <- save_lvs
   dat$do_test <- do_test
-  
-  dat$p <- dim(Lambda_y_skeleton)[2]
-  dat$m <- dim(Lambda_y_skeleton)[3]
-  tmpres <- group_sparse_skeleton(Lambda_y_skeleton)
-  dat$len_w1 <- max(tmpres$g_len)
-  dat$w1 <- tmpres$w
-  dat$v1 <- tmpres$v
-  dat$u1 <- tmpres$u
-  dat$wg1 <- array(tmpres$g_len, length(tmpres$g_len))
-  dat$w1skel <- w1skel
+
+  ## level 1 matrix info
+  dat <- c(dat, stanmarg_matdata(dat, Lambda_y_skeleton, Lambda_x_skeleton,
+                                 Gamma_skeleton, B_skeleton, Theta_skeleton,
+                                 Theta_r_skeleton, Theta_x_skeleton, Theta_x_r_skeleton,
+                                 Psi_skeleton, Psi_r_skeleton, Phi_skeleton, Phi_r_skeleton,
+                                 Nu_skeleton, Alpha_skeleton, Tau_skeleton, dumlv, level = 1L))
   dat$lam_y_sign <- lam_y_sign
-
-  dat$q <- dim(Lambda_x_skeleton)[2]
-  dat$n <- dim(Lambda_x_skeleton)[3]
-  tmpres <- group_sparse_skeleton(Lambda_x_skeleton)
-  #dat$len_w2 <- max(tmpres$g_len)
-  #dat$w2 <- tmpres$w
-  #dat$v2 <- tmpres$v
-  #dat$u2 <- tmpres$u
-  #dat$wg2 <- array(tmpres$g_len, length(tmpres$g_len))
-  #dat$w2skel <- w2skel
+  dat$w1skel <- w1skel
   #dat$lam_x_sign <- lam_x_sign
-
-  tmpres <- group_sparse_skeleton(Gamma_skeleton)
-  dat$len_w3 <- max(tmpres$g_len)
-  dat$w3 <- tmpres$w
-  dat$v3 <- tmpres$v
-  dat$u3 <- tmpres$u
-  dat$wg3 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w3skel <- w3skel
   dat$gam_sign <- gam_sign
-
-  tmpres <- group_sparse_skeleton(B_skeleton)
-  dat$len_w4 <- max(tmpres$g_len)
-  dat$w4 <- tmpres$w
-  dat$v4 <- tmpres$v
-  dat$u4 <- tmpres$u
-  dat$wg4 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w4skel <- w4skel
   dat$b_sign <- b_sign
-
-  dThet <- Theta_skeleton
-  for (g in 1:Ng) {
-    tmpmat <- as.matrix(dThet[g,,])
-    tmpmat[lower.tri(tmpmat)] <- tmpmat[upper.tri(tmpmat)] <- 0L
-    dThet[g,,] <- tmpmat
-  }
-  tmpres <- group_sparse_skeleton(dThet)
-  dat$len_w5 <- max(tmpres$g_len)
-  dat$w5 <- tmpres$w
-  dat$v5 <- tmpres$v
-  dat$u5 <- tmpres$u
-  dat$wg5 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w5skel <- w5skel
-  ## for lv sampling
-  usethet <- array(which(diag(as.matrix(Theta_skeleton[1,,])) != 0))
-  dat$w5use <- length(usethet)
-  dat$usethet <- usethet
-  
-  dThetx <- Theta_x_skeleton
-  for (g in 1:Ng) {
-    tmpmat <- as.matrix(dThetx[g,,])
-    tmpmat[lower.tri(tmpmat)] <- tmpmat[upper.tri(tmpmat)] <- 0L
-    dThetx[g,,] <- tmpmat
-  }
-  tmpres <- group_sparse_skeleton(dThetx)
-  dat$len_w6 <- max(tmpres$g_len)
-  dat$w6 <- tmpres$w
-  dat$v6 <- tmpres$v
-  dat$u6 <- tmpres$u
-  dat$wg6 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w6skel <- w6skel
-
-  tmpres <- group_sparse_skeleton(Theta_r_skeleton)
-  dat$len_w7 <- max(tmpres$g_len)
-  dat$w7 <- tmpres$w
-  dat$v7 <- tmpres$v
-  dat$u7 <- tmpres$u
-  dat$wg7 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w7skel <- w7skel
-
-  tmpres <- group_sparse_skeleton(Theta_x_r_skeleton)
-  dat$len_w8 <- max(tmpres$g_len)
-  dat$w8 <- tmpres$w
-  dat$v8 <- tmpres$v
-  dat$u8 <- tmpres$u
-  dat$wg8 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w8skel <- w8skel
-
-  dPsi <- Psi_skeleton
-  for (g in 1:Ng) {
-    tmpmat <- as.matrix(dPsi[g,,])
-    tmpmat[lower.tri(tmpmat)] <- tmpmat[upper.tri(tmpmat)] <- 0L
-    dPsi[g,,] <- tmpmat
-  }
-  tmpres <- group_sparse_skeleton(dPsi)
-  dat$len_w9 <- max(tmpres$g_len)
-  dat$w9 <- tmpres$w
-  dat$v9 <- tmpres$v
-  dat$u9 <- tmpres$u
-  dat$wg9 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w9skel <- w9skel
-  ## for lv sampling
-  usepsi <- useorig <- array(which(diag(as.matrix(Psi_skeleton[1,,])) != 0))
-  if (length(dumlv) > 0) {
-    dums <- match(dumlv, usepsi)
-    usepsi <- array(usepsi[-dums[!is.na(dums)]])
-  }
-  dat$w9use <- length(usepsi)
-  dat$usepsi <- usepsi
-  dat$nopsi <- array((1:dim(Psi_skeleton)[2])[-useorig])
-  dat$w9no <- length(dat$nopsi)
-  
-  tmpres <- group_sparse_skeleton(Psi_r_skeleton)
-  dat$len_w10 <- max(tmpres$g_len)
-  dat$w10 <- tmpres$w
-  dat$v10 <- tmpres$v
-  dat$u10 <- tmpres$u
-  dat$wg10 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w10skel <- w10skel
   dat$psi_r_sign <- psi_r_sign
   dat$fullpsi <- fullpsi
 
-  dPhi <- Phi_skeleton
-  for (g in 1:Ng) {
-    tmpmat <- as.matrix(dPhi[g,,])
-    tmpmat[lower.tri(tmpmat)] <- tmpmat[upper.tri(tmpmat)] <- 0L
-    dPhi[g,,] <- tmpmat
-  }
-  tmpres <- group_sparse_skeleton(dPhi)
-  #dat$len_w11 <- max(tmpres$g_len)
-  #dat$w11 <- tmpres$w
-  #dat$v11 <- tmpres$v
-  #dat$u11 <- tmpres$u
-  #dat$wg11 <- array(tmpres$g_len, length(tmpres$g_len))
   #dat$w11skel <- w11skel
-
-  tmpres <- group_sparse_skeleton(Phi_r_skeleton)
-  #dat$len_w12 <- max(tmpres$g_len)
-  #dat$w12 <- tmpres$w
-  #dat$v12 <- tmpres$v
-  #dat$u12 <- tmpres$u
-  #dat$wg12 <- array(tmpres$g_len, length(tmpres$g_len))
   #dat$w12skel <- w12skel
   #dat$phi_r_sign <- phi_r_sign
-
-  if(dat$has_data & is.null(Nu_skeleton)) stop("blavaan ERROR: Nu_skeleton not provided")
-  tmpres <- group_sparse_skeleton(Nu_skeleton)
-  dat$len_w13 <- max(tmpres$g_len)
-  dat$w13 <- tmpres$w
-  dat$v13 <- tmpres$v
-  dat$u13 <- tmpres$u
-  dat$wg13 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w13skel <- w13skel
-
-  tmpres <- group_sparse_skeleton(Alpha_skeleton)
-  dat$len_w14 <- max(tmpres$g_len)
-  dat$w14 <- tmpres$w
-  dat$v14 <- tmpres$v
-  dat$u14 <- tmpres$u
-  dat$wg14 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w14skel <- w14skel
-
-  tmpres <- group_sparse_skeleton(Tau_skeleton)
-  dat$len_w15 <- max(tmpres$g_len)
-  dat$w15 <- tmpres$w
-  dat$v15 <- tmpres$v
-  dat$u15 <- tmpres$u
-  dat$wg15 <- array(tmpres$g_len, length(tmpres$g_len))
   dat$w15skel <- w15skel
+
+  ## TODO level 2 matrices
+  
   
   ## priors; first make sure they match what is in the stan file
   check_priors(lavpartable)
@@ -519,6 +381,184 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   pris <- format_priors(lavpartable, "tau")
   dat$tau_mn <- pris[['p1']]; dat$tau_sd <- pris[['p2']]
   dat$len_tau <- length(dat$tau_mn)
+  
+  return(dat)
+}
+
+
+## create data on model matrices
+stanmarg_matdata <- function(indat, Lambda_y_skeleton, Lambda_x_skeleton = NULL,
+                             Gamma_skeleton = NULL, B_skeleton, Theta_skeleton,
+                             Theta_r_skeleton, Theta_x_skeleton = NULL,
+                             Theta_x_r_skeleton = NULL, Psi_skeleton,
+                             Psi_r_skeleton, Phi_skeleton = NULL,
+                             Phi_r_skeleton = NULL, Nu_skeleton, Alpha_skeleton,
+                             Tau_skeleton = NULL, dumlv = NULL, level = 1L) {
+  
+  dat$p <- dim(Lambda_y_skeleton)[2]
+  dat$m <- dim(Lambda_y_skeleton)[3]
+  tmpres <- group_sparse_skeleton(Lambda_y_skeleton)
+  dat$len_w1 <- max(tmpres$g_len)
+  dat$w1 <- tmpres$w
+  dat$v1 <- tmpres$v
+  dat$u1 <- tmpres$u
+  dat$wg1 <- array(tmpres$g_len, length(tmpres$g_len))
+
+  if (level == 1L) {
+    dat$q <- dim(Lambda_x_skeleton)[2]
+    dat$n <- dim(Lambda_x_skeleton)[3]
+
+    #tmpres <- group_sparse_skeleton(Lambda_x_skeleton)
+    #dat$len_w2 <- max(tmpres$g_len)
+    #dat$w2 <- tmpres$w
+    #dat$v2 <- tmpres$v
+    #dat$u2 <- tmpres$u
+    #dat$wg2 <- array(tmpres$g_len, length(tmpres$g_len))
+    #dat$w2skel <- w2skel
+  }
+
+  tmpres <- group_sparse_skeleton(Gamma_skeleton)
+  dat$len_w3 <- max(tmpres$g_len)
+  dat$w3 <- tmpres$w
+  dat$v3 <- tmpres$v
+  dat$u3 <- tmpres$u
+  dat$wg3 <- array(tmpres$g_len, length(tmpres$g_len))
+
+  tmpres <- group_sparse_skeleton(B_skeleton)
+  dat$len_w4 <- max(tmpres$g_len)
+  dat$w4 <- tmpres$w
+  dat$v4 <- tmpres$v
+  dat$u4 <- tmpres$u
+  dat$wg4 <- array(tmpres$g_len, length(tmpres$g_len))
+
+  dThet <- Theta_skeleton
+  for (g in 1:indat$Ng) {
+    tmpmat <- as.matrix(dThet[g,,])
+    tmpmat[lower.tri(tmpmat)] <- tmpmat[upper.tri(tmpmat)] <- 0L
+    dThet[g,,] <- tmpmat
+  }
+  tmpres <- group_sparse_skeleton(dThet)
+  dat$len_w5 <- max(tmpres$g_len)
+  dat$w5 <- tmpres$w
+  dat$v5 <- tmpres$v
+  dat$u5 <- tmpres$u
+  dat$wg5 <- array(tmpres$g_len, length(tmpres$g_len))
+
+  ## for lv sampling
+  usethet <- array(which(diag(as.matrix(Theta_skeleton[1,,])) != 0))
+  dat$w5use <- length(usethet)
+  dat$usethet <- usethet
+
+  if (level == 1L) {
+    dThetx <- Theta_x_skeleton
+    for (g in 1:indat$Ng) {
+      tmpmat <- as.matrix(dThetx[g,,])
+      tmpmat[lower.tri(tmpmat)] <- tmpmat[upper.tri(tmpmat)] <- 0L
+      dThetx[g,,] <- tmpmat
+    }
+    tmpres <- group_sparse_skeleton(dThetx)
+    dat$len_w6 <- max(tmpres$g_len)
+    dat$w6 <- tmpres$w
+    dat$v6 <- tmpres$v
+    dat$u6 <- tmpres$u
+    dat$wg6 <- array(tmpres$g_len, length(tmpres$g_len))
+  }
+
+  tmpres <- group_sparse_skeleton(Theta_r_skeleton)
+  dat$len_w7 <- max(tmpres$g_len)
+  dat$w7 <- tmpres$w
+  dat$v7 <- tmpres$v
+  dat$u7 <- tmpres$u
+  dat$wg7 <- array(tmpres$g_len, length(tmpres$g_len))
+
+  if (level == 1L) {
+    tmpres <- group_sparse_skeleton(Theta_x_r_skeleton)
+    dat$len_w8 <- max(tmpres$g_len)
+    dat$w8 <- tmpres$w
+    dat$v8 <- tmpres$v
+    dat$u8 <- tmpres$u
+    dat$wg8 <- array(tmpres$g_len, length(tmpres$g_len))
+  }
+
+  dPsi <- Psi_skeleton
+  for (g in 1:indat$Ng) {
+    tmpmat <- as.matrix(dPsi[g,,])
+    tmpmat[lower.tri(tmpmat)] <- tmpmat[upper.tri(tmpmat)] <- 0L
+    dPsi[g,,] <- tmpmat
+  }
+  tmpres <- group_sparse_skeleton(dPsi)
+  dat$len_w9 <- max(tmpres$g_len)
+  dat$w9 <- tmpres$w
+  dat$v9 <- tmpres$v
+  dat$u9 <- tmpres$u
+  dat$wg9 <- array(tmpres$g_len, length(tmpres$g_len))
+
+  ## for lv sampling
+  usepsi <- useorig <- array(which(diag(as.matrix(Psi_skeleton[1,,])) != 0))
+  if (length(dumlv) > 0) {
+    dums <- match(dumlv, usepsi)
+    usepsi <- array(usepsi[-dums[!is.na(dums)]])
+  }
+  dat$w9use <- length(usepsi)
+  dat$usepsi <- usepsi
+  dat$nopsi <- array((1:dim(Psi_skeleton)[2])[-useorig])
+  dat$w9no <- length(dat$nopsi)  
+
+  tmpres <- group_sparse_skeleton(Psi_r_skeleton)
+  dat$len_w10 <- max(tmpres$g_len)
+  dat$w10 <- tmpres$w
+  dat$v10 <- tmpres$v
+  dat$u10 <- tmpres$u
+  dat$wg10 <- array(tmpres$g_len, length(tmpres$g_len))
+
+  if (level == 1L) {
+    dPhi <- Phi_skeleton
+    for (g in 1:indat$Ng) {
+      tmpmat <- as.matrix(dPhi[g,,])
+      tmpmat[lower.tri(tmpmat)] <- tmpmat[upper.tri(tmpmat)] <- 0L
+      dPhi[g,,] <- tmpmat
+    }
+    #tmpres <- group_sparse_skeleton(dPhi)
+    #dat$len_w11 <- max(tmpres$g_len)
+    #dat$w11 <- tmpres$w
+    #dat$v11 <- tmpres$v
+    #dat$u11 <- tmpres$u
+    #dat$wg11 <- array(tmpres$g_len, length(tmpres$g_len))
+
+    #tmpres <- group_sparse_skeleton(Phi_r_skeleton)
+    #dat$len_w12 <- max(tmpres$g_len)
+    #dat$w12 <- tmpres$w
+    #dat$v12 <- tmpres$v
+    #dat$u12 <- tmpres$u
+    #dat$wg12 <- array(tmpres$g_len, length(tmpres$g_len))
+  }
+
+  if (indat$has_data & is.null(Nu_skeleton)) stop("blavaan ERROR: Nu_skeleton not provided")
+  tmpres <- group_sparse_skeleton(Nu_skeleton)
+  dat$len_w13 <- max(tmpres$g_len)
+  dat$w13 <- tmpres$w
+  dat$v13 <- tmpres$v
+  dat$u13 <- tmpres$u
+  dat$wg13 <- array(tmpres$g_len, length(tmpres$g_len))
+
+  tmpres <- group_sparse_skeleton(Alpha_skeleton)
+  dat$len_w14 <- max(tmpres$g_len)
+  dat$w14 <- tmpres$w
+  dat$v14 <- tmpres$v
+  dat$u14 <- tmpres$u
+  dat$wg14 <- array(tmpres$g_len, length(tmpres$g_len))
+
+  if (level == 1L) {
+    tmpres <- group_sparse_skeleton(Tau_skeleton)
+    dat$len_w15 <- max(tmpres$g_len)
+    dat$w15 <- tmpres$w
+    dat$v15 <- tmpres$v
+    dat$u15 <- tmpres$u
+    dat$wg15 <- array(tmpres$g_len, length(tmpres$g_len))
+  }
+
+  ## level 2 mats get "_c" suffix
+  if (level == 2L) names(dat) <- paste0(names(dat), "_c")
   
   return(dat)
 }
