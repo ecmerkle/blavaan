@@ -150,29 +150,6 @@ check_priors <- function(lavpartable) {
 
 
 #' Obtain data list for stanmarg.
-#'
-#' @export
-#' @param S If `YX` is not supplied, then you must supply
-#'   `S`, which is a covariance matrix among observed variables (divided by N-1)
-#' @param N If `lavobject` is not supplied, then you must provide
-#'   `N`, which is an integer indicating the number of observations
-#' @param If `lavobject` is not supplied, then you must provide number of groups (for multi-group analysis)
-#' @param Lambda_y_skeleton,Lambda_x_skeleton,Gamma_skeleton,B_skeleton
-#'   Matrices indicating the restrictions placed on the elements using
-#'   the parameterization of the LISREL software. If `NA`, then the
-#'   element is unrestricted but presumably not too far from zero. If
-#'   `Inf` or `-Inf`, the element is unrestricted but is constrained
-#'   to be positive or negative respectively and is presumably far from
-#'   zero. Otherwise, the element is fixed to the specified number, 
-#'   which is often zero but can be any finite value.
-#' @param theta_sd_rate,theta_x_sd_rate,psi_sd_rate,phi_sd_rate Vectors (possibly of length one)
-#'   containing the rate parameter under independent exponential priors
-#'   on the standard deviations of the measurement errors in `Y` and `X`
-#'   respectively. If either of these are of length one, this value is
-#'   recylcled to the number of columns in `Y` or `X` respectively
-#' @param ... Further arguments
-#' @return A list of data
-#' @details Explain this
 stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           miss, Np, Nobs, Obsvar, # missing
                           ord, Nord, ordidx, contidx, nlevs,
@@ -195,6 +172,14 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           dumlv = NULL, # for sampling lvs
                           wigind = NULL, # wiggle indicator
                           pri_only = FALSE, # prior predictive sampling
+                          Lambda_y_skeleton_c = NULL, # level 2 matrices
+                          B_skeleton_c = NULL, Theta_skeleton_c = NULL, Theta_r_skeleton_c = NULL,
+                          Psi_skeleton_c = NULL, Psi_r_skeleton_c = NULL, Nu_skeleton_c = NULL,
+                          Alpha_skeleton_c = NULL,
+                          w1skel_c = NULL, w4skel_c = NULL, w5skel_c = NULL, w7skel_c = NULL,
+                          w9skel_c = NULL, w10skel_c = NULL, w13skel_c = NULL, w14skel_c = NULL,
+                          lam_y_sign_c = NULL, b_sign_c = NULL, psi_r_sign_c = NULL,
+                          phi_r_sign_c = NULL, fullpsi_c = NULL, dumlv_c = NULL, wigind_c = NULL,
                           ...) {
   
   dat <- list()
@@ -307,9 +292,28 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$w14skel <- w14skel
   dat$w15skel <- w15skel
 
-  ## TODO level 2 matrices
   
+  ## level 2 matrices
+  dat <- c(dat, stanmarg_matdata(dat, Lambda_y_skeleton = Lambda_y_skeleton_c,
+                                 B_skeleton = B_skeleton_c, Theta_skeleton = Theta_skeleton_c,
+                                 Theta_r_skeleton = Theta_r_skeleton_c,
+                                 Psi_skeleton = Psi_skeleton_c, Psi_r_skeleton = Psi_r_skeleton_c,
+                                 Nu_skeleton = Nu_skeleton_c, Alpha_skeleton = Alpha_skeleton_c,
+                                 dumlv = dumlv_c, level = 2L))
+  dat$lam_y_sign <- lam_y_sign_c
+  dat$w1skel <- w1skel_c
+  dat$w4skel <- w4skel_c
+  dat$b_sign <- b_sign_c
+  dat$w5skel <- w5skel_c
+  dat$w7skel <- w7skel_c
+  dat$w9skel <- w9skel_c
+  dat$w10skel <- w10skel_c
+  dat$psi_r_sign <- psi_r_sign_c
+  dat$fullpsi <- fullpsi_c
+  dat$w13skel <- w13skel_c
+  dat$w14skel <- w14skel_c
   
+
   ## priors; first make sure they match what is in the stan file
   check_priors(lavpartable)
   dat$wigind <- wigind
@@ -415,15 +419,16 @@ stanmarg_matdata <- function(indat, Lambda_y_skeleton, Lambda_x_skeleton = NULL,
     #dat$u2 <- tmpres$u
     #dat$wg2 <- array(tmpres$g_len, length(tmpres$g_len))
     #dat$w2skel <- w2skel
+
+
+    tmpres <- group_sparse_skeleton(Gamma_skeleton)
+    dat$len_w3 <- max(tmpres$g_len)
+    dat$w3 <- tmpres$w
+    dat$v3 <- tmpres$v
+    dat$u3 <- tmpres$u
+    dat$wg3 <- array(tmpres$g_len, length(tmpres$g_len))
   }
-
-  tmpres <- group_sparse_skeleton(Gamma_skeleton)
-  dat$len_w3 <- max(tmpres$g_len)
-  dat$w3 <- tmpres$w
-  dat$v3 <- tmpres$v
-  dat$u3 <- tmpres$u
-  dat$wg3 <- array(tmpres$g_len, length(tmpres$g_len))
-
+    
   tmpres <- group_sparse_skeleton(B_skeleton)
   dat$len_w4 <- max(tmpres$g_len)
   dat$w4 <- tmpres$w
