@@ -64,68 +64,108 @@ group_sparse_skeleton <- function(skeleton) {
 # @param lavpartable A lavaan partable with "priors" column
 # @param mat The matrix for which we are obtaining priors
 # @return A list containing the prior parameters
-format_priors <- function(lavpartable, mat) {
+format_priors <- function(lavpartable, level = 1L) {
   ## parameter matrices are filled in by row, so need to make
   ## sure we get parameters in the right order!
   lavpartable <- lavpartable[order(lavpartable$group, lavpartable$col, lavpartable$row),]
 
-  if (grepl("var", mat)) {
-    mat <- gsub("var", "", mat)
-    prisel <- lavpartable$row == lavpartable$col
-  } else if (grepl("psioff", mat)) {
-    mat <- "lvrho"
-    prisel <- lavpartable$row != lavpartable$col
-  } else if (grepl("thetaoff", mat)) {
-    mat <- "rho"
-    prisel <- lavpartable$row != lavpartable$col
-  } else {
-    prisel <- rep(TRUE, length(lavpartable$row))
+  transtab <- list(c('lambda_y_mn', 'lambda_y_sd', 'len_lam_y'),
+                   c('lambda_x_mn', 'lambda_x_sd', 'len_lam_x'),
+                   c('gamma_mn', 'gamma_sd', 'len_gam'),
+                   c('b_mn', 'b_sd', 'len_b'),
+                   c('theta_sd_shape', 'theta_sd_rate', 'len_thet_sd', 'theta_pow'),
+                   c('theta_x_sd_shape', 'theta_x_sd_rate', 'len_thet_x_sd', 'theta_x_pow'),
+                   c('theta_r_alpha', 'theta_r_beta', 'len_thet_r'),
+                   c('theta_x_r_alpha', 'theta_x_r_beta', 'len_thet_x_r'),
+                   c('psi_sd_shape', 'psi_sd_rate', 'len_psi_sd', 'psi_pow'),
+                   c('psi_r_alpha', 'psi_r_beta', 'len_psi_r'),
+                   c('phi_sd_shape', 'phi_sd_rate', 'len_phi_sd', 'phi_pow'),
+                   c('phi_r_alpha', 'phi_r_beta', 'len_phi_r'),
+                   c('nu_mn', 'nu_sd', 'len_nu'),
+                   c('alpha_mn', 'alpha_sd', 'len_alph'),
+                   c('tau_mn', 'tau_sd', 'len_tau'))
+
+  mats <- c('lambda', 'lambda_x', 'gamma', 'beta', 'thetavar', 'cov.xvar', 'thetaoff',
+            'cov.xoff', 'psivar', 'psioff', 'phivar', 'phioff', 'nu', 'alpha', 'tau')
+  if (level == 2L) {
+    newmats <- c('lambda', 'beta', 'thetavar', 'thetaoff', 'psivar', 'psioff', 'nu', 'alpha')
+    subloc <- match(newmats, mats)
+    mats <- newmats
+    transtab <- transtab[subloc]
+    transtab <- lapply(transtab, function(x) paste0(x, '_c'))
   }
 
-  if (mat == "nu") {
-    prisel <- prisel & (lavpartable$mat %in% c(mat, "mean.x"))
-  } else {
-    prisel <- prisel & (lavpartable$mat == mat)
-  }
+  out <- list()
   
-  prisel <- prisel & (lavpartable$free > 0)
-  thepris <- lavpartable$prior[prisel]
-
-  if (length(thepris) > 0) {
-    textpris <- thepris[thepris != ""]
-
-    prisplit <- strsplit(textpris, "[, ()]+")
-
-    param1 <- sapply(prisplit, function(x) x[2])
-
-    if (!grepl("\\[", prisplit[[1]][3])) {
-      param2 <- sapply(prisplit, function(x) x[3])
-    } else {
-      param2 <- rep(NA, length(param1))
-    }
-
-    ## check that var/sd/prec is same for all
-    powargs <- sapply(prisplit, tail, 1)
-    if (any(grepl("\\[", powargs))) {
-      if (length(unique(powargs)) > 1) stop(paste0("blavaan ERROR: In matrix ", mat, ", all priors must be placed on either vars, sds, or precisions."))
-    }
-    powpar <- 1
-    powarg <- powargs[1]
-    if (grepl("\\[var\\]", powarg)) {
-      powpar <- 2
-    } else if (!grepl("\\[sd\\]", powarg)) {
-      powpar <- -2
-    }
+  for (i in 1:length(mats)) {
+    mat <- mats[i]
     
-    param1 <- array(as.numeric(param1), length(param1))
-    param2 <- array(as.numeric(param2), length(param2))
-  } else {
-    param1 <- array(0,0)
-    param2 <- array(0,0)
-    powpar <- 1
-  }
+    if (grepl("var", mat)) {
+      mat <- gsub("var", "", mat)
+      prisel <- lavpartable$row == lavpartable$col
+    } else if (grepl("psioff", mat)) {
+      mat <- "lvrho"
+      prisel <- lavpartable$row != lavpartable$col
+    } else if (grepl("thetaoff", mat)) {
+      mat <- "rho"
+      prisel <- lavpartable$row != lavpartable$col
+    } else {
+      prisel <- rep(TRUE, length(lavpartable$row))
+    }
+
+    if (mat == "nu") {
+      prisel <- prisel & (lavpartable$mat %in% c(mat, "mean.x"))
+    } else {
+      prisel <- prisel & (lavpartable$mat == mat)
+    }
   
-  return(list(p1=param1, p2=param2, powpar=powpar))
+    prisel <- prisel & (lavpartable$free > 0)
+    thepris <- lavpartable$prior[prisel]
+
+    if (length(thepris) > 0) {
+      textpris <- thepris[thepris != ""]
+
+      prisplit <- strsplit(textpris, "[, ()]+")
+      
+      param1 <- sapply(prisplit, function(x) x[2])
+
+      if (!grepl("\\[", prisplit[[1]][3])) {
+        param2 <- sapply(prisplit, function(x) x[3])
+      } else {
+        param2 <- rep(NA, length(param1))
+      }
+
+      ## check that var/sd/prec is same for all
+      powargs <- sapply(prisplit, tail, 1)
+      if (any(grepl("\\[", powargs))) {
+        if (length(unique(powargs)) > 1) stop(paste0("blavaan ERROR: In matrix ", mat, ", all priors must be placed on either vars, sds, or precisions."))
+      }
+      powpar <- 1
+      powarg <- powargs[1]
+      if (grepl("\\[var\\]", powarg)) {
+        powpar <- 2
+      } else if (!grepl("\\[sd\\]", powarg)) {
+        powpar <- -2
+      }
+    
+      param1 <- array(as.numeric(param1), length(param1))
+      param2 <- array(as.numeric(param2), length(param2))
+    } else {
+      param1 <- array(0, 0)
+      param2 <- array(0, 0)
+      powpar <- 1
+    }
+
+    out[[ transtab[[i]][1] ]] <- param1
+    out[[ transtab[[i]][2] ]] <- param2
+    out[[ transtab[[i]][3] ]] <- length(param1)
+
+    if (mat %in% c('thetavar', 'cov.xvar', 'psivar', 'phivar')) {
+      out[[ transtab[[i]][4] ]] <- powpar
+    }
+  } # mats
+  
+  return(out)
 }
 
 # Check that priors match what is in the stan file
@@ -314,77 +354,17 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$w14skel <- w14skel_c
   
 
-  ## priors; first make sure they match what is in the stan file
+  ## priors, first making sure they match what is in the stan file
   check_priors(lavpartable)
   dat$wigind <- wigind
-  
-  pris <- format_priors(lavpartable, "lambda")
-  dat$lambda_y_mn <- pris[['p1']]; dat$lambda_y_sd <- pris[['p2']]
-  dat$len_lam_y <- length(dat$lambda_y_mn)
-  
-  pris <- format_priors(lavpartable, "lambda_x")
-  dat$lambda_x_mn <- pris[['p1']]; dat$lambda_x_sd <- pris[['p2']]
-  dat$len_lam_x <- length(dat$lambda_x_mn)
+  dat$wigind_c <- wigind_c
 
-  pris <- format_priors(lavpartable, "gamma")
-  dat$gamma_mn <- pris[['p1']]; dat$gamma_sd <- pris[['p2']]
-  dat$len_gam <- length(dat$gamma_mn)
-  
-  pris <- format_priors(lavpartable, "beta")
-  dat$b_mn <- pris[['p1']]; dat$b_sd <- pris[['p2']]
-  dat$len_b <- length(dat$b_mn)
-
-  pris <- format_priors(lavpartable, "thetavar")
-  dat$theta_sd_shape <- pris[['p1']]
-  dat$theta_sd_rate <- pris[['p2']]
-  dat$len_thet_sd <- length(dat$theta_sd_rate)
-  dat$theta_pow <- pris[['powpar']]
-
-  pris <- format_priors(lavpartable, "cov.xvar")
-  dat$theta_x_sd_shape <- pris[['p1']]
-  dat$theta_x_sd_rate <- pris[['p2']]
-  dat$len_thet_x_sd <- length(dat$theta_x_sd_rate)
-  dat$theta_x_pow <- pris[['powpar']]
-  
-  pris <- format_priors(lavpartable, "thetaoff")
-  dat$theta_r_alpha <- pris[['p1']]; dat$theta_r_beta <- pris[['p2']]
-  dat$len_thet_r <- length(dat$theta_r_alpha)
-  
-  pris <- format_priors(lavpartable, "cov.xoff")
-  dat$theta_x_r_alpha <- pris[['p1']]; dat$theta_x_r_beta <- pris[['p2']]
-  dat$len_thet_x_r <- length(dat$theta_x_r_alpha)
-
-  pris <- format_priors(lavpartable, "psivar")
-  dat$psi_sd_shape <- pris[['p1']]
-  dat$psi_sd_rate <- pris[['p2']]
-  dat$len_psi_sd <- length(dat$psi_sd_rate)
-  dat$psi_pow <- pris[['powpar']]
-
-  pris <- format_priors(lavpartable, "psioff")
-  dat$psi_r_alpha <- pris[['p1']]; dat$psi_r_beta <- pris[['p2']]
-  dat$len_psi_r <- length(dat$psi_r_alpha)
-
-  pris <- format_priors(lavpartable, "phivar")
-  dat$phi_sd_shape <- pris[['p1']]
-  dat$phi_sd_rate <- pris[['p2']]
-  dat$len_phi_sd <- length(dat$phi_sd_rate)
-  dat$phi_pow <- pris[['powpar']]
-  
-  pris <- format_priors(lavpartable, "phioff")
-  dat$phi_r_alpha <- pris[['p1']]; dat$phi_r_beta <- pris[['p2']]
-  dat$len_phi_r <- length(dat$phi_r_alpha)
-  
-  pris <- format_priors(lavpartable, "nu")
-  dat$nu_mn <- pris[['p1']]; dat$nu_sd <- pris[['p2']]
-  dat$len_nu <- length(dat$nu_mn)
-
-  pris <- format_priors(lavpartable, "alpha")
-  dat$alpha_mn <- pris[['p1']]; dat$alpha_sd <- pris[['p2']]
-  dat$len_alph <- length(dat$alpha_mn)
-
-  pris <- format_priors(lavpartable, "tau")
-  dat$tau_mn <- pris[['p1']]; dat$tau_sd <- pris[['p2']]
-  dat$len_tau <- length(dat$tau_mn)
+  if (dat$nclus[2] == 0L) {
+    dat <- c(dat, format_priors(lavpartable))
+  } else {
+    dat <- c(dat, format_priors(subset(lavpartable, level == "within")))
+    dat <- c(dat, format_priors(subset(lavpartable, level == "between"), level = 2L))
+  }
   
   return(dat)
 }
