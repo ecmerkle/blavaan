@@ -223,7 +223,11 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   } else if (level == 2L) {
     lavpartable <- lavpartable[0,]
   }
-  lavpartable <- lavpartable[order(lavpartable$group, lavpartable$col, lavpartable$row),]
+  if ("group" %in% names(lavpartable)) {
+    lavpartable <- lavpartable[order(lavpartable$group, lavpartable$col, lavpartable$row),]
+  } else {
+    lavpartable <- lavpartable[order(lavpartable$col, lavpartable$row),]
+  }
 
   if (length(wiggle) > 0){
     wigls <- wiglabels(lavpartable, wiggle, wiggle.sd)
@@ -744,10 +748,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   }
 
   ## index of dummy lvs, for sampling lvs
-  if (multilevel) {
-    dumlv <- c(lavobject@Model@ov.x.dummy.lv.idx[[level]],
-               lavobject@Model@ov.y.dummy.lv.idx[[level]])
-  } else if (level == 1L) {
+  if (level == 1L) {
     dumlv <- c(lavobject@Model@ov.x.dummy.lv.idx[[1]],
                lavobject@Model@ov.y.dummy.lv.idx[[1]])
   } else {
@@ -1040,6 +1041,7 @@ lav2standata <- function(lavobject) {
                                                               matrix(0, N_between + N_both + N_within,
                                                                      N_between + N_both + N_within))
     }
+    dat$cov_d <- cov_d
   } else {
     dat$nclus <- array(1, 2)
     dat$cluster_size <- array(1, 1)

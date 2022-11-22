@@ -67,7 +67,11 @@ group_sparse_skeleton <- function(skeleton) {
 format_priors <- function(lavpartable, level = 1L) {
   ## parameter matrices are filled in by row, so need to make
   ## sure we get parameters in the right order!
-  lavpartable <- lavpartable[order(lavpartable$group, lavpartable$col, lavpartable$row),]
+  if ("group" %in% names(lavpartable)) {
+    lavpartable <- lavpartable[order(lavpartable$group, lavpartable$col, lavpartable$row),]
+  } else {
+    lavpartable <- lavpartable[order(lavpartable$col, lavpartable$row),]
+  }
 
   transtab <- list(c('lambda_y_mn', 'lambda_y_sd', 'len_lam_y'),
                    c('lambda_x_mn', 'lambda_x_sd', 'len_lam_x'),
@@ -321,7 +325,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$p_tilde <- p_tilde
   dat$N_lev <- N_lev
   dat$all_idx <- all_idx
-  
+
   ## level 1 matrix info
   dat <- c(dat, stanmarg_matdata(dat, Lambda_y_skeleton, Lambda_x_skeleton,
                                  Gamma_skeleton, B_skeleton, Theta_skeleton,

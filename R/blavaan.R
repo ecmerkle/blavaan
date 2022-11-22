@@ -305,7 +305,7 @@ blavaan <- function(...,  # default lavaan arguments
     LAV <- do.call("lavaan", dotdotdot)
     dotdotdot$do.fit <- TRUE; dotdotdot$warn <- FALSE
     # for initial values/parameter setup:
-    LAV <- do.call("lavaan", dotdotdot)
+    #LAV <- do.call("lavaan", dotdotdot)
 
     if(LAV@Data@data.type == "moment") {
         stop("blavaan ERROR: full data are required. consider using kd() from package semTools.")
@@ -528,56 +528,58 @@ blavaan <- function(...,  # default lavaan arguments
                                                 inits = initsin, wiggle = wiggle,
                                                 wiggle.sd = wiggle.sd, prisamp = prisamp,
                                                 level = 2L, indat = l2s$dat))
-                }
+                
+                    if(!inherits(l2slev2, "try-error")){
+                        l2s$dat <- c(l2s$dat, l2slev2$dat)
+                        l2s$dat <- l2s$dat[!duplicated(names(l2s$dat))]
 
-                if(!inherits(l2slev2, "try-error")){
-                    l2s$dat <- c(l2s$dat, l2slev2$dat)
-                    l2s$dat <- l2s$dat[!duplicated(names(l2s$dat))]
+                        l2s$free2 <- c(l2s$free2, l2slev2$free2)
 
-                    l2s$free2 <- c(l2s$free2, l2slev2$free2)
-
-                    l2s$lavpartable <- rbind(l2s$lavpartable, l2slev2$lavpartable)
-                    l2s$wigpris <- c(l2s$wigpris, l2slev2$wigpris)
-                    l2s$init <- lapply(1:length(l2s$init), function(i) c(l2s$init[[i]], l2slev2$init[[i]]))
+                        l2s$lavpartable <- rbind(l2s$lavpartable, l2slev2$lavpartable)
+                        l2s$wigpris <- c(l2s$wigpris, l2slev2$wigpris)
+                        l2s$init <- lapply(1:length(l2s$init), function(i) c(l2s$init[[i]], l2slev2$init[[i]]))
                   
-                    lavpartable$prior[as.numeric(rownames(l2s$lavpartable))] <- l2s$lavpartable$prior
-                    ldargs <- c(l2s$dat, list(lavpartable = l2s$lavpartable, dumlv = l2s$dumlv,
-                                              dumlv_c = l2slev2$dumlv_c,
-                                              save_lvs = save.lvs, do_test = !(lavoptions$test == "none") ))
+                        lavpartable$prior[as.numeric(rownames(l2s$lavpartable))] <- l2s$lavpartable$prior
+                        ldargs <- c(l2s$dat, list(lavpartable = l2s$lavpartable, dumlv = l2s$dumlv,
+                                                  dumlv_c = l2slev2$dumlv_c,
+                                                  save_lvs = save.lvs, do_test = !(lavoptions$test == "none") ))
 
-                    ## add priors to lavpartable, including wiggle
-                    if(length(wiggle) > 0){
-                      wigrows <- which(l2s$wigpris != "")
-                      lavpartable$prior[as.numeric(rownames(l2s$lavpartable))[wigrows]] <- l2s$wigpris[wigrows]
-                    }
+                        ## add priors to lavpartable, including wiggle
+                        if(length(wiggle) > 0){
+                            wigrows <- which(l2s$wigpris != "")
+                            lavpartable$prior[as.numeric(rownames(l2s$lavpartable))[wigrows]] <- l2s$wigpris[wigrows]
+                        }
 
-                    jagtrans <- try(do.call("stanmarg_data", ldargs), silent = TRUE)
+                        jagtrans <- try(do.call("stanmarg_data", ldargs), silent = TRUE)
 
-                    if(inherits(jagtrans, "try-error")) stop(jagtrans)
+                        if(inherits(jagtrans, "try-error")) stop(jagtrans)
 
-                    ## add lkj for unrestricted psi
-                    if(jagtrans$fullpsi == 1L){
-                      psirows <- which(l2s$lavpartable$mat == "lvrho")
-                      lavpartable$prior[as.numeric(rownames(l2s$lavpartable))[psirows]] <- paste0("lkj_corr(", jagtrans$psi_r_alpha[1], ")")
-                    }
+                        ## add lkj for unrestricted psi
+                        if(jagtrans$fullpsi == 1L){
+                            psirows <- which(l2s$lavpartable$mat == "lvrho")
+                            lavpartable$prior[as.numeric(rownames(l2s$lavpartable))[psirows]] <- paste0("lkj_corr(", jagtrans$psi_r_alpha[1], ")")
+                        }
 
-                    jagtrans <- list(data = jagtrans,
-                                     monitors = c("ly_sign",
-                                           #"lx_sign",
-                                           "bet_sign", #"g_sign",
-                                           "Theta_cov", "Theta_var",
-                                           #"Theta_x_cov", "Theta_x_var",
-                                           "Psi_cov", "Psi_var",
-                                           #"Ph_cov", "Ph_var",
-                                           "Nu_free", "Alpha_free", "Tau_free",
-                                           "log_lik", "log_lik_sat", "ppp"))
+                        jagtrans <- list(data = jagtrans,
+                                         monitors = c("ly_sign",
+                                                      #"lx_sign",
+                                                      "bet_sign", #"g_sign",
+                                                      "Theta_cov", "Theta_var",
+                                                      #"Theta_x_cov", "Theta_x_var",
+                                                      "Psi_cov", "Psi_var",
+                                                      #"Ph_cov", "Ph_var",
+                                                      "Nu_free", "Alpha_free", "Tau_free",
+                                                      "log_lik", "log_lik_sat", "ppp"))
 
-                    if("init" %in% names(l2s)){
-                      jagtrans <- c(jagtrans, list(inits = l2s$init))
-                    }
+                        if("init" %in% names(l2s)){
+                            jagtrans <- c(jagtrans, list(inits = l2s$init))
+                        }
 
-                    if(ordmod && save.lvs){
-                      jagtrans$monitors <- c(jagtrans$monitors, "YXostar")
+                        if(ordmod && save.lvs){
+                            jagtrans$monitors <- c(jagtrans$monitors, "YXostar")
+                        }
+                    } else {
+                        jagtrans <- l2slev2
                     }
                 } else {
                     jagtrans <- l2s
