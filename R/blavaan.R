@@ -522,6 +522,14 @@ blavaan <- function(...,  # default lavaan arguments
                                         wiggle.sd = wiggle.sd, prisamp = prisamp),
                            silent = TRUE)
 
+                if(!inherits(l2s, "try-error") & lavoptions$clustered){
+                    l2s <- try(c(l2s, lav2stanmarg(lavobject = LAV, dp = dp,
+                                                   n.chains = n.chains, mcmcextra = mcmcextra,
+                                                   inits = initsin, wiggle = wiggle,
+                                                   wiggle.sd = wiggle.sd, prisamp = prisamp,
+                                                   level = 2L, indat = l2s)))
+                }
+
                 if(!inherits(l2s, "try-error")){
                     lavpartable$prior[as.numeric(rownames(l2s$lavpartable))] <- l2s$lavpartable$prior
                     ldargs <- c(l2s$dat, list(lavpartable = l2s$lavpartable, dumlv = l2s$dumlv,

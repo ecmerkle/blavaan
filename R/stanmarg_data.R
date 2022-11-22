@@ -212,6 +212,9 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           dumlv = NULL, # for sampling lvs
                           wigind = NULL, # wiggle indicator
                           pri_only = FALSE, # prior predictive sampling
+                          mean_d, cov_d, nclus, cluster_size, cluster_sizes, # level 2 data
+                          cluster_size_ns, between_idx, N_between, within_idx, N_within, both_idx,
+                          N_both, ov_idx1, ov_idx2, p_tilde, N_lev, all_idx,
                           Lambda_y_skeleton_c = NULL, # level 2 matrices
                           B_skeleton_c = NULL, Theta_skeleton_c = NULL, Theta_r_skeleton_c = NULL,
                           Psi_skeleton_c = NULL, Psi_r_skeleton_c = NULL, Nu_skeleton_c = NULL,
@@ -303,6 +306,21 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$save_lvs <- save_lvs
   dat$do_test <- do_test
 
+  ## level 2 data
+  dat$mean_d <- mean_d
+  dat$cov_d <- cov_d
+  dat$nclus <- nclus
+  dat$cluster_size <- cluster_size
+  dat$cluster_sizes <- cluster_sizes
+  dat$cluster_size_ns <- cluster_size_ns
+  dat$between_idx <- between_idx; dat$N_between <- N_between
+  dat$within_idx <- within_idx; dat$N_within <- N_within
+  dat$both_idx <- both_idx; dat$N_both <- N_both
+  dat$ov_idx1 <- ov_idx1; dat$ov_idx2 <- ov_idx2
+  dat$p_tilde <- p_tilde
+  dat$N_lev <- N_lev
+  dat$all_idx <- all_idx
+  
   ## level 1 matrix info
   dat <- c(dat, stanmarg_matdata(dat, Lambda_y_skeleton, Lambda_x_skeleton,
                                  Gamma_skeleton, B_skeleton, Theta_skeleton,
@@ -378,7 +396,8 @@ stanmarg_matdata <- function(indat, Lambda_y_skeleton, Lambda_x_skeleton = NULL,
                              Psi_r_skeleton, Phi_skeleton = NULL,
                              Phi_r_skeleton = NULL, Nu_skeleton, Alpha_skeleton,
                              Tau_skeleton = NULL, dumlv = NULL, level = 1L) {
-  
+
+  dat <- list()
   dat$p <- dim(Lambda_y_skeleton)[2]
   dat$m <- dim(Lambda_y_skeleton)[3]
   tmpres <- group_sparse_skeleton(Lambda_y_skeleton)

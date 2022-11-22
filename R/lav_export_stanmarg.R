@@ -168,7 +168,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
 lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=NULL, prisamp=FALSE, mcmcextra=NULL, level=1L, indat=NULL) {
   ## extract model and data characteristics from lavaan object
   opts <- lavInspect(lavobject, 'options')
-  multilevel <- opts$multilevel
+  multilevel <- opts$clustered
   
   if (!multilevel & level > 1) stop("blavaan ERROR: higher levels requested, but this is not a multilevel model.")
 
@@ -299,7 +299,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     twsel <- lavpartable$free %in% frnums
     tmpwig <- lavpartable[twsel,'free'][which(lavpartable[twsel, 'plabel'] %in% wig)]
     res <- matattr(fr, es, constrain, mat = "B", Ng, opts$std.lv, tmpwig,
-                   free2 = lyfree2, sign = dat[[paste0('lam_y_sign', matmod)]])
+                   free2 = lyfree2, sign = dat$lam_y_sign)
 
     dat$B_skeleton <- res$matskel
     dat$w4skel <- res$wskel
