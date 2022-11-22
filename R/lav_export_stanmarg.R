@@ -169,8 +169,9 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   ## extract model and data characteristics from lavaan object
   opts <- lavInspect(lavobject, 'options')
   multilevel <- opts$clustered
-  
-  if (!multilevel & level > 1) stop("blavaan ERROR: higher levels requested, but this is not a multilevel model.")
+
+  ## if not multilevel, this creates empty matrices to pass to stan for level 2
+  ## if (!multilevel & level > 1) stop("blavaan ERROR: higher levels requested, but this is not a multilevel model.")
 
   ## data characteristics
   if (length(indat) == 0) {
@@ -189,7 +190,11 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   }
   
   freemats <- lavInspect(lavobject, 'free')
-  if (inherits(freemats[[1]], 'list')) freemats <- freemats[[level]]
+  if (multilevel) {
+    freemats <- freemats[[level]]
+  } else if (level == 2L) {
+    freemats <- list()
+  }
   constrain <- attr(freemats, 'header')
   if (any(constrain$op != "==")) {
     ops <- unique(constrain$op)
@@ -198,7 +203,11 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
                paste(ops, collapse=" "), "\n Try target='stanclassic'"))
   }
   estmats <- lavInspect(lavobject, 'est')
-  if (inherits(estmats[[1]], 'list')) estmats <- estmats[[level]]
+  if (multilevel) {
+    estmats <- estmats[[level]]
+  } else if (level == 2L) {
+    estmats <- list()
+  }
   if (Ng == 1) {
     freemats <- list(freemats)
     estmats <- list(estmats)
@@ -207,12 +216,12 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   nfree <- list()
   lavpartable <- parTable(lavobject)
   lavpartable <- lavMatrixRepresentation(lavpartable, add.attributes = TRUE)
-  if (multilevel) {
-    if (level == 1L) {
-      lavpartable <- subset(lavpartable, level == "within")
-    } else {
-      lavpartable <- subset(lavpartable, level == "between")
-    }
+  if (multilevel & level == 1L) {
+    lavpartable <- subset(lavpartable, level == "within")
+  } else if (multilevel & level == 2L) {
+    lavpartable <- subset(lavpartable, level == "between")
+  } else if (level == 2L) {
+    lavpartable <- lavpartable[0,]
   }
   lavpartable <- lavpartable[order(lavpartable$group, lavpartable$col, lavpartable$row),]
 
@@ -507,6 +516,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   }
 
   ## 10. Psi_r
+  dat$fullpsi <- 0L
   if ("psi" %in% names(freemats[[1]])) {
     fr <- lapply(freemats, function(x){
       dmat <- x$psi
@@ -529,7 +539,6 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
                    free2 = lyfree2, sign = dat$lam_y_sign,
                    dest = dest)
 
-    dat$fullpsi <- 0L
     dat$Psi_r_skeleton <- res$matskel
     dat$w10skel <- res$wskel
     dat$psi_r_sign <- res$sign
@@ -673,8 +682,10 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   lpt <- lavpartable
   lpt$mat[lpt$op == ":="] <- "def"
   dp <- c(dp, def = "")
-  stanprires <- set_stanpars("", lpt, prifree, dp, "")
-  lavpartable$prior <- stanprires$partable$prior
+  if (nrow(lpt) > 0) {
+    stanprires <- set_stanpars("", lpt, prifree, dp, "")
+    lavpartable$prior <- stanprires$partable$prior
+  }
 
   dat$wigind <- 0L
   if (length(wig) > 0) {
@@ -688,7 +699,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   lavpartable$freeparnums <- freeparnums
 
   ## FIXME theta_x, cov.x not handled
-  if (!(inits %in% c("jags", "stan"))) {
+  if (!(inits %in% c("jags", "stan")) & nrow(lavpartable) > 0) {
     ini <- set_inits_stan(lavpartable, nfree, n.chains, inits)
 
     mapping <- c(Lambda_y_free = "lambdafree", Gamma_free = "gammafree",
@@ -733,13 +744,20 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   }
 
   ## index of dummy lvs, for sampling lvs
-  dumlv <- c(lavobject@Model@ov.x.dummy.lv.idx[[level]],
-             lavobject@Model@ov.y.dummy.lv.idx[[level]])
+  if (multilevel) {
+    dumlv <- c(lavobject@Model@ov.x.dummy.lv.idx[[level]],
+               lavobject@Model@ov.y.dummy.lv.idx[[level]])
+  } else if (level == 1L) {
+    dumlv <- c(lavobject@Model@ov.x.dummy.lv.idx[[1]],
+               lavobject@Model@ov.y.dummy.lv.idx[[1]])
+  } else {
+    dumlv <- NULL
+  }
 
   ## for level 2, add _c to names
   if (level == 2L) {
     names(dat) <- paste0(names(dat), "_c")
-    names(free2) <- paste0(names(free2), "_c")
+    if (length(free2) > 0) names(free2) <- paste0(names(free2), "_c")
   }
   
   return(list(dat = dat, free2 = free2, lavpartable = lavpartable,
@@ -1023,11 +1041,11 @@ lav2standata <- function(lavobject) {
                                                                      N_between + N_both + N_within))
     }
   } else {
-    dat$nclus <- array(0, 2)
-    dat$cluster_size <- array(0, 0)
-    dat$ncluster_sizes <- 0
-    dat$cluster_sizes <- array(0, 0)
-    dat$cluster_size_ns <- array(0, 0)
+    dat$nclus <- array(1, 2)
+    dat$cluster_size <- array(1, 1)
+    dat$ncluster_sizes <- 1
+    dat$cluster_sizes <- array(1, 1)
+    dat$cluster_size_ns <- array(1, 1)
     dat$between_idx <- array(0, 0)
     dat$N_between <- 0
     dat$within_idx <- array(0, 0)
@@ -1040,8 +1058,8 @@ lav2standata <- function(lavobject) {
     dat$N_lev <- array(0, 2)
     dat$all_idx <- array(0, 0)
     
-    dat$mean_d <- array(0, 0)
-    dat$cov_d <- matrix(0, 0, 0)
+    dat$mean_d <- array(0, c(1, 0))
+    dat$cov_d <- array(0, c(1, 0, 0))
   } # levels
   
   if (ord) {

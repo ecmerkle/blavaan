@@ -522,17 +522,27 @@ blavaan <- function(...,  # default lavaan arguments
                                         wiggle.sd = wiggle.sd, prisamp = prisamp),
                            silent = TRUE)
 
-                if(!inherits(l2s, "try-error") & lavoptions$clustered){
-                    l2s <- try(c(l2s, lav2stanmarg(lavobject = LAV, dp = dp,
-                                                   n.chains = n.chains, mcmcextra = mcmcextra,
-                                                   inits = initsin, wiggle = wiggle,
-                                                   wiggle.sd = wiggle.sd, prisamp = prisamp,
-                                                   level = 2L, indat = l2s)))
+                if(!inherits(l2s, "try-error")){
+                    l2slev2 <- try(lav2stanmarg(lavobject = LAV, dp = dp,
+                                                n.chains = n.chains, mcmcextra = mcmcextra,
+                                                inits = initsin, wiggle = wiggle,
+                                                wiggle.sd = wiggle.sd, prisamp = prisamp,
+                                                level = 2L, indat = l2s$dat))
                 }
 
-                if(!inherits(l2s, "try-error")){
+                if(!inherits(l2slev2, "try-error")){
+                    l2s$dat <- c(l2s$dat, l2slev2$dat)
+                    l2s$dat <- l2s$dat[!duplicated(names(l2s$dat))]
+
+                    l2s$free2 <- c(l2s$free2, l2slev2$free2)
+
+                    l2s$lavpartable <- rbind(l2s$lavpartable, l2slev2$lavpartable)
+                    l2s$wigpris <- c(l2s$wigpris, l2slev2$wigpris)
+                    l2s$init <- lapply(1:length(l2s$init), function(i) c(l2s$init[[i]], l2slev2$init[[i]]))
+                  
                     lavpartable$prior[as.numeric(rownames(l2s$lavpartable))] <- l2s$lavpartable$prior
                     ldargs <- c(l2s$dat, list(lavpartable = l2s$lavpartable, dumlv = l2s$dumlv,
+                                              dumlv_c = l2slev2$dumlv_c,
                                               save_lvs = save.lvs, do_test = !(lavoptions$test == "none") ))
 
                     ## add priors to lavpartable, including wiggle
@@ -554,7 +564,7 @@ blavaan <- function(...,  # default lavaan arguments
                     jagtrans <- list(data = jagtrans,
                                      monitors = c("ly_sign",
                                            #"lx_sign",
-                                           "bet_sign", "g_sign",
+                                           "bet_sign", #"g_sign",
                                            "Theta_cov", "Theta_var",
                                            #"Theta_x_cov", "Theta_x_var",
                                            "Psi_cov", "Psi_var",

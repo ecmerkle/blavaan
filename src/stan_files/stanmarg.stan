@@ -603,7 +603,7 @@ data {
   // Lambda
   int<lower=0> len_w1_c;
   int<lower=0> wg1_c[Ng];
-  vector[len_w1] w1_c[Ng];
+  vector[len_w1_c] w1_c[Ng];
   int<lower=1> v1_c[Ng, len_w1_c];
   int<lower=1> u1_c[Ng, p_c + 1];
   int<lower=0> w1skel_c[sum(wg1_c), 3];
@@ -615,7 +615,7 @@ data {
   // same things but for B
   int<lower=0> len_w4_c;
   int<lower=0> wg4_c[Ng];
-  vector[len_w4] w4_c[Ng];
+  vector[len_w4_c] w4_c[Ng];
   int<lower=1> v4_c[Ng, len_w4_c];
   int<lower=1> u4_c[Ng, m_c + 1];
   int<lower=0> w4skel_c[sum(wg4_c), 3];

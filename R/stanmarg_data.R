@@ -98,7 +98,7 @@ format_priors <- function(lavpartable, level = 1L) {
   out <- list()
   
   for (i in 1:length(mats)) {
-    mat <- mats[i]
+    mat <- origmat <- mats[i]
     
     if (grepl("var", mat)) {
       mat <- gsub("var", "", mat)
@@ -160,7 +160,7 @@ format_priors <- function(lavpartable, level = 1L) {
     out[[ transtab[[i]][2] ]] <- param2
     out[[ transtab[[i]][3] ]] <- length(param1)
 
-    if (mat %in% c('thetavar', 'cov.xvar', 'psivar', 'phivar')) {
+    if (origmat %in% c('thetavar', 'cov.xvar', 'psivar', 'phivar')) {
       out[[ transtab[[i]][4] ]] <- powpar
     }
   } # mats
@@ -212,9 +212,9 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           dumlv = NULL, # for sampling lvs
                           wigind = NULL, # wiggle indicator
                           pri_only = FALSE, # prior predictive sampling
-                          mean_d, cov_d, nclus, cluster_size, cluster_sizes, # level 2 data
-                          cluster_size_ns, between_idx, N_between, within_idx, N_within, both_idx,
-                          N_both, ov_idx1, ov_idx2, p_tilde, N_lev, all_idx,
+                          mean_d, cov_d, nclus, cluster_size, ncluster_sizes, # level 2 data
+                          cluster_sizes, cluster_size_ns, between_idx, N_between, within_idx,
+                          N_within, both_idx, N_both, ov_idx1, ov_idx2, p_tilde, N_lev, all_idx,
                           Lambda_y_skeleton_c = NULL, # level 2 matrices
                           B_skeleton_c = NULL, Theta_skeleton_c = NULL, Theta_r_skeleton_c = NULL,
                           Psi_skeleton_c = NULL, Psi_r_skeleton_c = NULL, Nu_skeleton_c = NULL,
@@ -311,6 +311,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$cov_d <- cov_d
   dat$nclus <- nclus
   dat$cluster_size <- cluster_size
+  dat$ncluster_sizes <- ncluster_sizes
   dat$cluster_sizes <- cluster_sizes
   dat$cluster_size_ns <- cluster_size_ns
   dat$between_idx <- between_idx; dat$N_between <- N_between
@@ -350,7 +351,6 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$w14skel <- w14skel
   dat$w15skel <- w15skel
 
-  
   ## level 2 matrices
   dat <- c(dat, stanmarg_matdata(dat, Lambda_y_skeleton = Lambda_y_skeleton_c,
                                  B_skeleton = B_skeleton_c, Theta_skeleton = Theta_skeleton_c,
@@ -358,18 +358,18 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                                  Psi_skeleton = Psi_skeleton_c, Psi_r_skeleton = Psi_r_skeleton_c,
                                  Nu_skeleton = Nu_skeleton_c, Alpha_skeleton = Alpha_skeleton_c,
                                  dumlv = dumlv_c, level = 2L))
-  dat$lam_y_sign <- lam_y_sign_c
-  dat$w1skel <- w1skel_c
-  dat$w4skel <- w4skel_c
-  dat$b_sign <- b_sign_c
-  dat$w5skel <- w5skel_c
-  dat$w7skel <- w7skel_c
-  dat$w9skel <- w9skel_c
-  dat$w10skel <- w10skel_c
-  dat$psi_r_sign <- psi_r_sign_c
-  dat$fullpsi <- fullpsi_c
-  dat$w13skel <- w13skel_c
-  dat$w14skel <- w14skel_c
+  dat$lam_y_sign_c <- lam_y_sign_c
+  dat$w1skel_c <- w1skel_c
+  dat$w4skel_c <- w4skel_c
+  dat$b_sign_c <- b_sign_c
+  dat$w5skel_c <- w5skel_c
+  dat$w7skel_c <- w7skel_c
+  dat$w9skel_c <- w9skel_c
+  dat$w10skel_c <- w10skel_c
+  dat$psi_r_sign_c <- psi_r_sign_c
+  dat$fullpsi_c <- fullpsi_c
+  dat$w13skel_c <- w13skel_c
+  dat$w14skel_c <- w14skel_c
   
 
   ## priors, first making sure they match what is in the stan file
@@ -377,8 +377,9 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$wigind <- wigind
   dat$wigind_c <- wigind_c
 
-  if (dat$nclus[2] == 0L) {
+  if (dat$nclus[2] == 1L) {
     dat <- c(dat, format_priors(lavpartable))
+    dat <- c(dat, format_priors(lavpartable[0,], level = 2L))
   } else {
     dat <- c(dat, format_priors(subset(lavpartable, level == "within")))
     dat <- c(dat, format_priors(subset(lavpartable, level == "between"), level = 2L))
