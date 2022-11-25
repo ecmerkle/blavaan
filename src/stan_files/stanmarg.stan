@@ -56,8 +56,8 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     matrix[N_wo_b, N_between] Sigma_ji_yz_zi;
     matrix[N_between, N_between] Vinv_11;
     real Sigma_j_ld;
-    vector[nclus[2]] L;
-    vector[nclus[2]] B;
+    vector[nclus_sizes] L;
+    vector[nclus_sizes] B;
     int bidx[N_between];
     int notbidx[p_tilde - N_between];
     real q_zz;
@@ -477,19 +477,18 @@ data {
   int<lower=1> ncluster_sizes; // number of unique cluster sizes
   int<lower=1> cluster_sizes[ncluster_sizes]; // unique cluster sizes
   int<lower=1> cluster_size_ns[ncluster_sizes]; // number of clusters of each size
-  vector[p_c] mean_d[nclus[2]]; // sample means by cluster
-  matrix[p_c, p_c] cov_d[nclus[2]]; // sample covariances by cluster
+  vector[p_c] mean_d[ncluster_sizes]; // sample means by cluster
+  matrix[p_c, p_c] cov_d[ncluster_sizes]; // sample covariances by cluster
   int N_within; // number of within variables
   int N_between; // number of between variables
   int N_both; // number of variables at both levels
   int N_lev[2]; // number of observed variables at each level
   int p_tilde; // total number of variables
   int within_idx[N_within];
-  int between_idx[N_between];
+  int between_idx[p_tilde]; // between indexing, followed by within/both
   int ov_idx1[N_lev[1]];
   int ov_idx2[N_lev[2]];
   int both_idx[N_both];
-  int all_idx[p_tilde]; // between indexing, followed by within/both
   
   
   /* sparse matrix representations of skeletons of coefficient matrices, 
@@ -1133,7 +1132,7 @@ transformed parameters {
       }
 
       // remove between variables, for likelihood computations
-      S_PW[g] = Sigma_c[g, all_idx[(N_between + 1):p_tilde], all_idx[(N_between + 1):p_tilde]];
+      S_PW[g] = Sigma_c[g, between_idx[(N_between + 1):p_tilde], between_idx[(N_between + 1):p_tilde]];
     }
   }
 

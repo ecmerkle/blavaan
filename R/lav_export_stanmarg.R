@@ -931,11 +931,13 @@ lav2standata <- function(lavobject) {
   Ng <- dat$Ng <- lavInspect(lavobject, 'ngroups')
   YX <- lavobject@Data@X
   nvar <- ncol(YX[[1]])
+  
   ord <- as.numeric(lavInspect(lavobject, 'categorical'))
+  multilevel <- lavInspect(lavobject, 'options')$clustered
   levels <- lavInspect(lavobject, 'nlevels')
   dat$ord <- ord
   dat$N <- lavInspect(lavobject, 'nobs')
-
+  
   xidx <- lavobject@SampleStats@x.idx[[1]]
   allvars <- 1:nvar
 
@@ -1000,15 +1002,29 @@ lav2standata <- function(lavobject) {
     dat$Np <- dat$Ng
     dat$Nobs <- array(nvar, dat$Np)
     dat$Obsvar <- matrix(1:nvar, dat$Np, nvar, byrow=TRUE)
+    if (multilevel) {
+      ptot <- length(unique(c(Lp$ov.idx[[1]]))) #, Lp$ov.idx[[2]])))
+      dat$Obsvar <- matrix(1:ptot, dat$Np, ptot, byrow=TRUE)
+      dat$Nobs <- array(ptot, dat$Np)
+    }
     dat$Nx <- array(length(xidx), dat$Np)
     dat$Xvar <- dat$Xdatvar <- matrix(xidx, dat$Np, length(xidx), byrow=TRUE)
     if (length(xidx) < nvar) {
-      dat$Xvar <- dat$Xdatvar <- cbind(dat$Xvar,
-                                       matrix(allvars[!(allvars %in% xidx)], dat$Np,
-                                              nvar - length(xidx), byrow = TRUE))
+      if (multilevel) {
+        dat$Xvar <- dat$Xdatvar <- cbind(dat$Xvar,
+                                         matrix(allvars[!(allvars %in% xidx)], dat$Np,
+                                                ptot - length(xidx), byrow = TRUE))
+      } else {
+        dat$Xvar <- dat$Xdatvar <- cbind(dat$Xvar,
+                                         matrix(allvars[!(allvars %in% xidx)], dat$Np,
+                                                nvar - length(xidx), byrow = TRUE))
+      }
     }
   }
   dat$YX <- do.call("rbind", YX)
+  if (multilevel) {
+    dat$YX <- dat$YX[,1:ptot] ## unused, just to make stan happy
+  }
   dat$grpnum <- array(dat$grpnum, length(dat$grpnum))
 
   if (levels == 2L) {
@@ -1029,7 +1045,7 @@ lav2standata <- function(lavobject) {
     dat$ov_idx2 <- Lp$ov.idx[[2]]
     dat$p_tilde <- length(unique(c(dat$ov_idx1, dat$ov_idx2)))
     dat$N_lev <- c(length(dat$ov_idx1), length(dat$ov_idx2))
-    dat$all_idx <- c(dat$between_idx, sort(c(dat$within_idx, dat$both_idx)))
+    dat$between_idx <- c(dat$between_idx, sort(c(dat$within_idx, dat$both_idx)))
 
     
     YLp <- lavobject@SampleStats@YLp[[1]]
@@ -1058,7 +1074,6 @@ lav2standata <- function(lavobject) {
     dat$ov_idx2 <- array(0, 0)
     dat$p_tilde <- 0
     dat$N_lev <- array(0, 2)
-    dat$all_idx <- array(0, 0)
     
     dat$mean_d <- array(0, c(1, 0))
     dat$cov_d <- array(0, c(1, 0, 0))
@@ -1117,6 +1132,9 @@ lav2standata <- function(lavobject) {
     dat$Nordobs <- array(0, dat$Np)
     dat$OrdObsvar <- matrix(0, dat$Np, 0)
     dat$contidx <- array(1:nvar, nvar)
+    if (multilevel) {
+      dat$contidx <- array(1:ptot, ptot)
+    }
     dat$nlevs <- array(0, 0)
     dat$neach <- matrix(0, 0, 0)
   }
