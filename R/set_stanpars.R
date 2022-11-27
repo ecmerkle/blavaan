@@ -47,8 +47,7 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
 
             ## only complex equality constraints and defined parameters;
             ## rhs needs math expression
-            defeq <- partable$op[i] %in% c("==", ":=") &
-                     grepl("\\+|-|/|\\*|\\(|\\)|\\^", partable$rhs[i])
+            defeq <- (partable$op[i] == ":=") | (partable$op[i] == "==" & grepl("\\+|-|/|\\*|\\(|\\)|\\^", partable$rhs[i]))
             compeq <- which((partable$lhs == partable$plabel[i] |
                              partable$lhs == partable$label[i]) &
                             partable$op %in% c("==", ":=") &
