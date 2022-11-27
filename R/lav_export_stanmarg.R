@@ -934,7 +934,7 @@ lav2standata <- function(lavobject) {
   
   ord <- as.numeric(lavInspect(lavobject, 'categorical'))
   multilevel <- lavInspect(lavobject, 'options')$clustered
-  levels <- lavInspect(lavobject, 'nlevels')
+  if (multilevel) Lp <- lavobject@Data@Lp[[1]]
   dat$ord <- ord
   dat$N <- lavInspect(lavobject, 'nobs')
   
@@ -1010,7 +1010,7 @@ lav2standata <- function(lavobject) {
     dat$Nx <- array(length(xidx), dat$Np)
     dat$Xvar <- dat$Xdatvar <- matrix(xidx, dat$Np, length(xidx), byrow=TRUE)
     if (length(xidx) < nvar) {
-      if (multilevel) {
+      if (multilevel & length(xidx) > 0) {
         dat$Xvar <- dat$Xdatvar <- cbind(dat$Xvar,
                                          matrix(allvars[!(allvars %in% xidx)], dat$Np,
                                                 ptot - length(xidx), byrow = TRUE))
@@ -1027,9 +1027,7 @@ lav2standata <- function(lavobject) {
   }
   dat$grpnum <- array(dat$grpnum, length(dat$grpnum))
 
-  if (levels == 2L) {
-    Lp <- lavobject@Data@Lp[[1]]
-    
+  if (multilevel) {    
     dat$nclus <- as.integer(unlist(Lp$nclusters))
     dat$cluster_size <- Lp$cluster.size[[2]]
     dat$cluster_sizes <- Lp$cluster.sizes[[2]]
@@ -1077,7 +1075,7 @@ lav2standata <- function(lavobject) {
     
     dat$mean_d <- array(0, c(1, 0))
     dat$cov_d <- array(0, c(1, 0, 0))
-  } # levels
+  } # multilevel
   
   if (ord) {
     pta <- lav_partable_attributes(parTable(lavobject))

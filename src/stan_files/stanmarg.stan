@@ -131,7 +131,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
       matrix[N_between, N_between] Y2Yc_zz;
       matrix[N_wo_b, N_between] Y2Yc_yz;
       matrix[N_wo_b, N_wo_b] Y2Yc_yy;
-
+      
       if (N_between > 0) {
 	int uord_bidx[N_between];
 	int uord_notbidx[N_wo_b];
@@ -477,8 +477,8 @@ data {
   int<lower=1> ncluster_sizes; // number of unique cluster sizes
   int<lower=1> cluster_sizes[ncluster_sizes]; // unique cluster sizes
   int<lower=1> cluster_size_ns[ncluster_sizes]; // number of clusters of each size
-  vector[p_c] mean_d[ncluster_sizes]; // sample means by cluster
-  matrix[p_c, p_c] cov_d[ncluster_sizes]; // sample covariances by cluster
+  vector[p_c] mean_d[ncluster_sizes]; // sample means by unique cluster size
+  matrix[p_c, p_c] cov_d[ncluster_sizes]; // sample covariances by unique cluster size
   int N_within; // number of within variables
   int N_between; // number of between variables
   int N_both; // number of variables at both levels
@@ -1101,7 +1101,8 @@ transformed parameters {
       Psi_c[g] = quad_form_sym(Psi_r_c[g], Psi_sd_c[g]);
     }
   }
-
+  
+  
   // see https://books.google.com/books?id=9AC-s50RjacC&lpg=PP1&dq=LISREL&pg=PA3#v=onepage&q=LISREL&f=false
   for (g in 1:Ng) {
     if (m > 0) {
