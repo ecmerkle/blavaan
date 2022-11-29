@@ -480,6 +480,7 @@ data {
   int p_tilde; // total number of variables
   vector[p_tilde] mean_d[ncluster_sizes]; // sample means by unique cluster size
   matrix[p_tilde, p_tilde] cov_d[ncluster_sizes]; // sample covariances by unique cluster size
+  matrix[p_tilde, p_tilde] cov_w; // observed "within" covariance matrix
   int N_within; // number of within variables
   int N_between; // number of between variables
   int N_both; // number of variables at both levels
@@ -1135,9 +1136,10 @@ transformed parameters {
 
     if (nclus[2] > 1) {
       // remove between variables, for likelihood computations
-      S_PW[g] = Sigma[g, between_idx[(N_between + 1):p_tilde], between_idx[(N_between + 1):p_tilde]];  }
+      // TODO handle multiple groups in cov_w
+      S_PW[g] = cov_w[between_idx[(N_between + 1):p_tilde], between_idx[(N_between + 1):p_tilde]];
+    }
   }
-
   
   // obtain ordered thresholds; NB untouched for two-level models
   if (ord) {

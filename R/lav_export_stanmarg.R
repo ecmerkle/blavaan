@@ -1048,6 +1048,7 @@ lav2standata <- function(lavobject) {
     
     YLp <- lavobject@SampleStats@YLp[[1]]
     dat$mean_d <- YLp[[2]]$mean.d
+    dat$cov_w <- YLp[[2]]$Sigma.W
 
     cov_d <- YLp[[2]]$cov.d
     for (i in 1:length(cov_d)) {
@@ -1074,6 +1075,7 @@ lav2standata <- function(lavobject) {
     dat$N_lev <- array(0, 2)
     
     dat$mean_d <- array(0, c(1, 0))
+    dat$cov_w <- array(0, c(1, 0, 0))
     dat$cov_d <- array(0, c(1, 0, 0))
   } # multilevel
   
