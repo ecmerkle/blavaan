@@ -477,13 +477,13 @@ data {
   int<lower=1> ncluster_sizes; // number of unique cluster sizes
   int<lower=1> cluster_sizes[ncluster_sizes]; // unique cluster sizes
   int<lower=1> cluster_size_ns[ncluster_sizes]; // number of clusters of each size
-  vector[p_c] mean_d[ncluster_sizes]; // sample means by unique cluster size
-  matrix[p_c, p_c] cov_d[ncluster_sizes]; // sample covariances by unique cluster size
+  int p_tilde; // total number of variables
+  vector[p_tilde] mean_d[ncluster_sizes]; // sample means by unique cluster size
+  matrix[p_tilde, p_tilde] cov_d[ncluster_sizes]; // sample covariances by unique cluster size
   int N_within; // number of within variables
   int N_between; // number of between variables
   int N_both; // number of variables at both levels
   int N_lev[2]; // number of observed variables at each level
-  int p_tilde; // total number of variables
   int within_idx[N_within];
   int between_idx[p_tilde]; // between indexing, followed by within/both
   int ov_idx1[N_lev[1]];
@@ -961,7 +961,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
     }
   }
 
-  if (!ord) {
+  if (!ord && use_suff) {
     // sufficient stat matrices by pattern, moved to left for missing
     for (patt in 1:Np) {
       Sstar[patt] = rep_matrix(0, p + q, p + q);
@@ -1131,10 +1131,11 @@ transformed parameters {
         Sigma_c[g, 1:p_c, 1:p_c] += quad_form_sym(Psi_c[g], transpose(Lambda_y_A_c[g]));
 	Mu_c[g, 1:p_c] += to_vector(Lambda_y_A_c[g] * Alpha_c[g, 1:m_c, 1]);
       }
-
-      // remove between variables, for likelihood computations
-      S_PW[g] = Sigma_c[g, between_idx[(N_between + 1):p_tilde], between_idx[(N_between + 1):p_tilde]];
     }
+
+    if (nclus[2] > 1) {
+      // remove between variables, for likelihood computations
+      S_PW[g] = Sigma[g, between_idx[(N_between + 1):p_tilde], between_idx[(N_between + 1):p_tilde]];  }
   }
 
   
@@ -1256,12 +1257,14 @@ transformed parameters {
   }
 
   // for computing mvn with sufficient stats
-  for (g in 1:Ng) {
-    Sigmainv_grp[g] = inverse_spd(Sigma[g]);
-    logdetSigma_grp[g] = log_determinant(Sigma[g]);
-  }
-  for (patt in 1:Np) {    
-    Sigmainv[patt, 1:(Nobs[patt] + 1), 1:(Nobs[patt] + 1)] = sig_inv_update(Sigmainv_grp[grpnum[patt]], Obsvar[patt,], Nobs[patt], p + q, logdetSigma_grp[grpnum[patt]]);
+  if (use_suff) {
+    for (g in 1:Ng) {
+      Sigmainv_grp[g] = inverse_spd(Sigma[g]);
+      logdetSigma_grp[g] = log_determinant(Sigma[g]);
+    }
+    for (patt in 1:Np) {    
+      Sigmainv[patt, 1:(Nobs[patt] + 1), 1:(Nobs[patt] + 1)] = sig_inv_update(Sigmainv_grp[grpnum[patt]], Obsvar[patt,], Nobs[patt], p + q, logdetSigma_grp[grpnum[patt]]);
+    }
   }
 }
 model { // N.B.: things declared in the model block do not get saved in the output, which is okay here

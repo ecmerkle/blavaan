@@ -1035,7 +1035,7 @@ lav2standata <- function(lavobject) {
     dat$cluster_size_ns <- Lp$cluster.size.ns[[2]]
     dat$between_idx <- Lp$between.idx[[2]]
     dat$N_between <- length(dat$between_idx)
-    dat$within_idx <- Lp$within.idx[[2]]
+    dat$within_idx <- array(Lp$within.idx[[2]], length(Lp$within.idx[[2]]))
     dat$N_within <- length(dat$within_idx)
     dat$both_idx <- Lp$both.idx[[2]]
     dat$N_both <- length(dat$both_idx)
