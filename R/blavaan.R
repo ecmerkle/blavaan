@@ -759,8 +759,14 @@ blavaan <- function(...,  # default lavaan arguments
                                   res)
           stansumm <- parests$stansumm
         } else {
-          parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free'), l2s$free2, jagtrans$data, res)
-          stansumm <- parests$stansumm
+          if("level" %in% names(lavpartable)) {
+            parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')$within, l2s$free2, jagtrans$data, res)
+            browser()
+            parests2 <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')[[2]], l2s$free2, jagtrans$data, res, level = 2L)
+          } else {
+            parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')$within, l2s$free2, jagtrans$data, res)
+            stansumm <- parests$stansumm
+          }
         }
         x <- parests$x
         lavpartable <- parests$lavpartable

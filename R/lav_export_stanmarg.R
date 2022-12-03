@@ -766,11 +766,13 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
 }
 
 
-coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "mean") {
+coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, level = 1L, fun = "mean") {
   ## Extract posterior means from marginal stan model.
   ## free2 comes from lav2lers().
   ## lersdat is data passed to sem stan code.
   ## rsob is the result of sampling().
+  if (!(level %in% c(1L, 2L))) stop("blavaan ERROR: Bad level specification in coeffun.", call. = FALSE)
+  
   stanfit <- !is.null(rsob)
   if(stanfit){
     rssumm <- rstan::summary(rsob)
@@ -792,6 +794,15 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
                Theta_x_var = "cov.x", Psi_cov = "psi",
                Psi_var = "psi", Nu_free = "nu", ## includes mean.x!
                Alpha_free = "alpha", Tau_free = "tau")
+  matmod <- ""
+  olpt <- lavpartable
+  if (level == 2L) {
+    names(mapping) <- paste0(names(mapping), "_c")
+    lavpartable <- lapply(lavpartable, function(x) x[lavpartable$level == "between"])
+    matmod <- "_c"
+  } else if ("level" %in% names(lavpartable)) {
+    lavpartable <- lapply(lavpartable, function(x) x[lavpartable$level == "within"])
+  }
 
   ## lavaan pars to w?skel (for equality constraints)
   mapping2 <- c("lambda", "gamma", "beta", "theta",
@@ -807,6 +818,9 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
                 dtheta_x = "Theta_x_var", rpsi = "Psi_cov",
                 dpsi = "Psi_var", nu = "Nu_free",
                 alpha = "Alpha_free", tau = "Tau_free")
+  if (level == 2L) {
+    mapping3 <- sapply(mapping3, function(x) paste0(x, "_c"))
+  }
 
   ## check names in lavfree
   deltloc <- which(names(lavfree) == "delta")
@@ -841,13 +855,12 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
     ## 3. fill "x" in using lavaan free
     ## 4. record freeidx, double-counting free parameters
     est <- sdvec <- rep(NA, nfree)
-
     for(m in 1:length(freeidx[[1]])){
       stanvec <- names(mapping)[mapping == names(freeidx[[1]])[m]]
       wskel <- names(mapping2)[mapping == names(freeidx[[1]])[m]]
-      wvec <- paste0("w", wskel)
-      wgvec <- paste0("wg", wskel)
-      wskel <- paste0(wvec, "skel")
+      wvec <- paste0("w", wskel, matmod)
+      wgvec <- paste0("wg", wskel, matmod)
+      wskel <- paste0("w", wskel, "skel", matmod)
 
       ## 2 for cov/var vectors, 1 otherwise
       if(length(stanvec) > 2) stop("blavaan ERROR: problem with mapping from stan to lavaan")
@@ -916,7 +929,18 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, fun = "
   }
   
   ## matrices and names
-  lavpartable <- lavMatrixRepresentation(lavpartable, add.attributes = TRUE, as.data.frame. = FALSE)
+  if("level" %in% names(lavpartable)){
+    olpt <- lavMatrixRepresentation(olpt, add.attributes = TRUE, as.data.frame. = FALSE)
+
+    if(level == 2L){
+      olpt <- lapply(olpt, function(x) x[olpt$level == "between"])
+    } else {
+      olpt <- lapply(olpt, function(x) x[olpt$level == "within"])
+    }
+    lavpartable <- c(lavpartable, list(mat = olpt$mat, row = olpt$row, col = olpt$col))
+  } else {
+    lavpartable <- lavMatrixRepresentation(lavpartable, add.attributes = TRUE, as.data.frame = FALSE)
+  } 
   
   list(x = lavpartable$est[lavpartable$free > 0],
        lavpartable = lavpartable,
@@ -1075,7 +1099,7 @@ lav2standata <- function(lavobject) {
     dat$N_lev <- array(0, 2)
     
     dat$mean_d <- array(0, c(1, 0))
-    dat$cov_w <- array(0, c(1, 0, 0))
+    dat$cov_w <- array(0, c(0, 0))
     dat$cov_d <- array(0, c(1, 0, 0))
   } # multilevel
   
