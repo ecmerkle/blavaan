@@ -560,16 +560,15 @@ blavaan <- function(...,  # default lavaan arguments
                             lavpartable$prior[as.numeric(rownames(l2s$lavpartable))[psirows]] <- paste0("lkj_corr(", jagtrans$psi_r_alpha[1], ")")
                         }
 
-                        jagtrans <- list(data = jagtrans,
-                                         monitors = c("ly_sign",
-                                                      #"lx_sign",
-                                                      "bet_sign", #"g_sign",
-                                                      "Theta_cov", "Theta_var",
-                                                      #"Theta_x_cov", "Theta_x_var",
-                                                      "Psi_cov", "Psi_var",
-                                                      #"Ph_cov", "Ph_var",
-                                                      "Nu_free", "Alpha_free", "Tau_free",
-                                                      "log_lik", "log_lik_sat", "ppp"))
+                        stanmon <- c("ly_sign", "bet_sign", "Theta_cov", "Theta_var",
+                                     "Psi_cov", "Psi_var", "Nu_free", "Alpha_free", "Tau_free")
+                        if("level" %in% names(lavpartable)){
+                          stanmon <- c(stanmon, paste0(stanmon, "_c"))
+                          stanmon <- stanmon[-which(stanmon == "Tau_free_c")]
+                        }
+                        stanmon <- c(stanmon, c("log_lik", "log_lik_sat", "ppp"))
+
+                        jagtrans <- list(data = jagtrans, monitors = stanmon)
 
                         if("init" %in% names(l2s)){
                             jagtrans <- c(jagtrans, list(inits = l2s$init))
@@ -761,12 +760,16 @@ blavaan <- function(...,  # default lavaan arguments
         } else {
           if("level" %in% names(lavpartable)) {
             parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')$within, l2s$free2, jagtrans$data, res)
-            browser()
             parests2 <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')[[2]], l2s$free2, jagtrans$data, res, level = 2L)
+            parests$x <- c(parests$x parests2$x)
+            ##parests$lavpartable <- ## combine list elements!
+            ##parests$vcorr <- ## need level 1 by level 2!
+            parests$sd <- c(parests$sd, parests2$sd)
+            browser()
           } else {
             parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')$within, l2s$free2, jagtrans$data, res)
-            stansumm <- parests$stansumm
           }
+          stansumm <- parests$stansumm
         }
         x <- parests$x
         lavpartable <- parests$lavpartable

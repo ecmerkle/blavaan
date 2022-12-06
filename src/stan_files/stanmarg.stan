@@ -1397,10 +1397,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 
   // sign constraints and correlations
   vector[len_free[1]] ly_sign;
-  matrix[p, m] L_Y[Ng];
   vector[len_free[4]] bet_sign;
-  matrix[m, m] Bet[Ng];
-  matrix[p, p] Theta[Ng];
   matrix[m, m] PSmat[Ng];
   matrix[m, m] PS[Ng];
   vector[len_free[7]] Theta_cov;
@@ -1409,6 +1406,18 @@ generated quantities { // these matrices are saved in the output but do not figu
   vector[len_free[10]] Psi_cov;
   vector[len_free[9]] Psi_var;
 
+  // level 2
+  vector[len_free_c[1]] ly_sign_c;
+  vector[len_free_c[4]] bet_sign_c;
+  matrix[m_c, m_c] PSmat_c[Ng];
+  matrix[m_c, m_c] PS_c[Ng];
+  vector[len_free_c[7]] Theta_cov_c;
+  vector[len_free_c[5]] Theta_var_c;
+  vector[len_free_c[10]] P_r_c;
+  vector[len_free_c[10]] Psi_cov_c;
+  vector[len_free_c[9]] Psi_var_c;
+
+  // loglik + ppp
   vector[Ntot] log_lik; // for loo, etc
   vector[Ntot] log_lik_sat; // for ppp
   vector[p + q] YXstar_rep[Ntot]; // artificial data
@@ -1435,14 +1444,14 @@ generated quantities { // these matrices are saved in the output but do not figu
   if (fullpsi == 0) {
     P_r = sign_constrain_reg(2 * Psi_r_free - 1, len_free[10], psi_r_sign, Lambda_y_free, Lambda_y_free);
   }
+
+  ly_sign_c = sign_constrain_load(Lambda_y_free_c, len_free_c[1], lam_y_sign_c);
+  bet_sign_c = sign_constrain_reg(B_free_c, len_free_c[4], b_sign_c, Lambda_y_free_c, Lambda_y_free_c);
+  if (fullpsi_c == 0) {
+    P_r_c = sign_constrain_reg(2 * Psi_r_free_c - 1, len_free_c[10], psi_r_sign_c, Lambda_y_free_c, Lambda_y_free_c);
+  }
   
   for (g in 1:Ng) {
-    L_Y[g] = fill_matrix(ly_sign, Lambda_y_skeleton[g], w1skel, g_start1[g,1], g_start1[g,2]);
-
-    Bet[g] = fill_matrix(bet_sign, B_skeleton[g], w4skel, g_start4[g,1], g_start4[g,2]);
-
-    Theta[g] = quad_form_sym(Theta_r[g], Theta_sd[g]);
-
     if (m > 0) {
       if (fullpsi) {
 	PSmat[g] = Psi_r_mat[g];
@@ -1451,9 +1460,17 @@ generated quantities { // these matrices are saved in the output but do not figu
 	PSmat[g] = fill_matrix(P_r, Psi_r_skeleton[g], w10skel, g_start10[g,1], g_start10[g,2]);
 	PS[g] = quad_form_sym(PSmat[g] + transpose(PSmat[g]) - diag_matrix(rep_vector(1, m)), Psi_sd[g]);
       }
-
     }
-    
+
+    if (m_c > 0) {
+      if (fullpsi_c) {
+	PSmat_c[g] = Psi_r_mat_c[g];
+	PS_c[g] = quad_form_sym(PSmat_c[g], Psi_sd_c[g]);
+      } else {
+	PSmat_c[g] = fill_matrix(P_r_c, Psi_r_skeleton_c[g], w10skel_c, g_start10_c[g,1], g_start10_c[g,2]);
+	PS_c[g] = quad_form_sym(PSmat_c[g] + transpose(PSmat_c[g]) - diag_matrix(rep_vector(1, m_c)), Psi_sd_c[g]);
+      }
+    }
   }
 
   // off-diagonal covariance parameter vectors, from cor/sd matrices:
@@ -1472,6 +1489,20 @@ generated quantities { // these matrices are saved in the output but do not figu
   }
   Psi_var = Psi_sd_free .* Psi_sd_free;
 
+  // and for level 2
+  Theta_cov_c = cor2cov(Theta_r_c, Theta_sd_c, num_elements(Theta_r_free_c), Theta_r_skeleton_c, w7skel_c, Ng);
+  Theta_var_c = Theta_sd_free_c .* Theta_sd_free_c;
+  if (m_c > 0 && len_free_c[10] > 0) {
+    matrix[m_c, m_c] iden_c[Ng];
+    for (g in 1:Ng) {
+      iden_c[g] = diag_matrix(rep_vector(1, m_c));
+    }
+    Psi_cov_c = cor2cov(PS_c, iden_c, len_free_c[10], Psi_r_skeleton_c, w10skel_c, Ng);
+  } else {
+    Psi_cov_c = P_r_c;
+  }
+  Psi_var_c = Psi_sd_free_c .* Psi_sd_free_c;
+  
   { // log-likelihood
     int obsidx[p + q];
     int xidx[p + q];

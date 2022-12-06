@@ -786,7 +786,7 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, level =
     }
     sd.est <- rssumm$summary[,"sd"]
   }
-  
+
   ## lavaan pars to stan par vectors
   mapping <- c(ly_sign = "lambda", g_sign = "gamma",
                bet_sign = "beta", Theta_cov = "theta",
@@ -820,6 +820,7 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, level =
                 alpha = "Alpha_free", tau = "Tau_free")
   if (level == 2L) {
     mapping3 <- sapply(mapping3, function(x) paste0(x, "_c"))
+    names(mapping3) <- sapply(names(mapping3), function(x) paste0(x, "_c"))
   }
 
   ## check names in lavfree
@@ -843,6 +844,12 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, level =
   freenums <- lapply(free2, function(x) lapply(x, function(y) y[y > 0]))
   nfree <- max(sapply(lavfree, function(x)
     sapply(x, function(x) ifelse(length(x) > 0, max(x), 0))))
+  minpar <- 1L
+  if(level == 2L & any(lavpartable$free > 0)){
+    ## only count free level 2 parameters
+    minpar <- min(lavpartable$free[lavpartable$free > 0])
+    nfree <- nfree - minpar + 1
+  }
 
   if(stanfit){
     draw_mat <- as.matrix(rsob)
@@ -883,8 +890,13 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, level =
           ## ordered differently from stan draws rows
           samppar <- (tmpw[,1] == 0) | (tmpw[,3] == 1) # free or constrained prior
           parvec <- tmpsd <- rowvec <- rowvec2 <- rep(NA, NROW(tmpw))
-          rowvec[samppar] <- grep(stanvec[j], names(b.est))
-          rowvec2[samppar] <- grep(stanvec[j], colnames(draw_mat))
+          if(level == 1L){
+            rowvec[samppar] <- which(grepl(stanvec[j], names(b.est)) & !(grepl("_c", names(b.est))))
+            rowvec2[samppar] <- which(grepl(stanvec[j], colnames(draw_mat)) & !(grepl("_c", colnames(draw_mat))))
+          } else {
+            rowvec[samppar] <- grep(stanvec[j], names(b.est))
+            rowvec2[samppar] <- grep(stanvec[j], colnames(draw_mat))
+          }
           parvec[samppar] <- b.est[rowvec[samppar]]
           tmpsd[samppar] <- sd.est[rowvec[samppar]]
 
@@ -895,10 +907,10 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, level =
           parvec[eqpar] <- parvec[tmpw[,1] == 0][eqconst]
           tmpsd[eqpar] <- tmpsd[tmpw[,1] == 0][eqconst]
           
-          rowidx[parnums] <- rowvec
-          rowidx2[parnums] <- rowvec2
-          est[parnums] <- parvec
-          sdvec[parnums] <- tmpsd
+          rowidx[parnums - minpar + 1] <- rowvec
+          rowidx2[parnums - minpar + 1] <- rowvec2
+          est[parnums - minpar + 1] <- parvec
+          sdvec[parnums - minpar + 1] <- tmpsd
         }
       }
     }
