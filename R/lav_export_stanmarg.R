@@ -766,12 +766,12 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
 }
 
 
-coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, level = 1L, fun = "mean") {
+coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames, level = 1L, fun = "mean") {
   ## Extract posterior means from marginal stan model.
   ## free2 comes from lav2lers().
   ## lersdat is data passed to sem stan code.
   ## rsob is the result of sampling().
-  if (!(level %in% c(1L, 2L))) stop("blavaan ERROR: Bad level specification in coeffun.", call. = FALSE)
+  if (!(level %in% c(1L, 2L))) stop("blavaan ERROR: Bad level specification in coeffun().", call. = FALSE)
   
   stanfit <- !is.null(rsob)
   if(stanfit){
@@ -783,6 +783,8 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, level =
       b.est <- rssumm$summary[,"mean"]
     } else if(fun == "median"){
       b.est <- rssumm$summary[,"50%"]
+    } else {
+      stop(paste0("blavaan ERROR: ", fun, " not implemented in coeffun()."), call. = FALSE)
     }
     sd.est <- rssumm$summary[,"sd"]
   }
@@ -851,9 +853,8 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, level =
     nfree <- nfree - minpar + 1
   }
 
+  vcorr <- NULL
   if(stanfit){
-    draw_mat <- as.matrix(rsob)
-
     freevec <- rep(NA, nfree)
     rowidx <- rowidx2 <- rep(NA, nfree) # row index of stan est and summary containing the parameters (for vcorr)
 
@@ -892,10 +893,10 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, level =
           parvec <- tmpsd <- rowvec <- rowvec2 <- rep(NA, NROW(tmpw))
           if(level == 1L){
             rowvec[samppar] <- which(grepl(stanvec[j], names(b.est)) & !(grepl("_c", names(b.est))))
-            rowvec2[samppar] <- which(grepl(stanvec[j], colnames(draw_mat)) & !(grepl("_c", colnames(draw_mat))))
+            rowvec2[samppar] <- which(grepl(stanvec[j], dmnames) & !(grepl("_c", dmnames)))
           } else {
             rowvec[samppar] <- grep(stanvec[j], names(b.est))
-            rowvec2[samppar] <- grep(stanvec[j], colnames(draw_mat))
+            rowvec2[samppar] <- grep(stanvec[j], dmnames)
           }
           parvec[samppar] <- b.est[rowvec[samppar]]
           tmpsd[samppar] <- sd.est[rowvec[samppar]]
@@ -915,9 +916,7 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, level =
       }
     }
 
-    vcorr <- cor(draw_mat[, rowidx2, drop=FALSE])
-
-    names(sdvec) <- colnames(vcorr)
+    names(sdvec) <- dmnames[rowidx2]
 
     ## add to partable for other functions
     ## indexing of stan objects
@@ -936,7 +935,6 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, level =
     lavpartable$pxnames[lavpartable$free > 0] <- rownames(rssumm$summary)[rowidx2]
   } else {
     sdvec <- NULL
-    vcorr <- NULL
     rssumm <- list(summary = NULL)
   }
   

@@ -758,17 +758,19 @@ blavaan <- function(...,  # default lavaan arguments
                                   res)
           stansumm <- parests$stansumm
         } else {
+          draw_mat <- as.matrix(res)
           if("level" %in% names(lavpartable)) {
-            parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')$within, l2s$free2, jagtrans$data, res)
-            parests2 <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')[[2]], l2s$free2, jagtrans$data, res, level = 2L)
-            parests$x <- c(parests$x parests2$x)
-            ##parests$lavpartable <- ## combine list elements!
+            parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')$within, l2s$free2, jagtrans$data, res, colnames(draw_mat))
+            parests2 <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')[[2]], l2s$free2, jagtrans$data, res, colnames(draw_mat), level = 2L)
+            parests$x <- c(parests$x, parests2$x)
+            ## combine list elements of the partables
+            parests$lavpartable <- mapply("c", parests$lavpartable, parests2$lavpartable, SIMPLIFY = FALSE)
             ##parests$vcorr <- ## need level 1 by level 2!
             parests$sd <- c(parests$sd, parests2$sd)
-            browser()
           } else {
-            parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')$within, l2s$free2, jagtrans$data, res)
+            parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')$within, l2s$free2, jagtrans$data, res, colnames(draw_mat))
           }
+          parests$vcorr <- cor(draw_mat[, with(parests$lavpartable, stansumnum[free > 0]), drop=FALSE])
           stansumm <- parests$stansumm
         }
         x <- parests$x
