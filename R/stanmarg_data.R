@@ -259,7 +259,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   stopifnot(nrow(dat$YX) == dat$Ntot)
 
   dat$use_suff <- 1L
-  if (ord) dat$use_suff <- 0L
+  if (ord | nclus[2] > 1) dat$use_suff <- 0L
 
   dat$has_data <- 0L
   if (pri_only) {
