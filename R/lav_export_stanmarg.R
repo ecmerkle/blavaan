@@ -892,8 +892,8 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
           samppar <- (tmpw[,1] == 0) | (tmpw[,3] == 1) # free or constrained prior
           parvec <- tmpsd <- rowvec <- rowvec2 <- rep(NA, NROW(tmpw))
           if(level == 1L){
-            rowvec[samppar] <- which(grepl(stanvec[j], names(b.est)) & !(grepl("_c", names(b.est))))
-            rowvec2[samppar] <- which(grepl(stanvec[j], dmnames) & !(grepl("_c", dmnames)))
+            rowvec[samppar] <- which(grepl(stanvec[j], names(b.est)) & !(grepl("_c$", names(b.est))))
+            rowvec2[samppar] <- which(grepl(stanvec[j], dmnames) & !(grepl("_c$", dmnames)))
           } else {
             rowvec[samppar] <- grep(stanvec[j], names(b.est))
             rowvec2[samppar] <- grep(stanvec[j], dmnames)

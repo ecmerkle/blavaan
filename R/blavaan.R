@@ -768,7 +768,7 @@ blavaan <- function(...,  # default lavaan arguments
             ##parests$vcorr <- ## need level 1 by level 2!
             parests$sd <- c(parests$sd, parests2$sd)
           } else {
-            parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')$within, l2s$free2, jagtrans$data, res, colnames(draw_mat))
+            parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free'), l2s$free2, jagtrans$data, res, colnames(draw_mat))
           }
           parests$vcorr <- cor(draw_mat[, with(parests$lavpartable, stansumnum[free > 0]), drop=FALSE])
           stansumm <- parests$stansumm
