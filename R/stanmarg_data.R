@@ -195,6 +195,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           dumlv = NULL, # for sampling lvs
                           wigind = NULL, # wiggle indicator
                           pri_only = FALSE, # prior predictive sampling
+                          do_reg = FALSE, # regression sampling
                           ...) {
   
   dat <- list()
@@ -221,7 +222,8 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$Xdatvar <- Xdatvar
   dat$Nx <- array(Nx, length(Nx))
   dat$emiter <- emiter
-
+  dat$do_reg <- do_reg
+  
   dat$YX <- YX
   dat$YXo <- YXo
   stopifnot(nrow(dat$YX) == dat$Ntot)

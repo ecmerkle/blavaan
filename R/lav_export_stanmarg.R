@@ -217,6 +217,10 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     wigpris <- NULL
   }
 
+  dat$do_reg <- 0L
+  modprop <- lavobject@Model@modprop
+  if (modprop$uvreg | modprop$uvord) dat$do_reg <- 1L
+  
   freeparnums <- rep(0, length(lavpartable$free))
 
   ## 1. Lambda_y
