@@ -89,7 +89,8 @@
 
 
 
-<script src="summaries_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+
+<div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="" class="logo" alt=""><h1>Model Summaries</h1>
             
@@ -100,7 +101,10 @@
 
     
     
-<p>Say that we specify a model of the Bollen political democracy data and draw posterior samples using the following <em>blavaan</em> code (where <code>save.lvs</code> saves the latent variable samples for further use):</p>
+<p>Say that we specify a model of the Bollen political democracy data
+and draw posterior samples using the following <em>blavaan</em> code
+(where <code>save.lvs</code> saves the latent variable samples for
+further use):</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span>  <span class="va">model</span> <span class="op">&lt;-</span> <span class="st">' </span></span>
 <span><span class="st">    # latent variable definitions</span></span>
@@ -121,38 +125,96 @@
 <span><span class="st">  '</span></span>
 <span></span>
 <span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bsem.html">bsem</a></span><span class="op">(</span><span class="va">model</span>, data<span class="op">=</span><span class="va">PoliticalDemocracy</span>, save.lvs <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p>We describe here how to summarize the fitted model. The most obvious functions are <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>, <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code>, and <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code>, which all work in a manner similar to the analogous <em>lavaan</em> functions. But instead of maximum likelihood estimates and standard errors, <em>blavaan</em> reports posterior means and posterior standard deviations. Other summaries that are unique to Bayesian models include model convergence metrics, model fit/comparison metrics, and samples of latent variables. These are discussed below.</p>
+<p>We describe here how to summarize the fitted model. The most obvious
+functions are <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>, <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code>, and
+<code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code>, which all work in a manner similar to the analogous
+<em>lavaan</em> functions. But instead of maximum likelihood estimates
+and standard errors, <em>blavaan</em> reports posterior means and
+posterior standard deviations. Other summaries that are unique to
+Bayesian models include model convergence metrics, model fit/comparison
+metrics, and samples of latent variables. These are discussed below.</p>
 <div class="section level3">
 <h3 id="convergence">Convergence<a class="anchor" aria-label="anchor" href="#convergence"></a>
 </h3>
-<p>Following model estimation, we immediately wish to look at the “goodness” of the posterior samples, including convergence to a stationary distribution and autocorrelation. Popular convergence metrics are available via the <code><a href="../reference/blavInspect.html">blavInspect()</a></code> function:</p>
+<p>Following model estimation, we immediately wish to look at the
+“goodness” of the posterior samples, including convergence to a
+stationary distribution and autocorrelation. Popular convergence metrics
+are available via the <code><a href="../reference/blavInspect.html">blavInspect()</a></code> function:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">'rhat'</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">'neff'</span><span class="op">)</span></span></code></pre></div>
-<p>where R-hat values near 1.00 indicate convergence, and large effective sample sizes (hundreds or above) are preferred. For details on these metrics, see, e.g., the Posterior Analysis section of the <a href="https://mc-stan.org/docs/2_28/reference-manual/index.html" class="external-link">Stan Reference Manual</a>.</p>
-<p>If the model has definitely not converged (as judged by Rhat), blavaan will issue multiple warnings. Lack of convergence is sometimes caused by bad initial values (by default, blavaan generates random initial values), so it is occasionally helpful to re-estimate the model a second time. Otherwise, lack of convergence may imply prior distributions that severely conflict with the data, or an ill-defined model. It is sometimes helpful to try to fit the same model in <em>lavaan</em>, to observe the types of errors that occur there.</p>
+<p>where R-hat values near 1.00 indicate convergence, and large
+effective sample sizes (hundreds or above) are preferred. For details on
+these metrics, see, e.g., the Posterior Analysis section of the <a href="https://mc-stan.org/docs/2_28/reference-manual/index.html" class="external-link">Stan
+Reference Manual</a>.</p>
+<p>If the model has definitely not converged (as judged by Rhat),
+blavaan will issue multiple warnings. Lack of convergence is sometimes
+caused by bad initial values (by default, blavaan generates random
+initial values), so it is occasionally helpful to re-estimate the model
+a second time. Otherwise, lack of convergence may imply prior
+distributions that severely conflict with the data, or an ill-defined
+model. It is sometimes helpful to try to fit the same model in
+<em>lavaan</em>, to observe the types of errors that occur there.</p>
 </div>
 <div class="section level3">
 <h3 id="model-fit-comparison">Model Fit &amp; Comparison<a class="anchor" aria-label="anchor" href="#model-fit-comparison"></a>
 </h3>
-<p>Next, we may wish to examine some model fit metrics. While many metrics are available from the <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> output, more are available from the <code><a href="https://rdrr.io/pkg/lavaan/man/fitMeasures.html" class="external-link">fitMeasures()</a></code> function:</p>
+<p>Next, we may wish to examine some model fit metrics. While many
+metrics are available from the <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> output, more are
+available from the <code><a href="https://rdrr.io/pkg/lavaan/man/fitMeasures.html" class="external-link">fitMeasures()</a></code> function:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/lavaan/man/fitMeasures.html" class="external-link">fitMeasures</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
-<p>For judging absolute fit, <em>blavaan</em> supplies a posterior predictive p-value that is based on the likelihood ratio statistic. Good-fitting models have values near 0.5 on this metric. For examining models’ relative fits, <em>blavaan</em> supplies the DIC, WAIC, and LOOIC. The latter two metrics are computed with the help of the <em>loo</em> package <span class="citation">(Vehtari et al. 2020)</span>. Comparison of multiple models on these criteria is facilitated via <code><a href="../reference/blavCompare.html">blavCompare()</a></code>, which provides standard errors of the difference between two criteria.</p>
-<p>Other notable functions include <code><a href="../reference/blavFitIndices.html">blavFitIndices()</a></code> for alternative measures of absolute fit and <code><a href="../reference/ppmc.html">ppmc()</a></code> for general posterior predictive checks.</p>
+<p>For judging absolute fit, <em>blavaan</em> supplies a posterior
+predictive p-value that is based on the likelihood ratio statistic.
+Good-fitting models have values near 0.5 on this metric. For examining
+models’ relative fits, <em>blavaan</em> supplies the DIC, WAIC, and
+LOOIC. The latter two metrics are computed with the help of the
+<em>loo</em> package <span class="citation">(Vehtari et al.
+2020)</span>. Comparison of multiple models on these criteria is
+facilitated via <code><a href="../reference/blavCompare.html">blavCompare()</a></code>, which provides standard
+errors of the difference between two criteria.</p>
+<p>Other notable functions include <code><a href="../reference/blavFitIndices.html">blavFitIndices()</a></code> for
+alternative measures of absolute fit and <code><a href="../reference/ppmc.html">ppmc()</a></code> for general
+posterior predictive checks.</p>
 </div>
 <div class="section level3">
 <h3 id="latent-variables-standardization">Latent Variables &amp; Standardization<a class="anchor" aria-label="anchor" href="#latent-variables-standardization"></a>
 </h3>
-<p>An often-discussed advantage of Bayesian models is their abilities to describe uncertainty in “random” parameters, including random effects and latent variables. To access this functionality in <em>blavaan</em>, users must set <code>save.lvs = TRUE</code> during model estimation, as is done at the top of this page. After model estimation, uses can access this information via <code><a href="../reference/blavInspect.html">blavInspect()</a></code> or <code><a href="../reference/blavPredict.html">blavPredict()</a></code>. Relevant arguments to <code><a href="../reference/blavInspect.html">blavInspect()</a></code> include <code>lvmeans</code> and <code>lvs</code>. The former returns posterior means of latent variables, which are similar to the predictions supplied by frequentist models. The latter returns posterior samples of latent variables, so that users could summarize their uncertainties or other functions of latent variables. These posterior samples are returned as a list of length <code>n.chains</code>, where each list entry has a row per posterior sample (and number of columns is total number of latent variables in the model):</p>
+<p>An often-discussed advantage of Bayesian models is their abilities to
+describe uncertainty in “random” parameters, including random effects
+and latent variables. To access this functionality in <em>blavaan</em>,
+users must set <code>save.lvs = TRUE</code> during model estimation, as
+is done at the top of this page. After model estimation, uses can access
+this information via <code><a href="../reference/blavInspect.html">blavInspect()</a></code> or
+<code><a href="../reference/blavPredict.html">blavPredict()</a></code>. Relevant arguments to
+<code><a href="../reference/blavInspect.html">blavInspect()</a></code> include <code>lvmeans</code> and
+<code>lvs</code>. The former returns posterior means of latent
+variables, which are similar to the predictions supplied by frequentist
+models. The latter returns posterior samples of latent variables, so
+that users could summarize their uncertainties or other functions of
+latent variables. These posterior samples are returned as a list of
+length <code>n.chains</code>, where each list entry has a row per
+posterior sample (and number of columns is total number of latent
+variables in the model):</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">postmns</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, what <span class="op">=</span> <span class="st">"lvmeans"</span><span class="op">)</span></span>
 <span><span class="va">postsamps</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, what <span class="op">=</span> <span class="st">"lvs"</span><span class="op">)</span></span></code></pre></div>
-<p>Some related, but different, information can be obtained by <code><a href="../reference/blavPredict.html">blavPredict()</a></code>. This function will also return posterior samples of latent variables, but in a matrix instead of a list:</p>
+<p>Some related, but different, information can be obtained by
+<code><a href="../reference/blavPredict.html">blavPredict()</a></code>. This function will also return posterior
+samples of latent variables, but in a matrix instead of a list:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">postsamps</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blavPredict.html">blavPredict</a></span><span class="op">(</span><span class="va">fit</span>, type <span class="op">=</span> <span class="st">"lv"</span><span class="op">)</span></span></code></pre></div>
-<p>The <code><a href="../reference/blavPredict.html">blavPredict()</a></code> function will also return predictions of observed variables conditioned on the sampled latent variables. The <code>type = "yhat"</code> argument returns expected values of observed variables conditioned on latent variable samples; the <code>type = "ypred"</code> argument returns posterior predictions of observed variables including residual noise (essentially <code>yhat</code> + error); and the <code>type = "ymis"</code> argument returns posterior predictions of missing variables conditioned on observed. These expected values and predictions are returned in list format; for a matrix, see the last line of code below.</p>
+<p>The <code><a href="../reference/blavPredict.html">blavPredict()</a></code> function will also return predictions
+of observed variables conditioned on the sampled latent variables. The
+<code>type = "yhat"</code> argument returns expected values of observed
+variables conditioned on latent variable samples; the
+<code>type = "ypred"</code> argument returns posterior predictions of
+observed variables including residual noise (essentially
+<code>yhat</code> + error); and the <code>type = "ymis"</code> argument
+returns posterior predictions of missing variables conditioned on
+observed. These expected values and predictions are returned in list
+format; for a matrix, see the last line of code below.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">evpreds</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blavPredict.html">blavPredict</a></span><span class="op">(</span><span class="va">fit</span>, type <span class="op">=</span> <span class="st">"yhat"</span><span class="op">)</span></span>
 <span><span class="va">postpreds</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blavPredict.html">blavPredict</a></span><span class="op">(</span><span class="va">fit</span>, type <span class="op">=</span> <span class="st">"ypred"</span><span class="op">)</span></span>
@@ -160,14 +222,20 @@
 <span></span>
 <span><span class="co">## convert to matrix from list:</span></span>
 <span><span class="va">evpreds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="st">"rbind"</span>, <span class="va">evpreds</span><span class="op">)</span></span></code></pre></div>
-<p>Finally, not fully related to latent variables: the <code><a href="../reference/standardizedPosterior.html">standardizedPosterior()</a></code> function will return standardized posterior draws. It calls the <em>lavaan</em> function <code><a href="https://rdrr.io/pkg/lavaan/man/standardizedSolution.html" class="external-link">standardizedSolution()</a></code> in the background and has some of that function’s flexibility.</p>
+<p>Finally, not fully related to latent variables: the
+<code><a href="../reference/standardizedPosterior.html">standardizedPosterior()</a></code> function will return standardized
+posterior draws. It calls the <em>lavaan</em> function
+<code><a href="https://rdrr.io/pkg/lavaan/man/standardizedSolution.html" class="external-link">standardizedSolution()</a></code> in the background and has some of
+that function’s flexibility.</p>
 </div>
 <div class="section level3 unnumbered">
-<h3 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+<h3 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h3>
-<div id="refs" class="references">
-<div id="ref-loo">
-<p>Vehtari, Aki, Jonah Gabry, Mans Magnusson, Yuling Yao, Paul-Christian Bürkner, Topi Paananen, and Andrew Gelman. 2020. “Loo: Efficient Leave-One-Out Cross-Validation and Waic for Bayesian Models.” <a href="https://mc-stan.org/loo/" class="external-link">https://mc-stan.org/loo/</a>.</p>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-loo" class="csl-entry">
+Vehtari, Aki, Jonah Gabry, Mans Magnusson, Yuling Yao, Paul-Christian
+Bürkner, Topi Paananen, and Andrew Gelman. 2020. <span>“Loo: Efficient
+Leave-One-Out Cross-Validation and WAIC for Bayesian Models.”</span> <a href="https://mc-stan.org/loo/" class="external-link">https://mc-stan.org/loo/</a>.
 </div>
 </div>
 </div>
