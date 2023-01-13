@@ -89,8 +89,7 @@
 
 
 
-
-<div class="row">
+<script src="invariance_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="" class="logo" alt=""><h1>Measurement Invariance</h1>
             
@@ -101,15 +100,11 @@
 
     
     
-<p>The overt intent of this example is to illustrate the use of blavaan
-for studying measurement invariance. Along the way, we will also see how
-to obtain Bayesian model selection measures and how to send a lavaan
-object directly to blavaan for re-estimation.</p>
+<p>The overt intent of this example is to illustrate the use of blavaan for studying measurement invariance. Along the way, we will also see how to obtain Bayesian model selection measures and how to send a lavaan object directly to blavaan for re-estimation.</p>
 <div class="section level3">
 <h3 id="model-estimation">Model Estimation<a class="anchor" aria-label="anchor" href="#model-estimation"></a>
 </h3>
-<p>Consider a measurement invariance study of the <span class="citation">Holzinger and Swineford (1939)</span> data. In lavaan,
-we may first estimate two models:</p>
+<p>Consider a measurement invariance study of the <span class="citation">Holzinger and Swineford (1939)</span> data. In lavaan, we may first estimate two models:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">HS.model</span> <span class="op">&lt;-</span> <span class="st">' visual  =~ x1 + x2 + x3</span></span>
 <span><span class="st">              textual =~ x4 + x5 + x6</span></span>
@@ -119,19 +114,14 @@ we may first estimate two models:</p>
 <span></span>
 <span><span class="va">fit2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/lavaan/man/cfa.html" class="external-link">cfa</a></span><span class="op">(</span><span class="va">HS.model</span>, data <span class="op">=</span> <span class="va">HolzingerSwineford1939</span>, group <span class="op">=</span> <span class="st">"school"</span>,</span>
 <span>            group.equal <span class="op">=</span> <span class="st">"loadings"</span><span class="op">)</span></span></code></pre></div>
-<p>and then examine the absolute fit of <code>fit1</code>. We could also
-compare <code>fit2</code> to <code>fit1</code> via a Likelihood Ratio
-Test. Instead of this, we wish to do something similar via Bayesian
-methods.</p>
-<p>To accomplish this via blavaan, we can fit Bayesian versions of
-<code>fit1</code> and <code>fit2</code> using similar syntax.</p>
+<p>and then examine the absolute fit of <code>fit1</code>. We could also compare <code>fit2</code> to <code>fit1</code> via a Likelihood Ratio Test. Instead of this, we wish to do something similar via Bayesian methods.</p>
+<p>To accomplish this via blavaan, we can fit Bayesian versions of <code>fit1</code> and <code>fit2</code> using similar syntax.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bfit1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcfa.html">bcfa</a></span><span class="op">(</span><span class="va">HS.model</span>, data <span class="op">=</span> <span class="va">HolzingerSwineford1939</span>, group <span class="op">=</span> <span class="st">"school"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">bfit2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcfa.html">bcfa</a></span><span class="op">(</span><span class="va">HS.model</span>, data <span class="op">=</span> <span class="va">HolzingerSwineford1939</span>, group <span class="op">=</span> <span class="st">"school"</span>, </span>
 <span>              group.equal <span class="op">=</span> <span class="st">"loadings"</span><span class="op">)</span></span></code></pre></div>
-<p>Model fit and comparison statistics are then available via the
-<code><a href="https://rdrr.io/pkg/lavaan/man/fitMeasures.html" class="external-link">fitMeasures()</a></code> and <code><a href="../reference/blavCompare.html">blavCompare()</a></code> functions:</p>
+<p>Model fit and comparison statistics are then available via the <code><a href="https://rdrr.io/pkg/lavaan/man/fitMeasures.html" class="external-link">fitMeasures()</a></code> and <code><a href="../reference/blavCompare.html">blavCompare()</a></code> functions:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/lavaan/man/fitMeasures.html" class="external-link">fitMeasures</a></span><span class="op">(</span><span class="va">bfit1</span><span class="op">)</span></span>
 <span></span>
@@ -142,10 +132,7 @@ methods.</p>
 <div class="section level3">
 <h3 id="approximate-invariance">Approximate Invariance<a class="anchor" aria-label="anchor" href="#approximate-invariance"></a>
 </h3>
-<p>In <em>approximate</em> measurement invariance studies, we replace
-the hard equality constraints with soft constraints by using informative
-prior distributions. The <code>wiggle</code> argument can be used to
-invoke these types of constraints. For example:</p>
+<p>In <em>approximate</em> measurement invariance studies, we replace the hard equality constraints with soft constraints by using informative prior distributions. The <code>wiggle</code> argument can be used to invoke these types of constraints. For example:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">HS.model</span> <span class="op">&lt;-</span> <span class="st">' visual  =~ x1 + c("a", "a")*x2 + c("b", "b")*x3</span></span>
 <span><span class="st">              textual =~ x4 + x5 + x6</span></span>
@@ -153,13 +140,8 @@ invoke these types of constraints. For example:</p>
 <span></span>
 <span><span class="va">bfit3</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcfa.html">bcfa</a></span><span class="op">(</span><span class="va">HS.model</span>, data <span class="op">=</span> <span class="va">HolzingerSwineford1939</span>, group <span class="op">=</span> <span class="st">"school"</span>, wiggle <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span>,</span>
 <span>              wiggle.sd <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span></code></pre></div>
-<p>This constrains the loadings associated with <code>x2</code> and
-<code>x3</code> to be approximately equal across groups, where the
-informative priors associated with these constraints are normal with
-standard deviations of 0.05.</p>
-<p>Using the above strategy, the syntax can become very cumbersome. In
-many cases, the <code>group.equal</code> argument can help here. For
-example:</p>
+<p>This constrains the loadings associated with <code>x2</code> and <code>x3</code> to be approximately equal across groups, where the informative priors associated with these constraints are normal with standard deviations of 0.05.</p>
+<p>Using the above strategy, the syntax can become very cumbersome. In many cases, the <code>group.equal</code> argument can help here. For example:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">HS.model</span> <span class="op">&lt;-</span> <span class="st">' visual  =~ x1 + x2 + x3</span></span>
 <span><span class="st">              textual =~ x4 + x5 + x6</span></span>
@@ -168,22 +150,14 @@ example:</p>
 <span><span class="va">bfit4</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcfa.html">bcfa</a></span><span class="op">(</span><span class="va">HS.model</span>, data <span class="op">=</span> <span class="va">HolzingerSwineford1939</span>, group <span class="op">=</span> <span class="st">"school"</span>,</span>
 <span>              group.equal <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"intercepts"</span>, <span class="st">"loadings"</span><span class="op">)</span>, wiggle <span class="op">=</span> <span class="st">"loadings"</span>,</span>
 <span>              wiggle.sd <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span></code></pre></div>
-<p>In the above example, the model intercepts and loadings have
-across-group constraints. The loadings are approximately equal across
-groups, due to the argument <code>wiggle = "loadings"</code>. And the
-intercepts are constrained to be exactly equal across groups. In this
-way, it becomes easy to use exact and approximate equality constraints
-in the same model, if desired.</p>
+<p>In the above example, the model intercepts and loadings have across-group constraints. The loadings are approximately equal across groups, due to the argument <code>wiggle = "loadings"</code>. And the intercepts are constrained to be exactly equal across groups. In this way, it becomes easy to use exact and approximate equality constraints in the same model, if desired.</p>
 </div>
 <div class="section level3 unnumbered">
-<h3 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+<h3 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h3>
-<div id="refs" class="references csl-bib-body hanging-indent">
-<div id="ref-holswi39" class="csl-entry">
-Holzinger, K. J., and F. A. Swineford. 1939. <em>A Study of Factor
-Analysis: <span>T</span>he Stability of a Bi-Factor Solution</em>.
-Supplementary Educational Monograph 48. Chicago: University of Chicago
-Press.
+<div id="refs" class="references">
+<div id="ref-holswi39">
+<p>Holzinger, K. J., and F. A. Swineford. 1939. <em>A Study of Factor Analysis: The Stability of a Bi-Factor Solution</em>. Supplementary Educational Monograph 48. Chicago: University of Chicago Press.</p>
 </div>
 </div>
 </div>

@@ -89,8 +89,7 @@
 
 
 
-
-<div class="row">
+<script src="estimate_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="" class="logo" alt=""><h1>Model Estimation</h1>
             
@@ -101,92 +100,26 @@
 
     
     
-<p>Models are specified using <em>lavaan</em> syntax, and prior
-distribution specification can already been covered on the <a href="prior.html">previous page</a>. The specified model can then be
-estimated via the <code><a href="../reference/bsem.html">bsem()</a></code> command, with other models being
-estimated via <code><a href="../reference/bcfa.html">bcfa()</a></code>, <code><a href="../reference/bgrowth.html">bgrowth()</a></code>, or
-<code><a href="../reference/blavaan.html">blavaan()</a></code>. Regardless of the command, there are many
-arguments that allow you to tailor the model estimation to your needs.
-We discuss here some of the most popular arguments, as well as some
-easy-to-miss arguments.</p>
+<p>Models are specified using <em>lavaan</em> syntax, and prior distribution specification can already been covered on the <a href="prior.html">previous page</a>. The specified model can then be estimated via the <code><a href="../reference/bsem.html">bsem()</a></code> command, with other models being estimated via <code><a href="../reference/bcfa.html">bcfa()</a></code>, <code><a href="../reference/bgrowth.html">bgrowth()</a></code>, or <code><a href="../reference/blavaan.html">blavaan()</a></code>. Regardless of the command, there are many arguments that allow you to tailor the model estimation to your needs. We discuss here some of the most popular arguments, as well as some easy-to-miss arguments.</p>
 <div class="section level3">
 <h3 id="primary-arguments">Primary arguments<a class="anchor" aria-label="anchor" href="#primary-arguments"></a>
 </h3>
-<p>Primary arguments to the model estimation commands include
-<code>burnin</code>, <code>sample</code>, <code>n.chains</code>, and
-<code>target</code>. The <code>burnin</code> and <code>sample</code>
-arguments are used to specify the desired number of burn-in iterations
-and posterior samples for each of <code>n.chains</code> chains (and the
-<code>burnin</code> argument controls the <em>warm-up</em> iterations in
-Stan). The <code>target</code> argument, on the other hand, is used to
-specify the MCMC strategy used for estimation. The default,
-<code>target = "stan"</code>, tends to be fastest and most efficient.
-Other options are slightly more flexible, including
-<code>target = "stanclassic"</code> and <code>target = "jags"</code>.
-Both of these approaches sample latent variables as if they are model
-parameters, whereas <code>target = "stan"</code> marginalizes out the
-latent variables. For more detail of these approaches, see the <a href="https://www.jstatsoft.org/article/view/v100i06" class="external-link">JSS paper</a>.</p>
+<p>Primary arguments to the model estimation commands include <code>burnin</code>, <code>sample</code>, <code>n.chains</code>, and <code>target</code>. The <code>burnin</code> and <code>sample</code> arguments are used to specify the desired number of burn-in iterations and posterior samples for each of <code>n.chains</code> chains (and the <code>burnin</code> argument controls the <em>warm-up</em> iterations in Stan). The <code>target</code> argument, on the other hand, is used to specify the MCMC strategy used for estimation. The default, <code>target = "stan"</code>, tends to be fastest and most efficient. Other options are slightly more flexible, including <code>target = "stanclassic"</code> and <code>target = "jags"</code>. Both of these approaches sample latent variables as if they are model parameters, whereas <code>target = "stan"</code> marginalizes out the latent variables. For more detail of these approaches, see the <a href="https://www.jstatsoft.org/article/view/v100i06" class="external-link">JSS paper</a>.</p>
 </div>
 <div class="section level3">
 <h3 id="secondary-arguments">Secondary arguments<a class="anchor" aria-label="anchor" href="#secondary-arguments"></a>
 </h3>
-<p>Noteworthy secondary arguments include <code>save.lvs</code>,
-<code>mcmcfile</code>, <code>mcmcextra</code>, and
-<code>inits</code>.</p>
-<p>The <code>save.lvs</code> argument controls whether or not latent
-variables are sampled during model estimation. It defaults to
-<code>FALSE</code> because the latent variable sampling can take a large
-amount of memory, and can slow down some post-estimation summaries. But
-setting <code>save.lvs = TRUE</code> allows for model summaries of
-latent variables and observed variable predictions using
-<code><a href="../reference/blavPredict.html">blavPredict()</a></code> and other functions.</p>
-<p>By setting <code>mcmcfile = TRUE</code>, users can obtain the Stan
-(JAGS) code and data for the specified model. These files are written to
-the <code>lavExport</code> folder within a user’s working directory. One
-file has extension .jag or .stan, and the second file is an R data file
-(extension .rda). The rda file can be loaded in R (via
-<code><a href="https://rdrr.io/r/base/load.html" class="external-link">load()</a></code>) and will be a list including elements
-<code>data</code>, <code>monitors</code>, and <code>inits</code>. These
-elements can be supplied to <code>stan()</code> for model estimation
-outside of <em>blavaan</em>.</p>
-<p>The <code>mcmcextra</code> argument is used to supply extra
-information to Stan or JAGS. Users can supply a list with element names
-<code>monitor</code>, <code>data</code>, <code>syntax</code>, or
-<code>llnsamp</code>. These elements are respectively used to specify
-extra parameters to monitor, extra data to pass to the model estimation,
-extra syntax to include in the model file (JAGS only), and the number of
-importance samples for likelihood approximation (which is only relevant
-to models with ordinal variables).</p>
-<p>The <code>inits</code> argument is used to control the starting
-values for MCMC estimation. It can sometimes salvage a model that
-immediately crashes. The default, <code>inits = "prior"</code>, draws
-initial values from the prior distributions. A second option,
-<code>inits = "simple"</code>, initializes model parameters to 0 and 1
-in fashion similar to <em>lavaan</em>’s use of this argument. The user
-can also specify a list of their own initial values via this argument,
-though the required list format is somewhat cumbersome. We recommend
-exporting the model and data using <code>mcmcfile = TRUE</code>, loading
-the resulting rda file, and looking at the format of the initial values
-that <em>blavaan</em> created there.</p>
+<p>Noteworthy secondary arguments include <code>save.lvs</code>, <code>mcmcfile</code>, <code>mcmcextra</code>, and <code>inits</code>.</p>
+<p>The <code>save.lvs</code> argument controls whether or not latent variables are sampled during model estimation. It defaults to <code>FALSE</code> because the latent variable sampling can take a large amount of memory, and can slow down some post-estimation summaries. But setting <code>save.lvs = TRUE</code> allows for model summaries of latent variables and observed variable predictions using <code><a href="../reference/blavPredict.html">blavPredict()</a></code> and other functions.</p>
+<p>By setting <code>mcmcfile = TRUE</code>, users can obtain the Stan (JAGS) code and data for the specified model. These files are written to the <code>lavExport</code> folder within a user’s working directory. One file has extension .jag or .stan, and the second file is an R data file (extension .rda). The rda file can be loaded in R (via <code><a href="https://rdrr.io/r/base/load.html" class="external-link">load()</a></code>) and will be a list including elements <code>data</code>, <code>monitors</code>, and <code>inits</code>. These elements can be supplied to <code>stan()</code> for model estimation outside of <em>blavaan</em>.</p>
+<p>The <code>mcmcextra</code> argument is used to supply extra information to Stan or JAGS. Users can supply a list with element names <code>monitor</code>, <code>data</code>, <code>syntax</code>, or <code>llnsamp</code>. These elements are respectively used to specify extra parameters to monitor, extra data to pass to the model estimation, extra syntax to include in the model file (JAGS only), and the number of importance samples for likelihood approximation (which is only relevant to models with ordinal variables).</p>
+<p>The <code>inits</code> argument is used to control the starting values for MCMC estimation. It can sometimes salvage a model that immediately crashes. The default, <code>inits = "prior"</code>, draws initial values from the prior distributions. A second option, <code>inits = "simple"</code>, initializes model parameters to 0 and 1 in fashion similar to <em>lavaan</em>’s use of this argument. The user can also specify a list of their own initial values via this argument, though the required list format is somewhat cumbersome. We recommend exporting the model and data using <code>mcmcfile = TRUE</code>, loading the resulting rda file, and looking at the format of the initial values that <em>blavaan</em> created there.</p>
 </div>
 <div class="section level3">
 <h3 id="parallelization">Parallelization<a class="anchor" aria-label="anchor" href="#parallelization"></a>
 </h3>
-<p>Speed is always an issue when we sample via MCMC, especially using
-software like Stan or JAGS. For computers with multiple cores, the
-estimation can be sped up by sending each MCMC chain to a separate core.
-This is accomplished with the <code>bcontrol</code> argument, which is a
-list whose elements correspond to <code>stan()</code> or
-<code>run.jags()</code> arguments. For parallelizing the chains in Stan,
-we would want to use the argument
-<code>bcontrol = list(cores = 3)</code>. Many other arguments are
-available here to control other aspects of estimation; see
-<code>?stan</code> or <code>?run.jags</code> for all the
-possibilities.</p>
-<p>Parallelization can also be helpful to speed up post-estimation
-computations. The <em>future</em> package controls this parallelization,
-which requires an extra command prior to estimation. The most common
-commands would be</p>
+<p>Speed is always an issue when we sample via MCMC, especially using software like Stan or JAGS. For computers with multiple cores, the estimation can be sped up by sending each MCMC chain to a separate core. This is accomplished with the <code>bcontrol</code> argument, which is a list whose elements correspond to <code>stan()</code> or <code>run.jags()</code> arguments. For parallelizing the chains in Stan, we would want to use the argument <code>bcontrol = list(cores = 3)</code>. Many other arguments are available here to control other aspects of estimation; see <code>?stan</code> or <code>?run.jags</code> for all the possibilities.</p>
+<p>Parallelization can also be helpful to speed up post-estimation computations. The <em>future</em> package controls this parallelization, which requires an extra command prior to estimation. The most common commands would be</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://future.futureverse.org" class="external-link">"future"</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://future.futureverse.org/reference/plan.html" class="external-link">plan</a></span><span class="op">(</span><span class="st">"multicore"</span><span class="op">)</span> <span class="co">## mac or linux</span></span>

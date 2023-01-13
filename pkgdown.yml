@@ -1,4 +1,4 @@
-pandoc: 2.19.2
+pandoc: 2.7.3
 pkgdown: 2.0.7
 pkgdown_sha: ~
 articles:
@@ -11,7 +11,7 @@ articles:
   resources: resources.html
   start: start.html
   summaries: summaries.html
-last_built: 2023-01-13T18:51Z
+last_built: 2023-01-13T18:57Z
 urls:
   reference: http://ecmerkle.github.io/blavaan/reference
   article: http://ecmerkle.github.io/blavaan/articles
