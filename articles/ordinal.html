@@ -89,7 +89,8 @@
 
 
 
-<script src="ordinal_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+
+<div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="" class="logo" alt=""><h1>Ordinal Models in blavaan</h1>
                         <h4 data-toc-skip class="author">Ed Merkle</h4>
@@ -104,118 +105,344 @@
 <div class="section level3">
 <h3 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h3>
-<p>Structural equation models with ordinal observed variables are supported starting in <em>blavaan</em> 0.4-1 (<code>target="stan"</code> only). This document describes the overall approach, which includes model estimation, threshold parameters, log-likelihood calculation, posterior predictive p-values, and Jacobians. We assume that you are somewhat familiar with the layout of SEM; if not, some technical detail and examples are found in <span class="citation">Merkle and Rosseel (2018)</span> and, more recently, <span class="citation">Merkle et al. (2021)</span> (links to these papers are in the references section). We aim here to provide enough detail to elucidate the new blavaan features, while being informal enough for you to not get (too) bored.</p>
+<p>Structural equation models with ordinal observed variables are
+supported starting in <em>blavaan</em> 0.4-1 (<code>target="stan"</code>
+only). This document describes the overall approach, which includes
+model estimation, threshold parameters, log-likelihood calculation,
+posterior predictive p-values, and Jacobians. We assume that you are
+somewhat familiar with the layout of SEM; if not, some technical detail
+and examples are found in <span class="citation">Merkle and Rosseel
+(2018)</span> and, more recently, <span class="citation">Merkle et al.
+(2021)</span> (links to these papers are in the references section). We
+aim here to provide enough detail to elucidate the new blavaan features,
+while being informal enough for you to not get (too) bored.</p>
 </div>
 <div class="section level3">
 <h3 id="estimation">Estimation<a class="anchor" aria-label="anchor" href="#estimation"></a>
 </h3>
-<p>Ordinal observed variables are handled via data augmentation, in the style of <span class="citation">Chib and Greenberg (1998)</span>. You might already know this, but the phrase <em>data augmentation</em> is imprecise in the context of SEM. This is because there are many possible things that could be augmented, each of which can make model estimation easier. We could be augmenting observed data with predictions of missing data, which is related to multiple imputation methods. We could be augmenting the observed data with the latent variables, which can simplify likelihood calculation (leading to what is sometimes called a <em>conditional</em> likelihood, though <em>conditional</em> also has many meanings). Or we could be augmenting categorical observed variables with underlying, latent continuous variables. This last type of augmentation is what we are doing here. In our testing, we found it to be faster and more efficient than other approaches that would sample latent variables alongside other model parameters (the latent variables are integrated out of our likelihoods here; similar to the description from <span class="citation">Merkle et al. (2021)</span>).</p>
-<p>In our data augmentation implementation, each ordinal observation (e.g., <span class="math inline">\(y\)</span>) is used to generate a continuous, underlying counterpart (e.g., <span class="math inline">\(y^\ast\)</span>). This <span class="math inline">\(y^\ast\)</span> must obey the model’s threshold parameters (commonly denoted <span class="math inline">\(\mathbf{\tau}\)</span>), based on the value of the observed data. For example, ignoring subscripts on <span class="math inline">\(y^\ast\)</span> and assuming an ordinal variable with 4 categories, we would have <span class="math display">\[\begin{align*}
+<p>Ordinal observed variables are handled via data augmentation, in the
+style of <span class="citation">Chib and Greenberg (1998)</span>. You
+might already know this, but the phrase <em>data augmentation</em> is
+imprecise in the context of SEM. This is because there are many possible
+things that could be augmented, each of which can make model estimation
+easier. We could be augmenting observed data with predictions of missing
+data, which is related to multiple imputation methods. We could be
+augmenting the observed data with the latent variables, which can
+simplify likelihood calculation (leading to what is sometimes called a
+<em>conditional</em> likelihood, though <em>conditional</em> also has
+many meanings). Or we could be augmenting categorical observed variables
+with underlying, latent continuous variables. This last type of
+augmentation is what we are doing here. In our testing, we found it to
+be faster and more efficient than other approaches that would sample
+latent variables alongside other model parameters (the latent variables
+are integrated out of our likelihoods here; similar to the description
+from <span class="citation">Merkle et al. (2021)</span>).</p>
+<p>In our data augmentation implementation, each ordinal observation
+(e.g., <span class="math inline">\(y\)</span>) is used to generate a
+continuous, underlying counterpart (e.g., <span class="math inline">\(y^\ast\)</span>). This <span class="math inline">\(y^\ast\)</span> must obey the model’s threshold
+parameters (commonly denoted <span class="math inline">\(\mathbf{\tau}\)</span>), based on the value of the
+observed data. For example, ignoring subscripts on <span class="math inline">\(y^\ast\)</span> and assuming an ordinal variable
+with 4 categories, we would have <span class="math display">\[\begin{align*}
 y^* &lt; \tau_1 &amp;\text{ if }y = 1 \\
 \tau_1 &lt;\ y^* &lt; \tau_2 &amp;\text{ if }y = 2 \\
 \tau_2 &lt;\ y^* &lt; \tau_3 &amp;\text{ if }y = 3 \\
 y^* &gt;\ \tau_3 &amp;\text{ if }y = 4
-\end{align*}\]</span> where we require <span class="math inline">\(\tau_1 &lt; \tau_2 &lt; \tau_3\)</span>. We generate such a <span class="math inline">\(y^*\)</span> separately for each ordinal observation in the dataset. These all become additional, bounded parameters in the Stan file.</p>
-<p>The Stan User’s Guide has a helpful example of multivariate probit regression using a related approach; see <a href="https://mc-stan.org/docs/2_27/stan-users-guide/multivariate-outcomes.html" class="external-link uri">https://mc-stan.org/docs/2_27/stan-users-guide/multivariate-outcomes.html</a>. The trickiest parts involve enforcing the boundaries of the <span class="math inline">\(y^*\)</span> variables, and ensuring that the threshold parameters for each ordinal variable are ordered correctly (while allowing for the possibility that different ordinal variables have different numbers of thresholds). These require some Jacobian adjustments that took a good deal of time to code correctly (some further detail appears in a later section).</p>
-<p>Once the above parameters are defined and generated, the remainder of the model estimation is similar to the simpler situation where all observed variables are continuous. In terms of the Stan file, most of the ordinal overhead comes in the transformed parameters block. Once we get to the model block, most things operate as they would with continuous data.</p>
+\end{align*}\]</span> where we require <span class="math inline">\(\tau_1 &lt; \tau_2 &lt; \tau_3\)</span>. We
+generate such a <span class="math inline">\(y^*\)</span> separately for
+each ordinal observation in the dataset. These all become additional,
+bounded parameters in the Stan file.</p>
+<p>The Stan User’s Guide has a helpful example of multivariate probit
+regression using a related approach; see <a href="https://mc-stan.org/docs/2_27/stan-users-guide/multivariate-outcomes.html" class="external-link uri">https://mc-stan.org/docs/2_27/stan-users-guide/multivariate-outcomes.html</a>.
+The trickiest parts involve enforcing the boundaries of the <span class="math inline">\(y^*\)</span> variables, and ensuring that the
+threshold parameters for each ordinal variable are ordered correctly
+(while allowing for the possibility that different ordinal variables
+have different numbers of thresholds). These require some Jacobian
+adjustments that took a good deal of time to code correctly (some
+further detail appears in a later section).</p>
+<p>Once the above parameters are defined and generated, the remainder of
+the model estimation is similar to the simpler situation where all
+observed variables are continuous. In terms of the Stan file, most of
+the ordinal overhead comes in the transformed parameters block. Once we
+get to the model block, most things operate as they would with
+continuous data.</p>
 </div>
 <div class="section level3">
 <h3 id="thresholds-priors">Thresholds &amp; Priors<a class="anchor" aria-label="anchor" href="#thresholds-priors"></a>
 </h3>
-<p>The prior distributions on the threshold (<span class="math inline">\(\tau\)</span>) parameters are more involved than they may appear. This is because, as described in the previous section, the threshold parameters for a single variable must be ordered. So if we say, for example, that all thresholds have a normal(0,1) prior distribution, we are ignoring the fact that one threshold’s value influences the size of other thresholds’ values. As Michael Betancourt describes on Stan Discourse, such a prior “interacts with the (ordering) constraint to enforce a sort of uniform repulsion between the interior points, resulting in very rigid differences.”</p>
+<p>The prior distributions on the threshold (<span class="math inline">\(\tau\)</span>) parameters are more involved than
+they may appear. This is because, as described in the previous section,
+the threshold parameters for a single variable must be ordered. So if we
+say, for example, that all thresholds have a normal(0,1) prior
+distribution, we are ignoring the fact that one threshold’s value
+influences the size of other thresholds’ values. As Michael Betancourt
+describes on Stan Discourse, such a prior “interacts with the (ordering)
+constraint to enforce a sort of uniform repulsion between the interior
+points, resulting in very rigid differences.”</p>
 <p>quote from <a href="https://discourse.mc-stan.org/t/prior-choice-for-ordered-inverse-transformed-parameters/16378/3" class="external-link uri">https://discourse.mc-stan.org/t/prior-choice-for-ordered-inverse-transformed-parameters/16378/3</a></p>
-<p>To address this issue, we first define an unconstrained, unordered parameter vector whose length equals the number of thresholds in the model. Call this vector <span class="math inline">\(\mathbf{\tau}^*\)</span>. We then obtain ordered thresholds by exponentiating the unordered parameter vector in a specific manner. The manner in which this works is exactly the same as how Stan defines a parameter of type <code>ordered</code>. See <a href="https://mc-stan.org/docs/2_28/reference-manual/ordered-vector.html" class="external-link uri">https://mc-stan.org/docs/2_28/reference-manual/ordered-vector.html</a>. Additionally, a similar idea has been independently developed for signal detection models by <span class="citation">Paulewicz and Blaut (2020)</span> (and see their <em>bhsdtr</em> package).</p>
-<p>The idea is most easily shown via example. Say that we have an ordinal variable with 4 categories. Then the three thresholds for this variable are obtained via: <span class="math display">\[\begin{align*}
+<p>To address this issue, we first define an unconstrained, unordered
+parameter vector whose length equals the number of thresholds in the
+model. Call this vector <span class="math inline">\(\mathbf{\tau}^*\)</span>. We then obtain ordered
+thresholds by exponentiating the unordered parameter vector in a
+specific manner. The manner in which this works is exactly the same as
+how Stan defines a parameter of type <code>ordered</code>. See <a href="https://mc-stan.org/docs/2_28/reference-manual/ordered-vector.html" class="external-link uri">https://mc-stan.org/docs/2_28/reference-manual/ordered-vector.html</a>.
+Additionally, a similar idea has been independently developed for signal
+detection models by <span class="citation">Paulewicz and Blaut
+(2020)</span> (and see their <em>bhsdtr</em> package).</p>
+<p>The idea is most easily shown via example. Say that we have an
+ordinal variable with 4 categories. Then the three thresholds for this
+variable are obtained via: <span class="math display">\[\begin{align*}
 \tau_1 &amp;= \tau^*_1 \\
 \tau_2 &amp;= \tau^*_1 + \exp(\tau^*_2) \\
 \tau_3 &amp;= \tau^*_1 + \exp(\tau^*_2) + \exp(\tau^*_3).
-\end{align*}\]</span> We then place normal prior distributions on the unordered <span class="math inline">\(\tau^*\)</span> parameters, as opposed to placing priors on the ordered <span class="math inline">\(\tau\)</span> parameters. These normal priors imply that the lowest threshold (<span class="math inline">\(\tau_1\)</span> above) has a normal prior, while differences between successive <span class="math inline">\(\tau\)</span>’s have log-normal priors. In blavaan, these priors can be specified in the usual two ways. First, we could add the <code>dp</code> argument to a model estimation command as follows.</p>
+\end{align*}\]</span> We then place normal prior distributions on the
+unordered <span class="math inline">\(\tau^*\)</span> parameters, as
+opposed to placing priors on the ordered <span class="math inline">\(\tau\)</span> parameters. These normal priors
+imply that the lowest threshold (<span class="math inline">\(\tau_1\)</span> above) has a normal prior, while
+differences between successive <span class="math inline">\(\tau\)</span>’s have log-normal priors. In
+blavaan, these priors can be specified in the usual two ways. First, we
+could add the <code>dp</code> argument to a model estimation command as
+follows.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dp</span> <span class="op">=</span> <span class="fu"><a href="../reference/dpriors.html">dpriors</a></span><span class="op">(</span>tau <span class="op">=</span> <span class="st">"normal(0, .5)"</span><span class="op">)</span></span></code></pre></div>
-<p>which would assign this prior to all the unordered <span class="math inline">\(\tau^*\)</span> parameters in the model. Second, we could specify priors for specific threshold parameters in the model specification syntax. For example, say that we have a 4-category observed variable called <code>x1</code>. Then unique priors for each the three thresholds could be specified in the model syntax via</p>
+<p>which would assign this prior to all the unordered <span class="math inline">\(\tau^*\)</span> parameters in the model. Second,
+we could specify priors for specific threshold parameters in the model
+specification syntax. For example, say that we have a 4-category
+observed variable called <code>x1</code>. Then unique priors for each
+the three thresholds could be specified in the model syntax via</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">x1</span> <span class="op">|</span> <span class="fu">prior</span><span class="op">(</span><span class="st">"normal(-1, 1)"</span><span class="op">)</span> <span class="op">*</span> <span class="va">t1</span> <span class="op">+</span> <span class="fu">prior</span><span class="op">(</span><span class="st">"normal(0, .5)"</span><span class="op">)</span> <span class="op">*</span> <span class="va">t2</span> <span class="op">+</span> <span class="fu">prior</span><span class="op">(</span><span class="st">"normal(0, 1)"</span><span class="op">)</span> <span class="op">*</span> <span class="va">t3</span></span></code></pre></div>
-<p>It is not clear at this time that priors on the <span class="math inline">\(\tau^*\)</span> parameters are the best option. In a 2019 paper, Michael Betancourt describes a Dirichlet prior that regularizes the thresholds of an ordinal regression model. Such a strategy would seem to work for SEM, and it could be especially useful for datasets where some categories of the ordinal variable are sparse. These issues warrant further study.</p>
+<p>It is not clear at this time that priors on the <span class="math inline">\(\tau^*\)</span> parameters are the best option. In
+a 2019 paper, Michael Betancourt describes a Dirichlet prior that
+regularizes the thresholds of an ordinal regression model. Such a
+strategy would seem to work for SEM, and it could be especially useful
+for datasets where some categories of the ordinal variable are sparse.
+These issues warrant further study.</p>
 <p><a href="https://betanalpha.github.io/assets/case_studies/ordinal_regression.html" class="external-link uri">https://betanalpha.github.io/assets/case_studies/ordinal_regression.html</a></p>
 </div>
 <div class="section level3">
 <h3 id="likelihood-computations">Likelihood Computations<a class="anchor" aria-label="anchor" href="#likelihood-computations"></a>
 </h3>
-<p>Once we get to continuous data in the model block, it seems reasonable to expect simple likelihood computations. But it depends on what likelihood you want to compute. The likelihood used for sampling in Stan is a simple multivariate normal of the <span class="math inline">\(y^*\)</span> observations, combined with any continuous observed variables in the model. This is indeed simple to compute. But it is not the likelihood you want to use for model comparison. For one thing, all the <span class="math inline">\(y^*\)</span> parameters associated with ordinal data are involved in this likelihood, so quantities like the effective number of parameters become very inflated. The number of parameters involved in this likelihood also increases with sample size, which is generally bad in the land of model comparison metrics. See <span class="citation">Merkle, Furr, and Rabe-Hesketh (2019)</span> for more detail here.</p>
-<p>All this means that, for quantities like WAIC and PSIS-LOO, we must compute a second model likelihood that involves the observed, ordinal <span class="math inline">\(y\)</span> variables and that integrates over the latent <span class="math inline">\(y^*\)</span> variables. This is a difficult problem that amounts to evaluating the CDF of a sometimes-high-dimensional, multivariate normal distribution <span class="citation">(see Chib and Greenberg 1998, Equation 11)</span>. There are multiple possibilities for approximating this CDF. We currently rely on the <code>sadmvn()</code> function from the <em>mnormt</em> package <span class="citation">(Azzalini and Genz 2020)</span>, which uses a subregion adaptive integration method by <span class="citation">Genz (1992)</span> that is fast and accurate (when there are about 15 or fewer ordinal variables in the model). A second possibility involves Monte Carlo simulation, which is implemented in the <em>tmvnsim</em> package <span class="citation">(Bhattacjarjee 2016)</span>. For each case, we generate many random samples from the appropriate truncated multivariate normal and average over the resulting importance sampling weights. The procedure is computationally intensive and also time intensive, so we have to balance the number of random samples drawn with the amount of time that it takes. If users wish to use <code>tmvnsim()</code>, they must declare the number of importance samples to draw. This is accomplished by setting <code>llnsamp</code> within the <code>mcmcextra$data</code> argument. For example, to draw 100 samples for the approximation, a call to <code><a href="../reference/bsem.html">bsem()</a></code> or similar functions would include the argument</p>
+<p>Once we get to continuous data in the model block, it seems
+reasonable to expect simple likelihood computations. But it depends on
+what likelihood you want to compute. The likelihood used for sampling in
+Stan is a simple multivariate normal of the <span class="math inline">\(y^*\)</span> observations, combined with any
+continuous observed variables in the model. This is indeed simple to
+compute. But it is not the likelihood you want to use for model
+comparison. For one thing, all the <span class="math inline">\(y^*\)</span> parameters associated with ordinal
+data are involved in this likelihood, so quantities like the effective
+number of parameters become very inflated. The number of parameters
+involved in this likelihood also increases with sample size, which is
+generally bad in the land of model comparison metrics. See <span class="citation">Merkle, Furr, and Rabe-Hesketh (2019)</span> for more
+detail here.</p>
+<p>All this means that, for quantities like WAIC and PSIS-LOO, we must
+compute a second model likelihood that involves the observed, ordinal
+<span class="math inline">\(y\)</span> variables and that integrates
+over the latent <span class="math inline">\(y^*\)</span> variables. This
+is a difficult problem that amounts to evaluating the CDF of a
+sometimes-high-dimensional, multivariate normal distribution <span class="citation">(see Chib and Greenberg 1998, Equation 11)</span>.
+There are multiple possibilities for approximating this CDF. We
+currently rely on the <code>sadmvn()</code> function from the
+<em>mnormt</em> package <span class="citation">(Azzalini and Genz
+2020)</span>, which uses a subregion adaptive integration method by
+<span class="citation">Genz (1992)</span> that is fast and accurate
+(when there are about 15 or fewer ordinal variables in the model). A
+second possibility involves Monte Carlo simulation, which is implemented
+in the <em>tmvnsim</em> package <span class="citation">(Bhattacjarjee
+2016)</span>. For each case, we generate many random samples from the
+appropriate truncated multivariate normal and average over the resulting
+importance sampling weights. The procedure is computationally intensive
+and also time intensive, so we have to balance the number of random
+samples drawn with the amount of time that it takes. If users wish to
+use <code>tmvnsim()</code>, they must declare the number of importance
+samples to draw. This is accomplished by setting <code>llnsamp</code>
+within the <code>mcmcextra$data</code> argument. For example, to draw
+100 samples for the approximation, a call to <code><a href="../reference/bsem.html">bsem()</a></code> or
+similar functions would include the argument</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mcmcextra</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>llnsamp <span class="op">=</span> <span class="fl">100</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>Beyond these two methods, it would also be possible to use quadrature over the latent variables. Many people would consider quadrature to be the gold standard here, and quadrature would reduce the dimension of integration for many models (because there are usually fewer latent variables than observed variables). But the quadrature would have to be specific to SEM, and fast, efficient, open implementations of such a method do not appear to currently exist (some implementations are hidden in <em>blavaan</em>, but they are pure R implementations that are fairly slow). On the other hand, approximation of the multivariate normal CDF is a general problem that has multiple fast, efficient, open implementations, so long as there are not too many ordinal variables in your model.</p>
-<p>There also exists a relatively new method by <span class="citation">Botev (2017)</span> for evaluating the CDF of the multivariate normal, with an implementation of the method appearing in the package <em>TruncatedNormal</em> <span class="citation">(Botev and Belzile 2021)</span>. This method is especially useful for evaluating high-dimensional normal distributions (in our case, with more than about 15 ordinal variables), and it may be incorporated in future versions of <em>blavaan</em>.</p>
+<p>Beyond these two methods, it would also be possible to use quadrature
+over the latent variables. Many people would consider quadrature to be
+the gold standard here, and quadrature would reduce the dimension of
+integration for many models (because there are usually fewer latent
+variables than observed variables). But the quadrature would have to be
+specific to SEM, and fast, efficient, open implementations of such a
+method do not appear to currently exist (some implementations are hidden
+in <em>blavaan</em>, but they are pure R implementations that are fairly
+slow). On the other hand, approximation of the multivariate normal CDF
+is a general problem that has multiple fast, efficient, open
+implementations, so long as there are not too many ordinal variables in
+your model.</p>
+<p>There also exists a relatively new method by <span class="citation">Z. I. Botev (2017)</span> for evaluating the CDF of the
+multivariate normal, with an implementation of the method appearing in
+the package <em>TruncatedNormal</em> <span class="citation">(Z. Botev
+and Belzile 2021)</span>. This method is especially useful for
+evaluating high-dimensional normal distributions (in our case, with more
+than about 15 ordinal variables), and it may be incorporated in future
+versions of <em>blavaan</em>.</p>
 <!-- TODO Bayes factor, use chib's identity? -->
 </div>
 <div class="section level3">
 <h3 id="comparison-to-lavaan">Comparison to <em>lavaan</em><a class="anchor" aria-label="anchor" href="#comparison-to-lavaan"></a>
 </h3>
-<p>Ordinal SEM is associated with two types of model parameterizations: <em>delta</em> and <em>theta</em>. These refer to different scale parameterizations of the <span class="math inline">\(y^*\)</span> variables: <em>delta</em> refers to the total standard deviation of <span class="math inline">\(y^*\)</span> (including variability due to latent variables), and <em>theta</em> refers to the residual standard deviation of <span class="math inline">\(y^*\)</span>.</p>
-<p>In <em>blavaan</em>, only the theta parameterization is implemented. So, if you want to compare <em>lavaan</em> results to <em>blavaan</em> results, you need to use the argument <code>parameterization = "theta"</code> when you estimate the <em>lavaan</em> model.</p>
-<p>Also, the default <em>lavaan</em> estimator for ordinal models is a multiple-step procedure that involves a weighted least squares discrepancy function. The resulting parameter estimates are sometimes far from the posterior means reported by <em>blavaan</em>. The <em>blavaan</em> estimates are usually closer to <code>estimator="PML"</code> in <em>lavaan</em>.</p>
+<p>Ordinal SEM is associated with two types of model parameterizations:
+<em>delta</em> and <em>theta</em>. These refer to different scale
+parameterizations of the <span class="math inline">\(y^*\)</span>
+variables: <em>delta</em> refers to the total standard deviation of
+<span class="math inline">\(y^*\)</span> (including variability due to
+latent variables), and <em>theta</em> refers to the residual standard
+deviation of <span class="math inline">\(y^*\)</span>.</p>
+<p>In <em>blavaan</em>, only the theta parameterization is implemented.
+So, if you want to compare <em>lavaan</em> results to <em>blavaan</em>
+results, you need to use the argument
+<code>parameterization = "theta"</code> when you estimate the
+<em>lavaan</em> model.</p>
+<p>Also, the default <em>lavaan</em> estimator for ordinal models is a
+multiple-step procedure that involves a weighted least squares
+discrepancy function. The resulting parameter estimates are sometimes
+far from the posterior means reported by <em>blavaan</em>. The
+<em>blavaan</em> estimates are usually closer to
+<code>estimator="PML"</code> in <em>lavaan</em>.</p>
 </div>
 <div class="section level3">
 <h3 id="posterior-predictive-p-values">Posterior Predictive p-values<a class="anchor" aria-label="anchor" href="#posterior-predictive-p-values"></a>
 </h3>
-<p>Posterior predictive p-value (ppp) computations receive a speed boost in the 0.4 series. These computations now occur in Stan, whereas they previously occurred in R after model estimation. As discussed by <span class="citation">Asparouhov and Muthén (2021)</span>, the ppp computations needed for models with missing data can be excessively slow, requiring us to run an EM algorithm for each posterior sample in order to find the “H1” (“saturated”) model covariance matrix. The solution by <span class="citation">Asparouhov and Muthén (2021)</span> involves the realization that we do not need to use a fully-optimized H1 covariance matrix in order to compute the ppp. In <em>blavaan</em>, we consequently run an EM algorithm for a fixed number of iterations in order to compute an H1 covariance matrix that is “good enough” for the ppp. The default number of iterations it set to 20, and users can change the default by supplying an <code>emiter</code> value via the <code>mcmcextra</code> argument. For example,</p>
+<p>Posterior predictive p-value (ppp) computations receive a speed boost
+in the 0.4 series. These computations now occur in Stan, whereas they
+previously occurred in R after model estimation. As discussed by <span class="citation">Asparouhov and Muthén (2021)</span>, the ppp
+computations needed for models with missing data can be excessively
+slow, requiring us to run an EM algorithm for each posterior sample in
+order to find the “H1” (“saturated”) model covariance matrix. The
+solution by <span class="citation">Asparouhov and Muthén (2021)</span>
+involves the realization that we do not need to use a fully-optimized H1
+covariance matrix in order to compute the ppp. In <em>blavaan</em>, we
+consequently run an EM algorithm for a fixed number of iterations in
+order to compute an H1 covariance matrix that is “good enough” for the
+ppp. The default number of iterations it set to 20, and users can change
+the default by supplying an <code>emiter</code> value via the
+<code>mcmcextra</code> argument. For example,</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mcmcextra</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>emiter <span class="op">=</span> <span class="fl">50</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="jacobians">Jacobians<a class="anchor" aria-label="anchor" href="#jacobians"></a>
 </h3>
-<p><em>(This section is likely only relevant to you if you are editing/writing Stan models.)</em> The Stan model underlying <em>blavaan</em> currently requires Jacobian adjustments in two places. This section briefly reviews the ideas underneath the adjustments, which my future self may wish to remember.</p>
-<p>We need a Jacobian adjustment when we place a prior on something that does not appear in the Stan <code>parameters</code> block. The Jacobian tells us about the implied priors of the things in the <code>parameters</code> block, based on the priors that appear in the <code>model</code> block.</p>
-<p>The Jacobian comes from the statistics literature on “change of variables”: we are applying a function to some random variables, and finding the distribution of the function based on the original distribution of the random variables. When it comes to Stan models, this means we are starting with the priors from the <code>model</code> block and finding the implied priors for the <code>parameters</code> block. This confused me for a long time because, in the Stan file, the functions naturally go in the opposite direction: starting with the <code>parameters</code> block, and moving to the <code>model</code> block.</p>
-<p>The fact that our functions go from <code>model</code> to <code>parameters</code> is convenient, though, because Jacobian adjustments require the inverse functions. And the inverse functions move us from <code>parameters</code> to <code>model</code>, so they already exist in the Stan model. We just need to find the appropriate derivatives of these functions, which lead to the Jacobian.</p>
-<p>As an example, consider the fact that <em>blavaan</em> allows users to choose whether priors go on standard deviation, variance, or precision parameters. The standard deviations appear in the <code>parameters</code> block regardless of what the user chooses (the Stan model is precompiled at the time of package installation). Say that the user wants priors on precisions. We transform the standard deviations to precisions in the <code>model</code> block, then put the prior on the precision. In addition to this prior, we need the Jacobian of the function that starts with a standard deviation (call it <span class="math inline">\(\sigma\)</span>) and transforms to precision (<span class="math inline">\(\sigma^{-2}\)</span>). The derivative of <span class="math inline">\(\sigma^{-2}\)</span> with respect to <span class="math inline">\(\sigma\)</span> is <span class="math inline">\(-2 \sigma^{-3}\)</span>. And because this is a simple function mapping a single parameter to a different value, the Jacobian is the absolute value of this derivative, which is <span class="math inline">\(2 \sigma^{-3}\)</span>. In the Stan file, we would then add the log of this Jacobian to <code>target</code>:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1"></a>target += log(<span class="dv">2</span>) - <span class="dv">3</span>*log(sigma)</span></code></pre></div>
+<p><em>(This section is likely only relevant to you if you are
+editing/writing Stan models.)</em> The Stan model underlying
+<em>blavaan</em> currently requires Jacobian adjustments in two places.
+This section briefly reviews the ideas underneath the adjustments, which
+my future self may wish to remember.</p>
+<p>We need a Jacobian adjustment when we place a prior on something that
+does not appear in the Stan <code>parameters</code> block. The Jacobian
+tells us about the implied priors of the things in the
+<code>parameters</code> block, based on the priors that appear in the
+<code>model</code> block.</p>
+<p>The Jacobian comes from the statistics literature on “change of
+variables”: we are applying a function to some random variables, and
+finding the distribution of the function based on the original
+distribution of the random variables. When it comes to Stan models, this
+means we are starting with the priors from the <code>model</code> block
+and finding the implied priors for the <code>parameters</code> block.
+This confused me for a long time because, in the Stan file, the
+functions naturally go in the opposite direction: starting with the
+<code>parameters</code> block, and moving to the <code>model</code>
+block.</p>
+<p>The fact that our functions go from <code>model</code> to
+<code>parameters</code> is convenient, though, because Jacobian
+adjustments require the inverse functions. And the inverse functions
+move us from <code>parameters</code> to <code>model</code>, so they
+already exist in the Stan model. We just need to find the appropriate
+derivatives of these functions, which lead to the Jacobian.</p>
+<p>As an example, consider the fact that <em>blavaan</em> allows users
+to choose whether priors go on standard deviation, variance, or
+precision parameters. The standard deviations appear in the
+<code>parameters</code> block regardless of what the user chooses (the
+Stan model is precompiled at the time of package installation). Say that
+the user wants priors on precisions. We transform the standard
+deviations to precisions in the <code>model</code> block, then put the
+prior on the precision. In addition to this prior, we need the Jacobian
+of the function that starts with a standard deviation (call it <span class="math inline">\(\sigma\)</span>) and transforms to precision
+(<span class="math inline">\(\sigma^{-2}\)</span>). The derivative of
+<span class="math inline">\(\sigma^{-2}\)</span> with respect to <span class="math inline">\(\sigma\)</span> is <span class="math inline">\(-2
+\sigma^{-3}\)</span>. And because this is a simple function mapping a
+single parameter to a different value, the Jacobian is the absolute
+value of this derivative, which is <span class="math inline">\(2
+\sigma^{-3}\)</span>. In the Stan file, we would then add the log of
+this Jacobian to <code>target</code>:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>target <span class="op">+=</span> log<span class="op">(</span><span class="dv">2</span><span class="op">)</span> <span class="op">-</span> <span class="dv">3</span><span class="op">*</span>log<span class="op">(</span>sigma<span class="op">)</span></span></code></pre></div>
 <p>Further examples and discussion can be found in:</p>
 <p><a href="https://mc-stan.org/users/documentation/case-studies/mle-params.html" class="external-link uri">https://mc-stan.org/users/documentation/case-studies/mle-params.html</a></p>
 </div>
 <div class="section level3">
 <h3 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
 </h3>
-<p>The <em>blavaan</em> 0.4 series offers enhanced functionality in a variety of areas. The computational decisions that we have made reflect a balance between estimation precision and estimation speed. It will be the case that the software defaults behave poorly in some situations. For example, the default prior distributions can be problematic in certain situations, the likelihood approximations for ordinal models may not be as precise as desired, and the new ppp computations may behave differently than previous computations. We encourage users to carry out sensitivity analyses, and also to report bugs!</p>
+<p>The <em>blavaan</em> 0.4 series offers enhanced functionality in a
+variety of areas. The computational decisions that we have made reflect
+a balance between estimation precision and estimation speed. It will be
+the case that the software defaults behave poorly in some situations.
+For example, the default prior distributions can be problematic in
+certain situations, the likelihood approximations for ordinal models may
+not be as precise as desired, and the new ppp computations may behave
+differently than previous computations. We encourage users to carry out
+sensitivity analyses, and also to report bugs!</p>
 </div>
 <div class="section level3 unnumbered">
-<h3 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+<h3 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h3>
-<div id="refs" class="references">
-<div id="ref-aspmut21">
-<p>Asparouhov, Tihomir, and Bengt Muthén. 2021. “Advances in Bayesian Model Fit Evaluation for Structural Equation Models.” <em>Structural Equation Modeling: A Multidisciplinary Journal</em> 28 (1): 1–14. <a href="https://doi.org/10.1080/10705511.2020.1764360" class="external-link">https://doi.org/10.1080/10705511.2020.1764360</a>.</p>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-aspmut21" class="csl-entry">
+Asparouhov, Tihomir, and Bengt Muthén. 2021. <span>“Advances in
+<span>Bayesian</span> Model Fit Evaluation for Structural Equation
+Models.”</span> <em>Structural Equation Modeling: A Multidisciplinary
+Journal</em> 28 (1): 1–14. <a href="https://doi.org/10.1080/10705511.2020.1764360" class="external-link">https://doi.org/10.1080/10705511.2020.1764360</a>.
 </div>
-<div id="ref-azzgen20">
-<p>Azzalini, A., and A. Genz. 2020. <em>The R Package <code>mnormt</code>: The Multivariate Normal and <span class="math inline">\(t\)</span> Distributions (Version 2.0.2)</em>. <a href="http://azzalini.stat.unipd.it/SW/Pkg-mnormt/" class="external-link">http://azzalini.stat.unipd.it/SW/Pkg-mnormt/</a>.</p>
+<div id="ref-azzgen20" class="csl-entry">
+Azzalini, A., and A. Genz. 2020. <em>The <span>R</span> Package
+<code>mnormt</code>: The Multivariate Normal and <span class="math inline">\(t\)</span> Distributions (Version 2.0.2)</em>. <a href="http://azzalini.stat.unipd.it/SW/Pkg-mnormt/" class="external-link">http://azzalini.stat.unipd.it/SW/Pkg-mnormt/</a>.
 </div>
-<div id="ref-tmvnsim">
-<p>Bhattacjarjee, Samsiddhi. 2016. <em>tmvnsim: Truncated Multivariate Normal Simulation</em>. <a href="https://CRAN.R-project.org/package=tmvnsim" class="external-link">https://CRAN.R-project.org/package=tmvnsim</a>.</p>
+<div id="ref-tmvnsim" class="csl-entry">
+Bhattacjarjee, Samsiddhi. 2016. <em><span class="nocase">tmvnsim:
+Truncated</span> Multivariate Normal Simulation</em>. <a href="https://CRAN.R-project.org/package=tmvnsim" class="external-link">https://CRAN.R-project.org/package=tmvnsim</a>.
 </div>
-<div id="ref-tn21">
-<p>Botev, Zdravko, and Leo Belzile. 2021. <em>TruncatedNormal: Truncated Multivariate Normal and Student Distributions</em>. <a href="https://CRAN.R-project.org/package=TruncatedNormal" class="external-link">https://CRAN.R-project.org/package=TruncatedNormal</a>.</p>
+<div id="ref-bot17" class="csl-entry">
+Botev, Z. I. 2017. <span>“The Normal Law Under Linear Restrictions:
+Simulation and Estimation via Minimax Tilting.”</span> <em>Journal of
+the Royal Statistical Society: Series B</em> 79 (1): 125–48.
+https://doi.org/<a href="https://doi.org/10.1111/rssb.12162" class="external-link">https://doi.org/10.1111/rssb.12162</a>.
 </div>
-<div id="ref-bot17">
-<p>Botev, Z. I. 2017. “The Normal Law Under Linear Restrictions: Simulation and Estimation via Minimax Tilting.” <em>Journal of the Royal Statistical Society: Series B</em> 79 (1): 125–48. <a href="https://doi.org/https://doi.org/10.1111/rssb.12162" class="external-link">https://doi.org/https://doi.org/10.1111/rssb.12162</a>.</p>
+<div id="ref-tn21" class="csl-entry">
+Botev, Zdravko, and Leo Belzile. 2021. <em>TruncatedNormal: Truncated
+Multivariate Normal and Student Distributions</em>. <a href="https://CRAN.R-project.org/package=TruncatedNormal" class="external-link">https://CRAN.R-project.org/package=TruncatedNormal</a>.
 </div>
-<div id="ref-chigre98">
-<p>Chib, S., and E. Greenberg. 1998. “Analysis of Multivariate Probit Models.” <em>Biometrika</em> 85: 347–61.</p>
+<div id="ref-chigre98" class="csl-entry">
+Chib, S., and E. Greenberg. 1998. <span>“Analysis of Multivariate Probit
+Models.”</span> <em>Biometrika</em> 85: 347–61.
 </div>
-<div id="ref-gen92">
-<p>Genz, A. 1992. “Numerical Computation of the Multivariate Normal Probabilities.” <em>Journal of Computational and Graphical Statistics</em> 1: 141–50.</p>
+<div id="ref-gen92" class="csl-entry">
+Genz, A. 1992. <span>“Numerical Computation of the Multivariate Normal
+Probabilities.”</span> <em>Journal of Computational and Graphical
+Statistics</em> 1: 141–50.
 </div>
-<div id="ref-merfit21">
-<p>Merkle, E. C., E. Fitzsimmons, J. Uanhoro, and B. Goodrich. 2021. “Efficient Bayesian Structural Equation Modeling in Stan.” <em>Journal of Statistical Software</em> 100 (6): 1–22. <a href="https://www.jstatsoft.org/article/view/v100i06" class="external-link">https://www.jstatsoft.org/article/view/v100i06</a>.</p>
+<div id="ref-merfit21" class="csl-entry">
+Merkle, E. C., E. Fitzsimmons, J. Uanhoro, and B. Goodrich. 2021.
+<span>“Efficient <span>Bayesian</span> Structural Equation Modeling in
+<span>Stan</span>.”</span> <em>Journal of Statistical Software</em> 100
+(6): 1–22. <a href="https://www.jstatsoft.org/article/view/v100i06" class="external-link">https://www.jstatsoft.org/article/view/v100i06</a>.
 </div>
-<div id="ref-merfur19">
-<p>Merkle, E. C., D. Furr, and S. Rabe-Hesketh. 2019. “Bayesian Comparison of Latent Variable Models: Conditional Versus Marginal Likelihoods.” <em>Psychometrika</em> 84: 802–29. <a href="https://arxiv.org/abs/1802.04452" class="external-link">https://arxiv.org/abs/1802.04452</a>.</p>
+<div id="ref-merfur19" class="csl-entry">
+Merkle, E. C., D. Furr, and S. Rabe-Hesketh. 2019.
+<span>“<span>Bayesian</span> Comparison of Latent Variable Models:
+<span>Conditional</span> Versus Marginal Likelihoods.”</span>
+<em>Psychometrika</em> 84: 802–29. <a href="https://arxiv.org/abs/1802.04452" class="external-link">https://arxiv.org/abs/1802.04452</a>.
 </div>
-<div id="ref-merros18">
-<p>Merkle, E. C., and Y. Rosseel. 2018. “blavaan: Bayesian Structural Equation Models via Parameter Expansion.” <em>Journal of Statistical Software</em> 85 (4): 1–30. <a href="https://www.jstatsoft.org/article/view/v085i04" class="external-link">https://www.jstatsoft.org/article/view/v085i04</a>.</p>
+<div id="ref-merros18" class="csl-entry">
+Merkle, E. C., and Y. Rosseel. 2018. <span>“<span class="nocase">blavaan</span>: <span>Bayesian</span> Structural Equation
+Models via Parameter Expansion.”</span> <em>Journal of Statistical
+Software</em> 85 (4): 1–30. <a href="https://www.jstatsoft.org/article/view/v085i04" class="external-link">https://www.jstatsoft.org/article/view/v085i04</a>.
 </div>
-<div id="ref-paubla20">
-<p>Paulewicz, B., and A. Blaut. 2020. “The bhsdtr Package: A General-Purpose Method of Bayesian Inference for Signal Detection Theory Models.” <em>Behavior Research Methods</em> 52: 2122–41.</p>
+<div id="ref-paubla20" class="csl-entry">
+Paulewicz, B., and A. Blaut. 2020. <span>“The <span class="nocase">bhsdtr</span> Package: <span>A</span> General-Purpose
+Method of <span>Bayesian</span> Inference for Signal Detection Theory
+Models.”</span> <em>Behavior Research Methods</em> 52: 2122–41.
 </div>
 </div>
 </div>

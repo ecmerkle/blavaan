@@ -89,7 +89,8 @@
 
 
 
-<script src="prior_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+
+<div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="" class="logo" alt=""><h1>Specifying Prior Distributions</h1>
             
@@ -100,7 +101,11 @@
 
     
     
-<p>There are two ways to specify prior distributions in blavaan. First, each type of model parameter has a default prior distribution that may or may not be suitable for your specific situation. You are free to modify the defaults. Second, the priors for individual model parameters can be specified in the model syntax. Each is discussed below.</p>
+<p>There are two ways to specify prior distributions in blavaan. First,
+each type of model parameter has a default prior distribution that may
+or may not be suitable for your specific situation. You are free to
+modify the defaults. Second, the priors for individual model parameters
+can be specified in the model syntax. Each is discussed below.</p>
 <div class="section level3">
 <h3 id="defaults">Defaults<a class="anchor" aria-label="anchor" href="#defaults"></a>
 </h3>
@@ -113,7 +118,11 @@
 <span><span class="co">## "gamma(1,.5)[sd]" "gamma(1,.5)[sd]"       "beta(1,1)" "wishart(3,iden)" </span></span>
 <span><span class="co">##               tau </span></span>
 <span><span class="co">##   "normal(0,1.5)"</span></span></code></pre>
-<p>It is important to note that these prior distributions correspond to Stan parameterizations. These are similar to R parameterizations but not necessarily exactly the same. The Greek(ish) names above correspond to the following parameter types (where MV is manifest/observed variable and LV is latent variable):</p>
+<p>It is important to note that these prior distributions correspond to
+Stan parameterizations. These are similar to R parameterizations but not
+necessarily exactly the same. The Greek(ish) names above correspond to
+the following parameter types (where MV is manifest/observed variable
+and LV is latent variable):</p>
 <pre><code><span><span class="co">##                  nu               alpha              lambda                beta </span></span>
 <span><span class="co">##      "MV intercept"      "LV intercept"           "Loading"        "Regression" </span></span>
 <span><span class="co">##               theta                 psi                 rho               ibpsi </span></span>
@@ -121,8 +130,21 @@
 <span><span class="co">##                 tau </span></span>
 <span><span class="co">##         "Threshold"</span></span></code></pre>
 <p>For further information about priors on thresholds, see the <a href="ordinal.html">ordinal modeling details</a>.</p>
-<p>For <code>target = "stan"</code> (the default), priors are currently restricted to one distribution per parameter type. You can change the prior distribution parameters (for example, the mean and standard deviation of a normal), but you cannot change the prior distribution type. The only exceptions here are the “theta” and “psi” parameters: for those, you can use the modifiers “[sd]”, “[var]”, or “[prec]” to specify whether you want the priors to apply to the standard deviation, variance, or precision. If you require more flexibility in prior specification, you change the target to either <code>"stanclassic"</code> (the old Stan approach) or <code>"jags"</code> (the JAGS approach). Alternatively, you can export the Stan model via <code>mcmcfile = TRUE</code>, edit the file as needed, then fit it via the rstan package.</p>
-<p>To modify prior distributions, we could simply supply a new text string to <code><a href="../reference/dpriors.html">dpriors()</a></code> like this:</p>
+<p>For <code>target = "stan"</code> (the default), priors are currently
+restricted to one distribution per parameter type. You can change the
+prior distribution parameters (for example, the mean and standard
+deviation of a normal), but you cannot change the prior distribution
+type. The only exceptions here are the “theta” and “psi” parameters: for
+those, you can use the modifiers “[sd]”, “[var]”, or “[prec]” to specify
+whether you want the priors to apply to the standard deviation,
+variance, or precision. If you require more flexibility in prior
+specification, you change the target to either
+<code>"stanclassic"</code> (the old Stan approach) or
+<code>"jags"</code> (the JAGS approach). Alternatively, you can export
+the Stan model via <code>mcmcfile = TRUE</code>, edit the file as
+needed, then fit it via the rstan package.</p>
+<p>To modify prior distributions, we could simply supply a new text
+string to <code><a href="../reference/dpriors.html">dpriors()</a></code> like this:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mydp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dpriors.html">dpriors</a></span><span class="op">(</span>lambda<span class="op">=</span><span class="st">"normal(1,2)"</span><span class="op">)</span></span>
 <span><span class="va">mydp</span></span></code></pre></div>
@@ -132,37 +154,74 @@
 <span><span class="co">## "gamma(1,.5)[sd]" "gamma(1,.5)[sd]"       "beta(1,1)" "wishart(3,iden)" </span></span>
 <span><span class="co">##               tau </span></span>
 <span><span class="co">##   "normal(0,1.5)"</span></span></code></pre>
-<p>so that the default prior for loadings is now normal with mean 1 and standard deviation 2, and the rest of the parameters remain at the original defaults. The next time we estimate a model (via <code><a href="../reference/bsem.html">bsem()</a></code>, <code><a href="../reference/bcfa.html">bcfa()</a></code>, <code><a href="../reference/bgrowth.html">bgrowth()</a></code>, or <code><a href="../reference/blavaan.html">blavaan()</a></code>), we would add the argument <code>dp=mydp</code> to use this new set of default priors.</p>
+<p>so that the default prior for loadings is now normal with mean 1 and
+standard deviation 2, and the rest of the parameters remain at the
+original defaults. The next time we estimate a model (via
+<code><a href="../reference/bsem.html">bsem()</a></code>, <code><a href="../reference/bcfa.html">bcfa()</a></code>, <code><a href="../reference/bgrowth.html">bgrowth()</a></code>, or
+<code><a href="../reference/blavaan.html">blavaan()</a></code>), we would add the argument <code>dp=mydp</code>
+to use this new set of default priors.</p>
 </div>
 <div class="section level3">
 <h3 id="individual-parameters">Individual Parameters<a class="anchor" aria-label="anchor" href="#individual-parameters"></a>
 </h3>
-<p>In addition to setting the prior for one type of model parameter, the user may wish to set the prior of a specific model parameter. This is accomplished by using the <code>prior()</code> modifier within the model specification. For example, consider the following syntax for the <span class="citation">Holzinger and Swineford (1939)</span> confirmatory factor model:</p>
+<p>In addition to setting the prior for one type of model parameter, the
+user may wish to set the prior of a specific model parameter. This is
+accomplished by using the <code>prior()</code> modifier within the model
+specification. For example, consider the following syntax for the <span class="citation">Holzinger and Swineford (1939)</span> confirmatory
+factor model:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">HS.model</span> <span class="op">&lt;-</span> <span class="st">' visual  =~ x1 + prior("normal(1,2)")*x2 + x3</span></span>
 <span><span class="st">              textual =~ x4 + x5 + prior("normal(3,1.5)")*x6</span></span>
 <span><span class="st">              speed   =~ x7 + x8 + x9 </span></span>
 <span><span class="st">              x1 ~~ prior("gamma(3,3)[sd]")*x1 '</span></span></code></pre></div>
-<p>The loading from <code>visual</code> to <code>x2</code> now has a normal prior with mean 1 and standard deviation 2, while the loading from <code>textual</code> to <code>x6</code> has a normal prior with mean 3 and standard deviation 1.5. All other loadings have the default prior distribution.</p>
-<p>In the above syntax, we have additionally specified a gamma(3,3) prior associated with the residual of <code>x1</code>. The <code>[sd]</code> text at the end of the distribution says that this prior goes on the residual standard deviation, as opposed to the residual precision or residual variance. There exist two more options here: a <code>[var]</code> option for the residual variance, and no brackets for the precision (or you could also use <code>[prec]</code>). This bracketed text can be used for any model variance/SD/precision parameter and could also be used in default prior specification if desired.</p>
+<p>The loading from <code>visual</code> to <code>x2</code> now has a
+normal prior with mean 1 and standard deviation 2, while the loading
+from <code>textual</code> to <code>x6</code> has a normal prior with
+mean 3 and standard deviation 1.5. All other loadings have the default
+prior distribution.</p>
+<p>In the above syntax, we have additionally specified a gamma(3,3)
+prior associated with the residual of <code>x1</code>. The
+<code>[sd]</code> text at the end of the distribution says that this
+prior goes on the residual standard deviation, as opposed to the
+residual precision or residual variance. There exist two more options
+here: a <code>[var]</code> option for the residual variance, and no
+brackets for the precision (or you could also use <code>[prec]</code>).
+This bracketed text can be used for any model variance/SD/precision
+parameter and could also be used in default prior specification if
+desired.</p>
 </div>
 <div class="section level3">
 <h3 id="covariance-parameters">Covariance Parameters<a class="anchor" aria-label="anchor" href="#covariance-parameters"></a>
 </h3>
-<p>One additional note on covariance parameters defined in the model syntax: the <code>prior()</code> syntax specifies a prior on the correlation associated with the covariance parameter, as opposed to the covariance itself. The specified distribution should have support on (0,1), and blavaan automatically translates the prior to an equivalent distribution with support on (-1,1). It is safest to stick with beta priors here. For example, the syntax</p>
+<p>One additional note on covariance parameters defined in the model
+syntax: the <code>prior()</code> syntax specifies a prior on the
+correlation associated with the covariance parameter, as opposed to the
+covariance itself. The specified distribution should have support on
+(0,1), and blavaan automatically translates the prior to an equivalent
+distribution with support on (-1,1). It is safest to stick with beta
+priors here. For example, the syntax</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">HS.model</span> <span class="op">&lt;-</span> <span class="st">' visual  =~ x1 + x2 + x3</span></span>
 <span><span class="st">              textual =~ x4 + x5 + x6</span></span>
 <span><span class="st">              speed   =~ x7 + x8 + x9 </span></span>
 <span><span class="st">              visual ~~ prior("beta(1,1)")*textual '</span></span></code></pre></div>
-<p>places a Beta(1,1) (uniform) prior on the correlation between the <code>visual</code> and <code>textual</code> factors. If desired, we could also specify priors on the standard deviations (or variances or precisions) of the <code>visual</code> and <code>textual</code> factors. Together with the prior on the correlation, these priors would imply a prior on the covariance between <code>visual</code> and <code>textual</code>.</p>
+<p>places a Beta(1,1) (uniform) prior on the correlation between the
+<code>visual</code> and <code>textual</code> factors. If desired, we
+could also specify priors on the standard deviations (or variances or
+precisions) of the <code>visual</code> and <code>textual</code> factors.
+Together with the prior on the correlation, these priors would imply a
+prior on the covariance between <code>visual</code> and
+<code>textual</code>.</p>
 </div>
 <div class="section level3 unnumbered">
-<h3 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+<h3 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h3>
-<div id="refs" class="references">
-<div id="ref-holswi39">
-<p>Holzinger, K. J., and F. A. Swineford. 1939. <em>A Study of Factor Analysis: The Stability of a Bi-Factor Solution</em>. Supplementary Educational Monograph 48. Chicago: University of Chicago Press.</p>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-holswi39" class="csl-entry">
+Holzinger, K. J., and F. A. Swineford. 1939. <em>A Study of Factor
+Analysis: <span>T</span>he Stability of a Bi-Factor Solution</em>.
+Supplementary Educational Monograph 48. Chicago: University of Chicago
+Press.
 </div>
 </div>
 </div>
