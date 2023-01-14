@@ -651,10 +651,12 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   primap <- match(prinames[prich], mapping)
   names(prifree)[prich] <- names(mapping)[primap]
 
+  pta <- lav_partable_attributes(parTable(lavobject))
+  ov.names <- unique(unlist(pta$vnames$ov))
   lpt <- lavpartable
   lpt$mat[lpt$op == ":="] <- "def"
   dp <- c(dp, def = "")
-  stanprires <- set_stanpars("", lpt, prifree, dp, "")
+  stanprires <- set_stanpars("", lpt, prifree, dp, ov.names)
   lavpartable$prior <- stanprires$partable$prior
 
   dat$wigind <- 0L
@@ -963,7 +965,6 @@ lav2standata <- function(lavobject) {
 
   if (ord) {
     pta <- lav_partable_attributes(parTable(lavobject))
-
     ordidx <- pta$vidx$ov.ord[[1]]
     dat$YXo <- dat$YX[, ordidx, drop=FALSE]
     if (misflag) {

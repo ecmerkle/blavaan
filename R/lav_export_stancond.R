@@ -569,7 +569,7 @@ lav2stancond <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcext
       names(nfree)[psiidx] <- "psiUNC"
     }
   }
-  TXT2 <- set_stanpars(TXT2, partable, nfree, dp, orig.lv.names.x)
+  TXT2 <- set_stanpars(TXT2, partable, nfree, dp, orig.ov.names)
   partable$prior <- TXT2$partable$prior
   partable$freeparnums <- TXT2$partable$freeparnums
   TXT3 <- TXT2$TXT3
