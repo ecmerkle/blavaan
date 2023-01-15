@@ -477,7 +477,7 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
   TPS <- paste(TPS, "\n", t1, "}", sep="")
 
   ## priors/constraints
-  TXT2 <- set_parvec(TXT2, partable, dp, cp, lv.x.wish, orig.lv.names.x, target)
+  TXT2 <- set_parvec(TXT2, partable, dp, cp, lv.x.wish, orig.lv.names.x, orig.ov.names, target)
   partable$prior <- TXT2$partable$prior
   partable$freeparnums <- TXT2$partable$freeparnums
   TXT3 <- TXT2$TXT3

@@ -1,4 +1,4 @@
-set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x, target="jags"){
+set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x, ov.names, target="jags"){
     ## tabs
     t1 <- paste(rep(" ", 2L), collapse="")
     t2 <- paste(rep(" ", 4L), collapse="")
@@ -156,6 +156,8 @@ set_parvec <- function(TXT2, partable, dp, cp, lv.x.wish, lv.names.x, target="ja
                     } else if(grepl("star", partable$mat[i])){
                         pname <- paste("i", strsplit(partable$mat[i], "star")[[1]][1], sep="")
                         partype <- grep(pname, names(dp))
+                    } else if(partable$mat[i] == "alpha" & partable$lhs[i] %in% ov.names) {
+                      partype <- "nu"
                     } else {
                         partype <- grep(partable$mat[i], names(dp))
                     }
