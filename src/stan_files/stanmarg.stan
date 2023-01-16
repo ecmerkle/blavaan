@@ -174,8 +174,8 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
       B[clz] = q_zz + 2 * q_yz - q_yyc;
     }
 
-    q_W = (nperclus - 1) * sum(Sigma_w_inv .* S_PW);
-    L_W = (nperclus - 1) * Sigma_w_ld;
+    q_W = (nperclus - to_vector(clus_size_ns)) * sum(Sigma_w_inv .* S_PW);
+    L_W = (nperclus - to_vector(clus_size_ns)) * Sigma_w_ld;
 
     loglik = -.5 * ((L .* to_vector(clus_size_ns)) + (B .* to_vector(clus_size_ns)) + q_W + L_W);
     // add constant, line 300 lav_mvnorm_cluster
@@ -482,6 +482,8 @@ data {
   vector[p_tilde] mean_d[ncluster_sizes]; // sample means by unique cluster size
   matrix[p_tilde, p_tilde] cov_d[ncluster_sizes]; // sample covariances by unique cluster size
   matrix[p_tilde, p_tilde] cov_w; // observed "within" covariance matrix
+  vector[p_tilde] mean_d_full[nclus[2]]; // sample means/covs by cluster, for clusterwise log-densities
+  matrix[p_tilde, p_tilde] cov_d_full[nclus[2]];
   int N_within; // number of within variables
   int N_between; // number of between variables
   int N_both; // number of variables at both levels
@@ -721,6 +723,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
   matrix[m_c, m_c] I_c = diag_matrix(rep_vector(1, m_c));
   
   int Ncont = p + q - Nord;
+  int<lower = 0> intone[nclus[2] > 1 ? nclus[2] : 0];
   
   int g_start1[Ng,2];
   int g_start4[Ng,2];
@@ -963,6 +966,9 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
     }
   }
 
+  // for clusterwise loglik computations
+  if (nclus[2] > 1) for (i in 1:nclus[2]) intone[i] = 1;
+  
   if (!ord && use_suff) {
     // sufficient stat matrices by pattern, moved to left for missing
     for (patt in 1:Np) {
@@ -1419,7 +1425,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   vector[len_free_c[9]] Psi_var_c;
 
   // loglik + ppp
-  vector[Ntot] log_lik; // for loo, etc
+  vector[nclus[2] > 1 ? nclus[2] : Ntot] log_lik; // for loo, etc
   vector[Ntot] log_lik_sat; // for ppp
   vector[p + q] YXstar_rep[Ntot]; // artificial data
   vector[Ntot] log_lik_rep; // for loo, etc
@@ -1584,6 +1590,13 @@ generated quantities { // these matrices are saved in the output but do not figu
     }
     
     // compute log-likelihoods
+    if (nclus[2] > 1) { // multilevel
+      log_lik = twolevel_logdens(mean_d_full, cov_d_full, S_PW[1], nclus, cluster_size, cluster_size,
+				 nclus[2], intone, Mu[1], Sigma[1], Mu_c[1], Sigma_c[1],
+				 ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
+				 Xvar[1], p_tilde, N_within, N_between, N_both, 0.0);
+    }
+
     zmat = rep_matrix(0, p + q, p + q);
     for (mm in 1:Np) {
       obsidx = Obsvar[mm,];
@@ -1594,7 +1607,9 @@ generated quantities { // these matrices are saved in the output but do not figu
       grpidx = grpnum[mm];
       
       for (jj in r1:r2) {
-	log_lik[jj] = multi_normal_suff(YXstar[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu[grpidx, obsidx[1:Nobs[mm]]], Sigmainv[mm], 1);
+	if (nclus[2] == 1) {
+	  log_lik[jj] = multi_normal_suff(YXstar[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu[grpidx, obsidx[1:Nobs[mm]]], Sigmainv[mm], 1);
+	}
 	if (do_test) {
 	  // we add loglik[jj] here so that _sat always varies and does not lead to
 	  // problems with rhat and neff computations

@@ -1083,7 +1083,7 @@ lav2standata <- function(lavobject) {
     YLp <- lavobject@SampleStats@YLp[[1]]
     dat$mean_d <- YLp[[2]]$mean.d
     dat$cov_w <- YLp[[2]]$Sigma.W
-
+    
     cov_d <- YLp[[2]]$cov.d
     for (i in 1:length(cov_d)) {
       if (!inherits(cov_d[[i]], "matrix")) cov_d[[i]] <- with(dat,
@@ -1091,6 +1091,21 @@ lav2standata <- function(lavobject) {
                                                                      N_between + N_both + N_within))
     }
     dat$cov_d <- cov_d
+
+    ## clusterwise data summaries, for loo and waic and etc
+    Lp$cluster.sizes[[2]] <- dat$cluster_size
+    Lp$ncluster.sizes[[2]] <- dat$nclus[2]
+    Lp$lcuster.size.ns[[2]] <- rep(1, dat$nclus[2])
+    sumfull <- lavaan:::lav_samplestats_cluster_patterns(lavInspect(lavobject, 'data'), Lp)
+    dat$mean_d_full <- sumfull[[2]]$mean.d
+
+    cov_d_full <- sumfull[[2]]$cov.d
+    for (i in 1:length(cov_d_full)) {
+      if (!inherits(cov_d_full[[i]], "matrix")) cov_d_full[[i]] <- with(dat,
+                                                                        matrix(0, N_between + N_both + N_within,
+                                                                               N_between + N_both + N_within))
+    }
+    dat$cov_d_full <- cov_d_full
   } else {
     dat$nclus <- array(1, 2)
     dat$cluster_size <- array(1, 1)
@@ -1111,6 +1126,8 @@ lav2standata <- function(lavobject) {
     dat$mean_d <- array(0, c(1, 0))
     dat$cov_w <- array(0, c(0, 0))
     dat$cov_d <- array(0, c(1, 0, 0))
+    dat$mean_d_full <- array(0, c(1, 0))
+    dat$cov_d_full <- array(0, c(1, 0, 0))
   } # multilevel
   
   if (ord) {

@@ -216,7 +216,8 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           dumlv = NULL, # for sampling lvs
                           wigind = NULL, # wiggle indicator
                           pri_only = FALSE, # prior predictive sampling
-                          mean_d, cov_w, cov_d, nclus, cluster_size, ncluster_sizes, # level 2 data
+                          mean_d, cov_w, cov_d, nclus, cluster_size, ncluster_sizes,
+                          mean_d_full, cov_d_full,              # level 2 data
                           cluster_sizes, cluster_size_ns, between_idx, N_between, within_idx,
                           N_within, both_idx, N_both, ov_idx1, ov_idx2, p_tilde, N_lev,
                           Lambda_y_skeleton_c = NULL, # level 2 matrices
@@ -314,6 +315,8 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$mean_d <- mean_d
   dat$cov_w <- cov_w
   dat$cov_d <- cov_d
+  dat$mean_d_full <- mean_d_full
+  dat$cov_d_full <- cov_d_full
   dat$nclus <- nclus
   dat$cluster_size <- cluster_size
   dat$ncluster_sizes <- ncluster_sizes
