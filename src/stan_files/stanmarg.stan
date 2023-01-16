@@ -29,7 +29,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   }
 
 
-  real twolevel_logdens(vector[] mean_d, matrix[] cov_d, matrix S_PW, int[] nclus, int[] clus_size, int[] clus_sizes, int nclus_sizes, int[] clus_size_ns, vector impl_Muw, matrix impl_Sigmaw, vector impl_Mub, matrix impl_Sigmab, int[] ov_idx1, int[] ov_idx2, int[] within_idx, int[] between_idx, int[] both_idx, int[] ov_x_idx, int p_tilde, int N_within, int N_between, int N_both, real loglik_x){
+  vector twolevel_logdens(vector[] mean_d, matrix[] cov_d, matrix S_PW, int[] nclus, int[] clus_size, int[] clus_sizes, int nclus_sizes, int[] clus_size_ns, vector impl_Muw, matrix impl_Sigmaw, vector impl_Mub, matrix impl_Sigmab, int[] ov_idx1, int[] ov_idx2, int[] within_idx, int[] between_idx, int[] both_idx, int[] ov_x_idx, int p_tilde, int N_within, int N_between, int N_both, real loglik_x){
     matrix[p_tilde, p_tilde + 1] W_tilde;
     matrix[p_tilde, p_tilde] W_tilde_cov;
     matrix[p_tilde, p_tilde + 1] B_tilde;
@@ -63,10 +63,11 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     real q_zz;
     real q_yz;
     real q_yyc;
-    real P;
-    real q_W;
-    real L_W;
-    real loglik;
+    vector[nclus_sizes] P;
+    vector[nclus_sizes] q_W;
+    vector[nclus_sizes] L_W;
+    vector[nclus_sizes] loglik;
+    vector[nclus_sizes] nperclus = to_vector(clus_sizes) .* to_vector(clus_size_ns);
 
     // 1. compute necessary vectors/matrices, like lav_mvnorm_cluster_implied22l() of lav_mvnorm_cluster.R
     W_tilde = calc_W_tilde(impl_Sigmaw, impl_Muw, ov_idx1, p_tilde);
@@ -173,12 +174,12 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
       B[clz] = q_zz + 2 * q_yz - q_yyc;
     }
 
-    q_W = (sum(clus_size) - size(clus_size)) * sum(Sigma_w_inv .* S_PW);
-    L_W = (sum(clus_size) - size(clus_size)) * Sigma_w_ld;
+    q_W = (nperclus - 1) * sum(Sigma_w_inv .* S_PW);
+    L_W = (nperclus - 1) * Sigma_w_ld;
 
-    loglik = -.5 * (sum(L .* to_vector(clus_size_ns)) + sum(B .* to_vector(clus_size_ns)) + q_W + L_W);
+    loglik = -.5 * ((L .* to_vector(clus_size_ns)) + (B .* to_vector(clus_size_ns)) + q_W + L_W);
     // add constant, line 300 lav_mvnorm_cluster
-    P = nclus[1] * (N_within + N_both) + nclus[2] * N_between;
+    P = nperclus * (N_within + N_both) + N_between;
 
     loglik += -.5 * (P * log(2 * pi()));
     if (size(ov_x_idx) > 0) {
