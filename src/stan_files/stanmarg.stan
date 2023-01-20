@@ -493,6 +493,7 @@ data {
   int ov_idx1[N_lev[1]];
   int ov_idx2[N_lev[2]];
   int both_idx[N_both];
+  real log_lik_x; // ll of fixed x variables
   
   
   /* sparse matrix representations of skeletons of coefficient matrices, 
@@ -1288,11 +1289,11 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   if (nclus[2] > 1 && has_data) {
     // TODO compute loglik_x if we have fixed.x
 
-    // FIXME change Nx[1] for missing data/etc; S_PW for multiple groups; the final 0 is for loglik_x
+    // FIXME change Nx[1] for missing data/etc; S_PW for multiple groups
     target += twolevel_logdens(mean_d, cov_d, S_PW[1], nclus, cluster_size, cluster_sizes,
 			       ncluster_sizes, cluster_size_ns, Mu[1], Sigma[1], Mu_c[1], Sigma_c[1],
 			       ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
-			       Xvar[1], p_tilde, N_within, N_between, N_both, 0.0);
+			       Xvar[1], p_tilde, N_within, N_between, N_both, log_lik_x);
   } else if (has_data) {
     int obsidx[p + q];
     int xidx[p + q];
@@ -1622,7 +1623,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 	}
 
 	// log_lik_sat, log_lik_sat_rep
-	if (Nx[mm] > 0) {
+	if (Nx[mm] > 0 && nclus[2] == 1) {
 	  log_lik[jj] += -multi_normal_suff(YXstar[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigmainv[grpidx], xidx, Nx[mm], p + q, logdetSigma_grp[grpidx]), 1);
 	  if (do_test) {
 	    log_lik_sat[jj] += multi_normal_suff(YXstar[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigmainv[grpidx], xidx, Nx[mm], p + q, logdetSigma_grp[grpidx]), 1);

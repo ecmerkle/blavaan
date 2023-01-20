@@ -1042,9 +1042,10 @@ lav2standata <- function(lavobject) {
       dat$Nobs <- array(ptot, dat$Np)
     }
     dat$Nx <- array(length(xidx), dat$Np)
+
     dat$Xvar <- dat$Xdatvar <- matrix(xidx, dat$Np, length(xidx), byrow=TRUE)
     if (length(xidx) < nvar) {
-      if (multilevel & length(xidx) > 0) {
+      if (multilevel) {
         dat$Xvar <- dat$Xdatvar <- cbind(dat$Xvar,
                                          matrix(allvars[!(allvars %in% xidx)], dat$Np,
                                                 ptot - length(xidx), byrow = TRUE))
@@ -1083,6 +1084,7 @@ lav2standata <- function(lavobject) {
     YLp <- lavobject@SampleStats@YLp[[1]]
     dat$mean_d <- YLp[[2]]$mean.d
     dat$cov_w <- YLp[[2]]$Sigma.W
+    dat$log_lik_x <- YLp[[2]]$loglik.x
     
     cov_d <- YLp[[2]]$cov.d
     for (i in 1:length(cov_d)) {
@@ -1125,6 +1127,7 @@ lav2standata <- function(lavobject) {
     
     dat$mean_d <- array(0, c(1, 0))
     dat$cov_w <- array(0, c(0, 0))
+    dat$log_lik_x <- 0
     dat$cov_d <- array(0, c(1, 0, 0))
     dat$mean_d_full <- array(0, c(1, 0))
     dat$cov_d_full <- array(0, c(1, 0, 0))
