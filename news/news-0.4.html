@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-4.1016</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-4.1018</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -87,9 +87,9 @@
 </ul></div>
 </div>
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.4-2" id="version-04-2">Version 0.4-2<a class="anchor" aria-label="anchor" href="#version-04-2"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.4-3" id="version-04-3">Version 0.4-3<a class="anchor" aria-label="anchor" href="#version-04-3"></a></h2><p class="text-muted">CRAN release: 2022-05-11</p>
 <div class="section level3">
-<h3 id="new-features-0-4-2">New features<a class="anchor" aria-label="anchor" href="#new-features-0-4-2"></a></h3>
+<h3 id="new-features-0-4-3">New features<a class="anchor" aria-label="anchor" href="#new-features-0-4-3"></a></h3>
 <ul><li><p>For target = “stan”, most models should run faster than they did in earlier versions (use of sufficient statistics)</p></li>
 <li><p>Posterior summaries are faster for ordinal models (using mnormt::sadmvn() by default)</p></li>
 <li><p>Variational Bayes option added: target=“vb”, which uses rstan::vb()</p></li>
@@ -99,9 +99,21 @@
 <li><p>loo() moment matching available by passing mcmcextra = list(data = list(moment_match_k_threshold))</p></li>
 </ul></div>
 <div class="section level3">
-<h3 id="bugsglitches-discovered-after-the-release-0-4-2">Bugs/glitches discovered after the release:<a class="anchor" aria-label="anchor" href="#bugsglitches-discovered-after-the-release-0-4-2"></a></h3>
+<h3 id="bugsglitches-discovered-after-the-release-0-4-3">Bugs/glitches discovered after the release:<a class="anchor" aria-label="anchor" href="#bugsglitches-discovered-after-the-release-0-4-3"></a></h3>
 <ul><li><p>target = “stan” fails when there are complete data in one group and missing data in another group</p></li>
 <li><p>blavPredict(, type=“ymis”) still not available for models with ordinal variables</p></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4-4" id="version-04-4">Version 0.4-4<a class="anchor" aria-label="anchor" href="#version-04-4"></a></h2>
+<div class="section level3">
+<h3 id="new-features-0-4-4">New features<a class="anchor" aria-label="anchor" href="#new-features-0-4-4"></a></h3>
+<ul><li><p>Users are warned about priors on covariance matrices that are neither diagonal nor unrestricted</p></li>
+<li><p>For models where observed variable intercepts appear in the latent intercept vector (alpha), default priors come from the observed intercept vector nu (as the user might expect)</p></li>
+<li><p>inits = “simple” is now default (instead of “prior”), to address some convergence problems</p></li>
+<li><p>For stan targets, “:=” can now be used as an identity function</p></li>
+<li><p>For target = “stan”, fix the missing data issue from 0.4-3</p></li>
+<li><p>Column names are added to blavPredict(, type=“lv”)</p></li>
 </ul></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
