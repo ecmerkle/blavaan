@@ -1,4 +1,20 @@
-# Version 0.4-2
+# Version 0.4-4
+## New features
+* Users are warned about priors on covariance matrices that are neither diagonal nor unrestricted
+
+* For models where observed variable intercepts appear in the latent intercept vector (alpha), default priors come from the observed intercept vector nu (as the user might expect)
+
+* inits = "simple" is now default (instead of "prior"), to address some convergence problems
+
+* For stan targets, ":=" can now be used as an identity function
+
+* For target = "stan", fix the missing data issue from 0.4-3
+
+* Column names are added to blavPredict(, type="lv")
+
+
+
+# Version 0.4-3
 ## New features
 * For target = "stan", most models should run faster than they did in earlier versions (use of sufficient statistics)
 
