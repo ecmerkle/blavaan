@@ -968,7 +968,7 @@ lav2standata <- function(lavobject) {
   
   ord <- as.numeric(lavInspect(lavobject, 'categorical'))
   multilevel <- lavInspect(lavobject, 'options')$clustered
-  if (multilevel) Lp <- lavobject@Data@Lp[[1]]
+  if (multilevel) Lp <- lavobject@Data@Lp
   dat$ord <- ord
   dat$N <- lavInspect(lavobject, 'nobs')
   
@@ -1062,30 +1062,39 @@ lav2standata <- function(lavobject) {
   }
   dat$grpnum <- array(dat$grpnum, length(dat$grpnum))
 
-  if (multilevel) {    
-    dat$nclus <- as.integer(unlist(Lp$nclusters))
-    dat$cluster_size <- Lp$cluster.size[[2]]
-    dat$cluster_sizes <- Lp$cluster.sizes[[2]]
-    dat$ncluster_sizes <- length(dat$cluster_sizes)
-    dat$cluster_size_ns <- Lp$cluster.size.ns[[2]]
-    dat$between_idx <- Lp$between.idx[[2]]
+  if (multilevel) {
+    ## NB: Lp has one list entry per group
+    dat$nclus <- array(t(sapply(Lp, function(x) x$nclusters)), dim = c(Ng, 2))
+    ## these are in one vector to avoid ragged arrays in Stan. We need ncluster_sizes to decide
+    ## what sizes belong to which group.
+    dat$cluster_size <- unlist(sapply(Lp, function(x) x$cluster.size[[2]])) 
+    dat$cluster_sizes <- unlist(sapply(Lp, function(x) x$cluster.sizes[[2]]))
+    dat$ncluster_sizes <- array(sapply(Lp, function(x) length(x$cluster.sizes[[2]])), Ng)
+    dat$cluster_size_ns <- unlist(sapply(Lp, function(x) x$cluster.size.ns[[2]]))
+    ## we assume variable indices are the same across groups, this could be revisited later
+    dat$between_idx <- Lp[[1]]$between.idx[[2]]
     dat$N_between <- length(dat$between_idx)
-    dat$within_idx <- array(Lp$within.idx[[2]], length(Lp$within.idx[[2]]))
+    dat$within_idx <- array(Lp[[1]]$within.idx[[2]], length(Lp[[1]]$within.idx[[2]]))
     dat$N_within <- length(dat$within_idx)
-    dat$both_idx <- Lp$both.idx[[2]]
+    dat$both_idx <- Lp[[1]]$both.idx[[2]]
     dat$N_both <- length(dat$both_idx)
-    dat$ov_idx1 <- Lp$ov.idx[[1]]
-    dat$ov_idx2 <- Lp$ov.idx[[2]]
+    dat$ov_idx1 <- Lp[[1]]$ov.idx[[1]]
+    dat$ov_idx2 <- Lp[[1]]$ov.idx[[2]]
     dat$p_tilde <- length(unique(c(dat$ov_idx1, dat$ov_idx2)))
     dat$N_lev <- c(length(dat$ov_idx1), length(dat$ov_idx2))
     dat$between_idx <- c(dat$between_idx, sort(c(dat$within_idx, dat$both_idx)))
 
     
-    YLp <- lavobject@SampleStats@YLp[[1]]
-    dat$mean_d <- YLp[[2]]$mean.d
-    dat$cov_w <- YLp[[2]]$Sigma.W
-    dat$log_lik_x <- YLp[[2]]$loglik.x
-    
+    YLp <- lavobject@SampleStats@YLp # NB: one list entry per group
+    dat$mean_d <- do.call("rbind", sapply(YLp, function(x) do.call("rbind", x[[2]]$mean.d)))
+
+    cov_w <- array(unlist(lapply(YLp, function(x) x[[2]]$Sigma.W)), dim = c(ncol(dat$mean_d),
+                                                                            ncol(dat$mean_d),
+                                                                            Ng))
+    dat$cov_w <- aperm(cov_w, c(3, 1, 2))
+    dat$log_lik_x <- array(sapply(YLp, function(x) x[[2]]$loglik.x), Ng)
+
+    ## stopped here
     cov_d <- YLp[[2]]$cov.d
     for (i in 1:length(cov_d)) {
       if (!inherits(cov_d[[i]], "matrix")) cov_d[[i]] <- with(dat,

@@ -479,9 +479,9 @@ data {
   int<lower=1> cluster_sizes[ncluster_sizes]; // unique cluster sizes
   int<lower=1> cluster_size_ns[ncluster_sizes]; // number of clusters of each size
   int p_tilde; // total number of variables
-  vector[p_tilde] mean_d[ncluster_sizes]; // sample means by unique cluster size
-  matrix[p_tilde, p_tilde] cov_d[ncluster_sizes]; // sample covariances by unique cluster size
-  matrix[p_tilde, p_tilde] cov_w; // observed "within" covariance matrix
+  vector[p_tilde] mean_d[Ng, ncluster_sizes]; // sample means by unique cluster size
+  matrix[p_tilde, p_tilde] cov_d[Ng, ncluster_sizes]; // sample covariances by unique cluster size
+  matrix[p_tilde, p_tilde] cov_w[Ng]; // observed "within" covariance matrix
   vector[p_tilde] mean_d_full[nclus[2]]; // sample means/covs by cluster, for clusterwise log-densities
   matrix[p_tilde, p_tilde] cov_d_full[nclus[2]];
   int N_within; // number of within variables
