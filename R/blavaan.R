@@ -819,8 +819,8 @@ blavaan <- function(...,  # default lavaan arguments
                         lavpartable$free > 0)
       if(any(lavpartable$psrf[psrfrows] > 1.2)) attr(x, "converged") <- FALSE
 
-      ## warn if psrf is large
-      if(!attr(x, "converged") && lavoptions$warn) {
+      ## warn if psrf is large and if we aren't getting the stan warnings
+      if(!attr(x, "converged") && lavoptions$warn && !grepl("stan", target)) {
         warning("blavaan WARNING: at least one parameter has a rhat > 1.2.", call. = FALSE)
       }
     }
@@ -897,6 +897,10 @@ blavaan <- function(...,  # default lavaan arguments
 
     ## 8. "test statistics": marginal log-likelihood, dic
     TEST <- list()
+    domll <- TRUE
+    covres <- checkcovs(LAV)
+    ## in these cases, we cannot realibly evaluate the priors
+    if(ordmod | !(covres$diagpsi | covres$fullpsi) | !(covres$diagthet | covres$fullthet)) domll <- FALSE
     if(lavoptions$test != "none") { # && attr(x, "converged")) {
         TEST <- blav_model_test(lavmodel            = lavmodel,
                                 lavpartable         = lavpartable,
@@ -910,7 +914,8 @@ blavaan <- function(...,  # default lavaan arguments
                                 lavobject           = LAV,
                                 samplls             = samplls,
                                 jagextra            = mcmcextra,
-                                stansumm            = stansumm)
+                                stansumm            = stansumm,
+                                domll               = domll)
         if(verbose) cat(" done.\n")
     }
     timing$TEST <- (proc.time()[3] - start.time)
@@ -1001,7 +1006,13 @@ blavaan <- function(...,  # default lavaan arguments
         lavInspect(blavaan, "post.check")
     }
 
-    if(jag.do.fit & lavoptions$warn & !prisamp & !usevb){
+    if(with(covres, !(diagpsi | fullpsi) | !(diagthet | fullthet))){
+        badmat <- "latent"
+        if(with(covres, !(diagthet | fullthet))) badmat <- "observed"
+        warning("blavaan WARNING: As specified, the ", badmat, " variable covariance matrix is neither diagonal nor unrestricted, so the actual prior likely differs from the stated prior. See\n https://arxiv.org/abs/2301.08667", call. = FALSE)
+    }
+      
+    if(jag.do.fit & lavoptions$warn & !prisamp & !usevb & !grepl("stan", target)){
         if(any(blavInspect(blavaan, 'neff') < 100)){
             warning("blavaan WARNING: Small effective sample sizes (< 100) for some parameters.", call. = FALSE)
         }

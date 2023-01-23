@@ -377,3 +377,34 @@ Mp2dataidx <- function(Mp, case.idx, exclude.empty = TRUE){
 
   out
 }
+
+## check for restricted model covariance matrices, which causes problems for priors
+checkcovs <- function(lavobject){
+  free <- lavInspect(lavobject, 'free')
+
+  ## ensure each list entry is one group
+  if (inherits(free[[1]], "matrix")) free <- list(free)
+
+  if ("psi" %in% names(free[[1]])) {
+    psis <- lapply(free, function(x) x$psi)
+    psinums <- sapply(psis, function(x) x[lower.tri(x)])
+    diagpsi <- all(psinums == 0L, na.rm = TRUE)
+    fullpsi <- all(psinums > 0L, na.rm = TRUE) & (anyDuplicated(psinums, MARGIN = 0) == 0L)
+  } else {
+    diagpsi <- FALSE
+    fullpsi <- TRUE
+  } 
+
+  if ("theta" %in% names(free[[1]])) {
+    thets <- lapply(free, function(x) x$theta)
+    thetnums <- sapply(thets, function(x) x[lower.tri(x)])
+    diagthet <- all(thetnums == 0L)
+    ## surprising if this happens:
+    fullthet <- all(thetnums > 0L) & (anyDuplicated(thetnums, MARGIN = 0) == 0L)
+  } else {
+    diagthet <- FALSE
+    fullthet <- TRUE
+  }
+
+  list(diagpsi = diagpsi, fullpsi = fullpsi, diagthet = diagthet, fullthet = fullthet)
+}
