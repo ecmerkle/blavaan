@@ -1007,9 +1007,9 @@ blavaan <- function(...,  # default lavaan arguments
     }
 
     if(with(covres, !(diagpsi | fullpsi) | !(diagthet | fullthet))){
-        badmat <- "latent"
-        if(with(covres, !(diagthet | fullthet))) badmat <- "observed"
-        warning("blavaan WARNING: As specified, the ", badmat, " variable covariance matrix is neither diagonal nor unrestricted, so the actual prior likely differs from the stated prior. See\n https://arxiv.org/abs/2301.08667", call. = FALSE)
+        badmat <- "psi"
+        if(with(covres, !(diagthet | fullthet))) badmat <- "theta"
+        warning("blavaan WARNING: As specified, the ", badmat, " covariance matrix is neither diagonal nor unrestricted, so the actual prior might differ from the stated prior. See\n https://arxiv.org/abs/2301.08667", call. = FALSE)
     }
       
     if(jag.do.fit & lavoptions$warn & !prisamp & !usevb & !grepl("stan", target)){

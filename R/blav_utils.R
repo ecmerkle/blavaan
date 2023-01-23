@@ -385,7 +385,7 @@ checkcovs <- function(lavobject){
   ## ensure each list entry is one group
   if (inherits(free[[1]], "matrix")) free <- list(free)
 
-  if ("psi" %in% names(free[[1]])) {
+  if (nrow(free[[1]]$psi) > 0) {
     psis <- lapply(free, function(x) x$psi)
     psinums <- sapply(psis, function(x) x[lower.tri(x)])
     diagpsi <- all(psinums == 0L, na.rm = TRUE)
@@ -393,14 +393,14 @@ checkcovs <- function(lavobject){
   } else {
     diagpsi <- FALSE
     fullpsi <- TRUE
-  } 
+  }
 
-  if ("theta" %in% names(free[[1]])) {
+  if (nrow(free[[1]]$theta) > 0) {
     thets <- lapply(free, function(x) x$theta)
     thetnums <- sapply(thets, function(x) x[lower.tri(x)])
-    diagthet <- all(thetnums == 0L)
+    diagthet <- all(thetnums == 0L, na.rm = TRUE)
     ## surprising if this happens:
-    fullthet <- all(thetnums > 0L) & (anyDuplicated(thetnums, MARGIN = 0) == 0L)
+    fullthet <- all(thetnums > 0L, na.rm = TRUE) & (anyDuplicated(thetnums, MARGIN = 0) == 0L)
   } else {
     diagthet <- FALSE
     fullthet <- TRUE
