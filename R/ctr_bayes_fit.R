@@ -253,7 +253,8 @@ BayesChiFit <- function(obs, reps = NULL, nvar, pD, N, Ngr = 1,
   p <- p * Ngr
   ## Substract parameters and estimated parameters
   dif.ppD <- p - pD
-  if (dif.ppD < 0) warning("blavaan WARNING: The effective number of parameters exceeds the number of sample statistics (covariances, etc.), so fit index calculations may lead to uninterpretable results.", call. = FALSE)
+
+  if (dif.ppD[1] < 0) warning("blavaan WARNING: The effective number of parameters exceeds the number of sample statistics (covariances, etc.), so fit index calculations may lead to uninterpretable results.", call. = FALSE)
   
   nonc <- obs - reps - dif.ppD # == obs - p when rescale == "devm" because reps = pD
   ## Correct if numerator is smaller than zero
