@@ -480,7 +480,7 @@ data {
   int<lower=1> cluster_size_ns[ncluster_sizes]; // number of clusters of each size
   int p_tilde; // total number of variables
   vector[p_tilde] mean_d[Ng, ncluster_sizes]; // sample means by unique cluster size
-  matrix[p_tilde, p_tilde] cov_d[Ng, ncluster_sizes]; // sample covariances by unique cluster size
+  matrix[p_tilde, p_tilde] cov_d[ncluster_sizes]; // sample covariances by unique cluster size
   matrix[p_tilde, p_tilde] cov_w[Ng]; // observed "within" covariance matrix
   vector[p_tilde] mean_d_full[nclus[2]]; // sample means/covs by cluster, for clusterwise log-densities
   matrix[p_tilde, p_tilde] cov_d_full[nclus[2]];
@@ -1145,7 +1145,7 @@ transformed parameters {
     if (nclus[2] > 1) {
       // remove between variables, for likelihood computations
       // TODO handle multiple groups in cov_w
-      S_PW[g] = cov_w[between_idx[(N_between + 1):p_tilde], between_idx[(N_between + 1):p_tilde]];
+      S_PW[g] = cov_w[g, between_idx[(N_between + 1):p_tilde], between_idx[(N_between + 1):p_tilde]];
     }
   }
   

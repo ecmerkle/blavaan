@@ -1064,7 +1064,7 @@ lav2standata <- function(lavobject) {
 
   if (multilevel) {
     ## NB: Lp has one list entry per group
-    dat$nclus <- array(t(sapply(Lp, function(x) x$nclusters)), dim = c(Ng, 2))
+    dat$nclus <- array(t(sapply(Lp, function(x) unlist(x$nclusters))), dim = c(Ng, 2))
     ## these are in one vector to avoid ragged arrays in Stan. We need ncluster_sizes to decide
     ## what sizes belong to which group.
     dat$cluster_size <- unlist(sapply(Lp, function(x) x$cluster.size[[2]])) 
@@ -1094,8 +1094,7 @@ lav2standata <- function(lavobject) {
     dat$cov_w <- aperm(cov_w, c(3, 1, 2))
     dat$log_lik_x <- array(sapply(YLp, function(x) x[[2]]$loglik.x), Ng)
 
-    ## stopped here
-    cov_d <- YLp[[2]]$cov.d
+    cov_d <- unlist(lapply(YLp, function(x) x[[2]]$cov.d), recursive = FALSE)
     for (i in 1:length(cov_d)) {
       if (!inherits(cov_d[[i]], "matrix")) cov_d[[i]] <- with(dat,
                                                               matrix(0, N_between + N_both + N_within,
@@ -1104,13 +1103,17 @@ lav2standata <- function(lavobject) {
     dat$cov_d <- cov_d
 
     ## clusterwise data summaries, for loo and waic and etc
-    Lp$cluster.sizes[[2]] <- dat$cluster_size
-    Lp$ncluster.sizes[[2]] <- dat$nclus[2]
-    Lp$lcuster.size.ns[[2]] <- rep(1, dat$nclus[2])
-    sumfull <- lavaan:::lav_samplestats_cluster_patterns(lavInspect(lavobject, 'data'), Lp)
-    dat$mean_d_full <- sumfull[[2]]$mean.d
+    csums <- c(0L, cumsum(dat$nclus[,2]))
+    sumfull <- vector("list", Ng)
+    for (g in 1:Ng) {
+      Lp[[g]]$cluster.sizes[[2]] <- dat$cluster_size[(csums[g] + 1):csums[g+1]]
+      Lp[[g]]$ncluster.sizes[[2]] <- dat$nclus[g,2]
+      Lp[[g]]$cluster.size.ns[[2]] <- rep(1, dat$nclus[g,2])
+      sumfull[[g]] <- lavaan:::lav_samplestats_cluster_patterns(lavInspect(lavobject, 'data')[[g]], Lp[[g]])
+    }
+    dat$mean_d_full <- do.call("rbind", sapply(sumfull, function(x) do.call("rbind", x[[2]]$mean.d)))
 
-    cov_d_full <- sumfull[[2]]$cov.d
+    cov_d_full <- unlist(lapply(sumfull, function(x) x[[2]]$cov.d), recursive = FALSE)
     for (i in 1:length(cov_d_full)) {
       if (!inherits(cov_d_full[[i]], "matrix")) cov_d_full[[i]] <- with(dat,
                                                                         matrix(0, N_between + N_both + N_within,
@@ -1118,11 +1121,11 @@ lav2standata <- function(lavobject) {
     }
     dat$cov_d_full <- cov_d_full
   } else {
-    dat$nclus <- array(1, 2)
-    dat$cluster_size <- array(1, 1)
-    dat$ncluster_sizes <- 1
-    dat$cluster_sizes <- array(1, 1)
-    dat$cluster_size_ns <- array(1, 1)
+    dat$nclus <- array(1, c(Ng, 2))
+    dat$cluster_size <- array(1, Ng)
+    dat$ncluster_sizes <- Ng
+    dat$cluster_sizes <- array(1, Ng)
+    dat$cluster_size_ns <- array(1, Ng)
     dat$between_idx <- array(0, 0)
     dat$N_between <- 0
     dat$within_idx <- array(0, 0)
@@ -1134,12 +1137,12 @@ lav2standata <- function(lavobject) {
     dat$p_tilde <- 0
     dat$N_lev <- array(0, 2)
     
-    dat$mean_d <- array(0, c(1, 0))
+    dat$mean_d <- array(0, c(Ng, 0))
     dat$cov_w <- array(0, c(0, 0))
     dat$log_lik_x <- 0
-    dat$cov_d <- array(0, c(1, 0, 0))
-    dat$mean_d_full <- array(0, c(1, 0))
-    dat$cov_d_full <- array(0, c(1, 0, 0))
+    dat$cov_d <- array(0, c(Ng, 0, 0))
+    dat$mean_d_full <- array(0, c(Ng, 0))
+    dat$cov_d_full <- array(0, c(Ng, 0, 0))
   } # multilevel
   
   if (ord) {
