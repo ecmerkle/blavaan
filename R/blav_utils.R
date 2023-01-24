@@ -408,3 +408,60 @@ checkcovs <- function(lavobject){
 
   list(diagpsi = diagpsi, fullpsi = fullpsi, diagthet = diagthet, fullthet = fullthet)
 }
+
+## check whether model cov matrix is block diagonal
+## uses matrices from lavInspect(, "free")
+blkdiag <- function(mat) {
+  isblk <- TRUE
+  cnum <- 1L
+  nblks <- 0
+  matrows <- NROW(mat)
+  blkse <- matrix(0, matrows, 3) # start/end of each block, and first free param in that block
+  while (isblk && cnum <= matrows) {
+    ## ending row of this potential block
+    currend <- which(mat[, cnum] > 0)
+    if (length(currend) > 0) {
+      currend <- max(currend)
+    } else {
+      ## a fixed diagonal entry, which is its own block
+      currend <- cnum
+    }
+
+    if (currend > cnum) {
+      ## check that columns cnum+1 to max() also equal max()
+      othend <- sapply((cnum + 1):currend, function(i) {
+        nzents <- which(mat[,i] > 0)
+        if (length(nzents) > 0) {
+          out <- max(nzents)
+        } else {
+          out <- i
+        }
+        out})
+        
+      if (all(othend == currend)) {
+        ## is this entire submatrix free?
+        submat <- mat[cnum:currend, cnum:currend]
+        if (all(submat[lower.tri(submat)] > 0)) {
+          nblks <- nblks + 1
+          blkse[nblks,] <- c(cnum, currend, min(submat[lower.tri(submat)]))
+          cnum <- currend + 1
+        } else {
+          isblk <- FALSE
+        }
+      } else {
+        isblk <- FALSE
+      }
+    } else if (currend == cnum) {
+      ## 1x1 block
+      nblks <- nblks + 1
+      blkse[nblks,] <- c(cnum, cnum, 0)
+      cnum <- cnum + 1
+    } else {
+      isblk <- FALSE
+    }
+  }
+
+  if (isblk) blkse <- blkse[1:nblks, , drop = FALSE]
+  
+  list(isblk = isblk, nblks = nblks, blkse = blkse)
+}
