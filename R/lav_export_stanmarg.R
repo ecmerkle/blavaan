@@ -168,7 +168,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
 lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=NULL, prisamp=FALSE, mcmcextra=NULL, level=1L, indat=NULL) {
   ## extract model and data characteristics from lavaan object
   opts <- lavInspect(lavobject, 'options')
-  multilevel <- opts$clustered
+  multilevel <- opts$.clustered
 
   ## if not multilevel, this creates empty matrices to pass to stan for level 2
   ## if (!multilevel & level > 1) stop("blavaan ERROR: higher levels requested, but this is not a multilevel model.")
@@ -188,10 +188,10 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     dat <- list()
     Ng <- indat$Ng
   }
-  
+
   freemats <- lavInspect(lavobject, 'free')
   if (multilevel) {
-    freemats <- freemats[[level]]
+    freemats <- freemats[2*(1:Ng) - 2 + level]
   } else if (level == 2L) {
     freemats <- list()
   }
@@ -204,7 +204,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   }
   estmats <- lavInspect(lavobject, 'est')
   if (multilevel) {
-    estmats <- estmats[[level]]
+    estmats <- estmats[2*(1:Ng) - 2 + level]
   } else if (level == 2L) {
     estmats <- list()
   }
@@ -828,7 +828,7 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
   ## check names in lavfree
   deltloc <- which(names(lavfree) == "delta")
   if(length(deltloc) > 0) lavfree <- lavfree[-deltloc]
-  if(!all(names(lavfree) %in% mapping)){
+  if(!all(names(lavfree) %in% mapping) || is.null(names(lavfree))){
     ## multiple groups? FIXME handle delta
     deltloc <- which(names(lavfree[[1]]) == "delta")
     if(length(deltloc) > 0) lavfree <- lapply(lavfree, function(x) x[-deltloc])
@@ -965,9 +965,9 @@ lav2standata <- function(lavobject) {
   Ng <- dat$Ng <- lavInspect(lavobject, 'ngroups')
   YX <- lavobject@Data@X
   nvar <- ncol(YX[[1]])
-  
+
   ord <- as.numeric(lavInspect(lavobject, 'categorical'))
-  multilevel <- lavInspect(lavobject, 'options')$clustered
+  multilevel <- lavInspect(lavobject, 'options')$.clustered
   if (multilevel) Lp <- lavobject@Data@Lp
   dat$ord <- ord
   dat$N <- lavInspect(lavobject, 'nobs')
@@ -1037,7 +1037,7 @@ lav2standata <- function(lavobject) {
     dat$Nobs <- array(nvar, dat$Np)
     dat$Obsvar <- matrix(1:nvar, dat$Np, nvar, byrow=TRUE)
     if (multilevel) {
-      ptot <- length(unique(c(Lp$ov.idx[[1]]))) #, Lp$ov.idx[[2]])))
+      ptot <- length(unique(c(Lp[[1]]$ov.idx[[1]]))) #, Lp$ov.idx[[2]])))
       dat$Obsvar <- matrix(1:ptot, dat$Np, ptot, byrow=TRUE)
       dat$Nobs <- array(ptot, dat$Np)
     }

@@ -760,8 +760,9 @@ blavaan <- function(...,  # default lavaan arguments
         } else {
           draw_mat <- as.matrix(res)
           if("level" %in% names(lavpartable)) {
-            parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')$within, l2s$free2, jagtrans$data, res, colnames(draw_mat))
-            parests2 <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')[[2]], l2s$free2, jagtrans$data, res, colnames(draw_mat), level = 2L)
+            Ng <- lavInspect(LAV, 'ngroups')
+            parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')[2*(1:Ng) - 1], l2s$free2, jagtrans$data, res, colnames(draw_mat))
+            parests2 <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')[2*(1:Ng)], l2s$free2, jagtrans$data, res, colnames(draw_mat), level = 2L)
             parests$x <- c(parests$x, parests2$x)
             ## combine list elements of the partables
             parests$lavpartable <- mapply("c", parests$lavpartable, parests2$lavpartable, SIMPLIFY = FALSE)

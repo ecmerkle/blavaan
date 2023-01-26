@@ -1302,9 +1302,9 @@ model { // N.B.: things declared in the model block do not get saved in the outp
       r4 += ncluster_sizes[grpidx];
       
       // FIXME change Nx[1] for missing data/etc
-      target += twolevel_logdens(mean_d[r1:r2], cov_d[r1:r2], S_PW[grpidx], nclus[grpidx,],
+      target += twolevel_logdens(mean_d[r3:r4], cov_d[r3:r4], S_PW[grpidx], nclus[grpidx,],
 				 cluster_size[r1:r2], cluster_sizes[r3:r4],
-				 ncluster_sizes[grpidx], cluster_size_ns[r3:4], Mu[grpidx],
+				 ncluster_sizes[grpidx], cluster_size_ns[r3:r4], Mu[grpidx],
 				 Sigma[grpidx], Mu_c[grpidx], Sigma_c[grpidx],
 				 ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
 				 Xvar[1], p_tilde, N_within, N_between, N_both, log_lik_x[grpidx]);
