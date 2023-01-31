@@ -883,7 +883,12 @@ lav2standata <- function(lavobject) {
 
   Ng <- dat$Ng <- lavInspect(lavobject, 'ngroups')
   YX <- lavobject@Data@X
-  nvar <- ncol(YX[[1]])
+  S <- lavobject@SampleStats@cov
+  if (!lavInspect(lavobject, 'options')$meanstructure) {
+    nvar <- ncol(lavInspect(lavobject, 'sampstat')[[1]])
+  } else {
+    nvar <- ncol(YX[[1]])
+  }
   ord <- as.numeric(lavInspect(lavobject, 'categorical'))
   dat$ord <- ord
   dat$N <- lavInspect(lavobject, 'nobs')
@@ -961,6 +966,7 @@ lav2standata <- function(lavobject) {
     }
   }
   dat$YX <- do.call("rbind", YX)
+  dat$S <- S
   dat$grpnum <- array(dat$grpnum, length(dat$grpnum))
 
   if (ord) {

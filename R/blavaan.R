@@ -178,7 +178,8 @@ blavaan <- function(...,  # default lavaan arguments
     }
   
     # which arguments do we override?
-    lavArgsOverride <- c("meanstructure", "missing", "estimator", "conditional.x")
+    lavArgsOverride <- c("missing", "estimator", "conditional.x")
+    if(target != "stan") lavArgsOverride <- c(lavArgsOverride, "meanstructure")
     # always warn?
     warn.idx <- which(lavArgsOverride %in% dotNames)
     if(length(warn.idx) > 0L) {
@@ -211,12 +212,15 @@ blavaan <- function(...,  # default lavaan arguments
     # run for 1 iteration to obtain info about equality constraints, for npar
     dotdotdot$control <- list(iter.max = 1); dotdotdot$warn <- TRUE
     dotdotdot$optim.force.converged <- TRUE
-    dotdotdot$meanstructure <- TRUE
+    if(target != "stan") dotdotdot$meanstructure <- TRUE
     dotdotdot$missing <- "direct"   # direct/ml creates error? (bug in lavaan?)
-    if("ordered" %in% dotNames |
-       any(apply(dotdotdot$data, 2, function(x) inherits(x, "ordered")))){
+    ordmod <- FALSE
+    if("ordered" %in% dotNames) ordmod <- TRUE
+    if("data" %in% dotNames){
+        if(any(apply(dotdotdot$data, 2, function(x) inherits(x, "ordered")))) ordmod <- TRUE
+    }
+    if(ordmod){
       dotdotdot$missing <- "pairwise" # needed to get missing patterns
-      
       if("parameterization" %in% names(dotdotdot)){
         if(dotdotdot$parameterization == "delta"){
           warning("blavaan WARNING: the parameterization argument has no effect; theta parameterization will be used.", call. = FALSE)
@@ -297,18 +301,23 @@ blavaan <- function(...,  # default lavaan arguments
     # call lavaan
     mcdebug <- FALSE
     if("debug" %in% dotNames){
-      ## only debug mcmc stuff
-      mcdebug <- dotdotdot$debug
-      dotdotdot <- dotdotdot[-which(dotNames == "debug")]
+        ## only debug mcmc stuff
+        mcdebug <- dotdotdot$debug
+        dotdotdot <- dotdotdot[-which(dotNames == "debug")]
     }
     # for warnings related to setting up model/data:
     LAV <- do.call("lavaan", dotdotdot)
     dotdotdot$do.fit <- TRUE; dotdotdot$warn <- FALSE
+    if(LAV@Data@data.type != "moment"){
+        ## if no missing, set missing = "listwise" to avoid meanstructure if possible  
+        if(!any(is.na(lavInspect(LAV, 'data')))) dotdotdot$missing <- "listwise"
+    }
+
     # for initial values/parameter setup:
     LAV <- do.call("lavaan", dotdotdot)
 
-    if(LAV@Data@data.type == "moment") {
-        stop("blavaan ERROR: full data are required. consider using kd() from package semTools.")
+    if(LAV@Data@data.type == "moment" && target != "stan") {
+        stop('blavaan ERROR: full data are required for ', target, ' target.\n  Try target="stan", or consider using kd() from package semTools.')
     }
 
     # save.lvs in a model with no lvs
@@ -551,8 +560,10 @@ blavaan <- function(...,  # default lavaan arguments
                                            #"Theta_x_cov", "Theta_x_var",
                                            "Psi_cov", "Psi_var",
                                            #"Ph_cov", "Ph_var",
-                                           "Nu_free", "Alpha_free", "Tau_free",
-                                           "log_lik", "log_lik_sat", "ppp"))
+                                           "Nu_free", "Alpha_free", "Tau_free"))
+                    if(lavoptions$test != "none"){
+                      jagtrans$monitors <- c(jagtrans$monitors, "log_lik", "log_lik_sat", "ppp")
+                    }
 
                     if("init" %in% names(l2s)){
                       jagtrans <- c(jagtrans, list(inits = l2s$init))
@@ -794,7 +805,6 @@ blavaan <- function(...,  # default lavaan arguments
         ##        for ystar, could take means of truncated normals
         attr(x, "fx") <- get_ll(lavobject = LAV, standata = rjarg$data)[1]
         LAV@Options$target <- target
-
 
         if(save.lvs & jag.do.fit & !ordmod) {
             if(target == "jags"){
