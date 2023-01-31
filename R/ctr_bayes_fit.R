@@ -1,5 +1,5 @@
 ### Mauricio Garnier-Villareal and Terrence D. Jorgensen
-### Last updated: 9 June 2019
+### Last updated: 31 January 2023
 ### functions applying traditional SEM fit criteria to Bayesian models.
 ### Inspired by, and adpated from, Rens van de Schoot's idea for BRMSEA, as
 ### published in http://dx.doi.org/10.1177/0013164417709314
@@ -193,7 +193,7 @@ blavFitIndices <- function(object, thin = 1, pD = c("loo","waic","dic"),
 
   if (rescale != "mcmc") {
     out <- BayesChiFit(obs = chisqs, reps = reps,
-                       nvar = object@Model@nvar, pD = fit_pd,
+                       nvar = sum(object@Model@nvar), pD = fit_pd,
                        N = blavInspect(object, 'ntotal'),
                        Ngr = blavInspect(object, 'ngroups'),
                        Min1 = blavInspect(object, 'options')$mimic == "EQS",
