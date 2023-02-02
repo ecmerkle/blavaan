@@ -308,7 +308,7 @@ blavaan <- function(...,  # default lavaan arguments
     # for warnings related to setting up model/data:
     LAV <- do.call("lavaan", dotdotdot)
     dotdotdot$do.fit <- TRUE; dotdotdot$warn <- FALSE
-    if(LAV@Data@data.type != "moment"){
+    if(LAV@Data@data.type != "moment" && target == "stan"){
         ## if no missing, set missing = "listwise" to avoid meanstructure if possible
         if(!any(is.na(unlist(lavInspect(LAV, 'data'))))) dotdotdot$missing <- "listwise"
     }
