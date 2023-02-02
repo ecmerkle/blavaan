@@ -1,6 +1,8 @@
 dpriors <- function(..., target="stan"){
   userspec <- list(...)
 
+  if(length(userspec) > 0 && is.null(names(userspec))) stop("blavaan ERROR: dpriors() arguments require names (nu, lambda, etc)")
+  
   jagpres <- pkgcheck("runjags")
   stanpres <- pkgcheck("rstan")
 
