@@ -26,16 +26,20 @@ lvgqs <- function(modmats, standata, getlvs = TRUE) {
   } else {
     YXimp <- matrix(NA, NROW(YX), NCOL(YX))
   }
-  
+
   ## new matrices
   ovmean <- L_Y_A <- vector("list", Ng)
   for (g in 1:Ng){
-    ovmean[[g]] <- modmats[[g]]$nu
+    if ("nu" %in% names(modmats[[g]])){
+      ovmean[[g]] <- modmats[[g]]$nu
+    } else {
+      ovmean[[g]] <- t(standata$YXbar[g, , drop = FALSE])
+    }
 
     if (p > 0){
       L_Y_A[[g]] <- modmats[[g]]$lambda %*% solve(I - modmats[[g]]$beta)
 
-      if (standata$m > 0){
+      if (standata$m > 0 && "alpha" %in% names(modmats[[g]])){
         ovmean[[g]][1:p] <- ovmean[[g]][1:p,] + L_Y_A[[g]] %*% modmats[[g]]$alpha[1:m,]
       }
     }
