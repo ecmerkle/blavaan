@@ -24,9 +24,9 @@ set_stancovs <- function(partable, std.lv) {
                    partable$lhs != partable$rhs &
                    partable$free > 0L)
 
-  blkrow <- rep(NA, length(partable$id))
   partable$rhoidx <- rep(NA, length(partable$id))
-
+  blkrow <- rep(NA, ncol(partable)) #length(partable$id))
+  
   ## Only do this if covpars exist
   if(length(covpars) > 0){
     mvcov <- 0

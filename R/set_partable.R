@@ -48,7 +48,7 @@ set_phantoms <- function(partable, ov.names, lv.names, ov.names.x, lv.names.x, o
   ##   zcovs <- which(partable$ustart[covpars][fcovs] == 0)
   ##   covpars <- covpars[-fcovs[zcovs]]
   ## }
-  blkrow <- rep(NA, length(partable$id))
+  blkrow <- rep(NA, ncol(partable)) #length(partable$id))
   facovs <- NULL
 
   ## Only do this if covpars exist
@@ -123,7 +123,7 @@ nlvcovs)
           old.ridx <- ridx[old.idx]
           grp.idx <- partable$group[full.idx[1]]
         }
-          
+
         tmprows <- nrow(partable) + 1:3
         phname <- paste(".phant", i, sep="")
         partable <- rbind(partable, blkrow, blkrow, blkrow)
