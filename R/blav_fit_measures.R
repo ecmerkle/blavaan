@@ -226,8 +226,8 @@ blav_fit_measures <- function(object, fit.measures = "all",
         }
     }
     if(any(c("bic", "dic", "p_dic") %in% fit.measures)) {
-        if(lavInspect(object, "categorical") && compareVersion(packageDescription('lavaan')$Version, '0.6-10') < 0) stop("blavaan ERROR: lavaan 0.6-10 or higher is needed (you may need to install from github)")
-        if(is.na(object@external$samplls)) {
+      if(lavInspect(object, "categorical") && compareVersion(packageDescription('lavaan')$Version, '0.6-10') < 0) stop("blavaan ERROR: lavaan 0.6-10 or higher is needed (you may need to install from github)")
+        if(is.null(dim(object@external$samplls))) {
             samplls <- rowSums(casells)
             df <- 2*(object@Fit@fx - mean(samplls))
         } else {

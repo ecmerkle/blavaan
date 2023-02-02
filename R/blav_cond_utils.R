@@ -83,6 +83,9 @@ samp_kls <- function(lavjags        = NULL,
             } else {
                 mnvec0 <- as.numeric(implied0$mean[[g]])
                 mnvec1 <- as.numeric(implied1$mean[[g]])
+                if(length(mnvec0) == 0) {
+                    mnvec0 <- mnvec1 <- lavsamplestats@mean[[g]]
+                }
 
                 tmpkl <- tmpkl + lavsamplestats@nobs[[g]] *
                          kl_und(mnvec0, mnvec1, cmat0, invcmat0,

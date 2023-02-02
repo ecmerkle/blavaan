@@ -806,7 +806,7 @@ blavaan <- function(...,  # default lavaan arguments
         attr(x, "fx") <- get_ll(lavobject = LAV, standata = rjarg$data)[1]
         LAV@Options$target <- target
 
-        if(save.lvs & jag.do.fit & !ordmod) {
+        if(save.lvs && jag.do.fit && !ordmod && lavInspect(LAV, "meanstructure")) {
             if(target == "jags"){
                 fullpmeans <- summary(make_mcmc(res))[[1]][,"Mean"]
             } else {
@@ -859,7 +859,7 @@ blavaan <- function(...,  # default lavaan arguments
         sampkls <- NA
       }
       
-      if(save.lvs & !ordmod) {
+      if(save.lvs && !ordmod && lavInspect(LAV, "meanstructure")) {
         if(target == "stan"){
           lavmcmc <- make_mcmc(res, stanlvs) ## add on lvs
         }
@@ -980,7 +980,7 @@ blavaan <- function(...,  # default lavaan arguments
       if(save.lvs & target=="stan") extslot <- c(extslot, list(stanlvs = stanlvs))
     }
     if(jags.ic) extslot <- c(extslot, list(sampkls = sampkls))
-    if(save.lvs & !ordmod) {
+    if(save.lvs && !ordmod && lavInspect(LAV, "meanstructure")) {
       extslot <- c(extslot, list(cfx = cfx, csamplls = csamplls))
       if(jags.ic) extslot <- c(extslot, list(csampkls = csampkls))
     }
