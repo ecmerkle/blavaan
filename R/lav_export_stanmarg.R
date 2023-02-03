@@ -885,7 +885,9 @@ lav2standata <- function(lavobject) {
   YX <- lavobject@Data@X
   S <- lavobject@SampleStats@cov
   if (!lavInspect(lavobject, 'options')$meanstructure) {
-    nvar <- ncol(lavInspect(lavobject, 'sampstat')[[1]])
+    sstats <- lavInspect(lavobject, 'sampstat')
+    if(inherits(sstats[[1]], 'list')) sstats <- sstats[[1]]
+    nvar <- ncol(sstats[[1]])
   } else {
     nvar <- ncol(YX[[1]])
   }

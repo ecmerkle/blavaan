@@ -298,6 +298,9 @@ blavaan <- function(...,  # default lavaan arguments
                 paste(lavArgsRemove[warn.idx], collapse = " "), call. = FALSE)
     }
 
+
+    if("meanstructure" %in% names(dotdotdot) && "sample.cov" %in% names(dotdotdot)) stop('blavaan ERROR: meanstructure is not currently allowed when sample.cov is supplied')
+  
     # call lavaan
     mcdebug <- FALSE
     if("debug" %in% dotNames){
@@ -316,8 +319,8 @@ blavaan <- function(...,  # default lavaan arguments
     # for initial values/parameter setup:
     LAV <- do.call("lavaan", dotdotdot)
 
-    if(LAV@Data@data.type == "moment" && target != "stan") {
-        stop('blavaan ERROR: full data are required for ', target, ' target.\n  Try target="stan", or consider using kd() from package semTools.')
+    if(LAV@Data@data.type == "moment") {
+        if(target != "stan") stop('blavaan ERROR: full data are required for ', target, ' target.\n  Try target="stan", or consider using kd() from package semTools.')
     }
 
     # save.lvs in a model with no lvs
