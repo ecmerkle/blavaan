@@ -8,7 +8,7 @@ PKG_LIBS = $(shell "$(R_HOME)/bin$(R_ARCH_BIN)/Rscript" -e "RcppParallel::RcppPa
 PKG_LIBS += -Wl,--allow-multiple-definition
 
 
-CXX_STD = CXX14
+CXX_STD = CXX17
 SOURCES = $(wildcard stan_files/*.stan)
 OBJECTS = $(SOURCES:.stan=.o) init.o
 

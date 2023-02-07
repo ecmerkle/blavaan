@@ -1,4 +1,4 @@
-# Version 0.4-4
+# Version 0.4-5
 ## New features
 * For target = "stan", meanstructure=FALSE is allowed, along with use of sample.cov and sample.nobs instead of raw data
 
