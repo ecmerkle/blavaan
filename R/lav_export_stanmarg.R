@@ -217,10 +217,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   } else if (level == 2L) {
     estmats <- list()
   }
-  if (Ng == 1) {
-    freemats <- list(freemats)
-    estmats <- list(estmats)
-  }
+
   free2 <- list()
   nfree <- list()
   lavpartable <- parTable(lavobject)
@@ -679,7 +676,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       dat$w15skel <- matrix(0, 0, 3)
     }
   }
-  
+
   ## add priors by using set_stanpars() from classic approach
   ## needs some partable mods
   lavpartable$rhoidx <- rep(0, length(lavpartable$mat))
@@ -1092,10 +1089,10 @@ lav2standata <- function(lavobject) {
     dat$nclus <- array(t(sapply(Lp, function(x) unlist(x$nclusters))), dim = c(Ng, 2))
     ## these are in one vector to avoid ragged arrays in Stan. We need ncluster_sizes to decide
     ## what sizes belong to which group.
-    dat$cluster_size <- unlist(sapply(Lp, function(x) x$cluster.size[[2]])) 
-    dat$cluster_sizes <- unlist(sapply(Lp, function(x) x$cluster.sizes[[2]]))
+    dat$cluster_size <- unlist(sapply(Lp, function(x) x$cluster.size[[2]], simplify = FALSE)) 
+    dat$cluster_sizes <- unlist(sapply(Lp, function(x) x$cluster.sizes[[2]], simplify = FALSE))
     dat$ncluster_sizes <- array(sapply(Lp, function(x) length(x$cluster.sizes[[2]])), Ng)
-    dat$cluster_size_ns <- unlist(sapply(Lp, function(x) x$cluster.size.ns[[2]]))
+    dat$cluster_size_ns <- unlist(sapply(Lp, function(x) x$cluster.size.ns[[2]], simplify = FALSE))
     ## we assume variable indices are the same across groups, this could be revisited later
     dat$between_idx <- Lp[[1]]$between.idx[[2]]
     dat$N_between <- length(dat$between_idx)
@@ -1109,9 +1106,8 @@ lav2standata <- function(lavobject) {
     dat$N_lev <- c(length(dat$ov_idx1), length(dat$ov_idx2))
     dat$between_idx <- c(dat$between_idx, sort(c(dat$within_idx, dat$both_idx)))
 
-    
     YLp <- lavobject@SampleStats@YLp # NB: one list entry per group
-    dat$mean_d <- do.call("rbind", sapply(YLp, function(x) do.call("rbind", x[[2]]$mean.d)))
+    dat$mean_d <- do.call("rbind", lapply(YLp, function(x) do.call("rbind", x[[2]]$mean.d)))
 
     cov_w <- array(unlist(lapply(YLp, function(x) x[[2]]$Sigma.W)), dim = c(ncol(dat$mean_d),
                                                                             ncol(dat$mean_d),
@@ -1134,9 +1130,11 @@ lav2standata <- function(lavobject) {
       Lp[[g]]$cluster.sizes[[2]] <- dat$cluster_size[(csums[g] + 1):csums[g+1]]
       Lp[[g]]$ncluster.sizes[[2]] <- dat$nclus[g,2]
       Lp[[g]]$cluster.size.ns[[2]] <- rep(1, dat$nclus[g,2])
-      sumfull[[g]] <- lavaan:::lav_samplestats_cluster_patterns(lavInspect(lavobject, 'data')[[g]], Lp[[g]])
+      lavdat <- lavInspect(lavobject, 'data')
+      if (Ng > 1) lavdat <- lavdat[[g]]
+      sumfull[[g]] <- lavaan:::lav_samplestats_cluster_patterns(lavdat, Lp[[g]])
     }
-    dat$mean_d_full <- do.call("rbind", sapply(sumfull, function(x) do.call("rbind", x[[2]]$mean.d)))
+    dat$mean_d_full <- do.call("rbind", lapply(sumfull, function(x) do.call("rbind", x[[2]]$mean.d)))
 
     cov_d_full <- unlist(lapply(sumfull, function(x) x[[2]]$cov.d), recursive = FALSE)
     for (i in 1:length(cov_d_full)) {
