@@ -858,18 +858,14 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
 
   freeidx <- lapply(lavfree, function(x) lapply(x, function(y) which(y > 0, arr.ind = TRUE)))
   freenums <- lapply(free2, function(x) lapply(x, function(y) y[y > 0]))
-  nfree <- max(sapply(lavfree, function(x)
-    sapply(x, function(x) ifelse(length(x) > 0, max(x), 0))))
-  minpar <- 1L
-  if(level == 2L & any(lavpartable$free > 0)){
-    ## only count free level 2 parameters
-    minpar <- min(lavpartable$free[lavpartable$free > 0])
-    nfree <- nfree - minpar + 1
+  tmpfree <- unlist(lavfree)
+  nfree <- length(unique(tmpfree[tmpfree > 0]))
+  if(any(lavpartable$free > 0)){
+    freevec <- lavpartable$free[lavpartable$free > 0]
   }
 
   vcorr <- NULL
   if(stanfit){
-    freevec <- rep(NA, nfree)
     rowidx <- rowidx2 <- rep(NA, nfree) # row index of stan est and summary containing the parameters (for vcorr)
 
     ## 1. get free par vector
@@ -889,7 +885,8 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
 
       for(j in 1:length(stanvec)){
         freename <- names(mapping3)[mapping3 == stanvec[j]]
-        parnums <- do.call("c", freenums[[freename]])      
+        parnums <- do.call("c", freenums[[freename]])
+        parnums <- match(parnums, freevec)
         tmpw <- lersdat[[wskel[j]]]
 
         if(is.na(parnums[1])) next
@@ -906,8 +903,8 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
           samppar <- (tmpw[,1] == 0) | (tmpw[,3] == 1) # free or constrained prior
           parvec <- tmpsd <- rowvec <- rowvec2 <- rep(NA, NROW(tmpw))
           if(level == 1L){
-            rowvec[samppar] <- which(grepl(stanvec[j], names(b.est)) & !(grepl("_c$", names(b.est))))
-            rowvec2[samppar] <- which(grepl(stanvec[j], dmnames) & !(grepl("_c$", dmnames)))
+            rowvec[samppar] <- which(grepl(stanvec[j], names(b.est)) & !(grepl("_c\\[", names(b.est))))
+            rowvec2[samppar] <- which(grepl(stanvec[j], dmnames) & !(grepl("_c\\[", dmnames)))
           } else {
             rowvec[samppar] <- grep(stanvec[j], names(b.est))
             rowvec2[samppar] <- grep(stanvec[j], dmnames)
@@ -922,10 +919,10 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
           parvec[eqpar] <- parvec[tmpw[,1] == 0][eqconst]
           tmpsd[eqpar] <- tmpsd[tmpw[,1] == 0][eqconst]
           
-          rowidx[parnums - minpar + 1] <- rowvec
-          rowidx2[parnums - minpar + 1] <- rowvec2
-          est[parnums - minpar + 1] <- parvec
-          sdvec[parnums - minpar + 1] <- tmpsd
+          rowidx[parnums] <- rowvec
+          rowidx2[parnums] <- rowvec2
+          est[parnums] <- parvec
+          sdvec[parnums] <- tmpsd
         }
       }
     }

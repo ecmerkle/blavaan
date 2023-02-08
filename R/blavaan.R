@@ -776,11 +776,17 @@ blavaan <- function(...,  # default lavaan arguments
             Ng <- lavInspect(LAV, 'ngroups')
             parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')[2*(1:Ng) - 1], l2s$free2, jagtrans$data, res, colnames(draw_mat))
             parests2 <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')[2*(1:Ng)], l2s$free2, jagtrans$data, res, colnames(draw_mat), level = 2L)
-            parests$x <- c(parests$x, parests2$x)
             ## combine list elements of the partables
             parests$lavpartable <- mapply("c", parests$lavpartable, parests2$lavpartable, SIMPLIFY = FALSE)
             ##parests$vcorr <- ## need level 1 by level 2!
+            ## reorder to match original partable ordering
+            idord <- parests$lavpartable$id
+            freeid <- idord[parests$lavpartable$free > 0]
+            parests$lavpartable <- lapply(parests$lavpartable, function(x) x[order(idord)])
+            parests$x <- c(parests$x, parests2$x)
             parests$sd <- c(parests$sd, parests2$sd)
+            parests$x <- parests$x[order(freeid)]
+            parests$sd <- parests$sd[order(freeid)]
           } else {
             parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free'), l2s$free2, jagtrans$data, res, colnames(draw_mat))
           }
