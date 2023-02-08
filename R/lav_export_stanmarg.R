@@ -94,7 +94,10 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
   sign <- matrix(0, len, 2 + lvmat)
   if (std.lv & (lvmat | lammat)) {
     if (lvmat & length(ddd$sign) > 0) {
-      lamfree <- ddd$free2
+      lamfree <- ddd$free1
+      lamfree2 <- ddd$free2
+      transtab <- cbind(sapply(lamfree, function(x) x[x != 0]),
+                        sapply(lamfree2, function(x) x[x != 0]))
       lamsign <- ddd$sign
 
       for (i in 1:length(free2)) {
@@ -103,29 +106,35 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
           for (j in 1:nrow(fpar)) {
             ## in case all loadings restricted to 0
             if (all(lamfree[[i]][,fpar[j,]] == 0L)) next
-            
+
             ## find sign-constrained loadings of the two lvs
             lampar1 <- lamfree[[i]][,fpar[j,2]]
+            lampar12 <- lamfree2[[i]][,fpar[j,2]]
             ## see whether any are equality constrained
             l1match <- match(lampar1, constraint$rhs, nomatch = 0L)
-            lampar1[l1match != 0] <- as.numeric(constraint$lhs[l1match])
-            if (all(lampar1 == 0)) { # ov converted to lv
+            transconst <- transtab[match(constraint$lhs[l1match], transtab[,1]), 2]
+            lampar12[l1match != 0] <- as.numeric(transconst)
+            if (all(lampar12 == 0)) { # ov converted to lv
               l1 <- 1
             } else {
-              l1 <- lampar1[which(lampar1 %in% lamsign[,2])]
+              lampar12 <- lampar12[lampar12 != 0]
+              l1 <- lampar12[which(lampar12 %in% lamsign[,2])]
               ## for across-group equality constraint:
-              if (length(l1) == 0) l1 <- lampar1[lampar1 != 0][1]
+              if (length(l1) == 0) l1 <- lampar12[lampar12 != 0][1]
               if (lamsign[l1,1] == 1) l1 <- lamsign[l1,2]
             }
 
             lampar2 <- lamfree[[i]][,fpar[j,1]]
+            lampar22 <- lamfree2[[i]][,fpar[j,1]]
             l2match <- match(lampar2, constraint$rhs, nomatch = 0L)
-            lampar2[l2match != 0] <- as.numeric(constraint$lhs[l2match])
-            if (all(lampar2 == 0)) {
+            transconst <- transtab[match(constraint$lhs[l2match], transtab[,1]), 2]
+            lampar22[l2match != 0] <- as.numeric(transconst)
+            if (all(lampar22 == 0)) {
               l2 <- 1
             } else {
-              l2 <- lampar2[which(lampar2 %in% lamsign[,2])]
-              if (length(l2) == 0) l2 <- lampar2[lampar2 != 0][1]
+              lampar22 <- lampar22[lampar22 != 0]
+              l2 <- lampar22[which(lampar22 %in% lamsign[,2])]
+              if (length(l2) == 0) l2 <- lampar22[lampar22 != 0][1]
               if (lamsign[l2,1] == 1) l2 <- lamsign[l2,2]
             }
 
@@ -238,6 +247,10 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     wigpris <- NULL
   }
 
+  dat$do_reg <- 0L
+  modprop <- lavobject@Model@modprop
+  if (any(modprop$uvreg) || any(modprop$uvord)) dat$do_reg <- 1L
+  
   freeparnums <- rep(0, length(lavpartable$free))
 
   ## 1. Lambda_y
@@ -312,7 +325,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     twsel <- lavpartable$free %in% frnums
     tmpwig <- lavpartable[twsel,'free'][which(lavpartable[twsel, 'plabel'] %in% wig)]
     res <- matattr(fr, es, constrain, mat = "B", Ng, opts$std.lv, tmpwig,
-                   free2 = lyfree2, sign = dat$lam_y_sign)
+                   free1 = free2$lambda, free2 = lyfree2, sign = dat$lam_y_sign)
 
     dat$B_skeleton <- res$matskel
     dat$w4skel <- res$wskel
@@ -540,7 +553,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     tmpwig <- lavpartable[twsel,'free'][which(lavpartable[twsel, 'plabel'] %in% wig)]
     
     res <- matattr(fr, es, constrain, mat = "Psi_r", Ng, opts$std.lv, tmpwig,
-                   free2 = lyfree2, sign = dat$lam_y_sign,
+                   free1 = free2$lambda, free2 = lyfree2, sign = dat$lam_y_sign,
                    dest = dest)
 
     dat$Psi_r_skeleton <- res$matskel
@@ -558,7 +571,8 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     ## check for completely unrestricted correlation matrix, for lkj
     fpars <- sapply(res$free2, function(x) as.numeric(x[lower.tri(x)]))
     if (length(unlist(fpars)) > 0) {
-      if (all(!duplicated(fpars)) & all(fpars > 0) & all(res$wskel[,1] == 0)) dat$fullpsi <- 1L
+      if (all(!duplicated(fpars)) & all(fpars > 0) & all(res$wskel[,1] == 0) &
+          all(lavpartable[ptrows, 'prior'] == "")) dat$fullpsi <- 1L
     }
   } else {
     dat$Psi_r_skeleton <- array(0, dim = c(Ng, 0, 0))
@@ -683,9 +697,12 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   primap <- match(prinames[prich], mapping)
   names(prifree)[prich] <- names(mapping)[primap]
 
+  pta <- lav_partable_attributes(parTable(lavobject))
+  ov.names <- unique(unlist(pta$vnames$ov))
   lpt <- lavpartable
   lpt$mat[lpt$op == ":="] <- "def"
   dp <- c(dp, def = "")
+
   if (nrow(lpt) > 0) {
     stanprires <- set_stanpars("", lpt, prifree, dp, "")
     lavpartable$prior <- stanprires$partable$prior
@@ -964,7 +981,14 @@ lav2standata <- function(lavobject) {
 
   Ng <- dat$Ng <- lavInspect(lavobject, 'ngroups')
   YX <- lavobject@Data@X
-  nvar <- ncol(YX[[1]])
+  S <- lavobject@SampleStats@cov
+  if (!lavInspect(lavobject, 'options')$meanstructure) {
+    sstats <- lavInspect(lavobject, 'sampstat')
+    if(inherits(sstats[[1]], 'list')) sstats <- sstats[[1]]
+    nvar <- ncol(sstats[[1]])
+  } else {
+    nvar <- ncol(YX[[1]])
+  }
 
   ord <- as.numeric(lavInspect(lavobject, 'categorical'))
   multilevel <- lavInspect(lavobject, 'options')$.clustered
@@ -993,7 +1017,7 @@ lav2standata <- function(lavobject) {
     dat$grpnum <- rep(1:dat$Ng, npatt)
 
     dat$Nobs <- do.call("c", lapply(Mp, function(x) rowSums(x$pat)))
-    Obsvar <- do.call("c", lapply(Mp, function(x) apply(x$pat, 1, which)))
+    Obsvar <- do.call("c", lapply(Mp, function(x) apply(x$pat, 1, which, simplify = FALSE)))
     
     dat$Np <- length(unique(misgrps))
     dat$Ntot <- sum(dat$N)
@@ -1057,6 +1081,7 @@ lav2standata <- function(lavobject) {
     }
   }
   dat$YX <- do.call("rbind", YX)
+  dat$S <- S
   if (multilevel) {
     dat$YX <- dat$YX[,1:ptot] ## unused, just to make stan happy
   }
@@ -1147,13 +1172,12 @@ lav2standata <- function(lavobject) {
   
   if (ord) {
     pta <- lav_partable_attributes(parTable(lavobject))
-
     ordidx <- pta$vidx$ov.ord[[1]]
     dat$YXo <- dat$YX[, ordidx, drop=FALSE]
     if (misflag) {
       dat$Noent <- sum(dat$YXo > 0)
       dat$Nordobs <- do.call("c", lapply(Mp, function(x) rowSums(x$pat[,ordidx])))
-      OrdObsvar <- do.call("c", lapply(Mp, function(x) apply(x$pat[,ordidx], 1, which)))
+      OrdObsvar <- do.call("c", lapply(Mp, function(x) apply(x$pat[,ordidx], 1, which, simplify = FALSE)))
 
       dat$OrdObsvar <- matrix(0, dat$Np, ncol(dat$YXo))
       allvars <- 1:ncol(dat$YXo)

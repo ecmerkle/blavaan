@@ -39,7 +39,7 @@ Many other plot types are available, coming from the *bayesplot* package. In gen
 
 
 ### Customization
-Users may wish to customize some aspects of the resulting plots. For this, the `plot()` function will output a *ggplot* object. This makes it possible to modify the plot as if it were any other *ggplot* object.
+Users may wish to customize some aspects of the resulting plots. For this, the `plot()` function will output a *ggplot* object. This makes it possible to modify the plot as if it were any other *ggplot* object, which allows for many possibilities. One starting point for exploring *ggplot2* is [here](https://ggplot2.tidyverse.org/).
 
 ```{r p2}
 p <- plot(fit, pars = 1:4, plot.type = "trace", showplot = FALSE)

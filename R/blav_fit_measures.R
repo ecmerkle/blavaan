@@ -71,7 +71,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
     fx <- object@Fit@fx
     fx.group <- object@Fit@fx.group
     meanstructure <- object@Model@meanstructure
-    categorical   <- object@Model@categorical
+    categorical   <- lavInspect(object, "categorical")
     multigroup    <- object@Data@ngroups > 1L
     estimator     <- "ML" #object@Options$estimator
     test          <- object@Options$test
@@ -100,8 +100,11 @@ blav_fit_measures <- function(object, fit.measures = "all",
     if("csampkls" %in% names(object@external)){
         fit.ic <- c(fit.ic, "dic_cond_j", "p_dic_cond_j")
     }
-    fit.ic <- c(fit.ic, "waic", "p_waic", "se_waic",
-                "looic", "p_loo", "se_loo")
+    if(object@Data@data.type != "moment"){
+        ## if no data, we can't compute lppd for these metrics
+        fit.ic <- c(fit.ic, "waic", "p_waic", "se_waic",
+                    "looic", "p_loo", "se_loo")
+    }
     if("csamplls" %in% names(object@external)){
         fit.ic <- c(fit.ic, "waic_cond", "p_waic_cond", "se_waic_cond",
                     "looic_cond", "p_loo_cond", "se_loo_cond")
@@ -143,47 +146,18 @@ blav_fit_measures <- function(object, fit.measures = "all",
     }
     
     # posterior predictive p
-    if("ppp" %in% fit.measures & bopts$test != "none") {
+    if("ppp" %in% fit.measures && bopts$test != "none") {
         indices["ppp"] <- object@Fit@test[[2]]$stat
-    }
-    if(any(c("bic", "dic", "p_dic") %in% fit.measures & bopts$test != "none")) {
-        if(bopts$categorical && compareVersion(packageDescription('lavaan')$Version, '0.6-10') < 0) stop("blavaan ERROR: lavaan 0.6-10 or higher is needed (you may need to install from github)")
-        df <- 2*(object@Fit@fx - mean(as.numeric(object@external$samplls[,,1])))
-        indices["bic"] <- -2*object@Fit@fx + npar*log(N)
-        indices["dic"] <- -2*object@Fit@fx + 2*df
-        indices["p_dic"] <- df
-
-        if("sampkls" %in% names(object@external)){
-          dfj <- mean(object@external$sampkls)/2
-          indices["dic_jags"] <- -2*object@Fit@fx + 2*dfj
-          indices["p_dic_jags"] <- dfj
-        }
-
-        if("csamplls" %in% names(object@external)){
-          if(!is.na(as.numeric(object@external$csamplls)[1])){
-            cllmn <- mean(as.numeric(object@external$csamplls[,,1]))
-          } else {
-            cllmn <- NA
-          }
-          dfc <- 2*(object@external$cfx - cllmn)
-          indices["dic_cond"] <- -2*object@external$cfx + 2*dfc
-          indices["p_dic_cond"] <- dfc
-        }
-
-        if("csampkls" %in% names(object@external)){
-          dfjc <- mean(object@external$csampkls)/2
-          indices["dic_cond_j"] <- -2*object@external$cfx + 2*dfjc
-          indices["p_dic_cond_j"] <- dfjc
-        }
     }
     if(any(c("waic", "p_waic", "looic", "p_loo") %in% fit.measures)) {
         lavopt <- object@Options
+        catmod <- lavInspect(object, "categorical")
         lavopt$estimator <- "ML"
-        if(lavopt$target == "stan" && !lavopt$categorical){
+        if(lavopt$target == "stan" && !catmod && lavInspect(object, "meanstructure")){
           casells <- loo::extract_log_lik(object@external$mcmcout)
         } else {
-          if(lavopt$categorical & lavopt$test != "none"){
-            if(bopts$categorical && compareVersion(packageDescription('lavaan')$Version, '0.6-10') < 0) stop("blavaan ERROR: lavaan 0.6-10 or higher is needed (you may need to install from github)")
+          if(catmod & lavopt$test != "none"){
+            if(catmod && compareVersion(packageDescription('lavaan')$Version, '0.6-10') < 0) stop("blavaan ERROR: lavaan 0.6-10 or higher is needed (you may need to install from github)")
 
             if("llnsamp" %in% names(lavopt)){
               cat("blavaan NOTE: These criteria involve likelihood approximations that may be imprecise.\n",
@@ -251,12 +225,53 @@ blav_fit_measures <- function(object, fit.measures = "all",
             indices["se_loo_cond"] <- fitse[["looic"]]
         }
     }
+    if(any(c("bic", "dic", "p_dic") %in% fit.measures)) {
+      if(lavInspect(object, "categorical") && compareVersion(packageDescription('lavaan')$Version, '0.6-10') < 0) stop("blavaan ERROR: lavaan 0.6-10 or higher is needed (you may need to install from github)")
+        if(is.null(dim(object@external$samplls))) {
+            samplls <- rowSums(casells)
+            df <- 2*(object@Fit@fx - mean(samplls))
+        } else {
+            samplls <- object@external$samplls
+            df <- 2*(object@Fit@fx - mean(as.numeric(samplls[,,1])))
+        }
+
+        indices["bic"] <- -2*object@Fit@fx + npar*log(N)
+        indices["dic"] <- -2*object@Fit@fx + 2*df
+        indices["p_dic"] <- df
+
+        if("sampkls" %in% names(object@external)){
+          dfj <- mean(object@external$sampkls)/2
+          indices["dic_jags"] <- -2*object@Fit@fx + 2*dfj
+          indices["p_dic_jags"] <- dfj
+        }
+
+        if("csamplls" %in% names(object@external)){
+          if(!is.na(as.numeric(object@external$csamplls)[1])){
+            cllmn <- mean(as.numeric(object@external$csamplls[,,1]))
+          } else {
+            cllmn <- NA
+          }
+          dfc <- 2*(object@external$cfx - cllmn)
+          indices["dic_cond"] <- -2*object@external$cfx + 2*dfc
+          indices["p_dic_cond"] <- dfc
+        }
+
+        if("csampkls" %in% names(object@external)){
+          dfjc <- mean(object@external$csampkls)/2
+          indices["dic_cond_j"] <- -2*object@external$cfx + 2*dfjc
+          indices["p_dic_cond_j"] <- dfjc
+        }
+    }  
     if("margloglik" %in% fit.measures & test != "none") {
         indices["margloglik"] <- object@test[[1]]$stat
     }
     
     out <- unlist(indices[fit.measures])
 
+    ## warn for p_D computations < 0
+    pds <- names(out) %in% paste0('p_', c('dic', 'waic', 'loo'))
+    if(any(out[pds] < 0, na.rm = TRUE)) warning("blavaan WARNING: some effective number of parameter computations are < 0. This may indicate prior-data conflict or other model problems.", call. = FALSE)
+  
     if(length(out) > 0L) {
         class(out) <- c("lavaan.vector", "numeric")
     } else {

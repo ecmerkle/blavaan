@@ -216,6 +216,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           dumlv = NULL, # for sampling lvs
                           wigind = NULL, # wiggle indicator
                           pri_only = FALSE, # prior predictive sampling
+                          do_reg = FALSE, # regression sampling
                           mean_d, cov_w, log_lik_x, cov_d, nclus, cluster_size, ncluster_sizes,
                           mean_d_full, cov_d_full,              # level 2 data
                           cluster_sizes, cluster_size_ns, between_idx, N_between, within_idx,
@@ -254,17 +255,19 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$Xdatvar <- Xdatvar
   dat$Nx <- array(Nx, length(Nx))
   dat$emiter <- emiter
-
+  dat$do_reg <- do_reg
+  
   dat$YX <- YX
   dat$YXo <- YXo
-  stopifnot(nrow(dat$YX) == dat$Ntot)
 
   dat$use_suff <- 1L
   if (ord | nclus[2] > 1) dat$use_suff <- 0L
 
   dat$has_data <- 0L
+  dat$use_cov <- 0L
   if (pri_only) {
     dat$use_suff <- 0L
+    if (dim(Nu_skeleton)[2] == 0L) dat$use_cov <- 1L
     tmparr <- array(dim = c(dat$Ng, ncol(YX) + 1, ncol(YX) + 1))
     for (i in 1:Ng) {
       tmparr[i,,] <- diag(nrow=ncol(YX) + 1)
@@ -278,18 +281,22 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
       if (!is.list(S)) stop("S must be a list")
       if (is.null(N)) stop("N must be specified if YX is missing")
       if (miss) stop("blavaan ERROR: missingness requires raw data.")
+      ## TODO if YXbar missing, set use_cov = 1 otherwise use_cov = 0 (but need new ppp)
+      dat$use_cov <- 1L
+      dat$S <- array(0, dim = c(dat$Ng, nrow(S[[1]]) + 1, nrow(S[[1]]) + 1))
       for (i in 1:Ng) {
-        dat$S[i,,] <- (N[i] - 1) * S[[i]]
+        dat$S[i, 1:nrow(S[[1]]), 1:nrow(S[[1]])] <- S[[i]]
       }
-      dat$YX <- array(NA_real_, dim = c(dat$Ntot, ncol(S)))
-      dat$YXo <- array(NA_real_, dim = c(0, ncol(YXo)))
-      dat$YXbar <- array(NA_real_, dim = c(dat$Ng, ncol(S)))
+      dat$YX <- array(0, dim = c(dat$Ntot, ncol(S[[1]])))
+      dat$YXo <- array(0, dim = c(dat$Ntot, ncol(YXo)))
+      dat$YXbar <- array(0, dim = c(dat$Ng, ncol(S[[1]])))
     } else {
       if (NROW(YX) != dat$Ntot) stop("blavaan ERROR: nrow(YX) != Ntot.")
 
       dat$YXbar <- array(0, dim=c(Np, NCOL(YX)))
       dat$S <- array(1, dim=c(Np, NCOL(YX) + 1, NCOL(YX) + 1))
       dat$has_data <- 1L
+      if (dim(Nu_skeleton)[2] == 0L) dat$use_cov <- 1L
       if (length(contidx) > 0) {
         for (i in 1:dat$Np) {
           tmpyxbar <- colMeans(YX[(startrow[i] : endrow[i]), , drop = FALSE])

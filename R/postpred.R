@@ -29,6 +29,7 @@ postpred <- function(samplls = NULL, lavobject = NULL, measure = "logl", thin = 
   lavpartable <- lavobject@ParTable
   lavmodel <- lavobject@Model
   lavoptions <- lavobject@Options
+  catmod <- lavInspect(lavobject, "categorical")
   lavsamplestats <- lavobject@SampleStats
   lavdata <- lavobject@Data
   lavcache <- lavobject@Cache
@@ -192,7 +193,7 @@ postpred <- function(samplls = NULL, lavobject = NULL, measure = "logl", thin = 
         lavoptions2 <- lavoptions
         lavoptions2$verbose <- FALSE
         lavoptions2$estimator <- "ML"
-        if(lavoptions2$categorical) lavoptions2$estimator <- "DWLS"
+        if(catmod) lavoptions2$estimator <- "DWLS"
         lavoptions2$se <- "none"
         lavoptions2$test <- "standard"
         lavoptions2$optim.method <- "none"

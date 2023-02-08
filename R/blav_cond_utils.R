@@ -15,7 +15,7 @@ samp_kls <- function(lavjags        = NULL,
     ## need to implement plummer's approach of generating y_rep
     ##mis <- FALSE
     ##if(any(is.na(unlist(lavdata@X)))) mis <- TRUE
-    ##if(mis | lavoptions$categorical) stop("blavaan ERROR: K-L divergence not implemented for missing data or ordinal variables.")
+    ##if(mis | lavInspect(lavobject, "categorical")) stop("blavaan ERROR: K-L divergence not implemented for missing data or ordinal variables.")
 
     itnums <- sampnums(lavjags, thin = thin)
     lavmcmc <- lapply(lavmcmc, function(x) x[itnums,])
@@ -83,6 +83,9 @@ samp_kls <- function(lavjags        = NULL,
             } else {
                 mnvec0 <- as.numeric(implied0$mean[[g]])
                 mnvec1 <- as.numeric(implied1$mean[[g]])
+                if(length(mnvec0) == 0) {
+                    mnvec0 <- mnvec1 <- lavsamplestats@mean[[g]]
+                }
 
                 tmpkl <- tmpkl + lavsamplestats@nobs[[g]] *
                          kl_und(mnvec0, mnvec1, cmat0, invcmat0,

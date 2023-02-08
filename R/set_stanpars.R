@@ -1,4 +1,4 @@
-set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
+set_stanpars <- function(TXT2, partable, nfree, dp, ov.names){
     ## tabs
     t1 <- paste(rep(" ", 2L), collapse="")
     t2 <- paste(rep(" ", 4L), collapse="")
@@ -47,8 +47,7 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
 
             ## only complex equality constraints and defined parameters;
             ## rhs needs math expression
-            defeq <- partable$op[i] %in% c("==", ":=") &
-                     grepl("\\+|-|/|\\*|\\(|\\)|\\^", partable$rhs[i])
+            defeq <- (partable$op[i] == ":=") | (partable$op[i] == "==" & grepl("\\+|-|/|\\*|\\(|\\)|\\^", partable$rhs[i]))
             compeq <- which((partable$lhs == partable$plabel[i] |
                              partable$lhs == partable$label[i]) &
                             partable$op %in% c("==", ":=") &
@@ -152,6 +151,9 @@ set_stanpars <- function(TXT2, partable, nfree, dp, lv.names.x){
                     } else if(grepl("UNC", partable$mat[i])){
                         pname <- strsplit(partable$mat[i], "UNC")[[1]][1]
                         partype <- grep(pname, names(dp))
+                    } else if(partable$mat[i] == "alpha" & partable$lhs[i] %in% ov.names){
+                      ## ov intercepts in alpha instead of nu
+                      partype <- grep("nu", names(dp))
                     } else {
                         partype <- grep(partable$mat[i], names(dp))
                     }

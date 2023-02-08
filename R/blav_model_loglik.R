@@ -8,7 +8,7 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
                    conditional    = FALSE,
                    standata       = NULL){
 
-    if(lavobject@Options$categorical){
+    if(lavInspect(lavobject, "categorical")){
       ll.samp <- get_ll_ord(postsamp, lavobject, measure, casewise, conditional, standata)
     } else {
       ll.samp <- get_ll_cont(postsamp, lavobject, measure, casewise, conditional)
@@ -29,7 +29,10 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
   lavoptions <- lavobject@Options
   lavcache <- lavobject@Cache
   lavdata <- lavobject@Data
-  
+  wishlik <- lavdata@data.type == "moment"
+  nper <- lavInspect(lavobject, 'nobs')
+  if(wishlik && casewise) stop("blavaan ERROR: casewise loglikelihoods are unavailable for Wishart likelihood.")
+
   if(length(postsamp) > 0){
     lavmodel <- fill_params(postsamp, lavmodel, lavpartable)
   }
@@ -51,7 +54,7 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
 
   if(measure[1] %in% c("logl", "chisq") & !mis & length(measure) == 1){
     if(casewise){
-      ll.samp <- rep(NA, sum(unlist(lavdata@nobs)))
+      ll.samp <- rep(NA, sum(nper))
     } else if(conditional){
       ll.samp <- 0
     } else {
@@ -63,13 +66,19 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
     for(g in 1:Ng){
       if(conditional){
         mnvec <- implied$mean[[g]]
+      } else if(!lavoptions$meanstructure){
+        mnvec <- lavsamplestats@mean[[g]]
       } else {
         mnvec <- as.numeric(implied$mean[[g]])
       }
-      
+
       ## ensure symmetric:
       cmat <- (implied$cov[[g]] + t(implied$cov[[g]]))/2
-      tmpll <- try(dmnorm(lavdata@X[[g]], mnvec, cmat, log=TRUE))
+      if(wishlik){
+        tmpll <- try(ldwish((nper[g] - 1) * lavsamplestats@cov[[g]], nper[g] - 1, cmat))
+      } else {
+        tmpll <- try(dmnorm(lavdata@X[[g]], mnvec, cmat, log=TRUE))
+      }
       if(inherits(tmpll, "try-error")) tmpll <- NA
 
       ## subtract logl.X
@@ -77,22 +86,30 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
       if(!is.null(x.idx) && length(x.idx) > 0L){
         Mu.X <- lavsamplestats@mean.x[[g]]
         Sigma.X <- lavsamplestats@cov.x[[g]]
-        if(is.null(Mu.X)){
+        if(is.null(Mu.X) && !wishlik){
           Mu.X <- mnvec[x.idx]
         }
         if(is.null(Sigma.X)){
           Sigma.X <- cmat[x.idx, x.idx, drop=FALSE]
         }
-        tmpll.x <- try(dmnorm(lavdata@X[[g]][,x.idx], Mu.X, Sigma.X, log=TRUE))
+        if(wishlik){
+          tmpll.x <- try(ldwish((nper[g] - 1) * lavsamplestats@cov[[g]][x.idx, x.idx], nper[g] - 1, Sigma.X))
+        } else {
+          tmpll.x <- try(dmnorm(lavdata@X[[g]][,x.idx], Mu.X, Sigma.X, log=TRUE))
+        }
         if(inherits(tmpll.x, "try-error")) tmpll.x <- NA
         tmpll <- tmpll - tmpll.x
       }
 
-      if(!conditional){
-        sampmn <- apply(lavdata@X[[g]], 2, mean, na.rm=TRUE)
-        sampcov <- ((lavdata@nobs[[g]]-1)/(lavdata@nobs[[g]]))*cov(lavdata@X[[g]])
-        
-        basell <- try(dmnorm(lavdata@X[[g]], sampmn, sampcov, log=TRUE))
+      if(!conditional){       
+        sampmn <- lavsamplestats@mean[[g]]
+        sampcov <- lavsamplestats@cov[[g]]
+
+        if(wishlik){
+          basell <- try(ldwish((nper[g] - 1) * sampcov, nper[g] - 1, sampcov))
+        } else {
+          basell <- try(dmnorm(lavdata@X[[g]], sampmn, sampcov, log=TRUE))
+        }
         if(inherits(basell, "try-error")){
           basell <- NA
           warning("blavaan WARNING: sample covariance matrix is not positive definite.", call. = FALSE)
@@ -101,13 +118,17 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
         if(!is.null(x.idx) && length(x.idx) > 0L){
           Mu.X <- lavsamplestats@mean.x[[g]]
           Sigma.X <- lavsamplestats@cov.x[[g]]
-          if(is.null(Mu.X)){
+          if(is.null(Mu.X) && !wishlik){
             Mu.X <- sampmn[x.idx]
           }
           if(is.null(Sigma.X)){
             Sigma.X <- sampcov[x.idx, x.idx, drop=FALSE]
           }
-          tmpll.x <- try(dmnorm(lavdata@X[[g]][,x.idx], Mu.X, Sigma.X, log=TRUE))
+          if(wishlik){
+            tmpll.x <- try(ldwish((nper[g] - 1) * Sigma.X, nper[g] - 1, Sigma.X))
+          } else {
+            tmpll.x <- try(dmnorm(lavdata@X[[g]][,x.idx], Mu.X, Sigma.X, log=TRUE))
+          }
           if(inherits(tmpll.x, "try-error")) tmpll.x <- NA
           basell <- basell - tmpll.x
         }
@@ -167,7 +188,7 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
     lavoptions$se <- "none"
     lavoptions$test <- "standard"
     lavoptions$estimator <- "ML"
-    if(lavoptions$categorical) lavoptions$estimator <- "DWLS"
+    if(lavInspect(lavobject, "categorical")) lavoptions$estimator <- "DWLS"
     ## control() is part of lavmodel (for now)
     lavoptions$optim.method <- "none"
     lavoptions$check.gradient <- FALSE
@@ -452,7 +473,7 @@ samp_lls <- function(lavjags        = NULL,
 
   nchain <- length(lavmcmc)
 
-  if(lavoptions$target != "stan" | conditional | lavoptions$categorical) {
+  if(lavoptions$target != "stan" | conditional | lavInspect(lavobject, "categorical") | !lavInspect(lavobject, "meanstructure")) {
     loop.args <- list(X = 1:nsamps, future.seed = TRUE, FUN = function(i){
       tmpmat <- matrix(NA, nchain, 2)
       for(j in 1:nchain){

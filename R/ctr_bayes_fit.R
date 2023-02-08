@@ -1,5 +1,5 @@
 ### Mauricio Garnier-Villareal and Terrence D. Jorgensen
-### Last updated: 9 June 2019
+### Last updated: 31 January 2023
 ### functions applying traditional SEM fit criteria to Bayesian models.
 ### Inspired by, and adpated from, Rens van de Schoot's idea for BRMSEA, as
 ### published in http://dx.doi.org/10.1177/0013164417709314
@@ -247,12 +247,23 @@ BayesChiFit <- function(obs, reps = NULL, nvar, pD, N, Ngr = 1,
     stop('blavaan ERROR: rescale="ppmc" requires non-NULL reps argument (and reps_null, if applicable).')
   }
 
+  ## ensure number of variables is a vector with length == Ngr
+  #FIXME: This shouldn't be necessary.  
+  #       Is object@Model@nvar always a vector, even when equal across groups?
+  if (Ngr > 1L) {
+    if (length(nvar) == 1L) nvar <- rep(nvar, Ngr)
+  }
   ## Compute number of modeled moments
-  p <- ((nvar * (nvar + 1)) / 2)
-  if (ms) p <- p + nvar
-  p <- p * Ngr
-  ## Substract parameters and estimated parameters
+  p <- sum(sapply(nvar, function(nv) {
+    nMoments <- nv * (nv + 1) / 2      # sample (co) variances
+    if (ms) nMoments <- nMoments + nv  # plus means
+    nMoments
+  } ))
+  ## Difference between number of moments and effective number of parameters
   dif.ppD <- p - pD
+
+  if (dif.ppD[1] < 0) warning("blavaan WARNING: The effective number of parameters exceeds the number of sample statistics (covariances, etc.), so fit index calculations may lead to uninterpretable results.", call. = FALSE)
+  
   nonc <- obs - reps - dif.ppD # == obs - p when rescale == "devm" because reps = pD
   ## Correct if numerator is smaller than zero
   nonc[nonc < 0] <- 0
@@ -267,12 +278,12 @@ BayesChiFit <- function(obs, reps = NULL, nvar, pD, N, Ngr = 1,
 
   ## compute GammaHat and adjusted GammaHat
   if ("bgammahat" %in% fit.measures) {
-    result[["BGammaHat"]] <- nvar / (nvar + 2*nonc/N)
+    result[["BGammaHat"]] <- sum(nvar) / (sum(nvar) + 2*nonc/N)
     if ("adjbgammahat" %in% fit.measures) {
       result[["adjBGammaHat"]] <- 1 - (p / dif.ppD) * (1 - result[["BGammaHat"]])
     }
   } else if ("adjbgammahat" %in% fit.measures) {
-    gammahat <- nvar / (nvar + 2*nonc/N)
+    gammahat <- sum(nvar) / (sum(nvar) + 2*nonc/N)
     result[["adjBGammaHat"]] <- 1 - (p / dif.ppD) * (1 - gammahat)
   }
 

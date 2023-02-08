@@ -19,7 +19,7 @@ fitjags <- bsem(model, data=Data, fixed.x=TRUE, burnin=20,
 
 model <- ' y1 ~ prior("normal(0,1)")*x1 '
 fitstan <- bsem(model, data=Data, fixed.x=TRUE, burnin=20,
-                sample=20, target="stan", group="g", seed=1)
+                sample=20, target="stan", group="g", seed=1, meanstructure=TRUE)
 
 fitstanc <- bsem(model, data=Data, fixed.x=TRUE, burnin=20,
                  sample=20, target="stanclassic", group="g", seed=1)
@@ -30,17 +30,17 @@ HS.model <- ' visual  =~ x1 + x2 + x3
 
 fitstanfs <- bcfa(HS.model, data=HolzingerSwineford1939,
                   burnin=30, sample=10, target="stan",
-                  save.lvs=TRUE, n.chains=2, seed=1)
+                  save.lvs=TRUE, n.chains=2, seed=1, meanstructure=TRUE)
 
 ## this really blows up file size if kept:
 attr(fitstan@external$mcmcout, 'stanmodel') <- NULL
-attr(fitstan@external$mcmcout, 'sim') <- NULL
+#attr(fitstan@external$mcmcout, 'sim') <- NULL
 attr(fitstan@external$mcmcout, 'inits') <- NULL
 attr(fitstanc@external$mcmcout, 'stanmodel') <- NULL
-attr(fitstanc@external$mcmcout, 'sim') <- NULL
+#attr(fitstanc@external$mcmcout, 'sim') <- NULL
 attr(fitstanc@external$mcmcout, 'inits') <- NULL
 attr(fitstanfs@external$mcmcout, 'stanmodel') <- NULL
-attr(fitstanfs@external$mcmcout, 'sim') <- NULL
+#attr(fitstanfs@external$mcmcout, 'sim') <- NULL
 attr(fitstanfs@external$mcmcout, 'inits') <- NULL
 
 save(list=c("fitjags", "fitstan", "fitstanc", "fitstanfs"), 

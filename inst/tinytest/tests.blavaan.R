@@ -86,7 +86,6 @@ expect_equal(class(bcfa(HS.model, data=HolzingerSwineford1939, target="stanclass
 expect_equal(class(bcfa(HS.model, data=HolzingerSwineford1939, target="jags", do.fit=FALSE, group="school", group.equal=c("intercepts","loadings"), wiggle=c("intercepts"), wiggle.sd=.1))[1], "blavaan")
 
 ## moment match mcmcextra
-
 set.seed(341)
 
 x1 <- rnorm(100)
