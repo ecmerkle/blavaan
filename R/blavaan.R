@@ -55,8 +55,8 @@ blavaan <- function(...,  # default lavaan arguments
         }
     }
 
-    # multilevel functionality not available
-    if("cluster" %in% dotNames) stop("blavaan ERROR: two-level models are not yet available.")
+    # multilevel functionality
+    if("cluster" %in% dotNames) warning("blavaan WARNING: two-level models are under development and may be unstable.")
   
     # prior predictives only for stan
     if(prisamp) {
@@ -317,7 +317,7 @@ blavaan <- function(...,  # default lavaan arguments
     }
 
     # for initial values/parameter setup:
-    LAV <- do.call("lavaan", dotdotdot)
+    #LAV <- do.call("lavaan", dotdotdot)
 
     if(LAV@Data@data.type == "moment") {
         if(target != "stan") stop('blavaan ERROR: full data are required for ', target, ' target.\n  Try target="stan", or consider using kd() from package semTools.')
@@ -535,45 +535,65 @@ blavaan <- function(...,  # default lavaan arguments
                            silent = TRUE)
 
                 if(!inherits(l2s, "try-error")){
-                    lavpartable$prior[as.numeric(rownames(l2s$lavpartable))] <- l2s$lavpartable$prior
-                    ldargs <- c(l2s$dat, list(lavpartable = l2s$lavpartable, dumlv = l2s$dumlv,
-                                              save_lvs = save.lvs, do_test = !(lavoptions$test == "none") ))
+                    l2slev2 <- try(lav2stanmarg(lavobject = LAV, dp = dp,
+                                                n.chains = n.chains, mcmcextra = mcmcextra,
+                                                inits = initsin, wiggle = wiggle,
+                                                wiggle.sd = wiggle.sd, prisamp = prisamp,
+                                                level = 2L, indat = l2s$dat))
+                
+                    if(!inherits(l2slev2, "try-error")){
+                        l2s$dat <- c(l2s$dat, l2slev2$dat)
+                        l2s$dat <- l2s$dat[!duplicated(names(l2s$dat))]
 
-                    ## add priors to lavpartable, including wiggle
-                    if(length(wiggle) > 0){
-                      wigrows <- which(l2s$wigpris != "")
-                      lavpartable$prior[as.numeric(rownames(l2s$lavpartable))[wigrows]] <- l2s$wigpris[wigrows]
-                    }
+                        l2s$free2 <- c(l2s$free2, l2slev2$free2)
 
-                    jagtrans <- try(do.call("stanmarg_data", ldargs), silent = TRUE)
+                        l2s$lavpartable <- rbind(l2s$lavpartable, l2slev2$lavpartable)
+                        l2s$wigpris <- c(l2s$wigpris, l2slev2$wigpris)
+                        l2s$init <- lapply(1:length(l2s$init), function(i) c(l2s$init[[i]], l2slev2$init[[i]]))
+                  
+                        lavpartable$prior[as.numeric(rownames(l2s$lavpartable))] <- l2s$lavpartable$prior
+                        ldargs <- c(l2s$dat, list(lavpartable = l2s$lavpartable, dumlv = l2s$dumlv,
+                                                  dumlv_c = l2slev2$dumlv_c,
+                                                  save_lvs = save.lvs, do_test = !(lavoptions$test == "none") ))
 
-                    if(inherits(jagtrans, "try-error")) stop(jagtrans)
+                        ## add priors to lavpartable, including wiggle
+                        if(length(wiggle) > 0){
+                            wigrows <- which(l2s$wigpris != "")
+                            lavpartable$prior[as.numeric(rownames(l2s$lavpartable))[wigrows]] <- l2s$wigpris[wigrows]
+                        }
 
-                    ## add lkj for unrestricted psi
-                    if(jagtrans$fullpsi == 1L){
-                      psirows <- which(l2s$lavpartable$mat == "lvrho")
-                      lavpartable$prior[as.numeric(rownames(l2s$lavpartable))[psirows]] <- paste0("lkj_corr(", jagtrans$psi_r_alpha[1], ")")
-                    }
+                        jagtrans <- try(do.call("stanmarg_data", ldargs), silent = TRUE)
+                        if(inherits(jagtrans, "try-error")) stop(jagtrans)
+                        
+                        if(lavoptions$test != "none"){
+                            jagtrans$monitors <- c(jagtrans$monitors, "log_lik", "log_lik_sat", "ppp")
+                        }
 
-                    jagtrans <- list(data = jagtrans,
-                                     monitors = c("ly_sign",
-                                           #"lx_sign",
-                                           "bet_sign", "g_sign",
-                                           "Theta_cov", "Theta_var",
-                                           #"Theta_x_cov", "Theta_x_var",
-                                           "Psi_cov", "Psi_var",
-                                           #"Ph_cov", "Ph_var",
-                                           "Nu_free", "Alpha_free", "Tau_free"))
-                    if(lavoptions$test != "none"){
-                      jagtrans$monitors <- c(jagtrans$monitors, "log_lik", "log_lik_sat", "ppp")
-                    }
+                        ## add lkj for unrestricted psi
+                        if(jagtrans$fullpsi == 1L){
+                            psirows <- which(l2s$lavpartable$mat == "lvrho")
+                            lavpartable$prior[as.numeric(rownames(l2s$lavpartable))[psirows]] <- paste0("lkj_corr(", jagtrans$psi_r_alpha[1], ")")
+                        }
 
-                    if("init" %in% names(l2s)){
-                      jagtrans <- c(jagtrans, list(inits = l2s$init))
-                    }
+                        stanmon <- c("ly_sign", "bet_sign", "Theta_cov", "Theta_var",
+                                     "Psi_cov", "Psi_var", "Nu_free", "Alpha_free", "Tau_free")
+                        if("level" %in% names(lavpartable)){
+                          stanmon <- c(stanmon, paste0(stanmon, "_c"))
+                          stanmon <- stanmon[-which(stanmon == "Tau_free_c")]
+                        }
+                        stanmon <- c(stanmon, c("log_lik", "log_lik_sat", "ppp"))
 
-                    if(ordmod && save.lvs){
-                      jagtrans$monitors <- c(jagtrans$monitors, "YXostar")
+                        jagtrans <- list(data = jagtrans, monitors = stanmon)
+
+                        if("init" %in% names(l2s)){
+                            jagtrans <- c(jagtrans, list(inits = l2s$init))
+                        }
+
+                        if(ordmod && save.lvs){
+                            jagtrans$monitors <- c(jagtrans$monitors, "YXostar")
+                        }
+                    } else {
+                        jagtrans <- l2slev2
                     }
                 } else {
                     jagtrans <- l2s
@@ -753,7 +773,20 @@ blavaan <- function(...,  # default lavaan arguments
                                   res)
           stansumm <- parests$stansumm
         } else {
-          parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free'), l2s$free2, jagtrans$data, res)
+          draw_mat <- as.matrix(res)
+          if("level" %in% names(lavpartable)) {
+            Ng <- lavInspect(LAV, 'ngroups')
+            parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')[2*(1:Ng) - 1], l2s$free2, jagtrans$data, res, colnames(draw_mat))
+            parests2 <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')[2*(1:Ng)], l2s$free2, jagtrans$data, res, colnames(draw_mat), level = 2L)
+            parests$x <- c(parests$x, parests2$x)
+            ## combine list elements of the partables
+            parests$lavpartable <- mapply("c", parests$lavpartable, parests2$lavpartable, SIMPLIFY = FALSE)
+            ##parests$vcorr <- ## need level 1 by level 2!
+            parests$sd <- c(parests$sd, parests2$sd)
+          } else {
+            parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free'), l2s$free2, jagtrans$data, res, colnames(draw_mat))
+          }
+          parests$vcorr <- cor(draw_mat[, with(parests$lavpartable, stansumnum[free > 0]), drop=FALSE])
           stansumm <- parests$stansumm
         }
         x <- parests$x
