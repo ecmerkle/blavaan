@@ -565,10 +565,6 @@ blavaan <- function(...,  # default lavaan arguments
                         jagtrans <- try(do.call("stanmarg_data", ldargs), silent = TRUE)
                         if(inherits(jagtrans, "try-error")) stop(jagtrans)
                         
-                        if(lavoptions$test != "none"){
-                            jagtrans$monitors <- c(jagtrans$monitors, "log_lik", "log_lik_sat", "ppp")
-                        }
-
                         ## add lkj for unrestricted psi
                         if(jagtrans$fullpsi == 1L){
                             psirows <- which(l2s$lavpartable$mat == "lvrho")
@@ -581,7 +577,9 @@ blavaan <- function(...,  # default lavaan arguments
                           stanmon <- c(stanmon, paste0(stanmon, "_c"))
                           stanmon <- stanmon[-which(stanmon == "Tau_free_c")]
                         }
-                        stanmon <- c(stanmon, c("log_lik", "log_lik_sat", "ppp"))
+                        if(lavoptions$test != "none"){
+                          stanmon <- c(stanmon, c("log_lik", "log_lik_sat", "ppp"))
+                        }
 
                         jagtrans <- list(data = jagtrans, monitors = stanmon)
 
