@@ -199,12 +199,15 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   }
 
   freemats <- lavInspect(lavobject, 'free')
+  constrain <- attr(freemats, 'header')
   if (multilevel) {
     freemats <- freemats[2*(1:Ng) - 2 + level]
   } else if (level == 2L) {
-    freemats <- list()
+    freemats <- list(0)
+  } else if (inherits(freemats[[1]], "matrix")) {
+    freemats <- list(freemats)
   }
-  constrain <- attr(freemats, 'header')
+
   if (any(constrain$op != "==")) {
     ops <- unique(constrain$op)
     ops <- ops[ops != "=="]
@@ -215,7 +218,9 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   if (multilevel) {
     estmats <- estmats[2*(1:Ng) - 2 + level]
   } else if (level == 2L) {
-    estmats <- list()
+    estmats <- list(0)
+  } else if (inherits(estmats[[1]], "matrix")) {
+    estmats <- list(estmats)
   }
 
   free2 <- list()
