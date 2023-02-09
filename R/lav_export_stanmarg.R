@@ -1148,7 +1148,7 @@ lav2standata <- function(lavobject) {
   } else {
     dat$nclus <- array(1, c(Ng, 2))
     dat$cluster_size <- array(1, Ng)
-    dat$ncluster_sizes <- Ng
+    dat$ncluster_sizes <- array(1, Ng)
     dat$cluster_sizes <- array(1, Ng)
     dat$cluster_size_ns <- array(1, Ng)
     dat$between_idx <- array(0, 0)
@@ -1163,8 +1163,8 @@ lav2standata <- function(lavobject) {
     dat$N_lev <- array(0, 2)
     
     dat$mean_d <- array(0, c(Ng, 0))
-    dat$cov_w <- array(0, c(0, 0))
-    dat$log_lik_x <- 0
+    dat$cov_w <- array(0, c(Ng, 0, 0))
+    dat$log_lik_x <- array(0, Ng)
     dat$cov_d <- array(0, c(Ng, 0, 0))
     dat$mean_d_full <- array(0, c(Ng, 0))
     dat$cov_d_full <- array(0, c(Ng, 0, 0))
