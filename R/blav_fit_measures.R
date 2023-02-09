@@ -177,8 +177,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
         indices["p_waic"] <- fitres[["p_waic"]]
         indices["se_waic"] <- fitse[["waic"]]
         nchain <- blavInspect(object, "n.chains")
-        ref <- relative_eff(casells, chain_id =
-                            rep(1:nchain, each = nrow(casells)/nchain))
+        ref <- relative_eff(casells, chain_id = rep(1:nchain, each = nrow(casells)/nchain))
         if (
           "mcmcdata" %in% names(object@external) &
           "moment_match_k_threshold" %in% names(object@external$mcmcdata) & 
@@ -193,11 +192,11 @@ blav_fit_measures <- function(object, fit.measures = "all",
         } else {
           fitres <- loo(casells, r_eff = ref)
         }
-          fitse <- fitres$estimates[,'SE']
-          fitres <- fitres$estimates[,'Estimate']
-          indices["looic"] <- fitres[["looic"]]
-          indices["p_loo"] <- fitres[["p_loo"]]
-          indices["se_loo"] <- fitse[["looic"]]
+        fitse <- fitres$estimates[,'SE']
+        fitres <- fitres$estimates[,'Estimate']
+        indices["looic"] <- fitres[["looic"]]
+        indices["p_loo"] <- fitres[["p_loo"]]
+        indices["se_loo"] <- fitse[["looic"]]
 
         if("csamplls" %in% names(object@external) & bopts$target != "stan"){
             if("stanlvs" %in% names(object@external)){

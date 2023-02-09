@@ -573,12 +573,14 @@ blavaan <- function(...,  # default lavaan arguments
 
                         stanmon <- c("ly_sign", "bet_sign", "Theta_cov", "Theta_var",
                                      "Psi_cov", "Psi_var", "Nu_free", "Alpha_free", "Tau_free")
-                        if("level" %in% names(lavpartable)){
+                        if(lavoptions$.multilevel){
                           stanmon <- c(stanmon, paste0(stanmon, "_c"))
                           stanmon <- stanmon[-which(stanmon == "Tau_free_c")]
                         }
                         if(lavoptions$test != "none"){
                           stanmon <- c(stanmon, c("log_lik", "log_lik_sat", "ppp"))
+                        } else if(!lavInspect(LAV, 'categorical') && (lavoptions$.multilevel || lavInspect(LAV, 'meanstructure'))){
+                          stanmon <- c(stanmon, "log_lik")
                         }
 
                         jagtrans <- list(data = jagtrans, monitors = stanmon)
