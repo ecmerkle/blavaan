@@ -179,7 +179,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
 
     loglik = -.5 * ((L .* to_vector(clus_size_ns)) + (B .* to_vector(clus_size_ns)) + q_W + L_W);
     // add constant, line 300 lav_mvnorm_cluster
-    P = nperclus * (N_within + N_both) + N_between;
+    P = nperclus * (N_within + N_both) + to_vector(clus_size_ns) * N_between;
 
     loglik += -.5 * (P * log(2 * pi()));
     if (size(ov_x_idx) > 0) {
