@@ -299,7 +299,7 @@ blavaan <- function(...,  # default lavaan arguments
     }
 
 
-    if("meanstructure" %in% names(dotdotdot) && "sample.cov" %in% names(dotdotdot)) stop('blavaan ERROR: meanstructure is not currently allowed when sample.cov is supplied')
+    if("sample.mean" %in% names(dotdotdot) && !("data" %in% names(dotdotdot))) stop('blavaan ERROR: sample.mean cannot currently be used in place of data')
   
     # call lavaan
     mcdebug <- FALSE
