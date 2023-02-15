@@ -1058,7 +1058,7 @@ bcfa <- bsem <- function(..., cp = "srs", dp = NULL,
     mc$auto.cov.y      = TRUE
     mc$auto.th         = TRUE
     mc$auto.delta      = TRUE
-    mc[[1L]] <- quote(blavaan)
+    mc[[1L]] <- quote(blavaan::blavaan)
 
     ## change defaults depending on jags vs stan
     sampargs <- c("burnin", "sample", "adapt")
@@ -1101,7 +1101,7 @@ bgrowth <- function(..., cp = "srs", dp = NULL,
     mc$auto.cov.y      = TRUE
     mc$auto.th         = TRUE
     mc$auto.delta      = TRUE
-    mc[[1L]] <- quote(blavaan)
+    mc[[1L]] <- quote(blavaan::blavaan)
 
     ## change defaults depending on jags vs stan
     sampargs <- c("burnin", "sample", "adapt")
