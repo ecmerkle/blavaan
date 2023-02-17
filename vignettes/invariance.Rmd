@@ -6,6 +6,7 @@ bibliography:
 
 ```{r echo=FALSE, message=FALSE}
 library(blavaan, quietly=TRUE)
+library(lavaan, quietly=TRUE)
 ```
 
 The overt intent of this example is to illustrate the use of blavaan for studying measurement invariance. Along the way, we will also see how to obtain Bayesian model selection measures and how to send a lavaan object directly to blavaan for re-estimation.

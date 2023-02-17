@@ -6,6 +6,7 @@ bibliography:
 
 ```{r echo=FALSE, message=FALSE}
 library(blavaan, quietly=TRUE)
+library(lavaan, quietly=TRUE)
 ```
 
 There are two ways to specify prior distributions in blavaan.  First, each type of model parameter has a default prior distribution that may or may not be suitable for your specific situation.  You are free to modify the defaults.  Second, the priors for individual model parameters can be specified in the model syntax.  Each is discussed below.

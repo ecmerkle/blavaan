@@ -6,6 +6,7 @@ bibliography:
 
 ```{r pld, include=FALSE}
 library(blavaan, quietly=TRUE)
+library(lavaan, quietly=TRUE)
 library(ggplot2, quietly=TRUE)
 library(bayesplot, quietly=TRUE)
 ```
