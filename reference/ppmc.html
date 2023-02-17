@@ -14,7 +14,7 @@ function that can be applied to a lavaan model."><!-- mathjax --><script src="ht
     
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-7.1076</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-7.1079</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -79,7 +79,7 @@ function that can be applied to a lavaan model."><!-- mathjax --><script src="ht
     <div class="ref-description section level2">
     <p>This function allows users to conduct a posterior predictive model check to
 assess the global or local fit of a latent variable model using any discrepancy
-function that can be applied to a <code><a href="https://rdrr.io/pkg/lavaan/man/lavaan-class.html" class="external-link">lavaan</a></code> model.</p>
+function that can be applied to a <code>lavaan</code> model.</p>
     </div>
 
     <div class="section level2">
@@ -128,7 +128,7 @@ function that can be applied to a <code><a href="https://rdrr.io/pkg/lavaan/man/
 
   <dt>discFUN</dt>
 <dd><p><code>function</code>, or a <code>list</code> of functions, that can be
-    called on an object of class <code><a href="https://rdrr.io/pkg/lavaan/man/lavaan-class.html" class="external-link">lavaan</a></code>. Each function
+    called on an object of class <code>lavaan</code>. Each function
     must return an object whose <code><a href="https://rdrr.io/r/base/mode.html" class="external-link">mode</a></code> is <code>numeric</code>, but may
     be a <code>vector</code>, <code>matrix</code>, or multidimensional <code>array</code>. In
     the <code>summary</code> and <code>plot</code> methods, <code>discFUN</code> is a
@@ -301,11 +301,11 @@ function that can be applied to a <code><a href="https://rdrr.io/pkg/lavaan/man/
 <span class="r-in"><span><span class="co">## - (local) standardized residuals</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">discFUN</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>global <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">fit</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span>                  <span class="fu"><a href="https://rdrr.io/pkg/lavaan/man/fitMeasures.html" class="external-link">fitMeasures</a></span><span class="op">(</span><span class="va">fit</span>, fit.measures <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cfi"</span>,<span class="st">"rmsea"</span>,<span class="st">"srmr"</span>,<span class="st">"chisq"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>                  <span class="fu">fitMeasures</span><span class="op">(</span><span class="va">fit</span>, fit.measures <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cfi"</span>,<span class="st">"rmsea"</span>,<span class="st">"srmr"</span>,<span class="st">"chisq"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span>                <span class="op">}</span>,</span></span>
-<span class="r-in"><span>                std.cov.resid <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">fit</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/pkg/lavaan/man/lavResiduals.html" class="external-link">lavResiduals</a></span><span class="op">(</span><span class="va">fit</span>, zstat <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
+<span class="r-in"><span>                std.cov.resid <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">fit</span><span class="op">)</span> <span class="fu">lavResiduals</span><span class="op">(</span><span class="va">fit</span>, zstat <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
 <span class="r-in"><span>                                                           summary <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">$</span><span class="va">cov</span>,</span></span>
-<span class="r-in"><span>                std.mean.resid <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">fit</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/pkg/lavaan/man/lavResiduals.html" class="external-link">lavResiduals</a></span><span class="op">(</span><span class="va">fit</span>, zstat <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
+<span class="r-in"><span>                std.mean.resid <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">fit</span><span class="op">)</span> <span class="fu">lavResiduals</span><span class="op">(</span><span class="va">fit</span>, zstat <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
 <span class="r-in"><span>                                                            summary <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">$</span><span class="va">mean</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">out1g</span> <span class="op">&lt;-</span> <span class="fu">ppmc</span><span class="op">(</span><span class="va">fit</span>, discFUN <span class="op">=</span> <span class="va">discFUN</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
@@ -327,12 +327,12 @@ function that can be applied to a <code><a href="https://rdrr.io/pkg/lavaan/man/
 <span class="r-in"><span><span class="co">## (return each group's numeric output using a different function)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">disc2g</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>global <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">fit</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span>                 <span class="fu"><a href="https://rdrr.io/pkg/lavaan/man/fitMeasures.html" class="external-link">fitMeasures</a></span><span class="op">(</span><span class="va">fit</span>, fit.measures <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cfi"</span>,<span class="st">"rmsea"</span>,<span class="st">"mfi"</span>,<span class="st">"srmr"</span>,<span class="st">"chisq"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>                 <span class="fu">fitMeasures</span><span class="op">(</span><span class="va">fit</span>, fit.measures <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cfi"</span>,<span class="st">"rmsea"</span>,<span class="st">"mfi"</span>,<span class="st">"srmr"</span>,<span class="st">"chisq"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span>               <span class="op">}</span>,</span></span>
-<span class="r-in"><span>               cor.resid1 <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">fit</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/pkg/lavaan/man/lavResiduals.html" class="external-link">lavResiduals</a></span><span class="op">(</span><span class="va">fit</span>, zstat <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
+<span class="r-in"><span>               cor.resid1 <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">fit</span><span class="op">)</span> <span class="fu">lavResiduals</span><span class="op">(</span><span class="va">fit</span>, zstat <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
 <span class="r-in"><span>                                                       type <span class="op">=</span> <span class="st">"cor.bollen"</span>,</span></span>
 <span class="r-in"><span>                                                       summary <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">cov</span>,</span></span>
-<span class="r-in"><span>               cor.resid2 <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">fit</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/pkg/lavaan/man/lavResiduals.html" class="external-link">lavResiduals</a></span><span class="op">(</span><span class="va">fit</span>, zstat <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
+<span class="r-in"><span>               cor.resid2 <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">fit</span><span class="op">)</span> <span class="fu">lavResiduals</span><span class="op">(</span><span class="va">fit</span>, zstat <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
 <span class="r-in"><span>                                                       type <span class="op">=</span> <span class="st">"cor.bollen"</span>,</span></span>
 <span class="r-in"><span>                                                       summary <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">cov</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">out2g</span> <span class="op">&lt;-</span> <span class="fu">ppmc</span><span class="op">(</span><span class="va">fitg</span>, discFUN <span class="op">=</span> <span class="va">disc2g</span>, thin <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>

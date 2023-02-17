@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-7.1076</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-7.1079</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -149,22 +149,27 @@ these metrics, see, e.g., the Posterior Analysis section of the <a href="https:/
 Reference Manual</a>.</p>
 <p>If the model has definitely not converged (as judged by Rhat),
 blavaan will issue multiple warnings. Lack of convergence is sometimes
-caused by bad initial values (by default, blavaan generates random
-initial values), so it is occasionally helpful to re-estimate the model
-a second time. Otherwise, lack of convergence may imply prior
+caused by bad initial values or by a chain that strays to an extreme
+region of the posterior space. In these cases, it can be helpful to
+re-estimate the model a second time. It is also helpful to specify
+mildly-informative priors on loading parameters, so that the chains do
+not wander to extreme loading values. For example, if you expect all
+your variables to be positively correlated and some loadings are being
+fixed to 1 for identification, then Normal(1,.5) would often be a
+mildly-informative prior. Otherwise, lack of convergence may imply prior
 distributions that severely conflict with the data, or an ill-defined
 model. It is sometimes helpful to try to fit the same model in
-<em>lavaan</em>, to observe the types of errors that occur there.</p>
+<em>lavaan</em>, to observe whether errors occur there.</p>
 </div>
 <div class="section level3">
 <h3 id="model-fit-comparison">Model Fit &amp; Comparison<a class="anchor" aria-label="anchor" href="#model-fit-comparison"></a>
 </h3>
 <p>Next, we may wish to examine some model fit metrics. While many
 metrics are available from the <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> output, more are
-available from the <code><a href="https://rdrr.io/pkg/lavaan/man/fitMeasures.html" class="external-link">fitMeasures()</a></code> function:</p>
+available from the <code>fitMeasures()</code> function:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/lavaan/man/fitMeasures.html" class="external-link">fitMeasures</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">fitMeasures</span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p>For judging absolute fit, <em>blavaan</em> supplies a posterior
 predictive p-value that is based on the likelihood ratio statistic.
 Good-fitting models have values near 0.5 on this metric. For examining
@@ -225,7 +230,7 @@ format; for a matrix, see the last line of code below.</p>
 <p>Finally, not fully related to latent variables: the
 <code><a href="../reference/standardizedPosterior.html">standardizedPosterior()</a></code> function will return standardized
 posterior draws. It calls the <em>lavaan</em> function
-<code><a href="https://rdrr.io/pkg/lavaan/man/standardizedSolution.html" class="external-link">standardizedSolution()</a></code> in the background and has some of
+<code>standardizedSolution()</code> in the background and has some of
 that function’s flexibility.</p>
 </div>
 <div class="section level3 unnumbered">

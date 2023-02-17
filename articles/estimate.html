@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-7.1076</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-7.1079</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -159,15 +159,16 @@ importance samples for likelihood approximation (which is only relevant
 to models with ordinal variables).</p>
 <p>The <code>inits</code> argument is used to control the starting
 values for MCMC estimation. It can sometimes salvage a model that
-immediately crashes. The default, <code>inits = "prior"</code>, draws
-initial values from the prior distributions. A second option,
-<code>inits = "simple"</code>, initializes model parameters to 0 and 1
-in fashion similar to <em>lavaan</em>’s use of this argument. The user
-can also specify a list of their own initial values via this argument,
-though the required list format is somewhat cumbersome. We recommend
-exporting the model and data using <code>mcmcfile = TRUE</code>, loading
-the resulting rda file, and looking at the format of the initial values
-that <em>blavaan</em> created there.</p>
+immediately crashes. The default, <code>inits = "simple"</code>,
+initializes model parameters to 0 and 1 in fashion similar to
+<em>lavaan</em>’s use of this argument. A second option,
+<code>inits = "prior"</code>, draws initial values from the prior
+distributions. The user can also specify a list of their own initial
+values via this argument, though the required list format is somewhat
+cumbersome. We recommend exporting the model and data using
+<code>mcmcfile = TRUE</code>, loading the resulting rda file, and
+looking at the format of the initial values that <em>blavaan</em>
+created there.</p>
 </div>
 <div class="section level3">
 <h3 id="parallelization">Parallelization<a class="anchor" aria-label="anchor" href="#parallelization"></a>
