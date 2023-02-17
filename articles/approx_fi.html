@@ -146,10 +146,10 @@ standard deviation, and the 90% Credible Interval</p>
 <span><span class="co">## Posterior summary statistics and highest posterior density (HPD) 90% credible intervals for devm-based fit indices:</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##                EAP Median   MAP    SD lower upper</span></span>
-<span><span class="co">## BRMSEA       0.099  0.099 0.097 0.005 0.090 0.107</span></span>
-<span><span class="co">## BGammaHat    0.956  0.957 0.958 0.005 0.950 0.964</span></span>
-<span><span class="co">## adjBGammaHat 0.906  0.907 0.910 0.010 0.892 0.923</span></span>
-<span><span class="co">## BMc          0.902  0.903 0.906 0.010 0.888 0.919</span></span></code></pre>
+<span><span class="co">## BRMSEA       0.098  0.097 0.097 0.005 0.089 0.106</span></span>
+<span><span class="co">## BGammaHat    0.957  0.957 0.957 0.004 0.950 0.964</span></span>
+<span><span class="co">## adjBGammaHat 0.908  0.909 0.910 0.009 0.894 0.923</span></span>
+<span><span class="co">## BMc          0.903  0.904 0.905 0.010 0.888 0.919</span></span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="incremental-fit-indices">Incremental Fit Indices<a class="anchor" aria-label="anchor" href="#incremental-fit-indices"></a>
@@ -191,13 +191,13 @@ of fit indices</p>
 <span><span class="co">## Posterior summary statistics and highest posterior density (HPD) 90% credible intervals for devm-based fit indices:</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##                EAP Median   MAP    SD lower upper</span></span>
-<span><span class="co">## BRMSEA       0.099  0.099 0.097 0.005 0.090 0.107</span></span>
-<span><span class="co">## BGammaHat    0.956  0.957 0.958 0.005 0.950 0.964</span></span>
-<span><span class="co">## adjBGammaHat 0.906  0.907 0.910 0.010 0.892 0.923</span></span>
-<span><span class="co">## BMc          0.902  0.903 0.906 0.010 0.888 0.919</span></span>
-<span><span class="co">## BCFI         0.930  0.930 0.933 0.008 0.919 0.943</span></span>
-<span><span class="co">## BTLI         0.882  0.883 0.887 0.013 0.863 0.904</span></span>
-<span><span class="co">## BNFI         0.910  0.910 0.913 0.007 0.898 0.921</span></span></code></pre>
+<span><span class="co">## BRMSEA       0.098  0.097 0.097 0.005 0.089 0.106</span></span>
+<span><span class="co">## BGammaHat    0.957  0.957 0.957 0.004 0.950 0.964</span></span>
+<span><span class="co">## adjBGammaHat 0.908  0.909 0.910 0.009 0.894 0.923</span></span>
+<span><span class="co">## BMc          0.903  0.904 0.905 0.010 0.888 0.919</span></span>
+<span><span class="co">## BCFI         0.930  0.931 0.932 0.007 0.919 0.942</span></span>
+<span><span class="co">## BTLI         0.885  0.887 0.888 0.012 0.866 0.905</span></span>
+<span><span class="co">## BNFI         0.910  0.910 0.911 0.007 0.898 0.920</span></span></code></pre>
 <p>The <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> method now presents the central tendicy
 measure you asked for, standard deviation, and credible interval for the
 noncentrality and incremental fit indices.</p>
@@ -212,12 +212,12 @@ diagnostic plots using the <code>bayesplot</code> package.</p>
 <code class="sourceCode R"><span><span class="va">dist_fits</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="va">gl_fits_all</span><span class="op">@</span><span class="va">indices</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">dist_fits</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##       BRMSEA BGammaHat adjBGammaHat       BMc      BCFI      BTLI      BNFI</span></span>
-<span><span class="co">## 1 0.09417070 0.9602960    0.9148398 0.9111685 0.9365260 0.8930813 0.9161071</span></span>
-<span><span class="co">## 2 0.09707619 0.9579129    0.9097283 0.9058727 0.9324786 0.8862638 0.9121954</span></span>
-<span><span class="co">## 3 0.09587922 0.9589020    0.9118498 0.9080701 0.9348059 0.8901839 0.9146329</span></span>
-<span><span class="co">## 4 0.10452959 0.9515273    0.8960320 0.8917055 0.9225406 0.8695236 0.9028429</span></span>
-<span><span class="co">## 5 0.10217134 0.9535894    0.9004550 0.8962768 0.9265762 0.8763215 0.9068743</span></span>
-<span><span class="co">## 6 0.09644946 0.9584321    0.9108419 0.9070260 0.9342504 0.8892482 0.9141640</span></span></code></pre>
+<span><span class="co">## 1 0.09837738 0.9561484    0.9074629 0.9019544 0.9297280 0.8844935 0.9092054</span></span>
+<span><span class="co">## 2 0.10865259 0.9470203    0.8882006 0.8817268 0.9142187 0.8590006 0.8942734</span></span>
+<span><span class="co">## 3 0.10454038 0.9507610    0.8960943 0.8900075 0.9204730 0.8692809 0.9002607</span></span>
+<span><span class="co">## 4 0.10574233 0.9496795    0.8938122 0.8876122 0.9186835 0.8663395 0.8985514</span></span>
+<span><span class="co">## 5 0.09894907 0.9556599    0.9064321 0.9008702 0.9288333 0.8830229 0.9083239</span></span>
+<span><span class="co">## 6 0.09157821 0.9617767    0.9193399 0.9144610 0.9388935 0.8995589 0.9179514</span></span></code></pre>
 <p>Once we have saved the posterior distributions, we can explore the
 the histogram and scatterplots between indices.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
