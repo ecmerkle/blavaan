@@ -14,6 +14,11 @@
 
 * Column names are added to blavPredict(, type="lv")
 
+## Bugs/glitches discovered after the release:
+* blavFitIndices() and save.lvs = TRUE do not work correctly for models without meanstructure. Workaround is to use meanstructure = TRUE in the model estimation command (reported by Charles Hofacker).
+
+* The lavaan summary() method is sometimes called instead of the blavaan summary() method (reported by multiple users, with Shu Fai Cheung providing helpful examples).
+
 
 
 # Version 0.4-3
@@ -33,7 +38,7 @@
 * loo() moment matching available by passing mcmcextra = list(data = list(moment_match_k_threshold))
 
 ## Bugs/glitches discovered after the release:
-* target = "stan" fails when there are complete data in one group and missing data in another group
+* target = "stan" fails when there are complete data in one group and missing data in another group (reported by Ronja Runge).
 
 * blavPredict(, type="ymis") still not available for models with ordinal variables
 
