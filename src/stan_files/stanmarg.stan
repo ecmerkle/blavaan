@@ -886,11 +886,11 @@ model { // N.B.: things declared in the model block do not get saved in the outp
 	}
       }
     }
+    if (ord) {
+      target += tau_jacobian;
+    }
   }
   
-  if (ord) {
-    target += tau_jacobian;
-  }
   
   /* prior densities in log-units */
   target += normal_lpdf(Lambda_y_free | lambda_y_primn, lambda_y_sd);
