@@ -1,6 +1,7 @@
 if(requireNamespace("rstan", quietly = TRUE) &
    requireNamespace("runjags", quietly = TRUE)){
   load(system.file("testdata", "sysdata.rda", package="blavaan"))
+  library("lavaan", quietly = TRUE)
 
   # classes
   expect_equal(class(fitjags@external), "list")
