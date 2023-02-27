@@ -64,13 +64,13 @@ blavPredict <- function(object, newdata = NULL, type = "lv") {
 
       tmpres <- vector("list", nchain)
       for(j in 1:nchain) {
-        loop.args <- list(X = 1:nsamps, future.seed = TRUE, FUN = function(i, j){
+        loop.args <- list(X = 1:nsamps, FUN = function(i, j){
           cond_moments(lavmcmc[[j]][itnums[i],],
                        blavmodel,
                        blavpartable,
                        blavsamplestats,
                        blavdata,
-                       object)}, j = j)
+                       object)}, j = j, future.seed = TRUE)
         tmpres[[j]] <- do.call("future_lapply", loop.args)
       }
       tmpres <- unlist(tmpres, recursive = FALSE)
