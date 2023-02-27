@@ -140,7 +140,7 @@ samp_lvs <- function(mcobj, lavmodel, lavpartable, standata, categorical, thin =
   nmat <- lavmodel@nmat
   nblocks <- lavmodel@nblocks
 
-  loop.args <- list(X = 1:nsamps, future.seed = TRUE, FUN = function(i){
+  loop.args <- list(X = 1:nsamps, FUN=function(i){
       tmpmat <- array(NA, dim=c(nchain, standata$Ntot, standata$w9use + standata$w9no))
       for(j in 1:nchain){
         lavmodel <- fill_params(lavmcmc[[j]][i,], lavmodel, lavpartable)
@@ -152,6 +152,7 @@ samp_lvs <- function(mcobj, lavmodel, lavpartable, standata, categorical, thin =
 
           modmats[[g]] <- lavmodel@GLIST[ mm.in.group ]
           if(!("beta" %in% names(modmats[[g]]))) modmats[[g]]$beta <- matrix(0, standata$m, standata$m)
+          if(!("alpha" %in% names(modmats[[g]]))) modmats[[g]]$alpha <- matrix(0, standata$m, 1)
         }
 
         standata2 <- standata
@@ -174,7 +175,7 @@ samp_lvs <- function(mcobj, lavmodel, lavpartable, standata, categorical, thin =
         
         tmpmat[j,,] <- lvgqs(modmats, standata2)
       }
-      tmpmat})
+      tmpmat}, future.seed = TRUE)
 
   etasamps <- do.call("future_lapply", loop.args)
   etasamps <- array(unlist(etasamps), with(standata, c(nchain, Ntot, w9use + w9no, nsamps)))
@@ -209,6 +210,7 @@ samp_data <- function(mcobj, lavmodel, lavpartable, standata, lavdata, thin = 1)
 
           modmats[[g]] <- lavmodel@GLIST[ mm.in.group ]
           if(!("beta" %in% names(modmats[[g]]))) modmats[[g]]$beta <- matrix(0, standata$m, standata$m)
+          if(!("alpha" %in% names(modmats[[g]]))) modmats[[g]]$alpha <- matrix(0, standata$m, 1)
         }
 
         tmplist[[j]] <- lvgqs(modmats, standata, getlvs = FALSE)
