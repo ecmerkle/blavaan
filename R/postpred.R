@@ -194,6 +194,7 @@ postpred <- function(samplls = NULL, lavobject = NULL, measure = "logl", thin = 
         lavoptions2$verbose <- FALSE
         lavoptions2$estimator <- "ML"
         if(catmod) lavoptions2$estimator <- "DWLS"
+        if(!lavoptions2$meanstructure) lavoptions2$missing <- 'listwise' ## to avoid "missing" ll calculations
         lavoptions2$se <- "none"
         lavoptions2$test <- "standard"
         lavoptions2$optim.method <- "none"
@@ -406,6 +407,7 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, type = "res
       }
       Sigma.hat <- implied$cov
       Mu.hat <- implied$mean
+      if(is.null(Mu.hat[[1]])) Mu.hat <- lapply(lavsamplestats@mean, matrix)
       dataeXo <- lavdata@eXo
 
       dataX <- origlavdata@X
