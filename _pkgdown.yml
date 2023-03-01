@@ -11,7 +11,7 @@ resource_files:
   - vignettes/refs.bib
 
 news:
-  one_page: false
+  one_page: true
 
 navbar:
   title: "blavaan"
