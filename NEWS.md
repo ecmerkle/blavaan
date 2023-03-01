@@ -1,3 +1,11 @@
+# Version 0.4-7
+## New features
+* This is primarily an update to address a C++14 vs C++17 compilation issue identified by CRAN
+
+* But bugs from 0.4-6 have also been fixed
+
+
+
 # Version 0.4-6
 ## New features
 * For target = "stan", meanstructure=FALSE is allowed, along with use of sample.cov and sample.nobs instead of raw data
