@@ -39,7 +39,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   }
     
   vector fill_prior(vector free_elements, real[] pri_mean, int[,] eq_skeleton) {
-    int R = size(eq_skeleton);
+    int R = dims(eq_skeleton)[1];
     int eqelem = 0;
     int pos = 1;
     vector[num_elements(pri_mean)] out;
