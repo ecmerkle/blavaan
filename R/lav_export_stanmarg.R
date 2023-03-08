@@ -1081,11 +1081,6 @@ lav2standata <- function(lavobject) {
   }
   dat$YX <- do.call("rbind", YX)
   dat$S <- S
-  if (multilevel) {
-    cidx <- lavInspect(lavobject, 'cluster.idx')
-    tmpYX <- split.data.frame(dat$YX, cidx)
-    dat$YX <- do.call("rbind", tmpYX)[, 1:ptot]
-  }
   dat$grpnum <- array(dat$grpnum, length(dat$grpnum))
 
   if (multilevel) {
@@ -1128,24 +1123,15 @@ lav2standata <- function(lavobject) {
     dat$cov_d <- cov_d
 
     ## clusterwise data summaries, for loo and waic and etc
-    csums <- c(0L, cumsum(dat$nclus[,2]))
-    sumfull <- vector("list", Ng)
-    for (g in 1:Ng) {
-      Lp[[g]]$cluster.sizes[[2]] <- dat$cluster_size[(csums[g] + 1):csums[g+1]]
-      Lp[[g]]$ncluster.sizes[[2]] <- dat$nclus[g,2]
-      Lp[[g]]$cluster.size.ns[[2]] <- rep(1, dat$nclus[g,2])
-      lavdat <- lavInspect(lavobject, 'data')
-      if (Ng > 1) lavdat <- lavdat[[g]]
-      sumfull[[g]] <- lavaan:::lav_samplestats_cluster_patterns(lavdat, Lp[[g]])
-    }
-    dat$mean_d_full <- do.call("rbind", lapply(sumfull, function(x) do.call("rbind", x[[2]]$mean.d)))
+    cidx <- lavInspect(lavobject, 'cluster.idx')
+    mean_d_full <- rowsum.default(as.matrix(dat$YX), cidx) / dat$cluster_size
+    tmpYX <- split.data.frame(dat$YX, cidx)
+    dat$YX <- do.call("rbind", tmpYX)[, 1:ptot]
+    dat$mean_d_full <- mean_d_full
 
-    cov_d_full <- unlist(lapply(sumfull, function(x) x[[2]]$cov.d), recursive = FALSE)
-    for (i in 1:length(cov_d_full)) {
-      if (!inherits(cov_d_full[[i]], "matrix")) cov_d_full[[i]] <- with(dat,
-                                                                        matrix(0, N_between + N_both + N_within,
-                                                                               N_between + N_both + N_within))
-    }
+    ## cov_d is variability across clusters of same size, so irrelevant for clusterwise
+    ## (just send 0s to satisfy the Stan function)
+    cov_d_full <- lapply(1:length(dat$cluster_size), matrix, data = 0, nrow = NCOL(mean_d_full), ncol = NCOL(mean_d_full))
     dat$cov_d_full <- cov_d_full
   } else {
     dat$nclus <- array(1, c(Ng, 2))

@@ -138,7 +138,8 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
       int uord_bidx[N_between];
       int uord_notbidx[N_wo_b];
 
-      if (!cluswise) Y2Yc += cov_d[clz];
+      if (!cluswise) Y2Yc += cov_d[clz]; // variability between clusters of same size, will always equal 0 for clusterwise
+
       if (N_between > 0) {
 	for (k in 1:N_between) {
 	  uord_bidx[k] = k;
@@ -190,7 +191,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
 	}
 	r1 += nj; // for next iteration through loop
 	
-	q_W[clz] = trace(quad_form_sym(Sigma_w_inv, Y_j)) - nj * quad_form_sym(Sigma_w_inv, (mean_d[clz] - Mu_full));
+	q_W[clz] = sum(Sigma_w_inv .* tcrossprod(Y_j)) - nj * sum(Sigma_w_inv .* Y2Yc_yy);
       }
     }
 
