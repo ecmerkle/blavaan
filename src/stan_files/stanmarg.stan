@@ -975,7 +975,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   ly_sign = sign_constrain_load(Lambda_y_free, len_free[1], lam_y_sign);
   bet_sign = sign_constrain_reg(B_free, len_free[4], b_sign, Lambda_y_free, Lambda_y_free);
   if (fullpsi == 0) {
-    P_r = sign_constrain_reg(2 * Psi_r_free - 1, len_free[10], psi_r_sign, Lambda_y_free, Lambda_y_free);
+    P_r = sign_constrain_reg(Psi_r_free, len_free[10], psi_r_sign, Lambda_y_free, Lambda_y_free);
   }
   
   for (g in 1:Ng) {
