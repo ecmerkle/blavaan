@@ -29,7 +29,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   }
 
 
-  vector twolevel_logdens(vector[] mean_d, matrix[] cov_d, matrix S_PW, int[] nclus, int[] clus_size, int[] clus_sizes, int nclus_sizes, int[] clus_size_ns, vector impl_Muw, matrix impl_Sigmaw, vector impl_Mub, matrix impl_Sigmab, int[] ov_idx1, int[] ov_idx2, int[] within_idx, int[] between_idx, int[] both_idx, int[] ov_x_idx, int p_tilde, int N_within, int N_between, int N_both, real loglik_x){
+  vector twolevel_logdens(vector[] mean_d, matrix[] cov_d, matrix S_PW, vector[] YX, int[] nclus, int[] clus_size, int[] clus_sizes, int nclus_sizes, int[] clus_size_ns, vector impl_Muw, matrix impl_Sigmaw, vector impl_Mub, matrix impl_Sigmab, int[] ov_idx1, int[] ov_idx2, int[] within_idx, int[] between_idx, int[] both_idx, int[] ov_x_idx, int p_tilde, int N_within, int N_between, int N_both, real loglik_x){
     matrix[p_tilde, p_tilde + 1] W_tilde;
     matrix[p_tilde, p_tilde] W_tilde_cov;
     matrix[p_tilde, p_tilde + 1] B_tilde;
@@ -68,8 +68,11 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     vector[nclus_sizes] L_W;
     vector[nclus_sizes] loglik;
     vector[nclus_sizes] nperclus = to_vector(clus_sizes) .* to_vector(clus_size_ns);
+    int cluswise = 0;
+    int r1 = 1; // running index of rows of YX corresponding to each cluster
 
     // 1. compute necessary vectors/matrices, like lav_mvnorm_cluster_implied22l() of lav_mvnorm_cluster.R
+    if (nclus[2] == nclus_sizes) cluswise = 1;
     W_tilde = calc_W_tilde(impl_Sigmaw, impl_Muw, ov_idx1, p_tilde);
     W_tilde_cov = block(W_tilde, 1, 2, p_tilde, p_tilde);
     B_tilde = calc_B_tilde(impl_Sigmab, impl_Mub, ov_idx2, p_tilde);
@@ -128,15 +131,15 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     for (clz in 1:nclus_sizes) {
       int nj = clus_sizes[clz];
     
-      matrix[N_between + N_wo_b, N_between + N_wo_b] Y2Yc = cov_d[clz] + crossprod(to_matrix(mean_d[clz] - Mu_full)');
+      matrix[N_between + N_wo_b, N_between + N_wo_b] Y2Yc = crossprod(to_matrix(mean_d[clz] - Mu_full)');
       matrix[N_between, N_between] Y2Yc_zz;
       matrix[N_wo_b, N_between] Y2Yc_yz;
       matrix[N_wo_b, N_wo_b] Y2Yc_yy;
-      
-      if (N_between > 0) {
-	int uord_bidx[N_between];
-	int uord_notbidx[N_wo_b];
+      int uord_bidx[N_between];
+      int uord_notbidx[N_wo_b];
 
+      if (!cluswise) Y2Yc += cov_d[clz];
+      if (N_between > 0) {
 	for (k in 1:N_between) {
 	  uord_bidx[k] = k;
 	}
@@ -172,9 +175,28 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
       q_yyc =  -nj * sum(Sigma_j_inv .* Y2Yc_yy);
 
       B[clz] = q_zz + 2 * q_yz - q_yyc;
+
+      if (cluswise) {
+	matrix[N_wo_b, nj] Y_j;
+
+	if (N_between > 0) {
+	  for (i in 1:nj) {
+	    Y_j[, i] = YX[r1 - 1 + i, uord_notbidx] - Mu_y; // would be nice to have to_matrix(YX) here
+	  }
+	} else {
+	  for (i in 1:nj) {
+	    Y_j[, i] = YX[r1 - 1 + i] - Mu_y;
+	  }
+	}
+	r1 += nj; // for next iteration through loop
+	
+	q_W[clz] = trace(quad_form_sym(Sigma_w_inv, Y_j)) - nj * quad_form_sym(Sigma_w_inv, (mean_d[clz] - Mu_full));
+      }
     }
 
-    q_W = (nperclus - to_vector(clus_size_ns)) * sum(Sigma_w_inv .* S_PW);
+    if (!cluswise) {
+      q_W = (nperclus - to_vector(clus_size_ns)) * sum(Sigma_w_inv .* S_PW);
+    }
     L_W = (nperclus - to_vector(clus_size_ns)) * Sigma_w_ld;
 
     loglik = -.5 * ((L .* to_vector(clus_size_ns)) + (B .* to_vector(clus_size_ns)) + q_W + L_W);
@@ -1314,7 +1336,7 @@ model { // N.B.: things declared in the model block do not get saved in the outp
       r4 += ncluster_sizes[grpidx];
       
       // FIXME change Nx[1] for missing data/etc
-      target += twolevel_logdens(mean_d[r3:r4], cov_d[r3:r4], S_PW[grpidx], nclus[grpidx,],
+      target += twolevel_logdens(mean_d[r3:r4], cov_d[r3:r4], S_PW[grpidx], YX, nclus[grpidx,],
 				 cluster_size[r1:r2], cluster_sizes[r3:r4],
 				 ncluster_sizes[grpidx], cluster_size_ns[r3:r4], Mu[grpidx],
 				 Sigma[grpidx], Mu_c[grpidx], Sigma_c[grpidx],
@@ -1553,6 +1575,8 @@ generated quantities { // these matrices are saved in the output but do not figu
     int xdatidx[p + q];
     int r1;
     int r2;
+    int r3;
+    int r4;
     int grpidx;
 
     if (do_test && use_cov) {
@@ -1633,13 +1657,19 @@ generated quantities { // these matrices are saved in the output but do not figu
     // compute log-likelihoods
     if (nclus[1,2] > 1) { // multilevel
       r1 = 1;
+      r3 = 1;
       r2 = 0;
+      r4 = 0;
       for (mm in 1:Np) {
 	grpidx = grpnum[mm];
-	if (grpidx > 1) r1 += nclus[(grpidx - 1), 2];
+	if (grpidx > 1) {
+	  r1 += nclus[(grpidx - 1), 2];
+	  r3 += nclus[(grpidx - 1), 1];
+	}
 	r2 += nclus[grpidx, 2];
+	r4 += nclus[grpidx, 1];
 	
-	log_lik[r1:r2] = twolevel_logdens(mean_d_full[r1:r2], cov_d_full[r1:r2], S_PW[grpidx],
+	log_lik[r1:r2] = twolevel_logdens(mean_d_full[r1:r2], cov_d_full[r1:r2], S_PW[grpidx], YX[r3:r4],
 					  nclus[grpidx,], cluster_size[r1:r2], cluster_size[r1:r2],
 					  nclus[grpidx,2], intone[1:nclus[grpidx,2]], Mu[grpidx],
 					  Sigma[grpidx], Mu_c[grpidx], Sigma_c[grpidx],

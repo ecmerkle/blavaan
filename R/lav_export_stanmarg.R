@@ -1082,7 +1082,9 @@ lav2standata <- function(lavobject) {
   dat$YX <- do.call("rbind", YX)
   dat$S <- S
   if (multilevel) {
-    dat$YX <- dat$YX[,1:ptot] ## unused, just to make stan happy
+    cidx <- lavInspect(lavobject, 'cluster.idx')
+    tmpYX <- split.data.frame(dat$YX, cidx)
+    dat$YX <- do.call("rbind", tmpYX)[, 1:ptot]
   }
   dat$grpnum <- array(dat$grpnum, length(dat$grpnum))
 
