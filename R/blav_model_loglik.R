@@ -480,15 +480,18 @@ get_ll_2l <- function(postsamp       = NULL, # one posterior sample
   }
 
   implied <- lav_model_implied(lavmodel, delta = (lavmodel@parameterization == "delta"))
+  Ng <- lavInspect(lavobject, 'ngroups')
 
-  ## FIXME: handle multiple groups
-  ll.args <- list(YLp = lavsamplestats@YLp[[1]], Lp = lavdata@Lp[[1]], Mu.W = implied$mean[[1]],
-                  Sigma.W = implied$cov[[1]], Mu.B = implied$mean[[2]], Sigma.B = implied$cov[[2]],
-                  log2pi = TRUE, minus.two = FALSE)
+  out <- rep(NA, Ng)
+  for(g in 1:Ng){
+    ll.args <- list(YLp = lavsamplestats@YLp[[g]], Lp = lavdata@Lp[[g]], Mu.W = implied$mean[[(2 * g - 1)]],
+                    Sigma.W = implied$cov[[(2 * g - 1)]], Mu.B = implied$mean[[2 * g]], Sigma.B = implied$cov[[2 * g]],
+                    log2pi = TRUE, minus.two = FALSE)
 
-  out <- do.call(lav2ll, ll.args)
+    out[g] <- do.call(lav2ll, ll.args)
+  }
 
-  out
+  sum(out)
 }
 
 ## get log-likelihoods for each sampled parameter

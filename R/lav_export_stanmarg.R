@@ -177,7 +177,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
 lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=NULL, prisamp=FALSE, mcmcextra=NULL, level=1L, indat=NULL) {
   ## extract model and data characteristics from lavaan object
   opts <- lavInspect(lavobject, 'options')
-  multilevel <- opts$.clustered
+  multilevel <- opts$.multilevel
 
   ## if not multilevel, this creates empty matrices to pass to stan for level 2
   ## if (!multilevel & level > 1) stop("blavaan ERROR: higher levels requested, but this is not a multilevel model.")
@@ -990,7 +990,7 @@ lav2standata <- function(lavobject) {
   }
 
   ord <- as.numeric(lavInspect(lavobject, 'categorical'))
-  multilevel <- lavInspect(lavobject, 'options')$.clustered
+  multilevel <- lavInspect(lavobject, 'options')$.multilevel
   if (multilevel) Lp <- lavobject@Data@Lp
   dat$ord <- ord
   dat$N <- lavInspect(lavobject, 'nobs')
@@ -1124,6 +1124,14 @@ lav2standata <- function(lavobject) {
 
     ## clusterwise data summaries, for loo and waic and etc
     cidx <- lavInspect(lavobject, 'cluster.idx')
+    if (inherits(cidx, "list")) {
+      if (length(cidx) > 1) {
+        for (g in 2:length(cidx)) {
+          cidx[[g]] <- cidx[[g]] + max(cidx[[(g - 1)]])
+        }
+      }
+      cidx <- unlist(cidx)
+    }
     mean_d_full <- rowsum.default(as.matrix(dat$YX), cidx) / dat$cluster_size
     tmpYX <- split.data.frame(dat$YX, cidx)
     dat$YX <- do.call("rbind", tmpYX)[, 1:ptot]
