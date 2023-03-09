@@ -774,7 +774,7 @@ blavaan <- function(...,  # default lavaan arguments
           stansumm <- parests$stansumm
         } else {
           draw_mat <- as.matrix(res)
-          if("level" %in% names(lavpartable)) {
+          if(lavoptions$.multilevel) {
             Ng <- lavInspect(LAV, 'ngroups')
             parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')[2*(1:Ng) - 1], l2s$free2, jagtrans$data, res, colnames(draw_mat))
             parests2 <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')[2*(1:Ng)], l2s$free2, jagtrans$data, res, colnames(draw_mat), level = 2L)

@@ -10,6 +10,8 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
 
     if(lavInspect(lavobject, "categorical")){
       ll.samp <- get_ll_ord(postsamp, lavobject, measure, casewise, conditional, standata)
+    } else if(lavInspect(lavobject, "options")$.multilevel){
+      ll.samp <- get_ll_2l(postsamp, lavobject, standata)
     } else {
       ll.samp <- get_ll_cont(postsamp, lavobject, measure, casewise, conditional)
     }
@@ -458,6 +460,35 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
   ll.samp <- as.numeric(ll.samp)
   attributes(ll.samp) <- ATTR
   ll.samp
+}
+
+get_ll_2l <- function(postsamp       = NULL, # one posterior sample
+                      lavobject      = NULL,
+                      standata       = NULL){
+
+  lav2ll <- getFromNamespace("lav_mvnorm_cluster_loglik_samplestats_2l", "lavaan")
+
+  lavmodel <- lavobject@Model
+  lavpartable <- lavobject@ParTable
+  lavsamplestats <- lavobject@SampleStats
+  lavoptions <- lavobject@Options
+  lavcache <- lavobject@Cache
+  lavdata <- lavobject@Data
+
+  if(length(postsamp) > 0){
+    lavmodel <- fill_params(postsamp, lavmodel, lavpartable)
+  }
+
+  implied <- lav_model_implied(lavmodel, delta = (lavmodel@parameterization == "delta"))
+
+  ## FIXME: handle multiple groups
+  ll.args <- list(YLp = lavsamplestats@YLp[[1]], Lp = lavdata@Lp[[1]], Mu.W = implied$mean[[1]],
+                  Sigma.W = implied$cov[[1]], Mu.B = implied$mean[[2]], Sigma.B = implied$cov[[2]],
+                  log2pi = TRUE, minus.two = FALSE)
+
+  out <- do.call(lav2ll, ll.args)
+
+  out
 }
 
 ## get log-likelihoods for each sampled parameter
