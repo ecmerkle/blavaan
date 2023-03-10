@@ -11,6 +11,7 @@ lvgqs <- function(modmats, standata, getlvs = TRUE) {
   grpnum <- standata$grpnum
   Obsvar <- standata$Obsvar
   Nobs <- standata$Nobs
+  Ntot <- standata$Ntot
   YX <- standata$YX
   usepsi <- standata$usepsi
   nopsi <- standata$nopsi

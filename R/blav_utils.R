@@ -388,8 +388,8 @@ checkcovs <- function(lavobject){
   if (nrow(free[[1]]$psi) > 0) {
     psis <- lapply(free, function(x) x$psi)
     psinums <- sapply(psis, function(x) x[lower.tri(x)])
-    diagpsi <- all(psinums == 0L, na.rm = TRUE)
-    fullpsi <- all(psinums > 0L, na.rm = TRUE) & (anyDuplicated(psinums, MARGIN = 0) == 0L)
+    diagpsi <- all(unlist(psinums) == 0L, na.rm = TRUE)
+    fullpsi <- all(unlist(psinums) > 0L, na.rm = TRUE) & (anyDuplicated(unlist(psinums), MARGIN = 0) == 0L)
   } else {
     diagpsi <- FALSE
     fullpsi <- TRUE
@@ -398,9 +398,9 @@ checkcovs <- function(lavobject){
   if (nrow(free[[1]]$theta) > 0) {
     thets <- lapply(free, function(x) x$theta)
     thetnums <- sapply(thets, function(x) x[lower.tri(x)])
-    diagthet <- all(thetnums == 0L, na.rm = TRUE)
+    diagthet <- all(unlist(thetnums) == 0L, na.rm = TRUE)
     ## surprising if this happens:
-    fullthet <- all(thetnums > 0L, na.rm = TRUE) & (anyDuplicated(thetnums, MARGIN = 0) == 0L)
+    fullthet <- all(unlist(thetnums) > 0L, na.rm = TRUE) & (anyDuplicated(unlist(thetnums), MARGIN = 0) == 0L)
   } else {
     diagthet <- FALSE
     fullthet <- TRUE

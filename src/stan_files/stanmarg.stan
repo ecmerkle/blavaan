@@ -182,7 +182,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
 
 	if (N_between > 0) {
 	  for (i in 1:nj) {
-	    Y_j[, i] = YX[r1 - 1 + i, uord_notbidx] - Mu_y; // would be nice to have to_matrix(YX) here
+	    Y_j[, i] = YX[r1 - 1 + i, notbidx] - Mu_y; // would be nice to have to_matrix(YX) here
 	  }
 	} else {
 	  for (i in 1:nj) {
