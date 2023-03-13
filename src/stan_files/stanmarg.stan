@@ -29,7 +29,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   }
 
 
-  vector twolevel_logdens(vector[] mean_d, matrix[] cov_d, matrix S_PW, vector[] YX, int[] nclus, int[] clus_size, int[] clus_sizes, int nclus_sizes, int[] clus_size_ns, vector impl_Muw, matrix impl_Sigmaw, vector impl_Mub, matrix impl_Sigmab, int[] ov_idx1, int[] ov_idx2, int[] within_idx, int[] between_idx, int[] both_idx, int[] ov_x_idx, int p_tilde, int N_within, int N_between, int N_both, real loglik_x){
+  vector twolevel_logdens(vector[] mean_d, matrix[] cov_d, matrix S_PW, vector[] YX, int[] nclus, int[] clus_size, int[] clus_sizes, int nclus_sizes, int[] clus_size_ns, vector impl_Muw, matrix impl_Sigmaw, vector impl_Mub, matrix impl_Sigmab, int[] ov_idx1, int[] ov_idx2, int[] within_idx, int[] between_idx, int[] both_idx, int Nx, int p_tilde, int N_within, int N_between, int N_both, vector loglik_x){
     matrix[p_tilde, p_tilde + 1] W_tilde;
     matrix[p_tilde, p_tilde] W_tilde_cov;
     matrix[p_tilde, p_tilde + 1] B_tilde;
@@ -180,14 +180,8 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
       if (cluswise) {
 	matrix[N_wo_b, nj] Y_j;
 
-	if (N_between > 0) {
-	  for (i in 1:nj) {
-	    Y_j[, i] = YX[r1 - 1 + i, notbidx] - Mu_y; // would be nice to have to_matrix(YX) here
-	  }
-	} else {
-	  for (i in 1:nj) {
-	    Y_j[, i] = YX[r1 - 1 + i] - Mu_y;
-	  }
+	for (i in 1:nj) {
+	  Y_j[, i] = YX[r1 - 1 + i] - Mu_y; // would be nice to have to_matrix() here
 	}
 	r1 += nj; // for next iteration through loop
 	
@@ -203,9 +197,8 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     loglik = -.5 * ((L .* to_vector(clus_size_ns)) + (B .* to_vector(clus_size_ns)) + q_W + L_W);
     // add constant, line 300 lav_mvnorm_cluster
     P = nperclus * (N_within + N_both) + to_vector(clus_size_ns) * N_between;
-
     loglik += -.5 * (P * log(2 * pi()));
-    if (size(ov_x_idx) > 0) {
+    if (Nx > 0) {
       loglik += -loglik_x;
     }
 
@@ -251,7 +244,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   }
     
   vector fill_prior(vector free_elements, real[] pri_mean, int[,] eq_skeleton) {
-    int R = size(eq_skeleton);
+    int R = dims(eq_skeleton)[1];
     int eqelem = 0;
     int pos = 1;
     vector[num_elements(pri_mean)] out;
@@ -488,8 +481,6 @@ data {
   vector[p + q - Nord] YX[Ntot]; // continuous data
   int YXo[Ntot, Nord]; // ordinal data
   int<lower=0> Nx[Np]; // number of fixed.x variables
-  int<lower=0> Xvar[Np, p + q]; // indexing of fixed.x variables
-  int<lower=0> Xdatvar[Np, p + q]; // indexing of fixed.x in data (differs from Xvar when missing)
   int<lower=0, upper=1> use_cov;
   int<lower=0> emiter; // number of em iterations for saturated model in ppp (missing data only)
   int<lower=0, upper=1> use_suff; // should we compute likelihood via mvn sufficient stats?
@@ -503,6 +494,8 @@ data {
   int<lower=1> cluster_sizes[sum(ncluster_sizes)]; // unique cluster sizes
   int<lower=1> cluster_size_ns[sum(ncluster_sizes)]; // number of clusters of each size
   int p_tilde; // total number of variables
+  int<lower=0> Xvar[Np, nclus[1, 2] > 1 ? p_tilde : p + q]; // indexing of fixed.x variables
+  int<lower=0> Xdatvar[Np, nclus[1, 2] > 1 ? p_tilde : p + q]; // indexing of fixed.x in data (differs from Xvar when missing)
   vector[p_tilde] mean_d[sum(ncluster_sizes)]; // sample means by unique cluster size
   matrix[p_tilde, p_tilde] cov_d[sum(ncluster_sizes)]; // sample covariances by unique cluster size
   matrix[p_tilde, p_tilde] cov_w[Ng]; // observed "within" covariance matrix
@@ -517,7 +510,8 @@ data {
   int ov_idx1[N_lev[1]];
   int ov_idx2[N_lev[2]];
   int both_idx[N_both];
-  real log_lik_x[Ng]; // ll of fixed x variables
+  vector[nclus[1, 2] > 1 ? sum(ncluster_sizes) : Ng] log_lik_x; // ll of fixed x variables by unique cluster size
+  vector[nclus[1, 2] > 1 ? sum(nclus[,2]) : Ng] log_lik_x_full; // ll of fixed x variables by cluster
   
   
   /* sparse matrix representations of skeletons of coefficient matrices, 
@@ -1335,14 +1329,13 @@ model { // N.B.: things declared in the model block do not get saved in the outp
       }
       r2 += nclus[grpidx, 2];
       r4 += ncluster_sizes[grpidx];
-      
-      // FIXME change Nx[1] for missing data/etc
+
       target += twolevel_logdens(mean_d[r3:r4], cov_d[r3:r4], S_PW[grpidx], YX, nclus[grpidx,],
 				 cluster_size[r1:r2], cluster_sizes[r3:r4],
 				 ncluster_sizes[grpidx], cluster_size_ns[r3:r4], Mu[grpidx],
 				 Sigma[grpidx], Mu_c[grpidx], Sigma_c[grpidx],
 				 ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
-				 Xvar[1], p_tilde, N_within, N_between, N_both, log_lik_x[grpidx]);
+				 Nx[mm], p_tilde, N_within, N_between, N_both, log_lik_x[r3:r4]);
     }
   } else if (use_cov) {
     for (g in 1:Ng) {
@@ -1675,16 +1668,16 @@ generated quantities { // these matrices are saved in the output but do not figu
 					  nclus[grpidx,2], intone[1:nclus[grpidx,2]], Mu[grpidx],
 					  Sigma[grpidx], Mu_c[grpidx], Sigma_c[grpidx],
 					  ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
-					  Xvar[1], p_tilde, N_within, N_between, N_both,
-					  log_lik_x[grpidx]);
+					  Nx[mm], p_tilde, N_within, N_between, N_both,
+					  log_lik_x_full[r1:r2]);
       }
-    }
+    } else {
 
     zmat = rep_matrix(0, p + q, p + q);
     for (mm in 1:Np) {
       obsidx = Obsvar[mm,];
-      xidx = Xvar[mm,];
-      xdatidx = Xdatvar[mm,];
+      xidx = Xvar[mm, 1:(p + q)];
+      xdatidx = Xdatvar[mm, 1:(p + q)];
       r1 = startrow[mm];
       r2 = endrow[mm];
       grpidx = grpnum[mm];
@@ -1734,12 +1727,12 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  }
 	}
       }
-    }
+    }} //extra is for "else if not multilevel", can remove once deal with multilevel ppp    
 
     if (do_test) {
       ppp = step((-sum(log_lik_rep) + sum(log_lik_rep_sat)) - (sum(log_lik_sat)));
     } else {
-	ppp = 0;
+      ppp = 0;
     }
   }
   

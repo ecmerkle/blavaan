@@ -563,3 +563,31 @@ case_lls <- function(lavjags        = NULL,
       
   llmat
 }
+
+## clusterwise loglik.x (for computing clusterwise log-likelihoods)
+llx_2l <- function(Lp, YX, mean_d, cidx){
+  ## fixed within logl:
+  wx.idx <- Lp$ov.x.idx[[1]]
+
+  if (length(wx.idx) > 0) {
+    nrows <- nrow(YX)
+    S <- cov(YX[, wx.idx, drop = FALSE]) * (nrows - 1) / nrows
+    loglik.x.w.all <- dmnorm(YX[, wx.idx, drop = FALSE], mean = colMeans(YX[, wx.idx, drop = FALSE]), varcov = S, log = TRUE)
+    loglik.x.w.clus <- tapply(loglik.x.w.all, cidx, sum)
+  } else {
+    loglik.x.w.clus <- rep(0, nrow(mean_d))
+  }
+
+  ## fixed between logl
+  bx.idx <-  Lp$ov.x.idx[[2]]
+  if(length(bx.idx) > 0L) {
+    nclusters <- nrow(mean_d)
+    COVB <- cov(mean_d[, bx.idx, drop = FALSE]) * (nclusters - 1)/nclusters
+    loglik.x.b <- dmnorm(mean_d[, bx.idx, drop = FALSE], mean = colMeans(mean_d[, bx.idx, drop = FALSE]), varcov = COVB, log = TRUE)
+  } else {
+    loglik.x.b <- rep(0, nrow(mean_d))
+  }
+  loglik.x <- loglik.x.w.clus + loglik.x.b
+
+  array(loglik.x, length(loglik.x))
+}

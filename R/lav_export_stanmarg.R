@@ -1071,7 +1071,7 @@ lav2standata <- function(lavobject) {
       if (multilevel) {
         dat$Xvar <- dat$Xdatvar <- cbind(dat$Xvar,
                                          matrix(allvars[!(allvars %in% xidx)], dat$Np,
-                                                ptot - length(xidx), byrow = TRUE))
+                                                length(allvars) - length(xidx), byrow = TRUE))
       } else {
         dat$Xvar <- dat$Xdatvar <- cbind(dat$Xvar,
                                          matrix(allvars[!(allvars %in% xidx)], dat$Np,
@@ -1112,7 +1112,6 @@ lav2standata <- function(lavobject) {
                                                                             ncol(dat$mean_d),
                                                                             Ng))
     dat$cov_w <- aperm(cov_w, c(3, 1, 2))
-    dat$log_lik_x <- array(sapply(YLp, function(x) x[[2]]$loglik.x), Ng)
 
     cov_d <- unlist(lapply(YLp, function(x) x[[2]]$cov.d), recursive = FALSE)
     for (i in 1:length(cov_d)) {
@@ -1121,6 +1120,9 @@ lav2standata <- function(lavobject) {
                                                                      N_between + N_both + N_within))
     }
     dat$cov_d <- cov_d
+    ## this evenly distributes loglik.x across unique cluster sizes; sums to correct value
+    llx <- sapply(YLp, function(x) x[[2]]$loglik.x)
+    dat$log_lik_x <- rep(llx / dat$ncluster_sizes, dat$ncluster_sizes)
 
     ## clusterwise data summaries, for loo and waic and etc
     cidx <- lavInspect(lavobject, 'cluster.idx')
@@ -1131,11 +1133,12 @@ lav2standata <- function(lavobject) {
         }
       }
       cidx <- unlist(cidx)
-    }
+    }    
     mean_d_full <- rowsum.default(as.matrix(dat$YX), cidx) / dat$cluster_size
     tmpYX <- split.data.frame(dat$YX, cidx)
     dat$YX <- do.call("rbind", tmpYX)[, 1:ptot]
-    dat$mean_d_full <- mean_d_full
+    dat$log_lik_x_full <- llx_2l(Lp[[1]], dat$YX, mean_d_full, cidx)
+    dat$mean_d_full <- lapply(1:nrow(mean_d_full), function(i) mean_d_full[i, dat$between_idx])
 
     ## cov_d is variability across clusters of same size, so irrelevant for clusterwise
     ## (just send 0s to satisfy the Stan function)
@@ -1161,6 +1164,7 @@ lav2standata <- function(lavobject) {
     dat$mean_d <- array(0, c(Ng, 0))
     dat$cov_w <- array(0, c(Ng, 0, 0))
     dat$log_lik_x <- array(0, Ng)
+    dat$log_lik_x_full <- array(0, Ng)
     dat$cov_d <- array(0, c(Ng, 0, 0))
     dat$mean_d_full <- array(0, c(Ng, 0))
     dat$cov_d_full <- array(0, c(Ng, 0, 0))
