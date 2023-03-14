@@ -210,7 +210,7 @@ blavaan <- function(...,  # default lavaan arguments
     dotdotdot$do.fit <- FALSE
     dotdotdot$se <- "none"; dotdotdot$test <- "none"
     # run for 1 iteration to obtain info about equality constraints, for npar
-    dotdotdot$control <- list(iter.max = 1); dotdotdot$warn <- TRUE
+    dotdotdot$control <- list(iter.max = 1, eval.max = 1); dotdotdot$warn <- TRUE
     dotdotdot$optim.force.converged <- TRUE
     if(target != "stan") dotdotdot$meanstructure <- TRUE
     dotdotdot$missing <- "direct"   # direct/ml creates error? (bug in lavaan?)
@@ -317,7 +317,7 @@ blavaan <- function(...,  # default lavaan arguments
     }
 
     # for initial values/parameter setup:
-    #LAV <- do.call("lavaan", dotdotdot)
+    LAV <- do.call("lavaan", dotdotdot)
 
     if(LAV@Data@data.type == "moment") {
         if(target != "stan") stop('blavaan ERROR: full data are required for ', target, ' target.\n  Try target="stan", or consider using kd() from package semTools.')
