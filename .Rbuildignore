@@ -5,7 +5,7 @@
 ^\.Rproj\.user$
 ^.*\.so$
 ^.*\.o$
-^src/stanmarg\.hpp$
+^src$
 ^\.github$
 ^_pkgdown\.yml$
 ^docs$
