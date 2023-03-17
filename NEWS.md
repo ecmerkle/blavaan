@@ -4,6 +4,8 @@
 
 * But bugs from 0.4-6 have also been fixed
 
+## Bugs/glitches discovered after the release:
+* Sampling from the priors (prisamp = TRUE) fails for models with meanstructure = FALSE (the posterior is still estimated)
 
 
 # Version 0.4-6
