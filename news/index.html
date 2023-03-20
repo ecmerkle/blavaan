@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-8.1101</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-8.1102</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,7 +80,8 @@
 </ul></div>
 <div class="section level3">
 <h3 id="bugsglitches-discovered-after-the-release-0-4-7">Bugs/glitches discovered after the release:<a class="anchor" aria-label="anchor" href="#bugsglitches-discovered-after-the-release-0-4-7"></a></h3>
-<ul><li>Sampling from the priors (prisamp = TRUE) fails for models with meanstructure = FALSE (the posterior is still estimated)</li>
+<ul><li><p>Sampling from the priors (prisamp = TRUE) fails for models with meanstructure = FALSE; the posterior is still estimated (reported by Armel Brizuela Rodríguez).</p></li>
+<li><p>For target = “jags”, models with a single-indicator latent variable, where the latent variable is regressed on other variables, return incorrect parameter estimates (reported by Brad Cosentino).</p></li>
 </ul></div>
 </div>
     <div class="section level2">
