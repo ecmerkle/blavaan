@@ -278,6 +278,7 @@ data {
   int<lower=0> Xvar[Np, p + q]; // indexing of fixed.x variables
   int<lower=0> Xdatvar[Np, p + q]; // indexing of fixed.x in data (differs from Xvar when missing)
   int<lower=0, upper=1> use_cov;
+  int<lower=0, upper=1> pri_only; // sample only from the prior?
   int<lower=0> emiter; // number of em iterations for saturated model in ppp (missing data only)
   int<lower=0, upper=1> use_suff; // should we compute likelihood via mvn sufficient stats?
   int<lower=0, upper=1> do_test; // should we do everything in generated quantities?
@@ -847,7 +848,7 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   vector[len_free[9]] Psi_pri;
   
   /* log-likelihood */
-  if (use_cov) {
+  if (use_cov && !pri_only) {
     for (g in 1:Ng) {
       target += wishart_lpdf((N[g] - 1) * Sstar[g] | N[g] - 1, Sigma[g]);
       if (Nx[g] > 0) {
@@ -855,7 +856,7 @@ model { // N.B.: things declared in the model block do not get saved in the outp
 	target += -wishart_lpdf((N[g] - 1) * Sstar[g, xvars, xvars] | N[g] - 1, Sigma[g, xvars, xvars]);
       }
     }
-  } else if (has_data) {
+  } else if (has_data && !pri_only) {
     int obsidx[p + q];
     int xidx[p + q];
     int xdatidx[p + q];

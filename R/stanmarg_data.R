@@ -223,6 +223,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$Nx <- array(Nx, length(Nx))
   dat$emiter <- emiter
   dat$do_reg <- do_reg
+  dat$pri_only <- pri_only
   
   dat$YX <- YX
   dat$YXo <- YXo
@@ -234,6 +235,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$use_cov <- 0L
   if (pri_only) {
     dat$use_suff <- 0L
+    if (dim(Nu_skeleton)[2] == 0L) dat$use_cov <- 1L
     tmparr <- array(dim = c(dat$Ng, ncol(YX) + 1, ncol(YX) + 1))
     for (i in 1:Ng) {
       tmparr[i,,] <- diag(nrow=ncol(YX) + 1)
