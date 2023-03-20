@@ -58,9 +58,9 @@ blavaan <- function(...,  # default lavaan arguments
     # multilevel functionality not available
     if("cluster" %in% dotNames) stop("blavaan ERROR: two-level models are not yet available.")
   
-    # prior predictives only for stan
+    # prior sampling only for stan
     if(prisamp) {
-      if(target != 'stan') stop("blavaan ERROR: prior predictives currently only work for target='stan'.")
+      if(target != 'stan') stop("blavaan ERROR: prior sampling currently only work for target='stan'.")
       if(!('test' %in% dotNames)) {
         dotdotdot$test <- 'none'
         dotNames <- c(dotNames, "test")

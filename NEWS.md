@@ -5,7 +5,9 @@
 * But bugs from 0.4-6 have also been fixed
 
 ## Bugs/glitches discovered after the release:
-* Sampling from the priors (prisamp = TRUE) fails for models with meanstructure = FALSE (the posterior is still estimated)
+* Sampling from the priors (prisamp = TRUE) fails for models with meanstructure = FALSE; the posterior is still estimated (reported by Armel Brizuela Rodríguez).
+
+* For target = "jags", models with a single-indicator latent variable, where the latent variable is regressed on other variables, return incorrect parameter estimates (reported by Brad Cosentino).
 
 
 # Version 0.4-6

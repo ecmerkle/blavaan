@@ -350,7 +350,7 @@ set_mv0 <- function(partable, ov.names, ngroups) {
                                partable$group == j)
 
                 lvreg <- which(partable$op == "~" &
-                               partable$lhs == ovn[i] &
+                               partable$lhs %in% c(ovn[i], partable$lhs[lvloc]) &
                                partable$group == j)
 
                 lvcov <- which(partable$op == "~~" &
