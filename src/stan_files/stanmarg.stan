@@ -1481,6 +1481,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   vector[nclus[1,2] > 1 ? sum(nclus[,2]) : (use_cov ? Ng : Ntot)] log_lik_sat; // for ppp
 
   vector[p + q] YXstar_rep[Ntot]; // artificial data
+  vector[p_c + q_c] YXstar_rep_c[sum(nclus[,2])];
   vector[use_cov ? Ng : Ntot] log_lik_rep; // for loo, etc
   vector[use_cov ? Ng : Ntot] log_lik_rep_sat; // for ppp
   matrix[p + q, p + q + 1] satout[Ng];
@@ -1572,21 +1573,43 @@ generated quantities { // these matrices are saved in the output but do not figu
     int r3;
     int r4;
     int grpidx;
+    int clusidx;
 
     if (do_test && use_cov) {
       for (g in 1:Ng) {
 	Sigma_rep_sat[g] = wishart_rng(N[g] - 1, Sigma[g]);
       }
     } else if (do_test && has_data) {
-      for (mm in 1:Np) {
-	obsidx = Obsvar[mm,];
-	xidx = Xvar[mm,];
-	xdatidx = Xdatvar[mm,];
-	r1 = startrow[mm];
-	r2 = endrow[mm];
-	grpidx = grpnum[mm];
-	for (jj in r1:r2) {
-	  YXstar_rep[jj, 1:Nobs[mm]] = multi_normal_rng(Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+      // generate level 2 data, then level 1
+      if (nclus[1, 2] > 1) {
+	r1 = 1;
+	clusidx = 1;
+	for (gg in 1:Ng) {
+	  for (cc in 1:nclus[gg, 2]) {
+	    YXstar_rep_c[clusidx] = multi_normal_rng(Mu_c[grpidx], Sigma_c[grpidx]);
+
+	    for (jj in r1:(r1 + cluster_size[clusidx])) {
+	      YXstar_rep[jj] = multi_normal_rng(Mu[grpidx] + YXstar_rep_c[clusidx], Sigma[grpidx]);
+	    }
+	    // TODO compute mean_d_c[cc], cov_d_c[cc], log_lik_x_c[cc]
+
+	    r1 += cluster_size[clusidx];
+	    clusidx += 1;
+	  }
+	  // TODO compute S_PW[gg]
+	}
+      } else {
+	for (mm in 1:Np) {	
+	  obsidx = Obsvar[mm,];
+	  xidx = Xvar[mm,];
+	  xdatidx = Xdatvar[mm,];
+	  grpidx = grpnum[mm];
+	  r1 = startrow[mm];
+	  r2 = endrow[mm];
+
+	  for (jj in r1:r2) {
+	    YXstar_rep[jj, 1:Nobs[mm]] = multi_normal_rng(Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+	  }
 	}
       }
 
@@ -1671,15 +1694,13 @@ generated quantities { // these matrices are saved in the output but do not figu
 					  Nx[mm], p_tilde, N_within, N_between, N_both,
 					  log_lik_x_full[r1:r2]);
       }
-    } else {
+    }
 
     zmat = rep_matrix(0, p + q, p + q);
     for (mm in 1:Np) {
       obsidx = Obsvar[mm,];
       xidx = Xvar[mm, 1:(p + q)];
       xdatidx = Xdatvar[mm, 1:(p + q)];
-      r1 = startrow[mm];
-      r2 = endrow[mm];
       grpidx = grpnum[mm];
 
       if (use_cov) {
@@ -1700,34 +1721,50 @@ generated quantities { // these matrices are saved in the output but do not figu
 	    log_lik_rep_sat[mm] += -wishart_lpdf(Sigma_rep_sat[mm, xvars, xvars] | N[mm] - 1, pow(N[mm] - 1, -1) * Sigma_rep_sat[mm, xvars, xvars]);
 	  }
 	}
-      } else if (has_data) {      
+      } else if (has_data && nclus[1, 2] > 1) {
+
+      } else if (has_data) {
+	r1 = startrow[mm];
+	r2 = endrow[mm];
+
 	for (jj in r1:r2) {
-	  if (nclus[grpidx,2] == 1) {
-	    log_lik[jj] = multi_normal_suff(YXstar[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu[grpidx, obsidx[1:Nobs[mm]]], Sigmainv[mm], 1);
-	  }
-	  if (do_test) {
-	    // we add loglik[jj] here so that _sat always varies and does not lead to
-	    // problems with rhat and neff computations
-	    log_lik_sat[jj] = -log_lik[jj] + multi_normal_suff(YXstar[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_sat_inv[mm], 1);	
-	    log_lik_rep[jj] = multi_normal_suff(YXstar_rep[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu[grpidx, obsidx[1:Nobs[mm]]], Sigmainv[mm], 1);
-	    log_lik_rep_sat[jj] = multi_normal_suff(YXstar_rep[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu_rep_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_rep_sat_inv[mm], 1);
-	  }
-	    
-	  // log_lik_sat, log_lik_sat_rep
-	  if (Nx[mm] > 0 && nclus[grpidx,2] == 1) {
+	  log_lik[jj] = multi_normal_suff(YXstar[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu[grpidx, obsidx[1:Nobs[mm]]], Sigmainv[mm], 1);
+
+	  if (Nx[mm] > 0) {
 	    log_lik[jj] += -multi_normal_suff(YXstar[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigmainv[grpidx], xidx, Nx[mm], p + q, logdetSigma_grp[grpidx]), 1);
-	    if (do_test) {
-	      log_lik_sat[jj] += multi_normal_suff(YXstar[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigmainv[grpidx], xidx, Nx[mm], p + q, logdetSigma_grp[grpidx]), 1);
-	      log_lik_sat[jj] += -multi_normal_suff(YXstar[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu_sat[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigma_sat_inv[grpidx], xidx, Nx[mm], p + q, logdetS_sat_grp[grpidx]), 1);
-	  
-	      log_lik_rep[jj] += -multi_normal_suff(YXstar_rep[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigmainv[grpidx], xidx, Nx[mm], p + q, logdetSigma_grp[grpidx]), 1);
-		
-	      log_lik_rep_sat[jj] += -multi_normal_suff(YXstar_rep[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu_rep_sat[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigma_rep_sat_inv[grpidx], xidx, Nx[mm], p + q, logdetS_rep_sat_grp[grpidx]), 1);
-	    }
 	  }
 	}
       }
-    }} //extra is for "else if not multilevel", can remove once deal with multilevel ppp    
+
+      // saturated and y_rep likelihoods for ppp
+      if (do_test) {
+	if (nclus[1, 2] > 1) {
+	  // compute clusterwise log_lik_rep for grpidx
+	}
+
+	for (jj in r1:r2) {
+	  if (nclus[1, 2] == 1) {
+	    log_lik_rep[jj] = multi_normal_suff(YXstar_rep[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu[grpidx, obsidx[1:Nobs[mm]]], Sigmainv[mm], 1);
+	  }
+	  // we add loglik[jj] here so that _sat always varies and does not lead to
+	  // problems with rhat and neff computations
+	  log_lik_sat[jj] = -log_lik[jj] + multi_normal_suff(YXstar[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_sat_inv[mm], 1);	
+
+	  log_lik_rep_sat[jj] = multi_normal_suff(YXstar_rep[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu_rep_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_rep_sat_inv[mm], 1);
+	    
+	  // log_lik_sat, log_lik_sat_rep
+	  if (Nx[mm] > 0) {
+	    if (nclus[1, 2] == 1) {
+	      log_lik_rep[jj] += -multi_normal_suff(YXstar_rep[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigmainv[grpidx], xidx, Nx[mm], p + q, logdetSigma_grp[grpidx]), 1);
+	    }
+	    
+	    log_lik_sat[jj] += -multi_normal_suff(YXstar[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu_sat[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigma_sat_inv[grpidx], xidx, Nx[mm], p + q, logdetS_sat_grp[grpidx]), 1);
+		
+	    log_lik_rep_sat[jj] += -multi_normal_suff(YXstar_rep[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu_rep_sat[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigma_rep_sat_inv[grpidx], xidx, Nx[mm], p + q, logdetS_rep_sat_grp[grpidx]), 1);
+	  }
+	}
+      }
+    }
 
     if (do_test) {
       ppp = step((-sum(log_lik_rep) + sum(log_lik_rep_sat)) - (sum(log_lik_sat)));
