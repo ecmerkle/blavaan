@@ -1498,6 +1498,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   real logdetS_rep_sat_grp[Ng];
   matrix[p + q, p + q] zmat;
   vector[p_tilde] mean_d_rep[sum(nclus[,2])];
+  vector[p_tilde] ov_mean_rep[Ng];
   vector[nclus[1, 2] > 1 ? sum(nclus[,2]) : Ng] log_lik_x_rep;
   matrix[N_both + N_within, N_both + N_within] S_PW_rep[Ng];
   real<lower=0, upper=1> ppp;
@@ -1588,23 +1589,23 @@ generated quantities { // these matrices are saved in the output but do not figu
       // generate level 2 data, then level 1
       if (nclus[1, 2] > 1) {
 	r1 = 1;
+	rr1 = 1;
 	clusidx = 1;
+	rr2 = 1;
+	r2 = 1;
 	for (gg in 1:Ng) {
-	  // TODO: we need log_lik_x_rep, which involves between and within evaluations
-	  // possibly need fixed.x indexing for within separate from between
-	  // evaluate within likelihood using mean_d_rep, cov YXstar_rep_c (not S_PW_rep)
-	  //          between likelihood using mean(mean_d_rep) and cov(mean_d_rep)
-	  //          we don't need means because assume sample mean equals dist mean
-	  //          use multi_normal_suff, set xbar equal to mu
 	  for (cc in 1:nclus[gg, 2]) {
 	    YXstar_rep_c[clusidx] = multi_normal_rng(Mu_c[grpidx], Sigma_c[grpidx]);
 
 	    for (ii in r1:(r1 + cluster_size[clusidx])) {
 	      YXstar_rep[ii] = multi_normal_rng(Mu[grpidx] + YXstar_rep_c[clusidx], Sigma[grpidx]);
+	      ov_mean_rep[gg] += YXstar_rep[ii];
 	    }
 	    for (jj in 1:p_tilde) {
 	      mean_d_rep[cc, jj] = mean(YXstar_rep[r1:(r1 + cluster_size[clusidx]), jj]);
             }
+	    ov_mean_d_rep[gg] += mean_d_rep[cc];
+	    
 	    for (ii in r1:(r1 + cluster_size[clusidx])) {
 	      S_PW_rep[gg] += tcrossprod(to_matrix(YXstar_rep[ii] - mean_d_rep[cc]));
 	    }
@@ -1613,7 +1614,34 @@ generated quantities { // these matrices are saved in the output but do not figu
 
 	    S_PW_rep[gg] *= pow(nclus[gg, 1] - nclus[gg, 2], -1);
 	  }
-	}
+
+	  if (Nx[gg] > 0) {
+	    ov_mean_rep[gg] *= pow(nclus[gg, 1], -1);
+	    ov_mean_d_rep[gg] *= pow(nclus[gg, 2], -1);
+
+	    // use above means to get within cov and between cov
+	    for (cc in 1:nclus[gg, 2]) {
+	      cov_mean_d_rep[gg] += tcrossprod(to_matrix(mean_d_rep[cc] - ov_mean_d_rep[gg]));
+	      for (ii in rr1:(rr1 + cluster_size[rr2])) {
+		cov_w_rep[gg] += tcrossprod(to_matrix(YXstar_rep[ii] - ov_mean_rep[gg]));
+	      }
+	      rr1 += cluster_size[rr2];
+	      rr2 += 1;
+	    }
+	    cov_mean_d_rep[gg] *= pow(nclus[gg, 2], -1);
+	    cov_w_rep[gg] *= pow(nclus[gg, 1], -1);
+	    cov_w_rep_inv[gg, 1:Nx_within[gg], 1:Nx_within[gg]] = inverse_spd(cov_w_rep[gg, xwithin, xwithin]);
+
+	    for (cc in 1:nclus[gg, 2]) {
+	      if (Nx_within[gg] > 0) {
+		log_lik_x_rep[cc] = multi_normal_suff(mean_d_rep[cc, xwithin], cov_w_rep[gg, xwithin, xwithin], mean_d_rep[cc, xwithin], cov_w_rep_inv[gg, 1:Nx_within[gg], 1:Nx_within[gg]], cluster_size[r2]);
+	      }
+	      if (Nx_between[gg] > 0) {
+		log_lik_x_rep[cc] += multi_normal_lpdf(mean_d_rep[cc, xbetween] | ov_mean_d_rep[gg, xbetween], cov_mean_d_rep[gg, 1:Nx_between[gg], 1:Nx_between[gg]]);
+	      }
+	    }
+	  } // Nx[gg] > 0
+	} // gg
       } else {
 	for (mm in 1:Np) {	
 	  obsidx = Obsvar[mm,];
