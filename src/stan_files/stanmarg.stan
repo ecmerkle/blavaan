@@ -1481,7 +1481,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   vector[nclus[1,2] > 1 ? sum(nclus[,2]) : (use_cov ? Ng : Ntot)] log_lik_sat; // for ppp
 
   vector[p + q] YXstar_rep[Ntot]; // artificial data
-  vector[p_c + q_c] YXstar_rep_c[sum(nclus[,2])];
+  vector[p_c] YXstar_rep_c[sum(nclus[,2])];
   vector[use_cov ? Ng : Ntot] log_lik_rep; // for loo, etc
   vector[use_cov ? Ng : Ntot] log_lik_rep_sat; // for ppp
   matrix[p + q, p + q + 1] satout[Ng];
@@ -1497,6 +1497,9 @@ generated quantities { // these matrices are saved in the output but do not figu
   matrix[p + q + 1, p + q + 1] Sigma_rep_sat_inv[Np];
   real logdetS_rep_sat_grp[Ng];
   matrix[p + q, p + q] zmat;
+  vector[p_tilde] mean_d_rep[sum(nclus[,2])];
+  vector[nclus[1, 2] > 1 ? sum(nclus[,2]) : Ng] log_lik_x_rep;
+  matrix[N_both + N_within, N_both + N_within] S_PW_rep[Ng];
   real<lower=0, upper=1> ppp;
   
   // first deal with sign constraints:
@@ -1572,6 +1575,8 @@ generated quantities { // these matrices are saved in the output but do not figu
     int r2;
     int r3;
     int r4;
+    int rr1;
+    int rr2;
     int grpidx;
     int clusidx;
 
@@ -1585,18 +1590,29 @@ generated quantities { // these matrices are saved in the output but do not figu
 	r1 = 1;
 	clusidx = 1;
 	for (gg in 1:Ng) {
+	  // TODO: we need log_lik_x_rep, which involves between and within evaluations
+	  // possibly need fixed.x indexing for within separate from between
+	  // evaluate within likelihood using mean_d_rep, cov YXstar_rep_c (not S_PW_rep)
+	  //          between likelihood using mean(mean_d_rep) and cov(mean_d_rep)
+	  //          we don't need means because assume sample mean equals dist mean
+	  //          use multi_normal_suff, set xbar equal to mu
 	  for (cc in 1:nclus[gg, 2]) {
 	    YXstar_rep_c[clusidx] = multi_normal_rng(Mu_c[grpidx], Sigma_c[grpidx]);
 
-	    for (jj in r1:(r1 + cluster_size[clusidx])) {
-	      YXstar_rep[jj] = multi_normal_rng(Mu[grpidx] + YXstar_rep_c[clusidx], Sigma[grpidx]);
+	    for (ii in r1:(r1 + cluster_size[clusidx])) {
+	      YXstar_rep[ii] = multi_normal_rng(Mu[grpidx] + YXstar_rep_c[clusidx], Sigma[grpidx]);
 	    }
-	    // TODO compute mean_d_c[cc], cov_d_c[cc], log_lik_x_c[cc]
-
+	    for (jj in 1:p_tilde) {
+	      mean_d_rep[cc, jj] = mean(YXstar_rep[r1:(r1 + cluster_size[clusidx]), jj]);
+            }
+	    for (ii in r1:(r1 + cluster_size[clusidx])) {
+	      S_PW_rep[gg] += tcrossprod(to_matrix(YXstar_rep[ii] - mean_d_rep[cc]));
+	    }
 	    r1 += cluster_size[clusidx];
 	    clusidx += 1;
+
+	    S_PW_rep[gg] *= pow(nclus[gg, 1] - nclus[gg, 2], -1);
 	  }
-	  // TODO compute S_PW[gg]
 	}
       } else {
 	for (mm in 1:Np) {	
@@ -1697,6 +1713,12 @@ generated quantities { // these matrices are saved in the output but do not figu
     }
 
     zmat = rep_matrix(0, p + q, p + q);
+    // reset for 2-level loglik:
+    rr1 = 1;
+    r3 = 1;
+    rr2 = 0;
+    r4 = 0;
+    
     for (mm in 1:Np) {
       obsidx = Obsvar[mm,];
       xidx = Xvar[mm, 1:(p + q)];
@@ -1721,9 +1743,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 	    log_lik_rep_sat[mm] += -wishart_lpdf(Sigma_rep_sat[mm, xvars, xvars] | N[mm] - 1, pow(N[mm] - 1, -1) * Sigma_rep_sat[mm, xvars, xvars]);
 	  }
 	}
-      } else if (has_data && nclus[1, 2] > 1) {
-
-      } else if (has_data) {
+      } else if (has_data && nclus[1,2] == 1) {
 	r1 = startrow[mm];
 	r2 = endrow[mm];
 
@@ -1740,6 +1760,20 @@ generated quantities { // these matrices are saved in the output but do not figu
       if (do_test) {
 	if (nclus[1, 2] > 1) {
 	  // compute clusterwise log_lik_rep for grpidx
+	  if (grpidx > 1) {
+	    rr1 += nclus[(grpidx - 1), 2];
+	    r3 += nclus[(grpidx - 1), 1];
+	  }
+	  rr2 += nclus[grpidx, 2];
+	  r4 += nclus[grpidx, 1];
+	
+	  log_lik_rep[rr1:rr2] = twolevel_logdens(mean_d_rep[rr1:rr2], cov_d_full[rr1:rr2], S_PW_rep[grpidx], YXstar_rep[r3:r4],
+						  nclus[grpidx,], cluster_size[rr1:rr2], cluster_size[rr1:rr2],
+						  nclus[grpidx,2], intone[1:nclus[grpidx,2]], Mu[grpidx],
+						  Sigma[grpidx], Mu_c[grpidx], Sigma_c[grpidx],
+						  ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
+						  Nx[mm], p_tilde, N_within, N_between, N_both,
+						  log_lik_x_rep[rr1:rr2]);
 	}
 
 	for (jj in r1:r2) {
