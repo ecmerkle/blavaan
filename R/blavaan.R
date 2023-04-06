@@ -300,7 +300,7 @@ blavaan <- function(...,  # default lavaan arguments
 
 
     if("sample.mean" %in% names(dotdotdot) && !("data" %in% names(dotdotdot))) stop('blavaan ERROR: sample.mean cannot currently be used in place of data')
-  
+
     # call lavaan
     mcdebug <- FALSE
     if("debug" %in% dotNames){
@@ -317,8 +317,11 @@ blavaan <- function(...,  # default lavaan arguments
     }
 
     # for initial values/parameter setup:
-    LAV <- do.call("lavaan", dotdotdot)
-
+    if(jag.do.fit) {
+        LAV2 <- try(do.call("lavaan", dotdotdot), silent = TRUE)
+        if(!inherits(LAV2, 'try-error')) LAV <- LAV2
+    }
+        
     if(LAV@Data@data.type == "moment") {
         if(target != "stan") stop('blavaan ERROR: full data are required for ', target, ' target.\n  Try target="stan", or consider using kd() from package semTools.')
     }
