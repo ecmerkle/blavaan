@@ -799,7 +799,7 @@ transformed parameters {
   }
 
   // continuous responses underlying ordinal data
-  if (ord) {
+  if (ord && has_data) {
     int idxvec = 0;
     for (patt in 1:Np) {
       for (i in startrow[patt]:endrow[patt]) {
@@ -892,11 +892,11 @@ model { // N.B.: things declared in the model block do not get saved in the outp
 	}
       }
     }
-    if (ord) {
-      target += tau_jacobian;
-    }
   }
-  
+
+  if (ord) {
+    target += tau_jacobian;
+  }
   
   /* prior densities in log-units */
   target += normal_lpdf(Lambda_y_free | lambda_y_primn, lambda_y_sd);
@@ -908,12 +908,12 @@ model { // N.B.: things declared in the model block do not get saved in the outp
 
   if (use_dirch) {
     // this will fail for partial equality constraints:
-    int totvars = len_tau / (sum(nlevs) - Nord);
     int varidx;
     int gidx;
+    int i = 1;
     int vecidx = 1;
 
-    for (i in 1:totvars) {
+    while (vecidx <= len_tau) {
       if (i > Nord) {
 	varidx = i % Nord;
 	gidx = i / Nord; // we want integer division
@@ -922,7 +922,9 @@ model { // N.B.: things declared in the model block do not get saved in the outp
 	gidx = 1;
       }
 
-      target += induced_dirichlet_lpdf(Tau_free[vecidx:(nlevs[varidx] - 1)] | append_col(tau_primn[vecidx:(nlevs[varidx] - 1)]', tau_sd[vecidx])', Mu[gidx, varidx]);
+      target += induced_dirichlet_lpdf(Tau_free[vecidx:(vecidx + nlevs[varidx] - 2)] | append_col(tau_primn[vecidx:(vecidx + nlevs[varidx] - 2)]', tau_sd[vecidx])', Mu[gidx, varidx]);
+      vecidx += nlevs[varidx] - 1;
+      i += 1;
     }
 
   } else {
