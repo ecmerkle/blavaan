@@ -20,11 +20,13 @@ bcfa(..., cp = "srs",
     parameters, typically the result of a call to \code{dpriors()}.
     See the \code{dpriors()} help file for more information.}
 \item{n.chains}{Number of desired MCMC chains.}
-\item{burnin}{Number of burnin iterations, NOT including the adaptive
-  iterations.}
-\item{sample}{The total number of samples to take after burnin.}
-\item{adapt}{The number of adaptive iterations to use at the start of
-  the simulation.}
+\item{burnin}{Number of burnin/warmup iterations (not including the adaptive
+  iterations, for target="jags"). Defaults to 4000 or target="jags" and
+  500 for Stan targets.}
+\item{sample}{The total number of samples to take after burnin. Defaults
+to 10000 for target="jags" and 1000 for Stan targets.}
+\item{adapt}{For target="jags", the number of adaptive iterations to use at the start of
+  sampling. Defaults to 1000.}
 \item{mcmcfile}{If \code{TRUE}, the JAGS/Stan model will be written to file
   (in the lavExport directory). Can also supply a character
   string, which serves as the name of the directory to which files will be written.}
