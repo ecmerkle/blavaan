@@ -480,7 +480,8 @@ data {
   int<lower=1> nlevs[Nord]; // how many levels does each ordinal variable have
   vector[p + q - Nord] YX[Ntot]; // continuous data
   int YXo[Ntot, Nord]; // ordinal data
-  int<lower=0> Nx[Np]; // number of fixed.x variables
+  int<lower=0> Nx[Np]; // number of fixed.x variables (within)
+  int<lower=0> Nx_between[Np]; // number of fixed.x variables (between)
   int<lower=0, upper=1> use_cov;
   int<lower=0> emiter; // number of em iterations for saturated model in ppp (missing data only)
   int<lower=0, upper=1> use_suff; // should we compute likelihood via mvn sufficient stats?
@@ -494,8 +495,9 @@ data {
   int<lower=1> cluster_sizes[sum(ncluster_sizes)]; // unique cluster sizes
   int<lower=1> cluster_size_ns[sum(ncluster_sizes)]; // number of clusters of each size
   int p_tilde; // total number of variables
-  int<lower=0> Xvar[Np, nclus[1, 2] > 1 ? p_tilde : p + q]; // indexing of fixed.x variables
+  int<lower=0> Xvar[Np, nclus[1, 2] > 1 ? p_tilde : p + q]; // indexing of fixed.x variables (within)
   int<lower=0> Xdatvar[Np, nclus[1, 2] > 1 ? p_tilde : p + q]; // indexing of fixed.x in data (differs from Xvar when missing)
+  int<lower=0> Xbetvar[Np, nclus[1, 2] > 1 ? p_tilde : p + q]; // indexing of fixed.x variables (between)
   vector[p_tilde] mean_d[sum(ncluster_sizes)]; // sample means by unique cluster size
   matrix[p_tilde, p_tilde] cov_d[sum(ncluster_sizes)]; // sample covariances by unique cluster size
   matrix[p_tilde, p_tilde] cov_w[Ng]; // observed "within" covariance matrix
@@ -1499,6 +1501,10 @@ generated quantities { // these matrices are saved in the output but do not figu
   matrix[p + q, p + q] zmat;
   vector[p_tilde] mean_d_rep[sum(nclus[,2])];
   vector[p_tilde] ov_mean_rep[Ng];
+  vector[p_tilde] ov_mean_d_rep[Ng];
+  matrix[p_tilde, p_tilde] cov_mean_d_rep[Ng];
+  matrix[p_tilde, p_tilde] cov_w_rep[Ng];
+  matrix[p_tilde, p_tilde] cov_w_rep_inv[Ng];
   vector[nclus[1, 2] > 1 ? sum(nclus[,2]) : Ng] log_lik_x_rep;
   matrix[N_both + N_within, N_both + N_within] S_PW_rep[Ng];
   real<lower=0, upper=1> ppp;
@@ -1615,7 +1621,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 	    S_PW_rep[gg] *= pow(nclus[gg, 1] - nclus[gg, 2], -1);
 	  }
 
-	  if (Nx[gg] > 0) {
+	  if (Nx[gg] > 0 || Nx_between[gg] > 0) {
 	    ov_mean_rep[gg] *= pow(nclus[gg, 1], -1);
 	    ov_mean_d_rep[gg] *= pow(nclus[gg, 2], -1);
 
@@ -1630,14 +1636,14 @@ generated quantities { // these matrices are saved in the output but do not figu
 	    }
 	    cov_mean_d_rep[gg] *= pow(nclus[gg, 2], -1);
 	    cov_w_rep[gg] *= pow(nclus[gg, 1], -1);
-	    cov_w_rep_inv[gg, 1:Nx_within[gg], 1:Nx_within[gg]] = inverse_spd(cov_w_rep[gg, xwithin, xwithin]);
+	    cov_w_rep_inv[gg, 1:Nx[gg], 1:Nx[gg]] = inverse_spd(cov_w_rep[gg, Xvar[gg, 1:Nx[gg]], Xvar[gg, 1:Nx[gg]]]);
 
 	    for (cc in 1:nclus[gg, 2]) {
-	      if (Nx_within[gg] > 0) {
-		log_lik_x_rep[cc] = multi_normal_suff(mean_d_rep[cc, xwithin], cov_w_rep[gg, xwithin, xwithin], mean_d_rep[cc, xwithin], cov_w_rep_inv[gg, 1:Nx_within[gg], 1:Nx_within[gg]], cluster_size[r2]);
+	      if (Nx[gg] > 0) {
+		log_lik_x_rep[cc] = multi_normal_suff(mean_d_rep[cc, Xvar[gg, 1:Nx[gg]]], cov_w_rep[gg, Xvar[gg, 1:Nx[gg]], Xvar[gg, 1:Nx[gg]]], mean_d_rep[cc, Xvar[gg, 1:Nx[gg]]], cov_w_rep_inv[gg, 1:Nx[gg], 1:Nx[gg]], cluster_size[r2]);
 	      }
 	      if (Nx_between[gg] > 0) {
-		log_lik_x_rep[cc] += multi_normal_lpdf(mean_d_rep[cc, xbetween] | ov_mean_d_rep[gg, xbetween], cov_mean_d_rep[gg, 1:Nx_between[gg], 1:Nx_between[gg]]);
+		log_lik_x_rep[cc] += multi_normal_lpdf(mean_d_rep[cc, Xbetvar[gg, 1:Nx_between[gg]]] | ov_mean_d_rep[gg, Xbetvar[gg, 1:Nx_between[gg]]], cov_mean_d_rep[gg, 1:Nx_between[gg], 1:Nx_between[gg]]);
 	      }
 	    }
 	  } // Nx[gg] > 0
