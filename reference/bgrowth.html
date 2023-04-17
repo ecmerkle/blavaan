@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-8.1103</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-8.1104</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -103,15 +103,17 @@
 <dd><p>Number of desired MCMC chains.</p></dd>
 
 <dt>burnin</dt>
-<dd><p>Number of burnin iterations, NOT including the adaptive
-  iterations.</p></dd>
+<dd><p>Number of burnin/warmup iterations (not including the adaptive
+  iterations, for target="jags"). Defaults to 4000 or target="jags" and
+  500 for Stan targets.</p></dd>
 
 <dt>sample</dt>
-<dd><p>The total number of samples to take after burnin.</p></dd>
+<dd><p>The total number of samples to take after burnin. Defaults
+to 10000 for target="jags" and 1000 for Stan targets.</p></dd>
 
 <dt>adapt</dt>
-<dd><p>The number of adaptive iterations to use at the start of
-  the simulation.</p></dd>
+<dd><p>For target="jags", the number of adaptive iterations to use at the start of
+  sampling. Defaults to 1000.</p></dd>
 
 <dt>mcmcfile</dt>
 <dd><p>If <code>TRUE</code>, the JAGS/Stan model will be written to file
