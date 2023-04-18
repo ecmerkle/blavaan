@@ -198,7 +198,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           miss, Np, Nobs, Obsvar, # missing
                           ord, Nord, ordidx, contidx, nlevs,
                           Noent, Nordobs, OrdObsvar, # ordinal
-                          Xvar, Xdatvar, Nx, # fixed.x
+                          Xvar, Xdatvar, Xbetvar, Nx, Nx_between, # fixed.x
                           startrow, endrow, save_lvs = FALSE, do_test = TRUE,
                           Lambda_y_skeleton, # skeleton matrices
                           Lambda_x_skeleton, Gamma_skeleton, B_skeleton,
@@ -253,7 +253,9 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$endrow <- endrow
   dat$Xvar <- Xvar
   dat$Xdatvar <- Xdatvar
+  dat$Xbetvar <- Xbetvar
   dat$Nx <- array(Nx, length(Nx))
+  dat$Nx_between <- array(Nx_between, length(Nx_between))
   dat$emiter <- emiter
   dat$do_reg <- do_reg
   

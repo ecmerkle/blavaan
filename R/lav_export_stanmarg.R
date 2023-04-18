@@ -994,8 +994,16 @@ lav2standata <- function(lavobject) {
   if (multilevel) Lp <- lavobject@Data@Lp
   dat$ord <- ord
   dat$N <- lavInspect(lavobject, 'nobs')
-  
-  xidx <- lavobject@SampleStats@x.idx[[1]]
+
+  if (multilevel) {
+    xidx <- Lp[[1]]$ov.x.idx[[1]]
+    if (is.null(xidx)) xidx <- integer(0)
+    xidxb <- Lp[[1]]$ov.x.idx[[2]]
+    if (is.null(xidxb)) xidxb <- integer(0)
+  } else {
+    xidx <- lavobject@SampleStats@x.idx[[1]]
+    xidxb <- NULL
+  }
   allvars <- 1:nvar
 
   ## lavobject@SampleStats@missing.flag is TRUE when missing='ml',
@@ -1023,6 +1031,10 @@ lav2standata <- function(lavobject) {
     dat$Obsvar <- matrix(0, dat$Np, nvar)
     dat$Nx <- rep(0, dat$Np)
     dat$Xvar <- dat$Xdatvar <- matrix(0, dat$Np, nvar)
+
+    ## these are placeholders because we do not yet allow missingness in two-level models:
+    dat$Nx_between <- rep(0, dat$Np)
+    dat$Xbetvar <- matrix(, dat$Np, nvar)
 
     for (i in 1:dat$Np) {
       dat$Obsvar[i, 1:dat$Nobs[i]] <- Obsvar[[i]]
@@ -1065,14 +1077,23 @@ lav2standata <- function(lavobject) {
       dat$Nobs <- array(ptot, dat$Np)
     }
     dat$Nx <- array(length(xidx), dat$Np)
+    dat$Nx_between <- array(length(xidxb), dat$Np)
 
-    dat$Xvar <- dat$Xdatvar <- matrix(xidx, dat$Np, length(xidx), byrow=TRUE)
-    if (length(xidx) < nvar) {
-      if (multilevel) {
+    dat$Xvar <- dat$Xdatvar <- matrix(xidx, dat$Np, length(xidx), byrow = TRUE)
+    dat$Xbetvar <- matrix(xidxb, dat$Np, length(xidxb), byrow = TRUE)
+    if (multilevel) {
+      if (length(xidx) < length(allvars)) {
         dat$Xvar <- dat$Xdatvar <- cbind(dat$Xvar,
                                          matrix(allvars[!(allvars %in% xidx)], dat$Np,
                                                 length(allvars) - length(xidx), byrow = TRUE))
-      } else {
+      }
+      if (length(xidxb) < length(allvars)) {
+        dat$Xbetvar <- cbind(dat$Xbetvar,
+                             matrix(allvars[!(allvars %in% xidxb)], dat$Np,
+                                    length(allvars) - length(xidx), byrow = TRUE))
+      }
+    } else {
+      if (length(xidx) < nvar) {
         dat$Xvar <- dat$Xdatvar <- cbind(dat$Xvar,
                                          matrix(allvars[!(allvars %in% xidx)], dat$Np,
                                                 nvar - length(xidx), byrow = TRUE))
