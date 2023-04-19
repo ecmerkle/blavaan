@@ -996,6 +996,10 @@ lav2standata <- function(lavobject) {
   dat$N <- lavInspect(lavobject, 'nobs')
 
   if (multilevel) {
+    dat$ov_idx1 <- Lp[[1]]$ov.idx[[1]]
+    dat$ov_idx2 <- Lp[[1]]$ov.idx[[2]]
+    dat$p_tilde <- length(unique(c(dat$ov_idx1, dat$ov_idx2)))
+
     xidx <- Lp[[1]]$ov.x.idx[[1]]
     if (is.null(xidx)) xidx <- integer(0)
     xidxb <- Lp[[1]]$ov.x.idx[[2]]
@@ -1090,7 +1094,7 @@ lav2standata <- function(lavobject) {
       if (length(xidxb) < length(allvars)) {
         dat$Xbetvar <- cbind(dat$Xbetvar,
                              matrix(allvars[!(allvars %in% xidxb)], dat$Np,
-                                    length(allvars) - length(xidx), byrow = TRUE))
+                                    length(allvars) - length(xidxb), byrow = TRUE))
       }
     } else {
       if (length(xidx) < nvar) {
@@ -1120,9 +1124,6 @@ lav2standata <- function(lavobject) {
     dat$N_within <- length(dat$within_idx)
     dat$both_idx <- Lp[[1]]$both.idx[[2]]
     dat$N_both <- length(dat$both_idx)
-    dat$ov_idx1 <- Lp[[1]]$ov.idx[[1]]
-    dat$ov_idx2 <- Lp[[1]]$ov.idx[[2]]
-    dat$p_tilde <- length(unique(c(dat$ov_idx1, dat$ov_idx2)))
     dat$N_lev <- c(length(dat$ov_idx1), length(dat$ov_idx2))
     dat$between_idx <- c(dat$between_idx, sort(c(dat$within_idx, dat$both_idx)))
 

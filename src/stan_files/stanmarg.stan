@@ -1337,7 +1337,8 @@ model { // N.B.: things declared in the model block do not get saved in the outp
 				 ncluster_sizes[grpidx], cluster_size_ns[r3:r4], Mu[grpidx],
 				 Sigma[grpidx], Mu_c[grpidx], Sigma_c[grpidx],
 				 ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
-				 Nx[mm], p_tilde, N_within, N_between, N_both, log_lik_x[r3:r4]);
+				 Nx[mm] + Nx_between[mm], p_tilde, N_within, N_between, N_both,
+				 log_lik_x[r3:r4]);
     }
   } else if (use_cov) {
     for (g in 1:Ng) {
@@ -1480,9 +1481,9 @@ generated quantities { // these matrices are saved in the output but do not figu
 
   // loglik + ppp
   vector[nclus[1,2] > 1 ? sum(nclus[,2]) : (use_cov ? Ng : Ntot)] log_lik; // for loo, etc
-  vector[nclus[1,2] > 1 ? sum(nclus[,2]) : (use_cov ? Ng : Ntot)] log_lik_sat; // for ppp
+  vector[use_cov ? Ng : Ntot] log_lik_sat; // for ppp
 
-  vector[p + q] YXstar_rep[Ntot]; // artificial data
+  vector[nclus[1,2] > 1 ? p_tilde : p + q] YXstar_rep[Ntot]; // artificial data
   vector[p_c] YXstar_rep_c[sum(nclus[,2])];
   vector[use_cov ? Ng : Ntot] log_lik_rep; // for loo, etc
   vector[use_cov ? Ng : Ntot] log_lik_rep_sat; // for ppp
@@ -1600,26 +1601,26 @@ generated quantities { // these matrices are saved in the output but do not figu
 	rr2 = 1;
 	r2 = 1;
 	for (gg in 1:Ng) {
+	  S_PW_rep[gg] = rep_matrix(0, N_both + N_within, N_both + N_within);
 	  for (cc in 1:nclus[gg, 2]) {
-	    YXstar_rep_c[clusidx] = multi_normal_rng(Mu_c[grpidx], Sigma_c[grpidx]);
+	    YXstar_rep_c[clusidx] = multi_normal_rng(Mu_c[gg], Sigma_c[gg]);
 
-	    for (ii in r1:(r1 + cluster_size[clusidx])) {
-	      YXstar_rep[ii] = multi_normal_rng(Mu[grpidx] + YXstar_rep_c[clusidx], Sigma[grpidx]);
+	    for (ii in r1:(r1 + cluster_size[clusidx] - 1)) {
+	      YXstar_rep[ii] = multi_normal_rng(Mu[gg] + YXstar_rep_c[clusidx], Sigma[gg]);
 	      ov_mean_rep[gg] += YXstar_rep[ii];
 	    }
 	    for (jj in 1:p_tilde) {
-	      mean_d_rep[cc, jj] = mean(YXstar_rep[r1:(r1 + cluster_size[clusidx]), jj]);
+	      mean_d_rep[cc, jj] = mean(YXstar_rep[r1:(r1 + cluster_size[clusidx] - 1), jj]);
             }
 	    ov_mean_d_rep[gg] += mean_d_rep[cc];
-	    
-	    for (ii in r1:(r1 + cluster_size[clusidx])) {
+
+	    for (ii in r1:(r1 + cluster_size[clusidx] - 1)) {
 	      S_PW_rep[gg] += tcrossprod(to_matrix(YXstar_rep[ii] - mean_d_rep[cc]));
 	    }
 	    r1 += cluster_size[clusidx];
 	    clusidx += 1;
-
-	    S_PW_rep[gg] *= pow(nclus[gg, 1] - nclus[gg, 2], -1);
 	  }
+	  S_PW_rep[gg] *= pow(nclus[gg, 1] - nclus[gg, 2], -1);
 
 	  if (Nx[gg] > 0 || Nx_between[gg] > 0) {
 	    ov_mean_rep[gg] *= pow(nclus[gg, 1], -1);
@@ -1628,7 +1629,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 	    // use above means to get within cov and between cov
 	    for (cc in 1:nclus[gg, 2]) {
 	      cov_mean_d_rep[gg] += tcrossprod(to_matrix(mean_d_rep[cc] - ov_mean_d_rep[gg]));
-	      for (ii in rr1:(rr1 + cluster_size[rr2])) {
+	      for (ii in rr1:(rr1 + cluster_size[rr2] - 1)) {
 		cov_w_rep[gg] += tcrossprod(to_matrix(YXstar_rep[ii] - ov_mean_rep[gg]));
 	      }
 	      rr1 += cluster_size[rr2];
@@ -1639,8 +1640,9 @@ generated quantities { // these matrices are saved in the output but do not figu
 	    cov_w_rep_inv[gg, 1:Nx[gg], 1:Nx[gg]] = inverse_spd(cov_w_rep[gg, Xvar[gg, 1:Nx[gg]], Xvar[gg, 1:Nx[gg]]]);
 
 	    for (cc in 1:nclus[gg, 2]) {
+	      log_lik_x_rep[cc] = 0.0;
 	      if (Nx[gg] > 0) {
-		log_lik_x_rep[cc] = multi_normal_suff(mean_d_rep[cc, Xvar[gg, 1:Nx[gg]]], cov_w_rep[gg, Xvar[gg, 1:Nx[gg]], Xvar[gg, 1:Nx[gg]]], mean_d_rep[cc, Xvar[gg, 1:Nx[gg]]], cov_w_rep_inv[gg, 1:Nx[gg], 1:Nx[gg]], cluster_size[r2]);
+		log_lik_x_rep[cc] += multi_normal_suff(mean_d_rep[cc, Xvar[gg, 1:Nx[gg]]], cov_w_rep[gg, Xvar[gg, 1:Nx[gg]], Xvar[gg, 1:Nx[gg]]], mean_d_rep[cc, Xvar[gg, 1:Nx[gg]]], cov_w_rep_inv[gg, 1:Nx[gg], 1:Nx[gg]], cluster_size[r2]);
 	      }
 	      if (Nx_between[gg] > 0) {
 		log_lik_x_rep[cc] += multi_normal_lpdf(mean_d_rep[cc, Xbetvar[gg, 1:Nx_between[gg]]] | ov_mean_d_rep[gg, Xbetvar[gg, 1:Nx_between[gg]]], cov_mean_d_rep[gg, 1:Nx_between[gg], 1:Nx_between[gg]]);
@@ -1741,8 +1743,8 @@ generated quantities { // these matrices are saved in the output but do not figu
 					  nclus[grpidx,2], intone[1:nclus[grpidx,2]], Mu[grpidx],
 					  Sigma[grpidx], Mu_c[grpidx], Sigma_c[grpidx],
 					  ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
-					  Nx[mm], p_tilde, N_within, N_between, N_both,
-					  log_lik_x_full[r1:r2]);
+					  Nx[mm] + Nx_between[mm], p_tilde, N_within, N_between,
+					  N_both, log_lik_x_full[r1:r2]);
       }
     }
 
@@ -1752,12 +1754,14 @@ generated quantities { // these matrices are saved in the output but do not figu
     r3 = 1;
     rr2 = 0;
     r4 = 0;
-    
+
     for (mm in 1:Np) {
       obsidx = Obsvar[mm,];
       xidx = Xvar[mm, 1:(p + q)];
       xdatidx = Xdatvar[mm, 1:(p + q)];
       grpidx = grpnum[mm];
+      r1 = startrow[mm];
+      r2 = endrow[mm];
 
       if (use_cov) {
 	log_lik[mm] = wishart_lpdf((N[mm] - 1) * Sstar[mm] | N[mm] - 1, Sigma[mm]);
@@ -1778,9 +1782,6 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  }
 	}
       } else if (has_data && nclus[1,2] == 1) {
-	r1 = startrow[mm];
-	r2 = endrow[mm];
-
 	for (jj in r1:r2) {
 	  log_lik[jj] = multi_normal_suff(YXstar[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu[grpidx, obsidx[1:Nobs[mm]]], Sigmainv[mm], 1);
 
@@ -1800,23 +1801,22 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  }
 	  rr2 += nclus[grpidx, 2];
 	  r4 += nclus[grpidx, 1];
-	
+
 	  log_lik_rep[rr1:rr2] = twolevel_logdens(mean_d_rep[rr1:rr2], cov_d_full[rr1:rr2], S_PW_rep[grpidx], YXstar_rep[r3:r4],
 						  nclus[grpidx,], cluster_size[rr1:rr2], cluster_size[rr1:rr2],
 						  nclus[grpidx,2], intone[1:nclus[grpidx,2]], Mu[grpidx],
 						  Sigma[grpidx], Mu_c[grpidx], Sigma_c[grpidx],
 						  ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
-						  Nx[mm], p_tilde, N_within, N_between, N_both,
-						  log_lik_x_rep[rr1:rr2]);
+						  Nx[mm] + Nx_between[mm], p_tilde, N_within,
+						  N_between, N_both, log_lik_x_rep[rr1:rr2]);
 	}
 
 	for (jj in r1:r2) {
 	  if (nclus[1, 2] == 1) {
 	    log_lik_rep[jj] = multi_normal_suff(YXstar_rep[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu[grpidx, obsidx[1:Nobs[mm]]], Sigmainv[mm], 1);
 	  }
-	  // we add loglik[jj] here so that _sat always varies and does not lead to
-	  // problems with rhat and neff computations
-	  log_lik_sat[jj] = -log_lik[jj] + multi_normal_suff(YXstar[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_sat_inv[mm], 1);	
+
+	  log_lik_sat[jj] = multi_normal_suff(YXstar[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_sat_inv[mm], 1);	
 
 	  log_lik_rep_sat[jj] = multi_normal_suff(YXstar_rep[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu_rep_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_rep_sat_inv[mm], 1);
 	    
@@ -1831,9 +1831,21 @@ generated quantities { // these matrices are saved in the output but do not figu
 	    log_lik_rep_sat[jj] += -multi_normal_suff(YXstar_rep[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu_rep_sat[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigma_rep_sat_inv[grpidx], xidx, Nx[mm], p + q, logdetS_rep_sat_grp[grpidx]), 1);
 	  }
 	}
+	// we subtract log_lik here so that _sat always varies and does not lead to
+	// problems with rhat and neff computations
+	if (nclus[1,2] > 1) {
+	  // subtract the grp full loglik off the first entry;
+	  // we can do this because we sum over the entire vector for ppp
+	  log_lik_sat[r1] -= sum(log_lik[rr1:rr2]);
+	} else {
+	  log_lik_sat[r1:r2] -= log_lik[r1:r2];
+	}
       }
     }
-
+    print(sum(log_lik_rep));
+    print(sum(log_lik_rep_sat));
+    print(sum(log_lik_sat));
+    
     if (do_test) {
       ppp = step((-sum(log_lik_rep) + sum(log_lik_rep_sat)) - (sum(log_lik_sat)));
     } else {
