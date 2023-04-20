@@ -1485,7 +1485,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 
   vector[nclus[1,2] > 1 ? p_tilde : p + q] YXstar_rep[Ntot]; // artificial data
   vector[p_c] YXstar_rep_c[sum(nclus[,2])];
-  vector[use_cov ? Ng : Ntot] log_lik_rep; // for loo, etc
+  vector[nclus[1,2] > 1 ? sum(nclus[,2]) : (use_cov ? Ng : Ntot)] log_lik_rep; // for loo, etc
   vector[use_cov ? Ng : Ntot] log_lik_rep_sat; // for ppp
   matrix[p + q, p + q + 1] satout[Ng];
   matrix[p + q, p + q + 1] satrep_out[Ng];
@@ -1842,9 +1842,6 @@ generated quantities { // these matrices are saved in the output but do not figu
 	}
       }
     }
-    print(sum(log_lik_rep));
-    print(sum(log_lik_rep_sat));
-    print(sum(log_lik_sat));
     
     if (do_test) {
       ppp = step((-sum(log_lik_rep) + sum(log_lik_rep_sat)) - (sum(log_lik_sat)));
