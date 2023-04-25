@@ -29,7 +29,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   }
 
 
-  vector twolevel_logdens(vector[] mean_d, matrix[] cov_d, matrix S_PW, vector[] YX, int[] nclus, int[] clus_size, int[] clus_sizes, int nclus_sizes, int[] clus_size_ns, vector impl_Muw, matrix impl_Sigmaw, vector impl_Mub, matrix impl_Sigmab, int[] ov_idx1, int[] ov_idx2, int[] within_idx, int[] between_idx, int[] both_idx, int Nx, int p_tilde, int N_within, int N_between, int N_both, vector loglik_x){
+  vector twolevel_logdens(vector[] mean_d, matrix[] cov_d, matrix S_PW, vector[] YX, int[] nclus, int[] clus_size, int[] clus_sizes, int nclus_sizes, int[] clus_size_ns, vector impl_Muw, matrix impl_Sigmaw, vector impl_Mub, matrix impl_Sigmab, int[] ov_idx1, int[] ov_idx2, int[] within_idx, int[] between_idx, int[] both_idx, int p_tilde, int N_within, int N_between, int N_both){
     matrix[p_tilde, p_tilde + 1] W_tilde;
     matrix[p_tilde, p_tilde] W_tilde_cov;
     matrix[p_tilde, p_tilde + 1] B_tilde;
@@ -198,13 +198,9 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     // add constant, line 300 lav_mvnorm_cluster
     P = nperclus * (N_within + N_both) + to_vector(clus_size_ns) * N_between;
     loglik += -.5 * (P * log(2 * pi()));
-    if (Nx > 0) {
-      loglik += -loglik_x;
-    }
 
     return loglik;
   }
-
 
   /*
     Fills in the elements of a coefficient matrix containing some mix of 
@@ -446,8 +442,73 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     // using elementwise multiplication + sum here for efficiency
     out = -.5 * N * ( sum(Supdate[1:Nobs, 1:Nobs] .* (S + (xbar - Mu) * (xbar - Mu)')) + Supdate[Nobs + 1, Nobs + 1] + Nobs * log(2 * pi()) );
 
-    return(out);
+    return out;
   }
+
+  // compute mean vectors and cov matrices for a single group (two-level models)
+  vector[] calc_mean_vecs(vector[] YXstar, vector[] mean_d, int[] nclus, int[] Xvar, int[] Xbetvar, int Nx, int Nx_between) {
+    vector[Nx] ov_mean;
+    vector[Nx_between] ov_mean_d;
+    int nr = dims(YXstar)[1];
+    vector[max(Nx, Nx_between)] out[2];
+
+    for (i in 1:nr) {
+      ov_mean += YXstar[i, Xvar];
+    }
+    for (cc in 1:nclus[2]) {
+      ov_mean_d += mean_d[cc, Xbetvar];
+    }
+    ov_mean *= pow(nclus[1], -1);
+    ov_mean_d *= pow(nclus[2], -1);
+
+    out[1, 1:Nx] = ov_mean;
+    out[2, 1:Nx_between] = ov_mean_d;
+
+    return out;
+  }
+
+  matrix[] calc_cov_mats(vector[] YXstar, vector[] mean_d, vector[] mean_vecs, int[] nclus, int[] Xvar, int[] Xbetvar, int Nx, int Nx_between) {
+    matrix[Nx_between, Nx_between] cov_mean_d;
+    matrix[Nx, Nx] cov_w;
+    matrix[Nx, Nx] cov_w_inv;
+    int nr = dims(YXstar)[1];
+    int dimout = max(Nx, Nx_between);
+    matrix[dimout, dimout] out[3];
+
+    for (i in 1:nr) {
+      cov_w += tcrossprod(to_matrix(YXstar[i, Xvar] - mean_vecs[1, 1:Nx]));
+    }
+    for (cc in 1:nclus[2]) {
+      cov_mean_d += tcrossprod(to_matrix(mean_d[cc, Xbetvar] - mean_vecs[2, 1:Nx_between]));
+    }
+    cov_w *= pow(nclus[1], -1);
+    cov_mean_d *= pow(nclus[2], -1);
+
+    cov_w_inv[1:Nx, 1:Nx] = inverse_spd(cov_w);
+
+    out[1, 1:Nx_between, 1:Nx_between] = cov_mean_d;
+    out[2, 1:Nx, 1:Nx] = cov_w;
+    out[3, 1:Nx, 1:Nx] = cov_w_inv;
+
+    return out;
+  }
+  
+  // compute log_lik of fixed.x variables for a single group (two-level models)
+  vector calc_log_lik_x(vector[] mean_d, vector ov_mean_d, matrix cov_mean_d, matrix cov_w, matrix cov_w_inv, int[] nclus, int[] cluster_size, int[] Xvar, int[] Xbetvar, int Nx, int Nx_between) {
+    vector[nclus[2]] out;
+
+    for (cc in 1:nclus[2]) {
+      if (Nx > 0) {
+	out[cc] += multi_normal_suff(mean_d[cc, Xvar[1:Nx]], cov_w, mean_d[cc, Xvar[1:Nx]], cov_w_inv, cluster_size[cc]);
+      }
+      if (Nx_between > 0) {
+	out[cc] += multi_normal_lpdf(mean_d[cc, Xbetvar[1:Nx_between]] | ov_mean_d, cov_mean_d);
+      }      
+    }
+
+    return out;
+  }
+  
 }
 data {
   // see https://books.google.com/books?id=9AC-s50RjacC&lpg=PP1&dq=LISREL&pg=PA2#v=onepage&q=LISREL&f=false
@@ -478,7 +539,9 @@ data {
   int<lower=0> Noent; // how many observed entries of ordinal variables (for data augmentation)
   int<lower=0> contidx[p + q - Nord]; // indexing of continuous variables
   int<lower=1> nlevs[Nord]; // how many levels does each ordinal variable have
-  vector[p + q - Nord] YX[Ntot]; // continuous data
+  int<lower=1> nclus[Ng, 2]; // number of level 1 + level 2 observations
+  int<lower=0> p_tilde; // total number of variables
+  vector[nclus[1, 2] > 1 ? p_tilde : p + q - Nord] YX[Ntot]; // continuous data
   int YXo[Ntot, Nord]; // ordinal data
   int<lower=0> Nx[Np]; // number of fixed.x variables (within)
   int<lower=0> Nx_between[Np]; // number of fixed.x variables (between)
@@ -486,15 +549,13 @@ data {
   int<lower=0> emiter; // number of em iterations for saturated model in ppp (missing data only)
   int<lower=0, upper=1> use_suff; // should we compute likelihood via mvn sufficient stats?
   int<lower=0, upper=1> do_test; // should we do everything in generated quantities?
-  vector[p + q - Nord] YXbar[Np]; // sample means of continuous manifest variables
-  matrix[p + q - Nord + 1, p + q - Nord + 1] S[Np];     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
+  vector[nclus[1, 2] > 1 ? p_tilde : p + q - Nord] YXbar[Np]; // sample means of continuous manifest variables
+  matrix[nclus[1, 2] > 1 ? (p_tilde + 1) : (p + q - Nord + 1), nclus[1, 2] > 1 ? (p_tilde + 1) : (p + q - Nord + 1)] S[Np];     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
   
-  int<lower=1> nclus[Ng, 2]; // number of level 1 + level 2 observations
   int<lower=1> cluster_size[sum(nclus[,2])]; // number of obs per cluster
   int<lower=1> ncluster_sizes[Ng]; // number of unique cluster sizes
   int<lower=1> cluster_sizes[sum(ncluster_sizes)]; // unique cluster sizes
   int<lower=1> cluster_size_ns[sum(ncluster_sizes)]; // number of clusters of each size
-  int p_tilde; // total number of variables
   int<lower=0> Xvar[Np, nclus[1, 2] > 1 ? p_tilde : p + q]; // indexing of fixed.x variables (within)
   int<lower=0> Xdatvar[Np, nclus[1, 2] > 1 ? p_tilde : p + q]; // indexing of fixed.x in data (differs from Xvar when missing)
   int<lower=0> Xbetvar[Np, nclus[1, 2] > 1 ? p_tilde : p + q]; // indexing of fixed.x variables (between)
@@ -1320,6 +1381,8 @@ model { // N.B.: things declared in the model block do not get saved in the outp
     int grpidx;
     int r1 = 1; // index clusters per group
     int r2 = 0;
+    int rr1 = 1;  // index units per group
+    int rr2 = 0;
     int r3 = 1; // index unique cluster sizes per group
     int r4 = 0;
     
@@ -1327,18 +1390,33 @@ model { // N.B.: things declared in the model block do not get saved in the outp
       grpidx = grpnum[mm];
       if (grpidx > 1) {
 	r1 += nclus[(grpidx - 1), 2];
+	rr1 += nclus[(grpidx - 1), 1];
 	r3 += ncluster_sizes[(grpidx - 1)];
       }
       r2 += nclus[grpidx, 2];
+      rr2 += nclus[grpidx, 1];
       r4 += ncluster_sizes[grpidx];
 
-      target += twolevel_logdens(mean_d[r3:r4], cov_d[r3:r4], S_PW[grpidx], YX, nclus[grpidx,],
-				 cluster_size[r1:r2], cluster_sizes[r3:r4],
+      target += twolevel_logdens(mean_d[r3:r4], cov_d[r3:r4], S_PW[grpidx], YX[rr1:rr2],
+				 nclus[grpidx,], cluster_size[r1:r2], cluster_sizes[r3:r4],
 				 ncluster_sizes[grpidx], cluster_size_ns[r3:r4], Mu[grpidx],
 				 Sigma[grpidx], Mu_c[grpidx], Sigma_c[grpidx],
 				 ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
-				 Nx[mm] + Nx_between[mm], p_tilde, N_within, N_between, N_both,
-				 log_lik_x[r3:r4]);
+				 p_tilde, N_within, N_between, N_both);
+
+      if (Nx[grpidx] + Nx_between[grpidx] > 0) {
+	vector[p_tilde] mnvecs[2];
+	matrix[p_tilde, p_tilde] covmats[3];
+
+	mnvecs = calc_mean_vecs(YX[rr1:rr2], mean_d_full[r1:r2], nclus[grpidx], Xvar[grpidx], Xbetvar[grpidx], Nx[grpidx], Nx_between[grpidx]);
+	covmats = calc_cov_mats(YX[rr1:rr2], mean_d_full[r1:r2], mnvecs, nclus[grpidx], Xvar[grpidx], Xbetvar[grpidx], Nx[grpidx], Nx_between[grpidx]);
+	target += -calc_log_lik_x(mean_d_full[r1:r2], mnvecs[2, 1:Nx_between[grpidx]],
+				  covmats[1, 1:Nx_between[grpidx], 1:Nx_between[grpidx]],
+				  covmats[2, 1:Nx[grpidx], 1:Nx[grpidx]],
+				  covmats[3, 1:Nx[grpidx], 1:Nx[grpidx]], nclus[grpidx],
+				  cluster_size[r1:r2], Xvar[grpidx],
+				  Xbetvar[grpidx], Nx[grpidx], Nx_between[grpidx]);
+      }
     }
   } else if (use_cov) {
     for (g in 1:Ng) {
@@ -1501,11 +1579,6 @@ generated quantities { // these matrices are saved in the output but do not figu
   real logdetS_rep_sat_grp[Ng];
   matrix[p + q, p + q] zmat;
   vector[p_tilde] mean_d_rep[sum(nclus[,2])];
-  vector[p_tilde] ov_mean_rep[Ng];
-  vector[p_tilde] ov_mean_d_rep[Ng];
-  matrix[p_tilde, p_tilde] cov_mean_d_rep[Ng];
-  matrix[p_tilde, p_tilde] cov_w_rep[Ng];
-  matrix[p_tilde, p_tilde] cov_w_rep_inv[Ng];
   vector[nclus[1, 2] > 1 ? sum(nclus[,2]) : Ng] log_lik_x_rep;
   matrix[N_both + N_within, N_both + N_within] S_PW_rep[Ng];
   real<lower=0, upper=1> ppp;
@@ -1598,7 +1671,6 @@ generated quantities { // these matrices are saved in the output but do not figu
 	r1 = 1;
 	rr1 = 1;
 	clusidx = 1;
-	rr2 = 1;
 	r2 = 1;
 	for (gg in 1:Ng) {
 	  S_PW_rep[gg] = rep_matrix(0, N_both + N_within, N_both + N_within);
@@ -1607,12 +1679,10 @@ generated quantities { // these matrices are saved in the output but do not figu
 
 	    for (ii in r1:(r1 + cluster_size[clusidx] - 1)) {
 	      YXstar_rep[ii] = multi_normal_rng(Mu[gg] + YXstar_rep_c[clusidx], Sigma[gg]);
-	      ov_mean_rep[gg] += YXstar_rep[ii];
 	    }
 	    for (jj in 1:p_tilde) {
-	      mean_d_rep[cc, jj] = mean(YXstar_rep[r1:(r1 + cluster_size[clusidx] - 1), jj]);
+	      mean_d_rep[clusidx, jj] = mean(YXstar_rep[r1:(r1 + cluster_size[clusidx] - 1), jj]);
             }
-	    ov_mean_d_rep[gg] += mean_d_rep[cc];
 
 	    for (ii in r1:(r1 + cluster_size[clusidx] - 1)) {
 	      S_PW_rep[gg] += tcrossprod(to_matrix(YXstar_rep[ii] - mean_d_rep[cc]));
@@ -1623,31 +1693,21 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  S_PW_rep[gg] *= pow(nclus[gg, 1] - nclus[gg, 2], -1);
 
 	  if (Nx[gg] > 0 || Nx_between[gg] > 0) {
-	    ov_mean_rep[gg] *= pow(nclus[gg, 1], -1);
-	    ov_mean_d_rep[gg] *= pow(nclus[gg, 2], -1);
+	    vector[p_tilde] mnvecs[2];
+	    matrix[p_tilde, p_tilde] covmats[3];
+	    rr1 = r1 - nclus[gg, 1] + 1;
+	    r2 = clusidx - nclus[gg, 2] + 1;
 
-	    // use above means to get within cov and between cov
-	    for (cc in 1:nclus[gg, 2]) {
-	      cov_mean_d_rep[gg] += tcrossprod(to_matrix(mean_d_rep[cc] - ov_mean_d_rep[gg]));
-	      for (ii in rr1:(rr1 + cluster_size[rr2] - 1)) {
-		cov_w_rep[gg] += tcrossprod(to_matrix(YXstar_rep[ii] - ov_mean_rep[gg]));
-	      }
-	      rr1 += cluster_size[rr2];
-	      rr2 += 1;
-	    }
-	    cov_mean_d_rep[gg] *= pow(nclus[gg, 2], -1);
-	    cov_w_rep[gg] *= pow(nclus[gg, 1], -1);
-	    cov_w_rep_inv[gg, 1:Nx[gg], 1:Nx[gg]] = inverse_spd(cov_w_rep[gg, Xvar[gg, 1:Nx[gg]], Xvar[gg, 1:Nx[gg]]]);
-
-	    for (cc in 1:nclus[gg, 2]) {
-	      log_lik_x_rep[cc] = 0.0;
-	      if (Nx[gg] > 0) {
-		log_lik_x_rep[cc] += multi_normal_suff(mean_d_rep[cc, Xvar[gg, 1:Nx[gg]]], cov_w_rep[gg, Xvar[gg, 1:Nx[gg]], Xvar[gg, 1:Nx[gg]]], mean_d_rep[cc, Xvar[gg, 1:Nx[gg]]], cov_w_rep_inv[gg, 1:Nx[gg], 1:Nx[gg]], cluster_size[r2]);
-	      }
-	      if (Nx_between[gg] > 0) {
-		log_lik_x_rep[cc] += multi_normal_lpdf(mean_d_rep[cc, Xbetvar[gg, 1:Nx_between[gg]]] | ov_mean_d_rep[gg, Xbetvar[gg, 1:Nx_between[gg]]], cov_mean_d_rep[gg, 1:Nx_between[gg], 1:Nx_between[gg]]);
-	      }
-	    }
+	    mnvecs = calc_mean_vecs(YXstar[rr1:r1], mean_d_rep[r2:clusidx], nclus[gg], Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg]);
+	    covmats = calc_cov_mats(YXstar[rr1:r1], mean_d_rep[r2:clusidx], mnvecs, nclus[gg], Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg]);
+	    
+	    log_lik_x_rep[r2:clusidx] = calc_log_lik_x(mean_d_rep[r2:clusidx],
+						       mnvecs[2, 1:Nx_between[gg]],
+						       covmats[1, 1:Nx_between[gg], 1:Nx_between[gg]],
+						       covmats[2, 1:Nx[gg], 1:Nx[gg]],
+						       covmats[3, 1:Nx[gg], 1:Nx[gg]],
+						       nclus[gg], cluster_size[r2:clusidx],
+						       Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg]);
 	  } // Nx[gg] > 0
 	} // gg
       } else {
@@ -1743,8 +1803,21 @@ generated quantities { // these matrices are saved in the output but do not figu
 					  nclus[grpidx,2], intone[1:nclus[grpidx,2]], Mu[grpidx],
 					  Sigma[grpidx], Mu_c[grpidx], Sigma_c[grpidx],
 					  ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
-					  Nx[mm] + Nx_between[mm], p_tilde, N_within, N_between,
-					  N_both, log_lik_x_full[r1:r2]);
+					  p_tilde, N_within, N_between, N_both);
+
+	if (Nx[grpidx] + Nx_between[grpidx] > 0) {
+	  vector[p_tilde] mnvecs[2];
+	  matrix[p_tilde, p_tilde] covmats[3];
+
+	  mnvecs = calc_mean_vecs(YX[r3:r4], mean_d_full[r1:r2], nclus[grpidx], Xvar[grpidx], Xbetvar[grpidx], Nx[grpidx], Nx_between[grpidx]);
+	  covmats = calc_cov_mats(YX[r3:r4], mean_d_full[r1:r2], mnvecs, nclus[grpidx], Xvar[grpidx], Xbetvar[grpidx], Nx[grpidx], Nx_between[grpidx]);
+	  log_lik[r1:r2] -= calc_log_lik_x(mean_d_full[r1:r2], mnvecs[2, 1:Nx_between[grpidx]],
+					   covmats[1, 1:Nx_between[grpidx], 1:Nx_between[grpidx]],
+					   covmats[2, 1:Nx[grpidx], 1:Nx[grpidx]],
+					   covmats[3, 1:Nx[grpidx], 1:Nx[grpidx]], nclus[grpidx],
+					   cluster_size[r1:r2], Xvar[grpidx], Xbetvar[grpidx],
+					   Nx[grpidx], Nx_between[grpidx]);
+	}
       }
     }
 
@@ -1807,8 +1880,10 @@ generated quantities { // these matrices are saved in the output but do not figu
 						  nclus[grpidx,2], intone[1:nclus[grpidx,2]], Mu[grpidx],
 						  Sigma[grpidx], Mu_c[grpidx], Sigma_c[grpidx],
 						  ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
-						  Nx[mm] + Nx_between[mm], p_tilde, N_within,
-						  N_between, N_both, log_lik_x_rep[rr1:rr2]);
+						  p_tilde, N_within, N_between, N_both);
+	  if (Nx[grpidx] + Nx_between[grpidx] > 0) {
+	    log_lik_rep[rr1:rr2] -= log_lik_x_rep[rr1:rr2];
+	  }
 	}
 
 	for (jj in r1:r2) {
