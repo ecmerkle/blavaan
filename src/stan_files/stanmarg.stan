@@ -180,8 +180,14 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
       if (cluswise) {
 	matrix[N_wo_b, nj] Y_j;
 
-	for (i in 1:nj) {
-	  Y_j[, i] = YX[r1 - 1 + i] - Mu_y; // would be nice to have to_matrix() here
+	if (N_between > 0) {
+	  for (i in 1:nj) {	  
+	    Y_j[, i] = YX[r1 - 1 + i, uord_notbidx] - Mu_y; // would be nice to have to_matrix() here
+	  }
+	} else {
+	  for (i in 1:nj) {
+	    Y_j[, i] = YX[r1 - 1 + i] - Mu_y; // would be nice to have to_matrix() here
+	  }
 	}
 	r1 += nj; // for next iteration through loop
 	
@@ -446,56 +452,69 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   }
 
   // compute mean vectors and cov matrices for a single group (two-level models)
-  vector[] calc_mean_vecs(vector[] YXstar, vector[] mean_d, int[] nclus, int[] Xvar, int[] Xbetvar, int Nx, int Nx_between) {
-    vector[Nx] ov_mean;
-    vector[Nx_between] ov_mean_d;
+  vector[] calc_mean_vecs(vector[] YXstar, vector[] mean_d, int[] nclus, int[] Xvar, int[] Xbetvar, int Nx, int Nx_between, int p_tilde) {
+    vector[Nx] ov_mean = rep_vector(0, Nx);
+    vector[Nx_between] ov_mean_d = rep_vector(0, Nx_between);
     int nr = dims(YXstar)[1];
-    vector[max(Nx, Nx_between)] out[2];
+    vector[p_tilde] out[2];
 
-    for (i in 1:nr) {
-      ov_mean += YXstar[i, Xvar];
-    }
-    for (cc in 1:nclus[2]) {
-      ov_mean_d += mean_d[cc, Xbetvar];
-    }
-    ov_mean *= pow(nclus[1], -1);
-    ov_mean_d *= pow(nclus[2], -1);
+    for (i in 1:2) out[i] = rep_vector(0, p_tilde);
 
-    out[1, 1:Nx] = ov_mean;
-    out[2, 1:Nx_between] = ov_mean_d;
+    if (Nx > 0) {
+      for (i in 1:nr) {
+	ov_mean += YXstar[i, Xvar[1:Nx]];
+      }
+      ov_mean *= pow(nclus[1], -1);
+
+      out[1, 1:Nx] = ov_mean;
+    }
+
+    if (Nx_between > 0) {
+      for (cc in 1:nclus[2]) {
+	ov_mean_d += mean_d[cc, Xbetvar[1:Nx_between]];
+      }
+      ov_mean_d *= pow(nclus[2], -1);
+
+      out[2, 1:Nx_between] = ov_mean_d;
+    }
 
     return out;
   }
 
-  matrix[] calc_cov_mats(vector[] YXstar, vector[] mean_d, vector[] mean_vecs, int[] nclus, int[] Xvar, int[] Xbetvar, int Nx, int Nx_between) {
-    matrix[Nx_between, Nx_between] cov_mean_d;
-    matrix[Nx, Nx] cov_w;
+  matrix[] calc_cov_mats(vector[] YXstar, vector[] mean_d, vector[] mean_vecs, int[] nclus, int[] Xvar, int[] Xbetvar, int Nx, int Nx_between, int p_tilde) {
+    matrix[Nx_between, Nx_between] cov_mean_d = rep_matrix(0, Nx_between, Nx_between);
+    matrix[Nx, Nx] cov_w = rep_matrix(0, Nx, Nx);
     matrix[Nx, Nx] cov_w_inv;
     int nr = dims(YXstar)[1];
-    int dimout = max(Nx, Nx_between);
-    matrix[dimout, dimout] out[3];
+    matrix[p_tilde, p_tilde] out[3];
 
-    for (i in 1:nr) {
-      cov_w += tcrossprod(to_matrix(YXstar[i, Xvar] - mean_vecs[1, 1:Nx]));
+    for (i in 1:3) out[i] = rep_matrix(0, p_tilde, p_tilde);
+
+    if (Nx > 0) {
+      for (i in 1:nr) {
+	cov_w += tcrossprod(to_matrix(YXstar[i, Xvar[1:Nx]] - mean_vecs[1, 1:Nx]));
+      }
+      cov_w *= pow(nclus[1], -1);
+      cov_w_inv[1:Nx, 1:Nx] = inverse_spd(cov_w);
+
+      out[2, 1:Nx, 1:Nx] = cov_w;
+      out[3, 1:Nx, 1:Nx] = cov_w_inv;
     }
-    for (cc in 1:nclus[2]) {
-      cov_mean_d += tcrossprod(to_matrix(mean_d[cc, Xbetvar] - mean_vecs[2, 1:Nx_between]));
+
+    if (Nx_between > 0) {
+      for (cc in 1:nclus[2]) {
+	cov_mean_d += tcrossprod(to_matrix(mean_d[cc, Xbetvar[1:Nx_between]] - mean_vecs[2, 1:Nx_between]));
+      }
+      cov_mean_d *= pow(nclus[2], -1);
+      out[1, 1:Nx_between, 1:Nx_between] = cov_mean_d;
     }
-    cov_w *= pow(nclus[1], -1);
-    cov_mean_d *= pow(nclus[2], -1);
-
-    cov_w_inv[1:Nx, 1:Nx] = inverse_spd(cov_w);
-
-    out[1, 1:Nx_between, 1:Nx_between] = cov_mean_d;
-    out[2, 1:Nx, 1:Nx] = cov_w;
-    out[3, 1:Nx, 1:Nx] = cov_w_inv;
-
+    
     return out;
   }
   
   // compute log_lik of fixed.x variables for a single group (two-level models)
   vector calc_log_lik_x(vector[] mean_d, vector ov_mean_d, matrix cov_mean_d, matrix cov_w, matrix cov_w_inv, int[] nclus, int[] cluster_size, int[] Xvar, int[] Xbetvar, int Nx, int Nx_between) {
-    vector[nclus[2]] out;
+    vector[nclus[2]] out = rep_vector(0, nclus[2]);
 
     for (cc in 1:nclus[2]) {
       if (Nx > 0) {
@@ -1408,8 +1427,9 @@ model { // N.B.: things declared in the model block do not get saved in the outp
 	vector[p_tilde] mnvecs[2];
 	matrix[p_tilde, p_tilde] covmats[3];
 
-	mnvecs = calc_mean_vecs(YX[rr1:rr2], mean_d_full[r1:r2], nclus[grpidx], Xvar[grpidx], Xbetvar[grpidx], Nx[grpidx], Nx_between[grpidx]);
-	covmats = calc_cov_mats(YX[rr1:rr2], mean_d_full[r1:r2], mnvecs, nclus[grpidx], Xvar[grpidx], Xbetvar[grpidx], Nx[grpidx], Nx_between[grpidx]);
+	mnvecs = calc_mean_vecs(YX[rr1:rr2], mean_d_full[r1:r2], nclus[grpidx], Xvar[grpidx], Xbetvar[grpidx], Nx[grpidx], Nx_between[grpidx], p_tilde);
+	covmats = calc_cov_mats(YX[rr1:rr2], mean_d_full[r1:r2], mnvecs, nclus[grpidx], Xvar[grpidx], Xbetvar[grpidx], Nx[grpidx], Nx_between[grpidx], p_tilde);
+
 	target += -calc_log_lik_x(mean_d_full[r1:r2], mnvecs[2, 1:Nx_between[grpidx]],
 				  covmats[1, 1:Nx_between[grpidx], 1:Nx_between[grpidx]],
 				  covmats[2, 1:Nx[grpidx], 1:Nx[grpidx]],
@@ -1698,8 +1718,8 @@ generated quantities { // these matrices are saved in the output but do not figu
 	    rr1 = r1 - nclus[gg, 1] + 1;
 	    r2 = clusidx - nclus[gg, 2] + 1;
 
-	    mnvecs = calc_mean_vecs(YXstar[rr1:r1], mean_d_rep[r2:clusidx], nclus[gg], Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg]);
-	    covmats = calc_cov_mats(YXstar[rr1:r1], mean_d_rep[r2:clusidx], mnvecs, nclus[gg], Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg]);
+	    mnvecs = calc_mean_vecs(YXstar[rr1:r1], mean_d_rep[r2:clusidx], nclus[gg], Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg], p_tilde);
+	    covmats = calc_cov_mats(YXstar[rr1:r1], mean_d_rep[r2:clusidx], mnvecs, nclus[gg], Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg], p_tilde);
 	    
 	    log_lik_x_rep[r2:clusidx] = calc_log_lik_x(mean_d_rep[r2:clusidx],
 						       mnvecs[2, 1:Nx_between[gg]],
@@ -1809,8 +1829,8 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  vector[p_tilde] mnvecs[2];
 	  matrix[p_tilde, p_tilde] covmats[3];
 
-	  mnvecs = calc_mean_vecs(YX[r3:r4], mean_d_full[r1:r2], nclus[grpidx], Xvar[grpidx], Xbetvar[grpidx], Nx[grpidx], Nx_between[grpidx]);
-	  covmats = calc_cov_mats(YX[r3:r4], mean_d_full[r1:r2], mnvecs, nclus[grpidx], Xvar[grpidx], Xbetvar[grpidx], Nx[grpidx], Nx_between[grpidx]);
+	  mnvecs = calc_mean_vecs(YX[r3:r4], mean_d_full[r1:r2], nclus[grpidx], Xvar[grpidx], Xbetvar[grpidx], Nx[grpidx], Nx_between[grpidx], p_tilde);
+	  covmats = calc_cov_mats(YX[r3:r4], mean_d_full[r1:r2], mnvecs, nclus[grpidx], Xvar[grpidx], Xbetvar[grpidx], Nx[grpidx], Nx_between[grpidx], p_tilde);
 	  log_lik[r1:r2] -= calc_log_lik_x(mean_d_full[r1:r2], mnvecs[2, 1:Nx_between[grpidx]],
 					   covmats[1, 1:Nx_between[grpidx], 1:Nx_between[grpidx]],
 					   covmats[2, 1:Nx[grpidx], 1:Nx[grpidx]],
