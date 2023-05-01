@@ -1688,24 +1688,51 @@ generated quantities { // these matrices are saved in the output but do not figu
     } else if (do_test && has_data) {
       // generate level 2 data, then level 1
       if (nclus[1, 2] > 1) {
+	int notbidx[p_tilde - N_between];
+	notbidx = between_idx[(N_between + 1):p_tilde];
 	r1 = 1;
 	rr1 = 1;
 	clusidx = 1;
 	r2 = 1;
 	for (gg in 1:Ng) {
+	  matrix[p_tilde, p_tilde + 1] W_tilde = calc_W_tilde(Sigma[gg], Mu[gg], ov_idx1, p_tilde);
 	  S_PW_rep[gg] = rep_matrix(0, N_both + N_within, N_both + N_within);
+
 	  for (cc in 1:nclus[gg, 2]) {
+	    vector[p_tilde] YXstar_rep_tilde;
+	    vector[p_tilde] Mu_cond = W_tilde[,1];
 	    YXstar_rep_c[clusidx] = multi_normal_rng(Mu_c[gg], Sigma_c[gg]);
 
-	    for (ii in r1:(r1 + cluster_size[clusidx] - 1)) {
-	      YXstar_rep[ii] = multi_normal_rng(Mu[gg] + YXstar_rep_c[clusidx], Sigma[gg]);
+	    YXstar_rep_tilde = calc_B_tilde(Sigma_c[gg], YXstar_rep_c[clusidx], ov_idx2, p_tilde)[,1];
+	    
+	    // add cluster effects to within Mu
+	    for (ww in (N_between + 1):p_tilde) {
+	      Mu_cond[between_idx[ww]] += YXstar_rep_tilde[between_idx[ww]];
 	    }
+	    
+	    for (ii in r1:(r1 + cluster_size[clusidx] - 1)) {
+
+	      matrix[p_tilde, p_tilde] Wcov = block(W_tilde, 1, 2, p_tilde, p_tilde);
+	      vector[N_within + N_both] Ywb_rep;
+
+	      Ywb_rep = multi_normal_rng(Mu_cond[notbidx], Wcov[notbidx, notbidx]);
+	      
+	      if (N_between > 0) {
+		for (bb in 1:N_between) {
+		  YXstar_rep[ii, between_idx[bb]] = YXstar_rep_tilde[between_idx[bb]];
+		}
+	      }
+	      for (ww in 1:(p_tilde - N_between)) {
+		YXstar_rep[ii, notbidx[ww]] = Ywb_rep[ww];
+	      }
+	    }
+	    
 	    for (jj in 1:p_tilde) {
 	      mean_d_rep[clusidx, jj] = mean(YXstar_rep[r1:(r1 + cluster_size[clusidx] - 1), jj]);
             }
 
 	    for (ii in r1:(r1 + cluster_size[clusidx] - 1)) {
-	      S_PW_rep[gg] += tcrossprod(to_matrix(YXstar_rep[ii] - mean_d_rep[cc]));
+	      S_PW_rep[gg] += tcrossprod(to_matrix(YXstar_rep[ii, notbidx] - mean_d_rep[cc, notbidx]));
 	    }
 	    r1 += cluster_size[clusidx];
 	    clusidx += 1;
@@ -1715,11 +1742,11 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  if (Nx[gg] > 0 || Nx_between[gg] > 0) {
 	    vector[p_tilde] mnvecs[2];
 	    matrix[p_tilde, p_tilde] covmats[3];
-	    rr1 = r1 - nclus[gg, 1] + 1;
+	    rr1 = r1 - nclus[gg, 1];
 	    r2 = clusidx - nclus[gg, 2] + 1;
 
-	    mnvecs = calc_mean_vecs(YXstar[rr1:r1], mean_d_rep[r2:clusidx], nclus[gg], Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg], p_tilde);
-	    covmats = calc_cov_mats(YXstar[rr1:r1], mean_d_rep[r2:clusidx], mnvecs, nclus[gg], Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg], p_tilde);
+	    mnvecs = calc_mean_vecs(YXstar[rr1:(r1 - 1)], mean_d_rep[r2:clusidx], nclus[gg], Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg], p_tilde);
+	    covmats = calc_cov_mats(YXstar[rr1:(r1 - 1)], mean_d_rep[r2:clusidx], mnvecs, nclus[gg], Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg], p_tilde);
 	    
 	    log_lik_x_rep[r2:clusidx] = calc_log_lik_x(mean_d_rep[r2:clusidx],
 						       mnvecs[2, 1:Nx_between[gg]],
