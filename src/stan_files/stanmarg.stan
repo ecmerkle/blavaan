@@ -471,7 +471,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
 
     if (Nx_between > 0) {
       for (cc in 1:nclus[2]) {
-	ov_mean_d += mean_d[cc, Xbetvar[1:Nx_between]];
+	ov_mean_d += mean_d[cc, 1:Nx_between];
       }
       ov_mean_d *= pow(nclus[2], -1);
 
@@ -503,7 +503,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
 
     if (Nx_between > 0) {
       for (cc in 1:nclus[2]) {
-	cov_mean_d += tcrossprod(to_matrix(mean_d[cc, Xbetvar[1:Nx_between]] - mean_vecs[2, 1:Nx_between]));
+	cov_mean_d += tcrossprod(to_matrix(mean_d[cc, 1:Nx_between] - mean_vecs[2, 1:Nx_between]));
       }
       cov_mean_d *= pow(nclus[2], -1);
       out[1, 1:Nx_between, 1:Nx_between] = cov_mean_d;
@@ -521,7 +521,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
 	out[cc] += multi_normal_suff(mean_d[cc, Xvar[1:Nx]], cov_w, mean_d[cc, Xvar[1:Nx]], cov_w_inv, cluster_size[cc]);
       }
       if (Nx_between > 0) {
-	out[cc] += multi_normal_lpdf(mean_d[cc, Xbetvar[1:Nx_between]] | ov_mean_d, cov_mean_d);
+	out[cc] += multi_normal_lpdf(mean_d[cc, 1:Nx_between] | ov_mean_d, cov_mean_d);
       }      
     }
 
@@ -1415,14 +1415,14 @@ model { // N.B.: things declared in the model block do not get saved in the outp
       r2 += nclus[grpidx, 2];
       rr2 += nclus[grpidx, 1];
       r4 += ncluster_sizes[grpidx];
-
+      
       target += twolevel_logdens(mean_d[r3:r4], cov_d[r3:r4], S_PW[grpidx], YX[rr1:rr2],
 				 nclus[grpidx,], cluster_size[r1:r2], cluster_sizes[r3:r4],
 				 ncluster_sizes[grpidx], cluster_size_ns[r3:r4], Mu[grpidx],
 				 Sigma[grpidx], Mu_c[grpidx], Sigma_c[grpidx],
 				 ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
 				 p_tilde, N_within, N_between, N_both);
-
+      
       if (Nx[grpidx] + Nx_between[grpidx] > 0) {
 	vector[p_tilde] mnvecs[2];
 	matrix[p_tilde, p_tilde] covmats[3];
