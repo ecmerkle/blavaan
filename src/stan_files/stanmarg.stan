@@ -1423,20 +1423,7 @@ model { // N.B.: things declared in the model block do not get saved in the outp
 				 ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
 				 p_tilde, N_within, N_between, N_both);
       
-      if (Nx[grpidx] + Nx_between[grpidx] > 0) {
-	vector[p_tilde] mnvecs[2];
-	matrix[p_tilde, p_tilde] covmats[3];
-
-	mnvecs = calc_mean_vecs(YX[rr1:rr2], mean_d_full[r1:r2], nclus[grpidx], Xvar[grpidx], Xbetvar[grpidx], Nx[grpidx], Nx_between[grpidx], p_tilde);
-	covmats = calc_cov_mats(YX[rr1:rr2], mean_d_full[r1:r2], mnvecs, nclus[grpidx], Xvar[grpidx], Xbetvar[grpidx], Nx[grpidx], Nx_between[grpidx], p_tilde);
-
-	target += -calc_log_lik_x(mean_d_full[r1:r2], mnvecs[2, 1:Nx_between[grpidx]],
-				  covmats[1, 1:Nx_between[grpidx], 1:Nx_between[grpidx]],
-				  covmats[2, 1:Nx[grpidx], 1:Nx[grpidx]],
-				  covmats[3, 1:Nx[grpidx], 1:Nx[grpidx]], nclus[grpidx],
-				  cluster_size[r1:r2], Xvar[grpidx],
-				  Xbetvar[grpidx], Nx[grpidx], Nx_between[grpidx]);
-      }
+      if (Nx[grpidx] + Nx_between[grpidx] > 0) target += -log_lik_x;
     }
   } else if (use_cov) {
     for (g in 1:Ng) {
@@ -1852,19 +1839,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 					  ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
 					  p_tilde, N_within, N_between, N_both);
 
-	if (Nx[grpidx] + Nx_between[grpidx] > 0) {
-	  vector[p_tilde] mnvecs[2];
-	  matrix[p_tilde, p_tilde] covmats[3];
-
-	  mnvecs = calc_mean_vecs(YX[r3:r4], mean_d_full[r1:r2], nclus[grpidx], Xvar[grpidx], Xbetvar[grpidx], Nx[grpidx], Nx_between[grpidx], p_tilde);
-	  covmats = calc_cov_mats(YX[r3:r4], mean_d_full[r1:r2], mnvecs, nclus[grpidx], Xvar[grpidx], Xbetvar[grpidx], Nx[grpidx], Nx_between[grpidx], p_tilde);
-	  log_lik[r1:r2] -= calc_log_lik_x(mean_d_full[r1:r2], mnvecs[2, 1:Nx_between[grpidx]],
-					   covmats[1, 1:Nx_between[grpidx], 1:Nx_between[grpidx]],
-					   covmats[2, 1:Nx[grpidx], 1:Nx[grpidx]],
-					   covmats[3, 1:Nx[grpidx], 1:Nx[grpidx]], nclus[grpidx],
-					   cluster_size[r1:r2], Xvar[grpidx], Xbetvar[grpidx],
-					   Nx[grpidx], Nx_between[grpidx]);
-	}
+	if (Nx[grpidx] + Nx_between[grpidx] > 0) log_lik[r1:r2] -= log_lik_x_full;
       }
     }
 
