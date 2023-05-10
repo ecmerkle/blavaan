@@ -1588,6 +1588,9 @@ generated quantities { // these matrices are saved in the output but do not figu
   vector[p_tilde] mean_d_rep[sum(nclus[,2])];
   vector[nclus[1, 2] > 1 ? sum(nclus[,2]) : Ng] log_lik_x_rep;
   matrix[N_both + N_within, N_both + N_within] S_PW_rep[Ng];
+  matrix[p_tilde, p_tilde] S_PW_rep_full[Ng];
+  vector[p_tilde] ov_mean_rep[Ng];
+  matrix[p_tilde, p_tilde] S_B_rep[Ng];
   real<lower=0, upper=1> ppp;
   
   // first deal with sign constraints:
@@ -1667,6 +1670,7 @@ generated quantities { // these matrices are saved in the output but do not figu
     int rr2;
     int grpidx;
     int clusidx;
+    int clusidx2;
 
     if (do_test && use_cov) {
       for (g in 1:Ng) {
@@ -1680,10 +1684,14 @@ generated quantities { // these matrices are saved in the output but do not figu
 	r1 = 1;
 	rr1 = 1;
 	clusidx = 1;
+	clusidx2 = 1;
 	r2 = 1;
 	for (gg in 1:Ng) {
 	  matrix[p_tilde, p_tilde + 1] W_tilde = calc_W_tilde(Sigma[gg], Mu[gg], ov_idx1, p_tilde);
 	  S_PW_rep[gg] = rep_matrix(0, N_both + N_within, N_both + N_within);
+	  S_PW_rep_full[gg] = rep_matrix(0, p_tilde, p_tilde);
+	  S_B_rep[gg] = rep_matrix(0, p_tilde, p_tilde);
+	  ov_mean_rep[gg] = rep_vector(0, p_tilde);
 
 	  for (cc in 1:nclus[gg, 2]) {
 	    vector[p_tilde] YXstar_rep_tilde;
@@ -1712,6 +1720,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 	      for (ww in 1:(p_tilde - N_between)) {
 		YXstar_rep[ii, notbidx[ww]] = Ywb_rep[ww];
 	      }
+	      ov_mean_rep[gg] += YXstar_rep[ii];
 	    }
 	    
 	    for (jj in 1:p_tilde) {
@@ -1719,12 +1728,25 @@ generated quantities { // these matrices are saved in the output but do not figu
             }
 
 	    for (ii in r1:(r1 + cluster_size[clusidx] - 1)) {
-	      S_PW_rep[gg] += tcrossprod(to_matrix(YXstar_rep[ii, notbidx] - mean_d_rep[cc, notbidx]));
+	      S_PW_rep_full[gg] += tcrossprod(to_matrix(YXstar_rep[ii] - mean_d_rep[cc]));
+	      S_PW_rep[gg] += S_PW_rep_full[gg, notbidx, notbidx];
 	    }
 	    r1 += cluster_size[clusidx];
 	    clusidx += 1;
-	  }
+	  } // cc
+
+	  ov_mean_rep[gg] *= pow(nclus[gg, 1], -1);
+	  S_PW_rep_full[gg] *= pow(nclus[gg, 1] - nclus[gg, 2], -1);
 	  S_PW_rep[gg] *= pow(nclus[gg, 1] - nclus[gg, 2], -1);
+
+	  for (cc in 1:nclus[gg, 2]) {
+	    S_B_rep[gg] += cluster_size[clusidx2] * tcrossprod(mean_d_rep[clusidx2] - ov_mean_rep[gg]);
+	    clusidx2 += 1;
+	  }
+	  S_B_rep[gg] *= pow(nclus[gg, 2] - 1, -1);
+	  Sigma_rep_sat[gg] = cinv * (S_B_rep[gg] - S_PW_rep_full[gg]);
+	  Sigma_sat[gg] = S_B[gg];
+	  // TODO send in S_B, cinv
 
 	  if (Nx[gg] > 0 || Nx_between[gg] > 0) {
 	    vector[p_tilde] mnvecs[2];
@@ -1839,7 +1861,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 					  ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
 					  p_tilde, N_within, N_between, N_both);
 
-	if (Nx[grpidx] + Nx_between[grpidx] > 0) log_lik[r1:r2] -= log_lik_x_full;
+	if (Nx[grpidx] + Nx_between[grpidx] > 0) log_lik[r1:r2] -= log_lik_x_full[r1:r2];
       }
     }
 
@@ -1897,44 +1919,65 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  rr2 += nclus[grpidx, 2];
 	  r4 += nclus[grpidx, 1];
 
-	  log_lik_rep[rr1:rr2] = twolevel_logdens(mean_d_rep[rr1:rr2], cov_d_full[rr1:rr2], S_PW_rep[grpidx], YXstar_rep[r3:r4],
-						  nclus[grpidx,], cluster_size[rr1:rr2], cluster_size[rr1:rr2],
-						  nclus[grpidx,2], intone[1:nclus[grpidx,2]], Mu[grpidx],
+	  // TODO need cov_d_rep here
+	  log_lik_rep[rr1:rr2] = twolevel_logdens(mean_d_rep[rr1:rr2], cov_d_rep[rr1:rr2],
+						  S_PW_rep[grpidx], YXstar_rep[r3:r4],
+						  nclus[grpidx,], cluster_size[rr1:rr2],
+						  cluster_size[rr1:rr2], nclus[grpidx,2],
+						  intone[1:nclus[grpidx,2]], Mu[grpidx],
 						  Sigma[grpidx], Mu_c[grpidx], Sigma_c[grpidx],
-						  ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
-						  p_tilde, N_within, N_between, N_both);
+						  ov_idx1, ov_idx2, within_idx, between_idx,
+						  both_idx, p_tilde, N_within, N_between, N_both);
+
+	  log_lik_sat[rr1:rr2] = twolevel_logdens(mean_d_full[rr1:rr2], cov_d_full[rr1:rr2],
+						  S_PW[grpidx], YX[r3:r4],
+						  nclus[grpidx,], cluster_size[rr1:rr2],
+						  cluster_size[rr1:rr2], nclus[grpidx,2],
+						  intone[1:nclus[grpidx,2]], Mu[grpidx],
+						  S_PW[grpidx], Mu_c[grpidx], Sigma_sat[grpidx],
+						  ov_idx1, ov_idx2, within_idx, between_idx,
+						  both_idx, p_tilde, N_within, N_between, N_both);
+
+	  log_lik_rep_sat[rr1:rr2] = twolevel_logdens(mean_d_rep[rr1:rr2], cov_d_rep[rr1:rr2],
+						      S_PW_rep[grpidx], YXstar_rep[r3:r4],
+						      nclus[grpidx,], cluster_size[rr1:rr2],
+						      cluster_size[rr1:rr2], nclus[grpidx,2],
+						      intone[1:nclus[grpidx,2]], Mu[grpidx],
+						      S_PW_rep[grpidx], Mu_c[grpidx],
+						      Sigma_rep_sat[grpidx], ov_idx1, ov_idx2,
+						      within_idx, between_idx, both_idx, p_tilde,
+						      N_within, N_between, N_both);
+	  
 	  if (Nx[grpidx] + Nx_between[grpidx] > 0) {
 	    log_lik_rep[rr1:rr2] -= log_lik_x_rep[rr1:rr2];
-	  }
-	}
-
-	for (jj in r1:r2) {
-	  if (nclus[1, 2] == 1) {
-	    log_lik_rep[jj] = multi_normal_suff(YXstar_rep[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu[grpidx, obsidx[1:Nobs[mm]]], Sigmainv[mm], 1);
+	    log_lik_sat[rr1:rr2] -= log_lik_x_full[rr1:rr2];
+	    log_lik_rep_sat[rr1:rr2] -= log_lik_x_rep[rr1:rr2];
 	  }
 
-	  log_lik_sat[jj] = multi_normal_suff(YXstar[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_sat_inv[mm], 1);	
-
-	  log_lik_rep_sat[jj] = multi_normal_suff(YXstar_rep[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu_rep_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_rep_sat_inv[mm], 1);
-	    
-	  // log_lik_sat, log_lik_sat_rep
-	  if (Nx[mm] > 0) {
-	    if (nclus[1, 2] == 1) {
-	      log_lik_rep[jj] += -multi_normal_suff(YXstar_rep[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigmainv[grpidx], xidx, Nx[mm], p + q, logdetSigma_grp[grpidx]), 1);
-	    }
-	    
-	    log_lik_sat[jj] += -multi_normal_suff(YXstar[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu_sat[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigma_sat_inv[grpidx], xidx, Nx[mm], p + q, logdetS_sat_grp[grpidx]), 1);
-		
-	    log_lik_rep_sat[jj] += -multi_normal_suff(YXstar_rep[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu_rep_sat[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigma_rep_sat_inv[grpidx], xidx, Nx[mm], p + q, logdetS_rep_sat_grp[grpidx]), 1);
-	  }
-	}
-	// we subtract log_lik here so that _sat always varies and does not lead to
-	// problems with rhat and neff computations
-	if (nclus[1,2] > 1) {
-	  // subtract the grp full loglik off the first entry;
-	  // we can do this because we sum over the entire vector for ppp
-	  log_lik_sat[r1] -= sum(log_lik[rr1:rr2]);
+	  // we subtract log_lik here so that _sat always varies and does not lead to
+	  // problems with rhat and neff computations
+	  log_lik_sat[rr1:rr2] -= log_lik[rr1:rr2];
+	  
 	} else {
+	  for (jj in r1:r2) {
+	    log_lik_rep[jj] = multi_normal_suff(YXstar_rep[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu[grpidx, obsidx[1:Nobs[mm]]], Sigmainv[mm], 1);
+
+	    log_lik_sat[jj] = multi_normal_suff(YXstar[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_sat_inv[mm], 1);	
+
+	    log_lik_rep_sat[jj] = multi_normal_suff(YXstar_rep[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu_rep_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_rep_sat_inv[mm], 1);
+	    
+	    // log_lik_sat, log_lik_sat_rep
+	    if (Nx[mm] > 0) {
+	      log_lik_rep[jj] += -multi_normal_suff(YXstar_rep[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigmainv[grpidx], xidx, Nx[mm], p + q, logdetSigma_grp[grpidx]), 1);
+	    
+	      log_lik_sat[jj] += -multi_normal_suff(YXstar[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu_sat[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigma_sat_inv[grpidx], xidx, Nx[mm], p + q, logdetS_sat_grp[grpidx]), 1);
+	      
+	      log_lik_rep_sat[jj] += -multi_normal_suff(YXstar_rep[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu_rep_sat[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigma_rep_sat_inv[grpidx], xidx, Nx[mm], p + q, logdetS_rep_sat_grp[grpidx]), 1);
+	    }
+	  }
+	  
+	  // we subtract log_lik here so that _sat always varies and does not lead to
+	  // problems with rhat and neff computations
 	  log_lik_sat[r1:r2] -= log_lik[r1:r2];
 	}
       }
