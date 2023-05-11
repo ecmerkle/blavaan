@@ -583,6 +583,10 @@ data {
   matrix[p_tilde, p_tilde] cov_w[Ng]; // observed "within" covariance matrix
   vector[p_tilde] mean_d_full[sum(nclus[,2])]; // sample means/covs by cluster, for clusterwise log-densities
   matrix[p_tilde, p_tilde] cov_d_full[sum(nclus[,2])];
+  vector[p_tilde] xbar_w[Ng]; // data estimates of within/between means/covs (for saturated logl)
+  vector[p_tilde] xbar_b[Ng];
+  matrix[p_tilde, p_tilde] cov_b[Ng];
+  real gs[Ng]; // group size constant, for computation of saturated logl
   int N_within; // number of within variables
   int N_between; // number of between variables
   int N_both; // number of variables at both levels
@@ -1566,7 +1570,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 
   // loglik + ppp
   vector[nclus[1,2] > 1 ? sum(nclus[,2]) : (use_cov ? Ng : Ntot)] log_lik; // for loo, etc
-  vector[use_cov ? Ng : Ntot] log_lik_sat; // for ppp
+  vector[nclus[1,2] > 1 ? sum(nclus[,2]) : (use_cov ? Ng : Ntot)] log_lik_sat; // for ppp
 
   vector[nclus[1,2] > 1 ? p_tilde : p + q] YXstar_rep[Ntot]; // artificial data
   vector[p_c] YXstar_rep_c[sum(nclus[,2])];
@@ -1590,7 +1594,9 @@ generated quantities { // these matrices are saved in the output but do not figu
   matrix[N_both + N_within, N_both + N_within] S_PW_rep[Ng];
   matrix[p_tilde, p_tilde] S_PW_rep_full[Ng];
   vector[p_tilde] ov_mean_rep[Ng];
+  vector[p_tilde] xbar_b_rep[Ng];
   matrix[p_tilde, p_tilde] S_B_rep[Ng];
+  matrix[p_c, p_c] cov_b_rep[Ng];
   real<lower=0, upper=1> ppp;
   
   // first deal with sign constraints:
@@ -1740,29 +1746,36 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  S_PW_rep[gg] *= pow(nclus[gg, 1] - nclus[gg, 2], -1);
 
 	  for (cc in 1:nclus[gg, 2]) {
-	    S_B_rep[gg] += cluster_size[clusidx2] * tcrossprod(mean_d_rep[clusidx2] - ov_mean_rep[gg]);
+	    S_B_rep[gg] += cluster_size[clusidx2] * tcrossprod(to_matrix(mean_d_rep[clusidx2] - ov_mean_rep[gg]));
 	    clusidx2 += 1;
 	  }
 	  S_B_rep[gg] *= pow(nclus[gg, 2] - 1, -1);
-	  Sigma_rep_sat[gg] = cinv * (S_B_rep[gg] - S_PW_rep_full[gg]);
-	  Sigma_sat[gg] = S_B[gg];
-	  // TODO send in S_B, cinv
+	  cov_b_rep[gg] = pow(gs[gg], -1) * (S_B_rep[gg, ov_idx2, ov_idx2] - S_PW_rep_full[gg, ov_idx2, ov_idx2]);
+
+	  Mu_rep_sat[gg] = rep_vector(0, N_within + N_both);
+	  if (N_within > 0) {
+	    for (j in 1:N_within) {
+	      Mu_rep_sat[gg, within_idx[j]] = ov_mean_rep[gg, within_idx[j]];
+	    }
+	  }
+
+	  rr1 = r1 - nclus[gg, 1];
+	  r2 = clusidx - nclus[gg, 2];
+	  xbar_b_rep[gg] = calc_mean_vecs(YXstar_rep[rr1:(r1 - 1)], mean_d_rep[r2:(clusidx - 1)], nclus[gg], Xvar[gg], Xbetvar[gg], 0, p_tilde, p_tilde)[2]; // repeated arguments due to code reuse
 
 	  if (Nx[gg] > 0 || Nx_between[gg] > 0) {
 	    vector[p_tilde] mnvecs[2];
 	    matrix[p_tilde, p_tilde] covmats[3];
-	    rr1 = r1 - nclus[gg, 1];
-	    r2 = clusidx - nclus[gg, 2] + 1;
 
-	    mnvecs = calc_mean_vecs(YXstar[rr1:(r1 - 1)], mean_d_rep[r2:clusidx], nclus[gg], Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg], p_tilde);
-	    covmats = calc_cov_mats(YXstar[rr1:(r1 - 1)], mean_d_rep[r2:clusidx], mnvecs, nclus[gg], Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg], p_tilde);
+	    mnvecs = calc_mean_vecs(YXstar_rep[rr1:(r1 - 1)], mean_d_rep[r2:(clusidx - 1)], nclus[gg], Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg], p_tilde);
+	    covmats = calc_cov_mats(YXstar_rep[rr1:(r1 - 1)], mean_d_rep[r2:(clusidx - 1)], mnvecs, nclus[gg], Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg], p_tilde);
 	    
-	    log_lik_x_rep[r2:clusidx] = calc_log_lik_x(mean_d_rep[r2:clusidx],
+	    log_lik_x_rep[r2:clusidx] = calc_log_lik_x(mean_d_rep[r2:(clusidx - 1)],
 						       mnvecs[2, 1:Nx_between[gg]],
 						       covmats[1, 1:Nx_between[gg], 1:Nx_between[gg]],
 						       covmats[2, 1:Nx[gg], 1:Nx[gg]],
 						       covmats[3, 1:Nx[gg], 1:Nx[gg]],
-						       nclus[gg], cluster_size[r2:clusidx],
+						       nclus[gg], cluster_size[r2:(clusidx - 1)],
 						       Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg]);
 	  } // Nx[gg] > 0
 	} // gg
@@ -1919,8 +1932,10 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  rr2 += nclus[grpidx, 2];
 	  r4 += nclus[grpidx, 1];
 
-	  // TODO need cov_d_rep here
-	  log_lik_rep[rr1:rr2] = twolevel_logdens(mean_d_rep[rr1:rr2], cov_d_rep[rr1:rr2],
+	  // NB: cov_d is 0 when we go cluster by cluster.
+	  // otherwise it is covariance of cluster means by each unique cluster size
+	  // because we go cluster by cluster here, we can reuse cov_d_full everywhere
+	  log_lik_rep[rr1:rr2] = twolevel_logdens(mean_d_rep[rr1:rr2], cov_d_full[rr1:rr2],
 						  S_PW_rep[grpidx], YXstar_rep[r3:r4],
 						  nclus[grpidx,], cluster_size[rr1:rr2],
 						  cluster_size[rr1:rr2], nclus[grpidx,2],
@@ -1933,18 +1948,18 @@ generated quantities { // these matrices are saved in the output but do not figu
 						  S_PW[grpidx], YX[r3:r4],
 						  nclus[grpidx,], cluster_size[rr1:rr2],
 						  cluster_size[rr1:rr2], nclus[grpidx,2],
-						  intone[1:nclus[grpidx,2]], Mu[grpidx],
-						  S_PW[grpidx], Mu_c[grpidx], Sigma_sat[grpidx],
+						  intone[1:nclus[grpidx,2]], xbar_w[grpidx],
+						  S_PW[grpidx], xbar_b[grpidx], cov_b[grpidx],
 						  ov_idx1, ov_idx2, within_idx, between_idx,
 						  both_idx, p_tilde, N_within, N_between, N_both);
 
-	  log_lik_rep_sat[rr1:rr2] = twolevel_logdens(mean_d_rep[rr1:rr2], cov_d_rep[rr1:rr2],
+	  log_lik_rep_sat[rr1:rr2] = twolevel_logdens(mean_d_rep[rr1:rr2], cov_d_full[rr1:rr2],
 						      S_PW_rep[grpidx], YXstar_rep[r3:r4],
 						      nclus[grpidx,], cluster_size[rr1:rr2],
 						      cluster_size[rr1:rr2], nclus[grpidx,2],
-						      intone[1:nclus[grpidx,2]], Mu[grpidx],
-						      S_PW_rep[grpidx], Mu_c[grpidx],
-						      Sigma_rep_sat[grpidx], ov_idx1, ov_idx2,
+						      intone[1:nclus[grpidx,2]], Mu_rep_sat[grpidx],
+						      S_PW_rep[grpidx], xbar_b_rep[grpidx, ov_idx2],
+						      cov_b_rep[grpidx], ov_idx1, ov_idx2,
 						      within_idx, between_idx, both_idx, p_tilde,
 						      N_within, N_between, N_both);
 	  

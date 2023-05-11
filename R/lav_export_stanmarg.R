@@ -1166,6 +1166,17 @@ lav2standata <- function(lavobject) {
     ## (just send 0s to satisfy the Stan function)
     cov_d_full <- lapply(1:length(dat$cluster_size), matrix, data = 0, nrow = NCOL(mean_d_full), ncol = NCOL(mean_d_full))
     dat$cov_d_full <- cov_d_full
+
+    ## matrices for "saturated" logl
+    dat$xbar_w <- do.call("rbind", lapply(YLp, function(x) x[[2]]$Mu.W))
+    dat$xbar_b <- do.call("rbind", lapply(YLp, function(x) x[[2]]$Mu.B))
+    cov_b <- array(unlist(lapply(YLp, function(x) x[[2]]$Sigma.B)), dim = c(ncol(dat$xbar_b),
+                                                                           ncol(dat$xbar_b),
+                                                                           Ng))
+    dat$cov_b <- aperm(cov_b, c(3, 1, 2))
+    
+    ## cinv for each group, for computing saturated _rep matrices for ppp
+    dat$gs <- array(unlist(sapply(YLp, function(x) x[[2]]$s, simplify = FALSE)))
   } else {
     dat$nclus <- array(1, c(Ng, 2))
     dat$cluster_size <- array(1, Ng)
@@ -1190,6 +1201,10 @@ lav2standata <- function(lavobject) {
     dat$cov_d <- array(0, c(Ng, 0, 0))
     dat$mean_d_full <- array(0, c(Ng, 0))
     dat$cov_d_full <- array(0, c(Ng, 0, 0))
+    dat$xbar_w <- array(0, c(Ng, 0))
+    dat$xbar_b <- array(0, c(Ng, 0))
+    dat$cov_b <- array(0, c(Ng, 0, 0))
+    dat$cinv <- array(1, Ng)
   } # multilevel
   
   if (ord) {
