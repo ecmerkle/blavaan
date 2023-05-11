@@ -1575,7 +1575,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   vector[nclus[1,2] > 1 ? p_tilde : p + q] YXstar_rep[Ntot]; // artificial data
   vector[p_c] YXstar_rep_c[sum(nclus[,2])];
   vector[nclus[1,2] > 1 ? sum(nclus[,2]) : (use_cov ? Ng : Ntot)] log_lik_rep; // for loo, etc
-  vector[use_cov ? Ng : Ntot] log_lik_rep_sat; // for ppp
+  vector[nclus[1,2] > 1 ? sum(nclus[,2]) : (use_cov ? Ng : Ntot)] log_lik_rep_sat; // for ppp
   matrix[p + q, p + q + 1] satout[Ng];
   matrix[p + q, p + q + 1] satrep_out[Ng];
   vector[p + q] Mu_sat[Ng];
@@ -1792,63 +1792,63 @@ generated quantities { // these matrices are saved in the output but do not figu
 	    YXstar_rep[jj, 1:Nobs[mm]] = multi_normal_rng(Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
 	  }
 	}
-      }
 
-      if (missing) {
-	// start values for Mu and Sigma
-	for (g in 1:Ng) {
-	  Mu_sat[g] = rep_vector(0, p + q);
-	  Mu_rep_sat[g] = Mu_sat[g];
-	  Sigma_sat[g] = diag_matrix(rep_vector(1, p + q));
-	  Sigma_rep_sat[g] = Sigma_sat[g];
-	}
-
-	for (jj in 1:emiter) {
-	  satout = estep(YXstar, Mu_sat, Sigma_sat, Nobs, Obsvar, startrow, endrow, grpnum, Np, Ng);
-	  satrep_out = estep(YXstar_rep, Mu_rep_sat, Sigma_rep_sat, Nobs, Obsvar, startrow, endrow, grpnum, Np, Ng);
-
-	  // M step
+	if (missing) {
+	  // start values for Mu and Sigma
 	  for (g in 1:Ng) {
-	    Mu_sat[g] = satout[g,,1]/N[g];
-	    Sigma_sat[g] = satout[g,,2:(p + q + 1)]/N[g] - Mu_sat[g] * Mu_sat[g]';
-	    Mu_rep_sat[g] = satrep_out[g,,1]/N[g];
-	    Sigma_rep_sat[g] = satrep_out[g,,2:(p + q + 1)]/N[g] - Mu_rep_sat[g] * Mu_rep_sat[g]';
+	    Mu_sat[g] = rep_vector(0, p + q);
+	    Mu_rep_sat[g] = Mu_sat[g];
+	    Sigma_sat[g] = diag_matrix(rep_vector(1, p + q));
+	    Sigma_rep_sat[g] = Sigma_sat[g];
+	  }
+
+	  for (jj in 1:emiter) {
+	    satout = estep(YXstar, Mu_sat, Sigma_sat, Nobs, Obsvar, startrow, endrow, grpnum, Np, Ng);
+	    satrep_out = estep(YXstar_rep, Mu_rep_sat, Sigma_rep_sat, Nobs, Obsvar, startrow, endrow, grpnum, Np, Ng);
+
+	    // M step
+	    for (g in 1:Ng) {
+	      Mu_sat[g] = satout[g,,1]/N[g];
+	      Sigma_sat[g] = satout[g,,2:(p + q + 1)]/N[g] - Mu_sat[g] * Mu_sat[g]';
+	      Mu_rep_sat[g] = satrep_out[g,,1]/N[g];
+	      Sigma_rep_sat[g] = satrep_out[g,,2:(p + q + 1)]/N[g] - Mu_rep_sat[g] * Mu_rep_sat[g]';
+	    }
+	  }
+	} else {
+	  // complete data; Np patterns must only correspond to groups
+	  for (mm in 1:Np) {
+	    int arr_dims[3] = dims(YXstar);
+	    matrix[endrow[mm] - startrow[mm] + 1, arr_dims[2]] YXsmat; // crossprod needs matrix
+	    matrix[endrow[mm] - startrow[mm] + 1, arr_dims[2]] YXsrepmat;
+	    r1 = startrow[mm];
+	    r2 = endrow[mm];
+	    grpidx = grpnum[mm];
+	    for (jj in 1:(p + q)) {
+	      Mu_sat[grpidx,jj] = mean(YXstar[r1:r2,jj]);
+	      Mu_rep_sat[grpidx,jj] = mean(YXstar_rep[r1:r2,jj]);
+	    }
+	    for (jj in r1:r2) {
+	      YXsmat[jj - r1 + 1] = (YXstar[jj] - Mu_sat[grpidx])';
+	      YXsrepmat[jj - r1 + 1] = (YXstar_rep[jj] - Mu_rep_sat[grpidx])';
+	    }
+	    Sigma_sat[grpidx] = crossprod(YXsmat)/N[grpidx];
+	    Sigma_rep_sat[grpidx] = crossprod(YXsrepmat)/N[grpidx];
+	    // FIXME? Sigma_sat[grpidx] = tcrossprod(YXsmat); does not throw an error??
 	  }
 	}
-      } else {
-	// complete data; Np patterns must only correspond to groups
+
+	for (g in 1:Ng) {
+	  Sigma_sat_inv_grp[g] = inverse_spd(Sigma_sat[g]);
+	  logdetS_sat_grp[g] = log_determinant(Sigma_sat[g]);
+
+	  Sigma_rep_sat_inv_grp[g] = inverse_spd(Sigma_rep_sat[g]);
+	  logdetS_rep_sat_grp[g] = log_determinant(Sigma_rep_sat[g]);
+	}
+
 	for (mm in 1:Np) {
-	  int arr_dims[3] = dims(YXstar);
-	  matrix[endrow[mm] - startrow[mm] + 1, arr_dims[2]] YXsmat; // crossprod needs matrix
-	  matrix[endrow[mm] - startrow[mm] + 1, arr_dims[2]] YXsrepmat;
-	  r1 = startrow[mm];
-	  r2 = endrow[mm];
-	  grpidx = grpnum[mm];
-	  for (jj in 1:(p + q)) {
-	    Mu_sat[grpidx,jj] = mean(YXstar[r1:r2,jj]);
-	    Mu_rep_sat[grpidx,jj] = mean(YXstar_rep[r1:r2,jj]);
-	  }
-	  for (jj in r1:r2) {
-	    YXsmat[jj - r1 + 1] = (YXstar[jj] - Mu_sat[grpidx])';
-	    YXsrepmat[jj - r1 + 1] = (YXstar_rep[jj] - Mu_rep_sat[grpidx])';
-	  }
-	  Sigma_sat[grpidx] = crossprod(YXsmat)/N[grpidx];
-	  Sigma_rep_sat[grpidx] = crossprod(YXsrepmat)/N[grpidx];
-	  // FIXME? Sigma_sat[grpidx] = tcrossprod(YXsmat); does not throw an error??
+	  Sigma_sat_inv[mm, 1:(Nobs[mm] + 1), 1:(Nobs[mm] + 1)] = sig_inv_update(Sigma_sat_inv_grp[grpnum[mm]], Obsvar[mm,], Nobs[mm], p + q, logdetS_sat_grp[grpnum[mm]]);
+	  Sigma_rep_sat_inv[mm, 1:(Nobs[mm] + 1), 1:(Nobs[mm] + 1)] = sig_inv_update(Sigma_rep_sat_inv_grp[grpnum[mm]], Obsvar[mm,], Nobs[mm], p + q, logdetS_rep_sat_grp[grpnum[mm]]);
 	}
-      }
-
-      for (g in 1:Ng) {
-	Sigma_sat_inv_grp[g] = inverse_spd(Sigma_sat[g]);
-	logdetS_sat_grp[g] = log_determinant(Sigma_sat[g]);
-
-	Sigma_rep_sat_inv_grp[g] = inverse_spd(Sigma_rep_sat[g]);
-	logdetS_rep_sat_grp[g] = log_determinant(Sigma_rep_sat[g]);
-      }
-
-      for (mm in 1:Np) {
-	Sigma_sat_inv[mm, 1:(Nobs[mm] + 1), 1:(Nobs[mm] + 1)] = sig_inv_update(Sigma_sat_inv_grp[grpnum[mm]], Obsvar[mm,], Nobs[mm], p + q, logdetS_sat_grp[grpnum[mm]]);
-	Sigma_rep_sat_inv[mm, 1:(Nobs[mm] + 1), 1:(Nobs[mm] + 1)] = sig_inv_update(Sigma_rep_sat_inv_grp[grpnum[mm]], Obsvar[mm,], Nobs[mm], p + q, logdetS_rep_sat_grp[grpnum[mm]]);
       }
     }
 
@@ -1953,6 +1953,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 						  ov_idx1, ov_idx2, within_idx, between_idx,
 						  both_idx, p_tilde, N_within, N_between, N_both);
 
+	  // problem is here:
 	  log_lik_rep_sat[rr1:rr2] = twolevel_logdens(mean_d_rep[rr1:rr2], cov_d_full[rr1:rr2],
 						      S_PW_rep[grpidx], YXstar_rep[r3:r4],
 						      nclus[grpidx,], cluster_size[rr1:rr2],
