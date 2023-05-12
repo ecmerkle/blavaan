@@ -1735,20 +1735,19 @@ generated quantities { // these matrices are saved in the output but do not figu
 
 	    for (ii in r1:(r1 + cluster_size[clusidx] - 1)) {
 	      S_PW_rep_full[gg] += tcrossprod(to_matrix(YXstar_rep[ii] - mean_d_rep[cc]));
-	      S_PW_rep[gg] += S_PW_rep_full[gg, notbidx, notbidx];
 	    }
 	    r1 += cluster_size[clusidx];
 	    clusidx += 1;
 	  } // cc
-
 	  ov_mean_rep[gg] *= pow(nclus[gg, 1], -1);
 	  S_PW_rep_full[gg] *= pow(nclus[gg, 1] - nclus[gg, 2], -1);
-	  S_PW_rep[gg] *= pow(nclus[gg, 1] - nclus[gg, 2], -1);
-
+	  S_PW_rep[gg] = S_PW_rep_full[gg, notbidx, notbidx];
+	  
 	  for (cc in 1:nclus[gg, 2]) {
 	    S_B_rep[gg] += cluster_size[clusidx2] * tcrossprod(to_matrix(mean_d_rep[clusidx2] - ov_mean_rep[gg]));
 	    clusidx2 += 1;
 	  }
+	  // TODO see line 1737 + 1766 of lav_samplestats for between idx changes to S_B_rep, Mu_rep_sat
 	  S_B_rep[gg] *= pow(nclus[gg, 2] - 1, -1);
 	  cov_b_rep[gg] = pow(gs[gg], -1) * (S_B_rep[gg, ov_idx2, ov_idx2] - S_PW_rep_full[gg, ov_idx2, ov_idx2]);
 
@@ -1761,7 +1760,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 
 	  rr1 = r1 - nclus[gg, 1];
 	  r2 = clusidx - nclus[gg, 2];
-	  xbar_b_rep[gg] = calc_mean_vecs(YXstar_rep[rr1:(r1 - 1)], mean_d_rep[r2:(clusidx - 1)], nclus[gg], Xvar[gg], Xbetvar[gg], 0, p_tilde, p_tilde)[2]; // repeated arguments due to code reuse
+	  xbar_b_rep[gg] = ov_mean_rep[gg];
 
 	  if (Nx[gg] > 0 || Nx_between[gg] > 0) {
 	    vector[p_tilde] mnvecs[2];
