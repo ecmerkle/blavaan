@@ -1,0 +1,135 @@
+---
+title: "Probability of Direction"
+author: Mauricio Garnier-Villarreal
+bibliography:
+  - refs.bib
+---
+
+```{r pkgld, include=FALSE}
+library(blavaan, quietly=TRUE)
+library(lavaan, quietly=TRUE)
+library(brms, quietly=TRUE)
+load("probability_direction_out.RData")
+```
+
+### Introduction 
+
+The Probability of Direction (pd) is an index of effect existence, ranging from 0% to 100%, representing the certainty with which an effect goes in a particular direction (i.e., is positive or negative) [@makowski_indices_2019]. Beyond its simplicity of interpretation, understanding and computation, this index also presents other interesting properties:
+*It is independent from the model: It is solely based on the posterior distributions and does not require any additional information from the data or the model.
+*It is robust to the scale of both the response variable and the predictors.
+*It is strongly correlated with the frequentist p-value, and can thus be used to draw parallels and give some reference to readers non-familiar with Bayesian statistics.
+
+Can be interpreted as the probability that a parameter (described by its posterior distribution) is above or below a chosen cutoff, an explicit hypothesis. It is mathematically defined as the proportion of the posterior distribution that satisfies the specified hypothesis. Although differently expressed, this index is fairly similar (i.e., is strongly correlated) to the frequentist p-value. 
+
+### Probability of Direction (pd)
+
+For this example we will use the Industrialization and Political Democracy example [@bollen_structural_1989]. We will first estimate the latent regression model
+
+```{r, eval=F}
+model <- '
+  # latent variable definitions
+     ind60 =~ x1 + x2 + x3
+     dem60 =~ a*y1 + b*y2 + c*y3 + d*y4
+     dem65 =~ a*y5 + b*y6 + c*y7 + d*y8
+
+  # regressions
+    dem60 ~ ind60
+    dem65 ~ ind60 + dem60
+
+  # residual correlations
+    y1 ~~ y5
+    y2 ~~ y4 + y6
+    y3 ~~ y7
+    y4 ~~ y8
+    y6 ~~ y8
+'
+
+fit <- bsem(model, data=PoliticalDemocracy,
+            std.lv=T, meanstructure=T)
+```
+
+We can then look at the overall model results with the ```summary``` function, in this case we are also asking for the standardized estimates, and $R^2$
+
+```{r}
+summary(fit, standardize=T, rsquare=T)
+```
+
+
+To calculate the probability of direction we will use a function from the package ```brms``` [@brms]
+
+```{r, eval=FALSE}
+library(brms)
+```
+
+Ans we will need to extract the posterior draws a matrix, 
+
+```{r, eval=T}
+mc_out <- as.matrix(blavInspect(fit, "mcmc"))
+dim(mc_out)
+colnames(mc_out)
+```
+
+It is also important to note that the parameters in the posterior draws are named after the ```Stan``` underlying object names, instead of the ```(b)lavaan``` parameter names. You can see what each parameter name equates to with ```partable()``` function, as follows
+
+```{r}
+pt <- partable(fit)[,c("lhs","op","rhs","pxnames")]
+pt
+```
+
+For this example we will focus on the regressions between factors
+
+```{r}
+pt[pt$op=="~",]
+```
+
+Now, we can calculate pd, with the ```hypothesis()``` function from ```brms``` we can ask specific question of the posterior distributions, for example if we want to know what proportion of the regression ```dem65~ind60``` is higher than 0. The function requires 2 arguments, the posterior draws (```mc_out```) and a hypothesis (```bet_sign[2] > 0```), we are also adding the ``alpha``` argument that specifies the size for the credible intervals
+
+```{r}
+hypothesis(mc_out, "bet_sign[2] > 0", alpha = 0.05)
+```
+
+The estimate presents the mean of the posterior distribution, and the respective measures of variability (deviation and credible interval). ```Post.Prob``` is the pd under the stated hypothesis, so in this example we can say that 91% of the posterior distribution of ```dem65~ind60``` is lower than 0. This is equivalent to the one-tail test. And ```Evid.Ratio``` is the evidence ratio for the hypothesis, when the hypothesis is of the form $a > b$, the evidence ratio is the ratio of the posterior probability of $a > b$ and the posterior probability of $a < b$ 
+
+In another example, we want to know what proportion of the regression ```dem60~ind60``` is higher than 0. Here we can see that 100% of the posterior probability is higher than 0, in such a case ```Evid.Ratio = Inf```, this will happens when the whole distribution fulfills the hypothesis.
+
+```{r}
+hypothesis(mc_out, "bet_sign[1] > 0", alpha = 0.05)
+```
+
+In another possible case of interest, you could use this to test equalities between parameters, for example we can test if ```dem60~ind60``` is higher than ```dem65~ind60```. Here we see 97% of the posteriors state that ```dem60~ind60``` is higher than ```dem65~ind60```, and the mean of the difference (```dem60~ind60 - dem65~ind60```) is ```Estimate=0.46```
+
+```{r}
+hypothesis(mc_out, "bet_sign[1] - bet_sign[2] > 0", alpha = 0.05)
+```
+
+### Region of Practical Equivalence (ROPE)
+
+Note that so far we have only tested the hypothesis against 0, which would be equivalent to the frequentist null hypothesis tests. But we can test against any other. Bayesian inference is not based on statistical significance, where effects are tested against “zero”. Indeed, the Bayesian framework offers a probabilistic view of the parameters, allowing assessment of the uncertainty related to them. Thus, rather than concluding that an effect is present when it simply differs from zero, we would conclude that the probability of being outside a specific range that can be considered as “practically no effect” (i.e., a negligible magnitude) is sufficient. This range is called the region of practical equivalence (ROPE).
+
+Indeed, statistically, the probability of a posterior distribution being different from 0 does not make much sense (the probability of it being different from a single point being infinite). Therefore, the idea underlining ROPE is to let the user define an area around the null value enclosing values that are equivalent to the null value for practical purposes [@kruschke_bayesian_2018]
+
+For these examples, we would change the value tested, a common recommendations is to use ```|0.1|``` as the minimally relevant value for standardized regressions, in this case we find that ```0.79``` proportion of the posterior is above ```0.1``` 
+
+```{r}
+hypothesis(mc_out, "bet_sign[2] > .1", alpha = 0.05)
+```
+
+### 89% vs. 95% CI
+
+Most commonly and from the frequentist tradition you will see the use of the 95% Credible interval. Using 89% is another popular choice, and used to be the default for a long time. How did it start?
+
+Naturally, when it came about choosing the CI level to report by default, people started using 95%, the arbitrary convention used in the frequentist world. However, some authors suggested that 95% might not be the most appropriate for Bayesian posterior distributions, potentially lacking stability if not enough posterior samples are drawn [@mcelreath_statistical_2020].
+
+The proposition was to use 90% instead of 95%. However, recently, @mcelreath_statistical_2020 suggested that if we were to use arbitrary thresholds in the first place, why not use 89%? Moreover, 89 is the highest prime number that does not exceed the already unstable 95% threshold. What does it have to do with anything? Nothing, but it reminds us of the total arbitrariness of these conventions [@mcelreath_statistical_2020].
+
+You can use this as the argument ```alpha``` argument in the ```hypothesis``` function, or as the interpretation values for ```Post.Prob```
+
+### Caveats
+
+Although this allows testing of hypotheses in a similar manner as in the frequentist null-hypothesis testing framework, we strongly argue against using arbitrary cutoffs (e.g., p < .05) to determine the 'existence' of an effect.
+
+ROPE is sensitive to scale, so be aware that the value of interest is representative in the respective scale. For this, standardize parameters are useful to have in a commonly used scale
+
+### References
+
+
