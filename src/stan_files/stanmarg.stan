@@ -1769,13 +1769,13 @@ generated quantities { // these matrices are saved in the output but do not figu
 	    mnvecs = calc_mean_vecs(YXstar_rep[rr1:(r1 - 1)], mean_d_rep[r2:(clusidx - 1)], nclus[gg], Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg], p_tilde);
 	    covmats = calc_cov_mats(YXstar_rep[rr1:(r1 - 1)], mean_d_rep[r2:(clusidx - 1)], mnvecs, nclus[gg], Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg], p_tilde);
 	    
-	    log_lik_x_rep[r2:clusidx] = calc_log_lik_x(mean_d_rep[r2:(clusidx - 1)],
-						       mnvecs[2, 1:Nx_between[gg]],
-						       covmats[1, 1:Nx_between[gg], 1:Nx_between[gg]],
-						       covmats[2, 1:Nx[gg], 1:Nx[gg]],
-						       covmats[3, 1:Nx[gg], 1:Nx[gg]],
-						       nclus[gg], cluster_size[r2:(clusidx - 1)],
-						       Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg]);
+	    log_lik_x_rep[r2:(clusidx - 1)] = calc_log_lik_x(mean_d_rep[r2:(clusidx - 1)],
+							     mnvecs[2, 1:Nx_between[gg]],
+							     covmats[1, 1:Nx_between[gg], 1:Nx_between[gg]],
+							     covmats[2, 1:Nx[gg], 1:Nx[gg]],
+							     covmats[3, 1:Nx[gg], 1:Nx[gg]],
+							     nclus[gg], cluster_size[r2:(clusidx - 1)],
+							     Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg]);
 	  } // Nx[gg] > 0
 	} // gg
       } else {
@@ -1947,12 +1947,11 @@ generated quantities { // these matrices are saved in the output but do not figu
 						  S_PW[grpidx], YX[r3:r4],
 						  nclus[grpidx,], cluster_size[rr1:rr2],
 						  cluster_size[rr1:rr2], nclus[grpidx,2],
-						  intone[1:nclus[grpidx,2]], xbar_w[grpidx],
-						  S_PW[grpidx], xbar_b[grpidx], cov_b[grpidx],
+						  intone[1:nclus[grpidx,2]], xbar_w[grpidx, ov_idx1],
+						  S_PW[grpidx], xbar_b[grpidx, ov_idx2], cov_b[grpidx, ov_idx2, ov_idx2],
 						  ov_idx1, ov_idx2, within_idx, between_idx,
 						  both_idx, p_tilde, N_within, N_between, N_both);
 
-	  // problem is here:
 	  log_lik_rep_sat[rr1:rr2] = twolevel_logdens(mean_d_rep[rr1:rr2], cov_d_full[rr1:rr2],
 						      S_PW_rep[grpidx], YXstar_rep[r3:r4],
 						      nclus[grpidx,], cluster_size[rr1:rr2],
