@@ -8,7 +8,6 @@ bibliography:
 ```{r pkgld, include=FALSE}
 library(blavaan, quietly=TRUE)
 library(lavaan, quietly=TRUE)
-load("cross_load_out.RData")
 ```
 
 ### Introduction 
@@ -22,6 +21,15 @@ In this tutorial we present how to estimate a CFA with all possible cross-loadin
 ### Cross-loadings
 
 We will show an example with the @holswi39 data, first we will estimate the regular model with no cross-loadings and default priors
+
+```{r, eval=T, include=FALSE, cache=TRUE}
+HS.model <- ' visual  =~ x1 + x2 + x3
+              textual =~ x4 + x5 + x6
+              speed   =~ x7 + x8 + x9 '
+
+fit_df <- bcfa(HS.model, data=HolzingerSwineford1939, 
+            std.lv=TRUE, meanstructure=T)
+```
 
 ```{r, eval=F}
 HS.model <- ' visual  =~ x1 + x2 + x3
@@ -39,6 +47,20 @@ summary(fit_df)
 ```
 
 Next, we will add all possible cross-loadings with a strong prior of $N(0, 0.1)$, having it center around 0 and allowing them little space to move
+
+```{r, eval=T, include=FALSE, cache=TRUE}
+HS.model.cl<-' visual  =~ x1 + x2 + x3
+              textual =~ x4 + x5 + x6
+              speed   =~ x7 + x8 + x9 
+    
+              ## Cross-loadings
+              visual =~  prior("normal(0,.1)")*x4 + prior("normal(0,.1)")*x5 + prior("normal(0,.1)")*x6 + prior("normal(0,.1)")*x7 + prior("normal(0,.1)")*x8 + prior("normal(0,.1)")*x9
+              textual =~ prior("normal(0,.1)")*x1 + prior("normal(0,.1)")*x2 + prior("normal(0,.1)")*x3 + prior("normal(0,.1)")*x7 + prior("normal(0,.1)")*x8 + prior("normal(0,.1)")*x9 
+              speed =~ prior("normal(0,.1)")*x1 + prior("normal(0,.1)")*x2 + prior("normal(0,.1)")*x3 + prior("normal(0,.1)")*x4 + prior("normal(0,.1)")*x5 + prior("normal(0,.1)")*x6'
+
+fit_cl <- bcfa(HS.model.cl, data=HolzingerSwineford1939, 
+            std.lv=TRUE, meanstructure=T)
+```
 
 ```{r, eval=F}
 HS.model.cl<-' visual  =~ x1 + x2 + x3

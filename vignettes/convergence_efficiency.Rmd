@@ -8,7 +8,6 @@ bibliography:
 ```{r pkgld, include=FALSE}
 library(blavaan, quietly=TRUE)
 library(lavaan, quietly=TRUE)
-load("conv_eff_out.RData")
 ```
 
 ### Introduction 
@@ -16,6 +15,30 @@ load("conv_eff_out.RData")
 When Bayesian models estimated with Markov-Chain Monte Carlo (MCMC) sampler, the models doesnt stop when it has achieve some convergence criteria, it will run as long as you set it to, and then you need to evaluate the convergence and efficiency of the estimated posterior distributions. And only analyze the results if they are stable enough. 
 
 For this example we will use the Industrialization and Political Democracy example [@bollen_structural_1989]. 
+
+```{r, eval=T, include=FALSE, cache=TRUE}
+model <- '
+  # latent variable definitions
+     ind60 =~ x1 + x2 + x3
+     dem60 =~ a*y1 + b*y2 + c*y3 + d*y4
+     dem65 =~ a*y5 + b*y6 + c*y7 + d*y8
+
+  # regressions
+    dem60 ~ ind60
+    dem65 ~ ind60 + dem60
+
+  # residual correlations
+    y1 ~~ y5
+    y2 ~~ y4 + y6
+    y3 ~~ y7
+    y4 ~~ y8
+    y6 ~~ y8
+'
+
+fit <- bsem(model, data=PoliticalDemocracy,
+            std.lv=T, meanstructure=T, n.chains=3,
+            burnin=500, sample=1000)
+```
 
 ```{r, eval=F}
 model <- '

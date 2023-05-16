@@ -8,7 +8,6 @@ bibliography:
 ```{r pkgld, include=FALSE}
 library(blavaan, quietly=TRUE)
 library(lavaan, quietly=TRUE)
-load("mod_indices_out.RData")
 ```
 
 ### Introduction
@@ -24,6 +23,14 @@ MI presents the possible effect on the overall model, and SEPC presents the effe
 
 We will show an example with the @holswi39 example. You first estimate your SEM/CFA model as usual
 
+```{r, eval=T, include=FALSE, cache=TRUE}
+HS.model <- ' visual  =~ x1 + x2 + x3
+              textual =~ x4 + x5 + x6
+              speed   =~ x7 + x8 + x9 '
+
+fit <- bcfa(HS.model, data=HolzingerSwineford1939, std.lv=TRUE)
+```
+
 ```{r, eval=F}
 HS.model <- ' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6
@@ -35,7 +42,7 @@ fit <- bcfa(HS.model, data=HolzingerSwineford1939, std.lv=TRUE)
 
 Then we would need to write a **discrepancy** function to collect the modification indices. This function estimates and save the MI and SEPC
 
-```{r, eval=F, include=T}
+```{r, eval=T, include=T}
 discFUN <- list(mod.ind_mi = function(object){
   temp <- modificationindices(object,free.remove = F)
   mods <- temp$mi
@@ -52,6 +59,10 @@ mod.ind_sepc.all = function(object){
 ```
 
 Then we will pass this function to the ```ppmc()``` function of *blavaan*, this way the MI and SEPC will be estimated at each iteration of the saved posterior draws, building posterior distributions for them
+
+```{r, eval=T, include=FALSE, cache=TRUE}
+out <- ppmc(fit, discFUN = discFUN)
+```
 
 ```{r, eval=F, include=T}
 out <- ppmc(fit, discFUN = discFUN)
@@ -76,6 +87,15 @@ summary(out, prob=.9, discFUN = "mod.ind_sepc.all", sort.by="EAP", decreasing=T)
 ```
 
 Here we see that for the 2 highest parameters, the likely SEPC is **x7~~x8 = 0.788** and **visual=~x9 = 0.519**. With this information we can decide to include one of these new parameters in the model (one at the time). For this example, since factor loadings have impact in more variances and covariances of the covariance matrix I would choose **visual=~x9**
+
+```{r, eval=T, include=FALSE, cache=TRUE}
+HS.model <- ' visual  =~ x1 + x2 + x3 + x9
+              textual =~ x4 + x5 + x6
+              speed   =~ x7 + x8 + x9 '
+
+fit2 <- bcfa(HS.model, data=HolzingerSwineford1939, std.lv=TRUE)
+```
+
 
 ```{r, eval=F}
 HS.model <- ' visual  =~ x1 + x2 + x3 + x9

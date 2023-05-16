@@ -8,7 +8,6 @@ bibliography:
 ```{r pkgld, include=FALSE}
 library(blavaan, quietly=TRUE)
 library(lavaan, quietly=TRUE)
-load("model_comparison_out.RData")
 ```
 
 
@@ -21,6 +20,30 @@ Specifically, we will focus on two information criteria, (1) Widely Applicable I
 These methods intend to evaluate the out-of-sample predictive accuracy of the models, and compare that performance. This is the ability to predict a subjects score when they havent been used in the **training** model [@mcelreath_statistical_2020]
 
 For this example we will use the Industrialization and Political Democracy example [@bollen_structural_1989]. 
+
+```{r, eval=T, include=FALSE, cache=TRUE}
+model <- '
+  # latent variable definitions
+     ind60 =~ x1 + x2 + x3
+     dem60 =~ a*y1 + b*y2 + c*y3 + d*y4
+     dem65 =~ a*y5 + b*y6 + c*y7 + d*y8
+
+  # regressions
+    dem60 ~ ind60
+    dem65 ~ ind60 + dem60
+
+  # residual correlations
+    y1 ~~ y5
+    y2 ~~ y4 + y6
+    y3 ~~ y7
+    y4 ~~ y8
+    y6 ~~ y8
+'
+
+fit1 <- bsem(model, data=PoliticalDemocracy,
+            std.lv=T, meanstructure=T, n.chains=3,
+            burnin=500, sample=1000)
+```
 
 ```{r, eval=F}
 model <- '
@@ -97,6 +120,31 @@ There are no clear cutoff rules on how to interpret and present these comparison
 
 For the first example, we will compare the standard political democracy model, with a model where all factor regressions are fixed to 0
 
+
+```{r, eval=T, include=FALSE, cache=TRUE}
+model <- '
+  # latent variable definitions
+     ind60 =~ x1 + x2 + x3
+     dem60 =~ a*y1 + b*y2 + c*y3 + d*y4
+     dem65 =~ a*y5 + b*y6 + c*y7 + d*y8
+
+  # regressions
+    dem60 ~ 0*ind60
+    dem65 ~ 0*ind60 + 0*dem60
+
+  # residual correlations
+    y1 ~~ y5
+    y2 ~~ y4 + y6
+    y3 ~~ y7
+    y4 ~~ y8
+    y6 ~~ y8
+'
+
+fit2 <- bsem(model, data=PoliticalDemocracy,
+            std.lv=T, meanstructure=T, n.chains=3,
+            burnin=500, sample=1000)
+```
+
 ```{r, eval=F}
 model <- '
   # latent variable definitions
@@ -123,6 +171,10 @@ fit2 <- bsem(model, data=PoliticalDemocracy,
 
 Once we have the 2 models, we can compare them with the ```blavCompare``` 
 
+```{r, eval=T, include=FALSE, cache=TRUE}
+bc12 <- blavCompare(fit1, fit2)
+```
+
 ```{r, eval=F}
 bc12 <- blavCompare(fit1, fit2)
 ```
@@ -140,6 +192,32 @@ bc12$diff_loo[1]/bc12$diff_loo[2]
 ```
 
 Now, lets look at an example whit a smaller difference between models. Where only the smallest regression is fixed to 0 (```dem65~ind60```)
+
+```{r, eval=T, include=FALSE, cache=TRUE}
+model <- '
+  # latent variable definitions
+     ind60 =~ x1 + x2 + x3
+     dem60 =~ a*y1 + b*y2 + c*y3 + d*y4
+     dem65 =~ a*y5 + b*y6 + c*y7 + d*y8
+
+  # regressions
+    dem60 ~ ind60
+    dem65 ~ 0*ind60 + dem60
+
+  # residual correlations
+    y1 ~~ y5
+    y2 ~~ y4 + y6
+    y3 ~~ y7
+    y4 ~~ y8
+    y6 ~~ y8
+'
+
+fit3 <- bsem(model, data=PoliticalDemocracy,
+            std.lv=T, meanstructure=T, n.chains=3,
+            burnin=500, sample=1000)
+bc13 <- blavCompare(fit1, fit3)
+```
+
 
 ```{r, eval=F}
 model <- '
@@ -175,6 +253,31 @@ bc13$diff_loo[1]/bc13$diff_loo[2]
 
 Lets do one last model, here only the highest regression is fixed to 0 (```dem65~dem60```)
 
+
+```{r, eval=T, include=FALSE, cache=TRUE}
+model <- '
+  # latent variable definitions
+     ind60 =~ x1 + x2 + x3
+     dem60 =~ a*y1 + b*y2 + c*y3 + d*y4
+     dem65 =~ a*y5 + b*y6 + c*y7 + d*y8
+
+  # regressions
+    dem60 ~ ind60
+    dem65 ~ ind60 + 0*dem60
+
+  # residual correlations
+    y1 ~~ y5
+    y2 ~~ y4 + y6
+    y3 ~~ y7
+    y4 ~~ y8
+    y6 ~~ y8
+'
+
+fit4 <- bsem(model, data=PoliticalDemocracy,
+            std.lv=T, meanstructure=T, n.chains=3,
+            burnin=500, sample=1000)
+bc14 <- blavCompare(fit1, fit4)
+```
 
 ```{r, eval=F}
 model <- '

@@ -8,7 +8,6 @@ bibliography:
 ```{r pkgld, include=FALSE}
 library(blavaan, quietly=TRUE)
 library(lavaan, quietly=TRUE)
-load("converge_loop_out.RData")
 ```
 
 
@@ -23,6 +22,27 @@ You will start by writing the model syntax as always. Then instead of running th
 Before the loop starts you need to define a starting ```BURN <- 0``` number of iterations, and a convergence value higher than the desired such as ```rhat <- 20```. 
 
 Then the loop will be set sto stop when the convergence criteria (```rhat```) is lower than a desired value, like $\hat{R} < 1.05$, we specify this with ```while(rhat > 1.05)```, meaning the the loop will continue as long as rhat is higher than 1.05. 
+
+```{r, eval=T, include=FALSE, cache=TRUE}
+HS.model <- ' visual  =~ x1 + x2 + x3
+              textual =~ x4 + x5 + x6
+              speed   =~ x7 + x8 + x9 '
+
+BURN <- 0
+rhat <- 20
+while(rhat > 1.05) {
+  
+  BURN <- BURN + 1000 ### increase burn in by 1000 iterations every time
+  
+  fit <- bcfa(HS.model, std.lv=T, 
+              data=HolzingerSwineford1939, 
+              n.chains = 3, burnin = BURN,
+              sample=1000)
+  rhat <- max(blavInspect(fit, "psrf"), na.rm=T)
+  print(paste0("Rhat=",rhat))  
+}
+
+```
 
 ```{r, eval=F}
 HS.model <- ' visual  =~ x1 + x2 + x3
