@@ -1118,11 +1118,11 @@ lav2standata <- function(lavobject) {
     dat$ncluster_sizes <- array(sapply(Lp, function(x) length(x$cluster.sizes[[2]])), Ng)
     dat$cluster_size_ns <- unlist(sapply(Lp, function(x) x$cluster.size.ns[[2]], simplify = FALSE))
     ## we assume variable indices are the same across groups, this could be revisited later
-    dat$between_idx <- Lp[[1]]$between.idx[[2]]
+    dat$between_idx <- array(Lp[[1]]$between.idx[[2]], length(Lp[[1]]$between.idx[[2]]))
     dat$N_between <- length(dat$between_idx)
     dat$within_idx <- array(Lp[[1]]$within.idx[[2]], length(Lp[[1]]$within.idx[[2]]))
     dat$N_within <- length(dat$within_idx)
-    dat$both_idx <- Lp[[1]]$both.idx[[2]]
+    dat$both_idx <- array(Lp[[1]]$both.idx[[2]], length(Lp[[1]]$both.idx[[2]]))
     dat$N_both <- length(dat$both_idx)
     dat$N_lev <- c(length(dat$ov_idx1), length(dat$ov_idx2))
     dat$between_idx <- c(dat$between_idx, sort(c(dat$within_idx, dat$both_idx)))
