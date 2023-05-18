@@ -3,15 +3,22 @@ pkgdown: 2.0.7
 pkgdown_sha: ~
 articles:
   approx_fi: approx_fi.html
+  convergence_efficiency: convergence_efficiency.html
+  convergence_loop: convergence_loop.html
+  cross_loadings_strong_priors: cross_loadings_strong_priors.html
   estimate: estimate.html
   invariance: invariance.html
+  mod_indices: mod_indices.html
+  model_comparison: model_comparison.html
   ordinal: ordinal.html
   plotting: plotting.html
   prior: prior.html
+  prior_pred_checks: prior_pred_checks.html
+  probability_direction: probability_direction.html
   resources: resources.html
   start: start.html
   summaries: summaries.html
-last_built: 2023-05-18T15:55Z
+last_built: 2023-05-18T16:04Z
 urls:
   reference: http://ecmerkle.github.io/blavaan/reference
   article: http://ecmerkle.github.io/blavaan/articles
