@@ -79,6 +79,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     B_tilde_cov = block(B_tilde, 1, 2, p_tilde, p_tilde);
     Mu_WB_tilde = rep_vector(0, p_tilde);
 
+
     if (N_within > 0) {
       for (i in 1:N_within) {
 	Mu_WB_tilde[within_idx[i]] = W_tilde[within_idx[i], 1];
@@ -1694,6 +1695,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 	r2 = 1;
 	for (gg in 1:Ng) {
 	  matrix[p_tilde, p_tilde + 1] W_tilde = calc_W_tilde(Sigma[gg], Mu[gg], ov_idx1, p_tilde);
+	  matrix[p_tilde, p_tilde] Wcov = block(W_tilde, 1, 2, p_tilde, p_tilde);
 	  S_PW_rep[gg] = rep_matrix(0, N_both + N_within, N_both + N_within);
 	  S_PW_rep_full[gg] = rep_matrix(0, p_tilde, p_tilde);
 	  S_B_rep[gg] = rep_matrix(0, p_tilde, p_tilde);
@@ -1706,14 +1708,14 @@ generated quantities { // these matrices are saved in the output but do not figu
 
 	    YXstar_rep_tilde = calc_B_tilde(Sigma_c[gg], YXstar_rep_c[clusidx], ov_idx2, p_tilde)[,1];
 	    
-	    // add cluster effects to within Mu
-	    for (ww in (N_between + 1):p_tilde) {
-	      Mu_cond[between_idx[ww]] += YXstar_rep_tilde[between_idx[ww]];
+	    // for both_idx, add cluster effects to within Mu
+	    if (N_both > 0) {
+	      for (ww in 1:N_both) {
+		Mu_cond[both_idx[ww]] += YXstar_rep_tilde[both_idx[ww]];
+	      }
 	    }
-	    
-	    for (ii in r1:(r1 + cluster_size[clusidx] - 1)) {
 
-	      matrix[p_tilde, p_tilde] Wcov = block(W_tilde, 1, 2, p_tilde, p_tilde);
+	    for (ii in r1:(r1 + cluster_size[clusidx] - 1)) {
 	      vector[N_within + N_both] Ywb_rep;
 
 	      Ywb_rep = multi_normal_rng(Mu_cond[notbidx], Wcov[notbidx, notbidx]);
@@ -1961,7 +1963,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 						      cov_b_rep[grpidx], ov_idx1, ov_idx2,
 						      within_idx, between_idx, both_idx, p_tilde,
 						      N_within, N_between, N_both);
-	  
+
 	  if (Nx[grpidx] + Nx_between[grpidx] > 0) {
 	    log_lik_rep[rr1:rr2] -= log_lik_x_rep[rr1:rr2];
 	    log_lik_sat[rr1:rr2] -= log_lik_x_full[rr1:rr2];
