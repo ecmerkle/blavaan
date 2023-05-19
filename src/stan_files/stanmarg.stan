@@ -1574,7 +1574,6 @@ generated quantities { // these matrices are saved in the output but do not figu
   vector[nclus[1,2] > 1 ? sum(nclus[,2]) : (use_cov ? Ng : Ntot)] log_lik_sat; // for ppp
 
   vector[nclus[1,2] > 1 ? p_tilde : p + q] YXstar_rep[Ntot]; // artificial data
-  vector[p_c] YXstar_rep_c[sum(nclus[,2])];
   vector[nclus[1,2] > 1 ? sum(nclus[,2]) : (use_cov ? Ng : Ntot)] log_lik_rep; // for loo, etc
   vector[nclus[1,2] > 1 ? sum(nclus[,2]) : (use_cov ? Ng : Ntot)] log_lik_rep_sat; // for ppp
   matrix[p + q, p + q + 1] satout[Ng];
@@ -1677,7 +1676,6 @@ generated quantities { // these matrices are saved in the output but do not figu
     int rr2;
     int grpidx;
     int clusidx;
-    int clusidx2;
 
     if (do_test && use_cov) {
       for (g in 1:Ng) {
@@ -1691,42 +1689,28 @@ generated quantities { // these matrices are saved in the output but do not figu
 	r1 = 1;
 	rr1 = 1;
 	clusidx = 1;
-	clusidx2 = 1;
 	r2 = 1;
 	for (gg in 1:Ng) {
-	  matrix[p_tilde, p_tilde + 1] W_tilde = calc_W_tilde(Sigma[gg], Mu[gg], ov_idx1, p_tilde);
-	  matrix[p_tilde, p_tilde] Wcov = block(W_tilde, 1, 2, p_tilde, p_tilde);
 	  S_PW_rep[gg] = rep_matrix(0, N_both + N_within, N_both + N_within);
 	  S_PW_rep_full[gg] = rep_matrix(0, p_tilde, p_tilde);
 	  S_B_rep[gg] = rep_matrix(0, p_tilde, p_tilde);
 	  ov_mean_rep[gg] = rep_vector(0, p_tilde);
 
 	  for (cc in 1:nclus[gg, 2]) {
+	    vector[p_c] YXstar_rep_c;
 	    vector[p_tilde] YXstar_rep_tilde;
-	    vector[p_tilde] Mu_cond = W_tilde[,1];
-	    YXstar_rep_c[clusidx] = multi_normal_rng(Mu_c[gg], Sigma_c[gg]);
+	    YXstar_rep_c = multi_normal_rng(Mu_c[gg], Sigma_c[gg]);
 
-	    YXstar_rep_tilde = calc_B_tilde(Sigma_c[gg], YXstar_rep_c[clusidx], ov_idx2, p_tilde)[,1];
-	    
-	    // for both_idx, add cluster effects to within Mu
-	    if (N_both > 0) {
-	      for (ww in 1:N_both) {
-		Mu_cond[both_idx[ww]] += YXstar_rep_tilde[both_idx[ww]];
-	      }
-	    }
+	    YXstar_rep_tilde = calc_B_tilde(Sigma_c[gg], YXstar_rep_c, ov_idx2, p_tilde)[,1];
 
 	    for (ii in r1:(r1 + cluster_size[clusidx] - 1)) {
 	      vector[N_within + N_both] Ywb_rep;
 
-	      Ywb_rep = multi_normal_rng(Mu_cond[notbidx], Wcov[notbidx, notbidx]);
-	      
-	      if (N_between > 0) {
-		for (bb in 1:N_between) {
-		  YXstar_rep[ii, between_idx[bb]] = YXstar_rep_tilde[between_idx[bb]];
-		}
-	      }
+	      Ywb_rep = multi_normal_rng(Mu[gg], Sigma[gg]);
+
+	      YXstar_rep[ii] = YXstar_rep_tilde;
 	      for (ww in 1:(p_tilde - N_between)) {
-		YXstar_rep[ii, notbidx[ww]] = Ywb_rep[ww];
+		YXstar_rep[ii, notbidx[ww]] += Ywb_rep[ww];
 	      }
 	      ov_mean_rep[gg] += YXstar_rep[ii];
 	    }
@@ -1735,19 +1719,27 @@ generated quantities { // these matrices are saved in the output but do not figu
 	      mean_d_rep[clusidx, jj] = mean(YXstar_rep[r1:(r1 + cluster_size[clusidx] - 1), jj]);
             }
 
-	    for (ii in r1:(r1 + cluster_size[clusidx] - 1)) {
-	      S_PW_rep_full[gg] += tcrossprod(to_matrix(YXstar_rep[ii] - mean_d_rep[clusidx]));
-	    }
 	    r1 += cluster_size[clusidx];
 	    clusidx += 1;
 	  } // cc
 	  ov_mean_rep[gg] *= pow(nclus[gg, 1], -1);
-	  S_PW_rep_full[gg] *= pow(nclus[gg, 1] - nclus[gg, 2], -1);
-	  
+
+	  r1 -= nclus[gg, 1]; // reset for S_PW
+	  clusidx -= nclus[gg, 2];
 	  for (cc in 1:nclus[gg, 2]) {
-	    S_B_rep[gg] += cluster_size[clusidx2] * tcrossprod(to_matrix(mean_d_rep[clusidx2] - ov_mean_rep[gg]));
-	    clusidx2 += 1;
+	    if (N_within > 0) {
+	      mean_d_rep[clusidx, within_idx] = ov_mean_rep[gg, within_idx];
+	    }
+
+	    for (ii in r1:(r1 + cluster_size[clusidx] - 1)) {
+	      S_PW_rep_full[gg] += tcrossprod(to_matrix(YXstar_rep[ii] - mean_d_rep[clusidx]));
+	    }
+	    
+	    S_B_rep[gg] += cluster_size[clusidx] * tcrossprod(to_matrix(mean_d_rep[clusidx] - ov_mean_rep[gg]));
+	    r1 += cluster_size[clusidx];
+	    clusidx += 1;
 	  }
+	  S_PW_rep_full[gg] *= pow(nclus[gg, 1] - nclus[gg, 2], -1);
 	  // TODO see line 1737 + 1766 of lav_samplestats for between idx changes to S_B_rep, Mu_rep_sat
 	  S_B_rep[gg] *= pow(nclus[gg, 2] - 1, -1);
 	  cov_b_rep[gg] = pow(gs[gg], -1) * (S_B_rep[gg, ov_idx2, ov_idx2] - S_PW_rep_full[gg, ov_idx2, ov_idx2]);
