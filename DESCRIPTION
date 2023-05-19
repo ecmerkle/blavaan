@@ -1,6 +1,6 @@
 Package: blavaan
 Title: Bayesian Latent Variable Analysis
-Version: 0.4-8.1105
+Version: 0.4-8.1106
 Authors@R: c(person(given = "Edgar", family = "Merkle",
                     role = c("aut", "cre"),
                     email = "merklee@missouri.edu",
@@ -41,3 +41,4 @@ Suggests: runjags(>= 2.0.4-3), modeest(>= 2.3.3), rjags, cmdstanr, semTools, tin
 SystemRequirements: GNU make
 NeedsCompilation: yes
 Additional_repositories: https://mc-stan.org/r-packages/
+Config/Needs/website: brms
