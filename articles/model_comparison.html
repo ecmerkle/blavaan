@@ -113,16 +113,16 @@ Garnier-Villarreal</h4>
 <div class="section level3">
 <h3 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h3>
-<p>The basic method for model comparison in frequentist SEM (fSEM) is
-the <span class="math inline">\(\chi^2\)</span> (Likelihood Ratio Test)
-and its varietions. But for BSEM, we would take the Bayesian modelo
-comparsion methods, and apply them en SEM.</p>
+<p>The traditional method for model comparison in frequentist SEM (fSEM)
+is the <span class="math inline">\(\chi^2\)</span> (Likelihood Ratio
+Test) and its variations. But for BSEM, we would take the Bayesian model
+comparison methods, and apply them to SEM.</p>
 <p>Specifically, we will focus on two information criteria, (1) Widely
 Applicable Information Criterion (WAIC), and (2) Leave-One-Out
 cross-validation (LOO).</p>
 <p>These methods intend to evaluate the out-of-sample predictive
 accuracy of the models, and compare that performance. This is the
-ability to predict a subjects score when they havent been used in the
+ability to predict a datapoint that hasn’t been used in the
 <strong>training</strong> model <span class="citation">(McElreath
 2020)</span></p>
 <p>For this example we will use the Industrialization and Political
@@ -155,20 +155,19 @@ Democracy example <span class="citation">(Bollen 1989)</span>.</p>
 </h3>
 <p>WAIC <span class="citation">(Watanabe 2010)</span> can be seen as a
 fully Bayesian generalization of the Akaike Information Criteria (AIC),
-where we have measure of uncertainty/information of the model measure
-for each row in the data across all posterior draws, this is the
-Log-Pointwise-Predictive-Density (lppd)</p>
+where we have a measure of uncertainty/information of the model
+prediction for each row in the data across all posterior draws. This is
+the Log-Pointwise-Predictive-Density (lppd). The WAIC is defined as</p>
 <p><span class="math display">\[\begin{equation}
 WAIC= -2lppd + 2efp_{WAIC},
-\end{equation}\]</span> The first term represents the log-likelihoods of
-observed data and the second term is the effective number of parameters.
-The first term, <span class="math inline">\(lppd\)</span> is estimated
-as:</p>
+\end{equation}\]</span> The first term involves the log-likelihoods of
+observed data (marginal over latent variables) and the second term is
+the effective number of parameters. The first term, <span class="math inline">\(lppd\)</span>, is estimated as:</p>
 <p><span class="math display">\[\begin{equation}
 \widehat{lppd} = \sum^{n}_{i = 1} log
 \Bigg(\frac{1}{S}\sum^{S}_{S=1}f(y_{i}|\theta^{S}) \Bigg)
 \end{equation}\]</span></p>
-<p>Where <span class="math inline">\(S\)</span> is the number of
+<p>where <span class="math inline">\(S\)</span> is the number of
 posterior draws and <span class="math inline">\(f(y_{i}|\theta^{S})\)</span> is the density of
 observation <span class="math inline">\(i\)</span> with respect to the
 parameter sampled at iteration <span class="math inline">\(s\)</span>.</p>
@@ -188,10 +187,11 @@ update the prior. This estimation is calculated via <span class="citation">(Veht
     LOO = -2\sum_{i=1}^{n} log \Bigg(\frac{\sum^{S}_{s =1}
 w^{s}_{i}f(y_{i}|\theta^{s})}{\sum^{s}_{s=1} w^{s}_{i}}\Bigg)
 \end{equation}\]</span></p>
-<p>Where <span class="math inline">\(w^s_{i}\)</span> are sampling
-weights taken from the relative magnitude of individual <span class="math inline">\(i\)</span> density function across the <span class="math inline">\(S\)</span> posterior samples.</p>
-<p>The LOO effective number of parameters can be calculated taken the
-<span class="math inline">\(lppd\)</span> term from WAIC:</p>
+<p>Where the <span class="math inline">\(w^s_{i}\)</span> are
+Pareto-smoothed sampling weights based on the relative magnitude of
+individual <span class="math inline">\(i\)</span> density function
+across the <span class="math inline">\(S\)</span> posterior samples.</p>
+<p>The LOO effective number of parameters involves the <span class="math inline">\(lppd\)</span> term from WAIC:</p>
 <p><span class="math display">\[\begin{equation}
     efp_{LOO} = lppd + LOO/2
 \end{equation}\]</span></p>
@@ -199,22 +199,22 @@ weights taken from the relative magnitude of individual <span class="math inline
 <div class="section level3">
 <h3 id="model-comparison">Model comparison<a class="anchor" aria-label="anchor" href="#model-comparison"></a>
 </h3>
-<p>As both WAIC and LOO estimate the models performance across posterior
-draws, we are able to calculate a standard error for them and the
-comparison between them.</p>
+<p>As both WAIC and LOO approximate the models’ performance across
+posterior draws, we are able to calculate a standard error for them and
+for model comparisons involving them.</p>
 <p>The model differences estimate the differences across the Expected
 Log-Pointwise-Predictive-Density (elpd), and the standard error of the
-respective difference</p>
+respective difference.</p>
 <p>There are no clear cutoff rules on how to interpret and present these
 comparisons, and the researchers need to use their expert knowledge as
 part of the decision process. The best recommendation is the present the
 differences in elpd <span class="math inline">\(\Delta elpd\)</span>,
-the standard error, and the ration between them. If the ratio is at
-least 2 can be consider evidence of differences between the models, and
-at least a ratio of 4 would be consider stringer evidence.</p>
+the standard error, and the ratio between them. If the ratio is at least
+2 can be consider evidence of differences between the models, and a
+ratio of 4 would be considered stronger evidence.</p>
 <p>For the first example, we will compare the standard political
 democracy model, with a model where all factor regressions are fixed to
-0</p>
+0.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="st">'</span></span>
 <span><span class="st">  # latent variable definitions</span></span>
@@ -243,8 +243,8 @@ democracy model, with a model where all factor regressions are fixed to
 <code class="sourceCode R"><span><span class="va">bc12</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blavCompare.html">blavCompare</a></span><span class="op">(</span><span class="va">fit1</span>, <span class="va">fit2</span><span class="op">)</span></span></code></pre></div>
 <p>By looking into this comparison object, you can see the WAIC, LOO,
 estimates, and the respective differences between them. As these are
-information criteria, looking at the LOOIC the <strong>best</strong>
-model presents the lowest value</p>
+information criteria, the <strong>best</strong> model is the one with
+the lowest value</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bc12</span></span></code></pre></div>
 <pre><code><span><span class="co">## $bf</span></span>
@@ -254,48 +254,48 @@ model presents the lowest value</p>
 <span><span class="co">## $loo</span></span>
 <span><span class="co">## $loo[[1]]</span></span>
 <span><span class="co">##             Estimate        SE</span></span>
-<span><span class="co">## elpd_loo -1606.56059 19.570470</span></span>
-<span><span class="co">## p_loo       38.13812  2.972323</span></span>
-<span><span class="co">## looic     3213.12117 39.140939</span></span>
+<span><span class="co">## elpd_loo -1605.77251 19.575153</span></span>
+<span><span class="co">## p_loo       37.48365  2.881757</span></span>
+<span><span class="co">## looic     3211.54501 39.150305</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $loo[[2]]</span></span>
-<span><span class="co">##             Estimate       SE</span></span>
-<span><span class="co">## elpd_loo -1646.37661 18.83114</span></span>
-<span><span class="co">## p_loo       34.14679  2.65215</span></span>
-<span><span class="co">## looic     3292.75323 37.66228</span></span>
+<span><span class="co">##             Estimate        SE</span></span>
+<span><span class="co">## elpd_loo -1646.74487 18.860220</span></span>
+<span><span class="co">## p_loo       34.53596  2.734361</span></span>
+<span><span class="co">## looic     3293.48974 37.720440</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $diff_loo</span></span>
-<span><span class="co">## elpd_diff   se_diff </span></span>
-<span><span class="co">## -39.81603   7.89547 </span></span>
+<span><span class="co">##  elpd_diff    se_diff </span></span>
+<span><span class="co">## -40.972362   7.882123 </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $waic</span></span>
 <span><span class="co">## $waic[[1]]</span></span>
 <span><span class="co">##              Estimate        SE</span></span>
-<span><span class="co">## elpd_waic -1606.28431 19.544530</span></span>
-<span><span class="co">## p_waic       37.86184  2.937357</span></span>
-<span><span class="co">## waic       3212.56861 39.089059</span></span>
+<span><span class="co">## elpd_waic -1605.51580 19.544319</span></span>
+<span><span class="co">## p_waic       37.22694  2.842396</span></span>
+<span><span class="co">## waic       3211.03161 39.088638</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $waic[[2]]</span></span>
-<span><span class="co">##              Estimate        SE</span></span>
-<span><span class="co">## elpd_waic -1646.15662 18.799981</span></span>
-<span><span class="co">## p_waic       33.92679  2.617696</span></span>
-<span><span class="co">## waic       3292.31324 37.599961</span></span>
+<span><span class="co">##             Estimate        SE</span></span>
+<span><span class="co">## elpd_waic -1646.3913 18.817374</span></span>
+<span><span class="co">## p_waic       34.1824  2.675175</span></span>
+<span><span class="co">## waic       3292.7826 37.634748</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $diff_waic</span></span>
 <span><span class="co">##  elpd_diff    se_diff </span></span>
-<span><span class="co">## -39.872311   7.904892</span></span></code></pre>
+<span><span class="co">## -40.875509   7.880226</span></span></code></pre>
 <p>In this case we can see that model 1 has lower LOOIC, and the ratio
-shows that the LOO differences is 5 SE of magnitude. Indicating that the
-model with the estimated regressions is better</p>
+shows that the LOO differences is 5 SE of magnitude. This indicates that
+the model with the estimated regressions is better</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">bc12</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">/</span><span class="va">bc12</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">bc12</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">/</span> <span class="va">bc12</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## elpd_diff </span></span>
-<span><span class="co">## -5.042895</span></span></code></pre>
-<p>Now, lets look at an example whit a smaller difference between
-models. Where only the smallest regression is fixed to 0
-(<code>dem65~ind60</code>)</p>
+<span><span class="co">##  5.198138</span></span></code></pre>
+<p>Now, lets look at an example with a smaller difference between
+models, where only the smallest regression (<code>dem65~ind60</code>) is
+fixed to 0.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="st">'</span></span>
 <span><span class="st">  # latent variable definitions</span></span>
@@ -320,10 +320,10 @@ models. Where only the smallest regression is fixed to 0
 <span>            burnin<span class="op">=</span><span class="fl">500</span>, sample<span class="op">=</span><span class="fl">1000</span><span class="op">)</span></span>
 <span><span class="va">bc13</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blavCompare.html">blavCompare</a></span><span class="op">(</span><span class="va">fit1</span>, <span class="va">fit3</span><span class="op">)</span></span></code></pre></div>
 <p>When we see the LOOIC, we see that the difference between the two
-models is minimal, and the ratio is 0.21. Indicating that the models are
-functionally equivalent. In a case like this, it is up to the
+models is minimal, and the ratio is 0.21. This indicates that the models
+are functionally equivalent. In a case like this, it is up to the
 researchers to decide which model is a <strong>better</strong>
-representation, and theoretically stronger</p>
+representation, and theoretically stronger.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bc13</span></span></code></pre></div>
 <pre><code><span><span class="co">## $bf</span></span>
@@ -333,44 +333,44 @@ representation, and theoretically stronger</p>
 <span><span class="co">## $loo</span></span>
 <span><span class="co">## $loo[[1]]</span></span>
 <span><span class="co">##             Estimate        SE</span></span>
-<span><span class="co">## elpd_loo -1606.56059 19.570470</span></span>
-<span><span class="co">## p_loo       38.13812  2.972323</span></span>
-<span><span class="co">## looic     3213.12117 39.140939</span></span>
+<span><span class="co">## elpd_loo -1605.77251 19.575153</span></span>
+<span><span class="co">## p_loo       37.48365  2.881757</span></span>
+<span><span class="co">## looic     3211.54501 39.150305</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $loo[[2]]</span></span>
 <span><span class="co">##             Estimate        SE</span></span>
-<span><span class="co">## elpd_loo -1606.54312 19.415162</span></span>
-<span><span class="co">## p_loo       37.28615  2.896401</span></span>
-<span><span class="co">## looic     3213.08624 38.830323</span></span>
+<span><span class="co">## elpd_loo -1606.81483 19.465096</span></span>
+<span><span class="co">## p_loo       37.67837  2.935012</span></span>
+<span><span class="co">## looic     3213.62966 38.930193</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $diff_loo</span></span>
 <span><span class="co">##  elpd_diff    se_diff </span></span>
-<span><span class="co">## -0.0174669  0.9869666 </span></span>
+<span><span class="co">## -1.0423244  0.9535536 </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $waic</span></span>
 <span><span class="co">## $waic[[1]]</span></span>
 <span><span class="co">##              Estimate        SE</span></span>
-<span><span class="co">## elpd_waic -1606.28431 19.544530</span></span>
-<span><span class="co">## p_waic       37.86184  2.937357</span></span>
-<span><span class="co">## waic       3212.56861 39.089059</span></span>
+<span><span class="co">## elpd_waic -1605.51580 19.544319</span></span>
+<span><span class="co">## p_waic       37.22694  2.842396</span></span>
+<span><span class="co">## waic       3211.03161 39.088638</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $waic[[2]]</span></span>
 <span><span class="co">##              Estimate        SE</span></span>
-<span><span class="co">## elpd_waic -1606.25375 19.374221</span></span>
-<span><span class="co">## p_waic       36.99678  2.845917</span></span>
-<span><span class="co">## waic       3212.50750 38.748443</span></span>
+<span><span class="co">## elpd_waic -1606.46922 19.418334</span></span>
+<span><span class="co">## p_waic       37.33276  2.877521</span></span>
+<span><span class="co">## waic       3212.93845 38.836667</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $diff_waic</span></span>
-<span><span class="co">##   elpd_diff     se_diff </span></span>
-<span><span class="co">## -0.03055605  0.98629661</span></span></code></pre>
+<span><span class="co">##  elpd_diff    se_diff </span></span>
+<span><span class="co">## -0.9534206  0.9564998</span></span></code></pre>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">bc13</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">/</span><span class="va">bc13</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span></span></code></pre></div>
-<pre><code><span><span class="co">##   elpd_diff </span></span>
-<span><span class="co">## -0.01769756</span></span></code></pre>
-<p>Lets do one last model, here only the highest regression is fixed to
-0 (<code>dem65~dem60</code>)</p>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">bc13</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">/</span> <span class="va">bc13</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## elpd_diff </span></span>
+<span><span class="co">##  1.093095</span></span></code></pre>
+<p>Lets do one last model, where only the largest regression
+(<code>dem65~dem60</code>) is fixed to 0.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="st">'</span></span>
 <span><span class="st">  # latent variable definitions</span></span>
@@ -407,70 +407,72 @@ predictive differences</p>
 <span><span class="co">## $loo</span></span>
 <span><span class="co">## $loo[[1]]</span></span>
 <span><span class="co">##             Estimate        SE</span></span>
-<span><span class="co">## elpd_loo -1606.56059 19.570470</span></span>
-<span><span class="co">## p_loo       38.13812  2.972323</span></span>
-<span><span class="co">## looic     3213.12117 39.140939</span></span>
+<span><span class="co">## elpd_loo -1605.77251 19.575153</span></span>
+<span><span class="co">## p_loo       37.48365  2.881757</span></span>
+<span><span class="co">## looic     3211.54501 39.150305</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $loo[[2]]</span></span>
-<span><span class="co">##            Estimate        SE</span></span>
-<span><span class="co">## elpd_loo -1629.8784 19.892502</span></span>
-<span><span class="co">## p_loo       38.1177  2.997643</span></span>
-<span><span class="co">## looic     3259.7569 39.785004</span></span>
+<span><span class="co">##             Estimate        SE</span></span>
+<span><span class="co">## elpd_loo -1629.62214 19.908566</span></span>
+<span><span class="co">## p_loo       37.89518  3.008002</span></span>
+<span><span class="co">## looic     3259.24428 39.817133</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $diff_loo</span></span>
 <span><span class="co">##  elpd_diff    se_diff </span></span>
-<span><span class="co">## -23.317841   4.040493 </span></span>
+<span><span class="co">## -23.849636   3.979392 </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $waic</span></span>
 <span><span class="co">## $waic[[1]]</span></span>
 <span><span class="co">##              Estimate        SE</span></span>
-<span><span class="co">## elpd_waic -1606.28431 19.544530</span></span>
-<span><span class="co">## p_waic       37.86184  2.937357</span></span>
-<span><span class="co">## waic       3212.56861 39.089059</span></span>
+<span><span class="co">## elpd_waic -1605.51580 19.544319</span></span>
+<span><span class="co">## p_waic       37.22694  2.842396</span></span>
+<span><span class="co">## waic       3211.03161 39.088638</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $waic[[2]]</span></span>
 <span><span class="co">##              Estimate        SE</span></span>
-<span><span class="co">## elpd_waic -1629.50137 19.851093</span></span>
-<span><span class="co">## p_waic       37.74064  2.945115</span></span>
-<span><span class="co">## waic       3259.00275 39.702186</span></span>
+<span><span class="co">## elpd_waic -1629.24588 19.855494</span></span>
+<span><span class="co">## p_waic       37.51892  2.941006</span></span>
+<span><span class="co">## waic       3258.49176 39.710989</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $diff_waic</span></span>
 <span><span class="co">##  elpd_diff    se_diff </span></span>
-<span><span class="co">## -23.217067   4.037058</span></span></code></pre>
+<span><span class="co">## -23.730075   3.957623</span></span></code></pre>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">bc14</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">/</span><span class="va">bc14</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">bc14</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">/</span> <span class="va">bc14</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## elpd_diff </span></span>
-<span><span class="co">## -5.771038</span></span></code></pre>
+<span><span class="co">##  5.993286</span></span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="bayes-factor">Bayes factor<a class="anchor" aria-label="anchor" href="#bayes-factor"></a>
 </h3>
 <p>In the Bayesian literature you will the the use of the Bayes factor
-(BF) to compare models. We do not recommend to use of BF in BSEM, (1) as
-the BF is unstable for large models (like most SEMs), (2) it is highly
-sensitive to model priors, (3) requires strong priors to have stable
-estimation of it, (4) can require large number of posterior draws, (5)
-the estimation using the marginal likelihood ignores a lot of
-information from the posterior distributions. For more details on this
-discussion please see <span class="citation">Tendeiro and Kiers
-(2019)</span> and <span class="citation">Schad et al. (2022)</span>.</p>
+(BF) to compare models. There are a number of criticisms related to the
+use of the BF in BSEM, including (1) the BF is unstable for large models
+(like most SEMs), (2) it is highly sensitive to model priors, (3) it
+requires strong priors to have stable estimation of it, (4) it can
+require large number of posterior draws, (5) the estimation using the
+marginal likelihood ignores a lot of information from the posterior
+distributions. For more details on this discussion please see <span class="citation">Tendeiro and Kiers (2019)</span> and <span class="citation">Schad et al. (2022)</span>. These criticisms lead us to
+recommend against use of the BF in everyday BSEM estimation. For
+researchers who commit to their prior distributions and who commit to
+exploring the noise in their computations, the BF can used to describe
+the relative odds of one model over another, which is more intuitive
+than some other model comparison metrics.</p>
 </div>
 <div class="section level3">
 <h3 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
 </h3>
-<p>We recommend the use of LOO or WAIC as Bayesian model comparison
-methods. This allow us to estimate th out-of-sample predictive accuracy
-of the models, and the respective differences across posterior draws.
-This allow us to estimate the differences with measure of its
-variability (standard error).</p>
-<p>In most cases LOO and WAIC will results in similar results, and LOO
-is recommended as the most stable metric <span class="citation">(Vehtari, Gelman, and Gabry 2017)</span>. In general a
-ratio of at least 2 and preferably 4 of the ratio <span class="math inline">\(\Delta elpd/\Delta SE\)</span> can be interpret as
-evidence of model differences.</p>
-<p>We dont recommend the use of the Bayes Factor for BSEM, as it is less
-stable and harder to identify.</p>
+<p>We recommend the use of LOO or WAIC as general model comparison
+metrics for BSEM. They allow us to estimate the models’ out-of-sample
+predictive accuracies, and the respective differences across posterior
+draws. They also provide us uncertainty estimates in the comparison.</p>
+<p>In most cases LOO and WAIC will lead to similar results, and LOO is
+recommended as the most stable metric <span class="citation">(Vehtari,
+Gelman, and Gabry 2017)</span>. In general, a <span class="math inline">\(\Delta elpd\)</span> of at least 2 standard errors
+and preferably 4 standard errors can be interpreted as evidence of
+differential predictive accuracy.</p>
 </div>
 <div class="section level3 unnumbered">
 <h3 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
