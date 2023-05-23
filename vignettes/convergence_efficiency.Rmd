@@ -12,7 +12,7 @@ library(lavaan, quietly=TRUE)
 
 ### Introduction 
 
-When Bayesian models estimated with Markov-Chain Monte Carlo (MCMC) sampler, the models doesnt stop when it has achieve some convergence criteria, it will run as long as you set it to, and then you need to evaluate the convergence and efficiency of the estimated posterior distributions. And only analyze the results if they are stable enough. 
+When Bayesian models are estimated with a Markov-Chain Monte Carlo (MCMC) sampler, the model estimation doesn't stop when it has achieved some convergence criteria. It will run as long as desired (determined by the `burnin` and `sample` arguments), and then you need to evaluate the convergence and efficiency of the estimated posterior distributions. You should only analyze the results if convergence has been achieved, as judged by the metrics described below.
 
 For this example we will use the Industrialization and Political Democracy example [@bollen_structural_1989]. 
 
@@ -67,21 +67,21 @@ fit <- bsem(model, data=PoliticalDemocracy,
 
 ### Convergence 
 
-$\hat{R}$ is the convergence diagnostic, which compares the between- and within-chain estimates for model parameters and other univariate quantities of interest [@new_rhat]. If chains have not mixed well (ie, the between- and within-chain estimates don't agree), $\hat{R}$ is larger than 1. We recommend running at least three chains by default and only using the sample if $\hat{R} < 1.05$ for all the parameters. 
+The primary convergence diagnostic is that $\hat{R}$, which compares the between- and within-chain samples of model parameters and other univariate quantities of interest [@new_rhat]. If chains have not mixed well (ie, the between- and within-chain estimates don't agree), $\hat{R}$ is larger than 1. We recommend running at least three chains by default and only using the posterior samples if $\hat{R} < 1.05$ for all the parameters. 
 
-```blavaan``` presents the $\hat{R}$ reported by the underlying MCMC program, either Stan or JAGS (Stan by default). We can report the $\hat{R}$ from ```summary()``` function, and can also extract it with the ```blavInspect()``` function
+```blavaan``` presents the $\hat{R}$ reported by the underlying MCMC program, either Stan or JAGS (Stan by default). We can obtain the $\hat{R}$ from the ```summary()``` function, and we can also extract it with the ```blavInspect()``` function
 
 ```{r}
-blavInspect(fit, "psrf")
+blavInspect(fit, "rhat")
 ```
 
-But with large models can be cumbersome to look over all of them, we can find the higest $\hat{R}$ to see if they are all $\hat{R} < 1.05$
+With large models it can be cumbersome to look over all of these entries. We can instead find the largest $\hat{R}$ to see if they are all less than $1.05$
 
 ```{r}
 max(blavInspect(fit, "psrf"))
 ```
 
-If all $\hat{R} < 1.05$ then we can establish that the MCMC chains have converged to a stable solution. If the model has not converged, you shoudl increase the number of ```burnin``` iterations 
+If all $\hat{R} < 1.05$ then we can establish that the MCMC chains have converged to a stable solution. If the model has not converged, you might increase the number of ```burnin``` iterations 
 
 ```{r, eval=F}
 fit <- bsem(model, data=PoliticalDemocracy,
@@ -89,13 +89,13 @@ fit <- bsem(model, data=PoliticalDemocracy,
             burnin=1000, sample=1000)
 ```
 
-and/or change the model priors with the ```dpriors()``` function. As the model might have failed to converge due to needing more iterations or a model misspecification (such as bad priors)
+and/or change the model priors with the ```dpriors()``` function. These address issues where the model failed to converge due to needing more iterations or due to a model misspecification (such as bad priors). As a rule of thumb, we seldom see a model require more than 1,000 burnin samples in Stan. If your model is not converging after 1,000 burnin samples, it is likely that the default prior distributions clash with your data. This can happen, e.g., if your variables contain values in the 100s or 1000s.
 
 ### Efficiency
 
-We should alsoevaluate the efficiency of the posterior distributions, Effecitive sample size (ESS) is a useful measure for sampling efficiency in the distribution (related e.g. to efficiency of mean and median estimates), and is well defined even if the chains do not have finite mean or variance [@new_rhat].
+We should also evaluate the efficiency of the posterior samples. Effective sample size (ESS) is a useful measure for sampling efficiency, and is well defined even if the chains do not have finite mean or variance [@new_rhat].
 
-In short, ESS can be interpreted as the number of posterior draws that are completely independent of each other, with auto-correlations of 0. In ```blavaan``` we can print it from the ```summary``` function with the ```neff``` argument
+In short, the posterior samples produced by MCMC are autocorrelated. This means that, if you draw 500 posterior samples, you do not have 500 independent pieces of information about the posterior distribution, because the samples are autocorlated. The ESS metric is <a href="https://www.johndcook.com/blog/2017/06/27/effective-sample-size-for-mcmc/">like a currency conversion,</a> telling you how much your autocorrelated samples are worth if we were to convert them to indepndent samples. In ```blavaan``` we can print it from the ```summary``` function with the ```neff``` argument
 
 ```{r, eval=F}
 summary(fit, neff=T)
@@ -107,9 +107,9 @@ We can also extract only those with the ```blavInspect()``` function
 blavInspect(fit, "neff")
 ```
 
-ESS should be at least 100 (approximately) per Markov Chain in order to be reliable and indicate that estimates of respective posterior quantiles are reliable. In this example, that would be to have at least ```neff=300``` for every parameter. 
+ESS is a sample size, so it should be at least 100 (optimally, much more than 100) times the number of chains in order to be reliable and to indicate that estimates of the posterior quantiles are reliable. In this example, because we have 3 chains, we would want to see at least ```neff=300``` for every parameter. 
 
-We can focus on the lowest ESS with the ```min()``` function
+And we can easily find the lowest ESS with the ```min()``` function:
 
 ```{r}
 min(blavInspect(fit, "neff"))
