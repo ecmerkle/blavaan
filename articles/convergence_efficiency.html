@@ -113,12 +113,14 @@ Garnier-Villarreal</h4>
 <div class="section level3">
 <h3 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h3>
-<p>When Bayesian models estimated with Markov-Chain Monte Carlo (MCMC)
-sampler, the models doesnt stop when it has achieve some convergence
-criteria, it will run as long as you set it to, and then you need to
-evaluate the convergence and efficiency of the estimated posterior
-distributions. And only analyze the results if they are stable
-enough.</p>
+<p>When Bayesian models are estimated with a Markov-Chain Monte Carlo
+(MCMC) sampler, the model estimation doesn’t stop when it has achieved
+some convergence criteria. It will run as long as desired (determined by
+the <code>burnin</code> and <code>sample</code> arguments), and then you
+need to evaluate the convergence and efficiency of the estimated
+posterior distributions. You should only analyze the results if
+convergence has been achieved, as judged by the metrics described
+below.</p>
 <p>For this example we will use the Industrialization and Political
 Democracy example <span class="citation">(Bollen 1989)</span>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
@@ -147,64 +149,72 @@ Democracy example <span class="citation">(Bollen 1989)</span>.</p>
 <div class="section level3">
 <h3 id="convergence">Convergence<a class="anchor" aria-label="anchor" href="#convergence"></a>
 </h3>
-<p><span class="math inline">\(\hat{R}\)</span> is the convergence
-diagnostic, which compares the between- and within-chain estimates for
-model parameters and other univariate quantities of interest <span class="citation">(Vehtari et al. 2021)</span>. If chains have not mixed
-well (ie, the between- and within-chain estimates don’t agree), <span class="math inline">\(\hat{R}\)</span> is larger than 1. We recommend
-running at least three chains by default and only using the sample if
-<span class="math inline">\(\hat{R} &lt; 1.05\)</span> for all the
-parameters.</p>
+<p>The primary convergence diagnostic is that <span class="math inline">\(\hat{R}\)</span>, which compares the between- and
+within-chain samples of model parameters and other univariate quantities
+of interest <span class="citation">(Vehtari et al. 2021)</span>. If
+chains have not mixed well (ie, the between- and within-chain estimates
+don’t agree), <span class="math inline">\(\hat{R}\)</span> is larger
+than 1. We recommend running at least three chains by default and only
+using the posterior samples if <span class="math inline">\(\hat{R} &lt;
+1.05\)</span> for all the parameters.</p>
 <p><code>blavaan</code> presents the <span class="math inline">\(\hat{R}\)</span> reported by the underlying MCMC
-program, either Stan or JAGS (Stan by default). We can report the <span class="math inline">\(\hat{R}\)</span> from <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>
-function, and can also extract it with the <code><a href="../reference/blavInspect.html">blavInspect()</a></code>
+program, either Stan or JAGS (Stan by default). We can obtain the <span class="math inline">\(\hat{R}\)</span> from the <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>
+function, and we can also extract it with the <code><a href="../reference/blavInspect.html">blavInspect()</a></code>
 function</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"psrf"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"rhat"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##   ind60=~x1   ind60=~x2   ind60=~x3           a           b           c </span></span>
-<span><span class="co">##   1.0008831   0.9993772   1.0001830   0.9999461   0.9995749   1.0001195 </span></span>
+<span><span class="co">##   1.0009173   1.0020618   1.0014625   1.0001974   1.0021500   1.0003474 </span></span>
 <span><span class="co">##           d           a           b           c           d dem60~ind60 </span></span>
-<span><span class="co">##   0.9996089   0.9999461   0.9995749   1.0001195   0.9996089   0.9994675 </span></span>
+<span><span class="co">##   1.0025541   1.0001974   1.0021500   1.0003474   1.0025541   1.0008301 </span></span>
 <span><span class="co">## dem65~ind60 dem65~dem60      y1~~y5      y2~~y4      y2~~y6      y3~~y7 </span></span>
-<span><span class="co">##   1.0013513   1.0020327   1.0015766   1.0003726   1.0003014   1.0006798 </span></span>
+<span><span class="co">##   1.0025310   1.0004539   1.0003871   0.9996113   1.0000538   0.9994990 </span></span>
 <span><span class="co">##      y4~~y8      y6~~y8      x1~~x1      x2~~x2      x3~~x3      y1~~y1 </span></span>
-<span><span class="co">##   1.0004043   1.0015556   0.9995778   1.0005184   0.9995888   0.9997737 </span></span>
+<span><span class="co">##   0.9994445   1.0003317   1.0002102   0.9996424   0.9996667   1.0000858 </span></span>
 <span><span class="co">##      y2~~y2      y3~~y3      y4~~y4      y5~~y5      y6~~y6      y7~~y7 </span></span>
-<span><span class="co">##   1.0003952   1.0007281   1.0005428   0.9999904   1.0017796   1.0005175 </span></span>
+<span><span class="co">##   0.9995082   1.0003197   0.9997485   1.0001817   0.9992581   0.9992296 </span></span>
 <span><span class="co">##      y8~~y8        x1~1        x2~1        x3~1        y1~1        y2~1 </span></span>
-<span><span class="co">##   1.0020880   1.0028234   1.0027387   1.0025040   1.0018038   1.0003772 </span></span>
+<span><span class="co">##   1.0008797   0.9998822   0.9996805   0.9996404   1.0022089   1.0020207 </span></span>
 <span><span class="co">##        y3~1        y4~1        y5~1        y6~1        y7~1        y8~1 </span></span>
-<span><span class="co">##   1.0010171   1.0021138   1.0010582   1.0020269   1.0014152   1.0024544</span></span></code></pre>
-<p>But with large models can be cumbersome to look over all of them, we
-can find the higest <span class="math inline">\(\hat{R}\)</span> to see
-if they are all <span class="math inline">\(\hat{R} &lt;
-1.05\)</span></p>
+<span><span class="co">##   1.0018061   1.0021290   1.0029127   1.0030200   1.0035422   1.0028120</span></span></code></pre>
+<p>With large models it can be cumbersome to look over all of these
+entries. We can instead find the largest <span class="math inline">\(\hat{R}\)</span> to see if they are all less than
+<span class="math inline">\(1.05\)</span></p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"psrf"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] 1.002823</span></span></code></pre>
+<pre><code><span><span class="co">## [1] 1.003542</span></span></code></pre>
 <p>If all <span class="math inline">\(\hat{R} &lt; 1.05\)</span> then we
 can establish that the MCMC chains have converged to a stable solution.
-If the model has not converged, you shoudl increase the number of
+If the model has not converged, you might increase the number of
 <code>burnin</code> iterations</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bsem.html">bsem</a></span><span class="op">(</span><span class="va">model</span>, data<span class="op">=</span><span class="va">PoliticalDemocracy</span>,</span>
 <span>            std.lv<span class="op">=</span><span class="cn">T</span>, meanstructure<span class="op">=</span><span class="cn">T</span>, n.chains<span class="op">=</span><span class="fl">3</span>,</span>
 <span>            burnin<span class="op">=</span><span class="fl">1000</span>, sample<span class="op">=</span><span class="fl">1000</span><span class="op">)</span></span></code></pre></div>
 <p>and/or change the model priors with the <code><a href="../reference/dpriors.html">dpriors()</a></code>
-function. As the model might have failed to converge due to needing more
-iterations or a model misspecification (such as bad priors)</p>
+function. These address issues where the model failed to converge due to
+needing more iterations or due to a model misspecification (such as bad
+priors). As a rule of thumb, we seldom see a model require more than
+1,000 burnin samples in Stan. If your model is not converging after
+1,000 burnin samples, it is likely that the default prior distributions
+clash with your data. This can happen, e.g., if your variables contain
+values in the 100s or 1000s.</p>
 </div>
 <div class="section level3">
 <h3 id="efficiency">Efficiency<a class="anchor" aria-label="anchor" href="#efficiency"></a>
 </h3>
-<p>We should alsoevaluate the efficiency of the posterior distributions,
-Effecitive sample size (ESS) is a useful measure for sampling efficiency
-in the distribution (related e.g. to efficiency of mean and median
-estimates), and is well defined even if the chains do not have finite
-mean or variance <span class="citation">(Vehtari et al.
-2021)</span>.</p>
-<p>In short, ESS can be interpreted as the number of posterior draws
-that are completely independent of each other, with auto-correlations of
-0. In <code>blavaan</code> we can print it from the <code>summary</code>
+<p>We should also evaluate the efficiency of the posterior samples.
+Effective sample size (ESS) is a useful measure for sampling efficiency,
+and is well defined even if the chains do not have finite mean or
+variance <span class="citation">(Vehtari et al. 2021)</span>.</p>
+<p>In short, the posterior samples produced by MCMC are autocorrelated.
+This means that, if you draw 500 posterior samples, you do not have 500
+independent pieces of information about the posterior distribution,
+because the samples are autocorlated. The ESS metric is
+<a href="https://www.johndcook.com/blog/2017/06/27/effective-sample-size-for-mcmc/" class="external-link">like
+a currency conversion,</a> telling you how much your autocorrelated
+samples are worth if we were to convert them to indepndent samples. In
+<code>blavaan</code> we can print it from the <code>summary</code>
 function with the <code>neff</code> argument</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span>, neff<span class="op">=</span><span class="cn">T</span><span class="op">)</span></span></code></pre></div>
@@ -213,28 +223,29 @@ function</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"neff"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##   ind60=~x1   ind60=~x2   ind60=~x3           a           b           c </span></span>
-<span><span class="co">##    1759.067    1710.853    2109.629    1792.157    2349.600    2129.102 </span></span>
+<span><span class="co">##    1550.055    1407.685    1635.872    1954.824    2111.367    1830.250 </span></span>
 <span><span class="co">##           d           a           b           c           d dem60~ind60 </span></span>
-<span><span class="co">##    2019.163    1792.157    2349.600    2129.102    2019.163    2141.250 </span></span>
+<span><span class="co">##    1801.252    1954.824    2111.367    1830.250    1801.252    1897.749 </span></span>
 <span><span class="co">## dem65~ind60 dem65~dem60      y1~~y5      y2~~y4      y2~~y6      y3~~y7 </span></span>
-<span><span class="co">##    3021.177    2691.238    2348.424    2385.868    3425.342    2023.838 </span></span>
+<span><span class="co">##    2293.756    2318.148    2280.701    2294.526    2787.420    2403.793 </span></span>
 <span><span class="co">##      y4~~y8      y6~~y8      x1~~x1      x2~~x2      x3~~x3      y1~~y1 </span></span>
-<span><span class="co">##    2546.711    2167.235    1823.523    1677.211    3362.223    2860.854 </span></span>
+<span><span class="co">##    2956.076    1834.389    2001.960    1627.395    3128.871    2705.187 </span></span>
 <span><span class="co">##      y2~~y2      y3~~y3      y4~~y4      y5~~y5      y6~~y6      y7~~y7 </span></span>
-<span><span class="co">##    3331.081    3058.520    2579.409    2534.246    2636.362    2603.610 </span></span>
+<span><span class="co">##    3246.688    3058.887    2568.719    2755.551    2430.740    2786.449 </span></span>
 <span><span class="co">##      y8~~y8        x1~1        x2~1        x3~1        y1~1        y2~1 </span></span>
-<span><span class="co">##    2264.598    1242.789    1274.538    1341.639    1380.187    1595.789 </span></span>
+<span><span class="co">##    2444.932    1338.134    1311.597    1370.845    1207.891    1411.886 </span></span>
 <span><span class="co">##        y3~1        y4~1        y5~1        y6~1        y7~1        y8~1 </span></span>
-<span><span class="co">##    1634.938    1330.062    1163.911    1166.688    1171.661    1002.648</span></span></code></pre>
-<p>ESS should be at least 100 (approximately) per Markov Chain in order
-to be reliable and indicate that estimates of respective posterior
-quantiles are reliable. In this example, that would be to have at least
+<span><span class="co">##    1325.144    1118.150    1112.054    1099.120    1116.494    1018.879</span></span></code></pre>
+<p>ESS is a sample size, so it should be at least 100 (optimally, much
+more than 100) times the number of chains in order to be reliable and to
+indicate that estimates of the posterior quantiles are reliable. In this
+example, because we have 3 chains, we would want to see at least
 <code>neff=300</code> for every parameter.</p>
-<p>We can focus on the lowest ESS with the <code><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min()</a></code>
-function</p>
+<p>And we can easily find the lowest ESS with the <code><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min()</a></code>
+function:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"neff"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] 1002.648</span></span></code></pre>
+<pre><code><span><span class="co">## [1] 1018.879</span></span></code></pre>
 </div>
 <div class="section level3 unnumbered">
 <h3 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
