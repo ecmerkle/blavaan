@@ -40,13 +40,13 @@ navbar:
         href: articles/approx_fi.html
       - text: Model Comparison
         href: articles/model_comparison.html
-      - text: Cross-loadings with strong priors
+      - text: Cross-loadings with Strong Priors
         href: articles/cross_loadings_strong_priors.html
-      - text: Modification indices
+      - text: Modification Indices
         href: articles/mod_indices.html
       - text: Prior Predictive Checks
         href: articles/prior_pred_checks.html
-      - text: Convergence loop
+      - text: Convergence Loop
         href: articles/convergence_loop.html
       - text: Probability of Direction
         href: articles/probability_direction.html          
