@@ -53,10 +53,10 @@
     <a class="dropdown-item" href="../articles/ordinal.html">Estimation with Ordinal Data</a>
     <a class="dropdown-item" href="../articles/approx_fi.html">Approximate Fit Indices</a>
     <a class="dropdown-item" href="../articles/model_comparison.html">Model Comparison</a>
-    <a class="dropdown-item" href="../articles/cross_loadings_strong_priors.html">Cross-loadings with strong priors</a>
-    <a class="dropdown-item" href="../articles/mod_indices.html">Modification indices</a>
+    <a class="dropdown-item" href="../articles/cross_loadings_strong_priors.html">Cross-loadings with Strong Priors</a>
+    <a class="dropdown-item" href="../articles/mod_indices.html">Modification Indices</a>
     <a class="dropdown-item" href="../articles/prior_pred_checks.html">Prior Predictive Checks</a>
-    <a class="dropdown-item" href="../articles/convergence_loop.html">Convergence loop</a>
+    <a class="dropdown-item" href="../articles/convergence_loop.html">Convergence Loop</a>
     <a class="dropdown-item" href="../articles/probability_direction.html">Probability of Direction</a>
   </div>
 </li>
@@ -115,30 +115,31 @@ Garnier-Villarreal</h4>
 </h3>
 <p>In SEM, one of the first steps is to evaluate the model’s global fit.
 After global fit, we need to evaluate the local fit of a model, meaning
-how does the model reproduces specific indicator correlatons.</p>
-<p>There are a couple of common methods for this, (a) test for high
+how the model reproduces specific correlations between observed
+variables.</p>
+<p>There are a couple of common methods for this, (a) testing for high
 residual correlations, or (b) modification indices. This tutorial
 focuses on the second. Modification indices test the
-<strong>likely</strong> change in the model if a single parameter is
-added to the model that was not originally included, and do this for
-every possible parameter that was not included <span class="citation">(Bentler 1990)</span>.</p>
+<strong>likely</strong> change in the model fit if a single parameter is
+added to the model that was not originally included. This test can be
+carried out for every possible parameter that was not included <span class="citation">(Bentler 1990)</span>.</p>
 </div>
 <div class="section level3">
 <h3 id="modification-indices">Modification Indices<a class="anchor" aria-label="anchor" href="#modification-indices"></a>
 </h3>
 <p>Modification indices present different <strong>indices</strong> to
-quantify the effect of each pararmeter, here we will focus on two, (a)
-the modification index (MI) or Lagrange multiplier, which provides an
-estimated value in which the model’s chi-square (<span class="math inline">\(\chi^2\)</span>) test statistic would decrease if
-a fixed parameter were added to the model and freely estimated, and (b)
-standardized expected parameter change (SEPC) which is the approximated
-standardized value if the parameter where to be estimated in the model
-<span class="citation">(Whittaker 2012)</span>.</p>
+quantify the effect of each parameter, and we will focus on two here.
+These are (a) the modification index (MI) or Lagrange multiplier, which
+estimates the extent to which the model’s chi-square (<span class="math inline">\(\chi^2\)</span>) test statistic would decrease if
+a parameter were added to the model and freely estimated, and (b)
+standardized expected parameter change (SEPC), which is the approximated
+standardized value of the parameter if it were to be estimated in the
+model <span class="citation">(Whittaker 2012)</span>.</p>
 <p>MI presents the possible effect on the overall model, and SEPC
 presents the effect size for the missed parameter.</p>
 <p>We will show an example with the <span class="citation">Holzinger and
-Swineford (1939)</span> example. You first estimate your SEM/CFA model
-as usual</p>
+Swineford (1939)</span> model. You first estimate your SEM/CFA model as
+usual</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">HS.model</span> <span class="op">&lt;-</span> <span class="st">' visual  =~ x1 + x2 + x3</span></span>
 <span><span class="st">              textual =~ x4 + x5 + x6</span></span>
@@ -146,33 +147,34 @@ as usual</p>
 <span></span>
 <span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcfa.html">bcfa</a></span><span class="op">(</span><span class="va">HS.model</span>, data<span class="op">=</span><span class="va">HolzingerSwineford1939</span>, std.lv<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>Then we would need to write a <strong>discrepancy</strong> function
-to collect the modification indices. This function estimates and save
-the MI and SEPC</p>
+to collect the modification indices. The list below contains two
+functions that estimate and save the MI and SEPC.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">discFUN</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>mod.ind_mi <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">object</span><span class="op">)</span><span class="op">{</span></span>
-<span>  <span class="va">temp</span> <span class="op">&lt;-</span> <span class="fu">modificationindices</span><span class="op">(</span><span class="va">object</span>,free.remove <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
-<span>  <span class="va">mods</span> <span class="op">&lt;-</span> <span class="va">temp</span><span class="op">$</span><span class="va">mi</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">mods</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">temp</span><span class="op">$</span><span class="va">lhs</span>,<span class="va">temp</span><span class="op">$</span><span class="va">op</span>,<span class="va">temp</span><span class="op">$</span><span class="va">rhs</span><span class="op">)</span></span>
-<span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="va">mods</span><span class="op">)</span></span>
-<span><span class="op">}</span>,</span>
-<span>mod.ind_sepc.all <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">object</span><span class="op">)</span><span class="op">{</span></span>
-<span>  <span class="va">temp</span> <span class="op">&lt;-</span> <span class="fu">modificationindices</span><span class="op">(</span><span class="va">object</span>,free.remove <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
-<span>  <span class="va">sepc.all</span> <span class="op">&lt;-</span> <span class="va">temp</span><span class="op">$</span><span class="va">sepc.all</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">sepc.all</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">temp</span><span class="op">$</span><span class="va">lhs</span>,<span class="va">temp</span><span class="op">$</span><span class="va">op</span>,<span class="va">temp</span><span class="op">$</span><span class="va">rhs</span><span class="op">)</span></span>
-<span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="va">sepc.all</span> <span class="op">)</span></span>
-<span><span class="op">}</span></span>
+<code class="sourceCode R"><span><span class="va">discFUN</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  mod.ind_mi <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">object</span><span class="op">)</span><span class="op">{</span></span>
+<span>    <span class="va">temp</span> <span class="op">&lt;-</span> <span class="fu">modificationindices</span><span class="op">(</span><span class="va">object</span>, free.remove <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
+<span>    <span class="va">mods</span> <span class="op">&lt;-</span> <span class="va">temp</span><span class="op">$</span><span class="va">mi</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">mods</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">temp</span><span class="op">$</span><span class="va">lhs</span>, <span class="va">temp</span><span class="op">$</span><span class="va">op</span>, <span class="va">temp</span><span class="op">$</span><span class="va">rhs</span><span class="op">)</span></span>
+<span>    <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="va">mods</span><span class="op">)</span></span>
+<span>  <span class="op">}</span>,</span>
+<span>  mod.ind_sepc.all <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">object</span><span class="op">)</span><span class="op">{</span></span>
+<span>    <span class="va">temp</span> <span class="op">&lt;-</span> <span class="fu">modificationindices</span><span class="op">(</span><span class="va">object</span>, free.remove <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
+<span>    <span class="va">sepc.all</span> <span class="op">&lt;-</span> <span class="va">temp</span><span class="op">$</span><span class="va">sepc.all</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">sepc.all</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">temp</span><span class="op">$</span><span class="va">lhs</span>, <span class="va">temp</span><span class="op">$</span><span class="va">op</span>, <span class="va">temp</span><span class="op">$</span><span class="va">rhs</span><span class="op">)</span></span>
+<span>    <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="va">sepc.all</span><span class="op">)</span></span>
+<span>  <span class="op">}</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Then we will pass this function to the <code><a href="../reference/ppmc.html">ppmc()</a></code> function
-of <em>blavaan</em>, this way the MI and SEPC will be estimated at each
-iteration of the saved posterior draws, building posterior distributions
-for them</p>
+of <em>blavaan</em>. With this function, the MI and SEPC are computed
+for each posterior sample, leading to posterior distributions for each
+of them.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ppmc.html">ppmc</a></span><span class="op">(</span><span class="va">fit</span>, discFUN <span class="op">=</span> <span class="va">discFUN</span><span class="op">)</span></span></code></pre></div>
-<p>Then we view the top 5 parameters arrange by the mean (EAP) MI, which
-in thos case shows that the most the parameter that would have the
-highest impact in overall model fit (according to EAP) is
-<strong>visual=~x9</strong> the cross-loading from item
-<strong>x9</strong> to the factor Visual</p>
+<p>Then we view the top 5 parameters arrange by the posterior mean (EAP)
+MI, which in this case shows that the parameter having the highest
+impact in overall model fit (according to EAP) is
+<strong>visual=~x9</strong>, the cross-loading from the Visual factor to
+item <strong>x9</strong>.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">out</span>, prob<span class="op">=</span><span class="fl">.9</span>, discFUN <span class="op">=</span> <span class="st">"mod.ind_mi"</span>, sort.by<span class="op">=</span><span class="st">"EAP"</span>, decreasing<span class="op">=</span><span class="cn">T</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>,<span class="op">]</span></span></code></pre></div>
 <pre><code><span><span class="co">## </span></span>
@@ -180,20 +182,20 @@ highest impact in overall model fit (according to EAP) is
 <span><span class="co">## </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##               EAP Median    MAP     SD  lower  upper PPP_sim_GreaterThan_obs</span></span>
-<span><span class="co">## visual=~x9 35.599 35.641 36.217 10.879 18.472 54.073                   0.011</span></span>
-<span><span class="co">## x7~~x8     32.996 35.355 39.303 14.368  7.139 53.380                   0.073</span></span>
-<span><span class="co">## x8~~x9     27.122 12.221  3.346 41.812  0.000 71.148                   0.325</span></span>
-<span><span class="co">## x4~~x6     19.789  6.971  2.298 35.638  0.000 52.887                   0.459</span></span>
-<span><span class="co">## visual=~x7 18.564 16.393 12.353 10.477  3.280 32.657                   0.016</span></span>
+<span><span class="co">## visual=~x9 35.394 35.241 34.504 10.950 18.020 53.030                   0.016</span></span>
+<span><span class="co">## x7~~x8     33.069 35.629 39.160 14.425  6.764 55.032                   0.080</span></span>
+<span><span class="co">## x8~~x9     27.719 12.477  3.106 44.388  0.000 70.827                   0.319</span></span>
+<span><span class="co">## x4~~x6     21.067  7.262  2.039 37.813  0.000 55.972                   0.447</span></span>
+<span><span class="co">## visual=~x7 18.601 16.529 12.563 10.497  4.448 33.776                   0.012</span></span>
 <span><span class="co">##            PPP_sim_LessThan_obs</span></span>
-<span><span class="co">## visual=~x9                0.989</span></span>
-<span><span class="co">## x7~~x8                    0.927</span></span>
-<span><span class="co">## x8~~x9                    0.675</span></span>
-<span><span class="co">## x4~~x6                    0.541</span></span>
-<span><span class="co">## visual=~x7                0.984</span></span></code></pre>
-<p>But accoridng to the median, the parameter that would have the
-highest impact owuld be <strong>x7~~x8</strong> the residual corretion
-between indicators <strong>x7</strong> and <strong>x8</strong></p>
+<span><span class="co">## visual=~x9                0.984</span></span>
+<span><span class="co">## x7~~x8                    0.920</span></span>
+<span><span class="co">## x8~~x9                    0.681</span></span>
+<span><span class="co">## x4~~x6                    0.553</span></span>
+<span><span class="co">## visual=~x7                0.988</span></span></code></pre>
+<p>But according to the posterior median, the parameter that would have
+the highest impact would be the residual correlation between indicators
+<strong>x7</strong> and <strong>x8</strong></p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">out</span>, prob<span class="op">=</span><span class="fl">.9</span>, discFUN <span class="op">=</span> <span class="st">"mod.ind_mi"</span>, sort.by<span class="op">=</span><span class="st">"Median"</span>, decreasing<span class="op">=</span><span class="cn">T</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>,<span class="op">]</span></span></code></pre></div>
 <pre><code><span><span class="co">## </span></span>
@@ -201,61 +203,62 @@ between indicators <strong>x7</strong> and <strong>x8</strong></p>
 <span><span class="co">## </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##                EAP Median    MAP     SD  lower  upper PPP_sim_GreaterThan_obs</span></span>
-<span><span class="co">## visual=~x9  35.599 35.641 36.217 10.879 18.472 54.073                   0.011</span></span>
-<span><span class="co">## x7~~x8      32.996 35.355 39.303 14.368  7.139 53.380                   0.073</span></span>
-<span><span class="co">## visual=~x7  18.564 16.393 12.353 10.477  3.280 32.657                   0.016</span></span>
-<span><span class="co">## x8~~x9      27.122 12.221  3.346 41.812  0.000 71.148                   0.325</span></span>
-<span><span class="co">## textual=~x1 11.024  9.956  1.663  8.293  0.000 22.127                   0.242</span></span>
+<span><span class="co">## x7~~x8      33.069 35.629 39.160 14.425  6.764 55.032                   0.080</span></span>
+<span><span class="co">## visual=~x9  35.394 35.241 34.504 10.950 18.020 53.030                   0.016</span></span>
+<span><span class="co">## visual=~x7  18.601 16.529 12.563 10.497  4.448 33.776                   0.012</span></span>
+<span><span class="co">## x8~~x9      27.719 12.477  3.106 44.388  0.000 70.827                   0.319</span></span>
+<span><span class="co">## textual=~x1 11.053  9.894 83.999  9.206  0.000 22.205                   0.221</span></span>
 <span><span class="co">##             PPP_sim_LessThan_obs</span></span>
-<span><span class="co">## visual=~x9                 0.989</span></span>
-<span><span class="co">## x7~~x8                     0.927</span></span>
-<span><span class="co">## visual=~x7                 0.984</span></span>
-<span><span class="co">## x8~~x9                     0.675</span></span>
-<span><span class="co">## textual=~x1                0.758</span></span></code></pre>
-<p>MI is still recommended as the best metric to indicate which
-parameter is best to include next, and can use the SEPC to evaluate the
-<strong>likely</strong> effect size for the respecive parameters</p>
+<span><span class="co">## x7~~x8                     0.920</span></span>
+<span><span class="co">## visual=~x9                 0.984</span></span>
+<span><span class="co">## visual=~x7                 0.988</span></span>
+<span><span class="co">## x8~~x9                     0.681</span></span>
+<span><span class="co">## textual=~x1                0.779</span></span></code></pre>
+<p>The MI is still recommended as the best metric to indicate which
+parameter is best to include next, and we can use the SEPC to evaluate
+the <strong>likely</strong> effect size for the respective
+parameters.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">out</span>, prob<span class="op">=</span><span class="fl">.9</span>, discFUN <span class="op">=</span> <span class="st">"mod.ind_sepc.all"</span>, sort.by<span class="op">=</span><span class="st">"EAP"</span>, decreasing<span class="op">=</span><span class="cn">T</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>,<span class="op">]</span></span></code></pre></div>
 <pre><code><span><span class="co">## </span></span>
 <span><span class="co">## Posterior summary statistics and highest posterior density (HPD) 90% credible intervals for the posterior distribution of realized discrepancy-function values based on observed data, along with posterior predictive p values to test hypotheses in either direction:</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## </span></span>
-<span><span class="co">##               EAP Median   MAP    SD lower upper PPP_sim_GreaterThan_obs</span></span>
-<span><span class="co">## x7~~x8      0.809  0.793 0.765 0.379 0.479 1.277                   0.044</span></span>
-<span><span class="co">## visual=~x9  0.518  0.494 0.456 0.134 0.344 0.705                   0.006</span></span>
-<span><span class="co">## textual=~x1 0.269  0.299 0.327 0.178 0.002 0.489                   0.140</span></span>
-<span><span class="co">## x1~~x9      0.249  0.247 0.243 0.053 0.199 0.301                   0.019</span></span>
-<span><span class="co">## x2~~x3      0.223  0.222 0.221 0.036 0.169 0.277                   0.020</span></span>
+<span><span class="co">##               EAP Median   MAP    SD  lower upper PPP_sim_GreaterThan_obs</span></span>
+<span><span class="co">## x7~~x8      0.786  0.785 0.745 0.397  0.464 1.264                   0.050</span></span>
+<span><span class="co">## visual=~x9  0.518  0.499 0.454 0.144  0.336 0.698                   0.009</span></span>
+<span><span class="co">## textual=~x1 0.269  0.298 0.317 0.193  0.054 0.514                   0.127</span></span>
+<span><span class="co">## x1~~x9      0.248  0.248 0.247 0.036  0.200 0.300                   0.015</span></span>
+<span><span class="co">## x4~~x5      0.224  0.511 0.871 1.354 -1.787 1.960                   0.380</span></span>
 <span><span class="co">##             PPP_sim_LessThan_obs</span></span>
-<span><span class="co">## x7~~x8                     0.956</span></span>
-<span><span class="co">## visual=~x9                 0.994</span></span>
-<span><span class="co">## textual=~x1                0.860</span></span>
-<span><span class="co">## x1~~x9                     0.981</span></span>
-<span><span class="co">## x2~~x3                     0.980</span></span></code></pre>
+<span><span class="co">## x7~~x8                     0.950</span></span>
+<span><span class="co">## visual=~x9                 0.991</span></span>
+<span><span class="co">## textual=~x1                0.873</span></span>
+<span><span class="co">## x1~~x9                     0.985</span></span>
+<span><span class="co">## x4~~x5                     0.620</span></span></code></pre>
 <p>Here we see that for the 2 highest parameters, the likely SEPC is
-<strong>x7~~x8 = 0.788</strong> and <strong>visual=~x9 = 0.519</strong>.
-With this information we can decide to include one of these new
-parameters in the model (one at the time). For this example, since
-factor loadings have impact in more variances and covariances of the
-covariance matrix I would choose <strong>visual=~x9</strong></p>
+x7~~x8 = 0.786212027864778 and visual=~x9 = 0.518221498354117. With this
+information we can decide to include one of these new parameters in the
+model (one at the time). For this example, because factor loadings have
+a larger impact on the model-implied covariance matrix, I would choose
+<strong>visual=~x9</strong></p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">HS.model</span> <span class="op">&lt;-</span> <span class="st">' visual  =~ x1 + x2 + x3 + x9</span></span>
 <span><span class="st">              textual =~ x4 + x5 + x6</span></span>
 <span><span class="st">              speed   =~ x7 + x8 + x9 '</span></span>
 <span></span>
 <span><span class="va">fit2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcfa.html">bcfa</a></span><span class="op">(</span><span class="va">HS.model</span>, data<span class="op">=</span><span class="va">HolzingerSwineford1939</span>, std.lv<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p>And you can check if the added parameter has the expected impact in
-overall fit with the <code><a href="../reference/blavFitIndices.html">blavFitIndices()</a></code> function, and the
-<code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code></p>
+<p>And you can check if the added parameter has the expected impact on
+overall fit with the <code><a href="../reference/blavFitIndices.html">blavFitIndices()</a></code> and the
+<code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> functions.</p>
 <p>It is important to consider also the theoretical relevance of the
-suggested parameters, make sure that it makes sense, instead of just
-adding parameters until having <strong>good</strong> fit.</p>
+suggested parameters, and to ensure that they make sense, instead of
+just adding parameters until having <strong>good</strong> fit.</p>
 </div>
 <div class="section level3">
 <h3 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
 </h3>
-<p>In this tutorials we show how to calculate the MI and SEPC across
+<p>In this tutorial we show how to calculate the MI and SEPC across
 posterior distributions, and evaluate which parameters can be added.</p>
 <p>With the <code><a href="../reference/ppmc.html">ppmc()</a></code> function we are able to calculate
 relevant information after model estimation, and build posterior
