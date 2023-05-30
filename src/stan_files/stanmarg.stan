@@ -519,10 +519,10 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
 
     for (cc in 1:nclus[2]) {
       if (Nx > 0) {
-	out[cc] += multi_normal_suff(mean_d[cc, Xvar[1:Nx]], cov_w, mean_d[cc, Xvar[1:Nx]], cov_w_inv, cluster_size[cc]);
+	out[cc] += multi_normal_suff(mean_d[cc, Xvar[1:Nx]], cov_w[1:Nx, 1:Nx], mean_d[cc, Xvar[1:Nx]], cov_w_inv[1:Nx, 1:Nx], cluster_size[cc]);
       }
       if (Nx_between > 0) {
-	out[cc] += multi_normal_lpdf(mean_d[cc, 1:Nx_between] | ov_mean_d, cov_mean_d);
+	out[cc] += multi_normal_lpdf(mean_d[cc, 1:Nx_between] | ov_mean_d[1:Nx_between], cov_mean_d[1:Nx_between, 1:Nx_between]);
       }      
     }
 
@@ -1595,8 +1595,9 @@ generated quantities { // these matrices are saved in the output but do not figu
   matrix[p_tilde, p_tilde] S_PW_rep_full[Ng];
   vector[p_tilde] ov_mean_rep[Ng];
   vector[p_tilde] xbar_b_rep[Ng];
+  matrix[N_between, N_between] S2_rep[Ng];
   matrix[p_tilde, p_tilde] S_B_rep[Ng];
-  matrix[p_c, p_c] cov_b_rep[Ng];
+  matrix[p_tilde, p_tilde] cov_b_rep[Ng];
   real<lower=0, upper=1> ppp;
   
   // first deal with sign constraints:
@@ -1723,9 +1724,18 @@ generated quantities { // these matrices are saved in the output but do not figu
 	    clusidx += 1;
 	  } // cc
 	  ov_mean_rep[gg] *= pow(nclus[gg, 1], -1);
+	  xbar_b_rep[gg] = ov_mean_rep[gg];
 
 	  r1 -= nclus[gg, 1]; // reset for S_PW
 	  clusidx -= nclus[gg, 2];
+
+	  if (N_between > 0) {
+	    S2_rep[gg] = rep_matrix(0, N_between, N_between);
+	    for (ii in 1:N_between) {
+	      xbar_b_rep[gg, between_idx[ii]] = mean(mean_d_rep[clusidx:(clusidx + nclus[gg, 2] - 1), between_idx[ii]]);
+	    }
+	  }
+	  
 	  for (cc in 1:nclus[gg, 2]) {
 	    if (N_within > 0) {
 	      mean_d_rep[clusidx, within_idx] = ov_mean_rep[gg, within_idx];
@@ -1736,14 +1746,40 @@ generated quantities { // these matrices are saved in the output but do not figu
 	    }
 	    
 	    S_B_rep[gg] += cluster_size[clusidx] * tcrossprod(to_matrix(mean_d_rep[clusidx] - ov_mean_rep[gg]));
+	    if (N_between > 0) {
+	      S2_rep[gg] += tcrossprod(to_matrix(mean_d_rep[clusidx, between_idx[1:N_between]] - xbar_b_rep[gg, between_idx[1:N_between]]));
+	    }
+	    
 	    r1 += cluster_size[clusidx];
 	    clusidx += 1;
 	  }
 	  S_PW_rep_full[gg] *= pow(nclus[gg, 1] - nclus[gg, 2], -1);
-	  // TODO see line 1737 + 1766 of lav_samplestats for between idx changes to S_B_rep, Mu_rep_sat
 	  S_B_rep[gg] *= pow(nclus[gg, 2] - 1, -1);
-	  cov_b_rep[gg] = pow(gs[gg], -1) * (S_B_rep[gg, ov_idx2, ov_idx2] - S_PW_rep_full[gg, ov_idx2, ov_idx2]);
-	  xbar_b_rep[gg] = ov_mean_rep[gg];
+	  S2_rep[gg] *= pow(nclus[gg, 2], -1);
+	  // mods to between-only variables:
+	  if (N_between > 0) {
+	    int betonly[N_between] = between_idx[1:N_between];
+	    S_PW_rep_full[gg, betonly, betonly] = rep_matrix(0, N_between, N_between);
+
+	    // Y2: mean_d_rep; Y2c: mean_d_rep - ov_mean_rep
+	    for (ii in 1:N_between) {
+	      for (jj in 1:(N_both + N_within)) {
+		S_B_rep[gg, between_idx[ii], between_idx[(N_between + jj)]] *= (gs[gg] * nclus[gg, 2] * pow(nclus[gg, 1], -1));
+		S_B_rep[gg, between_idx[(N_between + jj)], between_idx[ii]] = S_B_rep[gg, between_idx[ii], between_idx[(N_between + jj)]];
+	      }
+	    }
+
+	    S_B_rep[gg, betonly, betonly] = rep_matrix(0, N_between, N_between);
+	    for (cc in 1:nclus[gg, 2]) {
+	      S_B_rep[gg, betonly, betonly] += tcrossprod(to_matrix(mean_d_rep[cc, betonly] - ov_mean_rep[gg, betonly]));
+	    }
+	    S_B_rep[gg, betonly, betonly] *= gs[gg] * pow(nclus[gg, 2], -1);
+	  }
+	  
+	  cov_b_rep[gg] = pow(gs[gg], -1) * (S_B_rep[gg] - S_PW_rep_full[gg]);
+	  if (N_between > 0) {
+	    cov_b_rep[gg, between_idx[1:N_between], between_idx[1:N_between]] = S2_rep[gg];
+	  }
 
 	  rr1 = r1 - nclus[gg, 1];
 	  r2 = clusidx - nclus[gg, 2];
@@ -1762,12 +1798,10 @@ generated quantities { // these matrices are saved in the output but do not figu
 
 	    mnvecs = calc_mean_vecs(YXstar_rep[rr1:(r1 - 1)], mean_d_rep[r2:(clusidx - 1)], nclus[gg], Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg], p_tilde);
 	    covmats = calc_cov_mats(YXstar_rep[rr1:(r1 - 1)], mean_d_rep[r2:(clusidx - 1)], mnvecs, nclus[gg], Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg], p_tilde);
-	    
+
 	    log_lik_x_rep[r2:(clusidx - 1)] = calc_log_lik_x(mean_d_rep[r2:(clusidx - 1)],
-							     mnvecs[2, 1:Nx_between[gg]],
-							     covmats[1, 1:Nx_between[gg], 1:Nx_between[gg]],
-							     covmats[2, 1:Nx[gg], 1:Nx[gg]],
-							     covmats[3, 1:Nx[gg], 1:Nx[gg]],
+							     mnvecs[2], covmats[1],
+							     covmats[2], covmats[3],
 							     nclus[gg], cluster_size[r2:(clusidx - 1)],
 							     Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg]);
 	  } // Nx[gg] > 0
@@ -1952,7 +1986,8 @@ generated quantities { // these matrices are saved in the output but do not figu
 						      cluster_size[rr1:rr2], nclus[grpidx,2],
 						      intone[1:nclus[grpidx,2]], Mu_rep_sat[grpidx],
 						      S_PW_rep[grpidx], xbar_b_rep[grpidx, ov_idx2],
-						      cov_b_rep[grpidx], ov_idx1, ov_idx2,
+						      cov_b_rep[grpidx, ov_idx2, ov_idx2],
+						      ov_idx1, ov_idx2,
 						      within_idx, between_idx, both_idx, p_tilde,
 						      N_within, N_between, N_both);
 
