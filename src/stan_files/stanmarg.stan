@@ -183,16 +183,16 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
 
 	if (N_between > 0) {
 	  for (i in 1:nj) {	  
-	    Y_j[, i] = YX[r1 - 1 + i, notbidx] - Mu_y; // would be nice to have to_matrix() here
+	    Y_j[, i] = YX[r1 - 1 + i, notbidx] - mean_d[clz, uord_notbidx]; // would be nice to have to_matrix() here
 	  }
 	} else {
 	  for (i in 1:nj) {
-	    Y_j[, i] = YX[r1 - 1 + i] - Mu_y; // would be nice to have to_matrix() here
+	    Y_j[, i] = YX[r1 - 1 + i] - mean_d[clz]; // would be nice to have to_matrix() here
 	  }
 	}
 	r1 += nj; // for next iteration through loop
-	
-	q_W[clz] = sum(Sigma_w_inv .* tcrossprod(Y_j)) - nj * sum(Sigma_w_inv .* Y2Yc_yy);
+
+	q_W[clz] = sum(Sigma_w_inv .* tcrossprod(Y_j));
       }
     }
 
@@ -202,6 +202,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     L_W = (nperclus - to_vector(clus_size_ns)) * Sigma_w_ld;
 
     loglik = -.5 * ((L .* to_vector(clus_size_ns)) + (B .* to_vector(clus_size_ns)) + q_W + L_W);
+    
     // add constant, line 300 lav_mvnorm_cluster
     P = nperclus * (N_within + N_both) + to_vector(clus_size_ns) * N_between;
     loglik += -.5 * (P * log(2 * pi()));
