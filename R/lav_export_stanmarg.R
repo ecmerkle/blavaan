@@ -1038,7 +1038,7 @@ lav2standata <- function(lavobject) {
 
     ## these are placeholders because we do not yet allow missingness in two-level models:
     dat$Nx_between <- rep(0, dat$Np)
-    dat$Xbetvar <- matrix(, dat$Np, nvar)
+    dat$Xbetvar <- matrix(0, dat$Np, nvar)
 
     for (i in 1:dat$Np) {
       dat$Obsvar[i, 1:dat$Nobs[i]] <- Obsvar[[i]]
