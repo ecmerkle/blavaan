@@ -1006,7 +1006,7 @@ lav2standata <- function(lavobject) {
     if (is.null(xidxb)) xidxb <- integer(0)
   } else {
     xidx <- lavobject@SampleStats@x.idx[[1]]
-    xidxb <- NULL
+    xidxb <- integer(0)
   }
   allvars <- 1:nvar
 
@@ -1102,6 +1102,7 @@ lav2standata <- function(lavobject) {
                                          matrix(allvars[!(allvars %in% xidx)], dat$Np,
                                                 nvar - length(xidx), byrow = TRUE))
       }
+      dat$Xbetvar <- matrix(0, dat$Np, nvar, byrow = TRUE)
     }
   }
   dat$YX <- do.call("rbind", YX)
@@ -1157,8 +1158,8 @@ lav2standata <- function(lavobject) {
       cidx <- unlist(cidx)
     }
     mean_d_full <- rowsum.default(as.matrix(dat$YX), cidx) / dat$cluster_size
-    if (N_within > 0) {
-      for (i in 1:N_within) {
+    if (dat$N_within > 0) {
+      for (i in 1:dat$N_within) {
         mean_d_full[, dat$within_idx[i]] <- mean(as.matrix(dat$YX)[, dat$within_idx[i]])
       }
     }
@@ -1209,7 +1210,7 @@ lav2standata <- function(lavobject) {
     dat$xbar_w <- array(0, c(Ng, 0))
     dat$xbar_b <- array(0, c(Ng, 0))
     dat$cov_b <- array(0, c(Ng, 0, 0))
-    dat$cinv <- array(1, Ng)
+    dat$gs <- array(1, Ng)
   } # multilevel
   
   if (ord) {

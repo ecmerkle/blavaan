@@ -2002,7 +2002,9 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  // problems with rhat and neff computations
 	  log_lik_sat[rr1:rr2] -= log_lik[rr1:rr2];
 	  
-	} else {
+	} else if (!use_cov) {
+	  r1 = startrow[mm];
+	  r2 = endrow[mm];
 	  for (jj in r1:r2) {
 	    log_lik_rep[jj] = multi_normal_suff(YXstar_rep[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu[grpidx, obsidx[1:Nobs[mm]]], Sigmainv[mm], 1);
 
