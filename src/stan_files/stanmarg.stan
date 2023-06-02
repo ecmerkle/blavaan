@@ -442,6 +442,7 @@ data {
   int<lower=0> w15skel[sum(wg15), 3];
   int<lower=0> len_tau;
   int<lower=0, upper=1> use_dirch;
+  int<lower=0, upper=1> use_normal;
   real tau_mn[len_tau];
   real<lower=0> tau_sd[len_tau];
 }
@@ -764,7 +765,7 @@ transformed parameters {
 
 	      Tau_free[ofreepos] = Tau[g, vecpos, 1];	      
 	      // this is used if a prior goes on Tau_free, instead of Tau_ufree:
-	      if (j > 1 && use_dirch) {
+	      if (j > 1 && (use_dirch || use_normal)) {
 	        tau_jacobian += Tau_un[g, vecpos, 1]; // see https://mc-stan.org/docs/2_24/reference-manual/ordered-vector.html
 	      }
 	      ofreepos += 1;
@@ -927,6 +928,8 @@ model { // N.B.: things declared in the model block do not get saved in the outp
       i += 1;
     }
 
+  } else if (use_normal) {
+    target += normal_lpdf(Tau_free       | tau_primn, tau_sd);
   } else {
     target += normal_lpdf(Tau_ufree      | tau_primn, tau_sd);
   }

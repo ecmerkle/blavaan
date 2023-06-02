@@ -189,9 +189,15 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     dat$emiter <- 20L
   }
   if ("use_dirch" %in% names(mcmcextra$data)) {
+    if ("use_normal" %in% names(mcmcextra$data)) stop("you can only have use_dirch or use_normal, not both!!")
     dat$use_dirch <- 1L
   } else {
     dat$use_dirch <- 0L
+  }
+  if ("use_normal" %in% names(mcmcextra$data)) {
+    dat$use_normal <- 1L
+  } else {
+    dat$use_normal <- 0L
   }
   
   dat$pri_only <- prisamp
