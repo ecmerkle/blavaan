@@ -800,6 +800,10 @@ blavaan <- function(...,  # default lavaan arguments
 
         if(jag.do.fit){
             lavmodel <- lav_model_set_parameters(lavmodel, x = x)
+            LAV@ParTable <- lavpartable
+            LAV@Model <- lavmodel
+            LAV@external$mcmcout <- res
+            
             if(target == "jags"){
                 attr(x, "iterations") <- res$sample
                 sample <- res$sample
@@ -814,11 +818,18 @@ blavaan <- function(...,  # default lavaan arguments
                 }
                 ## lvs now in R instead of Stan
                 if(save.lvs & target == "stan"){
-                    stanlvs <- samp_lvs(res, lavmodel, parests$lavpartable, jagtrans$data, lavInspect(LAV, "categorical"))
-                    if(dim(stanlvs)[3L] > 0){
-                        lvsumm <- as.matrix(rstan::monitor(stanlvs, print=FALSE))
-                        cmatch <- match(colnames(stansumm), colnames(lvsumm))
-                        stansumm <- rbind(stansumm, lvsumm[,cmatch])
+                    if(lavoptions$.multilevel){
+                        stanlvs <- samp_lvs_2lev(res, lavmodel, lavsamplestats, lavdata, parests$lavpartable, jagtrans$data)
+                    } else {
+                        stanlvs <- list(samp_lvs(res, lavmodel, parests$lavpartable, jagtrans$data, lavInspect(LAV, "categorical")))
+                    }
+
+                    for(j in 1:(1 + lavoptions$.multilevel)) {
+                        if(dim(stanlvs[[j]])[3L] > 0){
+                            lvsumm <- as.matrix(rstan::monitor(stanlvs[[j]], print=FALSE))
+                            cmatch <- match(colnames(stansumm), colnames(lvsumm))
+                            stansumm <- rbind(stansumm, lvsumm[,cmatch])
+                        }
                     }
                 }
                 # burnin + sample already defined, will be saved in
@@ -838,9 +849,6 @@ blavaan <- function(...,  # default lavaan arguments
         attr(x, "control") <- bcontrol
 
         ## log-likelihoods
-        LAV@ParTable <- lavpartable
-        LAV@Model <- lavmodel
-        LAV@external$mcmcout <- res
         LAV@Options$target <- "jags" ## to ensure computation in R, vs extraction of the
                                      ## log-likehoods from Stan
         ## FIXME: modify so that fx is commensurate with logl from Stan
@@ -848,7 +856,7 @@ blavaan <- function(...,  # default lavaan arguments
         attr(x, "fx") <- get_ll(lavobject = LAV, standata = rjarg$data)[1]
         LAV@Options$target <- target
 
-        if(save.lvs && jag.do.fit && !ordmod && lavInspect(LAV, "meanstructure")) {
+        if(save.lvs && jag.do.fit && !ordmod && !lavoptions$.multilevel && lavInspect(LAV, "meanstructure")) {
             if(target == "jags"){
                 fullpmeans <- summary(make_mcmc(res))[[1]][,"Mean"]
             } else {
@@ -901,7 +909,7 @@ blavaan <- function(...,  # default lavaan arguments
         sampkls <- NA
       }
       
-      if(save.lvs && !ordmod && lavInspect(LAV, "meanstructure")) {
+      if(save.lvs && !ordmod && !lavoptions$.multilevel && lavInspect(LAV, "meanstructure")) {
         if(target == "stan"){
           lavmcmc <- make_mcmc(res, stanlvs) ## add on lvs
         }
@@ -1022,7 +1030,7 @@ blavaan <- function(...,  # default lavaan arguments
       if(save.lvs & target=="stan") extslot <- c(extslot, list(stanlvs = stanlvs))
     }
     if(jags.ic) extslot <- c(extslot, list(sampkls = sampkls))
-    if(save.lvs && !ordmod && lavInspect(LAV, "meanstructure")) {
+    if(save.lvs && !ordmod && !lavoptions$.multilevel && lavInspect(LAV, "meanstructure")) {
       extslot <- c(extslot, list(cfx = cfx, csamplls = csamplls))
       if(jags.ic) extslot <- c(extslot, list(csampkls = csampkls))
     }

@@ -250,12 +250,12 @@ samp_data <- function(mcobj, lavmodel, lavpartable, standata, lavdata, thin = 1)
   missamps
 }
 
-samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable, standata, categorical, thin = 1) {
+samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable, standata, thin = 1) {
   lavmcmc <- make_mcmc(mcobj)
   itnums <- sampnums(mcobj, thin = thin)
   nsamps <- length(itnums)
   nchain <- length(lavmcmc)
-  
+
   nmat <- lavmodel@nmat
   nblocks <- lavmodel@nblocks
   stanorig <- standata
@@ -263,14 +263,21 @@ samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable,
   lav_implied22l <- getFromNamespace("lav_mvnorm_cluster_implied22l", "lavaan")
   lav_estep <- getFromNamespace("lav_mvnorm_cluster_em_estep_ranef", "lavaan")
   
-  loop.args <- list(X = 1:nsamps, future.seed = TRUE, FUN = function(i){
+  loop.args <- list(X = 1:nsamps, FUN = function(i){
       tmpmat <- array(NA, dim=c(nchain, standata$Ntot, standata$w9use + standata$w9no))
       tmpmat2 <- array(NA, dim=c(nchain, sum(standata$nclus[,2]), standata$w9use_c + standata$w9no_c))
       for(j in 1:nchain){
         lavmodel <- fill_params(lavmcmc[[j]][i,], lavmodel, lavpartable)
 
-        modmats <- lavmodel@GLIST
+        ## get model-implied matrices from this lavmodel
+        modmats <- vector("list", length = lavmodel@nblocks)
+        nmat <- lavmodel@nmat
+        for(b in seq_len(lavmodel@nblocks)) {
+            mm.in.group <- 1:nmat[b] + cumsum(c(0,nmat))[b]
 
+            modmats[[b]] <- lavmodel@GLIST[mm.in.group]
+        }
+        
         modmat2 <- modmats[2 * (1:standata$Ng)]
         for(g in 1:length(modmat2)){
           if(!("beta" %in% names(modmat2[[g]]))) modmat2[[g]]$beta <- matrix(0, standata$m_c, standata$m_c)
@@ -289,7 +296,7 @@ samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable,
         standata$endrow <- cumsum(standata$nclus[,2])
         standata$startrow <- c(1, standata$endrow[-length(standata$endrow)] + 1)
         standata$YX <- cbind(clusmns, matrix(0, nrow(clusmns), 2))
-
+        standata$Ntot <- sum(standata$nclus[,2])
         tmpmat2[j,,] <- lvgqs(modmat2, standata)
 
         ## now level 1
@@ -304,7 +311,7 @@ samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable,
 
         tmpmat[j,,] <- lvgqs(modmat1, standata)
       }
-      list(tmpmat, tmpmat2)})
+      list(tmpmat, tmpmat2)}, future.seed = TRUE)
 
   etasamps <- do.call("future_lapply", loop.args)
 
