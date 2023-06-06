@@ -750,6 +750,11 @@ transformed parameters {
       int vecpos = 1;
       Tau_un[g] = fill_matrix(Tau_ufree, Tau_skeleton[g], w15skel, g_start15[g], f_start15[g]);
       for (i in 1:Nord) {
+	if (use_normal) {
+	  Tau[g, vecpos:(vecpos + nlevs[i] - 2), 1] = sort_asc(Tau_un[g, vecpos:(vecpos + nlevs[i] - 2), 1]);
+	  Tau_free[vecpos:(vecpos + nlevs[i] - 2)] = Tau[g, vecpos:(vecpos + nlevs[i] - 2), 1];
+	  vecpos += nlevs[i] - 1;
+	} else {
 	for (j in 1:(nlevs[i] - 1)) {
 	  real rc = Tau_skeleton[g, vecpos, 1];
 	  int eq = w15skel[opos, 1];
@@ -765,7 +770,7 @@ transformed parameters {
 
 	      Tau_free[ofreepos] = Tau[g, vecpos, 1];	      
 	      // this is used if a prior goes on Tau_free, instead of Tau_ufree:
-	      if (j > 1 && (use_dirch || use_normal)) {
+	      if (j > 1 && use_dirch) {
 	        tau_jacobian += Tau_un[g, vecpos, 1]; // see https://mc-stan.org/docs/2_24/reference-manual/ordered-vector.html
 	      }
 	      ofreepos += 1;
@@ -779,7 +784,7 @@ transformed parameters {
 	    Tau[g, vecpos, 1] = Tau_un[g, vecpos, 1];
 	  }	  
 	  vecpos += 1;
-	}
+	} }
       }
     }
   }
@@ -928,8 +933,6 @@ model { // N.B.: things declared in the model block do not get saved in the outp
       i += 1;
     }
 
-  } else if (use_normal) {
-    target += normal_lpdf(Tau_free       | tau_primn, tau_sd);
   } else {
     target += normal_lpdf(Tau_ufree      | tau_primn, tau_sd);
   }
