@@ -554,6 +554,7 @@ data {
   int<lower=0,upper=1> wigind; // do any parameters have approx equality constraint ('wiggle')?
   int<lower=0, upper=1> has_data; // are the raw data on y and x available?
   int<lower=0, upper=1> ord; // are there any ordinal variables?
+  int<lower=0, upper=1> multilev; // is this a multilevel dataset?
   int<lower=0> Nord; // how many ordinal variables?
   int<lower=0> ordidx[Nord]; // indexing of ordinal variables
   int<lower=0> OrdObsvar[Np, Nord]; // indexing of observed ordinal variables in YXo
@@ -562,7 +563,7 @@ data {
   int<lower=1> nlevs[Nord]; // how many levels does each ordinal variable have
   int<lower=1> nclus[Ng, 2]; // number of level 1 + level 2 observations
   int<lower=0> p_tilde; // total number of variables
-  vector[nclus[1, 2] > 1 ? p_tilde : p + q - Nord] YX[Ntot]; // continuous data
+  vector[multilev ? p_tilde : p + q - Nord] YX[Ntot]; // continuous data
   int YXo[Ntot, Nord]; // ordinal data
   int<lower=0> Nx[Np]; // number of fixed.x variables (within)
   int<lower=0> Nx_between[Np]; // number of fixed.x variables (between)
@@ -570,16 +571,16 @@ data {
   int<lower=0> emiter; // number of em iterations for saturated model in ppp (missing data only)
   int<lower=0, upper=1> use_suff; // should we compute likelihood via mvn sufficient stats?
   int<lower=0, upper=1> do_test; // should we do everything in generated quantities?
-  vector[nclus[1, 2] > 1 ? p_tilde : p + q - Nord] YXbar[Np]; // sample means of continuous manifest variables
-  matrix[nclus[1, 2] > 1 ? (p_tilde + 1) : (p + q - Nord + 1), nclus[1, 2] > 1 ? (p_tilde + 1) : (p + q - Nord + 1)] S[Np];     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
+  vector[multilev ? p_tilde : p + q - Nord] YXbar[Np]; // sample means of continuous manifest variables
+  matrix[multilev ? (p_tilde + 1) : (p + q - Nord + 1), multilev ? (p_tilde + 1) : (p + q - Nord + 1)] S[Np];     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
   
   int<lower=1> cluster_size[sum(nclus[,2])]; // number of obs per cluster
   int<lower=1> ncluster_sizes[Ng]; // number of unique cluster sizes
   int<lower=1> cluster_sizes[sum(ncluster_sizes)]; // unique cluster sizes
   int<lower=1> cluster_size_ns[sum(ncluster_sizes)]; // number of clusters of each size
-  int<lower=0> Xvar[Np, nclus[1, 2] > 1 ? p_tilde : p + q]; // indexing of fixed.x variables (within)
-  int<lower=0> Xdatvar[Np, nclus[1, 2] > 1 ? p_tilde : p + q]; // indexing of fixed.x in data (differs from Xvar when missing)
-  int<lower=0> Xbetvar[Np, nclus[1, 2] > 1 ? p_tilde : p + q]; // indexing of fixed.x variables (between)
+  int<lower=0> Xvar[Np, multilev ? p_tilde : p + q]; // indexing of fixed.x variables (within)
+  int<lower=0> Xdatvar[Np, multilev ? p_tilde : p + q]; // indexing of fixed.x in data (differs from Xvar when missing)
+  int<lower=0> Xbetvar[Np, multilev ? p_tilde : p + q]; // indexing of fixed.x variables (between)
   vector[p_tilde] mean_d[sum(ncluster_sizes)]; // sample means by unique cluster size
   matrix[p_tilde, p_tilde] cov_d[sum(ncluster_sizes)]; // sample covariances by unique cluster size
   matrix[p_tilde, p_tilde] cov_w[Ng]; // observed "within" covariance matrix
@@ -598,8 +599,8 @@ data {
   int ov_idx1[N_lev[1]];
   int ov_idx2[N_lev[2]];
   int both_idx[N_both];
-  vector[nclus[1, 2] > 1 ? sum(ncluster_sizes) : Ng] log_lik_x; // ll of fixed x variables by unique cluster size
-  vector[nclus[1, 2] > 1 ? sum(nclus[,2]) : Ng] log_lik_x_full; // ll of fixed x variables by cluster
+  vector[multilev ? sum(ncluster_sizes) : Ng] log_lik_x; // ll of fixed x variables by unique cluster size
+  vector[multilev ? sum(nclus[,2]) : Ng] log_lik_x_full; // ll of fixed x variables by cluster
   
   
   /* sparse matrix representations of skeletons of coefficient matrices, 
@@ -1402,7 +1403,7 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   vector[len_free_c[9]] Psi_pri_c;
   
   /* log-likelihood */
-  if (nclus[1,2] > 1 && has_data) {
+  if (multilev && has_data) {
     int grpidx;
     int r1 = 1; // index clusters per group
     int r2 = 0;
@@ -1571,12 +1572,12 @@ generated quantities { // these matrices are saved in the output but do not figu
   vector[len_free_c[9]] Psi_var_c;
 
   // loglik + ppp
-  vector[nclus[1,2] > 1 ? sum(nclus[,2]) : (use_cov ? Ng : Ntot)] log_lik; // for loo, etc
-  vector[nclus[1,2] > 1 ? sum(nclus[,2]) : (use_cov ? Ng : Ntot)] log_lik_sat; // for ppp
+  vector[multilev ? sum(nclus[,2]) : (use_cov ? Ng : Ntot)] log_lik; // for loo, etc
+  vector[multilev ? sum(nclus[,2]) : (use_cov ? Ng : Ntot)] log_lik_sat; // for ppp
 
-  vector[nclus[1,2] > 1 ? p_tilde : p + q] YXstar_rep[Ntot]; // artificial data
-  vector[nclus[1,2] > 1 ? sum(nclus[,2]) : (use_cov ? Ng : Ntot)] log_lik_rep; // for loo, etc
-  vector[nclus[1,2] > 1 ? sum(nclus[,2]) : (use_cov ? Ng : Ntot)] log_lik_rep_sat; // for ppp
+  vector[multilev ? p_tilde : p + q] YXstar_rep[Ntot]; // artificial data
+  vector[multilev ? sum(nclus[,2]) : (use_cov ? Ng : Ntot)] log_lik_rep; // for loo, etc
+  vector[multilev ? sum(nclus[,2]) : (use_cov ? Ng : Ntot)] log_lik_rep_sat; // for ppp
   matrix[p + q, p + q + 1] satout[Ng];
   matrix[p + q, p + q + 1] satrep_out[Ng];
   vector[p + q] Mu_sat[Ng];
@@ -1591,7 +1592,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   real logdetS_rep_sat_grp[Ng];
   matrix[p + q, p + q] zmat;
   vector[p_tilde] mean_d_rep[sum(nclus[,2])];
-  vector[nclus[1, 2] > 1 ? sum(nclus[,2]) : Ng] log_lik_x_rep;
+  vector[multilev ? sum(nclus[,2]) : Ng] log_lik_x_rep;
   matrix[N_both + N_within, N_both + N_within] S_PW_rep[Ng];
   matrix[p_tilde, p_tilde] S_PW_rep_full[Ng];
   vector[p_tilde] ov_mean_rep[Ng];
@@ -1685,7 +1686,7 @@ generated quantities { // these matrices are saved in the output but do not figu
       }
     } else if (do_test && has_data) {
       // generate level 2 data, then level 1
-      if (nclus[1, 2] > 1) {
+      if (multilev) {
 	int notbidx[p_tilde - N_between];
 	notbidx = between_idx[(N_between + 1):p_tilde];
 	r1 = 1;
@@ -1881,7 +1882,7 @@ generated quantities { // these matrices are saved in the output but do not figu
     }
 
     // compute log-likelihoods
-    if (nclus[1,2] > 1) { // multilevel
+    if (multilev) { // multilevel
       r1 = 1;
       r3 = 1;
       r2 = 0;
@@ -1939,7 +1940,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 	    log_lik_rep_sat[mm] += -wishart_lpdf(Sigma_rep_sat[mm, xvars, xvars] | N[mm] - 1, pow(N[mm] - 1, -1) * Sigma_rep_sat[mm, xvars, xvars]);
 	  }
 	}
-      } else if (has_data && nclus[1,2] == 1) {
+      } else if (has_data && !multilev) {
 	for (jj in r1:r2) {
 	  log_lik[jj] = multi_normal_suff(YXstar[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu[grpidx, obsidx[1:Nobs[mm]]], Sigmainv[mm], 1);
 
@@ -1951,7 +1952,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 
       // saturated and y_rep likelihoods for ppp
       if (do_test) {
-	if (nclus[1, 2] > 1) {
+	if (multilev) {
 	  // compute clusterwise log_lik_rep for grpidx
 	  if (grpidx > 1) {
 	    rr1 += nclus[(grpidx - 1), 2];

@@ -217,7 +217,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           wigind = NULL, # wiggle indicator
                           pri_only = FALSE, # prior predictive sampling
                           do_reg = FALSE, # regression sampling
-                          mean_d, cov_w, log_lik_x, cov_d, nclus, cluster_size, # level 2 data
+                          multilev, mean_d, cov_w, log_lik_x, cov_d, nclus, cluster_size, # level 2 data
                           ncluster_sizes, mean_d_full, cov_d_full, log_lik_x_full, xbar_w, xbar_b,
                           cov_b, gs, cluster_sizes, cluster_size_ns, between_idx, N_between,
                           within_idx, N_within, both_idx, N_both, ov_idx1, ov_idx2, p_tilde, N_lev,
@@ -258,12 +258,13 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$Nx_between <- array(Nx_between, length(Nx_between))
   dat$emiter <- emiter
   dat$do_reg <- do_reg
+  dat$multilev <- multilev
   
   dat$YX <- YX
   dat$YXo <- YXo
 
   dat$use_suff <- 1L
-  if (ord | nclus[2] > 1) dat$use_suff <- 0L
+  if (ord | multilev) dat$use_suff <- 0L
 
   dat$has_data <- 0L
   dat$use_cov <- 0L
@@ -399,7 +400,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$wigind <- wigind
   dat$wigind_c <- wigind_c
 
-  if (dat$nclus[2] == 1L) {
+  if (!dat$multilev) {
     dat <- c(dat, format_priors(lavpartable))
     dat <- c(dat, format_priors(lavpartable[0,], level = 2L))
   } else {

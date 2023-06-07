@@ -993,6 +993,7 @@ lav2standata <- function(lavobject) {
   multilevel <- lavInspect(lavobject, 'options')$.multilevel
   if (multilevel) Lp <- lavobject@Data@Lp
   dat$ord <- ord
+  dat$multilev <- multilevel
   dat$N <- lavInspect(lavobject, 'nobs')
 
   if (multilevel) {
