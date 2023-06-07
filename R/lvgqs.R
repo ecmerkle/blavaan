@@ -250,7 +250,7 @@ samp_data <- function(mcobj, lavmodel, lavpartable, standata, lavdata, thin = 1)
   missamps
 }
 
-samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable, standata, thin = 1) {
+samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable, standata, thin = 1, debug = FALSE) {
   lavmcmc <- make_mcmc(mcobj)
   itnums <- sampnums(mcobj, thin = thin)
   nsamps <- length(itnums)
@@ -302,8 +302,7 @@ samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable,
         ## now level 1
         standata <- stanorig
         clusidx <- rep(1:length(standata$cluster_size), standata$cluster_size)
-
-        standata$YX <- standata$YX - clusmns[clusidx,]
+        standata$YX <- with(standata, YX[, between_idx[(N_between + 1):p_tilde]]) - clusmns[clusidx,]
         modmat1 <- modmats[2 * (1:standata$Ng) - 2 + 1]
         for(g in 1:length(modmat1)){
           if(!("beta" %in% names(modmat1[[g]]))) modmat1[[g]]$beta <- matrix(0, standata$m, standata$m)
@@ -311,9 +310,15 @@ samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable,
 
         tmpmat[j,,] <- lvgqs(modmat1, standata)
       }
-      list(tmpmat, tmpmat2)}, future.seed = TRUE)
+      list(tmpmat, tmpmat2)})
+  if(!debug) {
+    loop.args <- c(loop.args, future.seed = TRUE)
+    funcall <- "future_lapply"
+  } else {
+    funcall <- "lapply"
+  }
 
-  etasamps <- do.call("future_lapply", loop.args)
+  etasamps <- do.call(funcall, loop.args)
 
   etaout <- vector("list", 2)
   for (i in 1:2) {
