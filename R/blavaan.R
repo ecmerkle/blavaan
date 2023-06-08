@@ -481,7 +481,6 @@ blavaan <- function(...,  # default lavaan arguments
     }
     if(!jag.do.fit){
       lavoptions$test <- "none"
-      lavoptions$se <- "none"
     }
     lavoptions$missing   <- "ml"
     lavoptions$cp        <- cp
@@ -805,6 +804,7 @@ blavaan <- function(...,  # default lavaan arguments
         LAV@ParTable <- lavpartable
         LAV@Model <- lavmodel
         LAV@external$mcmcout <- res
+        LAV@Options$se <- "standard"
         LAV@Options$target <- "jags" ## to ensure computation in R, vs extraction of the
                                      ## log-likehoods from Stan
         ## FIXME: modify so that fx is commensurate with logl from Stan
