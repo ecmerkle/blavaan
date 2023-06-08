@@ -254,45 +254,45 @@ the lowest value</p>
 <span><span class="co">## $loo</span></span>
 <span><span class="co">## $loo[[1]]</span></span>
 <span><span class="co">##             Estimate        SE</span></span>
-<span><span class="co">## elpd_loo -1606.00817 19.538971</span></span>
-<span><span class="co">## p_loo       37.57384  2.887826</span></span>
-<span><span class="co">## looic     3212.01635 39.077942</span></span>
+<span><span class="co">## elpd_loo -1606.13686 19.539389</span></span>
+<span><span class="co">## p_loo       37.72971  2.935415</span></span>
+<span><span class="co">## looic     3212.27371 39.078778</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $loo[[2]]</span></span>
 <span><span class="co">##             Estimate        SE</span></span>
-<span><span class="co">## elpd_loo -1646.75489 18.846213</span></span>
-<span><span class="co">## p_loo       34.44202  2.684883</span></span>
-<span><span class="co">## looic     3293.50977 37.692425</span></span>
+<span><span class="co">## elpd_loo -1646.99543 18.915928</span></span>
+<span><span class="co">## p_loo       34.85405  2.767228</span></span>
+<span><span class="co">## looic     3293.99086 37.831856</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $diff_loo</span></span>
 <span><span class="co">##  elpd_diff    se_diff </span></span>
-<span><span class="co">## -40.746714   7.975623 </span></span>
+<span><span class="co">## -40.858574   8.054982 </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $waic</span></span>
 <span><span class="co">## $waic[[1]]</span></span>
-<span><span class="co">##             Estimate        SE</span></span>
-<span><span class="co">## elpd_waic -1605.7181 19.503473</span></span>
-<span><span class="co">## p_waic       37.2838  2.846245</span></span>
-<span><span class="co">## waic       3211.4363 39.006945</span></span>
+<span><span class="co">##              Estimate       SE</span></span>
+<span><span class="co">## elpd_waic -1605.75860 19.49307</span></span>
+<span><span class="co">## p_waic       37.35145  2.87122</span></span>
+<span><span class="co">## waic       3211.51720 38.98614</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $waic[[2]]</span></span>
-<span><span class="co">##              Estimate       SE</span></span>
-<span><span class="co">## elpd_waic -1646.47636 18.81664</span></span>
-<span><span class="co">## p_waic       34.16349  2.65174</span></span>
-<span><span class="co">## waic       3292.95271 37.63327</span></span>
+<span><span class="co">##             Estimate        SE</span></span>
+<span><span class="co">## elpd_waic -1646.6769 18.868171</span></span>
+<span><span class="co">## p_waic       34.5355  2.707142</span></span>
+<span><span class="co">## waic       3293.3537 37.736342</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $diff_waic</span></span>
-<span><span class="co">## elpd_diff   se_diff </span></span>
-<span><span class="co">## -40.75823   7.97372</span></span></code></pre>
+<span><span class="co">##  elpd_diff    se_diff </span></span>
+<span><span class="co">## -40.918271   8.038179</span></span></code></pre>
 <p>In this case we can see that model 1 has lower LOOIC, and the ratio
 shows that the LOO differences is 5 SE of magnitude. This indicates that
 the model with the estimated regressions is better</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">bc12</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">/</span> <span class="va">bc12</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## elpd_diff </span></span>
-<span><span class="co">##  5.108907</span></span></code></pre>
+<span><span class="co">##   5.07246</span></span></code></pre>
 <p>Now, lets look at an example with a smaller difference between
 models, where only the smallest regression (<code>dem65~ind60</code>) is
 fixed to 0.</p>
@@ -333,42 +333,42 @@ representation, and theoretically stronger.</p>
 <span><span class="co">## $loo</span></span>
 <span><span class="co">## $loo[[1]]</span></span>
 <span><span class="co">##             Estimate        SE</span></span>
-<span><span class="co">## elpd_loo -1606.00817 19.538971</span></span>
-<span><span class="co">## p_loo       37.57384  2.887826</span></span>
-<span><span class="co">## looic     3212.01635 39.077942</span></span>
+<span><span class="co">## elpd_loo -1606.13686 19.539389</span></span>
+<span><span class="co">## p_loo       37.72971  2.935415</span></span>
+<span><span class="co">## looic     3212.27371 39.078778</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $loo[[2]]</span></span>
-<span><span class="co">##             Estimate        SE</span></span>
-<span><span class="co">## elpd_loo -1605.75269 19.439483</span></span>
-<span><span class="co">## p_loo       36.49289  2.837404</span></span>
-<span><span class="co">## looic     3211.50537 38.878965</span></span>
+<span><span class="co">##             Estimate      SE</span></span>
+<span><span class="co">## elpd_loo -1606.31449 19.4352</span></span>
+<span><span class="co">## p_loo       37.29058  2.8859</span></span>
+<span><span class="co">## looic     3212.62898 38.8704</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $diff_loo</span></span>
 <span><span class="co">##  elpd_diff    se_diff </span></span>
-<span><span class="co">## -0.2554871  0.9113369 </span></span>
+<span><span class="co">## -0.1776319  0.9514123 </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $waic</span></span>
 <span><span class="co">## $waic[[1]]</span></span>
-<span><span class="co">##             Estimate        SE</span></span>
-<span><span class="co">## elpd_waic -1605.7181 19.503473</span></span>
-<span><span class="co">## p_waic       37.2838  2.846245</span></span>
-<span><span class="co">## waic       3211.4363 39.006945</span></span>
+<span><span class="co">##              Estimate       SE</span></span>
+<span><span class="co">## elpd_waic -1605.75860 19.49307</span></span>
+<span><span class="co">## p_waic       37.35145  2.87122</span></span>
+<span><span class="co">## waic       3211.51720 38.98614</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $waic[[2]]</span></span>
 <span><span class="co">##              Estimate        SE</span></span>
-<span><span class="co">## elpd_waic -1605.52605 19.409441</span></span>
-<span><span class="co">## p_waic       36.26625  2.795464</span></span>
-<span><span class="co">## waic       3211.05210 38.818881</span></span>
+<span><span class="co">## elpd_waic -1605.96725 19.397837</span></span>
+<span><span class="co">## p_waic       36.94334  2.834454</span></span>
+<span><span class="co">## waic       3211.93451 38.795673</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $diff_waic</span></span>
 <span><span class="co">##  elpd_diff    se_diff </span></span>
-<span><span class="co">## -0.1920768  0.9111052</span></span></code></pre>
+<span><span class="co">## -0.2086534  0.9377103</span></span></code></pre>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">bc13</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">/</span> <span class="va">bc13</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## elpd_diff </span></span>
-<span><span class="co">## 0.2803432</span></span></code></pre>
+<span><span class="co">## 0.1867033</span></span></code></pre>
 <p>Lets do one last model, where only the largest regression
 (<code>dem65~dem60</code>) is fixed to 0.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
@@ -407,42 +407,42 @@ predictive differences</p>
 <span><span class="co">## $loo</span></span>
 <span><span class="co">## $loo[[1]]</span></span>
 <span><span class="co">##             Estimate        SE</span></span>
-<span><span class="co">## elpd_loo -1606.00817 19.538971</span></span>
-<span><span class="co">## p_loo       37.57384  2.887826</span></span>
-<span><span class="co">## looic     3212.01635 39.077942</span></span>
+<span><span class="co">## elpd_loo -1606.13686 19.539389</span></span>
+<span><span class="co">## p_loo       37.72971  2.935415</span></span>
+<span><span class="co">## looic     3212.27371 39.078778</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $loo[[2]]</span></span>
 <span><span class="co">##             Estimate        SE</span></span>
-<span><span class="co">## elpd_loo -1629.27589 19.869462</span></span>
-<span><span class="co">## p_loo       37.47812  2.919387</span></span>
-<span><span class="co">## looic     3258.55178 39.738925</span></span>
+<span><span class="co">## elpd_loo -1629.54680 19.898255</span></span>
+<span><span class="co">## p_loo       38.01618  3.030621</span></span>
+<span><span class="co">## looic     3259.09361 39.796509</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $diff_loo</span></span>
-<span><span class="co">## elpd_diff   se_diff </span></span>
-<span><span class="co">## -23.26772   4.03366 </span></span>
+<span><span class="co">##  elpd_diff    se_diff </span></span>
+<span><span class="co">## -23.409947   4.085455 </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $waic</span></span>
 <span><span class="co">## $waic[[1]]</span></span>
-<span><span class="co">##             Estimate        SE</span></span>
-<span><span class="co">## elpd_waic -1605.7181 19.503473</span></span>
-<span><span class="co">## p_waic       37.2838  2.846245</span></span>
-<span><span class="co">## waic       3211.4363 39.006945</span></span>
+<span><span class="co">##              Estimate       SE</span></span>
+<span><span class="co">## elpd_waic -1605.75860 19.49307</span></span>
+<span><span class="co">## p_waic       37.35145  2.87122</span></span>
+<span><span class="co">## waic       3211.51720 38.98614</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $waic[[2]]</span></span>
-<span><span class="co">##              Estimate       SE</span></span>
-<span><span class="co">## elpd_waic -1629.04210 19.84811</span></span>
-<span><span class="co">## p_waic       37.24433  2.88799</span></span>
-<span><span class="co">## waic       3258.08420 39.69622</span></span>
+<span><span class="co">##             Estimate        SE</span></span>
+<span><span class="co">## elpd_waic -1629.3057 19.872959</span></span>
+<span><span class="co">## p_waic       37.7751  3.004253</span></span>
+<span><span class="co">## waic       3258.6115 39.745918</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $diff_waic</span></span>
 <span><span class="co">##  elpd_diff    se_diff </span></span>
-<span><span class="co">## -23.323975   4.038487</span></span></code></pre>
+<span><span class="co">## -23.547129   4.067372</span></span></code></pre>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">bc14</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">/</span> <span class="va">bc14</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## elpd_diff </span></span>
-<span><span class="co">##  5.768389</span></span></code></pre>
+<span><span class="co">##  5.730071</span></span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="bayes-factor">Bayes factor<a class="anchor" aria-label="anchor" href="#bayes-factor"></a>
