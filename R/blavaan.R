@@ -773,7 +773,12 @@ blavaan <- function(...,  # default lavaan arguments
                                   res)
           stansumm <- parests$stansumm
         } else {
-          draw_mat <- as.matrix(res)
+          if(jag.do.fit) {
+            draw_mat <- as.matrix(res)
+          } else {
+            draw_mat <- NULL
+          }
+          
           if(lavoptions$.multilevel) {
             Ng <- lavInspect(LAV, 'ngroups')
             parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')[2*(1:Ng) - 1], l2s$free2, jagtrans$data, res, colnames(draw_mat))
@@ -792,7 +797,10 @@ blavaan <- function(...,  # default lavaan arguments
           } else {
             parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free'), l2s$free2, jagtrans$data, res, colnames(draw_mat))
           }
-          parests$vcorr <- cor(draw_mat[, with(parests$lavpartable, stansumnum[free > 0]), drop=FALSE])
+
+          if(jag.do.fit) {
+            parests$vcorr <- cor(draw_mat[, with(parests$lavpartable, stansumnum[free > 0]), drop=FALSE])
+          }
           stansumm <- parests$stansumm
         }
         x <- parests$x
