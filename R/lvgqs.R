@@ -44,6 +44,7 @@ lvgqs <- function(modmats, standata, getlvs = TRUE) {
         ovmean[[g]][1:p] <- ovmean[[g]][1:p,] + L_Y_A[[g]] %*% modmats[[g]]$alpha[1:m,]
       }
     }
+    if (!("alpha" %in% names(modmats[[g]]))) modmats[[g]]$alpha <- matrix(0, m, 1)
   }
 
   if ((w9use + w9no) > 0 | !getlvs) {
@@ -141,7 +142,7 @@ samp_lvs <- function(mcobj, lavmodel, lavpartable, standata, categorical, thin =
   nmat <- lavmodel@nmat
   nblocks <- lavmodel@nblocks
 
-  loop.args <- list(X = 1:nsamps, future.seed = TRUE, FUN = function(i){
+  loop.args <- list(X = 1:nsamps, FUN = function(i){
       tmpmat <- array(NA, dim=c(nchain, standata$Ntot, standata$w9use + standata$w9no))
       for(j in 1:nchain){
         lavmodel <- fill_params(lavmcmc[[j]][i,], lavmodel, lavpartable)
@@ -175,7 +176,7 @@ samp_lvs <- function(mcobj, lavmodel, lavpartable, standata, categorical, thin =
         
         tmpmat[j,,] <- lvgqs(modmats, standata2)
       }
-      tmpmat})
+      tmpmat}, future.seed = TRUE)
 
   etasamps <- do.call("future_lapply", loop.args)
   etasamps <- array(unlist(etasamps), with(standata, c(nchain, Ntot, w9use + w9no, nsamps)))

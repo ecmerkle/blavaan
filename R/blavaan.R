@@ -832,12 +832,19 @@ blavaan <- function(...,  # default lavaan arguments
                         stanlvs <- list(samp_lvs(res, lavmodel, parests$lavpartable, jagtrans$data, lavInspect(LAV, "categorical")))
                     }
 
-                    for(j in 1:(1 + lavoptions$.multilevel)) {
+                    for(j in 1:(1 + lavoptions$.multilevel)){
                         if(dim(stanlvs[[j]])[3L] > 0){
                             lvsumm <- as.matrix(rstan::monitor(stanlvs[[j]], print=FALSE))
                             cmatch <- match(colnames(stansumm), colnames(lvsumm))
                             stansumm <- rbind(stansumm, lvsumm[,cmatch])
                         }
+                    }
+
+                    if(lavoptions$.multilevel){
+                        stanlvs <- sapply(1:nrow(stanlvs[[1]]), function(i) cbind(stanlvs[[1]][i,,],
+                                                                                  stanlvs[[2]][i,,]))
+                    } else {
+                        stanlvs <- stanlvs[[1]]
                     }
                 }
                 # burnin + sample already defined, will be saved in
