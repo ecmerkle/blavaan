@@ -259,6 +259,9 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
   ## allowable group.equal names
   gqnames <- c("loadings", "intercepts", "regressions", "means", "thresholds")
   gqops <- c("=~", "~1", "~", "~1", "|")
+
+  if(!any(wiggle %in% lavpartable$label) && !any(wiggle %in% gqnames)) return( list(outlist = NULL, lavpartable = list(prior = NULL)) )
+  
   lv.names <- unique(unlist(lav_partable_attributes(lavpartable, pta=NULL)$vnames$lv))
   lpt <- lavpartable[lavpartable$label != "" & !is.na(lavpartable$label),]
 

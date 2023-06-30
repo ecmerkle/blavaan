@@ -1081,7 +1081,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
   // for clusterwise loglik computations
   if (max(nclus[,2]) > 1) for (i in 1:max(nclus[,2])) intone[i] = 1;
   
-  if (!ord && use_suff) {
+  if (!ord && (use_suff || use_cov)) {
     // sufficient stat matrices by pattern, moved to left for missing
     for (patt in 1:Np) {
       Sstar[patt] = rep_matrix(0, p + q, p + q);
