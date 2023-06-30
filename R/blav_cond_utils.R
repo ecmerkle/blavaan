@@ -99,7 +99,7 @@ samp_kls <- function(lavjags        = NULL,
 
 ## fill in eta matrices (1 per group, in list)
 fill_eta <- function(postsamp, lavmodel, lavpartable, lavsamplestats, lavdata){
-    nlv <- length(lavmodel@GLIST$alpha)
+    nlv <- nrow(lavmodel@GLIST$psi)
     etapars <- grepl("^eta", names(postsamp))
     cnums <- strsplit(names(postsamp)[etapars], "\\[|,|\\]")
     cnums <- sapply(cnums, function(x) as.numeric(x[3]))
