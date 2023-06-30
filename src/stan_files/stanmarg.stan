@@ -937,6 +937,10 @@ model { // N.B.: things declared in the model block do not get saved in the outp
     target += normal_lpdf(Tau_ufree      | tau_primn, tau_sd);
   }
 
+  if (use_normal) {
+    print(Tau_ufree);
+  }
+
   /* transform sd parameters to var or prec, depending on
      what the user wants. */
   Theta_pri = Theta_sd_free;
