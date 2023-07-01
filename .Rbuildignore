@@ -5,8 +5,7 @@
 ^\.Rproj\.user$
 ^.*\.so$
 ^.*\.o$
-^.*\.h$
-^src/stan_files$
+^src/stanmarg\.hpp$
 ^\.github$
 ^_pkgdown\.yml$
 ^docs$

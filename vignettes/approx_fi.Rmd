@@ -7,7 +7,6 @@ bibliography:
 
 ```{r pkgld, include=FALSE}
 library(blavaan, quietly=TRUE)
-library(lavaan, quietly=TRUE)
 library(bayesplot)
 ```
 

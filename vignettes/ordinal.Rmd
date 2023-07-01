@@ -7,7 +7,6 @@ bibliography:
 
 ```{r echo=FALSE, message=FALSE}
 library(blavaan, quietly=TRUE)
-library(lavaan, quietly=TRUE)
 ```
 
 ### Introduction

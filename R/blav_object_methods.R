@@ -159,8 +159,12 @@ function(object) {
 })
 
 
-setMethod("summary", signature(object = "blavaan"),
-function(object, header       = TRUE,
+summary.blavaan <- function(object, ...) {
+    bl.long.summary(object, ...)
+}
+
+bl.long.summary <- function(object,
+                 header       = TRUE,
                  fit.measures = FALSE,
                  estimates    = TRUE,
                  ci           = TRUE,
@@ -331,7 +335,9 @@ function(object, header       = TRUE,
         print(PE, nd = nd)
     } # parameter estimates
 }
-)
+
+setMethod("summary", "blavaan", summary.blavaan)
+
 
 # NB not absolutely necessary, except for
 # bug in lavaan 0.5-23.1097

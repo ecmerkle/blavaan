@@ -4,7 +4,6 @@ title: "Model Estimation"
 
 ```{r echo=FALSE, message=FALSE}
 library(blavaan, quietly=TRUE)
-library(lavaan, quietly=TRUE)
 ```
 
 Models are specified using *lavaan* syntax, and prior distribution specification can already been covered on the [previous page](prior.html). The specified model can then be estimated via the `bsem()` command, with other models being estimated via `bcfa()`, `bgrowth()`, or `blavaan()`. Regardless of the command, there are many arguments that allow you to tailor the model estimation to your needs. We discuss here some of the most popular arguments, as well as some easy-to-miss arguments.
@@ -22,7 +21,7 @@ By setting `mcmcfile = TRUE`, users can obtain the Stan (JAGS) code and data for
 
 The `mcmcextra` argument is used to supply extra information to Stan or JAGS. Users can supply a list with element names `monitor`, `data`, `syntax`, or `llnsamp`. These elements are respectively used to specify extra parameters to monitor, extra data to pass to the model estimation, extra syntax to include in the model file (JAGS only), and the number of importance samples for likelihood approximation (which is only relevant to models with ordinal variables).
 
-The `inits` argument is used to control the starting values for MCMC estimation. It can sometimes salvage a model that immediately crashes. The default, `inits = "simple"`, initializes model parameters to 0 and 1 in fashion similar to *lavaan*'s use of this argument. A second option, `inits = "prior"`, draws initial values from the prior distributions. The user can also specify a list of their own initial values via this argument, though the required list format is somewhat cumbersome. We recommend exporting the model and data using `mcmcfile = TRUE`, loading the resulting rda file, and looking at the format of the initial values that *blavaan* created there.
+The `inits` argument is used to control the starting values for MCMC estimation. It can sometimes salvage a model that immediately crashes. The default, `inits = "prior"`, draws initial values from the prior distributions. A second option, `inits = "simple"`, initializes model parameters to 0 and 1 in fashion similar to *lavaan*'s use of this argument. The user can also specify a list of their own initial values via this argument, though the required list format is somewhat cumbersome. We recommend exporting the model and data using `mcmcfile = TRUE`, loading the resulting rda file, and looking at the format of the initial values that *blavaan* created there.
 
 
 ### Parallelization

@@ -1,5 +1,4 @@
 set.seed(8675309)
-library(lavaan, quietly = TRUE)
 x1 <- rnorm(100)
 x2 <- rnorm(100)
 y1 <- 0.5 + 2*x1 + rnorm(100)
