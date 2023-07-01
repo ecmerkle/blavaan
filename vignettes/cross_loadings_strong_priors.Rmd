@@ -1,0 +1,91 @@
+---
+title: "Cross-loadings with strong priors"
+author: Mauricio Garnier-Villarreal
+bibliography:
+  - refs.bib
+---
+
+```{r pkgld, include=FALSE}
+library(blavaan, quietly=TRUE)
+library(lavaan, quietly=TRUE)
+```
+
+### Introduction 
+
+An advantage of BSEM is that we can use priors to set up **soft** constraints in the model, by estimating a parameter with a strong prior. This way the parameter is estimated, but the prior will restrict the possible values. 
+
+This was suggested by @muthen_bayesian_2012, as a way to estimate all possible cross-loadings in a CFA. This way, if the posterior distribution of the restricted parameters includes values outside of the strong prior, it can be interpreted as a model modification. This means that the parameters should be less restricted, or that the prior distribution should be relaxed. 
+
+In this tutorial we present how to estimate a CFA where all possible cross-loadings are restricted by strong priors.
+
+### Cross-loadings
+
+We will show an example with the @holswi39 data. First we will estimate the regular model with no cross-loadings and default priors.
+
+```{r, eval=T, include=FALSE, cache=TRUE}
+HS.model <- ' visual  =~ x1 + x2 + x3
+              textual =~ x4 + x5 + x6
+              speed   =~ x7 + x8 + x9 '
+
+fit_df <- bcfa(HS.model, data=HolzingerSwineford1939, 
+            std.lv=TRUE, meanstructure=T)
+```
+
+```{r, eval=F}
+HS.model <- ' visual  =~ x1 + x2 + x3
+              textual =~ x4 + x5 + x6
+              speed   =~ x7 + x8 + x9 '
+
+fit_df <- bcfa(HS.model, data=HolzingerSwineford1939, 
+            std.lv=TRUE, meanstructure=T)
+```
+
+We can see the overall model results with the ```summary()``` function, looking at the posterior distribution for the factor loadings, correlations, intercepts and variances.  
+
+```{r}
+summary(fit_df)
+```
+
+Next, we will add all possible cross-loadings with a strong prior of $N(0, \sigma = 0.08)$. The prior centers the loadings around 0 and allows them little space to move.
+
+```{r, eval=T, include=FALSE, cache=TRUE}
+HS.model.cl<-' visual  =~ x1 + x2 + x3
+              textual =~ x4 + x5 + x6
+              speed   =~ x7 + x8 + x9 
+    
+              ## Cross-loadings
+              visual =~  prior("normal(0,.08)")*x4 + prior("normal(0,.08)")*x5 + prior("normal(0,.08)")*x6 + prior("normal(0,.08)")*x7 + prior("normal(0,.08)")*x8 + prior("normal(0,.08)")*x9
+              textual =~ prior("normal(0,.08)")*x1 + prior("normal(0,.08)")*x2 + prior("normal(0,.08)")*x3 + prior("normal(0,.08)")*x7 + prior("normal(0,.08)")*x8 + prior("normal(0,.08)")*x9 
+              speed =~ prior("normal(0,.08)")*x1 + prior("normal(0,.08)")*x2 + prior("normal(0,.08)")*x3 + prior("normal(0,.08)")*x4 + prior("normal(0,.08)")*x5 + prior("normal(0,.08)")*x6'
+
+fit_cl <- bcfa(HS.model.cl, data=HolzingerSwineford1939, 
+               std.lv=TRUE, meanstructure=T, seed=867)
+```
+
+```{r, eval=F}
+HS.model.cl<-' visual  =~ x1 + x2 + x3
+              textual =~ x4 + x5 + x6
+              speed   =~ x7 + x8 + x9 
+    
+              ## Cross-loadings
+              visual =~  prior("normal(0,.08)")*x4 + prior("normal(0,.08)")*x5 + prior("normal(0,.08)")*x6 + prior("normal(0,.08)")*x7 + prior("normal(0,.08)")*x8 + prior("normal(0,.08)")*x9
+              textual =~ prior("normal(0,.08)")*x1 + prior("normal(0,.08)")*x2 + prior("normal(0,.08)")*x3 + prior("normal(0,.08)")*x7 + prior("normal(0,.08)")*x8 + prior("normal(0,.08)")*x9 
+              speed =~ prior("normal(0,.08)")*x1 + prior("normal(0,.08)")*x2 + prior("normal(0,.08)")*x3 + prior("normal(0,.08)")*x4 + prior("normal(0,.08)")*x5 + prior("normal(0,.08)")*x6'
+
+fit_cl <- bcfa(HS.model.cl, data=HolzingerSwineford1939, 
+            std.lv=TRUE, meanstructure=T)
+```
+
+Then you can look at the ```summary()``` of this model and evaluate the cross-loadings. You can specifically see whether any of the cross-loadings seem large enough to suggest that they should be kept in the model, by looking at the posterior mean (```Estimate```) and credible interval. 
+
+```{r}
+summary(fit_cl)
+```
+
+We suggest to not simply look at whether the CI excludes 0 (similar to the null hypothesis), but to evaluate whether the minimum value of the CI (the value closer to 0) is far enough away from 0 to be relavant instead of just **different** from 0. 
+
+### Caveats
+
+The model with all possible cross-loadings should not be kept as the final analysis model, but should be used as a step to make decisions about model changes. This for two main reasons, (1) this model is overfitted and would present *good* overall fit just due to the inclusion of a lot of nuisance parameters. In this example the posterior predictive p-value goes from `r paste0('ppp = ', round(fitMeasures(fit_df, 'ppp')[[1]], 3))` to `r paste0('ppp = ', round(fitMeasures(fit_cl, 'ppp')[[1]], 3))`, and is not that the model is better theoretically but that we are inflating the model fit. And (2), the addition of small-variance priors can prevent detection of important misspecifications in Bayesian confirmatory factor analysis, as it can obscure underlying problems in the model by diluting it through a large number of nuisance parameters [@jorgensen_small_variance_2019].
+
+### References

@@ -96,13 +96,16 @@ export("blavaan", "bcfa", "bsem", "bgrowth", "dpriors", "BF", "blavCompare",
        "blavTech", "blavInspect", "blavFitIndices", "labelfun", "standardizedposterior",
        "standardizedPosterior", "ppmc", "blavPredict")
 
+exportClasses("blavaan", "blavPPMC", "blavFitIndices")
+
+exportMethods("summary", "coef", "show", "predict")
+
 S3method(plot, blavaan)
-S3method(summary, blavaan)
+#S3method(summary, blavaan)
 S3method(summary, blavPPMC)
 S3method(plot, blavPPMC)
 S3method(hist, blavPPMC)
 S3method(pairs, blavPPMC)
 S3method(summary, blavFitIndices)
-exportMethods("summary", "coef", "show", "predict")
 
 useDynLib(blavaan, .registration = TRUE)

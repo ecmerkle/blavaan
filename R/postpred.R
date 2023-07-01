@@ -69,7 +69,7 @@ postpred <- function(samplls = NULL, lavobject = NULL, measure = "logl", thin = 
   mis <- FALSE
   if (any(is.na(unlist(lavdata@X)))) mis <- TRUE
 
-  loop.args <- list(X = 1:psamp, future.seed = TRUE, FUN = function(i){
+  loop.args <- list(X = 1:psamp, FUN = function(i){
     ## lists to store output (reduced after concatenated across chains)
     if (length(discFUN)) {
       ## Nested lists (iterations within discrepancy functions)
@@ -194,6 +194,7 @@ postpred <- function(samplls = NULL, lavobject = NULL, measure = "logl", thin = 
         lavoptions2$verbose <- FALSE
         lavoptions2$estimator <- "ML"
         if(catmod) lavoptions2$estimator <- "DWLS"
+        if(!lavoptions2$meanstructure) lavoptions2$missing <- 'listwise' ## to avoid "missing" ll calculations, possibly from a bug in lavaan 0.6-13
         lavoptions2$se <- "none"
         lavoptions2$test <- "standard"
         lavoptions2$optim.method <- "none"
@@ -279,7 +280,7 @@ postpred <- function(samplls = NULL, lavobject = NULL, measure = "logl", thin = 
 
     result <- list(ind = ind, csdist = csdist, csboots = csboots)
     result
-  })
+  }, future.seed = TRUE)
 
   res <- do.call("future_lapply", loop.args)
   
@@ -406,6 +407,7 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, type = "res
       }
       Sigma.hat <- implied$cov
       Mu.hat <- implied$mean
+      if(is.null(Mu.hat[[1]])) Mu.hat <- lapply(lavsamplestats@mean, matrix)
       dataeXo <- lavdata@eXo
 
       dataX <- origlavdata@X

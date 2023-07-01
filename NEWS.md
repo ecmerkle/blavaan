@@ -1,4 +1,21 @@
-# Version 0.4-5
+# Version 0.4-8
+## New features
+* This is a maintenance release with bug fixes and some changes in compiler settings
+
+
+# Version 0.4-7
+## New features
+* This is primarily an update to address a C++14 vs C++17 compilation issue identified by CRAN
+
+* But bugs from 0.4-6 have also been fixed
+
+## Bugs/glitches discovered after the release:
+* Sampling from the priors (prisamp = TRUE) fails for models with meanstructure = FALSE; the posterior is still estimated (reported by Armel Brizuela Rodríguez).
+
+* For target = "jags", models with a single-indicator latent variable, where the latent variable is regressed on other variables, return incorrect parameter estimates (reported by Brad Cosentino).
+
+
+# Version 0.4-6
 ## New features
 * For target = "stan", meanstructure=FALSE is allowed, along with use of sample.cov and sample.nobs instead of raw data
 
@@ -13,6 +30,11 @@
 * For target = "stan", fix the missing data issue from 0.4-3 (complete data in one group but not the other)
 
 * Column names are added to blavPredict(, type="lv")
+
+## Bugs/glitches discovered after the release:
+* blavFitIndices() and save.lvs = TRUE do not work correctly for models without meanstructure. Workaround is to use meanstructure = TRUE in the model estimation command (reported by Charles Hofacker).
+
+* The lavaan summary() method is sometimes called instead of the blavaan summary() method (reported by multiple users, with Shu Fai Cheung providing helpful examples).
 
 
 
@@ -33,7 +55,7 @@
 * loo() moment matching available by passing mcmcextra = list(data = list(moment_match_k_threshold))
 
 ## Bugs/glitches discovered after the release:
-* target = "stan" fails when there are complete data in one group and missing data in another group
+* target = "stan" fails when there are complete data in one group and missing data in another group (reported by Ronja Runge).
 
 * blavPredict(, type="ymis") still not available for models with ordinal variables
 

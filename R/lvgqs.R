@@ -154,6 +154,7 @@ samp_lvs <- function(mcobj, lavmodel, lavpartable, standata, categorical, thin =
 
           modmats[[g]] <- lavmodel@GLIST[ mm.in.group ]
           if(!("beta" %in% names(modmats[[g]]))) modmats[[g]]$beta <- matrix(0, standata$m, standata$m)
+          if(!("alpha" %in% names(modmats[[g]]))) modmats[[g]]$alpha <- matrix(0, standata$m, 1)
         }
 
         standata2 <- standata
@@ -211,6 +212,7 @@ samp_data <- function(mcobj, lavmodel, lavpartable, standata, lavdata, thin = 1)
 
           modmats[[g]] <- lavmodel@GLIST[ mm.in.group ]
           if(!("beta" %in% names(modmats[[g]]))) modmats[[g]]$beta <- matrix(0, standata$m, standata$m)
+          if(!("alpha" %in% names(modmats[[g]]))) modmats[[g]]$alpha <- matrix(0, standata$m, 1)
         }
 
         tmplist[[j]] <- lvgqs(modmats, standata, getlvs = FALSE)

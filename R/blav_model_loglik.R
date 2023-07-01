@@ -63,9 +63,8 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
       ## logl + baseline logl
       ll.samp <- c(0,0)
     }
-    
-    Ng <- lavInspect(lavobject, 'ngroups')
-    for(g in 1:Ng){
+
+    for(g in 1:length(implied$cov)){
       if(conditional){
         mnvec <- implied$mean[[g]]
       } else if(!lavoptions$meanstructure){
@@ -168,7 +167,6 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
       tmpobj <- lavobject
       tmpobj@implied <- lav_model_implied(lavmodel, delta = (lavmodel@parameterization == "delta"))
       tmpobj@Options$estimator <- "ML"
-      tmpobj@Options$se <- "standard"
       tmpll <- llcont(tmpobj)
     }
     if(casewise) {

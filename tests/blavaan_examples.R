@@ -28,7 +28,7 @@ fitstanc <- bsem(model, data=Data, fixed.x=TRUE, burnin=20,
 HS.model <- ' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6 '
 
-fitstanfs <- bcfa(HS.model, data=HolzingerSwineford1939,
+fitstanfs <- bcfa(HS.model, data=lavaan::HolzingerSwineford1939,
                   burnin=30, sample=10, target="stan",
                   save.lvs=TRUE, n.chains=2, seed=1, meanstructure=TRUE)
 

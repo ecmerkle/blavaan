@@ -55,12 +55,12 @@ blavaan <- function(...,  # default lavaan arguments
         }
     }
 
-    # multilevel functionality
-    if("cluster" %in% dotNames) warning("blavaan WARNING: two-level models are under development and may be unstable.")
+    # multilevel functionality not available
+    if("cluster" %in% dotNames) stop("blavaan ERROR: two-level models are not yet available.")
   
-    # prior predictives only for stan
+    # prior sampling only for stan
     if(prisamp) {
-      if(target != 'stan') stop("blavaan ERROR: prior predictives currently only work for target='stan'.")
+      if(target != 'stan') stop("blavaan ERROR: prior sampling currently only work for target='stan'.")
       if(!('test' %in% dotNames)) {
         dotdotdot$test <- 'none'
         dotNames <- c(dotNames, "test")
@@ -299,8 +299,8 @@ blavaan <- function(...,  # default lavaan arguments
     }
 
 
-    if("meanstructure" %in% names(dotdotdot) && "sample.cov" %in% names(dotdotdot)) stop('blavaan ERROR: meanstructure is not currently allowed when sample.cov is supplied')
-  
+    if("sample.mean" %in% names(dotdotdot) && !("data" %in% names(dotdotdot))) stop('blavaan ERROR: sample.mean cannot currently be used in place of data')
+
     # call lavaan
     mcdebug <- FALSE
     if("debug" %in% dotNames){
@@ -317,8 +317,11 @@ blavaan <- function(...,  # default lavaan arguments
     }
 
     # for initial values/parameter setup:
-    LAV <- do.call("lavaan", dotdotdot)
-
+    if(jag.do.fit) {
+        LAV2 <- try(do.call("lavaan", dotdotdot), silent = TRUE)
+        if(!inherits(LAV2, 'try-error')) LAV <- LAV2
+    }
+        
     if(LAV@Data@data.type == "moment") {
         if(target != "stan") stop('blavaan ERROR: full data are required for ', target, ' target.\n  Try target="stan", or consider using kd() from package semTools.')
     }
@@ -478,7 +481,6 @@ blavaan <- function(...,  # default lavaan arguments
     }
     if(!jag.do.fit){
       lavoptions$test <- "none"
-      lavoptions$se <- "none"
     }
     lavoptions$missing   <- "ml"
     lavoptions$cp        <- cp
@@ -597,7 +599,7 @@ blavaan <- function(...,  # default lavaan arguments
                     }
                 } else {
                     jagtrans <- l2s
-                }  
+                }
             }
         }
 
@@ -1120,7 +1122,7 @@ bcfa <- bsem <- function(..., cp = "srs", dp = NULL,
     mc$auto.cov.y      = TRUE
     mc$auto.th         = TRUE
     mc$auto.delta      = TRUE
-    mc[[1L]] <- quote(blavaan)
+    mc[[1L]] <- quote(blavaan::blavaan)
 
     ## change defaults depending on jags vs stan
     sampargs <- c("burnin", "sample", "adapt")
@@ -1163,7 +1165,7 @@ bgrowth <- function(..., cp = "srs", dp = NULL,
     mc$auto.cov.y      = TRUE
     mc$auto.th         = TRUE
     mc$auto.delta      = TRUE
-    mc[[1L]] <- quote(blavaan)
+    mc[[1L]] <- quote(blavaan::blavaan)
 
     ## change defaults depending on jags vs stan
     sampargs <- c("burnin", "sample", "adapt")

@@ -184,8 +184,8 @@ blavFitIndices <- function(object, thin = 1, pD = c("loo","waic","dic"),
               " the hypothesized and null models.", call. = FALSE)
     } else {
       if (rescale == "ppmc") {
-        reps_null <- postpred(samplls = baseline.model@external$samplls,
-                              lavobject = baseline.model)$ppdist[["reps"]]
+        reps_null <- unlist(postpred(samplls = baseline.model@external$samplls,
+                                     lavobject = baseline.model)$ppdist[["reps"]])
       }
       pD_null <- fitMeasures(baseline.model, paste0('p_', pD))
     }

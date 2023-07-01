@@ -6,6 +6,7 @@ bibliography:
 
 ```{r echo=FALSE, message=FALSE}
 library(blavaan, quietly=TRUE)
+library(lavaan, quietly=TRUE)
 ```
 
 Say that we specify a model of the Bollen political democracy data and draw posterior samples using the following *blavaan* code (where `save.lvs` saves the latent variable samples for further use):
@@ -46,7 +47,7 @@ blavInspect(fit, 'neff')
 where R-hat values near 1.00 indicate convergence, and large effective sample sizes (hundreds or above) are preferred. For details on these metrics, see, e.g., the Posterior Analysis section of the [Stan Reference Manual](https://mc-stan.org/docs/2_28/reference-manual/index.html).
 
 
-If the model has definitely not converged (as judged by Rhat), blavaan will issue multiple warnings. Lack of convergence is sometimes caused by bad initial values (by default, blavaan generates random initial values), so it is occasionally helpful to re-estimate the model a second time. Otherwise, lack of convergence may imply prior distributions that severely conflict with the data, or an ill-defined model. It is sometimes helpful to try to fit the same model in *lavaan*, to observe the types of errors that occur there.
+If the model has definitely not converged (as judged by Rhat), blavaan will issue multiple warnings. Lack of convergence is sometimes caused by bad initial values or by a chain that strays to an extreme region of the posterior space. In these cases, it can be helpful to re-estimate the model a second time. It is also helpful to specify mildly-informative priors on loading parameters, so that the chains do not wander to extreme loading values. For example, if you expect all your variables to be positively correlated and some loadings are being fixed to 1 for identification, then Normal(1,.5) would often be a mildly-informative prior. Otherwise, lack of convergence may imply prior distributions that severely conflict with the data, or an ill-defined model. It is sometimes helpful to try to fit the same model in *lavaan*, to observe whether errors occur there. 
 
 
 ### Model Fit & Comparison
