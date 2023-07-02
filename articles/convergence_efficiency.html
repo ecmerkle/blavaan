@@ -164,25 +164,25 @@ function</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"rhat"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##   ind60=~x1   ind60=~x2   ind60=~x3           a           b           c </span></span>
-<span><span class="co">##   1.0002540   1.0005708   1.0003816   0.9995716   1.0006028   1.0007189 </span></span>
+<span><span class="co">##   1.0005453   1.0009271   1.0022684   1.0003763   0.9998406   1.0003980 </span></span>
 <span><span class="co">##           d           a           b           c           d dem60~ind60 </span></span>
-<span><span class="co">##   1.0010764   0.9995716   1.0006028   1.0007189   1.0010764   0.9998395 </span></span>
+<span><span class="co">##   0.9993419   1.0003763   0.9998406   1.0003980   0.9993419   1.0010347 </span></span>
 <span><span class="co">## dem65~ind60 dem65~dem60      y1~~y5      y2~~y4      y2~~y6      y3~~y7 </span></span>
-<span><span class="co">##   1.0002381   0.9994453   0.9996752   0.9995305   1.0001074   0.9991798 </span></span>
+<span><span class="co">##   1.0004080   0.9999676   1.0000291   0.9994473   0.9994205   1.0010620 </span></span>
 <span><span class="co">##      y4~~y8      y6~~y8      x1~~x1      x2~~x2      x3~~x3      y1~~y1 </span></span>
-<span><span class="co">##   0.9996521   0.9996519   1.0004944   0.9998991   0.9996217   0.9997909 </span></span>
+<span><span class="co">##   1.0005256   1.0005261   1.0006474   1.0004558   0.9999645   1.0005097 </span></span>
 <span><span class="co">##      y2~~y2      y3~~y3      y4~~y4      y5~~y5      y6~~y6      y7~~y7 </span></span>
-<span><span class="co">##   0.9996741   0.9991496   0.9992941   0.9999842   0.9998280   0.9996597 </span></span>
+<span><span class="co">##   0.9992815   1.0002557   1.0004767   0.9995329   0.9999013   1.0010135 </span></span>
 <span><span class="co">##      y8~~y8        x1~1        x2~1        x3~1        y1~1        y2~1 </span></span>
-<span><span class="co">##   0.9993240   1.0022212   1.0022546   1.0029188   1.0041307   1.0009686 </span></span>
+<span><span class="co">##   0.9999925   1.0003933   0.9999678   0.9997628   0.9997962   0.9996025 </span></span>
 <span><span class="co">##        y3~1        y4~1        y5~1        y6~1        y7~1        y8~1 </span></span>
-<span><span class="co">##   1.0017941   1.0048697   1.0029140   1.0046082   1.0047364   1.0029045</span></span></code></pre>
+<span><span class="co">##   1.0008636   1.0010702   1.0006603   0.9998754   1.0018665   1.0011047</span></span></code></pre>
 <p>With large models it can be cumbersome to look over all of these
 entries. We can instead find the largest <span class="math inline">\(\hat{R}\)</span> to see if they are all less than
 <span class="math inline">\(1.05\)</span></p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"psrf"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] 1.00487</span></span></code></pre>
+<pre><code><span><span class="co">## [1] 1.002268</span></span></code></pre>
 <p>If all <span class="math inline">\(\hat{R} &lt; 1.05\)</span> then we
 can establish that the MCMC chains have converged to a stable solution.
 If the model has not converged, you might increase the number of
@@ -223,19 +223,19 @@ function</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"neff"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##   ind60=~x1   ind60=~x2   ind60=~x3           a           b           c </span></span>
-<span><span class="co">##    1767.643    1596.598    1830.477    1804.864    1972.311    2309.472 </span></span>
+<span><span class="co">##   1887.6970   1841.8755   2027.0739   2008.4684   2055.3141   2135.4165 </span></span>
 <span><span class="co">##           d           a           b           c           d dem60~ind60 </span></span>
-<span><span class="co">##    1687.908    1804.864    1972.311    2309.472    1687.908    2327.471 </span></span>
+<span><span class="co">##   1931.1674   2008.4684   2055.3141   2135.4165   1931.1674   2310.1164 </span></span>
 <span><span class="co">## dem65~ind60 dem65~dem60      y1~~y5      y2~~y4      y2~~y6      y3~~y7 </span></span>
-<span><span class="co">##    3732.998    3388.232    1993.211    2627.636    2549.098    1994.449 </span></span>
+<span><span class="co">##   2516.9560   2382.2357   2412.7558   2413.5589   2922.6377   2635.5491 </span></span>
 <span><span class="co">##      y4~~y8      y6~~y8      x1~~x1      x2~~x2      x3~~x3      y1~~y1 </span></span>
-<span><span class="co">##    2514.269    1725.870    2800.582    2249.495    3568.241    2190.117 </span></span>
+<span><span class="co">##   2312.6734   1959.4439   1990.0712   1713.1246   3289.6407   2685.7491 </span></span>
 <span><span class="co">##      y2~~y2      y3~~y3      y4~~y4      y5~~y5      y6~~y6      y7~~y7 </span></span>
-<span><span class="co">##    3541.891    2936.564    2365.483    2089.770    2593.758    2072.954 </span></span>
+<span><span class="co">##   2973.6913   2868.3583   2589.2401   2896.9498   2841.8743   2891.0564 </span></span>
 <span><span class="co">##      y8~~y8        x1~1        x2~1        x3~1        y1~1        y2~1 </span></span>
-<span><span class="co">##    1733.724    1277.294    1259.063    1321.837    1296.981    1695.816 </span></span>
+<span><span class="co">##   2097.0977   1103.6791   1148.8941   1231.1351   1261.9368   1367.9775 </span></span>
 <span><span class="co">##        y3~1        y4~1        y5~1        y6~1        y7~1        y8~1 </span></span>
-<span><span class="co">##    1434.419    1201.374    1208.744    1295.823    1106.129    1134.529</span></span></code></pre>
+<span><span class="co">##   1370.1903   1072.3919   1064.6664   1108.0135   1033.5938    983.4699</span></span></code></pre>
 <p>ESS is a sample size, so it should be at least 100 (optimally, much
 more than 100) times the number of chains in order to be reliable and to
 indicate that estimates of the posterior quantiles are reliable. In this
@@ -245,7 +245,7 @@ example, because we have 3 chains, we would want to see at least
 function:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"neff"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] 1106.129</span></span></code></pre>
+<pre><code><span><span class="co">## [1] 983.4699</span></span></code></pre>
 </div>
 <div class="section level3 unnumbered">
 <h3 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
