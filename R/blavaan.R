@@ -55,12 +55,12 @@ blavaan <- function(...,  # default lavaan arguments
         }
     }
 
-    # multilevel functionality not available
-    if("cluster" %in% dotNames) stop("blavaan ERROR: two-level models are not yet available.")
+    # multilevel functionality
+    if("cluster" %in% dotNames) warning("blavaan WARNING: two-level models are under development and may be unstable.")
   
-    # prior sampling only for stan
+    # prior predictives only for stan
     if(prisamp) {
-      if(target != 'stan') stop("blavaan ERROR: prior sampling currently only work for target='stan'.")
+      if(target != 'stan') stop("blavaan ERROR: prior predictives currently only work for target='stan'.")
       if(!('test' %in% dotNames)) {
         dotdotdot$test <- 'none'
         dotNames <- c(dotNames, "test")
@@ -210,7 +210,7 @@ blavaan <- function(...,  # default lavaan arguments
     dotdotdot$do.fit <- FALSE
     dotdotdot$se <- "none"; dotdotdot$test <- "none"
     # run for 1 iteration to obtain info about equality constraints, for npar
-    dotdotdot$control <- list(iter.max = 1); dotdotdot$warn <- TRUE
+    dotdotdot$control <- list(iter.max = 1, eval.max = 1); dotdotdot$warn <- TRUE
     dotdotdot$optim.force.converged <- TRUE
     if(target != "stan") dotdotdot$meanstructure <- TRUE
     dotdotdot$missing <- "direct"   # direct/ml creates error? (bug in lavaan?)
@@ -299,8 +299,8 @@ blavaan <- function(...,  # default lavaan arguments
     }
 
 
-    if("sample.mean" %in% names(dotdotdot) && !("data" %in% names(dotdotdot))) stop('blavaan ERROR: sample.mean cannot currently be used in place of data')
-
+    if("meanstructure" %in% names(dotdotdot) && "sample.cov" %in% names(dotdotdot)) stop('blavaan ERROR: meanstructure is not currently allowed when sample.cov is supplied')
+  
     # call lavaan
     mcdebug <- FALSE
     if("debug" %in% dotNames){
@@ -321,7 +321,7 @@ blavaan <- function(...,  # default lavaan arguments
         LAV2 <- try(do.call("lavaan", dotdotdot), silent = TRUE)
         if(!inherits(LAV2, 'try-error')) LAV <- LAV2
     }
-        
+
     if(LAV@Data@data.type == "moment") {
         if(target != "stan") stop('blavaan ERROR: full data are required for ', target, ' target.\n  Try target="stan", or consider using kd() from package semTools.')
     }
@@ -481,6 +481,7 @@ blavaan <- function(...,  # default lavaan arguments
     }
     if(!jag.do.fit){
       lavoptions$test <- "none"
+      lavoptions$se <- "none"
     }
     lavoptions$missing   <- "ml"
     lavoptions$cp        <- cp
@@ -537,45 +538,65 @@ blavaan <- function(...,  # default lavaan arguments
                            silent = TRUE)
 
                 if(!inherits(l2s, "try-error")){
-                    lavpartable$prior[as.numeric(rownames(l2s$lavpartable))] <- l2s$lavpartable$prior
-                    ldargs <- c(l2s$dat, list(lavpartable = l2s$lavpartable, dumlv = l2s$dumlv,
-                                              save_lvs = save.lvs, do_test = !(lavoptions$test == "none") ))
+                    l2slev2 <- try(lav2stanmarg(lavobject = LAV, dp = dp,
+                                                n.chains = n.chains, mcmcextra = mcmcextra,
+                                                inits = initsin, wiggle = wiggle,
+                                                wiggle.sd = wiggle.sd, prisamp = prisamp,
+                                                level = 2L, indat = l2s$dat))
+                
+                    if(!inherits(l2slev2, "try-error")){
+                        l2s$dat <- c(l2s$dat, l2slev2$dat)
+                        l2s$dat <- l2s$dat[!duplicated(names(l2s$dat))]
 
-                    ## add priors to lavpartable, including wiggle
-                    if(length(wiggle) > 0){
-                      wigrows <- which(l2s$wigpris != "")
-                      lavpartable$prior[as.numeric(rownames(l2s$lavpartable))[wigrows]] <- l2s$wigpris[wigrows]
-                    }
+                        l2s$free2 <- c(l2s$free2, l2slev2$free2)
 
-                    jagtrans <- try(do.call("stanmarg_data", ldargs), silent = TRUE)
+                        l2s$lavpartable <- rbind(l2s$lavpartable, l2slev2$lavpartable)
+                        l2s$wigpris <- c(l2s$wigpris, l2slev2$wigpris)
+                        l2s$init <- lapply(1:length(l2s$init), function(i) c(l2s$init[[i]], l2slev2$init[[i]]))
+                  
+                        lavpartable$prior[as.numeric(rownames(l2s$lavpartable))] <- l2s$lavpartable$prior
+                        ldargs <- c(l2s$dat, list(lavpartable = l2s$lavpartable, dumlv = l2s$dumlv,
+                                                  dumlv_c = l2slev2$dumlv_c,
+                                                  save_lvs = save.lvs, do_test = !(lavoptions$test == "none") ))
 
-                    if(inherits(jagtrans, "try-error")) stop(jagtrans)
+                        ## add priors to lavpartable, including wiggle
+                        if(length(wiggle) > 0){
+                            wigrows <- which(l2s$wigpris != "")
+                            lavpartable$prior[as.numeric(rownames(l2s$lavpartable))[wigrows]] <- l2s$wigpris[wigrows]
+                        }
 
-                    ## add lkj for unrestricted psi
-                    if(jagtrans$fullpsi == 1L){
-                      psirows <- which(l2s$lavpartable$mat == "lvrho")
-                      lavpartable$prior[as.numeric(rownames(l2s$lavpartable))[psirows]] <- paste0("lkj_corr(", jagtrans$psi_r_alpha[1], ")")
-                    }
+                        jagtrans <- try(do.call("stanmarg_data", ldargs), silent = TRUE)
+                        if(inherits(jagtrans, "try-error")) stop(jagtrans)
+                        
+                        ## add lkj for unrestricted psi
+                        if(jagtrans$fullpsi == 1L){
+                            psirows <- which(l2s$lavpartable$mat == "lvrho")
+                            lavpartable$prior[as.numeric(rownames(l2s$lavpartable))[psirows]] <- paste0("lkj_corr(", jagtrans$psi_r_alpha[1], ")")
+                        }
 
-                    jagtrans <- list(data = jagtrans,
-                                     monitors = c("ly_sign",
-                                           #"lx_sign",
-                                           "bet_sign", "g_sign",
-                                           "Theta_cov", "Theta_var",
-                                           #"Theta_x_cov", "Theta_x_var",
-                                           "Psi_cov", "Psi_var",
-                                           #"Ph_cov", "Ph_var",
-                                           "Nu_free", "Alpha_free", "Tau_free"))
-                    if(lavoptions$test != "none"){
-                      jagtrans$monitors <- c(jagtrans$monitors, "log_lik", "log_lik_sat", "ppp")
-                    }
+                        stanmon <- c("ly_sign", "bet_sign", "Theta_cov", "Theta_var",
+                                     "Psi_cov", "Psi_var", "Nu_free", "Alpha_free", "Tau_free")
+                        if(lavoptions$.multilevel){
+                          stanmon <- c(stanmon, paste0(stanmon, "_c"))
+                          stanmon <- stanmon[-which(stanmon == "Tau_free_c")]
+                        }
+                        if(lavoptions$test != "none"){
+                          stanmon <- c(stanmon, c("log_lik", "log_lik_sat", "ppp"))
+                        } else if(!lavInspect(LAV, 'categorical') && (lavoptions$.multilevel || lavInspect(LAV, 'meanstructure'))){
+                          stanmon <- c(stanmon, "log_lik")
+                        }
 
-                    if("init" %in% names(l2s)){
-                      jagtrans <- c(jagtrans, list(inits = l2s$init))
-                    }
+                        jagtrans <- list(data = jagtrans, monitors = stanmon)
 
-                    if(ordmod && save.lvs){
-                      jagtrans$monitors <- c(jagtrans$monitors, "YXostar")
+                        if("init" %in% names(l2s)){
+                            jagtrans <- c(jagtrans, list(inits = l2s$init))
+                        }
+
+                        if(ordmod && save.lvs){
+                            jagtrans$monitors <- c(jagtrans$monitors, "YXostar")
+                        }
+                    } else {
+                        jagtrans <- l2slev2
                     }
                 } else {
                     jagtrans <- l2s
@@ -755,7 +776,34 @@ blavaan <- function(...,  # default lavaan arguments
                                   res)
           stansumm <- parests$stansumm
         } else {
-          parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free'), l2s$free2, jagtrans$data, res)
+          if(jag.do.fit) {
+            draw_mat <- as.matrix(res)
+          } else {
+            draw_mat <- NULL
+          }
+          
+          if(lavoptions$.multilevel) {
+            Ng <- lavInspect(LAV, 'ngroups')
+            parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')[2*(1:Ng) - 1], l2s$free2, jagtrans$data, res, colnames(draw_mat))
+            parests2 <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')[2*(1:Ng)], l2s$free2, jagtrans$data, res, colnames(draw_mat), level = 2L)
+            ## combine list elements of the partables
+            parests$lavpartable <- mapply("c", parests$lavpartable, parests2$lavpartable, SIMPLIFY = FALSE)
+            ##parests$vcorr <- ## need level 1 by level 2!
+            ## reorder to match original partable ordering
+            idord <- parests$lavpartable$id
+            freeid <- idord[parests$lavpartable$free > 0]
+            parests$lavpartable <- lapply(parests$lavpartable, function(x) x[order(idord)])
+            parests$x <- c(parests$x, parests2$x)
+            parests$sd <- c(parests$sd, parests2$sd)
+            parests$x <- parests$x[order(freeid)]
+            parests$sd <- parests$sd[order(freeid)]
+          } else {
+            parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free'), l2s$free2, jagtrans$data, res, colnames(draw_mat))
+          }
+
+          if(jag.do.fit) {
+            parests$vcorr <- cor(draw_mat[, with(parests$lavpartable, stansumnum[free > 0]), drop=FALSE])
+          }
           stansumm <- parests$stansumm
         }
         x <- parests$x
@@ -763,6 +811,10 @@ blavaan <- function(...,  # default lavaan arguments
 
         if(jag.do.fit){
             lavmodel <- lav_model_set_parameters(lavmodel, x = x)
+            LAV@ParTable <- lavpartable
+            LAV@Model <- lavmodel
+            LAV@external$mcmcout <- res
+            
             if(target == "jags"){
                 attr(x, "iterations") <- res$sample
                 sample <- res$sample
@@ -777,11 +829,25 @@ blavaan <- function(...,  # default lavaan arguments
                 }
                 ## lvs now in R instead of Stan
                 if(save.lvs & target == "stan"){
-                    stanlvs <- samp_lvs(res, lavmodel, parests$lavpartable, jagtrans$data, lavInspect(LAV, "categorical"))
-                    if(dim(stanlvs)[3L] > 0){
-                        lvsumm <- as.matrix(rstan::monitor(stanlvs, print=FALSE))
-                        cmatch <- match(colnames(stansumm), colnames(lvsumm))
-                        stansumm <- rbind(stansumm, lvsumm[,cmatch])
+                    if(lavoptions$.multilevel){
+                        stanlvs <- samp_lvs_2lev(res, lavmodel, lavsamplestats, lavdata, parests$lavpartable, jagtrans$data)
+                    } else {
+                        stanlvs <- list(samp_lvs(res, lavmodel, parests$lavpartable, jagtrans$data, lavInspect(LAV, "categorical")))
+                    }
+
+                    for(j in 1:(1 + lavoptions$.multilevel)){
+                        if(dim(stanlvs[[j]])[3L] > 0){
+                            lvsumm <- as.matrix(rstan::monitor(stanlvs[[j]], print=FALSE))
+                            cmatch <- match(colnames(stansumm), colnames(lvsumm))
+                            stansumm <- rbind(stansumm, lvsumm[,cmatch])
+                        }
+                    }
+
+                    if(lavoptions$.multilevel){
+                        stanlvs <- sapply(1:nrow(stanlvs[[1]]), function(i) cbind(stanlvs[[1]][i,,],
+                                                                                  stanlvs[[2]][i,,]))
+                    } else {
+                        stanlvs <- stanlvs[[1]]
                     }
                 }
                 # burnin + sample already defined, will be saved in
@@ -801,10 +867,6 @@ blavaan <- function(...,  # default lavaan arguments
         attr(x, "control") <- bcontrol
 
         ## log-likelihoods
-        LAV@ParTable <- lavpartable
-        LAV@Model <- lavmodel
-        LAV@external$mcmcout <- res
-        LAV@Options$se <- "standard"
         LAV@Options$target <- "jags" ## to ensure computation in R, vs extraction of the
                                      ## log-likehoods from Stan
         ## FIXME: modify so that fx is commensurate with logl from Stan
@@ -812,7 +874,7 @@ blavaan <- function(...,  # default lavaan arguments
         attr(x, "fx") <- get_ll(lavobject = LAV, standata = rjarg$data)[1]
         LAV@Options$target <- target
 
-        if(save.lvs && jag.do.fit && !ordmod && lavInspect(LAV, "meanstructure")) {
+        if(save.lvs && jag.do.fit && !ordmod && !lavoptions$.multilevel && lavInspect(LAV, "meanstructure")) {
             if(target == "jags"){
                 fullpmeans <- summary(make_mcmc(res))[[1]][,"Mean"]
             } else {
@@ -865,7 +927,7 @@ blavaan <- function(...,  # default lavaan arguments
         sampkls <- NA
       }
       
-      if(save.lvs && !ordmod && lavInspect(LAV, "meanstructure")) {
+      if(save.lvs && !ordmod && !lavoptions$.multilevel && lavInspect(LAV, "meanstructure")) {
         if(target == "stan"){
           lavmcmc <- make_mcmc(res, stanlvs) ## add on lvs
         }
@@ -986,7 +1048,7 @@ blavaan <- function(...,  # default lavaan arguments
       if(save.lvs & target=="stan") extslot <- c(extslot, list(stanlvs = stanlvs))
     }
     if(jags.ic) extslot <- c(extslot, list(sampkls = sampkls))
-    if(save.lvs && !ordmod && lavInspect(LAV, "meanstructure")) {
+    if(save.lvs && !ordmod && !lavoptions$.multilevel && lavInspect(LAV, "meanstructure")) {
       extslot <- c(extslot, list(cfx = cfx, csamplls = csamplls))
       if(jags.ic) extslot <- c(extslot, list(csampkls = csampkls))
     }
@@ -1061,7 +1123,7 @@ bcfa <- bsem <- function(..., cp = "srs", dp = NULL,
     mc$auto.cov.y      = TRUE
     mc$auto.th         = TRUE
     mc$auto.delta      = TRUE
-    mc[[1L]] <- quote(blavaan::blavaan)
+    mc[[1L]] <- quote(blavaan)
 
     ## change defaults depending on jags vs stan
     sampargs <- c("burnin", "sample", "adapt")
@@ -1104,7 +1166,7 @@ bgrowth <- function(..., cp = "srs", dp = NULL,
     mc$auto.cov.y      = TRUE
     mc$auto.th         = TRUE
     mc$auto.delta      = TRUE
-    mc[[1L]] <- quote(blavaan::blavaan)
+    mc[[1L]] <- quote(blavaan)
 
     ## change defaults depending on jags vs stan
     sampargs <- c("burnin", "sample", "adapt")
