@@ -11,6 +11,7 @@ lvgqs <- function(modmats, standata, getlvs = TRUE) {
   grpnum <- standata$grpnum
   Obsvar <- standata$Obsvar
   Nobs <- standata$Nobs
+  Ntot <- standata$Ntot
   YX <- standata$YX
   usepsi <- standata$usepsi
   nopsi <- standata$nopsi
@@ -43,6 +44,8 @@ lvgqs <- function(modmats, standata, getlvs = TRUE) {
         ovmean[[g]][1:p] <- ovmean[[g]][1:p,] + L_Y_A[[g]] %*% modmats[[g]]$alpha[1:m,]
       }
     }
+    if (!("alpha" %in% names(modmats[[g]]))) modmats[[g]]$alpha <- matrix(0, m, 1)
+    if(!("beta" %in% names(modmats[[g]]))) modmats[[g]]$beta <- matrix(0, standata$m, standata$m)
   }
 
   if ((w9use + w9no) > 0 | !getlvs) {
@@ -140,7 +143,7 @@ samp_lvs <- function(mcobj, lavmodel, lavpartable, standata, categorical, thin =
   nmat <- lavmodel@nmat
   nblocks <- lavmodel@nblocks
 
-  loop.args <- list(X = 1:nsamps, FUN=function(i){
+  loop.args <- list(X = 1:nsamps, FUN = function(i){
       tmpmat <- array(NA, dim=c(nchain, standata$Ntot, standata$w9use + standata$w9no))
       for(j in 1:nchain){
         lavmodel <- fill_params(lavmcmc[[j]][i,], lavmodel, lavpartable)
@@ -151,8 +154,6 @@ samp_lvs <- function(mcobj, lavmodel, lavpartable, standata, categorical, thin =
           mm.in.group <- 1:nmat[g] + cumsum(c(0,nmat))[g]
 
           modmats[[g]] <- lavmodel@GLIST[ mm.in.group ]
-          if(!("beta" %in% names(modmats[[g]]))) modmats[[g]]$beta <- matrix(0, standata$m, standata$m)
-          if(!("alpha" %in% names(modmats[[g]]))) modmats[[g]]$alpha <- matrix(0, standata$m, 1)
         }
 
         standata2 <- standata
@@ -209,8 +210,6 @@ samp_data <- function(mcobj, lavmodel, lavpartable, standata, lavdata, thin = 1)
           mm.in.group <- 1:nmat[g] + cumsum(c(0,nmat))[g]
 
           modmats[[g]] <- lavmodel@GLIST[ mm.in.group ]
-          if(!("beta" %in% names(modmats[[g]]))) modmats[[g]]$beta <- matrix(0, standata$m, standata$m)
-          if(!("alpha" %in% names(modmats[[g]]))) modmats[[g]]$alpha <- matrix(0, standata$m, 1)
         }
 
         tmplist[[j]] <- lvgqs(modmats, standata, getlvs = FALSE)
@@ -251,6 +250,95 @@ samp_data <- function(mcobj, lavmodel, lavpartable, standata, lavdata, thin = 1)
   missamps
 }
 
+samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable, standata, thin = 1, debug = FALSE) {
+  lavmcmc <- make_mcmc(mcobj)
+  itnums <- sampnums(mcobj, thin = thin)
+  nsamps <- length(itnums)
+  nchain <- length(lavmcmc)
+
+  nmat <- lavmodel@nmat
+  nblocks <- lavmodel@nblocks
+  stanorig <- standata
+
+  lav_implied22l <- getFromNamespace("lav_mvnorm_cluster_implied22l", "lavaan")
+  lav_estep <- getFromNamespace("lav_mvnorm_cluster_em_estep_ranef", "lavaan")
+  
+  loop.args <- list(X = 1:nsamps, FUN = function(i){
+      tmpmat <- array(NA, dim=c(nchain, standata$Ntot, standata$w9use + standata$w9no))
+      tmpmat2 <- array(NA, dim=c(nchain, sum(standata$nclus[,2]), standata$w9use_c + standata$w9no_c))
+      for(j in 1:nchain){
+        lavmodel <- fill_params(lavmcmc[[j]][i,], lavmodel, lavpartable)
+
+        ## get model-implied matrices from this lavmodel
+        modmats <- vector("list", length = lavmodel@nblocks)
+        nmat <- lavmodel@nmat
+        for(b in seq_len(lavmodel@nblocks)) {
+            mm.in.group <- 1:nmat[b] + cumsum(c(0,nmat))[b]
+
+            modmats[[b]] <- lavmodel@GLIST[mm.in.group]
+        }
+        
+        modmat2 <- modmats[2 * (1:standata$Ng)]
+        for(g in 1:length(modmat2)){
+          if(!("beta" %in% names(modmat2[[g]]))) modmat2[[g]]$beta <- matrix(0, standata$m_c, standata$m_c)
+        }
+
+        out <- lav_implied22l(lavdata@Lp[[1]], lav_model_implied(lavmodel))
+        clusmns <- lav_estep(YLp = lavsamplestats@YLp[[1]], Lp = lavdata@Lp[[1]],
+                             sigma.w = out$sigma.w, sigma.b = out$sigma.b,
+                             sigma.zz = out$sigma.zz, sigma.yz = out$sigma.yz,
+                             mu.z = out$mu.z, mu.w = out$mu.w, mu.b = out$mu.b, se = FALSE)
+
+        ## manipulations to reuse existing lvgqs code
+        standata$p <- standata$p_c
+        standata$q <- 0
+        standata$m <- standata$m_c
+        standata$endrow <- cumsum(standata$nclus[,2])
+        standata$startrow <- c(1, standata$endrow[-length(standata$endrow)] + 1)
+        standata$YX <- cbind(clusmns, matrix(0, nrow(clusmns), 2))
+        standata$Ntot <- sum(standata$nclus[,2])
+        tmpmat2[j,,] <- lvgqs(modmat2, standata)
+
+        ## now level 1
+        standata <- stanorig
+        clusidx <- rep(1:length(standata$cluster_size), standata$cluster_size)
+        standata$YX <- with(standata, YX[, between_idx[(N_between + 1):p_tilde]]) - clusmns[clusidx,]
+        modmat1 <- modmats[2 * (1:standata$Ng) - 2 + 1]
+        for(g in 1:length(modmat1)){
+          if(!("beta" %in% names(modmat1[[g]]))) modmat1[[g]]$beta <- matrix(0, standata$m, standata$m)
+        }
+
+        tmpmat[j,,] <- lvgqs(modmat1, standata)
+      }
+      list(tmpmat, tmpmat2)})
+  if(!debug) {
+    loop.args <- c(loop.args, future.seed = TRUE)
+    funcall <- "future_lapply"
+  } else {
+    funcall <- "lapply"
+  }
+
+  etasamps <- do.call(funcall, loop.args)
+
+  etaout <- vector("list", 2)
+  for (i in 1:2) {
+    tmpeta <- lapply(etasamps, function(x) x[[i]])
+    tmpN <- ifelse(i==1, standata$Ntot, sum(standata$nclus[,2]))
+    tmpw9 <- ifelse(i==1, standata$w9use + standata$w9no, standata$w9use_c + standata$w9no_c)
+
+    tmpeta <- array(unlist(tmpeta), with(standata, c(nchain, tmpN, tmpw9, nsamps)))
+
+    tmpeta <- aperm(tmpeta, c(4,1,3,2))
+    dim(tmpeta) <- with(standata, c(nsamps, nchain, tmpN * tmpw9))
+    if(tmpw9 > 0) {
+      dimnames(tmpeta)[[3]] <- with(standata, paste0("eta[", rep(1:tmpN, each=tmpw9), ",",
+                                                     rep(1:tmpw9, tmpN), "]"))
+    }
+    etaout[[i]] <- tmpeta
+  }
+  
+  etaout
+}
 
 if(FALSE){
   model <- ' 
