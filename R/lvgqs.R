@@ -37,6 +37,7 @@ lvgqs <- function(modmats, standata, getlvs = TRUE) {
       ovmean[[g]] <- t(standata$YXbar[g, , drop = FALSE])
     }
 
+    if(!("beta" %in% names(modmats[[g]]))) modmats[[g]]$beta <- matrix(0, standata$m, standata$m)
     if (p > 0){
       L_Y_A[[g]] <- modmats[[g]]$lambda %*% solve(I - modmats[[g]]$beta)
 
@@ -45,7 +46,6 @@ lvgqs <- function(modmats, standata, getlvs = TRUE) {
       }
     }
     if (!("alpha" %in% names(modmats[[g]]))) modmats[[g]]$alpha <- matrix(0, m, 1)
-    if(!("beta" %in% names(modmats[[g]]))) modmats[[g]]$beta <- matrix(0, standata$m, standata$m)
   }
 
   if ((w9use + w9no) > 0 | !getlvs) {
