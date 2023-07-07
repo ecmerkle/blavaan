@@ -260,6 +260,11 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
   gqnames <- c("loadings", "intercepts", "regressions", "means", "thresholds")
   gqops <- c("=~", "~1", "~", "~1", "|")
 
+  badnames <- c("residuals", "residual.covariances", "lv.variances", "lv.covariances")
+  if(any(wiggle %in% badnames)){
+    stop("blavaan ERROR: wiggle cannot be used on (co-)variance parameters.")
+  }
+  
   if(all(wiggle %in% gqnames)){
     ## ensure we have these things in this level of the model
     rmvars <- NULL
@@ -270,7 +275,6 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
     if(length(rmvars) > 0) wiggle <- wiggle[-rmvars]
   }
 
-  
   if(!any(wiggle %in% lavpartable$label) && !any(wiggle %in% gqnames)) return( list(outlist = NULL, lavpartable = list(prior = NULL)) )
   
   lv.names <- unique(unlist(lav_partable_attributes(lavpartable, pta=NULL)$vnames$lv))
