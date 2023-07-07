@@ -260,6 +260,15 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
   gqnames <- c("loadings", "intercepts", "regressions", "means", "thresholds")
   gqops <- c("=~", "~1", "~", "~1", "|")
 
+  if(all(wiggle %in% gqnames)){
+    ## ensure we have these things in this level of the model
+    for(i in 1:length(wiggle)){
+      relop <- gqops[match(wiggle[i], gqnames)]
+      if(!any(relop %in% lavpartable$op)) wiggle <- wiggle[-i]
+    }
+  }
+
+  
   if(!any(wiggle %in% lavpartable$label) && !any(wiggle %in% gqnames)) return( list(outlist = NULL, lavpartable = list(prior = NULL)) )
   
   lv.names <- unique(unlist(lav_partable_attributes(lavpartable, pta=NULL)$vnames$lv))
