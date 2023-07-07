@@ -262,10 +262,12 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
 
   if(all(wiggle %in% gqnames)){
     ## ensure we have these things in this level of the model
+    rmvars <- NULL
     for(i in 1:length(wiggle)){
       relop <- gqops[match(wiggle[i], gqnames)]
-      if(!any(relop %in% lavpartable$op)) wiggle <- wiggle[-i]
+      if(!any(relop %in% lavpartable$op)) rmvars <- c(rmvars, i)
     }
+    if(length(rmvars) > 0) wiggle <- wiggle[-rmvars]
   }
 
   
