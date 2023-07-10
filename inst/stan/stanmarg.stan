@@ -1385,7 +1385,7 @@ transformed parameters {
   }
 
   // for computing mvn with sufficient stats
-  if (use_suff) {
+  if (!multilev) {
     for (g in 1:Ng) {
       Sigmainv_grp[g] = inverse_spd(Sigma[g]);
       logdetSigma_grp[g] = log_determinant(Sigma[g]);
