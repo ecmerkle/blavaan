@@ -56,7 +56,10 @@ blavaan <- function(...,  # default lavaan arguments
     }
 
     # multilevel functionality
-    if("cluster" %in% dotNames) warning("blavaan WARNING: two-level models are under development and may be unstable.")
+    if("cluster" %in% dotNames) {
+        cat("blavaan NOTE: two-level models are new, please report bugs!\nhttps://github.com/ecmerkle/blavaan/issues\n\n")
+        if(!(target == "stan")) stop("blavaan ERROR: two-level functionality is not available for ", target, ".")
+    }
   
     # prior predictives only for stan
     if(prisamp) {
@@ -468,9 +471,6 @@ blavaan <- function(...,  # default lavaan arguments
     lavoptions$estimator <- "Bayes"
     lavoptions$se        <- "standard"
     lavoptions$test <- "standard"
-    if(ordmod) {
-        cat("blavaan NOTE: ordinal models are new, please report bugs!\nhttps://github.com/ecmerkle/blavaan/issues\n\n")
-    }
     if("test" %in% dotNames) {
         if(dotdotdot$test == "none") lavoptions$test <- "none"
     } else {

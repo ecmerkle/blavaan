@@ -197,6 +197,7 @@ function(object, header       = TRUE,
   if(estimates) {
         jagtarget <- lavInspect(object, "options")$target == "jags"
         newpt <- object@ParTable
+        if(!("group" %in% names(newpt))) newpt$group <- rep(1, length(newpt$lhs))
         newpt$group[newpt$group == 0] <- 1 # for defined parameters
 
         if(!jagtarget){
