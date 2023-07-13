@@ -488,6 +488,7 @@ blavaan <- function(...,  # default lavaan arguments
     lavoptions$dp        <- dp
     lavoptions$prisamp   <- prisamp
     lavoptions$target    <- target
+    lavoptions$optim.method <- "mcmc"
     if("llnsamp" %in% names(mcmcextra$data)){
         if(length(mcmcextra$data$llnsamp) > 1 ||
            (!inherits(mcmcextra$data$llnsamp, "numeric") &&
@@ -1006,6 +1007,7 @@ blavaan <- function(...,  # default lavaan arguments
                              x           = x,
                              VCOV        = VCOV,
                              TEST        = TEST)
+
     ## add SE and SD-Bayes factor to lavpartable
     ## (code around line 270 of blav_object_methods
     ##  can be removed with this addition near line 923
@@ -1061,6 +1063,7 @@ blavaan <- function(...,  # default lavaan arguments
     
     # 10. construct blavaan object
     blavaan <- new("blavaan",
+                   version      = as.character( packageVersion('blavaan') ),
                    call         = mc,                  # match.call
                    timing       = timing,              # list
                    Options      = lavoptions,          # list

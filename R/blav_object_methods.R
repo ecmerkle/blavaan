@@ -11,97 +11,15 @@ bl.short.summary <- function(object) {
         }
     }
 
-    # Convergence or not?
-    if(FAKE) {
-        cat(sprintf("blavaan (%s) -- DRY RUN with 0 iterations\n",
-                    packageDescription("blavaan", fields="Version")))
-    } else if(object@Fit@iterations > 0) {
-        if(object@Fit@converged) {
-	    cat(sprintf("blavaan (%s) results of %3i samples after %3i adapt/burnin iterations\n",
-                    packageDescription("blavaan", fields="Version"),
-                    object@external$sample,
-                    object@external$burnin))
-        } else {
-            cat(sprintf("** WARNING ** blavaan (%s) did NOT converge after %i adapt+burnin iterations\n", 
-                packageDescription("blavaan", fields="Version"),
-                object@external$burnin))
-            cat("** WARNING ** Proceed with caution\n")
-        }
-    } else {
-        cat(sprintf("** WARNING ** blavaan (%s) model has NOT been fitted\n",
-                    packageDescription("blavaan", fields="Version")))
-        #cat("** WARNING ** Estimates below are simply the starting values\n")
-    }
+    class(object) <- "lavaan"
+    garb <- capture.output( tmp <- show(object) )
+    tmp$test <- NULL
+    cat("b")
+    print(tmp)
     cat("\n")
+  
 
-    # number of free parameters
-    #t0.txt <- sprintf("  %-40s", "Number of free parameters")
-    #t1.txt <- sprintf("  %10i", object@Fit@npar)
-    #t2.txt <- ""
-    #cat(t0.txt, t1.txt, t2.txt, "\n", sep="")
-    #cat("\n")
-   
-    # listwise deletion?
-    listwise <- FALSE
-    for(g in 1:object@Data@ngroups) {
-       if(object@Data@nobs[[1L]] != object@Data@norig[[1L]]) {
-           listwise <- TRUE
-           break
-       }
-    }
-
-
-    if(object@Data@ngroups == 1L) {
-        if(listwise) {
-            cat(sprintf("  %-40s", ""), sprintf("  %10s", "Used"), 
-                                        sprintf("  %10s", "Total"),
-                "\n", sep="")
-        }
-        t0.txt <- sprintf("  %-40s", "Number of observations")
-        t1.txt <- sprintf("  %10i", object@Data@nobs[[1L]])
-        t2.txt <- ifelse(listwise,
-                  sprintf("  %10i", object@Data@norig[[1L]]), "")
-        cat(t0.txt, t1.txt, t2.txt, "\n", sep="")
-    } else {
-        if(listwise) {
-            cat(sprintf("  %-40s", ""), sprintf("  %10s", "Used"),  
-                                        sprintf("  %10s", "Total"),
-                "\n", sep="")
-        }
-        t0.txt <- sprintf("  %-40s", "Number of observations per group")
-        cat(t0.txt, "\n")
-        for(g in 1:object@Data@ngroups) {
-            t.txt <- sprintf("  %-40s  %10i", object@Data@group.label[[g]],
-                                              object@Data@nobs[[g]])
-            t2.txt <- ifelse(listwise,
-                      sprintf("  %10i", object@Data@norig[[g]]), "")
-            cat(t.txt, t2.txt, "\n", sep="")
-        }
-    }
-    cat("\n")
-
-    # missing patterns?
-    if(object@SampleStats@missing.flag) {
-        if(object@Data@ngroups == 1L) {
-            t0.txt <- sprintf("  %-40s", "Number of missing patterns")
-            t1.txt <- sprintf("  %10i", 
-                              object@Data@Mp[[1L]]$npatterns)
-            cat(t0.txt, t1.txt, "\n\n", sep="")
-        } else {
-            t0.txt <- sprintf("  %-40s", "Number of missing patterns per group")
-            cat(t0.txt, "\n")
-            for(g in 1:object@Data@ngroups) {
-                t.txt <- sprintf("  %-40s  %10i", object@Data@group.label[[g]],
-                                 object@Data@Mp[[g]]$npatterns)
-                cat(t.txt, "\n", sep="")
-            }
-            cat("\n")
-        }
-    }
-
-    # Print Chi-square value for the user-specified (full/h0) model
-
-    # other statistics?
+    # Print margloglik + ppp
     ppp <- TRUE
     if(length(object@Fit@test) == 0) ppp <- FALSE
     shifted <- FALSE
@@ -125,20 +43,6 @@ bl.short.summary <- function(object) {
     t2.txt <- ifelse(ppp, 
                      sprintf("  %10.3f", object@Fit@test[[2]]$stat), "")
     cat(t0.txt, t1.txt, t2.txt, "\n", sep="")
-
-    # 2. effective number of parameters
-    #t0.txt <- sprintf("  %-40s", "Effective # params")
-    #t1.txt <- sprintf("  %10i",   object@Fit@test[[1]]$df)
-    #t2.txt <- ifelse(dic, 
-    #                     ifelse(round(object@Fit@test[[2]]$df) == 
-    #                            object@Fit@test[[2]]$df,
-    #                            sprintf("  %10i",   object@Fit@test[[2]]$df),
-    #                            sprintf("  %10.3f", object@Fit@test[[2]]$df)),
-    #                     "")
-    #cat(t0.txt, t1.txt, t2.txt, "\n", sep="")
-
-    # 3. P-value is skipped
-
 
     ## interesting way to add other stuff:
     ## if(object@Options$estimator == "MML") {
@@ -198,6 +102,7 @@ function(object, header       = TRUE,
         jagtarget <- lavInspect(object, "options")$target == "jags"
         newpt <- object@ParTable
         if(!("group" %in% names(newpt))) newpt$group <- rep(1, length(newpt$lhs))
+        if(!("level" %in% names(newpt))) newpt$level <- rep("within", length(newpt$lhs))
         newpt$group[newpt$group == 0] <- 1 # for defined parameters
 
         if(!jagtarget){
@@ -213,8 +118,10 @@ function(object, header       = TRUE,
                                  rsquare = rsquare,
                                  remove.eq = FALSE, remove.system.eq = TRUE,
                                  remove.ineq = FALSE, remove.def = FALSE,
-                                 add.attributes = TRUE)
+                                 header = TRUE, output = "text")
+
         if(!("group" %in% names(PE))) PE$group <- 1
+        if(!("level" %in% names(PE))) PE$level <- "within"
         if(standardized && std.nox) {
             PE$std.all <- PE$std.nox
         }
@@ -231,8 +138,8 @@ function(object, header       = TRUE,
         } else {
             pte2 <- which(newpt$free > 0)
         }
-        peentry <- match(with(newpt, paste(lhs[pte2], op[pte2], rhs[pte2], group[pte2], sep="")),
-                         paste(PE$lhs, PE$op, PE$rhs, PE$group, sep=""))
+        peentry <- match(with(newpt, paste(lhs[pte2], op[pte2], rhs[pte2], group[pte2], level[pte2], sep="")),
+                         paste(PE$lhs, PE$op, PE$rhs, PE$group, PE$level, sep=""))
         if(jagtarget){
             PE$ci.lower[peentry] <- object@external$mcmcout$HPD[newpt$jagpnum[pte2],'Lower95']
             PE$ci.upper[peentry] <- object@external$mcmcout$HPD[newpt$jagpnum[pte2],'Upper95']
