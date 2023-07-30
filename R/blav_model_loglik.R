@@ -10,6 +10,8 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
 
     if(lavInspect(lavobject, "categorical")){
       ll.samp <- get_ll_ord(postsamp, lavobject, measure, casewise, conditional, standata)
+    } else if(lavInspect(lavobject, "options")$.multilevel){
+      ll.samp <- get_ll_2l(postsamp, lavobject, standata)
     } else {
       ll.samp <- get_ll_cont(postsamp, lavobject, measure, casewise, conditional)
     }
@@ -61,8 +63,9 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
       ## logl + baseline logl
       ll.samp <- c(0,0)
     }
-
-    for(g in 1:length(implied$cov)){
+    
+    Ng <- lavInspect(lavobject, 'ngroups')
+    for(g in 1:Ng){
       if(conditional){
         mnvec <- implied$mean[[g]]
       } else if(!lavoptions$meanstructure){
@@ -165,6 +168,7 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
       tmpobj <- lavobject
       tmpobj@implied <- lav_model_implied(lavmodel, delta = (lavmodel@parameterization == "delta"))
       tmpobj@Options$estimator <- "ML"
+      tmpobj@Options$se <- "standard"
       tmpll <- llcont(tmpobj)
     }
     if(casewise) {
@@ -458,6 +462,38 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
   ll.samp
 }
 
+get_ll_2l <- function(postsamp       = NULL, # one posterior sample
+                      lavobject      = NULL,
+                      standata       = NULL){
+
+  lav2ll <- getFromNamespace("lav_mvnorm_cluster_loglik_samplestats_2l", "lavaan")
+
+  lavmodel <- lavobject@Model
+  lavpartable <- lavobject@ParTable
+  lavsamplestats <- lavobject@SampleStats
+  lavoptions <- lavobject@Options
+  lavcache <- lavobject@Cache
+  lavdata <- lavobject@Data
+
+  if(length(postsamp) > 0){
+    lavmodel <- fill_params(postsamp, lavmodel, lavpartable)
+  }
+
+  implied <- lav_model_implied(lavmodel, delta = (lavmodel@parameterization == "delta"))
+  Ng <- lavInspect(lavobject, 'ngroups')
+
+  out <- rep(NA, Ng)
+  for(g in 1:Ng){
+    ll.args <- list(YLp = lavsamplestats@YLp[[g]], Lp = lavdata@Lp[[g]], Mu.W = implied$mean[[(2 * g - 1)]],
+                    Sigma.W = implied$cov[[(2 * g - 1)]], Mu.B = implied$mean[[2 * g]], Sigma.B = implied$cov[[2 * g]],
+                    log2pi = TRUE, minus.two = FALSE)
+
+    out[g] <- do.call(lav2ll, ll.args)
+  }
+
+  sum(out)
+}
+
 ## get log-likelihoods for each sampled parameter
 samp_lls <- function(lavjags        = NULL,
                      lavmcmc        = NULL,
@@ -526,4 +562,32 @@ case_lls <- function(lavjags        = NULL,
   llmat <- do.call("rbind", tmpres)
       
   llmat
+}
+
+## clusterwise loglik.x (for computing clusterwise log-likelihoods)
+llx_2l <- function(Lp, YX, mean_d, cidx){
+  ## fixed within logl:
+  wx.idx <- Lp$ov.x.idx[[1]]
+
+  if (length(wx.idx) > 0) {
+    nrows <- nrow(YX)
+    S <- cov(YX[, wx.idx, drop = FALSE]) * (nrows - 1) / nrows
+    loglik.x.w.all <- dmnorm(YX[, wx.idx, drop = FALSE], mean = colMeans(YX[, wx.idx, drop = FALSE]), varcov = S, log = TRUE)
+    loglik.x.w.clus <- tapply(loglik.x.w.all, cidx, sum)
+  } else {
+    loglik.x.w.clus <- rep(0, nrow(mean_d))
+  }
+
+  ## fixed between logl
+  bx.idx <-  Lp$ov.x.idx[[2]]
+  if(length(bx.idx) > 0L) {
+    nclusters <- nrow(mean_d)
+    COVB <- cov(mean_d[, bx.idx, drop = FALSE]) * (nclusters - 1)/nclusters
+    loglik.x.b <- dmnorm(mean_d[, bx.idx, drop = FALSE], mean = colMeans(mean_d[, bx.idx, drop = FALSE]), varcov = COVB, log = TRUE)
+  } else {
+    loglik.x.b <- rep(0, nrow(mean_d))
+  }
+  loglik.x <- loglik.x.w.clus + loglik.x.b
+
+  array(loglik.x, length(loglik.x))
 }

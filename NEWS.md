@@ -1,3 +1,10 @@
+# Version 0.4-8
+## New features
+* This is a maintenance release with bug fixes and some changes in compiler settings
+
+## Bugs/glitches discovered after the release:
+* For certain models with residual correlations and/or correlated factors, the initial values under target='stan' lead to non-positive definite matrices (reported by Yuanyuan Hu).
+
 # Version 0.4-7
 ## New features
 * This is primarily an update to address a C++14 vs C++17 compilation issue identified by CRAN

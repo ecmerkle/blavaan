@@ -11,24 +11,24 @@ library(lavaan, quietly=TRUE)
 ```
 
 ### Introduction
-In SEM, one of the first steps is to evaluate the model's global fit. After global fit, we need to evaluate the local fit of a model, meaning how does the model reproduces specific indicator correlatons. 
+In SEM, one of the first steps is to evaluate the model's global fit. After global fit, we need to evaluate the local fit of a model, meaning how the model reproduces specific correlations between observed variables.
 
-There are a couple of common methods for this, (a) test for high residual correlations, or (b) modification indices. This tutorial focuses on the second. Modification indices test the **likely** change in the model if a single parameter is added to the model that was not originally included, and do this for every possible parameter that was not included [@bentler_fit_1990]. 
+There are a couple of common methods for this, (a) testing for high residual correlations, or (b) modification indices. This tutorial focuses on the second. Modification indices test the **likely** change in the model fit if a single parameter is added to the model that was not originally included. This test can be carried out for every possible parameter that was not included [@bentler_fit_1990]. 
 
 ### Modification Indices
 
-Modification indices present different **indices** to quantify the effect of each pararmeter, here we will focus on two, (a) the modification index (MI) or Lagrange multiplier, which provides an estimated value in which the model’s chi-square ($\chi^2$) test statistic would decrease if a fixed parameter were added to the model and freely estimated, and (b) standardized expected parameter change (SEPC) which is the approximated standardized value if the parameter where to be estimated in the model [@whittaker_using_2012]. 
+Modification indices present different **indices** to quantify the effect of each parameter, and we will focus on two here. These are (a) the modification index (MI) or Lagrange multiplier, which estimates the extent to which the model’s chi-square ($\chi^2$) test statistic would decrease if a parameter were added to the model and freely estimated, and (b) standardized expected parameter change (SEPC), which is the approximated standardized value of the parameter if it were to be estimated in the model [@whittaker_using_2012]. 
 
 MI presents the possible effect on the overall model, and SEPC presents the effect size for the missed parameter. 
 
-We will show an example with the @holswi39 example. You first estimate your SEM/CFA model as usual
+We will show an example with the @holswi39 model. You first estimate your SEM/CFA model as usual
 
 ```{r, eval=T, include=FALSE, cache=TRUE}
 HS.model <- ' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6
               speed   =~ x7 + x8 + x9 '
 
-fit <- bcfa(HS.model, data=HolzingerSwineford1939, std.lv=TRUE)
+fit <- bcfa(HS.model, data=HolzingerSwineford1939, std.lv=TRUE, seed=866)
 ```
 
 ```{r, eval=F}
@@ -40,25 +40,26 @@ fit <- bcfa(HS.model, data=HolzingerSwineford1939, std.lv=TRUE)
 ```
 
 
-Then we would need to write a **discrepancy** function to collect the modification indices. This function estimates and save the MI and SEPC
+Then we would need to write a **discrepancy** function to collect the modification indices. The list below contains two functions that estimate and save the MI and SEPC.
 
 ```{r, eval=T, include=T}
-discFUN <- list(mod.ind_mi = function(object){
-  temp <- modificationindices(object,free.remove = F)
-  mods <- temp$mi
-  names(mods) <- paste0(temp$lhs,temp$op,temp$rhs)
-  return(mods)
-},
-mod.ind_sepc.all = function(object){
-  temp <- modificationindices(object,free.remove = F)
-  sepc.all <- temp$sepc.all
-  names(sepc.all) <- paste0(temp$lhs,temp$op,temp$rhs)
-  return(sepc.all )
-}
+discFUN <- list(
+  mod.ind_mi = function(object){
+    temp <- modificationindices(object, free.remove = F)
+    mods <- temp$mi
+    names(mods) <- paste0(temp$lhs, temp$op, temp$rhs)
+    return(mods)
+  },
+  mod.ind_sepc.all = function(object){
+    temp <- modificationindices(object, free.remove = F)
+    sepc.all <- temp$sepc.all
+    names(sepc.all) <- paste0(temp$lhs, temp$op, temp$rhs)
+    return(sepc.all)
+  }
 )
 ```
 
-Then we will pass this function to the ```ppmc()``` function of *blavaan*, this way the MI and SEPC will be estimated at each iteration of the saved posterior draws, building posterior distributions for them
+Then we will pass this function to the ```ppmc()``` function of *blavaan*. With this function, the MI and SEPC are computed for each posterior sample, leading to posterior distributions for each of them.
 
 ```{r, eval=T, include=FALSE, cache=TRUE}
 out <- ppmc(fit, discFUN = discFUN)
@@ -68,25 +69,29 @@ out <- ppmc(fit, discFUN = discFUN)
 out <- ppmc(fit, discFUN = discFUN)
 ```
 
-Then we view the top 5 parameters arrange by the mean (EAP) MI, which in thos case shows that the most the parameter that would have the highest impact in overall model fit (according to EAP) is **visual=~x9** the cross-loading from item **x9** to the factor Visual
+Then we view the top 5 parameters arrange by the posterior mean (EAP) MI, which in this case shows that the parameter having the highest impact in overall model fit (according to EAP) is **visual=~x9**, the cross-loading from the Visual factor to item **x9**.
 
 ```{r, eval=T, include=T}
 summary(out, prob=.9, discFUN = "mod.ind_mi", sort.by="EAP", decreasing=T)[1:5,]
 ```
 
-But accoridng to the median, the parameter that would have the highest impact owuld be **x7~~x8** the residual corretion between indicators **x7** and **x8**
+But according to the posterior median, the parameter that would have the highest impact would be the residual correlation between indicators **x7** and **x8**
 
 ```{r, eval=T, include=T}
 summary(out, prob=.9, discFUN = "mod.ind_mi", sort.by="Median", decreasing=T)[1:5,]
 ```
 
-MI is still recommended as the best metric to indicate which parameter is best to include next, and can use the SEPC to evaluate the **likely** effect size for the respecive parameters
+The MI is still recommended as the best metric to indicate which parameter is best to include next, and we can use the SEPC to evaluate the **likely** effect size for the respective parameters.
 
 ```{r, eval=T, include=T}
 summary(out, prob=.9, discFUN = "mod.ind_sepc.all", sort.by="EAP", decreasing=T)[1:5,]
 ```
 
-Here we see that for the 2 highest parameters, the likely SEPC is **x7~~x8 = 0.788** and **visual=~x9 = 0.519**. With this information we can decide to include one of these new parameters in the model (one at the time). For this example, since factor loadings have impact in more variances and covariances of the covariance matrix I would choose **visual=~x9**
+```{r, eval=T, include=F}
+tmptab <- summary(out, prob=.9, discFUN = "mod.ind_sepc.all", sort.by="EAP", decreasing=T)[1:5,]
+```
+
+Here we see that for the 2 highest parameters, the likely SEPC is `r paste0('x7~~x8 = ', tmptab['x7~~x8', 'EAP'])` and `r paste0('visual=~x9 = ', tmptab['visual=~x9', 'EAP'])`. With this information we can decide to include one of these new parameters in the model (one at the time). For this example, because factor loadings have a larger impact on the model-implied covariance matrix, I would choose **visual=~x9**
 
 ```{r, eval=T, include=FALSE, cache=TRUE}
 HS.model <- ' visual  =~ x1 + x2 + x3 + x9
@@ -105,13 +110,13 @@ HS.model <- ' visual  =~ x1 + x2 + x3 + x9
 fit2 <- bcfa(HS.model, data=HolzingerSwineford1939, std.lv=TRUE)
 ```
 
-And you can check if the added parameter has the expected impact in overall fit with the ```blavFitIndices()``` function, and the ```summary()```
+And you can check if the added parameter has the expected impact on overall fit with the ```blavFitIndices()``` and the ```summary()``` functions.
 
-It is important to consider also the theoretical relevance of the suggested parameters, make sure that it makes sense, instead of just adding parameters until having **good** fit.
+It is important to consider also the theoretical relevance of the suggested parameters, and to ensure that they make sense, instead of just adding parameters until having **good** fit.
 
 ### Summary
 
-In this tutorials we show how to calculate the MI and SEPC across posterior distributions, and evaluate which parameters can be added. 
+In this tutorial we show how to calculate the MI and SEPC across posterior distributions, and evaluate which parameters can be added. 
 
 With the ```ppmc()``` function we are able to calculate relevant information after model estimation, and build posterior distributions of them. 
 

@@ -24,14 +24,12 @@ navbar:
         href: articles/prior.html
       - text: Estimation
         href: articles/estimate.html
+      - text: Convergence and Efficiency Evaluation
+        href: articles/convergence_efficiency.html        
       - text: Model Summaries
         href: articles/summaries.html
       - text: Plots
         href: articles/plotting.html
-      - text: Convergence and Efficiency Evaluation
-        href: articles/convergence_efficiency.html        
-      - text: Convergence loop
-        href: articles/convergence_loop.html          
     - text: Examples/Details
       menu:
       - text: Measurement Invariance
@@ -41,13 +39,15 @@ navbar:
       - text: Approximate Fit Indices
         href: articles/approx_fi.html
       - text: Model Comparison
-        href: articles/model_comparison.html 
-      - text: Cross-loadings with strong priors
-        href: articles/cross_loadings_strong_priors.html   
-      - text: Modification indices
-        href: articles/mod_indices.html 
+        href: articles/model_comparison.html
+      - text: Cross-loadings with Strong Priors
+        href: articles/cross_loadings_strong_priors.html
+      - text: Modification Indices
+        href: articles/mod_indices.html
       - text: Prior Predictive Checks
-        href: articles/prior_pred_checks.html  
+        href: articles/prior_pred_checks.html
+      - text: Convergence Loop
+        href: articles/convergence_loop.html
       - text: Probability of Direction
         href: articles/probability_direction.html          
     - text: News

@@ -177,8 +177,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
         indices["p_waic"] <- fitres[["p_waic"]]
         indices["se_waic"] <- fitse[["waic"]]
         nchain <- blavInspect(object, "n.chains")
-        ref <- relative_eff(casells, chain_id =
-                            rep(1:nchain, each = nrow(casells)/nchain))
+        ref <- relative_eff(casells, chain_id = rep(1:nchain, each = nrow(casells)/nchain))
         if (
           "mcmcdata" %in% names(object@external) &
           "moment_match_k_threshold" %in% names(object@external$mcmcdata) & 
@@ -193,11 +192,11 @@ blav_fit_measures <- function(object, fit.measures = "all",
         } else {
           fitres <- loo(casells, r_eff = ref)
         }
-          fitse <- fitres$estimates[,'SE']
-          fitres <- fitres$estimates[,'Estimate']
-          indices["looic"] <- fitres[["looic"]]
-          indices["p_loo"] <- fitres[["p_loo"]]
-          indices["se_loo"] <- fitse[["looic"]]
+        fitse <- fitres$estimates[,'SE']
+        fitres <- fitres$estimates[,'Estimate']
+        indices["looic"] <- fitres[["looic"]]
+        indices["p_loo"] <- fitres[["p_loo"]]
+        indices["se_loo"] <- fitse[["looic"]]
 
         if("csamplls" %in% names(object@external) & bopts$target != "stan"){
             if("stanlvs" %in% names(object@external)){
@@ -226,7 +225,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
         }
     }
     if(any(c("bic", "dic", "p_dic") %in% fit.measures)) {
-      if(lavInspect(object, "categorical") && compareVersion(packageDescription('lavaan')$Version, '0.6-10') < 0) stop("blavaan ERROR: lavaan 0.6-10 or higher is needed (you may need to install from github)")
+        if(lavInspect(object, "categorical") && compareVersion(packageDescription('lavaan')$Version, '0.6-10') < 0) stop("blavaan ERROR: lavaan 0.6-10 or higher is needed (you may need to install from github)")
         if(is.null(dim(object@external$samplls))) {
             samplls <- rowSums(casells)
             df <- 2*(object@Fit@fx - mean(samplls))

@@ -259,6 +259,24 @@ wiglabels <- function(lavpartable, wiggle, wiggle.sd, target = "stan"){
   ## allowable group.equal names
   gqnames <- c("loadings", "intercepts", "regressions", "means", "thresholds")
   gqops <- c("=~", "~1", "~", "~1", "|")
+
+  badnames <- c("residuals", "residual.covariances", "lv.variances", "lv.covariances")
+  if(any(wiggle %in% badnames)){
+    stop("blavaan ERROR: wiggle cannot be used on (co-)variance parameters.")
+  }
+  
+  if(all(wiggle %in% gqnames)){
+    ## ensure we have these things in this level of the model
+    rmvars <- NULL
+    for(i in 1:length(wiggle)){
+      relop <- gqops[match(wiggle[i], gqnames)]
+      if(!any(relop %in% lavpartable$op)) rmvars <- c(rmvars, i)
+    }
+    if(length(rmvars) > 0) wiggle <- wiggle[-rmvars]
+  }
+
+  if(!any(wiggle %in% lavpartable$label) && !any(wiggle %in% gqnames)) return( list(outlist = NULL, lavpartable = list(prior = NULL)) )
+  
   lv.names <- unique(unlist(lav_partable_attributes(lavpartable, pta=NULL)$vnames$lv))
   lpt <- lavpartable[lavpartable$label != "" & !is.na(lavpartable$label),]
 
@@ -388,8 +406,8 @@ checkcovs <- function(lavobject){
   if (nrow(free[[1]]$psi) > 0) {
     psis <- lapply(free, function(x) x$psi)
     psinums <- sapply(psis, function(x) x[lower.tri(x)])
-    diagpsi <- all(psinums == 0L, na.rm = TRUE)
-    fullpsi <- all(psinums > 0L, na.rm = TRUE) & (anyDuplicated(psinums, MARGIN = 0) == 0L)
+    diagpsi <- all(unlist(psinums) == 0L, na.rm = TRUE)
+    fullpsi <- all(unlist(psinums) > 0L, na.rm = TRUE) & (anyDuplicated(unlist(psinums), MARGIN = 0) == 0L)
   } else {
     diagpsi <- FALSE
     fullpsi <- TRUE
@@ -398,9 +416,9 @@ checkcovs <- function(lavobject){
   if (nrow(free[[1]]$theta) > 0) {
     thets <- lapply(free, function(x) x$theta)
     thetnums <- sapply(thets, function(x) x[lower.tri(x)])
-    diagthet <- all(thetnums == 0L, na.rm = TRUE)
+    diagthet <- all(unlist(thetnums) == 0L, na.rm = TRUE)
     ## surprising if this happens:
-    fullthet <- all(thetnums > 0L, na.rm = TRUE) & (anyDuplicated(thetnums, MARGIN = 0) == 0L)
+    fullthet <- all(unlist(thetnums) > 0L, na.rm = TRUE) & (anyDuplicated(unlist(thetnums), MARGIN = 0) == 0L)
   } else {
     diagthet <- FALSE
     fullthet <- TRUE
