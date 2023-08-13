@@ -1,7 +1,7 @@
 \name{blavInspect}
 \alias{blavInspect}
 \alias{blavTech}
-\title{Inspect or Extract Information from a fitted blavaan object}
+\title{Inspect or Extract Information from a Fitted blavaan Object}
 \description{
 The \code{blavInspect()} and \code{blavTech()} functions can be used to
 inspect/extract information that is stored inside (or can be computed from) a

@@ -2,7 +2,7 @@
 \alias{blavCompare}
 \alias{BF}
 \title{
-Bayesian model comparisons.
+Bayesian model comparisons
 }
 \description{
 Bayesian model comparisons, including WAIC, LOO, and Bayes factor approximation.

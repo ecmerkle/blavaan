@@ -1,6 +1,6 @@
 \name{dpriors}
 \alias{dpriors}
-\title{Specify default prior distributions}
+\title{Specify Default Prior Distributions}
 \description{
 Specify "default" prior distributions for classes of model parameters.
 }
