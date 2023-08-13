@@ -586,6 +586,8 @@ ppmc <- function(object, thin = 1, fit.measures = c("srmr","chisq"),
                  #baseline.model = NULL,
                  discFUN = NULL, conditional = FALSE) {
 
+  if (blavInspect(object, "nlevels") > 1) stop('blavaan ERROR: ppmc is currently unavailable for multilevel models.')
+  
   ## check custom discrepancy function(s)
   if (!is.null(discFUN)) {
     if (!is.list(discFUN)) {

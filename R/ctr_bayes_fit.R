@@ -114,6 +114,9 @@ blavFitIndices <- function(object, thin = 1, pD = c("loo","waic","dic"),
   if (blavInspect(object, "categorical")) {
     stop('blavaan ERROR: Fit indices are currently unavailable for ordinal models')
   }
+  if (blavInspect(object, "nlevels") > 1) {
+    stop('blavaan ERROR: Fit indices are currently unavailable for multilevel models')
+  }
   
   rescale <- tolower(as.character(rescale[1])) #FIXME: make sure references to "devM" check for "devm"
   if (rescale == "ppmc" && blavInspect(object, 'ntotal') < 1000)

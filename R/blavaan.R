@@ -302,6 +302,10 @@ blavaan <- function(...,  # default lavaan arguments
     }
 
 
+    if("sample.cov" %in% names(dotdotdot)) {
+        if(!("data" %in% names(dotdotdot)) && target != "stan") stop('blavaan ERROR: sample.cov can only be used for target = "stan"')
+        if("cluster" %in% names(dotdotdot)) stop('blavaan ERROR: sample.cov cannot be used for two-level models')
+    }
     if("meanstructure" %in% names(dotdotdot) && "sample.cov" %in% names(dotdotdot)) stop('blavaan ERROR: meanstructure is not currently allowed when sample.cov is supplied')
   
     # call lavaan
