@@ -331,7 +331,8 @@ samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable,
     tmpeta <- aperm(tmpeta, c(4,1,3,2))
     dim(tmpeta) <- with(standata, c(nsamps, nchain, tmpN * tmpw9))
     if(tmpw9 > 0) {
-      dimnames(tmpeta)[[3]] <- with(standata, paste0("eta[", rep(1:tmpN, each=tmpw9), ",",
+      dimnames(tmpeta)[[3]] <- with(standata, paste0("eta", ifelse(i==2, "_b", ""), "[",
+                                                     rep(1:tmpN, each=tmpw9), ",",
                                                      rep(1:tmpw9, tmpN), "]"))
     }
     etaout[[i]] <- tmpeta

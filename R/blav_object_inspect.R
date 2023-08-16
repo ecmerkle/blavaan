@@ -108,18 +108,22 @@ blavInspect <- function(blavobject, what, ...) {
 
             ## how many lvs, excluding phantoms
             lvmn <- lavInspect(blavobject, "mean.lv")
-            if(inherits(lvmn, "list")){
-                lvmn <- lvmn[[1]]
+            if(!inherits(lvmn, "list")){
+                lvmn <- list(lvmn)
             }
-            nlv <- length(lvmn)
+            nlv <- length(lvmn[[1]])
+            nlv2 <- 0
+            if(length(lvmn) > 1) nlv2 <- length(lvmn[[2]])
 
             if(nlv == 0) stop("blavaan ERROR: no latent variables are in the model")
             if(!etas) stop("blavaan ERROR: factor scores not saved; set save.lvs=TRUE")
             
             nsamp <- sum(lavInspect(blavobject, "nobs"))
+            nclus <- lavInspect(blavobject, "nclusters")
 
             draws <- make_mcmc(blavobject@external$mcmcout, blavobject@external$stanlvs)
-            drawcols <- grep("^eta", colnames(draws[[1]]))
+            drawcols <- grep("^eta\\[", colnames(draws[[1]]))
+            drawcols2 <- grep("^eta_b", colnames(draws[[1]]))
 
             if(jagtarget){
                 ## remove phantoms
@@ -129,6 +133,14 @@ blavInspect <- function(blavobject, what, ...) {
                 drawcols <- drawcols[as.numeric(matrix(1:length(drawcols),
                                                        nsamp, nfound,
                                                        byrow=TRUE)[,1:nlv])]
+
+                if(any(nclus > 1)){
+                  nfound2 <- length(drawcols2)/sum(nclus)
+                  drawcols2 <- drawcols2[as.numeric(matrix(1:length(drawcols2),
+                                                           sum(nclus), nfound2,
+                                                           byrow=TRUE)[,1:nlv2])]
+                  drawcols <- c(drawcols, drawcols2)
+                }
             }
             draws <- lapply(draws, function(x) mcmc(x[,drawcols]))
 
@@ -171,11 +183,21 @@ blavInspect <- function(blavobject, what, ...) {
                     summ <- blavobject@external$stansumm
                     summname <- "mean"
                 }
-                mnrows <- grep("^eta", rownames(summ))
+                mnrows <- grep("^eta\\[", rownames(summ))
+                mnrows2 <- grep("^eta_b", rownames(summ))
 
                 draws <- matrix(summ[mnrows,summname], nsamp,
                                 length(mnrows)/nsamp, byrow=br)[,1:nlv,drop=FALSE]
-                colnames(draws) <- names(lvmn)
+                ## FIXME multiple groups?
+                colnames(draws) <- names(lvmn[[1]])
+
+                if(any(nclus > 1)){
+                  draws2 <- matrix(summ[mnrows2,summname], sum(nclus),
+                                   length(mnrows2)/sum(nclus), byrow=br)[,1:nlv2,drop=FALSE]
+                  colnames(draws2) <- names(lvmn[[2]])
+
+                  draws <- list(draws, draws2)
+                }
 
                 if(blavobject@Options$target == "stan" & mis){
                     draws[rank(rorig),] <- draws
