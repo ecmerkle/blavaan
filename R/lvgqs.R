@@ -277,17 +277,20 @@ samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable,
 
             modmats[[b]] <- lavmodel@GLIST[mm.in.group]
         }
-        
         modmat2 <- modmats[2 * (1:standata$Ng)]
+        clusmns <- vector("list", length(modmat2))
+        modimp <- lav_model_implied(lavmodel) ## for all groups
+
         for(g in 1:length(modmat2)){
           if(!("beta" %in% names(modmat2[[g]]))) modmat2[[g]]$beta <- matrix(0, standata$m_c, standata$m_c)
-        }
 
-        out <- lav_implied22l(lavdata@Lp[[1]], lav_model_implied(lavmodel))
-        clusmns <- lav_estep(YLp = lavsamplestats@YLp[[1]], Lp = lavdata@Lp[[1]],
-                             sigma.w = out$sigma.w, sigma.b = out$sigma.b,
-                             sigma.zz = out$sigma.zz, sigma.yz = out$sigma.yz,
-                             mu.z = out$mu.z, mu.w = out$mu.w, mu.b = out$mu.b, se = FALSE)
+          out <- lav_implied22l(lavdata@Lp[[g]], lapply(modimp, function(x) x[(2*g - 1):(2*g)]))
+          clusmns[[g]] <- lav_estep(YLp = lavsamplestats@YLp[[g]], Lp = lavdata@Lp[[g]],
+                                    sigma.w = out$sigma.w, sigma.b = out$sigma.b,
+                                    sigma.zz = out$sigma.zz, sigma.yz = out$sigma.yz,
+                                    mu.z = out$mu.z, mu.w = out$mu.w, mu.b = out$mu.b, se = FALSE)
+        }
+        clusmns <- do.call("rbind", clusmns)
 
         ## manipulations to reuse existing lvgqs code
         standata$p <- standata$p_c
