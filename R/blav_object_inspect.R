@@ -16,6 +16,8 @@ blavInspect <- function(blavobject, what, ...) {
     dotNames <- names(dotdotdot)
     add.labels <- TRUE
     if(any(dotNames == "add.labels")) add.labels <- dotdotdot$add.labels
+    level <- 1L
+    if(any(dotNames == "level")) level <- dotdotdot$level
 
     jagtarget <- lavInspect(blavobject, "options")$target == "jags"
   
@@ -92,6 +94,7 @@ blavInspect <- function(blavobject, what, ...) {
             if(what == "hpd"){
                 pct <- .95
                 if("level" %in% dotNames) pct <- dotdotdot$level
+                if("prob" %in% dotNames) pct <- dotdotdot$prob
                 draws <- mcmc(do.call("rbind", draws))
                 draws <- HPDinterval(draws, pct)
                 if(add.labels) rownames(draws) <- labs
@@ -111,36 +114,36 @@ blavInspect <- function(blavobject, what, ...) {
             if(!inherits(lvmn, "list")){
                 lvmn <- list(lvmn)
             }
-            nlv <- length(lvmn[[1]])
-            nlv2 <- 0
-            if(length(lvmn) > 1) nlv2 <- length(lvmn[[2]])
+            if(level == 1L){
+              nlv <- length(lvmn[[1]])
+              nsamp <- sum(lavInspect(blavobject, "nobs"))
+            } else {
+              nlv <- length(lvmn[[2]])
+              nsamp <- unlist(lavInspect(blavobject, "nclusters"))
+            }
 
-            if(nlv == 0) stop("blavaan ERROR: no latent variables are in the model")
-            if(!etas) stop("blavaan ERROR: factor scores not saved; set save.lvs=TRUE")
-            
-            nsamp <- sum(lavInspect(blavobject, "nobs"))
-            nclus <- lavInspect(blavobject, "nclusters")
+            if(nlv == 0) stop("blavaan ERROR: no latent variables are at this level of the model")
+            if(!etas) stop("blavaan ERROR: factor scores not saved; set save.lvs=TRUE")            
+
+            if(level == 2L & all(nsamp == 1)) stop("blavaan ERROR: level 2 was requested but the model is not multilevel")
 
             draws <- make_mcmc(blavobject@external$mcmcout, blavobject@external$stanlvs)
-            drawcols <- grep("^eta\\[", colnames(draws[[1]]))
-            drawcols2 <- grep("^eta_b", colnames(draws[[1]]))
 
             if(jagtarget){
                 ## remove phantoms
                 drawcols <- drawcols[1:(nlv * nsamp)]
             } else {
-                nfound <- length(drawcols)/nsamp
-                drawcols <- drawcols[as.numeric(matrix(1:length(drawcols),
-                                                       nsamp, nfound,
-                                                       byrow=TRUE)[,1:nlv])]
-
-                if(any(nclus > 1)){
-                  nfound2 <- length(drawcols2)/sum(nclus)
-                  drawcols2 <- drawcols2[as.numeric(matrix(1:length(drawcols2),
-                                                           sum(nclus), nfound2,
-                                                           byrow=TRUE)[,1:nlv2])]
-                  drawcols <- c(drawcols, drawcols2)
-                }
+              if(level == 1L){
+                drawcols <- grep("^eta\\[", colnames(draws[[1]]))
+              } else {
+                drawcols <- grep("^eta_b", colnames(draws[[1]]))
+                nsamp <- sum(nsamp)
+              }
+              nfound <- length(drawcols)/nsamp
+              
+              drawcols <- drawcols[as.numeric(matrix(1:length(drawcols),
+                                                     nsamp, nfound,
+                                                     byrow=TRUE)[,1:nlv])]
             }
             draws <- lapply(draws, function(x) mcmc(x[,drawcols]))
 
@@ -183,21 +186,15 @@ blavInspect <- function(blavobject, what, ...) {
                     summ <- blavobject@external$stansumm
                     summname <- "mean"
                 }
-                mnrows <- grep("^eta\\[", rownames(summ))
-                mnrows2 <- grep("^eta_b", rownames(summ))
+                if(level == 1L){
+                  mnrows <- grep("^eta\\[", rownames(summ))
+                } else {
+                  mnrows <- grep("^eta_b", rownames(summ))
+                }
 
                 draws <- matrix(summ[mnrows,summname], nsamp,
                                 length(mnrows)/nsamp, byrow=br)[,1:nlv,drop=FALSE]
-                ## FIXME multiple groups?
-                colnames(draws) <- names(lvmn[[1]])
-
-                if(any(nclus > 1)){
-                  draws2 <- matrix(summ[mnrows2,summname], sum(nclus),
-                                   length(mnrows2)/sum(nclus), byrow=br)[,1:nlv2,drop=FALSE]
-                  colnames(draws2) <- names(lvmn[[2]])
-
-                  draws <- list(draws, draws2)
-                }
+                colnames(draws) <- names(lvmn[[level]])
 
                 if(blavobject@Options$target == "stan" & mis){
                     draws[rank(rorig),] <- draws

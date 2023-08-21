@@ -7,7 +7,7 @@
   types of model predictions, conditioned on observed data. This differs
   somewhat from \code{lavPredict()} in lavaan.}
 \usage{
-blavPredict(object, newdata = NULL, type = "lv")
+blavPredict(object, newdata = NULL, type = "lv", level = 1L)
 }
 \arguments{
 \item{object}{An object of class \code{\linkS4class{blavaan}}.}
@@ -20,6 +20,8 @@ the observed variables in the model are computed. If
 observed variables (including residual noise) are computed. If
 \code{"ymis"} or \code{"ovmis"}, model predicted values ("imputations")
 for the missing data are computed. See details for further information.}
+\item{level}{For \code{type = "lv"}, used to specify whether one desires
+the level 1 latent variables or level 2 latent variables.}
 }
 \details{
 The \code{predict()} function calls the \code{blavPredict()} function
