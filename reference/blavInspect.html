@@ -14,7 +14,7 @@ fitted blavaan object. This is similar to lavaan's lavInspect() function."><!-- 
     
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-9.1145</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-9.1147</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -105,7 +105,7 @@ fitted blavaan object. This is similar to lavaan's <code>lavInspect()</code> fun
 <dd><p>Character. What needs to be inspected/extracted? See Details for Bayes-specific options, and see <code>lavaan</code>'s <code>lavInspect()</code> for additional options. Note: the <code>what</code> argument is not case-sensitive (everything is converted to lower case.)</p></dd>
 
 <dt>...</dt>
-<dd><p>Default lavaan arguments supplied to <code>lavInspect()</code>; see <code>lavaan</code>.</p></dd>
+<dd><p>lavaan arguments supplied to <code>lavInspect()</code>; see <code>lavaan</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -153,15 +153,13 @@ documentation.</p>
 <dd><p>Estimated posterior median of each free parameter.</p></dd>
 
   <dt><code>"lvs"</code>:</dt>
-<dd><p>An object of class <code>mcmc</code> containing latent
-  variable (factor score) draws.</p></dd>
+<dd><p>An object of class <code>mcmc</code> containing latent variable (factor score) draws. In two-level models, use <code>level = 1</code> or <code>level = 2</code> to specify which factor scores you want.</p></dd>
 
   <dt><code>"lvmeans"</code>:</dt>
-<dd><p>A matrix of mean factor scores (rows are
-  observations, columns are variables).</p></dd>
+<dd><p>A matrix of mean factor scores (rows are observations, columns are variables). Use the additional <code>level</code> argument in the same way.</p></dd>
 
   <dt><code>"hpd"</code>:</dt>
-<dd><p>HPD interval of each free parameter. In this case, an additional argument <code>level</code> can be supplied to specify a number in (0,1) reflecting the percentage of the interval.</p></dd>
+<dd><p>HPD interval of each free parameter. In this case, the <code>prob</code> argument can be used to specify a number in (0,1) reflecting the desired percentage of the interval.</p></dd>
 
 
 </dl></div>
@@ -183,7 +181,7 @@ documentation.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># extract information</span></span></span>
 <span class="r-in"><span><span class="fu">blavInspect</span><span class="op">(</span><span class="va">fit</span>, <span class="st">"psrf"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">blavInspect</span><span class="op">(</span><span class="va">fit</span>, <span class="st">"hpd"</span>, level <span class="op">=</span> <span class="fl">.9</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">blavInspect</span><span class="op">(</span><span class="va">fit</span>, <span class="st">"hpd"</span>, prob <span class="op">=</span> <span class="fl">.9</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
 </code></pre></div>
     </div>
