@@ -300,8 +300,9 @@ samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable,
         standata$startrow <- c(1, standata$endrow[-length(standata$endrow)] + 1)
         standata$YX <- cbind(clusmns, matrix(0, nrow(clusmns), 2))
         standata$Ntot <- sum(standata$nclus[,2])
-        standata$Nobs <- with(standata, N_between + N_both)
-        standata$Obsvar <- with(standata, matrix(1:standata$Nobs, Np, N_between + N_both, byrow = TRUE))
+        standata$Nobs <- with(standata, rep(N_between + N_both, Np))
+        standata$Obsvar <- with(standata, matrix(1:standata$Nobs[1], Np, N_between + N_both, byrow = TRUE))
+
         tmpmat2[j,,] <- lvgqs(modmat2, standata)
 
         ## now level 1
