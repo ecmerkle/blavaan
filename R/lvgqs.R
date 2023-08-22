@@ -3,7 +3,7 @@ lvgqs <- function(modmats, standata, eeta = NULL, getlvs = TRUE) {
 
   ## stan data
   ## FIXME for getlvs=FALSE, YX only contains continuous data so dimensions
-  ## are wrong below
+  ## are wrong below when ordinal data are involved
   p <- standata$p
   q <- standata$q
   m <- standata$m
@@ -110,7 +110,6 @@ lvgqs <- function(modmats, standata, eeta = NULL, getlvs = TRUE) {
 
       r1 <- startrow[mm]
       r2 <- endrow[mm]
-
       for (idx in r1:r2){
         if (getlvs) {
           lvmean <- modmats[[grpidx]]$alpha + beta[, 1:Nobs[mm], drop=FALSE] %*% (YX[idx, obsidx[1:Nobs[mm]]] - ovmean[[grpidx]][obsidx[1:Nobs[mm]]])
@@ -292,18 +291,29 @@ samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable,
                                     mu.z = out$mu.z, mu.w = out$mu.w, mu.b = out$mu.b, se = FALSE)
         }
         clusmns <- do.call("rbind", clusmns)
+        YX.B <- matrix(0, nrow = nrow(clusmns), ncol = ncol(stanorig$YX))
+        Lp <- lavdata@Lp[[1]]
+        YX.B[, Lp$ov.idx[[1]]] <- clusmns
+        between.idx <- Lp$between.idx[[2]]
+
+        if(length(between.idx) > 0L){
+          YX.B[, between.idx] <- stanorig$YX[!duplicated(Lp$cluster.idx[[2]]), between.idx]
+        }
 
         ## manipulations to reuse existing lvgqs code
         standata$p <- standata$p_c
         standata$q <- 0
         standata$m <- standata$m_c
+        standata$usepsi <- standata$usepsi_c
+        standata$nopsi <- standata$nopsi_c
+        standata$w9use <- standata$w9use_c
+        standata$w9no <- standata$w9no_c
         standata$endrow <- cumsum(standata$nclus[,2])
         standata$startrow <- c(1, standata$endrow[-length(standata$endrow)] + 1)
-        standata$YX <- cbind(clusmns, matrix(0, nrow(clusmns), 2))
+        standata$YX <- YX.B[, lavdata@Lp[[1]]$ov.idx[[2]], drop = FALSE]
         standata$Ntot <- sum(standata$nclus[,2])
         standata$Nobs <- with(standata, rep(N_between + N_both, Np))
         standata$Obsvar <- with(standata, matrix(1:standata$Nobs[1], Np, N_between + N_both, byrow = TRUE))
-
         tmpmat2[j,,] <- lvgqs(modmat2, standata, eeta[2*(1:standata$Ng)])
 
         ## now level 1
