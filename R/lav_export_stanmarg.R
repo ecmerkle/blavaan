@@ -738,7 +738,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
         ## remove Psi_r_free because handled as corr_mat
         ini[[i]]$Psi_r_free <- array(0, 0)
         psidim <- dim(dat$Psi_skeleton)[2]
-        psimat <- array(diag(1, psidim), dim = c(psidim, psidim, dat$Ng))
+        psimat <- array(diag(1, psidim), dim = c(psidim, psidim, Ng))
         ini[[i]]$Psi_r_mat <- aperm(psimat, perm = c(3, 1, 2))
       }
 

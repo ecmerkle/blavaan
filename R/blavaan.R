@@ -324,7 +324,7 @@ blavaan <- function(...,  # default lavaan arguments
     }
 
     # for initial values/parameter setup:
-    if(jag.do.fit) {
+    if(jag.do.fit & !any(lavInspect(LAV, 'nlevels') > 1)) {
         LAV2 <- try(do.call("lavaan", dotdotdot), silent = TRUE)
         if(!inherits(LAV2, 'try-error')) LAV <- LAV2
     }
@@ -766,7 +766,7 @@ blavaan <- function(...,  # default lavaan arguments
 
         timing$Estimate <- (proc.time()[3] - start.time)
         start.time <- proc.time()[3]
-        cat("Computing post-estimation metrics (including lvs if requested)...\n")
+        if(jag.do.fit) cat("Computing post-estimation metrics (including lvs if requested)...\n")
         
         ## FIXME: there is no pars argument. this saves all parameters and uses unnecessary memory
         ## see res@sim and line 284 of stan_csv.R... might cut it down manually

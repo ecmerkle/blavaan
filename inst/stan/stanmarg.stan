@@ -501,6 +501,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
 
       out[2, 1:Nx, 1:Nx] = cov_w;
       out[3, 1:Nx, 1:Nx] = cov_w_inv;
+      out[3, Nx + 1, Nx + 1] = log_determinant(cov_w); // need log_determinant for multi_normal_suff
     }
 
     if (Nx_between > 0) {
@@ -520,7 +521,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
 
     for (cc in 1:nclus[2]) {
       if (Nx > 0) {
-	out[cc] += multi_normal_suff(mean_d[cc, Xvar[1:Nx]], cov_w[1:Nx, 1:Nx], mean_d[cc, Xvar[1:Nx]], cov_w_inv[1:Nx, 1:Nx], cluster_size[cc]);
+	out[cc] += multi_normal_suff(mean_d[cc, Xvar[1:Nx]], cov_w[1:Nx, 1:Nx], mean_d[cc, Xvar[1:Nx]], cov_w_inv[1:(Nx + 1), 1:(Nx + 1)], cluster_size[cc]);
       }
       if (Nx_between > 0) {
 	out[cc] += multi_normal_lpdf(mean_d[cc, 1:Nx_between] | ov_mean_d[1:Nx_between], cov_mean_d[1:Nx_between, 1:Nx_between]);
