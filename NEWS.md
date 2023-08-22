@@ -5,6 +5,9 @@
 ## Bugs/glitches discovered after the release:
 * For certain models with residual correlations and/or correlated factors, the initial values under target='stan' lead to non-positive definite matrices (reported by Yuanyuan Hu).
 
+* For models where a latent variable is regressed on an observed variable (lv ~ ov), the latent variable samples do not account for the mean of the observed variable (they are centered around 0 and off by a constant).
+
+
 # Version 0.4-7
 ## New features
 * This is primarily an update to address a C++14 vs C++17 compilation issue identified by CRAN

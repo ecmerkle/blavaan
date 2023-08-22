@@ -766,7 +766,8 @@ blavaan <- function(...,  # default lavaan arguments
 
         timing$Estimate <- (proc.time()[3] - start.time)
         start.time <- proc.time()[3]
-
+        cat("Computing post-estimation metrics (including lvs if requested)...\n")
+        
         ## FIXME: there is no pars argument. this saves all parameters and uses unnecessary memory
         ## see res@sim and line 284 of stan_csv.R... might cut it down manually
         if(target == "cmdstan"){
@@ -834,10 +835,13 @@ blavaan <- function(...,  # default lavaan arguments
                 }
                 ## lvs now in R instead of Stan
                 if(save.lvs & target == "stan"){
+                    ## this handles dummy lvs so that we use the appropriate alpha:
+                    lav_eeta <- getFromNamespace("computeEETA", "lavaan")
+                    eeta <- lav_eeta(lavmodel = lavmodel, lavsamplestats = lavsamplestats)
                     if(lavoptions$.multilevel){
-                        stanlvs <- samp_lvs_2lev(res, lavmodel, lavsamplestats, lavdata, parests$lavpartable, jagtrans$data)
+                        stanlvs <- samp_lvs_2lev(res, lavmodel, lavsamplestats, lavdata, parests$lavpartable, jagtrans$data, eeta)
                     } else {
-                        stanlvs <- list(samp_lvs(res, lavmodel, parests$lavpartable, jagtrans$data, lavInspect(LAV, "categorical")))
+                        stanlvs <- list(samp_lvs(res, lavmodel, parests$lavpartable, jagtrans$data, eeta, lavInspect(LAV, "categorical")))
                     }
 
                     for(j in 1:(1 + lavoptions$.multilevel)){
@@ -912,7 +916,6 @@ blavaan <- function(...,  # default lavaan arguments
     ## fx is mean ll, where ll is marginal log-likelihood (integrate out lvs)
     casells <- NULL
     if(lavoptions$test != "none") {
-      cat("Computing posterior predictives...\n")
       lavmcmc <- make_mcmc(res)
       LAV@Options <- lavoptions
 
