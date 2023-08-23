@@ -776,7 +776,8 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     dumlv <- c(lavobject@Model@ov.x.dummy.lv.idx[[1]],
                lavobject@Model@ov.y.dummy.lv.idx[[1]])
   } else {
-    dumlv <- NULL
+    dumlv <- c(lavobject@Model@ov.x.dummy.lv.idx[[2]],
+               lavobject@Model@ov.y.dummy.lv.idx[[2]])
   }
 
   ## for level 2, add _c to names
