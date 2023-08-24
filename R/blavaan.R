@@ -855,7 +855,9 @@ blavaan <- function(...,  # default lavaan arguments
                     if(lavoptions$.multilevel){
                         stanlvs <- simplify2array( sapply(1:nrow(stanlvs[[1]]), function(i) cbind(stanlvs[[1]][i,,],
                                                                                                   stanlvs[[2]][i,,]), simplify = FALSE) )
-                        stanlvs <- aperm(stanlvs, c(3, 1, 2))
+                        if(with(jagtrans$data, length(usepsi) + length(usepsi_c) > 0)){
+                            stanlvs <- aperm(stanlvs, c(3, 1, 2))
+                        }
                     } else {
                         stanlvs <- stanlvs[[1]]
                     }
