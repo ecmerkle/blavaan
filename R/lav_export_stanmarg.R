@@ -772,10 +772,11 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   }
 
   ## index of dummy lvs, for sampling lvs
+  dumlv <- NULL
   if (level == 1L) {
     dumlv <- c(lavobject@Model@ov.x.dummy.lv.idx[[1]],
                lavobject@Model@ov.y.dummy.lv.idx[[1]])
-  } else {
+  } else if (multilevel) {
     dumlv <- c(lavobject@Model@ov.x.dummy.lv.idx[[2]],
                lavobject@Model@ov.y.dummy.lv.idx[[2]])
   }
