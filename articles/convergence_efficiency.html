@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-9.1155</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-9.1156</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -164,25 +164,25 @@ function</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"rhat"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##   ind60=~x1   ind60=~x2   ind60=~x3           a           b           c </span></span>
-<span><span class="co">##   1.0041124   1.0039657   1.0044124   0.9999052   0.9996267   0.9995434 </span></span>
+<span><span class="co">##   0.9997035   0.9998010   1.0002965   0.9997348   1.0000585   0.9998907 </span></span>
 <span><span class="co">##           d           a           b           c           d dem60~ind60 </span></span>
-<span><span class="co">##   0.9994847   0.9999052   0.9996267   0.9995434   0.9994847   1.0003544 </span></span>
+<span><span class="co">##   1.0010020   0.9997348   1.0000585   0.9998907   1.0010020   0.9997857 </span></span>
 <span><span class="co">## dem65~ind60 dem65~dem60      y1~~y5      y2~~y4      y2~~y6      y3~~y7 </span></span>
-<span><span class="co">##   0.9995184   0.9994051   1.0004907   1.0011988   0.9994444   0.9998014 </span></span>
+<span><span class="co">##   1.0014305   1.0000965   1.0000501   0.9991851   0.9995405   0.9997293 </span></span>
 <span><span class="co">##      y4~~y8      y6~~y8      x1~~x1      x2~~x2      x3~~x3      y1~~y1 </span></span>
-<span><span class="co">##   1.0004430   0.9999151   0.9999058   1.0013769   0.9991793   1.0002765 </span></span>
+<span><span class="co">##   1.0010207   0.9996319   1.0016246   1.0002329   0.9995293   0.9999420 </span></span>
 <span><span class="co">##      y2~~y2      y3~~y3      y4~~y4      y5~~y5      y6~~y6      y7~~y7 </span></span>
-<span><span class="co">##   0.9999933   0.9995286   1.0005252   0.9996636   0.9996659   0.9995974 </span></span>
+<span><span class="co">##   1.0000879   0.9991389   0.9996330   0.9995761   0.9997251   1.0005634 </span></span>
 <span><span class="co">##      y8~~y8        x1~1        x2~1        x3~1        y1~1        y2~1 </span></span>
-<span><span class="co">##   1.0009362   1.0009888   1.0017662   1.0003879   1.0010929   1.0000758 </span></span>
+<span><span class="co">##   0.9997588   0.9998691   0.9998457   1.0003962   0.9991706   0.9999650 </span></span>
 <span><span class="co">##        y3~1        y4~1        y5~1        y6~1        y7~1        y8~1 </span></span>
-<span><span class="co">##   1.0001870   1.0022721   1.0020639   1.0010978   1.0015236   1.0014965</span></span></code></pre>
+<span><span class="co">##   1.0004085   1.0000193   0.9996763   0.9994294   0.9996919   1.0003624</span></span></code></pre>
 <p>With large models it can be cumbersome to look over all of these
 entries. We can instead find the largest <span class="math inline">\(\hat{R}\)</span> to see if they are all less than
 <span class="math inline">\(1.05\)</span></p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"psrf"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] 1.004412</span></span></code></pre>
+<pre><code><span><span class="co">## [1] 1.001625</span></span></code></pre>
 <p>If all <span class="math inline">\(\hat{R} &lt; 1.05\)</span> then we
 can establish that the MCMC chains have converged to a stable solution.
 If the model has not converged, you might increase the number of
@@ -223,19 +223,19 @@ function</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"neff"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##   ind60=~x1   ind60=~x2   ind60=~x3           a           b           c </span></span>
-<span><span class="co">##   1500.5207   1431.0752   1591.5091   1614.1568   1930.9618   1915.3956 </span></span>
+<span><span class="co">##    2089.647    2000.058    2192.370    2229.146    2287.845    2519.689 </span></span>
 <span><span class="co">##           d           a           b           c           d dem60~ind60 </span></span>
-<span><span class="co">##   1596.4516   1614.1568   1930.9618   1915.3956   1596.4516   2093.5180 </span></span>
+<span><span class="co">##    2070.785    2229.146    2287.845    2519.689    2070.785    2722.508 </span></span>
 <span><span class="co">## dem65~ind60 dem65~dem60      y1~~y5      y2~~y4      y2~~y6      y3~~y7 </span></span>
-<span><span class="co">##   2880.2769   2771.2954   2396.5223   2267.9123   2822.7290   2441.7414 </span></span>
+<span><span class="co">##    3462.218    4038.977    2420.856    2955.464    3504.148    2776.066 </span></span>
 <span><span class="co">##      y4~~y8      y6~~y8      x1~~x1      x2~~x2      x3~~x3      y1~~y1 </span></span>
-<span><span class="co">##   2447.9342   1688.2048   1942.8770   1225.3396   3606.4277   2747.4478 </span></span>
+<span><span class="co">##    3107.047    2129.896    2632.534    2296.438    4081.131    2728.966 </span></span>
 <span><span class="co">##      y2~~y2      y3~~y3      y4~~y4      y5~~y5      y6~~y6      y7~~y7 </span></span>
-<span><span class="co">##   3051.6378   3360.5106   2405.1930   2535.2054   2233.0158   2801.7377 </span></span>
+<span><span class="co">##    3631.254    3786.164    2717.078    2323.484    3311.463    2738.208 </span></span>
 <span><span class="co">##      y8~~y8        x1~1        x2~1        x3~1        y1~1        y2~1 </span></span>
-<span><span class="co">##   1897.4351   1118.3810    962.9841   1259.3807   1364.7238   1353.4570 </span></span>
+<span><span class="co">##    2296.440    1343.020    1227.073    1366.907    1451.695    1788.873 </span></span>
 <span><span class="co">##        y3~1        y4~1        y5~1        y6~1        y7~1        y8~1 </span></span>
-<span><span class="co">##   1391.4738   1080.3957   1183.3551   1153.9730   1139.3386   1057.7861</span></span></code></pre>
+<span><span class="co">##    1433.018    1318.287    1192.843    1247.366    1113.443    1080.120</span></span></code></pre>
 <p>ESS is a sample size, so it should be at least 100 (optimally, much
 more than 100) times the number of chains in order to be reliable and to
 indicate that estimates of the posterior quantiles are reliable. In this
@@ -245,7 +245,7 @@ example, because we have 3 chains, we would want to see at least
 function:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"neff"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] 962.9841</span></span></code></pre>
+<pre><code><span><span class="co">## [1] 1080.12</span></span></code></pre>
 </div>
 <div class="section level3 unnumbered">
 <h3 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
