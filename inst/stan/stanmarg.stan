@@ -450,6 +450,8 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     // using elementwise multiplication + sum here for efficiency
     out = -.5 * N * ( sum(Supdate[1:Nobs, 1:Nobs] .* (S + (xbar - Mu) * (xbar - Mu)')) + Supdate[Nobs + 1, Nobs + 1] + Nobs * log(2 * pi()) );
 
+    if(is_nan(out) || out == positive_infinity()) out = negative_infinity();
+
     return out;
   }
 
