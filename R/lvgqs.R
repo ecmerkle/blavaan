@@ -30,7 +30,7 @@ lvgqs <- function(modmats, standata, eeta = NULL, getlvs = TRUE) {
 
   ## new matrices
   ovmean <- lvimpmean <- vector("list", Ng)
-  for (g in 1:Ng){
+  for (g in 1:Ng) {
     if ("nu" %in% names(modmats[[g]])){
       ovmean[[g]] <- modmats[[g]]$nu
     } else {
@@ -46,7 +46,13 @@ lvgqs <- function(modmats, standata, eeta = NULL, getlvs = TRUE) {
         ovmean[[g]][1:p] <- ovmean[[g]][1:p,] + modmats[[g]]$lambda %*% lvimpmean[[g]]
       }
     }
+  }
 
+  if (is.null(eeta)) {
+    eeta <- vector("list", Ng)
+    for (g in 1:Ng) {
+      eeta[[g]] <- rep(0, standata$m)
+    }
   }
 
   if ((w9use + w9no) > 0 | !getlvs) {

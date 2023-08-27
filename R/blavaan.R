@@ -835,13 +835,13 @@ blavaan <- function(...,  # default lavaan arguments
                 }
                 ## lvs now in R instead of Stan
                 if(save.lvs & target == "stan"){
-                    ## this handles dummy lvs so that we use the appropriate alpha:
-                    lav_eeta <- getFromNamespace("computeEETA", "lavaan")
-                    eeta <- lav_eeta(lavmodel = lavmodel, lavsamplestats = lavsamplestats)
                     if(lavoptions$.multilevel){
+                        ## this handles dummy lvs so that we use the appropriate alpha:
+                        lav_eeta <- getFromNamespace("computeEETA", "lavaan")
+                        eeta <- lav_eeta(lavmodel = lavmodel, lavsamplestats = lavsamplestats)
                         stanlvs <- samp_lvs_2lev(res, lavmodel, lavsamplestats, lavdata, parests$lavpartable, jagtrans$data, eeta)
                     } else {
-                        stanlvs <- list(samp_lvs(res, lavmodel, parests$lavpartable, jagtrans$data, eeta, lavInspect(LAV, "categorical")))
+                        stanlvs <- list(samp_lvs(res, lavmodel, parests$lavpartable, jagtrans$data, eeta = NULL, lavInspect(LAV, "categorical")))
                     }
 
                     for(j in 1:(1 + lavoptions$.multilevel)){
