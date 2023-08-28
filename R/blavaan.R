@@ -712,6 +712,7 @@ blavaan <- function(...,  # default lavaan arguments
                     rjcall <- "stan"
                 } else if(usevb){
                     rjcall <- "vb"
+                    rjarg$init <- rjarg$init[[1]]
                 } else if(target == "cmdstan"){
                     fname <- paste0("stanmarg_", packageDescription("blavaan")["Version"])
                     fdir <- paste0(cmdstanr::cmdstan_path(), "/")

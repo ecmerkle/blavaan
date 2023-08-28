@@ -127,8 +127,13 @@ function(object, header       = TRUE,
         }
         PE$group[PE$group == 0] <- 1
 
-        attributes(PE)$information <- "MCMC"
-        attributes(PE)$se <- "MCMC"
+        if(object@call$target == "vb") {
+            attributes(PE)$information <- "VB"
+            attributes(PE)$se <- "VB"
+        } else {
+            attributes(PE)$information <- "MCMC"
+            attributes(PE)$se <- "MCMC"
+        }
         ## 95% HPD; FIXME display blanks for equality-constrained parameters
         ##                (like Std.Err column)
 
