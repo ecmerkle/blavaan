@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-9.1162</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4-9.1164</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -145,7 +145,7 @@ function, looking at the posterior distribution for the factor loadings,
 correlations, intercepts and variances.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit_df</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## blavaan 0.4.9.1162 ended normally after 1000 iterations</span></span>
+<pre><code><span><span class="co">## blavaan 0.4.9.1164 ended normally after 1000 iterations</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   Estimator                                      BAYES</span></span>
 <span><span class="co">##   Optimization method                             MCMC</span></span>
@@ -154,7 +154,7 @@ correlations, intercepts and variances.</p>
 <span><span class="co">##   Number of observations                           301</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   Statistic                                 MargLogLik         PPP</span></span>
-<span><span class="co">##   Value                                      -3870.915       0.000</span></span>
+<span><span class="co">##   Value                                      -3870.777       0.000</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Parameter Estimates:</span></span>
 <span><span class="co">## </span></span>
@@ -162,52 +162,52 @@ correlations, intercepts and variances.</p>
 <span><span class="co">## Latent Variables:</span></span>
 <span><span class="co">##                    Estimate  Post.SD pi.lower pi.upper     Rhat    Prior       </span></span>
 <span><span class="co">##   visual =~                                                                    </span></span>
-<span><span class="co">##     x1                0.909    0.087    0.748    1.081    1.000    normal(0,10)</span></span>
-<span><span class="co">##     x2                0.502    0.082    0.342    0.664    1.000    normal(0,10)</span></span>
-<span><span class="co">##     x3                0.662    0.078    0.516    0.816    1.001    normal(0,10)</span></span>
+<span><span class="co">##     x1                0.913    0.091    0.740    1.098    1.000    normal(0,10)</span></span>
+<span><span class="co">##     x2                0.501    0.085    0.330    0.669    1.000    normal(0,10)</span></span>
+<span><span class="co">##     x3                0.661    0.081    0.499    0.825    1.000    normal(0,10)</span></span>
 <span><span class="co">##   textual =~                                                                   </span></span>
-<span><span class="co">##     x4                1.001    0.057    0.893    1.116    1.002    normal(0,10)</span></span>
-<span><span class="co">##     x5                1.114    0.061    0.997    1.237    1.000    normal(0,10)</span></span>
-<span><span class="co">##     x6                0.928    0.054    0.823    1.038    1.001    normal(0,10)</span></span>
+<span><span class="co">##     x4                1.001    0.058    0.893    1.113    0.999    normal(0,10)</span></span>
+<span><span class="co">##     x5                1.114    0.063    0.994    1.245    1.000    normal(0,10)</span></span>
+<span><span class="co">##     x6                0.925    0.055    0.819    1.035    1.000    normal(0,10)</span></span>
 <span><span class="co">##   speed =~                                                                     </span></span>
-<span><span class="co">##     x7                0.618    0.079    0.459    0.771    1.000    normal(0,10)</span></span>
-<span><span class="co">##     x8                0.732    0.077    0.580    0.882    1.001    normal(0,10)</span></span>
-<span><span class="co">##     x9                0.682    0.078    0.533    0.843    1.000    normal(0,10)</span></span>
+<span><span class="co">##     x7                0.619    0.078    0.464    0.767    1.000    normal(0,10)</span></span>
+<span><span class="co">##     x8                0.736    0.079    0.580    0.887    0.999    normal(0,10)</span></span>
+<span><span class="co">##     x9                0.681    0.079    0.528    0.842    0.999    normal(0,10)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Covariances:</span></span>
 <span><span class="co">##                    Estimate  Post.SD pi.lower pi.upper     Rhat    Prior       </span></span>
 <span><span class="co">##   visual ~~                                                                    </span></span>
-<span><span class="co">##     textual           0.448    0.064    0.314    0.567    1.000     lkj_corr(1)</span></span>
-<span><span class="co">##     speed             0.463    0.083    0.298    0.616    1.001     lkj_corr(1)</span></span>
+<span><span class="co">##     textual           0.447    0.064    0.316    0.565    0.999     lkj_corr(1)</span></span>
+<span><span class="co">##     speed             0.462    0.084    0.297    0.627    0.999     lkj_corr(1)</span></span>
 <span><span class="co">##   textual ~~                                                                   </span></span>
-<span><span class="co">##     speed             0.278    0.070    0.141    0.411    1.000     lkj_corr(1)</span></span>
+<span><span class="co">##     speed             0.277    0.072    0.133    0.413    1.000     lkj_corr(1)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Intercepts:</span></span>
 <span><span class="co">##                    Estimate  Post.SD pi.lower pi.upper     Rhat    Prior       </span></span>
-<span><span class="co">##    .x1                4.936    0.069    4.803    5.071    1.000    normal(0,32)</span></span>
-<span><span class="co">##    .x2                6.087    0.068    5.956    6.217    1.001    normal(0,32)</span></span>
-<span><span class="co">##    .x3                2.252    0.066    2.116    2.378    0.999    normal(0,32)</span></span>
-<span><span class="co">##    .x4                3.062    0.068    2.923    3.192    1.001    normal(0,32)</span></span>
-<span><span class="co">##    .x5                4.342    0.075    4.193    4.489    1.000    normal(0,32)</span></span>
-<span><span class="co">##    .x6                2.185    0.063    2.062    2.309    1.001    normal(0,32)</span></span>
-<span><span class="co">##    .x7                4.184    0.065    4.061    4.309    1.000    normal(0,32)</span></span>
-<span><span class="co">##    .x8                5.526    0.061    5.406    5.644    1.000    normal(0,32)</span></span>
-<span><span class="co">##    .x9                5.374    0.059    5.258    5.484    0.999    normal(0,32)</span></span>
+<span><span class="co">##    .x1                4.938    0.070    4.800    5.078    1.000    normal(0,32)</span></span>
+<span><span class="co">##    .x2                6.089    0.069    5.954    6.226    0.999    normal(0,32)</span></span>
+<span><span class="co">##    .x3                2.252    0.066    2.120    2.378    1.000    normal(0,32)</span></span>
+<span><span class="co">##    .x4                3.062    0.068    2.928    3.197    1.000    normal(0,32)</span></span>
+<span><span class="co">##    .x5                4.341    0.076    4.188    4.482    1.000    normal(0,32)</span></span>
+<span><span class="co">##    .x6                2.187    0.064    2.060    2.313    1.001    normal(0,32)</span></span>
+<span><span class="co">##    .x7                4.190    0.064    4.066    4.314    1.000    normal(0,32)</span></span>
+<span><span class="co">##    .x8                5.530    0.061    5.407    5.648    0.999    normal(0,32)</span></span>
+<span><span class="co">##    .x9                5.376    0.059    5.265    5.496    1.000    normal(0,32)</span></span>
 <span><span class="co">##     visual            0.000                                                    </span></span>
 <span><span class="co">##     textual           0.000                                                    </span></span>
 <span><span class="co">##     speed             0.000                                                    </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Variances:</span></span>
 <span><span class="co">##                    Estimate  Post.SD pi.lower pi.upper     Rhat    Prior       </span></span>
-<span><span class="co">##    .x1                0.558    0.124    0.312    0.795    1.001 gamma(1,.5)[sd]</span></span>
-<span><span class="co">##    .x2                1.152    0.109    0.958    1.382    1.001 gamma(1,.5)[sd]</span></span>
-<span><span class="co">##    .x3                0.858    0.097    0.679    1.064    1.000 gamma(1,.5)[sd]</span></span>
-<span><span class="co">##    .x4                0.380    0.051    0.284    0.487    1.000 gamma(1,.5)[sd]</span></span>
-<span><span class="co">##    .x5                0.457    0.061    0.345    0.584    0.999 gamma(1,.5)[sd]</span></span>
-<span><span class="co">##    .x6                0.362    0.046    0.276    0.458    0.999 gamma(1,.5)[sd]</span></span>
-<span><span class="co">##    .x7                0.823    0.094    0.653    1.013    0.999 gamma(1,.5)[sd]</span></span>
-<span><span class="co">##    .x8                0.503    0.093    0.322    0.687    1.001 gamma(1,.5)[sd]</span></span>
-<span><span class="co">##    .x9                0.567    0.093    0.381    0.744    1.001 gamma(1,.5)[sd]</span></span>
+<span><span class="co">##    .x1                0.551    0.136    0.258    0.802    1.001 gamma(1,.5)[sd]</span></span>
+<span><span class="co">##    .x2                1.150    0.108    0.960    1.376    0.999 gamma(1,.5)[sd]</span></span>
+<span><span class="co">##    .x3                0.860    0.103    0.666    1.073    1.000 gamma(1,.5)[sd]</span></span>
+<span><span class="co">##    .x4                0.378    0.050    0.287    0.482    1.000 gamma(1,.5)[sd]</span></span>
+<span><span class="co">##    .x5                0.456    0.060    0.342    0.578    1.000 gamma(1,.5)[sd]</span></span>
+<span><span class="co">##    .x6                0.364    0.045    0.281    0.457    0.999 gamma(1,.5)[sd]</span></span>
+<span><span class="co">##    .x7                0.820    0.090    0.659    1.012    1.000 gamma(1,.5)[sd]</span></span>
+<span><span class="co">##    .x8                0.500    0.095    0.313    0.699    1.000 gamma(1,.5)[sd]</span></span>
+<span><span class="co">##    .x9                0.570    0.094    0.373    0.747    1.000 gamma(1,.5)[sd]</span></span>
 <span><span class="co">##     visual            1.000                                                    </span></span>
 <span><span class="co">##     textual           1.000                                                    </span></span>
 <span><span class="co">##     speed             1.000</span></span></code></pre>
@@ -233,7 +233,7 @@ the model, by looking at the posterior mean (<code>Estimate</code>) and
 credible interval.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit_cl</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## blavaan 0.4.9.1162 ended normally after 1000 iterations</span></span>
+<pre><code><span><span class="co">## blavaan 0.4.9.1164 ended normally after 1000 iterations</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   Estimator                                      BAYES</span></span>
 <span><span class="co">##   Optimization method                             MCMC</span></span>
