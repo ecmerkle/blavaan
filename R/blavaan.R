@@ -619,11 +619,13 @@ blavaan <- function(...,  # default lavaan arguments
                     ## FIXME these do not cover level 2 parameters
                     moment_match_monitors <- c("Lambda_y_free", "B_free", 
                         "Theta_sd_free", "Theta_r_free", "Psi_sd_free", 
-                        "Psi_r_mat", "Psi_r_free", "Tau_ufree", 
-                        "z_aug", "ly_sign", "bet_sign",
-                        "Theta_cov", "Theta_var", "Psi_cov", "Psi_var", 
-                        "Nu_free", "Alpha_free", "Tau_free", "log_lik", 
-                        "log_lik_sat", "ppp")
+                        "Psi_r_mat", "Psi_r_free", "Nu_free", "Alpha_free")
+                    moment_match_monitors <- c(moment_match_monitors,
+                                               paste0(moment_match_monitors, "_c"))
+                    moment_match_monitors <- c(moment_match_monitors, "Tau_ufree", 
+                                               "z_aug", "ly_sign", "bet_sign", "Theta_cov",
+                                               "Theta_var", "Psi_cov", "Psi_var", "Tau_free",
+                                               "log_lik", "log_lik_sat", "ppp")
                     jagtrans$monitors <- c(jagtrans$monitors, moment_match_monitors[!(moment_match_monitors %in% jagtrans$monitors)])
                 }
                 if("data" %in% names(mcmcextra)){
