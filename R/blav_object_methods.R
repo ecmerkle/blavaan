@@ -127,9 +127,11 @@ function(object, header       = TRUE,
         }
         PE$group[PE$group == 0] <- 1
 
-        if(object@call$target == "vb") {
-            attributes(PE)$information <- "VB"
-            attributes(PE)$se <- "VB"
+        if("target" %in% names(object@call)){
+            if(object@call$target == "vb"){
+                attributes(PE)$information <- "VB"
+                attributes(PE)$se <- "VB"
+            }
         } else {
             attributes(PE)$information <- "MCMC"
             attributes(PE)$se <- "MCMC"
