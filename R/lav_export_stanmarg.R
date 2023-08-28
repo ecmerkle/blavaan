@@ -972,7 +972,7 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
     }
     lavpartable <- c(lavpartable, list(mat = olpt$mat, row = olpt$row, col = olpt$col))
   } else {
-    lavpartable <- lavMatrixRepresentation(lavpartable, add.attributes = TRUE, as.data.frame = FALSE)
+    lavpartable <- lavMatrixRepresentation(lavpartable, add.attributes = TRUE, as.data.frame. = FALSE)
   } 
   
   list(x = lavpartable$est[lavpartable$free > 0],
