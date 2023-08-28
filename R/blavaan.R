@@ -323,8 +323,8 @@ blavaan <- function(...,  # default lavaan arguments
         if(!any(is.na(unlist(lavInspect(LAV, 'data'))))) dotdotdot$missing <- "listwise"
     }
 
-    # for initial values/parameter setup:
-    if(jag.do.fit & !any(lavInspect(LAV, 'nlevels') > 1)) {
+    # for initial values/some parameter setup:
+    if(jag.do.fit){
         LAV2 <- try(do.call("lavaan", dotdotdot), silent = TRUE)
         if(!inherits(LAV2, 'try-error')) LAV <- LAV2
     }
