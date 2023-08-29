@@ -132,18 +132,19 @@ automatic way to do it). Alternatively, if there is not much missing
 data and it occurs only for lower-level units, listwise deletion could
 work.</p>
 <p>The <em>blavaan</em> approach to model estimation mimics the
-<em>lavaan</em> approach, which uses matrix results <span class="citation">[see @ros21]</span> that enable us to efficiently
+<em>lavaan</em> approach, which uses matrix results <span class="citation">(see Rosseel 2021)</span> that enable us to efficiently
 evaluate the multilevel SEM likelihood. This will often lead to more
 efficient MCMC estimation, as compared to sampling all the level 1 and
-level 2 latent variables and working with conditional likelihoods <span class="citation">[see @merfit21 for discussion of marginal vs
-conditional likelihoods]</span>.</p>
+level 2 latent variables and working with conditional likelihoods <span class="citation">(see Merkle et al. 2021 for discussion of marginal vs
+conditional likelihoods)</span>.</p>
 <p>Similar to single-level models, users can sample latent variables
 using the <code>save.lvs = TRUE</code> argument in their
 <code>bcfa/bsem/bgrowth/blavaan</code> commands. Marginal information
 criteria (marginal over all latent variables) are also automatically
 computed, with these information criteria generally being preferred over
-those than condition on latent variables <span class="citation">[see
-@merfur19 for detail in the context of single-level models]</span>.</p>
+those than condition on latent variables <span class="citation">(see
+Merkle, Furr, and Rabe-Hesketh 2019 for detail in the context of
+single-level models)</span>.</p>
 </div>
 <div class="section level3">
 <h3 id="bayes-specific-options">Bayes-specific Options<a class="anchor" aria-label="anchor" href="#bayes-specific-options"></a>
@@ -183,9 +184,29 @@ argument, and all the <em>blavaan</em> code is available on Github. Bug
 reports are appreciated, either at the <em>blavaan</em> Google group or
 as a Github issue.</p>
 </div>
-<div class="section level3">
-<h3 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+<div class="section level3 unnumbered">
+<h3 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h3>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-merfit21" class="csl-entry">
+Merkle, E. C., E. Fitzsimmons, J. Uanhoro, and B. Goodrich. 2021.
+<span>“Efficient <span>Bayesian</span> Structural Equation Modeling in
+<span>Stan</span>.”</span> <em>Journal of Statistical Software</em> 100
+(6): 1–22. <a href="https://www.jstatsoft.org/article/view/v100i06" class="external-link">https://www.jstatsoft.org/article/view/v100i06</a>.
+</div>
+<div id="ref-merfur19" class="csl-entry">
+Merkle, E. C., D. Furr, and S. Rabe-Hesketh. 2019.
+<span>“<span>Bayesian</span> Comparison of Latent Variable Models:
+<span>Conditional</span> Versus Marginal Likelihoods.”</span>
+<em>Psychometrika</em> 84: 802–29. <a href="https://arxiv.org/abs/1802.04452" class="external-link">https://arxiv.org/abs/1802.04452</a>.
+</div>
+<div id="ref-ros21" class="csl-entry">
+Rosseel, Yves. 2021. <span>“Evaluating the Observed Log-Likelihood
+Function in Two-Level Structural Equation Modeling with Missing Data:
+<span>From</span> Formulas to <span>R</span> Code.”</span>
+<em>Psych</em> 3 (2): 197–232. <a href="https://doi.org/10.3390/psych3020017" class="external-link">https://doi.org/10.3390/psych3020017</a>.
+</div>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>
