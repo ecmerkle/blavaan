@@ -32,10 +32,12 @@ navbar:
         href: articles/plotting.html
     - text: Examples/Details
       menu:
-      - text: Measurement Invariance
-        href: articles/invariance.html
       - text: Estimation with Ordinal Data
         href: articles/ordinal.html
+      - text: Two-level Estimation
+        href: articles/multilevel.html
+      - text: Measurement Invariance
+        href: articles/invariance.html
       - text: Approximate Fit Indices
         href: articles/approx_fi.html
       - text: Model Comparison
