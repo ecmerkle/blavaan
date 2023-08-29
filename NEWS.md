@@ -1,3 +1,8 @@
+# Version 0.5-1
+## New features
+* Two-level models are now supported (for complete, continuous data) via the cluster argument.
+
+
 # Version 0.4-8
 ## New features
 * This is a maintenance release with bug fixes and some changes in compiler settings
