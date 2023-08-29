@@ -1,5 +1,7 @@
 ---
 title: "Two-level SEM"
+bibliography:
+  - refs.bib
 ---
 
 ```{r echo=FALSE, message=FALSE}
