@@ -10,6 +10,7 @@ articles:
   invariance: invariance.html
   mod_indices: mod_indices.html
   model_comparison: model_comparison.html
+  multilevel: multilevel.html
   ordinal: ordinal.html
   plotting: plotting.html
   prior: prior.html
@@ -18,7 +19,7 @@ articles:
   resources: resources.html
   start: start.html
   summaries: summaries.html
-last_built: 2023-08-29T18:36Z
+last_built: 2023-08-29T19:04Z
 urls:
   reference: http://ecmerkle.github.io/blavaan/reference
   article: http://ecmerkle.github.io/blavaan/articles
