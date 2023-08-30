@@ -115,10 +115,24 @@ similar to those of <em>lavaan</em>, including use of
 <code>level:</code> in the model specification and use of the
 <code>cluster</code> argument for estimation. Consequently, examples
 involving <em>lavaan</em> also generally apply to <em>blavaan</em>, such
-as the <a href="https://lavaan.ugent.be/tutorial/multilevel.html" class="external-link"><em>lavaan</em>
-tutorial example</a>. Here, we discuss what is currently covered by
-<em>blavaan</em> and some features that are unique to Bayesian
-modeling.</p>
+as the <em>lavaan</em> tutorial example below. (note: for version 0.5-1,
+the levels can only be named “within” and “between” in the model
+specification syntax)</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">Demo.twolevel</span>, package <span class="op">=</span> <span class="st">"lavaan"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">model</span> <span class="op">&lt;-</span> <span class="st">'</span></span>
+<span><span class="st">    level: within</span></span>
+<span><span class="st">        fw =~ y1 + y2 + y3</span></span>
+<span><span class="st">        fw ~ x1 + x2 + x3</span></span>
+<span><span class="st">    level: between</span></span>
+<span><span class="st">        fb =~ y1 + y2 + y3</span></span>
+<span><span class="st">        fb ~ w1 + w2</span></span>
+<span><span class="st">'</span></span>
+<span></span>
+<span><span class="va">bfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bsem.html">bsem</a></span><span class="op">(</span>model <span class="op">=</span> <span class="va">model</span>, data <span class="op">=</span> <span class="va">Demo.twolevel</span>, cluster <span class="op">=</span> <span class="st">"cluster"</span><span class="op">)</span></span></code></pre></div>
+<p>Below, we discuss what is currently covered by <em>blavaan</em> and
+some features that are unique to Bayesian modeling.</p>
 <div class="section level3">
 <h3 id="blavaan-coverage">
 <em>blavaan</em> Coverage<a class="anchor" aria-label="anchor" href="#blavaan-coverage"></a>
@@ -176,7 +190,7 @@ custom model assessment (defined as an R function).</p>
 <div class="section level3">
 <h3 id="concluding-thoughts">Concluding Thoughts<a class="anchor" aria-label="anchor" href="#concluding-thoughts"></a>
 </h3>
-<p>We think that the new <em>blavaan</em> functionality will provide a
+<p>We think that the new <em>blavaan</em> functionality provides a
 viable option for Bayesian two-level SEM, and it should provide a solid
 base for future model developments. As always, the underlying Stan files
 and supporting data are available via the <code>mcmcfile = TRUE</code>
