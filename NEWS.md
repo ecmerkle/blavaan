@@ -2,6 +2,9 @@
 ## New features
 * Two-level models are now supported (for complete, continuous data) via the cluster argument.
 
+## Bugs/glitches discovered after the release:
+* For two-level model specification, the levels have to be labeled "within" and "between". This is more restrictive than lavaan.
+
 
 # Version 0.4-8
 ## New features
