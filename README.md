@@ -6,6 +6,8 @@
 
 blavaan is a free, open source R package for Bayesian latent variable analysis.  It relies on JAGS and Stan to estimate models via MCMC.
 
+blavaan 0.5-1 is now on CRAN, providing functionality for two-level SEM! [more details](articles/multilevel.html)
+
 The blavaan functions and syntax are similar to lavaan. For example, consider the Political Democracy example from Bollen (1989):
 
 ```r
