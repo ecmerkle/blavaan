@@ -405,8 +405,9 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
     dat <- c(dat, format_priors(lavpartable))
     dat <- c(dat, format_priors(lavpartable[0,], level = 2L))
   } else {
-    dat <- c(dat, format_priors(lavpartable[lavpartable$level == "within",]))
-    dat <- c(dat, format_priors(lavpartable[lavpartable$level == "between",], level = 2L))
+    levlabs <- blav_partable_level_values(lavpartable)
+    dat <- c(dat, format_priors(lavpartable[lavpartable$level == levlabs[1],]))
+    dat <- c(dat, format_priors(lavpartable[lavpartable$level == levlabs[2],], level = 2L))
   }
   
   return(dat)

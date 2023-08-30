@@ -226,11 +226,12 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   free2 <- list()
   nfree <- list()
   lavpartable <- parTable(lavobject)
+  levlabs <- blav_partable_level_values(lavpartable)
   lavpartable <- lavMatrixRepresentation(lavpartable, add.attributes = TRUE)
   if (multilevel & level == 1L) {
-    lavpartable <- subset(lavpartable, level == "within")
+    lavpartable <- subset(lavpartable, level == levlabs[1])
   } else if (multilevel & level == 2L) {
-    lavpartable <- subset(lavpartable, level == "between")
+    lavpartable <- subset(lavpartable, level == levlabs[2])
   } else if (level == 2L) {
     lavpartable <- lavpartable[0,]
   }
@@ -824,12 +825,13 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
                Alpha_free = "alpha", Tau_free = "tau")
   matmod <- ""
   olpt <- lavpartable
+  levlabs <- blav_partable_level_values(lavpartable)
   if (level == 2L) {
     names(mapping) <- paste0(names(mapping), "_c")
-    lavpartable <- lapply(lavpartable, function(x) x[lavpartable$level == "between"])
+    lavpartable <- lapply(lavpartable, function(x) x[lavpartable$level == levlabs[2]])
     matmod <- "_c"
   } else if ("level" %in% names(lavpartable)) {
-    lavpartable <- lapply(lavpartable, function(x) x[lavpartable$level == "within"])
+    lavpartable <- lapply(lavpartable, function(x) x[lavpartable$level == levlabs[1]])
   }
 
   ## lavaan pars to w?skel (for equality constraints)
@@ -966,9 +968,9 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
     olpt <- lavMatrixRepresentation(olpt, add.attributes = TRUE, as.data.frame. = FALSE)
 
     if(level == 2L){
-      olpt <- lapply(olpt, function(x) x[olpt$level == "between"])
+      olpt <- lapply(olpt, function(x) x[olpt$level == levlabs[2]])
     } else {
-      olpt <- lapply(olpt, function(x) x[olpt$level == "within"])
+      olpt <- lapply(olpt, function(x) x[olpt$level == levlabs[1]])
     }
     lavpartable <- c(lavpartable, list(mat = olpt$mat, row = olpt$row, col = olpt$col))
   } else {

@@ -483,3 +483,21 @@ blkdiag <- function(mat) {
   
   list(isblk = isblk, nblks = nblks, blkse = blkse)
 }
+
+## level labels for two-level models. this is taken from the similar lavaan function
+## with some small modifications.
+blav_partable_level_values <- function(partable) {
+    if(is.null(partable$level)) {
+        level.values <- 1L
+    } else if(is.numeric(partable$level)) {
+        tmp <- partable$level[  partable$level > 0L &
+                               !partable$op %in% c("==", "<", ">", ":=") ]
+        level.values <- unique(na.omit(tmp))
+    } else { # character
+        tmp <- partable$level[ nchar(partable$level) > 0L &
+                              !partable$op %in% c("==", "<", ">", ":=") ]
+        level.values <- unique(na.omit(tmp))
+    }
+
+    level.values
+}
