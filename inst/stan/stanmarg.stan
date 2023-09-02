@@ -2,7 +2,7 @@
    https://github.com/bgoodri/LERSIL */
 functions { // you can use these in R following `rstan::expose_stan_functions("foo.stan")`
   // mimics lav_mvnorm_cluster_implied22l():
-  matrix calc_W_tilde(matrix sigma_w, vector mu_w, int[] var1_idx, int p_tilde) {
+  matrix calc_W_tilde(matrix sigma_w, vector mu_w, array[] int var1_idx, int p_tilde) {
     matrix[p_tilde, p_tilde + 1] out = rep_matrix(0, p_tilde, p_tilde + 1); // first column is mean vector
     vector[p_tilde] mu1 = rep_vector(0, p_tilde);
     matrix[p_tilde, p_tilde] sig1 = rep_matrix(0, p_tilde, p_tilde);
@@ -15,7 +15,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     return out;
   }
 
-  matrix calc_B_tilde(matrix sigma_b, vector mu_b, int[] var2_idx, int p_tilde) {
+  matrix calc_B_tilde(matrix sigma_b, vector mu_b, array[] int var2_idx, int p_tilde) {
     matrix[p_tilde, p_tilde + 1] out = rep_matrix(0, p_tilde, p_tilde + 1);
     vector[p_tilde] mu2 = rep_vector(0, p_tilde);
     matrix[p_tilde, p_tilde] sig2 = rep_matrix(0, p_tilde, p_tilde);
@@ -29,7 +29,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   }
 
 
-  vector twolevel_logdens(vector[] mean_d, matrix[] cov_d, matrix S_PW, vector[] YX, int[] nclus, int[] clus_size, int[] clus_sizes, int nclus_sizes, int[] clus_size_ns, vector impl_Muw, matrix impl_Sigmaw, vector impl_Mub, matrix impl_Sigmab, int[] ov_idx1, int[] ov_idx2, int[] within_idx, int[] between_idx, int[] both_idx, int p_tilde, int N_within, int N_between, int N_both){
+  vector twolevel_logdens(array[] vector mean_d, array[] matrix cov_d, matrix S_PW, array[] vector YX, array[] int nclus, array[] int clus_size, array[] int clus_sizes, int nclus_sizes, array[] int clus_size_ns, vector impl_Muw, matrix impl_Sigmaw, vector impl_Mub, matrix impl_Sigmab, array[] int ov_idx1, array[] int ov_idx2, array[] int within_idx, array[] int between_idx, array[] int both_idx, int p_tilde, int N_within, int N_between, int N_both){
     matrix[p_tilde, p_tilde + 1] W_tilde;
     matrix[p_tilde, p_tilde] W_tilde_cov;
     matrix[p_tilde, p_tilde + 1] B_tilde;
@@ -58,8 +58,8 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     real Sigma_j_ld;
     vector[nclus_sizes] L;
     vector[nclus_sizes] B;
-    int bidx[N_between];
-    int notbidx[p_tilde - N_between];
+    array[N_between] int bidx;
+    array[p_tilde - N_between] int notbidx;
     real q_zz;
     real q_yz;
     real q_yyc;
@@ -136,8 +136,8 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
       matrix[N_between, N_between] Y2Yc_zz;
       matrix[N_wo_b, N_between] Y2Yc_yz;
       matrix[N_wo_b, N_wo_b] Y2Yc_yy;
-      int uord_bidx[N_between];
-      int uord_notbidx[N_wo_b];
+      array[N_between] int uord_bidx;
+      array[N_wo_b] int uord_notbidx;
 
       if (!cluswise) Y2Yc += cov_d[clz]; // variability between clusters of same size, will always equal 0 for clusterwise
 
@@ -220,7 +220,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
       other: if output element is fixed to that number
     @return matrix of coefficients
   */
-  matrix fill_matrix(vector free_elements, matrix skeleton, int[,] eq_skeleton, int pos_start, int spos_start) {
+  matrix fill_matrix(vector free_elements, matrix skeleton, array[,] int eq_skeleton, int pos_start, int spos_start) {
     int R = rows(skeleton);
     int C = cols(skeleton);
     matrix[R, C] out;
@@ -247,7 +247,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     return out;
   }
     
-  vector fill_prior(vector free_elements, real[] pri_mean, int[,] eq_skeleton) {
+  vector fill_prior(vector free_elements, array[] real pri_mean, array[,] int eq_skeleton) {
     int R = dims(eq_skeleton)[1];
     int eqelem = 0;
     int pos = 1;
@@ -274,7 +274,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   /*
    * This is a bug-free version of csr_to_dense_matrix and has the same arguments
    */
-  matrix to_dense_matrix(int m, int n, vector w, int[] v, int[] u) {
+  matrix to_dense_matrix(int m, int n, vector w, array[] int v, array[] int u) {
     matrix[m, n] out = rep_matrix(0, m, n);
     int pos = 1;
     for (i in 1:m) {
@@ -297,7 +297,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   }
 
   // sign-constrain a vector of loadings
-  vector sign_constrain_load(vector free_elements, int npar, int[,] sign_mat) {
+  vector sign_constrain_load(vector free_elements, int npar, array[,] int sign_mat) {
     vector[npar] out;
     for (i in 1:npar) {
       if (sign_mat[i,1]) {
@@ -315,7 +315,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   }
 
   // sign-constrain a vector of regressions or covariances
-  vector sign_constrain_reg(vector free_elements, int npar, int[,] sign_mat, vector load_par1, vector load_par2) {
+  vector sign_constrain_reg(vector free_elements, int npar, array[,] int sign_mat, vector load_par1, vector load_par2) {
     vector[npar] out;
     for (i in 1:npar) {
       if (sign_mat[i,1]) {
@@ -334,7 +334,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   }
 
   // obtain covariance parameter vector for correlation/sd matrices
-  vector cor2cov(matrix[] cormat, matrix[] sdmat, int num_free_elements, matrix[] matskel, int[,] wskel, int ngrp) {
+  vector cor2cov(array[] matrix cormat, array[] matrix sdmat, int num_free_elements, array[] matrix matskel, array[,] int wskel, int ngrp) {
     vector[num_free_elements] out;
     int R = rows(to_matrix(cormat[1]));
     int pos = 1; // position of eq_skeleton
@@ -355,12 +355,12 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   }
 
   // E step of EM algorithm on latent continuous space
-  matrix[] estep(vector[] YXstar, vector[] Mu, matrix[] Sigma, int[] Nobs, int[,] Obsvar, int[] startrow, int[] endrow, int[] grpnum, int Np, int Ng) {
+  array[] matrix estep(array[] vector YXstar, array[] vector Mu, array[] matrix Sigma, array[] int Nobs, array[,] int Obsvar, array[] int startrow, array[] int endrow, array[] int grpnum, int Np, int Ng) {
     int p = dims(YXstar)[2];
-    matrix[p, p + 1] out[Ng]; //mean vec + cov mat
+    array[Ng] matrix[p, p + 1] out; //mean vec + cov mat
     matrix[dims(YXstar)[1], p] YXfull; // columns consistenly ordered
     matrix[p, p] T2pat;
-    int obsidx[p];
+    array[p] int obsidx;
     int r1;
     int r2;
     int grpidx;
@@ -423,7 +423,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     return out;
   }
 
-  matrix sig_inv_update(matrix Sigmainv, int[] obsidx, int Nobs, int np, real logdet) {
+  matrix sig_inv_update(matrix Sigmainv, array[] int obsidx, int Nobs, int np, real logdet) {
     matrix[Nobs + 1, Nobs + 1] out = rep_matrix(0, Nobs + 1, Nobs + 1);
     int nrm = np - Nobs;
     matrix[nrm, nrm] H;
@@ -456,11 +456,11 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   }
 
   // compute mean vectors and cov matrices for a single group (two-level models)
-  vector[] calc_mean_vecs(vector[] YXstar, vector[] mean_d, int[] nclus, int[] Xvar, int[] Xbetvar, int Nx, int Nx_between, int p_tilde) {
+  array[] vector calc_mean_vecs(array[] vector YXstar, array[] vector mean_d, array[] int nclus, array[] int Xvar, array[] int Xbetvar, int Nx, int Nx_between, int p_tilde) {
     vector[Nx] ov_mean = rep_vector(0, Nx);
     vector[Nx_between] ov_mean_d = rep_vector(0, Nx_between);
     int nr = dims(YXstar)[1];
-    vector[p_tilde] out[2];
+    array[2] vector[p_tilde] out;
 
     for (i in 1:2) out[i] = rep_vector(0, p_tilde);
 
@@ -485,12 +485,12 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     return out;
   }
 
-  matrix[] calc_cov_mats(vector[] YXstar, vector[] mean_d, vector[] mean_vecs, int[] nclus, int[] Xvar, int[] Xbetvar, int Nx, int Nx_between, int p_tilde) {
+  array[] matrix calc_cov_mats(array[] vector YXstar, array[] vector mean_d, array[] vector mean_vecs, array[] int nclus, array[] int Xvar, array[] int Xbetvar, int Nx, int Nx_between, int p_tilde) {
     matrix[Nx_between, Nx_between] cov_mean_d = rep_matrix(0, Nx_between, Nx_between);
     matrix[Nx, Nx] cov_w = rep_matrix(0, Nx, Nx);
     matrix[Nx, Nx] cov_w_inv;
     int nr = dims(YXstar)[1];
-    matrix[p_tilde, p_tilde] out[3];
+    array[3] matrix[p_tilde, p_tilde] out;
 
     for (i in 1:3) out[i] = rep_matrix(0, p_tilde, p_tilde);
 
@@ -518,7 +518,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   }
   
   // compute log_lik of fixed.x variables for a single group (two-level models)
-  vector calc_log_lik_x(vector[] mean_d, vector ov_mean_d, matrix cov_mean_d, matrix cov_w, matrix cov_w_inv, int[] nclus, int[] cluster_size, int[] Xvar, int[] Xbetvar, int Nx, int Nx_between) {
+  vector calc_log_lik_x(array[] vector mean_d, vector ov_mean_d, matrix cov_mean_d, matrix cov_w, matrix cov_w_inv, array[] int nclus, array[] int cluster_size, array[] int Xvar, array[] int Xbetvar, int Nx, int Nx_between) {
     vector[nclus[2]] out = rep_vector(0, nclus[2]);
 
     for (cc in 1:nclus[2]) {
@@ -546,63 +546,63 @@ data {
   int<lower=0, upper=1> missing; // are there missing values?
   int<lower=0, upper=1> save_lvs; // should we save lvs?
   int<lower=1> Np; // number of group-by-missing patterns combos
-  int<lower=1> N[Ng]; // number of observations per group
-  int<lower=1> Nobs[Np]; // number of observed variables in each missing pattern
-  int<lower=0> Nordobs[Np]; // number of ordinal observed variables in each missing pattern
-  int<lower=0> Obsvar[Np, p + q]; // indexing of observed variables
+  array[Ng] int<lower=1> N; // number of observations per group
+  array[Np] int<lower=1> Nobs; // number of observed variables in each missing pattern
+  array[Np] int<lower=0> Nordobs; // number of ordinal observed variables in each missing pattern
+  array[Np, p + q] int<lower=0> Obsvar; // indexing of observed variables
   int<lower=1> Ntot; // number of observations across all groups
-  int<lower=1> startrow[Np]; // starting row for each missing pattern
-  int<lower=1,upper=Ntot> endrow[Np]; // ending row for each missing pattern
-  int<lower=1,upper=Ng> grpnum[Np]; // group number for each row of data
+  array[Np] int<lower=1> startrow; // starting row for each missing pattern
+  array[Np] int<lower=1,upper=Ntot> endrow; // ending row for each missing pattern
+  array[Np] int<lower=1,upper=Ng> grpnum; // group number for each row of data
   int<lower=0,upper=1> wigind; // do any parameters have approx equality constraint ('wiggle')?
   int<lower=0, upper=1> has_data; // are the raw data on y and x available?
   int<lower=0, upper=1> ord; // are there any ordinal variables?
   int<lower=0, upper=1> multilev; // is this a multilevel dataset?
   int<lower=0> Nord; // how many ordinal variables?
-  int<lower=0> ordidx[Nord]; // indexing of ordinal variables
-  int<lower=0> OrdObsvar[Np, Nord]; // indexing of observed ordinal variables in YXo
+  array[Nord] int<lower=0> ordidx; // indexing of ordinal variables
+  array[Np, Nord] int<lower=0> OrdObsvar; // indexing of observed ordinal variables in YXo
   int<lower=0> Noent; // how many observed entries of ordinal variables (for data augmentation)
-  int<lower=0> contidx[p + q - Nord]; // indexing of continuous variables
-  int<lower=1> nlevs[Nord]; // how many levels does each ordinal variable have
-  int<lower=1> nclus[Ng, 2]; // number of level 1 + level 2 observations
+  array[p + q - Nord] int<lower=0> contidx; // indexing of continuous variables
+  array[Nord] int<lower=1> nlevs; // how many levels does each ordinal variable have
+  array[Ng, 2] int<lower=1> nclus; // number of level 1 + level 2 observations
   int<lower=0> p_tilde; // total number of variables
-  vector[multilev ? p_tilde : p + q - Nord] YX[Ntot]; // continuous data
-  int YXo[Ntot, Nord]; // ordinal data
-  int<lower=0> Nx[Np]; // number of fixed.x variables (within)
-  int<lower=0> Nx_between[Np]; // number of fixed.x variables (between)
+  array[Ntot] vector[multilev ? p_tilde : p + q - Nord] YX; // continuous data
+  array[Ntot, Nord] int YXo; // ordinal data
+  array[Np] int<lower=0> Nx; // number of fixed.x variables (within)
+  array[Np] int<lower=0> Nx_between; // number of fixed.x variables (between)
   int<lower=0, upper=1> use_cov;
   int<lower=0, upper=1> pri_only;
   int<lower=0> emiter; // number of em iterations for saturated model in ppp (missing data only)
   int<lower=0, upper=1> use_suff; // should we compute likelihood via mvn sufficient stats?
   int<lower=0, upper=1> do_test; // should we do everything in generated quantities?
-  vector[multilev ? p_tilde : p + q - Nord] YXbar[Np]; // sample means of continuous manifest variables
-  matrix[multilev ? (p_tilde + 1) : (p + q - Nord + 1), multilev ? (p_tilde + 1) : (p + q - Nord + 1)] S[Np];     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
+  array[Np] vector[multilev ? p_tilde : p + q - Nord] YXbar; // sample means of continuous manifest variables
+  array[Np] matrix[multilev ? (p_tilde + 1) : (p + q - Nord + 1), multilev ? (p_tilde + 1) : (p + q - Nord + 1)] S;     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
   
-  int<lower=1> cluster_size[sum(nclus[,2])]; // number of obs per cluster
-  int<lower=1> ncluster_sizes[Ng]; // number of unique cluster sizes
-  int<lower=1> cluster_sizes[sum(ncluster_sizes)]; // unique cluster sizes
-  int<lower=1> cluster_size_ns[sum(ncluster_sizes)]; // number of clusters of each size
-  int<lower=0> Xvar[Np, multilev ? p_tilde : p + q]; // indexing of fixed.x variables (within)
-  int<lower=0> Xdatvar[Np, multilev ? p_tilde : p + q]; // indexing of fixed.x in data (differs from Xvar when missing)
-  int<lower=0> Xbetvar[Np, multilev ? p_tilde : p + q]; // indexing of fixed.x variables (between)
-  vector[p_tilde] mean_d[sum(ncluster_sizes)]; // sample means by unique cluster size
-  matrix[p_tilde, p_tilde] cov_d[sum(ncluster_sizes)]; // sample covariances by unique cluster size
-  matrix[p_tilde, p_tilde] cov_w[Ng]; // observed "within" covariance matrix
-  vector[p_tilde] mean_d_full[sum(nclus[,2])]; // sample means/covs by cluster, for clusterwise log-densities
-  matrix[p_tilde, p_tilde] cov_d_full[sum(nclus[,2])];
-  vector[p_tilde] xbar_w[Ng]; // data estimates of within/between means/covs (for saturated logl)
-  vector[p_tilde] xbar_b[Ng];
-  matrix[p_tilde, p_tilde] cov_b[Ng];
-  real gs[Ng]; // group size constant, for computation of saturated logl
+  array[sum(nclus[,2])] int<lower=1> cluster_size; // number of obs per cluster
+  array[Ng] int<lower=1> ncluster_sizes; // number of unique cluster sizes
+  array[sum(ncluster_sizes)] int<lower=1> cluster_sizes; // unique cluster sizes
+  array[sum(ncluster_sizes)] int<lower=1> cluster_size_ns; // number of clusters of each size
+  array[Np, multilev ? p_tilde : p + q] int<lower=0> Xvar; // indexing of fixed.x variables (within)
+  array[Np, multilev ? p_tilde : p + q] int<lower=0> Xdatvar; // indexing of fixed.x in data (differs from Xvar when missing)
+  array[Np, multilev ? p_tilde : p + q] int<lower=0> Xbetvar; // indexing of fixed.x variables (between)
+  array[sum(ncluster_sizes)] vector[p_tilde] mean_d; // sample means by unique cluster size
+  array[sum(ncluster_sizes)] matrix[p_tilde, p_tilde] cov_d; // sample covariances by unique cluster size
+  array[Ng] matrix[p_tilde, p_tilde] cov_w; // observed "within" covariance matrix
+  array[sum(nclus[,2])] vector[p_tilde] mean_d_full; // sample means/covs by cluster, for clusterwise log-densities
+  array[sum(nclus[,2])] matrix[p_tilde, p_tilde] cov_d_full;
+  array[Ng] vector[p_tilde] xbar_w; // data estimates of within/between means/covs (for saturated logl)
+  array[Ng] vector[p_tilde] xbar_b;
+  array[Ng] matrix[p_tilde, p_tilde] cov_b;
+  array[Ng] real gs; // group size constant, for computation of saturated logl
   int N_within; // number of within variables
   int N_between; // number of between variables
   int N_both; // number of variables at both levels
-  int N_lev[2]; // number of observed variables at each level
-  int within_idx[N_within];
-  int between_idx[p_tilde]; // between indexing, followed by within/both
-  int ov_idx1[N_lev[1]];
-  int ov_idx2[N_lev[2]];
-  int both_idx[N_both];
+  array[2] int N_lev; // number of observed variables at each level
+  array[N_within] int within_idx;
+  array[p_tilde] int between_idx; // between indexing, followed by within/both
+  array[N_lev[1]] int ov_idx1;
+  array[N_lev[2]] int ov_idx2;
+  array[N_both] int both_idx;
   vector[multilev ? sum(ncluster_sizes) : Ng] log_lik_x; // ll of fixed x variables by unique cluster size
   vector[multilev ? sum(nclus[,2]) : Ng] log_lik_x_full; // ll of fixed x variables by cluster
   
@@ -611,255 +611,255 @@ data {
      which is not that interesting but necessary because you cannot pass
      missing values into the data block of a Stan program from R */
   int<lower=0> len_w1;        // max number of free elements in Lambda_y per grp
-  int<lower=0> wg1[Ng];           // number of free elements in Lambda_y per grp
-  vector[len_w1] w1[Ng];          // values of free elements in Lambda_y
-  int<lower=1> v1[Ng, len_w1];    // index  of free elements in Lambda_y
-  int<lower=1> u1[Ng, p + 1];     // index  of free elements in Lambda_y
-  int<lower=0> w1skel[sum(wg1), 3];
-  int<lower=0> lam_y_sign[sum(wg1), 2];
+  array[Ng] int<lower=0> wg1;           // number of free elements in Lambda_y per grp
+  array[Ng] vector[len_w1] w1;          // values of free elements in Lambda_y
+  array[Ng, len_w1] int<lower=1> v1;    // index  of free elements in Lambda_y
+  array[Ng, p + 1] int<lower=1> u1;     // index  of free elements in Lambda_y
+  array[sum(wg1), 3] int<lower=0> w1skel;
+  array[sum(wg1), 2] int<lower=0> lam_y_sign;
   int<lower=0> len_lam_y;     // number of free elements minus equality constraints
-  real lambda_y_mn[len_lam_y];           // prior
-  real<lower=0> lambda_y_sd[len_lam_y];
+  array[len_lam_y] real lambda_y_mn;           // prior
+  array[len_lam_y] real<lower=0> lambda_y_sd;
 
   // same things but for B
   int<lower=0> len_w4;
-  int<lower=0> wg4[Ng];
-  vector[len_w4] w4[Ng];
-  int<lower=1> v4[Ng, len_w4];
-  int<lower=1> u4[Ng, m + 1];
-  int<lower=0> w4skel[sum(wg4), 3];
-  int<lower=0> b_sign[sum(wg4), 3];
+  array[Ng] int<lower=0> wg4;
+  array[Ng] vector[len_w4] w4;
+  array[Ng, len_w4] int<lower=1> v4;
+  array[Ng, m + 1] int<lower=1> u4;
+  array[sum(wg4), 3] int<lower=0> w4skel;
+  array[sum(wg4), 3] int<lower=0> b_sign;
   int<lower=0> len_b;
-  real b_mn[len_b];
-  real<lower=0> b_sd[len_b];
+  array[len_b] real b_mn;
+  array[len_b] real<lower=0> b_sd;
   
   // same things but for diag(Theta)
   int<lower=0> len_w5;
-  int<lower=0> wg5[Ng];
-  vector[len_w5] w5[Ng];
-  int<lower=1> v5[Ng, len_w5];
-  int<lower=1> u5[Ng, p + 1];
-  int<lower=0> w5skel[sum(wg5), 3];
+  array[Ng] int<lower=0> wg5;
+  array[Ng] vector[len_w5] w5;
+  array[Ng, len_w5] int<lower=1> v5;
+  array[Ng, p + 1] int<lower=1> u5;
+  array[sum(wg5), 3] int<lower=0> w5skel;
   int<lower=0> len_thet_sd;
-  real<lower=0> theta_sd_shape[len_thet_sd];
-  real<lower=0> theta_sd_rate[len_thet_sd];
+  array[len_thet_sd] real<lower=0> theta_sd_shape;
+  array[len_thet_sd] real<lower=0> theta_sd_rate;
   int<lower=-2, upper=2> theta_pow;
 
   // same things but for Theta_r
   int<lower=0> len_w7;
-  int<lower=0> wg7[Ng];
-  vector[len_w7] w7[Ng];
-  int<lower=1> v7[Ng, len_w7];
-  int<lower=1> u7[Ng, p + 1];
-  int<lower=0> w7skel[sum(wg7), 3];
+  array[Ng] int<lower=0> wg7;
+  array[Ng] vector[len_w7] w7;
+  array[Ng, len_w7] int<lower=1> v7;
+  array[Ng, p + 1] int<lower=1> u7;
+  array[sum(wg7), 3] int<lower=0> w7skel;
   int<lower=0> len_thet_r;
-  real<lower=0> theta_r_alpha[len_thet_r];
-  real<lower=0> theta_r_beta[len_thet_r];
+  array[len_thet_r] real<lower=0> theta_r_alpha;
+  array[len_thet_r] real<lower=0> theta_r_beta;
   
   // same things but for Psi
   int<lower=0> len_w9;
-  int<lower=0> wg9[Ng];
-  vector[len_w9] w9[Ng];
-  int<lower=1> v9[Ng, len_w9];
-  int<lower=1> u9[Ng, m + 1];
-  int<lower=0> w9skel[sum(wg9), 3];
+  array[Ng] int<lower=0> wg9;
+  array[Ng] vector[len_w9] w9;
+  array[Ng, len_w9] int<lower=1> v9;
+  array[Ng, m + 1] int<lower=1> u9;
+  array[sum(wg9), 3] int<lower=0> w9skel;
   int<lower=0> len_psi_sd;
-  real<lower=0> psi_sd_shape[len_psi_sd];
-  real<lower=0> psi_sd_rate[len_psi_sd];
+  array[len_psi_sd] real<lower=0> psi_sd_shape;
+  array[len_psi_sd] real<lower=0> psi_sd_rate;
   int<lower=-2,upper=2> psi_pow;
   
   // same things but for Psi_r
   int<lower=0> len_w10;
-  int<lower=0> wg10[Ng];
-  vector[len_w10] w10[Ng];
-  int<lower=1> v10[Ng, len_w10];
-  int<lower=1> u10[Ng, m + 1];
-  int<lower=0> w10skel[sum(wg10), 3];
-  int<lower=0> psi_r_sign[sum(wg10), 3];
+  array[Ng] int<lower=0> wg10;
+  array[Ng] vector[len_w10] w10;
+  array[Ng, len_w10] int<lower=1> v10;
+  array[Ng, m + 1] int<lower=1> u10;
+  array[sum(wg10), 3] int<lower=0> w10skel;
+  array[sum(wg10), 3] int<lower=0> psi_r_sign;
   int<lower=0> len_psi_r;
-  real<lower=0> psi_r_alpha[len_psi_r];
-  real<lower=0> psi_r_beta[len_psi_r];
+  array[len_psi_r] real<lower=0> psi_r_alpha;
+  array[len_psi_r] real<lower=0> psi_r_beta;
   int<lower=0,upper=1> fullpsi;
     
   // same things but for Nu
   int<lower=0> len_w13;
-  int<lower=0> wg13[Ng];
-  vector[len_w13] w13[Ng];
-  int<lower=1> v13[Ng, len_w13];
-  int<lower=1> u13[Ng, use_cov ? 1 : p + q + 1];
-  int<lower=0> w13skel[sum(wg13), 3];
+  array[Ng] int<lower=0> wg13;
+  array[Ng] vector[len_w13] w13;
+  array[Ng, len_w13] int<lower=1> v13;
+  array[Ng, use_cov ? 1 : p + q + 1] int<lower=1> u13;
+  array[sum(wg13), 3] int<lower=0> w13skel;
   int<lower=0> len_nu;
-  real nu_mn[len_nu];
-  real<lower=0> nu_sd[len_nu];
+  array[len_nu] real nu_mn;
+  array[len_nu] real<lower=0> nu_sd;
   
   // same things but for Alpha
   int<lower=0> len_w14;
-  int<lower=0> wg14[Ng];
-  vector[len_w14] w14[Ng];
-  int<lower=0> v14[Ng, len_w14];
-  int<lower=1> u14[Ng, use_cov ? 1 : m + n + 1];
-  int<lower=0> w14skel[sum(wg14), 3];
+  array[Ng] int<lower=0> wg14;
+  array[Ng] vector[len_w14] w14;
+  array[Ng, len_w14] int<lower=0> v14;
+  array[Ng, use_cov ? 1 : m + n + 1] int<lower=1> u14;
+  array[sum(wg14), 3] int<lower=0> w14skel;
   int<lower=0> len_alph;
-  real alpha_mn[len_alph];
-  real<lower=0> alpha_sd[len_alph];
+  array[len_alph] real alpha_mn;
+  array[len_alph] real<lower=0> alpha_sd;
 
   // same things but for Tau
   int<lower=0> len_w15;
-  int<lower=0> wg15[Ng];
-  vector[len_w15] w15[Ng];
-  int<lower=0> v15[Ng, len_w15];
-  int<lower=1> u15[Ng, sum(nlevs) - Nord + 1];
-  int<lower=0> w15skel[sum(wg15), 3];
+  array[Ng] int<lower=0> wg15;
+  array[Ng] vector[len_w15] w15;
+  array[Ng, len_w15] int<lower=0> v15;
+  array[Ng, sum(nlevs) - Nord + 1] int<lower=1> u15;
+  array[sum(wg15), 3] int<lower=0> w15skel;
   int<lower=0> len_tau;
-  real tau_mn[len_tau];
-  real<lower=0> tau_sd[len_tau];
+  array[len_tau] real tau_mn;
+  array[len_tau] real<lower=0> tau_sd;
 
   // Level 2 matrices start here!!
   // Lambda
   int<lower=0> len_w1_c;
-  int<lower=0> wg1_c[Ng];
-  vector[len_w1_c] w1_c[Ng];
-  int<lower=1> v1_c[Ng, len_w1_c];
-  int<lower=1> u1_c[Ng, p_c + 1];
-  int<lower=0> w1skel_c[sum(wg1_c), 3];
-  int<lower=0> lam_y_sign_c[sum(wg1_c), 2];
+  array[Ng] int<lower=0> wg1_c;
+  array[Ng] vector[len_w1_c] w1_c;
+  array[Ng, len_w1_c] int<lower=1> v1_c;
+  array[Ng, p_c + 1] int<lower=1> u1_c;
+  array[sum(wg1_c), 3] int<lower=0> w1skel_c;
+  array[sum(wg1_c), 2] int<lower=0> lam_y_sign_c;
   int<lower=0> len_lam_y_c;
-  real lambda_y_mn_c[len_lam_y_c];
-  real<lower=0> lambda_y_sd_c[len_lam_y_c];
+  array[len_lam_y_c] real lambda_y_mn_c;
+  array[len_lam_y_c] real<lower=0> lambda_y_sd_c;
 
   // same things but for B
   int<lower=0> len_w4_c;
-  int<lower=0> wg4_c[Ng];
-  vector[len_w4_c] w4_c[Ng];
-  int<lower=1> v4_c[Ng, len_w4_c];
-  int<lower=1> u4_c[Ng, m_c + 1];
-  int<lower=0> w4skel_c[sum(wg4_c), 3];
-  int<lower=0> b_sign_c[sum(wg4_c), 3];
+  array[Ng] int<lower=0> wg4_c;
+  array[Ng] vector[len_w4_c] w4_c;
+  array[Ng, len_w4_c] int<lower=1> v4_c;
+  array[Ng, m_c + 1] int<lower=1> u4_c;
+  array[sum(wg4_c), 3] int<lower=0> w4skel_c;
+  array[sum(wg4_c), 3] int<lower=0> b_sign_c;
   int<lower=0> len_b_c;
-  real b_mn_c[len_b_c];
-  real<lower=0> b_sd_c[len_b_c];
+  array[len_b_c] real b_mn_c;
+  array[len_b_c] real<lower=0> b_sd_c;
   
   // same things but for diag(Theta)
   int<lower=0> len_w5_c;
-  int<lower=0> wg5_c[Ng];
-  vector[len_w5_c] w5_c[Ng];
-  int<lower=1> v5_c[Ng, len_w5_c];
-  int<lower=1> u5_c[Ng, p_c + 1];
-  int<lower=0> w5skel_c[sum(wg5_c), 3];
+  array[Ng] int<lower=0> wg5_c;
+  array[Ng] vector[len_w5_c] w5_c;
+  array[Ng, len_w5_c] int<lower=1> v5_c;
+  array[Ng, p_c + 1] int<lower=1> u5_c;
+  array[sum(wg5_c), 3] int<lower=0> w5skel_c;
   int<lower=0> len_thet_sd_c;
-  real<lower=0> theta_sd_shape_c[len_thet_sd_c];
-  real<lower=0> theta_sd_rate_c[len_thet_sd_c];
+  array[len_thet_sd_c] real<lower=0> theta_sd_shape_c;
+  array[len_thet_sd_c] real<lower=0> theta_sd_rate_c;
   int<lower=-2, upper=2> theta_pow_c;
 
   // same things but for Theta_r
   int<lower=0> len_w7_c;
-  int<lower=0> wg7_c[Ng];
-  vector[len_w7_c] w7_c[Ng];
-  int<lower=1> v7_c[Ng, len_w7_c];
-  int<lower=1> u7_c[Ng, p_c + 1];
-  int<lower=0> w7skel_c[sum(wg7_c), 3];
+  array[Ng] int<lower=0> wg7_c;
+  array[Ng] vector[len_w7_c] w7_c;
+  array[Ng, len_w7_c] int<lower=1> v7_c;
+  array[Ng, p_c + 1] int<lower=1> u7_c;
+  array[sum(wg7_c), 3] int<lower=0> w7skel_c;
   int<lower=0> len_thet_r_c;
-  real<lower=0> theta_r_alpha_c[len_thet_r_c];
-  real<lower=0> theta_r_beta_c[len_thet_r_c];
+  array[len_thet_r_c] real<lower=0> theta_r_alpha_c;
+  array[len_thet_r_c] real<lower=0> theta_r_beta_c;
   
   // same things but for Psi
   int<lower=0> len_w9_c;
-  int<lower=0> wg9_c[Ng];
-  vector[len_w9_c] w9_c[Ng];
-  int<lower=1> v9_c[Ng, len_w9_c];
-  int<lower=1> u9_c[Ng, m_c + 1];
-  int<lower=0> w9skel_c[sum(wg9_c), 3];
+  array[Ng] int<lower=0> wg9_c;
+  array[Ng] vector[len_w9_c] w9_c;
+  array[Ng, len_w9_c] int<lower=1> v9_c;
+  array[Ng, m_c + 1] int<lower=1> u9_c;
+  array[sum(wg9_c), 3] int<lower=0> w9skel_c;
   int<lower=0> len_psi_sd_c;
-  real<lower=0> psi_sd_shape_c[len_psi_sd_c];
-  real<lower=0> psi_sd_rate_c[len_psi_sd_c];
+  array[len_psi_sd_c] real<lower=0> psi_sd_shape_c;
+  array[len_psi_sd_c] real<lower=0> psi_sd_rate_c;
   int<lower=-2,upper=2> psi_pow_c;
   
   // same things but for Psi_r
   int<lower=0> len_w10_c;
-  int<lower=0> wg10_c[Ng];
-  vector[len_w10_c] w10_c[Ng];
-  int<lower=1> v10_c[Ng, len_w10_c];
-  int<lower=1> u10_c[Ng, m_c + 1];
-  int<lower=0> w10skel_c[sum(wg10_c), 3];
-  int<lower=0> psi_r_sign_c[sum(wg10_c), 3];
+  array[Ng] int<lower=0> wg10_c;
+  array[Ng] vector[len_w10_c] w10_c;
+  array[Ng, len_w10_c] int<lower=1> v10_c;
+  array[Ng, m_c + 1] int<lower=1> u10_c;
+  array[sum(wg10_c), 3] int<lower=0> w10skel_c;
+  array[sum(wg10_c), 3] int<lower=0> psi_r_sign_c;
   int<lower=0> len_psi_r_c;
-  real<lower=0> psi_r_alpha_c[len_psi_r_c];
-  real<lower=0> psi_r_beta_c[len_psi_r_c];
+  array[len_psi_r_c] real<lower=0> psi_r_alpha_c;
+  array[len_psi_r_c] real<lower=0> psi_r_beta_c;
   int<lower=0,upper=1> fullpsi_c;
     
   // same things but for Nu
   int<lower=0> len_w13_c;
-  int<lower=0> wg13_c[Ng];
-  vector[len_w13_c] w13_c[Ng];
-  int<lower=1> v13_c[Ng, len_w13_c];
-  int<lower=1> u13_c[Ng, p_c + 1];
-  int<lower=0> w13skel_c[sum(wg13_c), 3];
+  array[Ng] int<lower=0> wg13_c;
+  array[Ng] vector[len_w13_c] w13_c;
+  array[Ng, len_w13_c] int<lower=1> v13_c;
+  array[Ng, p_c + 1] int<lower=1> u13_c;
+  array[sum(wg13_c), 3] int<lower=0> w13skel_c;
   int<lower=0> len_nu_c;
-  real nu_mn_c[len_nu_c];
-  real<lower=0> nu_sd_c[len_nu_c];
+  array[len_nu_c] real nu_mn_c;
+  array[len_nu_c] real<lower=0> nu_sd_c;
   
   // same things but for Alpha
   int<lower=0> len_w14_c;
-  int<lower=0> wg14_c[Ng];
-  vector[len_w14_c] w14_c[Ng];
-  int<lower=0> v14_c[Ng, len_w14_c];
-  int<lower=1> u14_c[Ng, m_c + 1];
-  int<lower=0> w14skel_c[sum(wg14_c), 3];
+  array[Ng] int<lower=0> wg14_c;
+  array[Ng] vector[len_w14_c] w14_c;
+  array[Ng, len_w14_c] int<lower=0> v14_c;
+  array[Ng, m_c + 1] int<lower=1> u14_c;
+  array[sum(wg14_c), 3] int<lower=0> w14skel_c;
   int<lower=0> len_alph_c;
-  real alpha_mn_c[len_alph_c];
-  real<lower=0> alpha_sd_c[len_alph_c];
+  array[len_alph_c] real alpha_mn_c;
+  array[len_alph_c] real<lower=0> alpha_sd_c;
 }
 transformed data { // (re)construct skeleton matrices in Stan (not that interesting)
-  matrix[p, m] Lambda_y_skeleton[Ng];
-  matrix[m, m] B_skeleton[Ng];
-  matrix[p, p] Theta_skeleton[Ng];
-  matrix[p, p] Theta_r_skeleton[Ng];
-  matrix[m, m] Psi_skeleton[Ng];
-  matrix[m, m] Psi_r_skeleton[Ng];
-  matrix[p, 1] Nu_skeleton[Ng];
-  matrix[m, 1] Alpha_skeleton[Ng];
-  matrix[sum(nlevs) - Nord, 1] Tau_skeleton[Ng];
-  vector[ord ? 0 : (p + q)] YXbarstar[Np];
-  matrix[ord ? 0 : (p + q), ord ? 0 : (p + q)] Sstar[Np];
+  array[Ng] matrix[p, m] Lambda_y_skeleton;
+  array[Ng] matrix[m, m] B_skeleton;
+  array[Ng] matrix[p, p] Theta_skeleton;
+  array[Ng] matrix[p, p] Theta_r_skeleton;
+  array[Ng] matrix[m, m] Psi_skeleton;
+  array[Ng] matrix[m, m] Psi_r_skeleton;
+  array[Ng] matrix[p, 1] Nu_skeleton;
+  array[Ng] matrix[m, 1] Alpha_skeleton;
+  array[Ng] matrix[sum(nlevs) - Nord, 1] Tau_skeleton;
+  array[Np] vector[ord ? 0 : (p + q)] YXbarstar;
+  array[Np] matrix[ord ? 0 : (p + q), ord ? 0 : (p + q)] Sstar;
 
-  matrix[p_c, m_c] Lambda_y_skeleton_c[Ng];
-  matrix[m_c, m_c] B_skeleton_c[Ng];
-  matrix[p_c, p_c] Theta_skeleton_c[Ng];
-  matrix[p_c, p_c] Theta_r_skeleton_c[Ng];
-  matrix[m_c, m_c] Psi_skeleton_c[Ng];
-  matrix[m_c, m_c] Psi_r_skeleton_c[Ng];
-  matrix[p_c, 1] Nu_skeleton_c[Ng];
-  matrix[m_c, 1] Alpha_skeleton_c[Ng];
+  array[Ng] matrix[p_c, m_c] Lambda_y_skeleton_c;
+  array[Ng] matrix[m_c, m_c] B_skeleton_c;
+  array[Ng] matrix[p_c, p_c] Theta_skeleton_c;
+  array[Ng] matrix[p_c, p_c] Theta_r_skeleton_c;
+  array[Ng] matrix[m_c, m_c] Psi_skeleton_c;
+  array[Ng] matrix[m_c, m_c] Psi_r_skeleton_c;
+  array[Ng] matrix[p_c, 1] Nu_skeleton_c;
+  array[Ng] matrix[m_c, 1] Alpha_skeleton_c;
   
   matrix[m, m] I = diag_matrix(rep_vector(1, m));
   matrix[m_c, m_c] I_c = diag_matrix(rep_vector(1, m_c));
   
   int Ncont = p + q - Nord;
-  int<lower = 0> intone[max(nclus[,2]) > 1 ? max(nclus[,2]) : 0];
+  array[max(nclus[,2]) > 1 ? max(nclus[,2]) : 0] int<lower = 0> intone;
   
-  int g_start1[Ng,2];
-  int g_start4[Ng,2];
-  int g_start5[Ng,2];
-  int g_start7[Ng,2];
-  int g_start9[Ng,2];
-  int g_start10[Ng,2];
-  int g_start13[Ng,2];
-  int g_start14[Ng,2];
-  int g_start15[Ng,2];
+  array[Ng,2] int g_start1;
+  array[Ng,2] int g_start4;
+  array[Ng,2] int g_start5;
+  array[Ng,2] int g_start7;
+  array[Ng,2] int g_start9;
+  array[Ng,2] int g_start10;
+  array[Ng,2] int g_start13;
+  array[Ng,2] int g_start14;
+  array[Ng,2] int g_start15;
 
-  int g_start1_c[Ng,2];
-  int g_start4_c[Ng,2];
-  int g_start5_c[Ng,2];
-  int g_start7_c[Ng,2];
-  int g_start9_c[Ng,2];
-  int g_start10_c[Ng,2];
-  int g_start13_c[Ng,2];
-  int g_start14_c[Ng,2];
+  array[Ng,2] int g_start1_c;
+  array[Ng,2] int g_start4_c;
+  array[Ng,2] int g_start5_c;
+  array[Ng,2] int g_start7_c;
+  array[Ng,2] int g_start9_c;
+  array[Ng,2] int g_start10_c;
+  array[Ng,2] int g_start13_c;
+  array[Ng,2] int g_start14_c;
   
-  int len_free[15];
-  int pos[15];
-  int len_free_c[15];
-  int pos_c[15];
+  array[15] int len_free;
+  array[15] int pos;
+  array[15] int len_free_c;
+  array[15] int pos_c;
   
   for (i in 1:15) {
     len_free[i] = 0;
@@ -1104,7 +1104,7 @@ parameters {
   vector<lower=0>[len_free[5]] Theta_sd_free;
   vector<lower=-1,upper=1>[len_free[7]] Theta_r_free; // to use beta prior
   vector<lower=0>[len_free[9]] Psi_sd_free;
-  corr_matrix[m] Psi_r_mat[Ng * fullpsi];
+  array[Ng * fullpsi] corr_matrix[m] Psi_r_mat;
   vector<lower=-1,upper=1>[fullpsi ? 0 : len_free[10]] Psi_r_free;
   vector[len_free[13]] Nu_free;
   vector[len_free[14]] Alpha_free;
@@ -1116,42 +1116,42 @@ parameters {
   vector<lower=0>[len_free_c[5]] Theta_sd_free_c;
   vector<lower=-1,upper=1>[len_free_c[7]] Theta_r_free_c; // to use beta prior
   vector<lower=0>[len_free_c[9]] Psi_sd_free_c;
-  corr_matrix[m_c] Psi_r_mat_c[Ng * fullpsi_c];
+  array[Ng * fullpsi_c] corr_matrix[m_c] Psi_r_mat_c;
   vector<lower=-1,upper=1>[fullpsi_c ? 0 : len_free_c[10]] Psi_r_free_c;
   vector[len_free_c[13]] Nu_free_c;
   vector[len_free_c[14]] Alpha_free_c;
 }
 transformed parameters {
-  matrix[p, m] Lambda_y[Ng];
-  matrix[m, m] B[Ng];
-  matrix[p, p] Theta_sd[Ng];
-  matrix[p, p] T_r_lower[Ng];
-  matrix[p, p] Theta_r[Ng];
-  matrix[p + q, 1] Nu[Ng];
-  matrix[m + n, 1] Alpha[Ng];
+  array[Ng] matrix[p, m] Lambda_y;
+  array[Ng] matrix[m, m] B;
+  array[Ng] matrix[p, p] Theta_sd;
+  array[Ng] matrix[p, p] T_r_lower;
+  array[Ng] matrix[p, p] Theta_r;
+  array[Ng] matrix[p + q, 1] Nu;
+  array[Ng] matrix[m + n, 1] Alpha;
 
-  matrix[p_c, m_c] Lambda_y_c[Ng];
-  matrix[m_c, m_c] B_c[Ng];
-  matrix[p_c, p_c] Theta_sd_c[Ng];
-  matrix[p_c, p_c] T_r_lower_c[Ng];
-  matrix[p_c, p_c] Theta_r_c[Ng];
-  matrix[p_c, 1] Nu_c[Ng];
-  matrix[m_c, 1] Alpha_c[Ng];
+  array[Ng] matrix[p_c, m_c] Lambda_y_c;
+  array[Ng] matrix[m_c, m_c] B_c;
+  array[Ng] matrix[p_c, p_c] Theta_sd_c;
+  array[Ng] matrix[p_c, p_c] T_r_lower_c;
+  array[Ng] matrix[p_c, p_c] Theta_r_c;
+  array[Ng] matrix[p_c, 1] Nu_c;
+  array[Ng] matrix[m_c, 1] Alpha_c;
   
-  matrix[sum(nlevs) - Nord, 1] Tau_un[Ng];
-  matrix[sum(nlevs) - Nord, 1] Tau[Ng];
+  array[Ng] matrix[sum(nlevs) - Nord, 1] Tau_un;
+  array[Ng] matrix[sum(nlevs) - Nord, 1] Tau;
   vector[len_free[15]] Tau_free;
   real tau_jacobian;
   
-  matrix[m, m] Psi[Ng];
-  matrix[m, m] Psi_sd[Ng];
-  matrix[m, m] Psi_r_lower[Ng];
-  matrix[m, m] Psi_r[Ng];
+  array[Ng] matrix[m, m] Psi;
+  array[Ng] matrix[m, m] Psi_sd;
+  array[Ng] matrix[m, m] Psi_r_lower;
+  array[Ng] matrix[m, m] Psi_r;
 
-  matrix[m_c, m_c] Psi_c[Ng];
-  matrix[m_c, m_c] Psi_sd_c[Ng];
-  matrix[m_c, m_c] Psi_r_lower_c[Ng];
-  matrix[m_c, m_c] Psi_r_c[Ng];
+  array[Ng] matrix[m_c, m_c] Psi_c;
+  array[Ng] matrix[m_c, m_c] Psi_sd_c;
+  array[Ng] matrix[m_c, m_c] Psi_r_lower_c;
+  array[Ng] matrix[m_c, m_c] Psi_r_c;
   
   vector[len_free[1]] lambda_y_primn;
   vector[len_free[4]] b_primn;
@@ -1164,21 +1164,21 @@ transformed parameters {
   vector[len_free_c[13]] nu_primn_c;
   vector[len_free_c[14]] alpha_primn_c;
   
-  matrix[p, m] Lambda_y_A[Ng];     // = Lambda_y * (I - B)^{-1}
-  matrix[p_c, m_c] Lambda_y_A_c[Ng];
+  array[Ng] matrix[p, m] Lambda_y_A;     // = Lambda_y * (I - B)^{-1}
+  array[Ng] matrix[p_c, m_c] Lambda_y_A_c;
   
-  vector[p + q] Mu[Ng];
-  matrix[p + q, p + q] Sigma[Ng];  // model covariance matrix
-  matrix[p + q, p + q] Sigmainv_grp[Ng];
-  real logdetSigma_grp[Ng];
-  matrix[p + q + 1, p + q + 1] Sigmainv[Np];  // for updating S^-1 by missing data pattern
+  array[Ng] vector[p + q] Mu;
+  array[Ng] matrix[p + q, p + q] Sigma;  // model covariance matrix
+  array[Ng] matrix[p + q, p + q] Sigmainv_grp;  // model covariance matrix
+  array[Ng] real logdetSigma_grp;
+  array[Np] matrix[p + q + 1, p + q + 1] Sigmainv;  // for updating S^-1 by missing data pattern
 
-  vector[p_c] Mu_c[Ng];
-  matrix[p_c, p_c] Sigma_c[Ng];  // level 2 model covariance matrix
-  matrix[N_both + N_within, N_both + N_within] S_PW[Ng];
+  array[Ng] vector[p_c] Mu_c;
+  array[Ng] matrix[p_c, p_c] Sigma_c;  // level 2 model covariance matrix
+  array[Ng] matrix[N_both + N_within, N_both + N_within] S_PW;
   
-  vector[p + q] YXstar[Ntot];
-  vector[Nord] YXostar[Ntot]; // ordinal data
+  array[Ntot] vector[p + q] YXstar;
+  array[Ntot] vector[Nord] YXostar; // ordinal data
 
   for (g in 1:Ng) {
     // model matrices
@@ -1352,10 +1352,10 @@ transformed parameters {
 	  if (obspos > 1) vecpos += sum(nlevs[1:(obspos - 1)]) - (obspos - 1);
 	  if (YXo[i,obspos] == 1) {
 	    YXostar[i,obspos] = -10 + (Tau[grpnum[patt], (vecpos + 1), 1] + 10) .* z_aug[idxvec];
-	    tau_jacobian += log(fabs(Tau[grpnum[patt], (vecpos + 1), 1] + 10));  // must add log(U) to tau_jacobian
+	    tau_jacobian += log(abs(Tau[grpnum[patt], (vecpos + 1), 1] + 10));  // must add log(U) to tau_jacobian
 	  } else if (YXo[i,obspos] == nlevs[obspos]) {
 	    YXostar[i,obspos] = Tau[grpnum[patt], vecpos, 1] + (10 - Tau[grpnum[patt], vecpos, 1]) .* z_aug[idxvec];
-	    tau_jacobian += log(fabs(10 - Tau[grpnum[patt], vecpos, 1]));
+	    tau_jacobian += log(abs(10 - Tau[grpnum[patt], vecpos, 1]));
 	  } else {
 	    YXostar[i,obspos] = Tau[grpnum[patt], vecpos, 1] + (Tau[grpnum[patt], (vecpos + 1), 1] - Tau[grpnum[patt], vecpos, 1]) .* z_aug[idxvec];
 	    tau_jacobian += Tau_un[grpnum[patt], (vecpos + 1), 1]; // jacobian is log(exp(Tau_un))
@@ -1440,14 +1440,14 @@ model { // N.B.: things declared in the model block do not get saved in the outp
     for (g in 1:Ng) {
       target += wishart_lpdf((N[g] - 1) * Sstar[g] | N[g] - 1, Sigma[g]);
       if (Nx[g] > 0) {
-	int xvars[Nx[g]] = Xdatvar[g, 1:Nx[g]];
+	array[Nx[g]] int xvars = Xdatvar[g, 1:Nx[g]];
 	target += -wishart_lpdf((N[g] - 1) * Sstar[g, xvars, xvars] | N[g] - 1, Sigma[g, xvars, xvars]);
       }
     }
   } else if (has_data && !pri_only) {
-    int obsidx[p + q];
-    int xidx[p + q];
-    int xdatidx[p + q];
+    array[p + q] int obsidx;
+    array[p + q] int xidx;
+    array[p + q] int xdatidx;
     int grpidx;
     int r1;
     int r2;
@@ -1498,14 +1498,14 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   if (len_free[5] > 0 && theta_pow != 1) {
     for (i in 1:len_free[5]) {
       Theta_pri[i] = Theta_sd_free[i]^(theta_pow);
-      target += log(fabs(theta_pow)) + (theta_pow - 1)*log(Theta_sd_free[i]);
+      target += log(abs(theta_pow)) + (theta_pow - 1)*log(Theta_sd_free[i]);
     }
   }
   Psi_pri = Psi_sd_free;
   if (len_free[9] > 0 && psi_pow != 1) {
     for (i in 1:len_free[9]) {
       Psi_pri[i] = Psi_sd_free[i]^(psi_pow);
-      target += log(fabs(psi_pow)) + (psi_pow - 1)*log(Psi_sd_free[i]);
+      target += log(abs(psi_pow)) + (psi_pow - 1)*log(Psi_sd_free[i]);
     }
   }
 
@@ -1526,14 +1526,14 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   if (len_free_c[5] > 0 && theta_pow_c != 1) {
     for (i in 1:len_free_c[5]) {
       Theta_pri_c[i] = Theta_sd_free_c[i]^(theta_pow_c);
-      target += log(fabs(theta_pow_c)) + (theta_pow_c - 1)*log(Theta_sd_free_c[i]);
+      target += log(abs(theta_pow_c)) + (theta_pow_c - 1)*log(Theta_sd_free_c[i]);
     }
   }
   Psi_pri_c = Psi_sd_free_c;
   if (len_free_c[9] > 0 && psi_pow_c != 1) {
     for (i in 1:len_free_c[9]) {
       Psi_pri_c[i] = Psi_sd_free_c[i]^(psi_pow_c);
-      target += log(fabs(psi_pow_c)) + (psi_pow_c - 1)*log(Psi_sd_free_c[i]);
+      target += log(abs(psi_pow_c)) + (psi_pow_c - 1)*log(Psi_sd_free_c[i]);
     }
   }
 
@@ -1555,8 +1555,8 @@ generated quantities { // these matrices are saved in the output but do not figu
   // sign constraints and correlations
   vector[len_free[1]] ly_sign;
   vector[len_free[4]] bet_sign;
-  matrix[m, m] PSmat[Ng];
-  matrix[m, m] PS[Ng];
+  array[Ng] matrix[m, m] PSmat;
+  array[Ng] matrix[m, m] PS;
   vector[len_free[7]] Theta_cov;
   vector[len_free[5]] Theta_var;
   vector[len_free[10]] P_r;
@@ -1566,8 +1566,8 @@ generated quantities { // these matrices are saved in the output but do not figu
   // level 2
   vector[len_free_c[1]] ly_sign_c;
   vector[len_free_c[4]] bet_sign_c;
-  matrix[m_c, m_c] PSmat_c[Ng];
-  matrix[m_c, m_c] PS_c[Ng];
+  array[Ng] matrix[m_c, m_c] PSmat_c;
+  array[Ng] matrix[m_c, m_c] PS_c;
   vector[len_free_c[7]] Theta_cov_c;
   vector[len_free_c[5]] Theta_var_c;
   vector[len_free_c[10]] P_r_c;
@@ -1578,31 +1578,31 @@ generated quantities { // these matrices are saved in the output but do not figu
   vector[multilev ? sum(nclus[,2]) : (use_cov ? Ng : Ntot)] log_lik; // for loo, etc
   vector[multilev ? sum(nclus[,2]) : (use_cov ? Ng : Ntot)] log_lik_sat; // for ppp
 
-  vector[multilev ? p_tilde : p + q] YXstar_rep[Ntot]; // artificial data
+  array[Ntot] vector[multilev ? p_tilde : p + q] YXstar_rep; // artificial data
   vector[multilev ? sum(nclus[,2]) : (use_cov ? Ng : Ntot)] log_lik_rep; // for loo, etc
   vector[multilev ? sum(nclus[,2]) : (use_cov ? Ng : Ntot)] log_lik_rep_sat; // for ppp
-  matrix[p + q, p + q + 1] satout[Ng];
-  matrix[p + q, p + q + 1] satrep_out[Ng];
-  vector[p + q] Mu_sat[Ng];
-  matrix[p + q, p + q] Sigma_sat[Ng];
-  matrix[p + q, p + q] Sigma_sat_inv_grp[Ng];
-  real logdetS_sat_grp[Ng];
-  matrix[p + q + 1, p + q + 1] Sigma_sat_inv[Np];
-  vector[p + q] Mu_rep_sat[Ng];
-  matrix[p + q, p + q] Sigma_rep_sat[Ng];
-  matrix[p + q, p + q] Sigma_rep_sat_inv_grp[Ng];
-  matrix[p + q + 1, p + q + 1] Sigma_rep_sat_inv[Np];
-  real logdetS_rep_sat_grp[Ng];
+  array[Ng] matrix[p + q, p + q + 1] satout;
+  array[Ng] matrix[p + q, p + q + 1] satrep_out;
+  array[Ng] vector[p + q] Mu_sat;
+  array[Ng] matrix[p + q, p + q] Sigma_sat;
+  array[Ng] matrix[p + q, p + q] Sigma_sat_inv_grp;
+  array[Ng] real logdetS_sat_grp;
+  array[Np] matrix[p + q + 1, p + q + 1] Sigma_sat_inv;
+  array[Ng] vector[p + q] Mu_rep_sat;
+  array[Ng] matrix[p + q, p + q] Sigma_rep_sat;
+  array[Ng] matrix[p + q, p + q] Sigma_rep_sat_inv_grp;
+  array[Np] matrix[p + q + 1, p + q + 1] Sigma_rep_sat_inv;
+  array[Ng] real logdetS_rep_sat_grp;
   matrix[p + q, p + q] zmat;
-  vector[p_tilde] mean_d_rep[sum(nclus[,2])];
+  array[sum(nclus[,2])] vector[p_tilde] mean_d_rep;
   vector[multilev ? sum(nclus[,2]) : Ng] log_lik_x_rep;
-  matrix[N_both + N_within, N_both + N_within] S_PW_rep[Ng];
-  matrix[p_tilde, p_tilde] S_PW_rep_full[Ng];
-  vector[p_tilde] ov_mean_rep[Ng];
-  vector[p_tilde] xbar_b_rep[Ng];
-  matrix[N_between, N_between] S2_rep[Ng];
-  matrix[p_tilde, p_tilde] S_B_rep[Ng];
-  matrix[p_tilde, p_tilde] cov_b_rep[Ng];
+  array[Ng] matrix[N_both + N_within, N_both + N_within] S_PW_rep;
+  array[Ng] matrix[p_tilde, p_tilde] S_PW_rep_full;
+  array[Ng] vector[p_tilde] ov_mean_rep;
+  array[Ng] vector[p_tilde] xbar_b_rep;
+  array[Ng] matrix[N_between, N_between] S2_rep;
+  array[Ng] matrix[p_tilde, p_tilde] S_B_rep;
+  array[Ng] matrix[p_tilde, p_tilde] cov_b_rep;
   real<lower=0, upper=1> ppp;
   
   // first deal with sign constraints:
@@ -1646,7 +1646,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   if (m > 0 && len_free[10] > 0) {
     /* iden is created so that we can re-use cor2cov, even though
        we don't need to multiply to get covariances */
-    matrix[m, m] iden[Ng];
+    array[Ng] matrix[m, m] iden;
     for (g in 1:Ng) {
       iden[g] = diag_matrix(rep_vector(1, m));
     }
@@ -1660,7 +1660,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   Theta_cov_c = cor2cov(Theta_r_c, Theta_sd_c, num_elements(Theta_r_free_c), Theta_r_skeleton_c, w7skel_c, Ng);
   Theta_var_c = Theta_sd_free_c .* Theta_sd_free_c;
   if (m_c > 0 && len_free_c[10] > 0) {
-    matrix[m_c, m_c] iden_c[Ng];
+    array[Ng] matrix[m_c, m_c] iden_c;
     for (g in 1:Ng) {
       iden_c[g] = diag_matrix(rep_vector(1, m_c));
     }
@@ -1671,9 +1671,9 @@ generated quantities { // these matrices are saved in the output but do not figu
   Psi_var_c = Psi_sd_free_c .* Psi_sd_free_c;
   
   { // log-likelihood
-    int obsidx[p + q];
-    int xidx[p + q];
-    int xdatidx[p + q];
+    array[p + q] int obsidx;
+    array[p + q] int xidx;
+    array[p + q] int xdatidx;
     int r1;
     int r2;
     int r3;
@@ -1690,7 +1690,7 @@ generated quantities { // these matrices are saved in the output but do not figu
     } else if (do_test && has_data) {
       // generate level 2 data, then level 1
       if (multilev) {
-	int notbidx[p_tilde - N_between];
+	array[p_tilde - N_between] int notbidx;
 	notbidx = between_idx[(N_between + 1):p_tilde];
 	r1 = 1;
 	rr1 = 1;
@@ -1763,7 +1763,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  S2_rep[gg] *= pow(nclus[gg, 2], -1);
 	  // mods to between-only variables:
 	  if (N_between > 0) {
-	    int betonly[N_between] = between_idx[1:N_between];
+	    array[N_between] int betonly = between_idx[1:N_between];
 	    S_PW_rep_full[gg, betonly, betonly] = rep_matrix(0, N_between, N_between);
 
 	    // Y2: mean_d_rep; Y2c: mean_d_rep - ov_mean_rep
@@ -1798,8 +1798,8 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  S_PW_rep[gg] = S_PW_rep_full[gg, notbidx, notbidx];
 
 	  if (Nx[gg] > 0 || Nx_between[gg] > 0) {
-	    vector[p_tilde] mnvecs[2];
-	    matrix[p_tilde, p_tilde] covmats[3];
+	    array[2] vector[p_tilde] mnvecs;
+	    array[3] matrix[p_tilde, p_tilde] covmats;
 
 	    mnvecs = calc_mean_vecs(YXstar_rep[rr1:(r1 - 1)], mean_d_rep[r2:(clusidx - 1)], nclus[gg], Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg], p_tilde);
 	    covmats = calc_cov_mats(YXstar_rep[rr1:(r1 - 1)], mean_d_rep[r2:(clusidx - 1)], mnvecs, nclus[gg], Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg], p_tilde);
@@ -1849,7 +1849,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 	} else {
 	  // complete data; Np patterns must only correspond to groups
 	  for (mm in 1:Np) {
-	    int arr_dims[3] = dims(YXstar);
+	    array[3] int arr_dims = dims(YXstar);
 	    matrix[endrow[mm] - startrow[mm] + 1, arr_dims[2]] YXsmat; // crossprod needs matrix
 	    matrix[endrow[mm] - startrow[mm] + 1, arr_dims[2]] YXsrepmat;
 	    r1 = startrow[mm];
@@ -1934,7 +1934,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 	}
 
 	if (Nx[mm] > 0) {
-	  int xvars[Nx[mm]] = xdatidx[1:Nx[mm]];
+	  array[Nx[mm]] int xvars = xdatidx[1:Nx[mm]];
 	  log_lik[mm] += -wishart_lpdf((N[mm] - 1) * Sstar[mm, xvars, xvars] | N[mm] - 1, Sigma[mm, xvars, xvars]);
 	  if (do_test) {
 	    log_lik_sat[mm] += wishart_lpdf((N[mm] - 1) * Sstar[mm, xvars, xvars] | N[mm] - 1, Sigma[mm, xvars, xvars]);

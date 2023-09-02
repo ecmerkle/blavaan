@@ -1,14 +1,14 @@
-  real sem_lv_lpdf(matrix x, real[,,] alpha, real[,,] B, real[,,] psi, real[,,] gamma, int gamind, real[,] meanx, int[] g, int k, int N, int Ng, int diagpsi, int fullbeta, int nlv, int[] lvind, int nlvno0){
-    real ldetcomp[Ng];
+  real sem_lv_lpdf(matrix x, array[,,] real alpha, array[,,] real B, array[,,] real psi, array[,,] real gamma, int gamind, array[,] real meanx, array[] int g, int k, int N, int Ng, int diagpsi, int fullbeta, int nlv, array[] int lvind, int nlvno0){
+    array[Ng] real ldetcomp;
     matrix[k,k] iden;
-    vector[k] alpha2[Ng];
-    vector[k] psivecinv[Ng];
-    matrix[k,k] psimatinv[Ng];
-    matrix[k,k] psimat[Ng];
-    matrix[k,k] siginv[Ng];
+    array[Ng] vector[k] alpha2;
+    array[Ng] vector[k] psivecinv;
+    array[Ng] matrix[k,k] psimatinv;
+    array[Ng] matrix[k,k] psimat;
+    array[Ng] matrix[k,k] siginv;
     vector[k] xvec;
-    vector[k] evlv[Ng];
-    int idx[(k-nlv+nlvno0)];
+    array[Ng] vector[k] evlv;
+    array[(k-nlv+nlvno0)] int idx;
     real xvectm;
     real ldetsum;
     int nov;

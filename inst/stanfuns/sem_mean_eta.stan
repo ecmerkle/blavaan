@@ -1,9 +1,9 @@
-  vector[] sem_mean_eta(real[,,] alpha, matrix eta, real[,,] B, real[,,] gamma, int[] g, int k, int N, int Ng, int nlv, int[] lvind, int[] lv0ind){
+  array[] vector sem_mean_eta(array[,,] real alpha, matrix eta, array[,,] real B, array[,,] real gamma, array[] int g, int k, int N, int Ng, int nlv, array[] int lvind, array[] int lv0ind){
     matrix[k,k] iden;
-    matrix[k,k] ibinv[Ng];
-    vector[k] evlv[N];
-    real alphvec[k,1,Ng];
-    int idx[(k - nlv + size(lvind))];
+    array[Ng] matrix[k,k] ibinv;
+    array[N] vector[k] evlv;
+    array[k,1,Ng] real alphvec;
+    array[(k - nlv + size(lvind))] int idx;
     int nov;
     int nlvno0;
 
