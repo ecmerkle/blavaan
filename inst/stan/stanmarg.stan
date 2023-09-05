@@ -572,6 +572,7 @@ data {
   int<lower=0> Nx_between[Np]; // number of fixed.x variables (between)
   int<lower=0, upper=1> use_cov;
   int<lower=0, upper=1> pri_only;
+  int<lower=0, upper=1> do_mix;
   int<lower=0> emiter; // number of em iterations for saturated model in ppp (missing data only)
   int<lower=0, upper=1> use_suff; // should we compute likelihood via mvn sufficient stats?
   int<lower=0, upper=1> do_test; // should we do everything in generated quantities?
@@ -1120,6 +1121,7 @@ parameters {
   vector<lower=-1,upper=1>[fullpsi_c ? 0 : len_free_c[10]] Psi_r_free_c;
   vector[len_free_c[13]] Nu_free_c;
   vector[len_free_c[14]] Alpha_free_c;
+  simplex[do_mix ? Ng : 0] pmix[nclus[1,2]];
 }
 transformed parameters {
   matrix[p, m] Lambda_y[Ng];
@@ -1415,26 +1417,55 @@ model { // N.B.: things declared in the model block do not get saved in the outp
     int rr2 = 0;
     int r3 = 1; // index unique cluster sizes per group
     int r4 = 0;
-    
-    for (mm in 1:Np) {
-      grpidx = grpnum[mm];
-      if (grpidx > 1) {
-	r1 += nclus[(grpidx - 1), 2];
-	rr1 += nclus[(grpidx - 1), 1];
-	r3 += ncluster_sizes[(grpidx - 1)];
+
+    if (do_mix) {
+      vector[nclus[1, 2]] tmp_clus_logl[Np];
+      for (mm in 1:Np) {
+	grpidx = grpnum[mm];
+	if (grpidx > 1) {
+	  r1 += nclus[(grpidx - 1), 2];
+	  r3 += nclus[(grpidx - 1), 1];
+	}
+	r2 += nclus[grpidx, 2];
+	r4 += nclus[grpidx, 1];
+
+	tmp_clus_logl[grpidx] = twolevel_logdens(mean_d_full[r1:r2], cov_d_full[r1:r2],
+						 S_PW[grpidx], YX[r3:r4], nclus[grpidx,],
+						 cluster_size[r1:r2], cluster_size[r1:r2],
+						 nclus[grpidx,2], intone[1:nclus[grpidx,2]],
+						 Mu[grpidx], Sigma[grpidx], Mu_c[grpidx],
+						 Sigma_c[grpidx], ov_idx1, ov_idx2, within_idx,
+						 between_idx, both_idx, p_tilde, N_within,
+						 N_between, N_both);
+	if (Nx[grpidx] + Nx_between[grpidx] > 0) tmp_clus_logl[grpidx] -= log_lik_x_full[r1:r2];
+
+	tmp_clus_logl[grpidx] += log(to_vector(pmix[, grpidx]));
       }
-      r2 += nclus[grpidx, 2];
-      rr2 += nclus[grpidx, 1];
-      r4 += ncluster_sizes[grpidx];
+      for (i in 1:nclus[1, 2]) {
+        // tmp_clus_logl is vector by each mixture component. log_sum_exp goes by each observation
+        target += log_sum_exp(tmp_clus_logl[, i]);
+      }
+    } else {
+      for (mm in 1:Np) {
+        grpidx = grpnum[mm];
+	if (grpidx > 1) {
+	  r1 += nclus[(grpidx - 1), 2];
+	  rr1 += nclus[(grpidx - 1), 1];
+	  r3 += ncluster_sizes[(grpidx - 1)];
+	}
+	r2 += nclus[grpidx, 2];
+	rr2 += nclus[grpidx, 1];
+	r4 += ncluster_sizes[grpidx];
       
-      target += twolevel_logdens(mean_d[r3:r4], cov_d[r3:r4], S_PW[grpidx], YX[rr1:rr2],
-				 nclus[grpidx,], cluster_size[r1:r2], cluster_sizes[r3:r4],
-				 ncluster_sizes[grpidx], cluster_size_ns[r3:r4], Mu[grpidx],
-				 Sigma[grpidx], Mu_c[grpidx], Sigma_c[grpidx],
-				 ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
-				 p_tilde, N_within, N_between, N_both);
+	target += twolevel_logdens(mean_d[r3:r4], cov_d[r3:r4], S_PW[grpidx], YX[rr1:rr2],
+				   nclus[grpidx,], cluster_size[r1:r2], cluster_sizes[r3:r4],
+				   ncluster_sizes[grpidx], cluster_size_ns[r3:r4], Mu[grpidx],
+				   Sigma[grpidx], Mu_c[grpidx], Sigma_c[grpidx],
+				   ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
+				   p_tilde, N_within, N_between, N_both);
       
-      if (Nx[grpidx] + Nx_between[grpidx] > 0) target += -log_lik_x;
+	if (Nx[grpidx] + Nx_between[grpidx] > 0) target += -log_lik_x;
+      }
     }
   } else if (use_cov && !pri_only) {
     for (g in 1:Ng) {

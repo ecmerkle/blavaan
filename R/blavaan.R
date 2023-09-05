@@ -1201,3 +1201,72 @@ bgrowth <- function(..., cp = "srs", dp = NULL,
     
     eval(mc, parent.frame())
 }
+
+bmix <- function(..., nmix = 2L, cp = "srs", dp = NULL,
+    n.chains = 3, burnin, sample, adapt,
+    mcmcfile = FALSE, mcmcextra = list(), inits = "simple",
+    convergence = "manual", target = "stan", save.lvs = FALSE, wiggle = NULL,
+    wiggle.sd = 0.1, prisamp = FALSE, jags.ic = FALSE, seed = NULL,
+    bcontrol = list()) {
+    if (nmix < 2L || (nmix %% 1) != 0) stop("blavaan ERROR: nmix must be an integer greater than 1.")
+
+    dotdotdot <- list(...)
+    std.lv <- ifelse(any(names(dotdotdot) == "std.lv"), dotdotdot$std.lv, FALSE)
+    if(target != "stan") stop("blavaan ERROR: mixture models require target = 'stan'")
+
+    if("group" %in% names(dotdotdot)) stop("blavaan ERROR: multi-group mixture models are not available")
+    if("model" %in% names(dotdotdot)) {
+      dotmod <- dotdotdot$model
+    } else {
+      dotmod <- dotdotdot[[1]]
+    }
+    
+    mixmod <- mixdata <- NULL
+    for(g in 1:nmix) {
+      mixmod <- paste0(mixmod, "group: ", g, "\n", dotmod, "\n")
+      mixdata <- rbind(mixdata, dotdotdot$data)
+    }
+    mixdata$mixgrp <- rep(1:nmix, each = nrow(mixdata)/nmix)
+
+    if(length(mcmcextra) > 0) {
+      mcmcextra$data <- c(mcmcextra$data, list(do_mix = 1L))
+    } else {
+      mcmcextra <- list(data = list(do_mix = 1L))
+    }
+
+    mc <- match.call()
+    mc[[2]] <- mixmod
+    mc$model <- NULL
+    mc$model.type      <- as.character( mc[[1L]] )
+    if(length(mc$model.type) == 3L) mc$model.type <- mc$model.type[3L]
+    mc$model.type <- "bsem"
+    mc$data <- mixdata
+    mc$group <- "mixgrp"
+    mc$nmix <- NULL
+    mc$n.chains        <- n.chains
+    mc$mcmcextra <- mcmcextra
+    mc$int.ov.free     <- TRUE
+    mc$int.lv.free     <- FALSE
+    mc$auto.fix.first  <- !std.lv
+    mc$auto.fix.single <- TRUE
+    mc$auto.var        <- TRUE
+    mc$auto.cov.lv.x   <- TRUE
+    mc$auto.cov.y      <- TRUE
+    mc$auto.th         <- TRUE
+    mc$auto.delta      <- TRUE
+    mc[[1L]] <- quote(blavaan)
+
+    ## change defaults depending on jags vs stan
+    sampargs <- c("burnin", "sample", "adapt")
+    defiters <- c(500L, 1000L, 1000L)
+    suppargs <- which(!(sampargs %in% names(mc)))
+
+    if(length(suppargs) > 0){
+        for(i in 1:length(suppargs)){
+            mc[[(length(mc)+1)]] <- defiters[suppargs[i]]
+            names(mc)[length(mc)] <- sampargs[suppargs[i]]
+        }
+    }
+
+    eval(mc, parent.frame())
+}

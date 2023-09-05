@@ -217,6 +217,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           wigind = NULL, # wiggle indicator
                           pri_only = FALSE, # prior predictive sampling
                           do_reg = FALSE, # regression sampling
+                          do_mix = FALSE, # mixture model
                           multilev, mean_d, cov_w, log_lik_x, cov_d, nclus, cluster_size, # level 2 data
                           ncluster_sizes, mean_d_full, cov_d_full, log_lik_x_full, xbar_w, xbar_b,
                           cov_b, gs, cluster_sizes, cluster_size_ns, between_idx, N_between,
@@ -258,6 +259,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$Nx_between <- array(Nx_between, length(Nx_between))
   dat$emiter <- emiter
   dat$do_reg <- do_reg
+  dat$do_mix <- do_mix
   dat$pri_only <- pri_only
   dat$multilev <- multilev
   
