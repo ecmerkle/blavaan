@@ -1121,7 +1121,7 @@ parameters {
   vector<lower=-1,upper=1>[fullpsi_c ? 0 : len_free_c[10]] Psi_r_free_c;
   vector[len_free_c[13]] Nu_free_c;
   vector[len_free_c[14]] Alpha_free_c;
-  simplex[do_mix ? Ng : 0] pmix[nclus[1,2]];
+  simplex[do_mix ? Ng : 0] pmix;
 }
 transformed parameters {
   matrix[p, m] Lambda_y[Ng];
@@ -1439,7 +1439,7 @@ model { // N.B.: things declared in the model block do not get saved in the outp
 						 N_between, N_both);
 	if (Nx[grpidx] + Nx_between[grpidx] > 0) tmp_clus_logl[grpidx] -= log_lik_x_full[r1:r2];
 
-	tmp_clus_logl[grpidx] += log(to_vector(pmix[, grpidx]));
+	tmp_clus_logl[grpidx] += log(pmix[grpidx]);
       }
       for (i in 1:nclus[1, 2]) {
         // tmp_clus_logl is vector by each mixture component. log_sum_exp goes by each observation
