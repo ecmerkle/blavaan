@@ -226,12 +226,13 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   free2 <- list()
   nfree <- list()
   lavpartable <- parTable(lavobject)
+
   levlabs <- blav_partable_level_values(lavpartable)
   lavpartable <- lavMatrixRepresentation(lavpartable, add.attributes = TRUE)
   if (multilevel & level == 1L) {
-    lavpartable <- subset(lavpartable, level == levlabs[1])
+    lavpartable <- subset(lavpartable, (level == levlabs[1]) | (op %in% c("==", ":=")))
   } else if (multilevel & level == 2L) {
-    lavpartable <- subset(lavpartable, level == levlabs[2])
+    lavpartable <- subset(lavpartable, (level == levlabs[2]) | (op %in% c("==", ":=")))
   } else if (level == 2L) {
     lavpartable <- lavpartable[0,]
   }
@@ -831,7 +832,7 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
     lavpartable <- lapply(lavpartable, function(x) x[lavpartable$level == levlabs[2]])
     matmod <- "_c"
   } else if ("level" %in% names(lavpartable)) {
-    lavpartable <- lapply(lavpartable, function(x) x[lavpartable$level == levlabs[1]])
+    lavpartable <- lapply(lavpartable, function(x) x[lavpartable$level == levlabs[1] | lavpartable$op %in% c("==", ":=")])
   }
 
   ## lavaan pars to w?skel (for equality constraints)
@@ -970,7 +971,7 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
     if(level == 2L){
       olpt <- lapply(olpt, function(x) x[olpt$level == levlabs[2]])
     } else {
-      olpt <- lapply(olpt, function(x) x[olpt$level == levlabs[1]])
+      olpt <- lapply(olpt, function(x) x[olpt$level == levlabs[1] | olpt$op %in% c("==", ":=")])
     }
     lavpartable <- c(lavpartable, list(mat = olpt$mat, row = olpt$row, col = olpt$col))
   } else {
