@@ -1,6 +1,6 @@
-  vector[] sem_mean(vector[] alpha, real[,,] B, real[,,] gamma, int[] g, int k, int Ng, int gamind, real[,] meanx){
+  array[] vector sem_mean(array[] vector alpha, array[,,] real B, array[,,] real gamma, array[] int g, int k, int Ng, int gamind, array[,] real meanx){
     matrix[k,k] iden;
-    vector[k] evlv[Ng];
+    array[Ng] vector[k] evlv;
 
     iden = diag_matrix(rep_vector(1.0, k));
 
