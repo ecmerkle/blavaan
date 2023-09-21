@@ -1,5 +1,8 @@
-lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = NULL, n.chains = 1, mcmcextra = "", inits = "prior", blavmis = "da", pta = NULL, wiggle = NULL, wiggle.sd = NULL, target = "stan") {
+lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = NULL, n.chains = 1, mcmcextra = "", inits = "prior", blavmis = "da", pta = NULL, wiggle = NULL, wiggle.sd = NULL, target = "jags") {
   ## lots of code is taken from lav_export_bugs.R
+  ## NB! This function once worked for target="stan", but it is not updated to use the new array syntax that was introduced to rstan in 2023.
+  ## At the time of writing this message (2023), blavaan no longer uses this function to create Stan code.
+  if(target == "stan") stop("blavaan ERROR: lav2mcmc() cannot produce a Stan model using the new (as of 2023) array syntax.")
 
   if(inherits(model, "lavaan")){
     partable <- parTable(model)
