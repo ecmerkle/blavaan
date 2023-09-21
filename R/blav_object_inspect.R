@@ -130,6 +130,7 @@ blavInspect <- function(blavobject, what, ...) {
             draws <- make_mcmc(blavobject@external$mcmcout, blavobject@external$stanlvs)
 
             if(jagtarget){
+                drawcols <- grep("^eta\\[", colnames(draws[[1]]))
                 ## remove phantoms
                 drawcols <- drawcols[1:(nlv * nsamp)]
             } else {

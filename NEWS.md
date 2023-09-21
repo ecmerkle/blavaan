@@ -3,8 +3,9 @@
 * Two-level models are now supported (for complete, continuous data) via the cluster argument.
 
 ## Bugs/glitches discovered after the release:
-* For two-level model specification, the levels have to be labeled "within" and "between". This is more restrictive than lavaan.
+* For two-level model specification, the levels have to be labeled "within" and "between". This is more restrictive than lavaan specification.
 
+* For target="jags", latent variable extraction via blavInspect(, "lvs") fails (reported by Joseph Saraceno).
 
 # Version 0.4-8
 ## New features
