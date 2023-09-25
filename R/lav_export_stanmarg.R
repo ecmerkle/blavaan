@@ -230,9 +230,9 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   levlabs <- blav_partable_level_values(lavpartable)
   lavpartable <- lavMatrixRepresentation(lavpartable, add.attributes = TRUE)
   if (multilevel & level == 1L) {
-    lavpartable <- subset(lavpartable, (level == levlabs[1]) | (op %in% c("==", ":=")))
+    lavpartable <- subset(lavpartable, (lavpartable$level == levlabs[1]) | (lavpartable$op %in% c("==", ":=")))
   } else if (multilevel & level == 2L) {
-    lavpartable <- subset(lavpartable, (level == levlabs[2]) | (op %in% c("==", ":=")))
+    lavpartable <- subset(lavpartable, (lavpartable$level == levlabs[2]) | (lavpartable$op %in% c("==", ":=")))
   } else if (level == 2L) {
     lavpartable <- lavpartable[0,]
   }
