@@ -1,3 +1,7 @@
+# Version 0.5-2
+## New features
+* This is a maintenance release, primarily adding the new array declaration syntax in Stan models (syntax that became available in the new version of rstan).
+
 # Version 0.5-1
 ## New features
 * Two-level models are now supported (for complete, continuous data) via the cluster argument.
