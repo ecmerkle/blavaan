@@ -10,7 +10,7 @@ library(lavaan, quietly=TRUE)
 ```
 
 Starting with version 0.5-1, *blavaan* supports two-level SEM with random intercepts. 
-The specification and estimation commands are similar to those of *lavaan*, including use of `level:` in the model specification and use of the `cluster` argument for estimation. Consequently, examples involving *lavaan* also generally apply to *blavaan*, such as the *lavaan* tutorial example below. (note: for version 0.5-1, the levels can only be named "within" and "between" in the model specification syntax)
+The specification and estimation commands are similar to those of *lavaan*, including use of `level:` in the model specification and use of the `cluster` argument for estimation. Consequently, examples involving *lavaan* also generally apply to *blavaan*, such as the *lavaan* tutorial example below.
 
 ```{r ex1, eval = FALSE}
 data(Demo.twolevel, package = "lavaan")
