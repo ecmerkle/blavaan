@@ -14,11 +14,15 @@ blavCompare <- function(object1, object2, ...) {
   res <- c(bf, object1@test[[1]]$stat, object2@test[[1]]$stat)
   names(res) <- c("bf", "mll1", "mll2")
   
-  ## FIXME? We already get case_lls in blav_fit_measures and should really
-  ## only do it once. But, if we store it in the blavaan object, the size
-  ## of that object can get much larger.
-  if(targ1 == "stan"){
+  if(targ1 == "stan" && blavInspect(object1, "meanstructure")){
     ll1 <- loo::extract_log_lik(object1@external$mcmcout)
+  } else if(blavInspect(object1, "categorical") && lavopt1$test != "none"){
+    if("llnsamp" %in% names(lavopt)){
+      cat("blavaan NOTE: These criteria involve likelihood approximations that may be imprecise.\n",
+          "You could try running the model again to see how much the criteria fluctuate.\n",
+          "You can also manually set llnsamp for greater accuracy (but also greater runtime).\n\n")
+    }
+    ll1 <- object1@external$casells
   } else {
     lavopt1$estimator <- "ML"
     ll1 <- case_lls(object1@external$mcmcout, make_mcmc(object1@external$mcmcout),
@@ -29,13 +33,20 @@ blavCompare <- function(object1, object2, ...) {
   cid1 <- rep(1:nchain1, each=niter1)
   ref1 <- relative_eff(exp(ll1), chain_id = cid1)
 
-  if(targ2 == "stan"){
+  if(targ2 == "stan" && blavInspect(object2, "meanstructure")){
     ll2 <- loo::extract_log_lik(object2@external$mcmcout)
+  } else if(blavInspect(object2, "categorical") && lavopt2$test != "none"){
+    if("llnsamp" %in% names(lavopt)){
+      cat("blavaan NOTE: These criteria involve likelihood approximations that may be imprecise.\n",
+          "You could try running the model again to see how much the criteria fluctuate.\n",
+          "You can also manually set llnsamp for greater accuracy (but also greater runtime).\n\n")
+    }
+    ll2 <- object2@external$casells
   } else {
     lavopt2$estimator <- "ML"
     ll2 <- case_lls(object2@external$mcmcout, make_mcmc(object2@external$mcmcout),
                     object2)
-  }
+  }  
   nchain2 <- blavInspect(object1, "n.chains")
   niter2 <- nrow(ll2)/nchain2
   cid2 <- rep(1:nchain2, each=niter2)
