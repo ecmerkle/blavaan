@@ -246,7 +246,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     }
     return out;
   }
-    
+
   vector fill_prior(vector free_elements, array[] real pri_mean, array[,] int eq_skeleton) {
     int R = dims(eq_skeleton)[1];
     int eqelem = 0;
@@ -1697,6 +1697,8 @@ generated quantities { // these matrices are saved in the output but do not figu
 	clusidx = 1;
 	r2 = 1;
 	for (gg in 1:Ng) {
+	  matrix[p_c, p_c] Sigma_c_chol = cholesky_decompose(Sigma_c[gg]);
+	  matrix[p + q, p + q] Sigma_chol = cholesky_decompose(Sigma[gg]);
 	  S_PW_rep[gg] = rep_matrix(0, N_both + N_within, N_both + N_within);
 	  S_PW_rep_full[gg] = rep_matrix(0, p_tilde, p_tilde);
 	  S_B_rep[gg] = rep_matrix(0, p_tilde, p_tilde);
@@ -1705,14 +1707,14 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  for (cc in 1:nclus[gg, 2]) {
 	    vector[p_c] YXstar_rep_c;
 	    vector[p_tilde] YXstar_rep_tilde;
-	    YXstar_rep_c = multi_normal_rng(Mu_c[gg], Sigma_c[gg]);
+	    YXstar_rep_c = multi_normal_cholesky_rng(Mu_c[gg], Sigma_c_chol);
 
 	    YXstar_rep_tilde = calc_B_tilde(Sigma_c[gg], YXstar_rep_c, ov_idx2, p_tilde)[,1];
 
 	    for (ii in r1:(r1 + cluster_size[clusidx] - 1)) {
 	      vector[N_within + N_both] Ywb_rep;
 
-	      Ywb_rep = multi_normal_rng(Mu[gg], Sigma[gg]);
+	      Ywb_rep = multi_normal_cholesky_rng(Mu[gg], Sigma_chol);
 
 	      YXstar_rep[ii] = YXstar_rep_tilde;
 	      for (ww in 1:(p_tilde - N_between)) {
@@ -1812,7 +1814,8 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  } // Nx[gg] > 0
 	} // gg
       } else {
-	for (mm in 1:Np) {	
+	for (mm in 1:Np) {
+	  matrix[Nobs[mm], Nobs[mm]] Sigma_chol;
 	  obsidx = Obsvar[mm,];
 	  xidx = Xvar[mm,];
 	  xdatidx = Xdatvar[mm,];
@@ -1820,8 +1823,10 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  r1 = startrow[mm];
 	  r2 = endrow[mm];
 
+	  Sigma_chol = cholesky_decompose(Sigma[ grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]] ]);
+	  
 	  for (jj in r1:r2) {
-	    YXstar_rep[jj, 1:Nobs[mm]] = multi_normal_rng(Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+	    YXstar_rep[jj, 1:Nobs[mm]] = multi_normal_cholesky_rng(Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma_chol);
 	  }
 	}
 
