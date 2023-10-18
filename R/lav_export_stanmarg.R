@@ -112,7 +112,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
             lampar12 <- lamfree2[[i]][,fpar[j,2]]
             ## see whether any are equality constrained
             l1match <- match(lampar1, constraint$rhs, nomatch = 0L)
-            transconst <- transtab[match(constraint$lhs[l1match], transtab[,1]), 2]
+            transconst <- transtab[match(constraint$lhs[l1match], transtab[,1]), 2*i]
             lampar12[l1match != 0] <- as.numeric(transconst)
             if (all(lampar12 == 0)) { # ov converted to lv
               l1 <- 1
@@ -127,7 +127,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
             lampar2 <- lamfree[[i]][,fpar[j,1]]
             lampar22 <- lamfree2[[i]][,fpar[j,1]]
             l2match <- match(lampar2, constraint$rhs, nomatch = 0L)
-            transconst <- transtab[match(constraint$lhs[l2match], transtab[,1]), 2]
+            transconst <- transtab[match(constraint$lhs[l2match], transtab[,1]), 2*i]
             lampar22[l2match != 0] <- as.numeric(transconst)
             if (all(lampar22 == 0)) {
               l2 <- 1
