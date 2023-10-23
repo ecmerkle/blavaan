@@ -45,7 +45,7 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
   } else {
     implied <- lav_model_implied(lavmodel, delta = (lavmodel@parameterization == "delta"))
   }
-  
+
   ## check for missing, to see if we can easily get baseline ll for chisq
   mis <- FALSE
   if(any(is.na(unlist(lavdata@X)))){
@@ -538,7 +538,8 @@ case_lls <- function(lavjags        = NULL,
                      lavmcmc        = NULL,
                      lavobject      = NULL,
                      conditional    = FALSE,
-                     thin           = 1){
+                     thin           = 1,
+                     debug          = FALSE){
 
   lavdata <- lavobject@Data
   
@@ -556,7 +557,13 @@ case_lls <- function(lavjags        = NULL,
       get_ll(lavmcmc[[j]][itnums[i],], lavobject,
              casewise = TRUE, conditional = conditional)},
       j = j, future.seed = TRUE)
-    tmpres[[j]] <- t(do.call("future_sapply", loop.args))
+
+    loopcom <- "future_sapply"
+    if(debug) {
+      loop.args$future.seed <- NULL
+      loopcom <- "sapply"
+    }
+    tmpres[[j]] <- t(do.call(loopcom, loop.args))
   }
 
   llmat <- do.call("rbind", tmpres)
