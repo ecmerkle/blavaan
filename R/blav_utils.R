@@ -158,6 +158,7 @@ dist2r <- function(priors, target){
         rosetta <- rosetta
         prisplit <- strsplit(priors, "[, ()]+")
         pridist <- sapply(prisplit, function(x) x[1])
+        pridist <- paste0(pridist, "_lpdf")
         newdist <- rosetta$RFunction[match(pridist, rosetta$StanFunction)]
         for(i in 1:length(newdist)){
             if(!is.na(newdist[i])) prisplit[[i]][1] <- newdist[i]
@@ -452,7 +453,7 @@ blkdiag <- function(mat, eqcon = NULL) {
       othend <- sapply((cnum + 1):currend, function(i) {
         nzents <- which(mat[,i] > 0)
         if (length(nzents) > 0) {
-          out <- max(nzents)
+          out <- max(nzents, i)
         } else {
           out <- i
         }
@@ -481,7 +482,7 @@ blkdiag <- function(mat, eqcon = NULL) {
     cnum <- currend + 1
   }
 
-  blkse <- blkse[1:nblks, , drop = FALSE]
+  if (nrow(blkse) > 0) blkse <- blkse[1:nblks, , drop = FALSE]
   
   list(isblk = isblk, nblks = nblks, blkse = blkse)
 }
