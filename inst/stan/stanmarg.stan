@@ -532,7 +532,35 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
 
     return out;
   }
-  
+
+  // fill covariance matrix with blocks
+  array[] matrix fill_cov(array[] matrix covmat, array[,] int blkse, array[] int nblk,
+			  array[] matrix mat_1, array[] matrix mat_2, array[] matrix mat_3,
+			  array[] matrix mat_4, array[] matrix mat_5) {
+    array[dims(covmat)[1]] matrix[dims(covmat)[2], dims(covmat)[3]] out = covmat;
+
+    for (k in 1:sum(nblk)) {
+      int blkidx = blkse[k, 6];
+      int arrayidx = blkse[k, 5];
+      int blkgrp = blkse[k, 4];
+      int srow = blkse[k, 1];
+      int erow = blkse[k, 2];
+
+      if (arrayidx == 1) {
+	out[blkgrp, srow:erow, srow:erow] = mat_1[blkidx];
+      } else if (arrayidx == 2) {
+	out[blkgrp, srow:erow, srow:erow] = mat_2[blkidx];
+      } else if (arrayidx == 3) {
+	out[blkgrp, srow:erow, srow:erow] = mat_3[blkidx];
+      } else if (arrayidx == 4) {
+	out[blkgrp, srow:erow, srow:erow] = mat_4[blkidx];
+      } else {
+	out[blkgrp, srow:erow, srow:erow] = mat_5[blkidx];
+      }
+    }  
+
+    return out;
+  }   
 }
 data {
   // see https://books.google.com/books?id=9AC-s50RjacC&lpg=PP1&dq=LISREL&pg=PA2#v=onepage&q=LISREL&f=false
@@ -679,7 +707,17 @@ data {
   int<lower=0> len_psi_r;
   array[len_psi_r] real<lower=0> psi_r_alpha;
   array[len_psi_r] real<lower=0> psi_r_beta;
-  int<lower=0,upper=1> fullpsi;
+
+  // for blocks within Psi_r that receive lkj
+  array[5] int<lower=0> nblk;
+  array[5] int<lower=3> psidims;
+  array[sum(nblk), 7] int<lower=0> blkse;
+  int<lower=0> len_w11;
+  array[Ng] int<lower=0> wg11;
+  array[Ng] vector[len_w11] w11;
+  array[Ng, len_w11] int<lower=1> v11;
+  array[Ng, m + 1] int<lower=1> u11;
+  array[sum(wg11), 3] int<lower=0> w11skel;
     
   // same things but for Nu
   int<lower=0> len_w13;
@@ -785,8 +823,18 @@ data {
   int<lower=0> len_psi_r_c;
   array[len_psi_r_c] real<lower=0> psi_r_alpha_c;
   array[len_psi_r_c] real<lower=0> psi_r_beta_c;
-  int<lower=0,upper=1> fullpsi_c;
-    
+
+  // for blocks within Psi_r that receive lkj
+  array[5] int<lower=0> nblk_c;
+  array[5] int<lower=3> psidims_c;
+  array[sum(nblk_c), 7] int<lower=0> blkse_c;
+  int<lower=0> len_w11_c;
+  array[Ng] int<lower=0> wg11_c;
+  array[Ng] vector[len_w11_c] w11_c;
+  array[Ng, len_w11_c] int<lower=1> v11_c;
+  array[Ng, m_c + 1] int<lower=1> u11_c;
+  array[sum(wg11_c), 3] int<lower=0> w11skel_c;
+  
   // same things but for Nu
   int<lower=0> len_w13_c;
   array[Ng] int<lower=0> wg13_c;
@@ -816,6 +864,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
   array[Ng] matrix[p, p] Theta_r_skeleton;
   array[Ng] matrix[m, m] Psi_skeleton;
   array[Ng] matrix[m, m] Psi_r_skeleton;
+  array[Ng] matrix[m, m] Psi_r_skeleton_f;
   array[Ng] matrix[p, 1] Nu_skeleton;
   array[Ng] matrix[m, 1] Alpha_skeleton;
   array[Ng] matrix[sum(nlevs) - Nord, 1] Tau_skeleton;
@@ -828,6 +877,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
   array[Ng] matrix[p_c, p_c] Theta_r_skeleton_c;
   array[Ng] matrix[m_c, m_c] Psi_skeleton_c;
   array[Ng] matrix[m_c, m_c] Psi_r_skeleton_c;
+  array[Ng] matrix[m_c, m_c] Psi_r_skeleton_f_c;
   array[Ng] matrix[p_c, 1] Nu_skeleton_c;
   array[Ng] matrix[m_c, 1] Alpha_skeleton_c;
   
@@ -875,6 +925,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
     Theta_r_skeleton[g] = to_dense_matrix(p, p, w7[g], v7[g,], u7[g,]);
     Psi_skeleton[g] = to_dense_matrix(m, m, w9[g], v9[g,], u9[g,]);
     Psi_r_skeleton[g] = to_dense_matrix(m, m, w10[g], v10[g,], u10[g,]);
+    Psi_r_skeleton_f[g] = to_dense_matrix(m, m, w11[g], v11[g,], u11[g,]);
     if (!use_cov) {
       Nu_skeleton[g] = to_dense_matrix((p + q), 1, w13[g], v13[g,], u13[g,]);
       Alpha_skeleton[g] = to_dense_matrix((m + n), 1, w14[g], v14[g,], u14[g,]);
@@ -887,6 +938,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
     Theta_r_skeleton_c[g] = to_dense_matrix(p_c, p_c, w7_c[g], v7_c[g,], u7_c[g,]);
     Psi_skeleton_c[g] = to_dense_matrix(m_c, m_c, w9_c[g], v9_c[g,], u9_c[g,]);
     Psi_r_skeleton_c[g] = to_dense_matrix(m_c, m_c, w10_c[g], v10_c[g,], u10_c[g,]);
+    Psi_r_skeleton_f_c[g] = to_dense_matrix(m_c, m_c, w11_c[g], v11_c[g,], u11_c[g,]);
     Nu_skeleton_c[g] = to_dense_matrix(p_c, 1, w13_c[g], v13_c[g,], u13_c[g,]);
     Alpha_skeleton_c[g] = to_dense_matrix(m_c, 1, w14_c[g], v14_c[g,], u14_c[g,]);
     
@@ -954,6 +1006,10 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
 	if (is_inf(Psi_r_skeleton[g,j,i])) {
 	  if (w10skel[pos[10],2] == 0 || w10skel[pos[10],3] == 1) len_free[10] += 1;
 	  pos[10] += 1;
+	}
+	if (is_inf(Psi_r_skeleton_f[g,j,i])) {
+	  if (w11skel[pos[11],2] == 0 || w11skel[pos[11],3] == 1) len_free[11] += 1;
+	  pos[11] += 1;
 	}
       }
     }
@@ -1057,6 +1113,10 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
 	  if (w10skel_c[pos_c[10],2] == 0 || w10skel_c[pos_c[10],3] == 1) len_free_c[10] += 1;
 	  pos_c[10] += 1;
 	}
+	if (is_inf(Psi_r_skeleton_f_c[g,j,i])) {
+	  if (w11skel_c[pos_c[11],2] == 0 || w11skel_c[pos_c[11],3] == 1) len_free_c[11] += 1;
+	  pos_c[11] += 1;
+	}	
       }
     }
 
@@ -1104,8 +1164,12 @@ parameters {
   vector<lower=0>[len_free[5]] Theta_sd_free;
   vector<lower=-1,upper=1>[len_free[7]] Theta_r_free; // to use beta prior
   vector<lower=0>[len_free[9]] Psi_sd_free;
-  array[Ng * fullpsi] corr_matrix[m] Psi_r_mat;
-  vector<lower=-1,upper=1>[fullpsi ? 0 : len_free[10]] Psi_r_free;
+  array[nblk[1]] corr_matrix[psidims[1]] Psi_r_mat_1;
+  array[nblk[2]] corr_matrix[psidims[2]] Psi_r_mat_2;
+  array[nblk[3]] corr_matrix[psidims[3]] Psi_r_mat_3;
+  array[nblk[4]] corr_matrix[psidims[4]] Psi_r_mat_4;
+  array[nblk[5]] corr_matrix[psidims[5]] Psi_r_mat_5;
+  vector<lower=-1,upper=1>[len_free[10]] Psi_r_free;
   vector[len_free[13]] Nu_free;
   vector[len_free[14]] Alpha_free;
   vector[len_free[15]] Tau_ufree;
@@ -1116,8 +1180,12 @@ parameters {
   vector<lower=0>[len_free_c[5]] Theta_sd_free_c;
   vector<lower=-1,upper=1>[len_free_c[7]] Theta_r_free_c; // to use beta prior
   vector<lower=0>[len_free_c[9]] Psi_sd_free_c;
-  array[Ng * fullpsi_c] corr_matrix[m_c] Psi_r_mat_c;
-  vector<lower=-1,upper=1>[fullpsi_c ? 0 : len_free_c[10]] Psi_r_free_c;
+  array[nblk_c[1]] corr_matrix[psidims_c[1]] Psi_r_mat_1_c;
+  array[nblk_c[2]] corr_matrix[psidims_c[2]] Psi_r_mat_2_c;
+  array[nblk_c[3]] corr_matrix[psidims_c[3]] Psi_r_mat_3_c;
+  array[nblk_c[4]] corr_matrix[psidims_c[4]] Psi_r_mat_4_c;
+  array[nblk_c[5]] corr_matrix[psidims_c[5]] Psi_r_mat_5_c;
+  vector<lower=-1,upper=1>[len_free_c[10]] Psi_r_free_c;
   vector[len_free_c[13]] Nu_free_c;
   vector[len_free_c[14]] Alpha_free_c;
 }
@@ -1197,13 +1265,9 @@ transformed parameters {
   
     if (m > 0) {
       Psi_sd[g] = fill_matrix(Psi_sd_free, Psi_skeleton[g], w9skel, g_start9[g,1], g_start9[g,2]);
-      if (fullpsi) {
-	Psi_r[g] = Psi_r_mat[g];
-      } else {
-        Psi_r_lower[g] = fill_matrix(Psi_r_free, Psi_r_skeleton[g], w10skel, g_start10[g,1], g_start10[g,2]);
-        Psi_r[g] = Psi_r_lower[g] + transpose(Psi_r_lower[g]) - diag_matrix(rep_vector(1, m));
-      }
-      Psi[g] = quad_form_sym(Psi_r[g], Psi_sd[g]);
+
+      Psi_r_lower[g] = fill_matrix(Psi_r_free, Psi_r_skeleton[g], w10skel, g_start10[g,1], g_start10[g,2]);
+      Psi_r[g] = Psi_r_lower[g] + transpose(Psi_r_lower[g]) - diag_matrix(rep_vector(1, m));
     }
 
     // level 2 matrices
@@ -1219,21 +1283,27 @@ transformed parameters {
   
     if (m_c > 0) {
       Psi_sd_c[g] = fill_matrix(Psi_sd_free_c, Psi_skeleton_c[g], w9skel_c, g_start9_c[g,1], g_start9_c[g,2]);
-      if (fullpsi_c) {
-	Psi_r_c[g] = Psi_r_mat_c[g];
-      } else {
-        Psi_r_lower_c[g] = fill_matrix(Psi_r_free_c, Psi_r_skeleton_c[g], w10skel_c, g_start10_c[g,1], g_start10_c[g,2]);
-        Psi_r_c[g] = Psi_r_lower_c[g] + transpose(Psi_r_lower_c[g]) - diag_matrix(rep_vector(1, m_c));
-      }
-      Psi_c[g] = quad_form_sym(Psi_r_c[g], Psi_sd_c[g]);
+      
+      Psi_r_lower_c[g] = fill_matrix(Psi_r_free_c, Psi_r_skeleton_c[g], w10skel_c, g_start10_c[g,1], g_start10_c[g,2]);
+      Psi_r_c[g] = Psi_r_lower_c[g] + transpose(Psi_r_lower_c[g]) - diag_matrix(rep_vector(1, m_c));
     }
   }
-  
-  
+
+  if (sum(nblk) > 0) {
+    // we need to define a separate parameter for each dimension of correlation matrix,
+    // so we need all these Psi_r_mats    
+    Psi_r = fill_cov(Psi_r, blkse, nblk, Psi_r_mat_1, Psi_r_mat_2, Psi_r_mat_3, Psi_r_mat_4, Psi_r_mat_5);
+  }
+
+  if (sum(nblk_c) > 0) {
+    Psi_r_c = fill_cov(Psi_r_c, blkse_c, nblk_c, Psi_r_mat_1_c, Psi_r_mat_2_c, Psi_r_mat_3_c, Psi_r_mat_4_c, Psi_r_mat_5_c);
+  }
+
   // see https://books.google.com/books?id=9AC-s50RjacC&lpg=PP1&dq=LISREL&pg=PA3#v=onepage&q=LISREL&f=false
   for (g in 1:Ng) {
     if (m > 0) {
       Lambda_y_A[g] = mdivide_right(Lambda_y[g], I - B[g]);     // = Lambda_y * (I - B)^{-1}
+      Psi[g] = quad_form_sym(Psi_r[g], Psi_sd[g]);
     }
 
     if (!use_cov) {
@@ -1251,7 +1321,8 @@ transformed parameters {
     }
 
     if (m_c > 0) {
-      Lambda_y_A_c[g] = mdivide_right(Lambda_y_c[g], I_c - B_c[g]);     // = Lambda_y * (I - B)^{-1}
+      Lambda_y_A_c[g] = mdivide_right(Lambda_y_c[g], I_c - B_c[g]);
+      Psi_c[g] = quad_form_sym(Psi_r_c[g], Psi_sd_c[g]);
     }
 
     Mu_c[g] = to_vector(Nu_c[g]);
@@ -1513,11 +1584,25 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   target += gamma_lpdf(Psi_pri | psi_sd_shape, psi_sd_rate);
 
   target += beta_lpdf(.5 * (1 + Theta_r_free) | theta_r_alpha, theta_r_beta) + log(.5) * len_free[7]; // the latter term is the jacobian moving from (-1,1) to (0,1), because beta_lpdf is defined on (0,1)
-  if (fullpsi) {
-    for (g in 1:Ng) {
-      target += lkj_corr_lpdf(Psi_r_mat[g] | psi_r_alpha[1]);
+  if (sum(nblk) > 0) {
+    for (k in 1:sum(nblk)) {
+      int blkidx = blkse[k, 6];
+      int arrayidx = blkse[k, 5];
+
+      if (arrayidx == 1) {
+	target += lkj_corr_lpdf(Psi_r_mat_1[blkidx] | blkse[k,7]);
+      } else if (arrayidx == 2) {
+	target += lkj_corr_lpdf(Psi_r_mat_2[blkidx] | blkse[k,7]);
+      } else if (arrayidx == 3) {
+	target += lkj_corr_lpdf(Psi_r_mat_3[blkidx] | blkse[k,7]);	
+      } else if (arrayidx == 4) {
+	target += lkj_corr_lpdf(Psi_r_mat_4[blkidx] | blkse[k,7]);
+      } else {
+	target += lkj_corr_lpdf(Psi_r_mat_5[blkidx] | blkse[k,7]);
+      }      
     }
-  } else if (len_free[10] > 0) {
+  }
+  if (len_free[10] > 0) {
     target += beta_lpdf(.5 * (1 + Psi_r_free) | psi_r_alpha, psi_r_beta) + log(.5) * len_free[10];
   }
 
@@ -1541,9 +1626,22 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   target += gamma_lpdf(Psi_pri_c | psi_sd_shape_c, psi_sd_rate_c);
 
   target += beta_lpdf(.5 * (1 + Theta_r_free_c) | theta_r_alpha_c, theta_r_beta_c) + log(.5) * len_free_c[7];
-  if (fullpsi_c) {
-    for (g in 1:Ng) {
-      target += lkj_corr_lpdf(Psi_r_mat_c[g] | psi_r_alpha_c[1]);
+  if (sum(nblk_c) > 0) {
+    for (k in 1:sum(nblk_c)) {
+      int blkidx = blkse_c[k, 6];
+      int arrayidx = blkse_c[k, 5];
+
+      if (arrayidx == 1) {
+	target += lkj_corr_lpdf(Psi_r_mat_1_c[blkidx] | blkse_c[k,7]);
+      } else if (arrayidx == 2) {
+	target += lkj_corr_lpdf(Psi_r_mat_2_c[blkidx] | blkse_c[k,7]);
+      } else if (arrayidx == 3) {
+	target += lkj_corr_lpdf(Psi_r_mat_3_c[blkidx] | blkse_c[k,7]);	
+      } else if (arrayidx == 4) {
+	target += lkj_corr_lpdf(Psi_r_mat_4_c[blkidx] | blkse_c[k,7]);
+      } else {
+	target += lkj_corr_lpdf(Psi_r_mat_5_c[blkidx] | blkse_c[k,7]);
+      }      
     }
   } else if (len_free_c[10] > 0) {
     target += beta_lpdf(.5 * (1 + Psi_r_free_c) | psi_r_alpha_c, psi_r_beta_c) + log(.5) * len_free_c[10];
@@ -1560,7 +1658,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   vector[len_free[7]] Theta_cov;
   vector[len_free[5]] Theta_var;
   vector[len_free[10]] P_r;
-  vector[len_free[10]] Psi_cov;
+  vector[len_free[11]] Psi_cov;
   vector[len_free[9]] Psi_var;
 
   // level 2
@@ -1608,49 +1706,51 @@ generated quantities { // these matrices are saved in the output but do not figu
   // first deal with sign constraints:
   ly_sign = sign_constrain_load(Lambda_y_free, len_free[1], lam_y_sign);
   bet_sign = sign_constrain_reg(B_free, len_free[4], b_sign, Lambda_y_free, Lambda_y_free);
-  if (fullpsi == 0) {
+  if (len_free[10] > 0) {
     P_r = sign_constrain_reg(Psi_r_free, len_free[10], psi_r_sign, Lambda_y_free, Lambda_y_free);
   }
 
   ly_sign_c = sign_constrain_load(Lambda_y_free_c, len_free_c[1], lam_y_sign_c);
   bet_sign_c = sign_constrain_reg(B_free_c, len_free_c[4], b_sign_c, Lambda_y_free_c, Lambda_y_free_c);
-  if (fullpsi_c == 0) {
+  if (len_free_c[10] > 0) {
     P_r_c = sign_constrain_reg(Psi_r_free_c, len_free_c[10], psi_r_sign_c, Lambda_y_free_c, Lambda_y_free_c);
   }
   
   for (g in 1:Ng) {
     if (m > 0) {
-      if (fullpsi) {
-	PSmat[g] = Psi_r_mat[g];
-	PS[g] = quad_form_sym(PSmat[g], Psi_sd[g]);
-      } else {
-	PSmat[g] = fill_matrix(P_r, Psi_r_skeleton[g], w10skel, g_start10[g,1], g_start10[g,2]);
-	PS[g] = quad_form_sym(PSmat[g] + transpose(PSmat[g]) - diag_matrix(rep_vector(1, m)), Psi_sd[g]);
-      }
+      PSmat[g] = fill_matrix(P_r, Psi_r_skeleton[g], w10skel, g_start10[g,1], g_start10[g,2]) + transpose(fill_matrix(P_r, Psi_r_skeleton[g], w10skel, g_start10[g,1], g_start10[g,2])) - diag_matrix(rep_vector(1, m));
     }
 
     if (m_c > 0) {
-      if (fullpsi_c) {
-	PSmat_c[g] = Psi_r_mat_c[g];
-	PS_c[g] = quad_form_sym(PSmat_c[g], Psi_sd_c[g]);
-      } else {
-	PSmat_c[g] = fill_matrix(P_r_c, Psi_r_skeleton_c[g], w10skel_c, g_start10_c[g,1], g_start10_c[g,2]);
-	PS_c[g] = quad_form_sym(PSmat_c[g] + transpose(PSmat_c[g]) - diag_matrix(rep_vector(1, m_c)), Psi_sd_c[g]);
-      }
+      PSmat_c[g] = fill_matrix(P_r_c, Psi_r_skeleton_c[g], w10skel_c, g_start10_c[g,1], g_start10_c[g,2]) + transpose(fill_matrix(P_r_c, Psi_r_skeleton_c[g], w10skel_c, g_start10_c[g,1], g_start10_c[g,2])) - diag_matrix(rep_vector(1, m_c));
     }
   }
 
+  if (sum(nblk) > 0) {
+    PSmat = fill_cov(PSmat, blkse, nblk, Psi_r_mat_1, Psi_r_mat_2, Psi_r_mat_3, Psi_r_mat_4, Psi_r_mat_5);
+  }
+
+  if (sum(nblk_c) > 0) {
+    PSmat_c = fill_cov(PSmat_c, blkse_c, nblk_c, Psi_r_mat_1_c, Psi_r_mat_2_c, Psi_r_mat_3_c, Psi_r_mat_4_c, Psi_r_mat_5_c);
+  }
+  
+  for (g in 1:Ng) {
+    PS[g] = quad_form_sym(PSmat[g], Psi_sd[g]);
+    PS_c[g] = quad_form_sym(PSmat_c[g], Psi_sd_c[g]);
+  }
+  
   // off-diagonal covariance parameter vectors, from cor/sd matrices:
   Theta_cov = cor2cov(Theta_r, Theta_sd, num_elements(Theta_r_free), Theta_r_skeleton, w7skel, Ng);
   Theta_var = Theta_sd_free .* Theta_sd_free;
-  if (m > 0 && len_free[10] > 0) {
+
+  if (m > 0 && len_free[11] > 0) {
     /* iden is created so that we can re-use cor2cov, even though
        we don't need to multiply to get covariances */
     array[Ng] matrix[m, m] iden;
     for (g in 1:Ng) {
       iden[g] = diag_matrix(rep_vector(1, m));
     }
-    Psi_cov = cor2cov(PS, iden, len_free[10], Psi_r_skeleton, w10skel, Ng);
+    Psi_cov = cor2cov(PS, iden, len_free[11], Psi_r_skeleton_f, w11skel, Ng);
   } else {
     Psi_cov = P_r;
   }
@@ -1659,12 +1759,12 @@ generated quantities { // these matrices are saved in the output but do not figu
   // and for level 2
   Theta_cov_c = cor2cov(Theta_r_c, Theta_sd_c, num_elements(Theta_r_free_c), Theta_r_skeleton_c, w7skel_c, Ng);
   Theta_var_c = Theta_sd_free_c .* Theta_sd_free_c;
-  if (m_c > 0 && len_free_c[10] > 0) {
+  if (m_c > 0 && len_free_c[11] > 0) {
     array[Ng] matrix[m_c, m_c] iden_c;
     for (g in 1:Ng) {
       iden_c[g] = diag_matrix(rep_vector(1, m_c));
     }
-    Psi_cov_c = cor2cov(PS_c, iden_c, len_free_c[10], Psi_r_skeleton_c, w10skel_c, Ng);
+    Psi_cov_c = cor2cov(PS_c, iden_c, len_free_c[11], Psi_r_skeleton_f_c, w11skel_c, Ng);
   } else {
     Psi_cov_c = P_r_c;
   }
