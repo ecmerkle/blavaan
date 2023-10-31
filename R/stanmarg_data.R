@@ -123,7 +123,7 @@ format_priors <- function(lavpartable, level = 1L) {
       prisel <- prisel & (lavpartable$mat == mat)
     }
   
-    prisel <- prisel & (lavpartable$free > 0)
+    prisel <- prisel & (lavpartable$free > 0) & !(lavpartable$plabel %in% lavpartable$rhs[lavpartable$op == "=="])
     thepris <- lavpartable$prior[prisel]
 
     if (length(thepris) > 0) {
