@@ -232,7 +232,8 @@ blavInspect <- function(blavobject, what, ...) {
                 if(jagtarget){
                     OUT <- mcmcsumm[idx,'Mode']
                 } else {
-                    stop("blavaan ERROR: Modes unavailable for Stan.")
+                    draws <- do.call("rbind", blavInspect(blavobject, "mcmc"))
+                    OUT <- modeapprox(draws)
                 }
             }
             if(add.labels) names(OUT) <- labs

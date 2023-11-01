@@ -207,7 +207,7 @@ function(object, header       = TRUE,
             PE$Post.Mode[peentry] <- object@external$mcmcout$summaries[newpt$jagpnum[pte2],'Mode']
             if(all(is.na(PE$Post.Mode))) warning("blavaan WARNING: Posterior modes require installation of the modeest package.", call. = FALSE)
           } else {
-            warning("blavaan WARNING: Posterior modes not available for target='stan'.", call. = FALSE)
+            PE$Post.Mode[peentry] <- blavInspect(object, "postmode")
           }
         }
         if(bf){

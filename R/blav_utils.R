@@ -504,3 +504,26 @@ blav_partable_level_values <- function(partable) {
 
     level.values
 }
+
+## Approximate posterior modes
+modeapprox <- function(draws) {
+  if(!inherits(draws, "matrix")) draws <- as.matrix(draws)
+  
+  ## can the modeest package be used?
+  out <- rep(NA, ncol(draws))
+  if (suppressMessages(requireNamespace("modeest", quietly = TRUE))) {
+    tryMode <- try(apply(draws, 2, modeest::mlv, method = "kernel", na.rm = TRUE),
+                   silent = TRUE)
+    if (!inherits(tryMode, "try-error") && is.numeric(tryMode)) {
+      out <- tryMode
+    }
+  }
+
+  if (all(is.na(out))) {
+    ## if not, use the quick-and-dirty way
+    dd <- apply(draws, 2, density, na.rm = TRUE)
+    out <- sapply(dd, function(z) z$x[which.max(z$y)])
+  }
+
+  out
+}
