@@ -805,9 +805,13 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     }
   }
 
+  ## remove priors from equality-constrained parameters
+  rmpri <- !(lavpartable$prior == "") & (lavpartable$plabel %in% lavpartable$rhs[lavpartable$op == "=="])
+  lavpartable$prior[rmpri] <- ""
+  
+  ## add priors to wiggle params (mean value is handled in stan)
   dat$wigind <- 0L
   if (length(wig) > 0) {
-    ## assign prior to wiggle params, (mean value is handled in stan)
     needpri <- (lavpartable$prior == "") & (lavpartable$plabel %in% wig)
     lavpartable$prior[needpri] <- wigls$stanpris[wigls$stanpris != ""]
     dat$wigind <- 1L
