@@ -1096,11 +1096,12 @@ blavaan <- function(...,  # default lavaan arguments
         lavInspect(blavaan, "post.check")
     }
 
-    if( (target == "stan" && !l2s$blkpsi) ||
-        (target != "stan" && with(covres, !(diagpsi | fullpsi))) ) {
+    if( "psi" %in% lavpartable$mat &&
+        ( (target == "stan" && !l2s$blkpsi) ||
+          (target != "stan" && with(covres, !(diagpsi | fullpsi))) ) ) {
       warning("blavaan WARNING: As specified, the psi covariance matrix is neither diagonal nor unrestricted, so the actual prior might differ from the stated prior. See\n https://arxiv.org/abs/2301.08667", call. = FALSE)
     }
-    if( with(covres, !(diagthet | fullthet)) ) {
+    if( "theta" %in% lavpartable$mat && with(covres, !(diagthet | fullthet)) ) {
       warning("blavaan WARNING: As specified, the theta covariance matrix is neither diagonal nor unrestricted, so the actual prior might differ from the stated prior. See\n https://arxiv.org/abs/2301.08667", call. = FALSE)
     }
     
