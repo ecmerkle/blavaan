@@ -49,10 +49,13 @@ summary.bfi <- function(object,
     if (hpd & !all(is.na(x))) {
       if (!"package:coda" %in% search()) attachNamespace("coda")
       out <- c(out, HPDinterval(as.mcmc(x), prob = prob)[1, ] )
+    } else if (hpd) {
+      out <- c(out, NA, NA)
     }
 
     out
   }
+
   ## apply function to each fit index
   indexSummaries <- lapply(object@indices, FUN)
   out <- as.data.frame(do.call(rbind, indexSummaries))

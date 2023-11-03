@@ -521,8 +521,9 @@ modeapprox <- function(draws) {
 
   if (all(is.na(out))) {
     ## if not, use the quick-and-dirty way
-    dd <- apply(draws, 2, density, na.rm = TRUE)
-    out <- sapply(dd, function(z) z$x[which.max(z$y)])
+    dd <- try(apply(draws, 2, density, na.rm = TRUE), silent = TRUE)
+
+    if (!inherits(dd, "try-error")) out <- sapply(dd, function(z) z$x[which.max(z$y)])
   }
 
   out
