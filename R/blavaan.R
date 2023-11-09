@@ -694,8 +694,7 @@ blavaan <- function(...,  # default lavaan arguments
 
             if(target == "jags"){
                 ## obtain posterior modes
-                ## turned off because runjags needs updated
-                if(suppressMessages(requireNamespace("modeest", quietly = TRUE))) runjags::runjags.options(mode.continuous = FALSE)
+                if(suppressMessages(requireNamespace("modeest", quietly = TRUE))) runjags::runjags.options(mode.continuous = TRUE)
                 runjags::runjags.options(force.summary = TRUE)
             }
 

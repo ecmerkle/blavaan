@@ -5,6 +5,8 @@
 ## Bugs/glitches discovered after the release:
 * blavCompare() does not work with models that have meanstructure = FALSE (reported by Pedro Ribeiro).
 
+* for target="jags", posterior modes cannot be obtained via postmode=TRUE (reported by Giada Venaruzzo).
+
 # Version 0.5-1
 ## New features
 * Two-level models are now supported (for complete, continuous data) via the cluster argument.
