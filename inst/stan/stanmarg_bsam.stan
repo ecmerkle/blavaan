@@ -1285,12 +1285,49 @@ generated quantities { // these matrices are saved in the output but do not figu
   array[Ng] matrix[N_between, N_between] S2_rep;
   array[Ng] matrix[p_tilde, p_tilde] S_B_rep;
   array[Ng] matrix[p_tilde, p_tilde] cov_b_rep;
+  array[Ng] vector[m * (m + 1)] gamma0;
+  array[Ng] matrix[m * (m + 1), m * (m + 1)] Omega_inv;
+  array[Ng] matrix[m, m] Psi_prior_shape;
+  array[Ng] matrix[m, m] Psi_prior_rate;
   real<lower=0, upper=1> ppp;
 
 
   // Begin with Gibbs sampler of structural model
+  // build prior vector/matrix for structural parameters and
   // fill structural matrices with initial values
+  if (wigind) {
+    b_primn = fill_prior(B_free, b_mn, w4skel);
+    alpha_primn = fill_prior(Alpha_free, alpha_mn, w14skel);
+  } else {
+    b_primn = to_vector(b_mn);
+    alpha_primn = to_vector(alpha_mn);
+  }
+
   for (g in 1:Ng) {
+    matrix[m, 1] alpha_prior = fill_matrix(alpha_primn, Alpha_skeleton[g], w14skel, g_start14[g,1], g_start14[g,2]);
+    matrix[m, 1] alpha_prior_sd = fill_matrix(alpha_sd, Alpha_skeleton[g], w14skel, g_start14[g,1], g_start14[g,2]);
+    matrix[m, m] b_prior = fill_matrix(b_primn, B_skeleton[g], w4skel, g_start4[g,1], g_start4[g,2]);
+    matrix[m, m] b_prior_sd = fill_matrix(b_sd, B_skeleton[g], w4skel, g_start4[g,1], g_start4[g,2]);
+    Psi_prior_shape[g] = fill_matrix(psi_sd_shape, w9skel, g_start9[g,1], g_start9[g,2]);
+    Psi_prior_rate[g] = fill_matrix(psi_sd_rate, w9skel, g_start9[g,1], g_start9[g,2]);    
+
+    if (m == 1) {
+      gamma0[g] = append(alpha_prior, b_prior);
+      Omega_inv[g] = diag_matrix(append(pow(alpha_prior_sd, -2), pow(b_prior_sd, -2)));
+    } else {
+      int idx = 1;
+      for (i in 1:m) {
+	gamma0[g, idx] = alpha_prior[i];
+	Omega_inv[g, idx, idx] = pow(alpha_prior_sd, -2);	
+	idx += 1;
+	for (j in i:m) {
+	  gamma0[g, idx] = b_prior[i, j];
+	  Omega_inv[g, idx, idx] pow(b_prior_sd[i, j], -2);
+	  idx += 1;
+	}
+      }
+    }
+
     B[g] = fill_matrix(B_free, B_skeleton[g], w4skel, g_start4[g,1], g_start4[g,2]);
     Alpha[g] = fill_matrix(Alpha_free, Alpha_skeleton[g], w14skel, g_start14[g,1], g_start14[g,2]);
     Psi_r[g] = diag_matrix(rep_vector(1, m));  
@@ -1304,6 +1341,11 @@ generated quantities { // these matrices are saved in the output but do not figu
       array[p + q] int xidx;
       array[p + q] int xdatidx;
       matrix[m, m] IBinv;
+      matrix[m, p] Lamt_Thet_inv;
+      matrix[m, m] Psi0_inv;
+      matrix[m, m] D;
+      matrix[m, m] Dchol;
+      vector[m] d;
       int r1 = startrow[mm];
       int r2 = endrow[mm];
       int g = grpnum[mm];
@@ -1323,24 +1365,44 @@ generated quantities { // these matrices are saved in the output but do not figu
 
       // sample alpha, beta
       Psi_inv = inverse_spd(Psi[g]);
-      for (lvrow in 1:m) {
-        matrix[m, m] FVF = rep_matrix(0, m, m);
-	vector[m] FVz = rep_vector(0, m);
+      for (k in 1:sum(nblk)) {
+	int blkgrp = blkse[k, 4];
 
-        for (ridx in r1:r2) {
-	  vector[m + 1] etavec = append_row(1, IBinv * eta[ridx]);
-	  FVF += etavec' * Psi_inv * etavec;
-	  FVz += etavec' * Psi_inv * eta[ridx];
+	if (blkgrp == g) {
+	  int srow = blkse[k, 1];
+	  int erow = blkse[k, 2];
+	  int matdim = (erow - srow + 2) * (erow - srow + 1);
+	  int pidx = 1;
+	  vector[matdim] params;
+	  matrix[matdim, matdim] FVF = rep_matrix(0, matdim, matdim);
+	  vector[matdim] FVz = rep_vector(0, matdim);
+	  matrix[matdim, matdim] Dinv;
+
+	  for (ridx in r1:r2) {
+	    matrix[erow - srow + 1, matdim] etamat = rep_matrix(0, erow - srow + 1, matdim);
+	    for (j in 1:(erow - srow + 1)) {
+	      int scol = (j - 1) * (erow - srow + 1) + 1;
+	      int ecol = j * (erow - srow + 1);
+	      etamat[j, scol:ecol] = append_row(1, eta[ridx]');
+	    }
+	    FVF += etamat' * Psi_inv[srow:erow, srow:erow] * etamat;
+	    FVz += etamat' * Psi_inv[srow:erow, ] * eta[ridx];
+	  }
+	  
+	  FVF += Omega_inv[g]; // TODO pick out relevant pieces
+	  FVz += Omega_inv[g] * gamma0[g];
+
+	  Dinv = inverse_spd(FVF);
+
+	  params = multi_normal_rng(Dinv * FVz, Dinv);
+
+	  // now put parameters in model matrices
+	  for (j in srow:erow) {
+	    Alpha[g, j, 1] = params[idx];
+	    Beta[g, j, ] = params[(idx + 1):(idx + 1 + m)];
+	    idx += m + 1;
+	  }
 	}
-	FVF += Omega_inv; // TODO need diagonal matrix of prior variances
-	FVz += Omega_inv * gamma0; // TODO need vector of prior means
-
-        Dinv = inverse_spd(FVF);
-
-        params = multi_normal_rng(Dinv * FVz, Dinv);
-
-        Alpha[g, m] = params[1];
-	B[g, m, ] = params[2:(m + 1)];
       }
     }
 
@@ -1368,22 +1430,20 @@ generated quantities { // these matrices are saved in the output but do not figu
         residcp += tcrossprod(eta[ridx] - (Alpha[gg] + B[gg] * eta[ridx]));
       }
 
-      for (blk in 1:nblks) {
-        if (end[blk] > start[blk]) {
-	  // Psi[g, start[blk]:end[blk], start[blk]:end[blk]] = inv wishart_rng(residcp[start[blk]:end[blk], start[blk]:end[blk]] + prior, n + prior)
-	} else {
-	  // Psi[g, start[blk], start[blk]] = inv gamma(prior + n/2, prior + residcp[start[blk], start[blk]])
-        }
+      for (k in 1:sum(nblk)) {
+	int blkgrp = blkse[k, 4];	
+
+	if (blkgrp == gg) {
+	  int srow = blkse[k, 1];
+	  int erow = blkse[k, 2];
+
+	  if (erow > srow) {
+	    Psi[gg, srow:erow, srow:erow] = inv_wishart_rng(r2 - r1 + 1 + Psi_prior_shape[srow], residcp[srow:erow, srow:erow] + Psi_prior_rate[srow:erow, srow:erow]);
+	  } else {
+	    Psi[gg, srow, srow] = inv_gamma_rng(.5 * (r2 - r1 + 1) + Psi_prior_shape[srow, srow], residcp[srow, srow] + Psi_prior_rate[srow, srow]);
+	  }
+	}
       }
-    }
-
-
-    if (wigind) {
-      b_primn = fill_prior(B_free, b_mn, w4skel);
-      alpha_primn = fill_prior(Alpha_free, alpha_mn, w14skel);
-    } else {
-      b_primn = to_vector(b_mn);
-      alpha_primn = to_vector(alpha_mn);
     }
   }
   // END OF GIBBS SAMPLER
@@ -1404,13 +1464,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   
   for (g in 1:Ng) {
     if (m > 0) {
-      if (fullpsi) {
-	PSmat[g] = Psi_r_mat[g];
-	PS[g] = quad_form_sym(PSmat[g], Psi_sd[g]);
-      } else {
-	PSmat[g] = fill_matrix(P_r, Psi_r_skeleton[g], w10skel, g_start10[g,1], g_start10[g,2]);
-	PS[g] = quad_form_sym(PSmat[g] + transpose(PSmat[g]) - diag_matrix(rep_vector(1, m)), Psi_sd[g]);
-      }
+      PS[g] = Psi[g];
     }
 
     if (m_c > 0) {
@@ -1438,7 +1492,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   } else {
     Psi_cov = P_r;
   }
-  Psi_var = Psi_sd_free .* Psi_sd_free;
+  Psi_var = fill_vector(Psi, Psi_skeleton, w9skel, Ng);
 
   // and for level 2
   Theta_cov_c = cor2cov(Theta_r_c, Theta_sd_c, num_elements(Theta_r_free_c), Theta_r_skeleton_c, w7skel_c, Ng);
