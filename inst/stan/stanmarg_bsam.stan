@@ -1291,7 +1291,6 @@ generated quantities { // these matrices are saved in the output but do not figu
   array[Ng] matrix[m, m] Psi_prior_rate;
   real<lower=0, upper=1> ppp;
 
-
   // Begin with Gibbs sampler of structural model
   // build prior vector/matrix for structural parameters and
   // fill structural matrices with initial values
@@ -1305,28 +1304,29 @@ generated quantities { // these matrices are saved in the output but do not figu
 
   for (g in 1:Ng) {
     matrix[m, 1] alpha_prior = fill_matrix(alpha_primn, Alpha_skeleton[g], w14skel, g_start14[g,1], g_start14[g,2]);
-    matrix[m, 1] alpha_prior_sd = fill_matrix(alpha_sd, Alpha_skeleton[g], w14skel, g_start14[g,1], g_start14[g,2]);
+    matrix[m, 1] alpha_prior_sd = fill_matrix(to_vector(alpha_sd), Alpha_skeleton[g], w14skel, g_start14[g,1], g_start14[g,2]);;
     matrix[m, m] b_prior = fill_matrix(b_primn, B_skeleton[g], w4skel, g_start4[g,1], g_start4[g,2]);
-    matrix[m, m] b_prior_sd = fill_matrix(b_sd, B_skeleton[g], w4skel, g_start4[g,1], g_start4[g,2]);
-    Psi_prior_shape[g] = fill_matrix(psi_sd_shape, w9skel, g_start9[g,1], g_start9[g,2]);
-    Psi_prior_rate[g] = fill_matrix(psi_sd_rate, w9skel, g_start9[g,1], g_start9[g,2]);    
+    matrix[m, m] b_prior_sd = fill_matrix(to_vector(b_sd), B_skeleton[g], w4skel, g_start4[g,1], g_start4[g,2]);
+    int idx = 1;
+    Psi_prior_shape[g] = fill_matrix(to_vector(psi_sd_shape), Psi_skeleton[g], w9skel, g_start9[g,1], g_start9[g,2]);
+    Psi_prior_rate[g] = fill_matrix(to_vector(psi_sd_rate), Psi_skeleton[g], w9skel, g_start9[g,1], g_start9[g,2]);    
 
     if (m == 1) {
-      gamma0[g] = append(alpha_prior, b_prior);
-      Omega_inv[g] = diag_matrix(append(pow(alpha_prior_sd, -2), pow(b_prior_sd, -2)));
+      gamma0[g] = to_vector(append_col(alpha_prior, b_prior));
+      Omega_inv[g] = diag_matrix(to_vector(append_col(pow(alpha_prior_sd, -2), pow(b_prior_sd, -2))));
     } else {
-      int idx = 1;
       for (i in 1:m) {
-	gamma0[g, idx] = alpha_prior[i];
-	Omega_inv[g, idx, idx] = pow(alpha_prior_sd, -2);	
+	gamma0[g, idx] = alpha_prior[i, 1];
+	Omega_inv[g, idx, idx] = pow(alpha_prior_sd[i, 1], -2);	
 	idx += 1;
 	for (j in i:m) {
 	  gamma0[g, idx] = b_prior[i, j];
-	  Omega_inv[g, idx, idx] pow(b_prior_sd[i, j], -2);
+	  Omega_inv[g, idx, idx] = pow(b_prior_sd[i, j], -2);
 	  idx += 1;
 	}
       }
     }
+    // around here, rstan line numbers are off by about 135
 
     B[g] = fill_matrix(B_free, B_skeleton[g], w4skel, g_start4[g,1], g_start4[g,2]);
     Alpha[g] = fill_matrix(Alpha_free, Alpha_skeleton[g], w14skel, g_start14[g,1], g_start14[g,2]);
@@ -1353,14 +1353,14 @@ generated quantities { // these matrices are saved in the output but do not figu
       IBinv = inverse_spd(I - B[g]);
 
       // sample lvs
-      Lamt_Thet_inv = Lambda[g]' * inverse_spd(Sigma[g]); // Sigma = Theta for bsam
+      Lamt_Thet_inv = Lambda_y[g]' * inverse_spd(Sigma[g]); // Sigma = Theta for bsam
       Psi0_inv = inverse_spd( quad_form_sym(Psi[g], IBinv') );
-      D = inverse_spd( Lamt_Thet_inv * Lambda[g] + Psi0_inv );
+      D = inverse_spd( Lamt_Thet_inv * Lambda_y[g] + Psi0_inv );
       Dchol = cholesky_decompose(D);
-      d = Psi0_inv * IBinv * Alpha[g];
+      d = to_vector(Psi0_inv * IBinv * Alpha[g]);
 
       for (ridx in r1:r2) {
-        eta[ridx] = multi_normal_cholesky_rng(D * (d + Lamt_Thet_inv * (YX[ridx] - Nu[g])), Dchol);
+        eta[ridx] = multi_normal_cholesky_rng(D * (d + Lamt_Thet_inv * (YX[ridx] - to_vector(Nu[g]))), Dchol);
       }
 
       // sample alpha, beta
@@ -1383,7 +1383,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 	    for (j in 1:(erow - srow + 1)) {
 	      int scol = (j - 1) * (erow - srow + 1) + 1;
 	      int ecol = j * (erow - srow + 1);
-	      etamat[j, scol:ecol] = append_row(1, eta[ridx]');
+	      etamat[j, scol:ecol] = append_col(1.0, eta[ridx]');
 	    }
 	    FVF += etamat' * Psi_inv[srow:erow, srow:erow] * etamat;
 	    FVz += etamat' * Psi_inv[srow:erow, ] * eta[ridx];
@@ -1398,9 +1398,9 @@ generated quantities { // these matrices are saved in the output but do not figu
 
 	  // now put parameters in model matrices
 	  for (j in srow:erow) {
-	    Alpha[g, j, 1] = params[idx];
-	    Beta[g, j, ] = params[(idx + 1):(idx + 1 + m)];
-	    idx += m + 1;
+	    Alpha[g, j, 1] = params[pidx];
+	    B[g, j, ] = params[(pidx + 1):(pidx + 1 + m)]';
+	    pidx += m + 1;
 	  }
 	}
       }
@@ -1427,7 +1427,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 
       // loop over n, get cross product of residuals (eta - (alpha + B * eta))
       for (ridx in r1:r2) {
-        residcp += tcrossprod(eta[ridx] - (Alpha[gg] + B[gg] * eta[ridx]));
+        residcp += tcrossprod(to_matrix(eta[ridx] - (to_vector(Alpha[gg]) + B[gg] * eta[ridx])));
       }
 
       for (k in 1:sum(nblk)) {
@@ -1438,9 +1438,9 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  int erow = blkse[k, 2];
 
 	  if (erow > srow) {
-	    Psi[gg, srow:erow, srow:erow] = inv_wishart_rng(r2 - r1 + 1 + Psi_prior_shape[srow], residcp[srow:erow, srow:erow] + Psi_prior_rate[srow:erow, srow:erow]);
+	    Psi[gg, srow:erow, srow:erow] = inv_wishart_rng(r2 - r1 + 1 + Psi_prior_shape[gg, srow, srow], residcp[srow:erow, srow:erow] + Psi_prior_rate[gg, srow:erow, srow:erow]);
 	  } else {
-	    Psi[gg, srow, srow] = inv_gamma_rng(.5 * (r2 - r1 + 1) + Psi_prior_shape[srow, srow], residcp[srow, srow] + Psi_prior_rate[srow, srow]);
+	    Psi[gg, srow, srow] = inv_gamma_rng(.5 * (r2 - r1 + 1) + Psi_prior_shape[gg, srow, srow], residcp[srow, srow] + Psi_prior_rate[gg, srow, srow]);
 	  }
 	}
       }
@@ -1452,9 +1452,6 @@ generated quantities { // these matrices are saved in the output but do not figu
   // first deal with sign constraints:
   ly_sign = sign_constrain_load(Lambda_y_free, len_free[1], lam_y_sign);
   bet_sign = sign_constrain_reg(B_free, len_free[4], b_sign, Lambda_y_free, Lambda_y_free);
-  if (fullpsi == 0) {
-    P_r = sign_constrain_reg(Psi_r_free, len_free[10], psi_r_sign, Lambda_y_free, Lambda_y_free);
-  }
 
   ly_sign_c = sign_constrain_load(Lambda_y_free_c, len_free_c[1], lam_y_sign_c);
   bet_sign_c = sign_constrain_reg(B_free_c, len_free_c[4], b_sign_c, Lambda_y_free_c, Lambda_y_free_c);
