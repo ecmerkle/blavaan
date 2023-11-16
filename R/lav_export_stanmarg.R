@@ -549,7 +549,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     blkpsi <- all(sapply(blkinfo, function(x) x$isblk))
     blkse <- do.call("rbind", lapply(blkinfo, function(x) x$blkse))
     if (nrow(blkse) > 0) {
-      blkse <- blkse[(blkse[,3] == 1) & (blkse[,2] - blkse[,1] > 1), , drop = FALSE]
+      blkse <- blkse[(blkse[,3] == 1), , drop = FALSE] # for joint model: & (blkse[,2] - blkse[,1] > 1), , drop = FALSE]
       blksizes <- blkse[,2] - blkse[,1] + 1
       ublksizes <- unique(blksizes)
       ublksizes <- ublksizes[order(ublksizes)]
@@ -566,7 +566,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       dat$psidims <- array(3, dim = 5)
       dat$blkse <- matrix(nrow = 0, ncol = 7)
     } else {
-      blkgrp <- rep(1:length(blkinfo), times = sapply(blkinfo, function(x) sum(x$blkse[,2] - x$blkse[,1] > 1)))
+      blkgrp <- rep(1:length(blkinfo), times = sapply(blkinfo, function(x) nrow(x$blkse)))
       arrayidx <- as.numeric(as.factor(ublksizes))
       dupsiz <- duplicated(blksizes)
       blkidx <- rep(NA, nrow(blkse))

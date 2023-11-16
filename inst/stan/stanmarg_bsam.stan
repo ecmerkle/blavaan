@@ -978,6 +978,10 @@ transformed parameters {
   
   // see https://books.google.com/books?id=9AC-s50RjacC&lpg=PP1&dq=LISREL&pg=PA3#v=onepage&q=LISREL&f=false
   for (g in 1:Ng) {
+    if (m > 0) {
+      Lambda_y_A[g] = Lambda_y[g];
+    }
+    
     if (!use_cov) {
       Mu[g] = to_vector(Nu[g]);
     } else if(has_data) {
@@ -986,6 +990,10 @@ transformed parameters {
       
     if (p > 0) {
       Sigma[g, 1:p, 1:p] = quad_form_sym(Theta_r[g], Theta_sd[g]);
+      if (m > 0) {
+	// TODO handle std.lv=FALSE
+	Sigma[g, 1:p, 1:p] += quad_form_sym(diag_matrix(rep_vector(1, m)), transpose(Lambda_y_A[g]));
+      }
     }
 
     if (m_c > 0) {
@@ -1308,25 +1316,27 @@ generated quantities { // these matrices are saved in the output but do not figu
     matrix[m, m] b_prior_sd = fill_matrix(pow(to_vector(b_sd), -2), B_skeleton[g], w4skel, g_start4[g,1], g_start4[g,2]);
     int idx = 1;
     Psi_prior_shape[g] = fill_matrix(to_vector(psi_sd_shape), Psi_skeleton[g], w9skel, g_start9[g,1], g_start9[g,2]);
-    Psi_prior_rate[g] = fill_matrix(to_vector(psi_sd_rate), Psi_skeleton[g], w9skel, g_start9[g,1], g_start9[g,2]);    
+    Psi_prior_rate[g] = fill_matrix(to_vector(psi_sd_rate), Psi_skeleton[g], w9skel, g_start9[g,1], g_start9[g,2]);
 
-    if (m == 1) {
-      gamma0[g] = to_vector(append_col(alpha_prior, b_prior));
-      Omega_inv[g] = diag_matrix( to_vector(append_col(alpha_prior_sd, b_prior_sd)) );
-    } else {
-      for (i in 1:m) {
-	gamma0[g, idx] = alpha_prior[i, 1];
-	Omega_inv[g, idx, idx] = alpha_prior_sd[i, 1];	
-	idx += 1;
-	for (j in i:m) {
-	  gamma0[g, idx] = b_prior[i, j];
+    gamma0[g] = rep_vector(1, m * (m + 1));
+    Omega_inv[g] = diag_matrix(gamma0[g]);
+
+    for (i in 1:m) {
+      gamma0[g, idx] = alpha_prior[i, 1];
+      if (alpha_prior_sd[i, 1] > 0) {
+	Omega_inv[g, idx, idx] = alpha_prior_sd[i, 1];
+      }
+      idx += 1;
+      for (j in i:m) {
+	gamma0[g, idx] = b_prior[i, j];
+	if (b_prior_sd[i, j] > 0) {
 	  Omega_inv[g, idx, idx] = b_prior_sd[i, j];
-	  idx += 1;
 	}
+	idx += 1;
       }
     }
     // around here, rstan line numbers are off by about 135
-
+    
     B[g] = fill_matrix(B_free, B_skeleton[g], w4skel, g_start4[g,1], g_start4[g,2]);
     Alpha[g] = fill_matrix(Alpha_free, Alpha_skeleton[g], w14skel, g_start14[g,1], g_start14[g,2]);
     Psi_r[g] = diag_matrix(rep_vector(1, m));  
