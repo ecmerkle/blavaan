@@ -1218,7 +1218,6 @@ generated quantities { // these matrices are saved in the output but do not figu
   // parameters to be obtained via Gibbs steps; all moved from earlier blocks here
   vector[len_free[4]] B_free = rep_vector(1, len_free[4]);
   vector<lower=0>[len_free[9]] Psi_sd_free = rep_vector(1, len_free[9]);
-  array[Ng] corr_matrix[m] Psi_r_mat;
   vector[len_free[14]] Alpha_free = rep_vector(0, len_free[14]);
   array[Ng] matrix[m, m] B;
   array[Ng] matrix[m + n, 1] Alpha;
@@ -1304,24 +1303,24 @@ generated quantities { // these matrices are saved in the output but do not figu
 
   for (g in 1:Ng) {
     matrix[m, 1] alpha_prior = fill_matrix(alpha_primn, Alpha_skeleton[g], w14skel, g_start14[g,1], g_start14[g,2]);
-    matrix[m, 1] alpha_prior_sd = fill_matrix(to_vector(alpha_sd), Alpha_skeleton[g], w14skel, g_start14[g,1], g_start14[g,2]);;
+    matrix[m, 1] alpha_prior_sd = fill_matrix(pow(to_vector(alpha_sd), -2), Alpha_skeleton[g], w14skel, g_start14[g,1], g_start14[g,2]);;
     matrix[m, m] b_prior = fill_matrix(b_primn, B_skeleton[g], w4skel, g_start4[g,1], g_start4[g,2]);
-    matrix[m, m] b_prior_sd = fill_matrix(to_vector(b_sd), B_skeleton[g], w4skel, g_start4[g,1], g_start4[g,2]);
+    matrix[m, m] b_prior_sd = fill_matrix(pow(to_vector(b_sd), -2), B_skeleton[g], w4skel, g_start4[g,1], g_start4[g,2]);
     int idx = 1;
     Psi_prior_shape[g] = fill_matrix(to_vector(psi_sd_shape), Psi_skeleton[g], w9skel, g_start9[g,1], g_start9[g,2]);
     Psi_prior_rate[g] = fill_matrix(to_vector(psi_sd_rate), Psi_skeleton[g], w9skel, g_start9[g,1], g_start9[g,2]);    
 
     if (m == 1) {
       gamma0[g] = to_vector(append_col(alpha_prior, b_prior));
-      Omega_inv[g] = diag_matrix(to_vector(append_col(pow(alpha_prior_sd, -2), pow(b_prior_sd, -2))));
+      Omega_inv[g] = diag_matrix( to_vector(append_col(alpha_prior_sd, b_prior_sd)) );
     } else {
       for (i in 1:m) {
 	gamma0[g, idx] = alpha_prior[i, 1];
-	Omega_inv[g, idx, idx] = pow(alpha_prior_sd[i, 1], -2);	
+	Omega_inv[g, idx, idx] = alpha_prior_sd[i, 1];	
 	idx += 1;
 	for (j in i:m) {
 	  gamma0[g, idx] = b_prior[i, j];
-	  Omega_inv[g, idx, idx] = pow(b_prior_sd[i, j], -2);
+	  Omega_inv[g, idx, idx] = b_prior_sd[i, j];
 	  idx += 1;
 	}
       }
@@ -1350,7 +1349,7 @@ generated quantities { // these matrices are saved in the output but do not figu
       int r2 = endrow[mm];
       int g = grpnum[mm];
 
-      IBinv = inverse_spd(I - B[g]);
+      IBinv = inverse(I - B[g]);
 
       // sample lvs
       Lamt_Thet_inv = Lambda_y[g]' * inverse_spd(Sigma[g]); // Sigma = Theta for bsam
@@ -1381,16 +1380,16 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  for (ridx in r1:r2) {
 	    matrix[erow - srow + 1, matdim] etamat = rep_matrix(0, erow - srow + 1, matdim);
 	    for (j in 1:(erow - srow + 1)) {
-	      int scol = (j - 1) * (erow - srow + 1) + 1;
-	      int ecol = j * (erow - srow + 1);
+	      int scol = (j - 1) * (erow - srow + 2) + 1;
+	      int ecol = j * (erow - srow + 2);
 	      etamat[j, scol:ecol] = append_col(1.0, eta[ridx]');
 	    }
 	    FVF += etamat' * Psi_inv[srow:erow, srow:erow] * etamat;
 	    FVz += etamat' * Psi_inv[srow:erow, ] * eta[ridx];
 	  }
 	  
-	  FVF += Omega_inv[g]; // TODO pick out relevant pieces
-	  FVz += Omega_inv[g] * gamma0[g];
+	  FVF += Omega_inv[g, ((srow - 1) * (m + 1) + 1):(erow * (m + 1)), ((srow - 1) * (m + 1) + 1):(erow * (m + 1))]; // pick out relevant pieces
+	  FVz += Omega_inv[g, ((srow - 1) * (m + 1) + 1):(erow * (m + 1)), ((srow - 1) * (m + 1) + 1):(erow * (m + 1))] * gamma0[g, ((srow - 1) * (m + 1) + 1):(erow * (m + 1))];
 
 	  Dinv = inverse_spd(FVF);
 
