@@ -425,7 +425,7 @@ data {
 
   // for blocks within Psi_r
   array[5] int<lower=0> nblk;
-  array[5] int<lower=3> psidims;
+  array[5] int<lower=1> psidims;
   array[sum(nblk), 7] int<lower=0> blkse;
   int<lower=0> len_w11;
   array[Ng] int<lower=0> wg11;
@@ -1380,7 +1380,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 	if (blkgrp == g) {
 	  int srow = blkse[k, 1];
 	  int erow = blkse[k, 2];
-	  int matdim = (erow - srow + 2) * (erow - srow + 1);
+	  int matdim = (erow - srow + 1) * (m + 1);
 	  int pidx = 1;
 	  vector[matdim] params;
 	  matrix[matdim, matdim] FVF = rep_matrix(0, matdim, matdim);
@@ -1388,14 +1388,14 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  matrix[matdim, matdim] Dinv;
 
 	  for (ridx in r1:r2) {
-	    matrix[erow - srow + 1, matdim] etamat = rep_matrix(0, erow - srow + 1, matdim);
+	    matrix[m, matdim] etamat = rep_matrix(0, m, matdim);
 	    for (j in 1:(erow - srow + 1)) {
-	      int scol = (j - 1) * (erow - srow + 2) + 1;
-	      int ecol = j * (erow - srow + 2);
+	      int scol = (j - 1) * (m + 1) + 1;
+	      int ecol = j * (m + 1);
 	      etamat[j, scol:ecol] = append_col(1.0, eta[ridx]');
 	    }
-	    FVF += etamat' * Psi_inv[srow:erow, srow:erow] * etamat;
-	    FVz += etamat' * Psi_inv[srow:erow, ] * eta[ridx];
+	    FVF += etamat' * Psi_inv * etamat;
+	    FVz += etamat' * Psi_inv * eta[ridx];
 	  }
 	  
 	  FVF += Omega_inv[g, ((srow - 1) * (m + 1) + 1):(erow * (m + 1)), ((srow - 1) * (m + 1) + 1):(erow * (m + 1))]; // pick out relevant pieces
@@ -1408,7 +1408,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  // now put parameters in model matrices
 	  for (j in srow:erow) {
 	    Alpha[g, j, 1] = params[pidx];
-	    B[g, j, ] = params[(pidx + 1):(pidx + 1 + m)]';
+	    B[g, j, ] = params[(pidx + 1):(pidx + m)]';
 	    pidx += m + 1;
 	  }
 	}

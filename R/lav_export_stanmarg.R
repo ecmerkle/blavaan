@@ -799,7 +799,11 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
         }
         lptrow <- with(lavpartable, which(row == blkse[b,1] & col == (blkse[b,1] + 1) &
                                           group == blkse[b,4] & mat == "lvrho"))
-        blkse[b,7] <- as.numeric(gsub("(\\w+)\\(([^,]+)\\)", "\\2", lavpartable$prior[lptrow]))
+        if (length(lptrow) > 0) {
+          blkse[b,7] <- as.numeric(gsub("(\\w+)\\(([^,]+)\\)", "\\2", lavpartable$prior[lptrow]))
+        } else {
+          blkse[b,7] <- 1
+        }
         lavpartable$prior[lkjrows] <- lavpartable$prior[lptrow]
       }
     }
