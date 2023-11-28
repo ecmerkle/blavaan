@@ -1350,6 +1350,9 @@ generated quantities { // these matrices are saved in the output but do not figu
       vector[matdim[g]] gamma0 = rep_vector(0, matdim[g]);
       matrix[matdim[g], matdim[g]] Omega_inv = diag_matrix(gamma0);
       vector[matdim[g]] params;
+      matrix[matdim[g], matdim[g]] FVF = rep_matrix(0, matdim[g], matdim[g]);
+      vector[matdim[g]] FVz = rep_vector(0, matdim[g]);
+      matrix[matdim[g], matdim[g]] Dinv;
       int pidx = 1;
       int f1idx = 1;
       int f2idx = 1;
@@ -1401,15 +1404,15 @@ generated quantities { // these matrices are saved in the output but do not figu
 	    etamat[r, pidx] = 1;
 	    pidx += 1;
 	  } else if (askel != 0) {
-	    z[m] += -askel;
+	    z[r] += -askel;
 	  }
 	  for (c in 1:m) {
 	    real bskel = B_skeleton[g, r, c];
 	    if (is_inf(bskel)) {
 	      etamat[r, pidx] = eta[ridx, c];
 	      pidx += 1;
-	    } else if (askel != 0) {
-	      z[m] += -bskel * eta[ridx, c];
+	    } else if (bskel != 0) {
+	      z[r] += -bskel * eta[ridx, c];
 	    }
 	  }
 	}
@@ -1418,8 +1421,8 @@ generated quantities { // these matrices are saved in the output but do not figu
 	FVz += etamat' * Psi_inv * z;
       }
       
-      FVF += Omega_inv[g];
-      FVz += Omega_inv[g] * gamma0[g];
+      FVF += Omega_inv;
+      FVz += Omega_inv * gamma0;
 
       Dinv = inverse_spd(FVF);
 
