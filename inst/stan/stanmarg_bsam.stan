@@ -42,14 +42,13 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     Constructs vector of unconstrained elements/parameters, based on filled
     parameter matrix. (this is the reverse of fill_matrix())
  */
-  vector fill_vector(array[] matrix parm_matrix, array[] matrix skeleton, array[,] int eq_skeleton, int Ng) {
+  vector fill_vector(array[] matrix parm_matrix, array[] matrix skeleton, array[,] int eq_skeleton, int len_free, int Ng) {
     int R = rows(skeleton[1]);
     int C = cols(skeleton[1]);
-    vector[Ng * R * C] out; // largest possible number of free elements
+    vector[len_free] out;
 
     int pos = 1; // position of eq_skeleton
     int freepos = 1; // position of free_elements
-    int eqelem = 0;
 
     for (g in 1:Ng) {
       for (c in 1:C) for (r in 1:R) {
@@ -65,7 +64,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
         }
       }
     }
-    return out[1 : freepos];
+    return out;
   }
   
   vector fill_prior(vector free_elements, array[] real pri_mean, array[,] int eq_skeleton) {
@@ -1238,6 +1237,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   vector[len_free[9]] Psi_pri;
   vector[len_free[4]] b_primn;
   vector[len_free[14]] alpha_primn;
+  array[Ng] int matdim;
 
   array[Ntot] vector[m] eta;
 
@@ -1292,8 +1292,10 @@ generated quantities { // these matrices are saved in the output but do not figu
   array[Ng] matrix[N_between, N_between] S2_rep;
   array[Ng] matrix[p_tilde, p_tilde] S_B_rep;
   array[Ng] matrix[p_tilde, p_tilde] cov_b_rep;
-  array[Ng] vector[m * (m + 1)] gamma0;
-  array[Ng] matrix[m * (m + 1), m * (m + 1)] Omega_inv;
+  array[Ng] matrix[m, 1] alpha_prior;
+  array[Ng] matrix[m, 1] alpha_prior_prec;
+  array[Ng] matrix[m, m] b_prior;
+  array[Ng] matrix[m, m] b_prior_prec;
   array[Ng] matrix[m, m] Psi_prior_shape;
   array[Ng] matrix[m, m] Psi_prior_rate;
   real<lower=0, upper=1> ppp;
@@ -1310,33 +1312,20 @@ generated quantities { // these matrices are saved in the output but do not figu
   }
 
   for (g in 1:Ng) {
-    matrix[m, 1] alpha_prior = fill_matrix(alpha_primn, Alpha_skeleton[g], w14skel, g_start14[g,1], g_start14[g,2]);
-    matrix[m, 1] alpha_prior_sd = fill_matrix(pow(to_vector(alpha_sd), -2), Alpha_skeleton[g], w14skel, g_start14[g,1], g_start14[g,2]);;
-    matrix[m, m] b_prior = fill_matrix(b_primn, B_skeleton[g], w4skel, g_start4[g,1], g_start4[g,2]);
-    matrix[m, m] b_prior_sd = fill_matrix(pow(to_vector(b_sd), -2), B_skeleton[g], w4skel, g_start4[g,1], g_start4[g,2]);
-    int idx = 1;
+    alpha_prior[g] = fill_matrix(alpha_primn, Alpha_skeleton[g], w14skel, g_start14[g,1], g_start14[g,2]);
+    alpha_prior_prec[g] = fill_matrix(pow(to_vector(alpha_sd), -2), Alpha_skeleton[g], w14skel, g_start14[g,1], g_start14[g,2]);
+    b_prior[g] = fill_matrix(b_primn, B_skeleton[g], w4skel, g_start4[g,1], g_start4[g,2]);
+    b_prior_prec[g] = fill_matrix(pow(to_vector(b_sd), -2), B_skeleton[g], w4skel, g_start4[g,1], g_start4[g,2]);
     Psi_prior_shape[g] = fill_matrix(to_vector(psi_sd_shape), Psi_skeleton[g], w9skel, g_start9[g,1], g_start9[g,2]);
     Psi_prior_rate[g] = fill_matrix(to_vector(psi_sd_rate), Psi_skeleton[g], w9skel, g_start9[g,1], g_start9[g,2]);
 
-    gamma0[g] = rep_vector(1, m * (m + 1));
-    Omega_inv[g] = diag_matrix(gamma0[g]);
-
-    for (i in 1:m) {
-      gamma0[g, idx] = alpha_prior[i, 1];
-      if (alpha_prior_sd[i, 1] > 0) {
-	Omega_inv[g, idx, idx] = alpha_prior_sd[i, 1];
-      }
-      idx += 1;
-      for (j in i:m) {
-	gamma0[g, idx] = b_prior[i, j];
-	if (b_prior_sd[i, j] > 0) {
-	  Omega_inv[g, idx, idx] = b_prior_sd[i, j];
-	}
-	idx += 1;
-      }
+    if (g == Ng) {
+      matdim[g] = (len_free[4] - g_start4[g, 1] + 1) + (len_free[14] - g_start14[g, 1] + 1);
+    } else {
+      matdim[g] = (g_start4[(g + 1), 1] - g_start4[g, 1]) + (g_start14[(g + 1), 1] - g_start14[g, 1]);
     }
-    // around here, rstan line numbers are off by about 135
-    
+
+    // around here, rstan line numbers are off by about 135    
     B[g] = fill_matrix(B_free, B_skeleton[g], w4skel, g_start4[g,1], g_start4[g,2]);
     Alpha[g] = fill_matrix(Alpha_free, Alpha_skeleton[g], w14skel, g_start14[g,1], g_start14[g,2]);
     Psi_r[g] = diag_matrix(rep_vector(1, m));  
@@ -1358,11 +1347,35 @@ generated quantities { // these matrices are saved in the output but do not figu
       int r1 = startrow[mm];
       int r2 = endrow[mm];
       int g = grpnum[mm];
+      vector[matdim[g]] gamma0 = rep_vector(0, matdim[g]);
+      matrix[matdim[g], matdim[g]] Omega_inv = diag_matrix(gamma0);
+      vector[matdim[g]] params;
+      int pidx = 1;
+      int f1idx = 1;
+      int f2idx = 1;
 
       IBinv = inverse(I - B[g]);
 
+      // priors
+      for (r in 1:m) {
+	real askel = Alpha_skeleton[g, r, 1];
+	if (is_inf(askel)) {
+	  gamma0[pidx] = alpha_prior[g, r, 1];
+	  Omega_inv[pidx, pidx] = alpha_prior_prec[g, r, 1];
+	  pidx += 1;
+	}
+	for (c in 1:m) {
+	  real bskel = B_skeleton[g, r, c];
+	  if (is_inf(bskel)) {
+	    gamma0[pidx] = b_prior[g, r, c];
+	    Omega_inv[pidx, pidx] = b_prior_prec[g, r, c];
+	    pidx += 1;
+	  }
+	}
+      }
+      
       // sample lvs
-      Lamt_Thet_inv = Lambda_y[g]' * inverse_spd(Sigma[g]); // Sigma = Theta for bsam
+      Lamt_Thet_inv = Lambda_y[g]' * inverse_spd( quad_form_sym(Theta_r[g], Theta_sd[g]) );
       Psi0_inv = inverse_spd( quad_form_sym(Psi[g], IBinv') );
       D = inverse_spd( Lamt_Thet_inv * Lambda_y[g] + Psi0_inv );
       Dchol = cholesky_decompose(D);
@@ -1373,51 +1386,66 @@ generated quantities { // these matrices are saved in the output but do not figu
       }
 
       // sample alpha, beta
+      pidx = 1;
       Psi_inv = inverse_spd(Psi[g]);
-      for (k in 1:sum(nblk)) {
-	int blkgrp = blkse[k, 4];
 
-	if (blkgrp == g) {
-	  int srow = blkse[k, 1];
-	  int erow = blkse[k, 2];
-	  int matdim = (erow - srow + 1) * (m + 1);
-	  int pidx = 1;
-	  vector[matdim] params;
-	  matrix[matdim, matdim] FVF = rep_matrix(0, matdim, matdim);
-	  vector[matdim] FVz = rep_vector(0, matdim);
-	  matrix[matdim, matdim] Dinv;
-
-	  for (ridx in r1:r2) {
-	    matrix[m, matdim] etamat = rep_matrix(0, m, matdim);
-	    for (j in 1:(erow - srow + 1)) {
-	      int scol = (j - 1) * (m + 1) + 1;
-	      int ecol = j * (m + 1);
-	      etamat[j, scol:ecol] = append_col(1.0, eta[ridx]');
-	    }
-	    FVF += etamat' * Psi_inv * etamat;
-	    FVz += etamat' * Psi_inv * eta[ridx];
+      // construct F_i matrix
+      // FIXME does not handle equality constraints
+      for (ridx in r1:r2) {
+	matrix[m, matdim[g]] etamat = rep_matrix(0, m, matdim[g]);
+	vector[m] z = eta[ridx];
+	
+	for (r in 1:m) {
+	  real askel = Alpha_skeleton[g, r, 1];
+	  if (is_inf(askel)) {
+	    etamat[r, pidx] = 1;
+	    pidx += 1;
+	  } else if (askel != 0) {
+	    z[m] += -askel;
 	  }
-	  
-	  FVF += Omega_inv[g, ((srow - 1) * (m + 1) + 1):(erow * (m + 1)), ((srow - 1) * (m + 1) + 1):(erow * (m + 1))]; // pick out relevant pieces
-	  FVz += Omega_inv[g, ((srow - 1) * (m + 1) + 1):(erow * (m + 1)), ((srow - 1) * (m + 1) + 1):(erow * (m + 1))] * gamma0[g, ((srow - 1) * (m + 1) + 1):(erow * (m + 1))];
+	  for (c in 1:m) {
+	    real bskel = B_skeleton[g, r, c];
+	    if (is_inf(bskel)) {
+	      etamat[r, pidx] = eta[ridx, c];
+	      pidx += 1;
+	    } else if (askel != 0) {
+	      z[m] += -bskel * eta[ridx, c];
+	    }
+	  }
+	}
 
-	  Dinv = inverse_spd(FVF);
+	FVF += etamat' * Psi_inv * etamat;
+	FVz += etamat' * Psi_inv * z;
+      }
+      
+      FVF += Omega_inv[g];
+      FVz += Omega_inv[g] * gamma0[g];
 
-	  params = multi_normal_rng(Dinv * FVz, Dinv);
+      Dinv = inverse_spd(FVF);
 
-	  // now put parameters in model matrices
-	  for (j in srow:erow) {
-	    Alpha[g, j, 1] = params[pidx];
-	    B[g, j, ] = params[(pidx + 1):(pidx + m)]';
-	    pidx += m + 1;
+      params = multi_normal_rng(Dinv * FVz, Dinv);
+
+      // now put parameters in free parameter vectors
+      pidx = 1;
+      for (r in 1:m) {
+	real askel = Alpha_skeleton[g, r, 1];
+	if (is_inf(askel)) {
+	  Alpha_free[f1idx] = params[pidx];
+	  f1idx +=1;
+	  pidx += 1;
+	}
+	for (c in 1:m) {
+	  real bskel = B_skeleton[g, r, c];
+	  if (is_inf(bskel)) {
+	    B_free[f2idx] = params[pidx];
+	    f2idx += 1;
+	    pidx += 1;
 	  }
 	}
       }
     }
 
-    // get free parameter vectors, then refill the matrices to get equality constraints and fixed values
-    Alpha_free = fill_vector(Alpha, Alpha_skeleton, w14skel, Ng);
-    B_free = fill_vector(B, B_skeleton, w4skel, Ng);
+    // fill model matrices
     for (g in 1:Ng) {
       Alpha[g] = fill_matrix(Alpha_free, Alpha_skeleton[g], w14skel, g_start14[g,1], g_start14[g,2]);
       B[g] = fill_matrix(B_free, B_skeleton[g], w4skel, g_start4[g,1], g_start4[g,2]);
@@ -1498,7 +1526,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   } else {
     Psi_cov = P_r;
   }
-  Psi_var = fill_vector(Psi, Psi_skeleton, w9skel, Ng);
+  Psi_var = fill_vector(Psi, Psi_skeleton, w9skel, len_free[9], Ng);
 
   // and for level 2
   Theta_cov_c = cor2cov(Theta_r_c, Theta_sd_c, num_elements(Theta_r_free_c), Theta_r_skeleton_c, w7skel_c, Ng);
