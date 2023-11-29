@@ -1669,7 +1669,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   vector[len_free_c[7]] Theta_cov_c;
   vector[len_free_c[5]] Theta_var_c;
   vector[len_free_c[10]] P_r_c;
-  vector[len_free_c[10]] Psi_cov_c;
+  vector[len_free_c[11]] Psi_cov_c;
   vector[len_free_c[9]] Psi_var_c;
 
   // loglik + ppp
