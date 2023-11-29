@@ -594,7 +594,7 @@ llx_2l <- function(Lp, YX, mean_d, cidx){
   } else {
     loglik.x.b <- rep(0, nrow(mean_d))
   }
-  loglik.x <- loglik.x.w.clus + loglik.x.b
+  loglik.x <- loglik.x.w.clus + as.numeric(loglik.x.b)
 
   array(loglik.x, length(loglik.x))
 }
