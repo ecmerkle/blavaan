@@ -181,7 +181,7 @@ blavaan <- function(...,  # default lavaan arguments
     }
   
     # which arguments do we override?
-    lavArgsOverride <- c("missing", "estimator", "conditional.x")
+    lavArgsOverride <- c("missing", "estimator", "conditional.x", "parser")
     if(target != "stan") lavArgsOverride <- c(lavArgsOverride, "meanstructure")
     # always warn?
     warn.idx <- which(lavArgsOverride %in% dotNames)
@@ -215,6 +215,7 @@ blavaan <- function(...,  # default lavaan arguments
     # run for 1 iteration to obtain info about equality constraints, for npar
     dotdotdot$control <- list(iter.max = 1, eval.max = 1); dotdotdot$warn <- TRUE
     dotdotdot$optim.force.converged <- TRUE
+    if(packageDescription("lavaan")$Version > "0.6-16") dotdotdot$parser <- "old"
     if(target != "stan") dotdotdot$meanstructure <- TRUE
     dotdotdot$missing <- "direct"   # direct/ml creates error? (bug in lavaan?)
     ordmod <- FALSE
