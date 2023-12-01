@@ -79,7 +79,6 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     B_tilde_cov = block(B_tilde, 1, 2, p_tilde, p_tilde);
     Mu_WB_tilde = rep_vector(0, p_tilde);
 
-
     if (N_within > 0) {
       for (i in 1:N_within) {
 	Mu_WB_tilde[within_idx[i]] = W_tilde[within_idx[i], 1];
@@ -156,11 +155,9 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
       } else {
 	Y2Yc_yy = Y2Yc;
       }
-
       Sigma_j = (nj * Sigma_b_z) + Sigma_w;
-      Sigma_j_inv = inverse_spd(Sigma_j);
+      Sigma_j_inv = inverse_spd(Sigma_j); // FIXME npd exceptions for within-only
       Sigma_j_ld = log_determinant(Sigma_j);
-    
       L[clz] = Sigma_zz_ld + Sigma_j_ld;
     
       if (N_between > 0) {

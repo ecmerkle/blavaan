@@ -1217,8 +1217,10 @@ lav2standata <- function(lavobject) {
     ## what sizes belong to which group.
     dat$cluster_size <- unlist(sapply(Lp, function(x) x$cluster.size[[2]], simplify = FALSE)) 
     dat$cluster_sizes <- unlist(sapply(Lp, function(x) x$cluster.sizes[[2]], simplify = FALSE))
+    dat$cluster_sizes <- array(dat$cluster_sizes, length(dat$cluster_sizes))
     dat$ncluster_sizes <- array(sapply(Lp, function(x) length(x$cluster.sizes[[2]])), Ng)
     dat$cluster_size_ns <- unlist(sapply(Lp, function(x) x$cluster.size.ns[[2]], simplify = FALSE))
+    dat$cluster_size_ns <- array(dat$cluster_size_ns, length(dat$cluster_size_ns))
     ## we assume variable indices are the same across groups, this could be revisited later
     dat$between_idx <- array(Lp[[1]]$between.idx[[2]], length(Lp[[1]]$between.idx[[2]]))
     dat$N_between <- length(dat$between_idx)
@@ -1246,7 +1248,7 @@ lav2standata <- function(lavobject) {
     dat$cov_d <- cov_d
     ## this evenly distributes loglik.x across unique cluster sizes; sums to correct value
     llx <- sapply(YLp, function(x) x[[2]]$loglik.x)
-    dat$log_lik_x <- rep(llx / dat$ncluster_sizes, dat$ncluster_sizes)
+    dat$log_lik_x <- array(rep(llx / dat$ncluster_sizes, dat$ncluster_sizes), dat$ncluster_sizes)
 
     ## clusterwise data summaries, for loo and waic and etc
     cidx <- lavInspect(lavobject, 'cluster.idx')
