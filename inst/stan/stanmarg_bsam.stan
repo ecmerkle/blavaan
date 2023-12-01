@@ -1387,7 +1387,7 @@ generated quantities { // these matrices are saved in the output but do not figu
       for (ridx in r1:r2) {
         eta[ridx] = multi_normal_cholesky_rng(D * (d + Lamt_Thet_inv * (YX[ridx] - to_vector(Nu[g]))), Dchol);
       }
-
+      
       // sample alpha, beta
       pidx = 1;
       Psi_inv = inverse_spd(Psi[g]);
@@ -1397,6 +1397,7 @@ generated quantities { // these matrices are saved in the output but do not figu
       for (ridx in r1:r2) {
 	matrix[m, matdim[g]] etamat = rep_matrix(0, m, matdim[g]);
 	vector[m] z = eta[ridx];
+	pidx = 1;
 	
 	for (r in 1:m) {
 	  real askel = Alpha_skeleton[g, r, 1];
@@ -1416,7 +1417,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 	    }
 	  }
 	}
-
+	
 	FVF += etamat' * Psi_inv * etamat;
 	FVz += etamat' * Psi_inv * z;
       }
