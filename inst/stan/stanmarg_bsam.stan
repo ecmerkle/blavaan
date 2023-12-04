@@ -878,6 +878,7 @@ parameters {
   vector<lower=0>[len_free[5]] Theta_sd_free;
   vector<lower=-1,upper=1>[len_free[7]] Theta_r_free; // to use beta prior
   vector[len_free[13]] Nu_free;
+  vector[len_free[9]] Psi_sd_tmp;
   vector[len_free[15]] Tau_ufree;
 
   vector[len_free_c[1]] Lambda_y_free_c;
@@ -896,6 +897,7 @@ transformed parameters {
   array[Ng] matrix[p, p] T_r_lower;
   array[Ng] matrix[p, p] Theta_r;
   array[Ng] matrix[p + q, 1] Nu;
+  array[Ng] matrix[m, m] Psi_tmp;
 
   array[Ng] matrix[p_c, m_c] Lambda_y_c;
   array[Ng] matrix[m_c, m_c] B_c;
@@ -947,6 +949,12 @@ transformed parameters {
     T_r_lower[g] = fill_matrix(Theta_r_free, Theta_r_skeleton[g], w7skel, g_start7[g,1], g_start7[g,2]);
     Theta_r[g] = T_r_lower[g] + transpose(T_r_lower[g]) - diag_matrix(rep_vector(1, p));
 
+    // TODO handle correlated blocks
+    Psi_tmp[g] = rep_matrix(0, m, m);
+    if (m > 0) {
+      Psi_tmp[g] = fill_matrix(pow(Psi_sd_tmp, 2), Psi_skeleton[g], w9skel, g_start9[g,1], g_start9[g,2]);
+    }
+    
     if (!use_cov) {
       Nu[g] = fill_matrix(Nu_free, Nu_skeleton[g], w13skel, g_start13[g,1], g_start13[g,2]);
     }
@@ -990,8 +998,7 @@ transformed parameters {
     if (p > 0) {
       Sigma[g, 1:p, 1:p] = quad_form_sym(Theta_r[g], Theta_sd[g]);
       if (m > 0) {
-	// TODO handle std.lv=FALSE
-	Sigma[g, 1:p, 1:p] += quad_form_sym(diag_matrix(rep_vector(1, m)), transpose(Lambda_y_A[g]));
+	Sigma[g, 1:p, 1:p] += quad_form_sym(Psi_tmp[g], transpose(Lambda_y_A[g]));
       }
     }
 
@@ -1119,6 +1126,7 @@ model { // N.B.: things declared in the model block do not get saved in the outp
 
   /* transformed sd parameters for priors */
   vector[len_free[5]] Theta_pri;
+  vector[len_free[9]] Psi_pri;
   vector[len_free_c[5]] Theta_pri_c;
   vector[len_free_c[9]] Psi_pri_c;
   
@@ -1186,8 +1194,16 @@ model { // N.B.: things declared in the model block do not get saved in the outp
       target += log(abs(theta_pow)) + (theta_pow - 1)*log(Theta_sd_free[i]);
     }
   }
-
+  Psi_pri = Psi_sd_tmp;
+  if (len_free[9] > 0 && psi_pow != 1) {
+    for (i in 1:len_free[9]) {
+      Psi_pri[i] = Psi_sd_tmp[i]^(psi_pow);
+      target += log(abs(psi_pow)) + (psi_pow - 1)*log(Psi_sd_tmp[i]);
+    }
+  }
+  
   target += gamma_lpdf(Theta_pri | theta_sd_shape, theta_sd_rate);
+  target += gamma_lpdf(Psi_pri | psi_sd_shape, psi_sd_rate);
 
   target += beta_lpdf(.5 * (1 + Theta_r_free) | theta_r_alpha, theta_r_beta) + log(.5) * len_free[7]; // the latter term is the jacobian moving from (-1,1) to (0,1), because beta_lpdf is defined on (0,1)
 
@@ -1292,6 +1308,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   array[Ng] matrix[N_between, N_between] S2_rep;
   array[Ng] matrix[p_tilde, p_tilde] S_B_rep;
   array[Ng] matrix[p_tilde, p_tilde] cov_b_rep;
+  array[Ng] matrix[p, m] Lambda;
   array[Ng] matrix[m, 1] alpha_prior;
   array[Ng] matrix[m, 1] alpha_prior_prec;
   array[Ng] matrix[m, m] b_prior;
@@ -1311,6 +1328,8 @@ generated quantities { // these matrices are saved in the output but do not figu
     alpha_primn = to_vector(alpha_mn);
   }
 
+  ly_sign = sign_constrain_load(Lambda_y_free, len_free[1], lam_y_sign);
+
   for (g in 1:Ng) {
     alpha_prior[g] = fill_matrix(alpha_primn, Alpha_skeleton[g], w14skel, g_start14[g,1], g_start14[g,2]);
     alpha_prior_prec[g] = fill_matrix(pow(to_vector(alpha_sd), -2), Alpha_skeleton[g], w14skel, g_start14[g,1], g_start14[g,2]);
@@ -1325,7 +1344,8 @@ generated quantities { // these matrices are saved in the output but do not figu
       matdim[g] = (g_start4[(g + 1), 1] - g_start4[g, 1]) + (g_start14[(g + 1), 1] - g_start14[g, 1]);
     }
 
-    // around here, rstan line numbers are off by about 135    
+    // around here, rstan line numbers are off by about 135
+    Lambda[g] = fill_matrix(ly_sign, Lambda_y_skeleton[g], w1skel, g_start1[g,1], g_start1[g,2]);
     B[g] = fill_matrix(B_free, B_skeleton[g], w4skel, g_start4[g,1], g_start4[g,2]);
     Alpha[g] = fill_matrix(Alpha_free, Alpha_skeleton[g], w14skel, g_start14[g,1], g_start14[g,2]);
     Psi_r[g] = diag_matrix(rep_vector(1, m));  
@@ -1333,6 +1353,7 @@ generated quantities { // these matrices are saved in the output but do not figu
     Psi[g] = quad_form_sym(Psi_r[g], Psi_sd[g]);
   }
 
+  
   for (i in 1:ngibbs) {
     for (mm in 1:Np) {
       array[p + q] int obsidx;
@@ -1378,9 +1399,9 @@ generated quantities { // these matrices are saved in the output but do not figu
       }
       
       // sample lvs
-      Lamt_Thet_inv = Lambda_y[g]' * inverse_spd( quad_form_sym(Theta_r[g], Theta_sd[g]) );
+      Lamt_Thet_inv = Lambda[g]' * inverse_spd( quad_form_sym(Theta_r[g], Theta_sd[g]) );
       Psi0_inv = inverse_spd( quad_form_sym(Psi[g], IBinv') );
-      D = inverse_spd( Lamt_Thet_inv * Lambda_y[g] + Psi0_inv );
+      D = inverse_spd( Lamt_Thet_inv * Lambda[g] + Psi0_inv );
       Dchol = cholesky_decompose(D);
       d = to_vector(Psi0_inv * IBinv * Alpha[g]);
 
@@ -1430,6 +1451,7 @@ generated quantities { // these matrices are saved in the output but do not figu
       params = multi_normal_rng(Dinv * FVz, Dinv);
 
       // now put parameters in free parameter vectors
+      // FIXME? fill_matrix works by columns instead of rows?
       pidx = 1;
       for (r in 1:m) {
 	real askel = Alpha_skeleton[g, r, 1];
@@ -1479,9 +1501,12 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  int erow = blkse[k, 2];
 
 	  if (erow > srow) {
-	    Psi[gg, srow:erow, srow:erow] = inv_wishart_rng(r2 - r1 + 1 + Psi_prior_shape[gg, srow, srow], residcp[srow:erow, srow:erow] + Psi_prior_rate[gg, srow:erow, srow:erow]);
+	    Psi[gg, srow:erow, srow:erow] = inv_wishart_rng((r2 - r1 + 1) + Psi_prior_shape[gg, srow, srow], residcp[srow:erow, srow:erow] + Psi_prior_rate[gg, srow:erow, srow:erow]);
 	  } else {
-	    Psi[gg, srow, srow] = inv_gamma_rng(.5 * (r2 - r1 + 1) + Psi_prior_shape[gg, srow, srow], residcp[srow, srow] + Psi_prior_rate[gg, srow, srow]);
+	    // line numbers are off by about 156 here
+	    if (is_inf(Psi_skeleton[gg, srow, srow])) {
+	      Psi[gg, srow, srow] = inv_gamma_rng(.5 * (r2 - r1 + 1) + Psi_prior_shape[gg, srow, srow], .5 * residcp[srow, srow] + Psi_prior_rate[gg, srow, srow]);
+	    }
 	  }
 	}
       }
@@ -1491,8 +1516,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   // now deal with the rest as if it is a joint model
   
   // first deal with sign constraints:
-  ly_sign = sign_constrain_load(Lambda_y_free, len_free[1], lam_y_sign);
-  bet_sign = sign_constrain_reg(B_free, len_free[4], b_sign, Lambda_y_free, Lambda_y_free);
+  bet_sign = B_free; //sign_constrain_reg(B_free, len_free[4], b_sign, Lambda_y_free, Lambda_y_free);
 
   ly_sign_c = sign_constrain_load(Lambda_y_free_c, len_free_c[1], lam_y_sign_c);
   bet_sign_c = sign_constrain_reg(B_free_c, len_free_c[4], b_sign_c, Lambda_y_free_c, Lambda_y_free_c);
@@ -1545,7 +1569,8 @@ generated quantities { // these matrices are saved in the output but do not figu
     Psi_cov_c = P_r_c;
   }
   Psi_var_c = Psi_sd_free_c .* Psi_sd_free_c;
-  
+
+  // FIXME: need to redefine Mu and Sigma to include B, Psi, Alpha
   { // log-likelihood
     array[p + q] int obsidx;
     array[p + q] int xidx;
