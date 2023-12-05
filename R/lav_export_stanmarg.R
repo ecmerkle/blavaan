@@ -1261,11 +1261,7 @@ lav2standata <- function(lavobject) {
       cidx <- unlist(cidx)
     }
     mean_d_full <- rowsum.default(as.matrix(dat$YX), cidx) / dat$cluster_size
-    if (dat$N_within > 0) {
-      for (i in 1:dat$N_within) {
-        mean_d_full[, dat$within_idx[i]] <- mean(as.matrix(dat$YX)[, dat$within_idx[i]])
-      }
-    }
+
     tmpYX <- split.data.frame(dat$YX, cidx)
     dat$YX <- do.call("rbind", tmpYX)
     dat$log_lik_x_full <- llx_2l(Lp[[1]], dat$YX, mean_d_full, cidx)

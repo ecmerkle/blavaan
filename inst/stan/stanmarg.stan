@@ -1841,10 +1841,6 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  }
 	  
 	  for (cc in 1:nclus[gg, 2]) {
-	    if (N_within > 0) {
-	      mean_d_rep[clusidx, within_idx] = ov_mean_rep[gg, within_idx];
-	    }
-
 	    for (ii in r1:(r1 + cluster_size[clusidx] - 1)) {
 	      S_PW_rep_full[gg] += tcrossprod(to_matrix(YXstar_rep[ii] - mean_d_rep[clusidx]));
 	    }
