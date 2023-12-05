@@ -1248,7 +1248,7 @@ lav2standata <- function(lavobject) {
     dat$cov_d <- cov_d
     ## this evenly distributes loglik.x across unique cluster sizes; sums to correct value
     llx <- sapply(YLp, function(x) x[[2]]$loglik.x)
-    dat$log_lik_x <- array(rep(llx / dat$ncluster_sizes, dat$ncluster_sizes), dat$ncluster_sizes)
+    dat$log_lik_x <- array(rep(llx / dat$ncluster_sizes, dat$ncluster_sizes), sum(dat$ncluster_sizes))
 
     ## clusterwise data summaries, for loo and waic and etc
     cidx <- lavInspect(lavobject, 'cluster.idx')
