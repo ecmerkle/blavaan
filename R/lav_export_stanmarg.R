@@ -842,7 +842,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       ## (needed because set_inits_stan() is also used for stanclassic and stancond targets
       if ("Theta_r_free" %in% names(ini[[i]])) ini[[i]]$Theta_r_free <- -1 + 2 * ini[[i]]$Theta_r_free
       if ("Psi_r_free" %in% names(ini[[i]])) ini[[i]]$Psi_r_free <- -1 + 2 * ini[[i]]$Psi_r_free
-        
+      
       if (level == 2L) {
         names(ini[[i]]) <- paste0(names(ini[[i]]), "_c")
       } else {
@@ -862,6 +862,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
           ini[[i]] <- c(ini[[i]], list(z_aug = z_aug))
         }
       }
+      ini[[i]]$Psi_sd_tmp <- ini[[i]]$Psi_sd_free
     }
   } else {
     ini <- NULL
