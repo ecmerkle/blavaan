@@ -319,6 +319,10 @@ data {
   array[Np] vector[multilev ? p_tilde : p + q - Nord] YXbar; // sample means of continuous manifest variables
   array[Np] matrix[multilev ? (p_tilde + 1) : (p + q - Nord + 1), multilev ? (p_tilde + 1) : (p + q - Nord + 1)] S;     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
   int<lower=1> ngibbs; // number of gibbs iterations for structural parameters per iteration
+  array[Np] int<lower=0> Ndum; // number of ovs with dummy lvs
+  array[Np, p] int<lower=1> dum_ov_idx; // first Ndum are dummy ovs, then non-dummy ovs
+  array[Np, m] int<lower=1> dum_lv_idx; // first Ndum are dummy lvs corresponding to ovs, then non-dummy lvs
+  array[Np, m] int<lower=0,upper=1> dum_x_idx; // index of eXo dummy lvs
   
   array[sum(nclus[,2])] int<lower=1> cluster_size; // number of obs per cluster
   array[Ng] int<lower=1> ncluster_sizes; // number of unique cluster sizes
@@ -1362,7 +1366,7 @@ generated quantities { // these matrices are saved in the output but do not figu
       array[p + q] int xidx;
       array[p + q] int xdatidx;
       matrix[m, m] IBinv;
-      matrix[m, p] Lamt_Thet_inv;
+      matrix[m - Ndum[mm], p - Ndum[mm]] Lamt_Thet_inv;
       matrix[m, m] Psi0_inv;
       matrix[m, m] D;
       matrix[m, m] Dchol;
@@ -1370,6 +1374,7 @@ generated quantities { // these matrices are saved in the output but do not figu
       int r1 = startrow[mm];
       int r2 = endrow[mm];
       int g = grpnum[mm];
+      array[m - Ndum[mm]] int nodum_lv_idx;
       vector[matdim[g]] gamma0 = rep_vector(0, matdim[g]);
       matrix[matdim[g], matdim[g]] Omega_inv = diag_matrix(gamma0);
       vector[matdim[g]] params;
@@ -1401,14 +1406,25 @@ generated quantities { // these matrices are saved in the output but do not figu
       }
       
       // sample lvs
-      Lamt_Thet_inv = Lambda[g]' * inverse_spd( quad_form_sym(Theta_r[g], Theta_sd[g]) );
       Psi0_inv = inverse_spd( quad_form_sym(Psi[g], IBinv') );
-      D = inverse_spd( Lamt_Thet_inv * Lambda[g] + Psi0_inv );
+      if (Ndum[mm] > 0) {
+	Lamt_Thet_inv = Lambda[g, dum_ov_idx[mm, (Ndum[mm] + 1):p],]' * inverse_spd( quad_form_sym(Theta_r[g, dum_ov_idx[mm, (Ndum[mm] + 1):p], dum_ov_idx[mm, (Ndum[mm] + 1):p]], Theta_sd[g, dum_ov_idx[mm, (Ndum[mm] + 1):p], dum_ov_idx[mm, (Ndum[mm] + 1):p]]) );
+	D = inverse_spd( Lamt_Thet_inv * Lambda[g, dum_ov_idx[mm, (Ndum[mm] + 1):p],] + Psi0_inv );
+      } else {
+	Lamt_Thet_inv = Lambda[g]' * inverse_spd( quad_form_sym(Theta_r[g], Theta_sd[g]) );
+	D = inverse_spd( Lamt_Thet_inv * Lambda[g] + Psi0_inv );
+      }
+
       Dchol = cholesky_decompose(D);
       d = to_vector(Psi0_inv * IBinv * Alpha[g]);
 
       for (ridx in r1:r2) {
-        eta[ridx] = multi_normal_cholesky_rng(D * (d + Lamt_Thet_inv * (YX[ridx] - to_vector(Nu[g]))), Dchol);
+	if (Ndum[mm] == 0) {
+	  eta[ridx] = multi_normal_cholesky_rng(D * (d + Lamt_Thet_inv * (YX[ridx] - to_vector(Nu[g]))), Dchol);
+	} else {
+	  eta[ridx] = multi_normal_cholesky_rng(D * (d + Psi0_inv * IBinv * B[g, , dum_lv_idx[2]] * YX[ridx, dum_ov_idx[2]] + Lamt_Thet_inv * (YX[ridx, dum_ov_idx[mm, (Ndum[mm] + 1):p]] - to_vector(Nu[g, dum_ov_idx[mm, (Ndum[mm] + 1):p]]))), Dchol);
+	  eta[ridx, dum_lv_idx[mm, 1:Ndum[mm]]] = YX[ridx, dum_ov_idx[mm, 1:Ndum[mm]]];
+	}
       }
       
       // sample alpha, beta
@@ -1574,8 +1590,8 @@ generated quantities { // these matrices are saved in the output but do not figu
 
   for (g in 1:Ng) {
     matrix[m, m] IBinv = inverse(diag_matrix(rep_vector(1, m)) - B[g]);
-    Sigma_full[g] = quad_form_sym(Psi[g], IBinv' * Lambda[g]') + Theta[g];
-    Mu_full[g] = Nu[g] + Lambda[g] * IBinv * Alpha[g];
+    Sigma_full[g] = quad_form_sym(Psi[g], IBinv' * Lambda[g]') + quad_form_sym(Theta_r[g], Theta_sd[g]);
+    Mu_full[g] = to_vector(Nu[g] + Lambda[g] * IBinv * Alpha[g]);
   }
 
   { // log-likelihood
