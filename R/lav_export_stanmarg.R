@@ -1324,7 +1324,7 @@ lav2standata <- function(lavobject) {
       dat$OrdObsvar <- matrix(0, dat$Np, ncol(dat$YXo))
       allvars <- 1:ncol(dat$YXo)
       for (i in 1:dat$Np) {
-        dat$OrdObsvar[i, 1:dat$Nordobs[i]] <- OrdObsvar[[i]]
+        if (dat$Nordobs[i] > 0) dat$OrdObsvar[i, 1:dat$Nordobs[i]] <- OrdObsvar[[i]]
         if (dat$Nordobs[i] < ncol(dat$YXo)) {
           dat$OrdObsvar[i, (dat$Nordobs[i] + 1):ncol(dat$YXo)] <- allvars[!(allvars %in% OrdObsvar[[i]])]
         }

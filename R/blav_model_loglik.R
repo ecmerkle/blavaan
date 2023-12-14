@@ -344,58 +344,62 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
       ord.idx <- unique(TH.idx)
       ord.idx <- ord.idx[ord.idx %in% obsidx[1:Nobs[mm]]]
       nord <- length(ord.idx)
-      if(length(obsnum) > 0){
-        s12s22i <- cmat[ord.idx, obsnum] %*% chol2inv(chol(cmat[obsnum, obsnum]))
-        cov.ord <- cmat[ord.idx, ord.idx] - s12s22i %*% cmat[obsnum, ord.idx]
-      } else {
-        tmpll <- rep(0, r2 - r1 + 1)
-        cov.ord <- cmat[ord.idx, ord.idx, drop=FALSE]
-        mu.ord <- mnvec[ord.idx]
-      }
 
-      mm.in.group <- 1:lavmodel@nmat[g] + cumsum(c(0,lavmodel@nmat))[g]
-      mms <- lavmodel@GLIST[mm.in.group]
-      tau <- mms$tau
-
-      ## thresholds for all cases
-      lowtau <- hitau <- matrix(NA, NROW(YX[r1:r2,]), length(ord.idx))
-      for(j in seq_len(nord)){
-        tmptau <- c(-Inf, tau[TH.idx == ord.idx[j]], Inf)
-        lowtau[,j] <- tmptau[YX[r1:r2,ord.idx[j]]]
-        hitau[,j] <- tmptau[YX[r1:r2,ord.idx[j]] + 1]
-      }
-
-      for(i in r1:r2){
-        llidx <- i - r1 + 1
-
-        if(conditional){
-          catprob <- pnorm(hitau[llidx,], mean = mnvec[i,ord.idx], sd = sqrt(diag(cmat)[ord.idx])) -
-            pnorm(lowtau[llidx,], mean = mnvec[i,ord.idx], sd = sqrt(diag(cmat)[ord.idx]))
-          lsigi <- sum( dbinom(1, size = 1, prob = catprob, log = TRUE) )
-          tmpll[llidx] <- tmpll[llidx] + lsigi
+      ## only proceed if this missingness pattern has ordinal variables!
+      if(nord > 0){
+        if(length(obsnum) > 0){
+          s12s22i <- cmat[ord.idx, obsnum] %*% chol2inv(chol(cmat[obsnum, obsnum]))
+          cov.ord <- cmat[ord.idx, ord.idx] - s12s22i %*% cmat[obsnum, ord.idx]
         } else {
-          if(length(obsnum) > 0){
-            mu.ord <- mnvec[ord.idx] + s12s22i %*% (YX[i,obsnum] - mnvec[obsnum])
-          }
+          tmpll <- rep(0, r2 - r1 + 1)
+          cov.ord <- cmat[ord.idx, ord.idx, drop=FALSE]
+          mu.ord <- mnvec[ord.idx]
+        }
 
-          if("llnsamp" %in% names(lavoptions)){
-            ## run tmvnsim to approximate marginal logl
-            lsigi <- try(tmvnsim::tmvnsim(llnsamp, nord,
-                                          lower = lowtau[llidx,], upper = hitau[llidx,],
-                                          means = mu.ord, sigma = cov.ord), silent = TRUE)
-            if(!inherits(lsigi, 'try-error')) lsigi <- mean(lsigi$wts)
-          } else {
-            lsigi <- try(mnormt::sadmvn(lowtau[llidx,], hitau[llidx,], mean = mu.ord, varcov = cov.ord, abseps = 1e-2))
-          }
+        mm.in.group <- 1:lavmodel@nmat[g] + cumsum(c(0,lavmodel@nmat))[g]
+        mms <- lavmodel@GLIST[mm.in.group]
+        tau <- mms$tau
 
-          if(inherits(lsigi, 'try-error')){
-            tmpll[llidx] <- NA
+        ## thresholds for all cases
+        lowtau <- hitau <- matrix(NA, NROW(YX[r1:r2,]), length(ord.idx))
+        for(j in seq_len(nord)){
+          tmptau <- c(-Inf, tau[TH.idx == ord.idx[j]], Inf)
+          lowtau[,j] <- tmptau[YX[r1:r2,ord.idx[j]]]
+          hitau[,j] <- tmptau[YX[r1:r2,ord.idx[j]] + 1]
+        }
+
+        for(i in r1:r2){
+          llidx <- i - r1 + 1
+
+          if(conditional){
+            catprob <- pnorm(hitau[llidx,], mean = mnvec[i,ord.idx], sd = sqrt(diag(cmat)[ord.idx])) -
+              pnorm(lowtau[llidx,], mean = mnvec[i,ord.idx], sd = sqrt(diag(cmat)[ord.idx]))
+            lsigi <- sum( dbinom(1, size = 1, prob = catprob, log = TRUE) )
+            tmpll[llidx] <- tmpll[llidx] + lsigi
           } else {
-            tmpll[llidx] <- tmpll[llidx] + log(lsigi)
+            if(length(obsnum) > 0){
+              mu.ord <- mnvec[ord.idx] + s12s22i %*% (YX[i,obsnum] - mnvec[obsnum])
+            }
+
+            if("llnsamp" %in% names(lavoptions)){
+              ## run tmvnsim to approximate marginal logl
+              lsigi <- try(tmvnsim::tmvnsim(llnsamp, nord,
+                                            lower = lowtau[llidx,], upper = hitau[llidx,],
+                                            means = mu.ord, sigma = cov.ord), silent = TRUE)
+              if(!inherits(lsigi, 'try-error')) lsigi <- mean(lsigi$wts)
+            } else {
+              lsigi <- try(mnormt::sadmvn(lowtau[llidx,], hitau[llidx,], mean = mu.ord, varcov = cov.ord, abseps = 1e-2))
+            }
+
+            if(inherits(lsigi, 'try-error')){
+              tmpll[llidx] <- NA
+            } else {
+              tmpll[llidx] <- tmpll[llidx] + log(lsigi)
+            }
           }
         }
       }
-            
+
       if(casewise){
         ll.samp[r1:r2] <- tmpll
       } else {
