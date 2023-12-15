@@ -1366,7 +1366,7 @@ generated quantities { // these matrices are saved in the output but do not figu
       array[p + q] int xidx;
       array[p + q] int xdatidx;
       matrix[m, m] IBinv;
-      matrix[m - Ndum[mm], p - Ndum[mm]] Lamt_Thet_inv;
+      matrix[m, p - Ndum[mm]] Lamt_Thet_inv;
       matrix[m, m] Psi0_inv;
       matrix[m, m] D;
       matrix[m, m] Dchol;
@@ -1374,7 +1374,6 @@ generated quantities { // these matrices are saved in the output but do not figu
       int r1 = startrow[mm];
       int r2 = endrow[mm];
       int g = grpnum[mm];
-      array[m - Ndum[mm]] int nodum_lv_idx;
       vector[matdim[g]] gamma0 = rep_vector(0, matdim[g]);
       matrix[matdim[g], matdim[g]] Omega_inv = diag_matrix(gamma0);
       vector[matdim[g]] params;
@@ -1422,7 +1421,7 @@ generated quantities { // these matrices are saved in the output but do not figu
 	if (Ndum[mm] == 0) {
 	  eta[ridx] = multi_normal_cholesky_rng(D * (d + Lamt_Thet_inv * (YX[ridx] - to_vector(Nu[g]))), Dchol);
 	} else {
-	  eta[ridx] = multi_normal_cholesky_rng(D * (d + Psi0_inv * IBinv * B[g, , dum_lv_idx[2]] * YX[ridx, dum_ov_idx[2]] + Lamt_Thet_inv * (YX[ridx, dum_ov_idx[mm, (Ndum[mm] + 1):p]] - to_vector(Nu[g, dum_ov_idx[mm, (Ndum[mm] + 1):p]]))), Dchol);
+	  eta[ridx] = multi_normal_cholesky_rng(D * (d + Lamt_Thet_inv * (YX[ridx, dum_ov_idx[mm, (Ndum[mm] + 1):p]] - to_vector(Nu[g, dum_ov_idx[mm, (Ndum[mm] + 1):p]]))), Dchol);
 	  eta[ridx, dum_lv_idx[mm, 1:Ndum[mm]]] = YX[ridx, dum_ov_idx[mm, 1:Ndum[mm]]];
 	}
       }
