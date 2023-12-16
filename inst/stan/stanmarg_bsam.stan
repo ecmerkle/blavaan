@@ -1480,8 +1480,19 @@ generated quantities { // these matrices are saved in the output but do not figu
 	for (c in 1:m) {
 	  real bskel = B_skeleton[g, r, c];
 	  if (is_inf(bskel)) {
+	    // find columnwise "free" index
+	    // this is inefficient and should be sent in as data
+	    f2idx = 1;
+	    for (cc in 1:c) {
+	      for (rr in 1:m) {
+		if (is_inf(B_skeleton[g, rr, cc])) {
+		  if (cc < c || (cc == c && rr < r)) {
+		    f2idx += 1;
+		  }
+		}
+	      }
+	    }
 	    B_free[f2idx] = params[pidx];
-	    f2idx += 1;
 	    pidx += 1;
 	  }
 	}
