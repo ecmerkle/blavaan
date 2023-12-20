@@ -806,7 +806,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   }
 
   ## remove priors from equality-constrained parameters
-  rmpri <- !(lavpartable$prior == "") & (lavpartable$plabel %in% lavpartable$rhs[lavpartable$op == "=="])
+  rmpri <- !(lavpartable$prior == "") & ((lavpartable$plabel %in% lavpartable$rhs[lavpartable$op == "=="]) | (lavpartable$label %in% lavpartable$rhs[lavpartable$op == "=="]))
   lavpartable$prior[rmpri] <- ""
   
   ## add priors to wiggle params (mean value is handled in stan)

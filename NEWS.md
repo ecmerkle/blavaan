@@ -9,6 +9,8 @@
 
 * models with both continuous and ordinal variables fail for cases where all ordinal variables are missing (reported by Sonja Winter).
 
+* certain equality constraints involving named parameters fail for target="stan" (reported by Niels Skovgaard-Olsen)
+
 # Version 0.5-1
 ## New features
 * Two-level models are now supported (for complete, continuous data) via the cluster argument.
