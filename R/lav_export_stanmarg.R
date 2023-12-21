@@ -561,7 +561,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     ## a separate parameter specification in Stan
     if (length(ublksizes) > 5 | length(ublksizes) == 0) {
       blkinfo <- NULL
-      blkpsi <- FALSE
+      if (length(ublksizes) > 5) blkpsi <- FALSE
       dat$nblk <- array(0, dim = 5)
       dat$psidims <- array(3, dim = 5)
       dat$blkse <- matrix(nrow = 0, ncol = 7)
