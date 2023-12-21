@@ -89,7 +89,7 @@ blavInspect <- function(blavobject, what, ...) {
             pt$free[pt$op == ":="] <- max(pt$free, na.rm = TRUE) + 1:sum(pt$op == ":=")
             labs <- lav_partable_labels(pt, type = "free")
             draws <- make_mcmc(blavobject@external$mcmcout)
-            draws <- lapply(draws, function(x) mcmc(x[,idx]))
+            draws <- lapply(draws, function(x) mcmc(x[, idx, drop = FALSE]))
             draws <- mcmc.list(draws)
             if(what == "hpd"){
                 pct <- .95

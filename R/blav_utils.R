@@ -236,7 +236,7 @@ make_mcmc <- function(mcmcout, stanlvs = NULL){
     lavmcmc <- as.array(mcmcout)
     lavmcmc <- lapply(seq(dim(lavmcmc)[2]), function(x) lavmcmc[,x,])
     reord <- match(rownames(tmpsumm$summary), colnames(lavmcmc[[1]]))
-    lavmcmc <- lapply(lavmcmc, function(x) x[,reord])
+    lavmcmc <- lapply(lavmcmc, function(x) x[, reord, drop = FALSE])
 
     if(is.array(stanlvs)){
       stanlvs <- lapply(seq(dim(stanlvs)[2]), function(x) stanlvs[,x,])
