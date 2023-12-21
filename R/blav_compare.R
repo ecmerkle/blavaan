@@ -17,7 +17,7 @@ blavCompare <- function(object1, object2, ...) {
   if(targ1 == "stan" && blavInspect(object1, "meanstructure")){
     ll1 <- loo::extract_log_lik(object1@external$mcmcout)
   } else if(blavInspect(object1, "categorical") && lavopt1$test != "none"){
-    if("llnsamp" %in% names(lavopt)){
+    if("llnsamp" %in% names(lavopt1)){
       cat("blavaan NOTE: These criteria involve likelihood approximations that may be imprecise.\n",
           "You could try running the model again to see how much the criteria fluctuate.\n",
           "You can also manually set llnsamp for greater accuracy (but also greater runtime).\n\n")
@@ -36,7 +36,7 @@ blavCompare <- function(object1, object2, ...) {
   if(targ2 == "stan" && blavInspect(object2, "meanstructure")){
     ll2 <- loo::extract_log_lik(object2@external$mcmcout)
   } else if(blavInspect(object2, "categorical") && lavopt2$test != "none"){
-    if("llnsamp" %in% names(lavopt)){
+    if("llnsamp" %in% names(lavopt2)){
       cat("blavaan NOTE: These criteria involve likelihood approximations that may be imprecise.\n",
           "You could try running the model again to see how much the criteria fluctuate.\n",
           "You can also manually set llnsamp for greater accuracy (but also greater runtime).\n\n")
