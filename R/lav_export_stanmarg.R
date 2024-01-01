@@ -617,7 +617,6 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     dat$Psi_r_skeleton <- res$matskel
     dat$w10skel <- res$wskel
     dat$psi_r_sign <- res$sign
-    free2 <- c(free2, list(rpsi = res$free))
     ptrows <- with(lavpartable[twsel, , drop = FALSE], which(mat == "psi" & free > 0 & row != col))
     veclen <- length(ptrows)
     if (veclen > 0) {
@@ -636,6 +635,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
                    free1 = free2$lambda, free2 = lyfree2, sign = dat$lam_y_sign,
                    dest = dest)
 
+    free2 <- c(free2, list(rpsi = res$free))
     dat$Psi_r_skeleton_f <- res$matskel
     dat$w11skel <- res$wskel
     dat$psi_r_sign_f <- res$sign
