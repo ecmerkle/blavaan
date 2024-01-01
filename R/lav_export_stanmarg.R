@@ -609,7 +609,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     frnums <- sapply(frnoblock, function(x) as.numeric(x[x != 0]))
     twsel <- lavpartable$free %in% frnums
     tmpwig <- lavpartable[twsel,'free'][which(lavpartable[twsel, 'plabel'] %in% wig)]
-    
+
     res <- matattr(frnoblock, es, constrain, mat = "Psi_r", Ng, opts$std.lv, tmpwig,
                    free1 = free2$lambda, free2 = lyfree2, sign = dat$lam_y_sign,
                    dest = dest)
@@ -617,15 +617,15 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     dat$Psi_r_skeleton <- res$matskel
     dat$w10skel <- res$wskel
     dat$psi_r_sign <- res$sign
-    #free2 <- c(free2, list(rpsi = res$free))
-    #ptrows <- with(lavpartable, which(mat == "psi" & free > 0 & row != col))
-    #veclen <- length(ptrows)
-    #if (veclen > 0) {
-    #  fpars <- res$wskel[1:veclen,1] == 0 | res$wskel[1:veclen,3] == 1
-    #  nfree <- c(nfree, list(sum(fpars)))
-    #  names(nfree)[length(nfree)] <- 'lvrho'
-    #  freeparnums[ptrows[fpars]] <- 1:sum(fpars)
-    #}
+    free2 <- c(free2, list(rpsi = res$free))
+    ptrows <- with(lavpartable[twsel, , drop = FALSE], which(mat == "psi" & free > 0 & row != col))
+    veclen <- length(ptrows)
+    if (veclen > 0) {
+      fpars <- res$wskel[1:veclen,1] == 0 | res$wskel[1:veclen,3] == 1
+      nfree <- c(nfree, list(sum(fpars)))
+      names(nfree)[length(nfree)] <- 'lvrho'
+      freeparnums[ptrows[fpars]] <- 1:sum(fpars)
+    }
 
     ## repeated for all free cov entries including blocks
     frnums <- sapply(fr, function(x) as.numeric(x[x != 0]))
@@ -639,15 +639,6 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     dat$Psi_r_skeleton_f <- res$matskel
     dat$w11skel <- res$wskel
     dat$psi_r_sign_f <- res$sign
-    free2 <- c(free2, list(rpsi = res$free))
-    ptrows <- with(lavpartable, which(mat == "psi" & free > 0 & row != col))
-    veclen <- length(ptrows)
-    if (veclen > 0) {
-      fpars <- res$wskel[1:veclen,1] == 0 | res$wskel[1:veclen,3] == 1
-      nfree <- c(nfree, list(sum(fpars)))
-      names(nfree)[length(nfree)] <- 'lvrho'
-      freeparnums[ptrows[fpars]] <- 1:sum(fpars)
-    }    
   } else {
     blkpsi <- TRUE
     dat$Psi_r_skeleton <- array(0, dim = c(Ng, 0, 0))
@@ -818,6 +809,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   }
 
   ## add inits (manipulate partable to re-use set_inits_stan)
+  ## TODO inits for blocks
   lavpartable$freeparnums <- freeparnums
 
   ## FIXME theta_x, cov.x not handled
