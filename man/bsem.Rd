@@ -143,7 +143,7 @@ model <- '
     y6 ~~ y8
 '
 
-## unique priors for mv intercepts; parallel chains
+## unique priors for mv intercepts
 fit <- bsem(model, data=PoliticalDemocracy,
             dp=dpriors(nu="normal(5,10)"))
 summary(fit)
