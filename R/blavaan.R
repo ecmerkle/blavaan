@@ -325,6 +325,15 @@ blavaan <- function(...,  # default lavaan arguments
     }
 
     # for initial values/some parameter setup:
+    if(lavInspect(LAV, 'nlevels') > 1){
+        # ppp for within-only ovs turned off because saturated lik doesn't work
+        if(length(LAV@Data@Lp[[1]]$within.idx[[1]]) > 0){
+            origtest <- "none"
+            dotdotdot$test <- "none"
+            cat('blavaan NOTE: ppp is currently unavailable for models with within-only ovs')
+        }
+    }
+
     if(jag.do.fit){
         LAV2 <- try(do.call("lavaan", dotdotdot), silent = TRUE)
         if(!inherits(LAV2, 'try-error')) LAV <- LAV2
@@ -476,7 +485,7 @@ blavaan <- function(...,  # default lavaan arguments
     lavoptions$estimator <- "Bayes"
     lavoptions$se        <- "standard"
     lavoptions$test <- "standard"
-    if("test" %in% dotNames) {
+    if("test" %in% names(dotdotdot)) {
         if(dotdotdot$test == "none") lavoptions$test <- "none"
     } else {
         # if missing data, posterior predictives are way slow
