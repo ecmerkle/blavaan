@@ -91,13 +91,17 @@ blavInspect <- function(blavobject, what, ...) {
             draws <- make_mcmc(blavobject@external$mcmcout)
             draws <- lapply(draws, function(x) mcmc(x[, idx, drop = FALSE]))
             draws <- mcmc.list(draws)
+            if(add.labels) {
+                for (i in 1:length(draws)) {
+                    colnames(draws[[i]]) <- labs
+                }
+            }
             if(what == "hpd"){
                 pct <- .95
                 if("level" %in% dotNames) pct <- dotdotdot$level
                 if("prob" %in% dotNames) pct <- dotdotdot$prob
                 draws <- mcmc(do.call("rbind", draws))
                 draws <- HPDinterval(draws, pct)
-                if(add.labels) rownames(draws) <- labs
             }
             draws
         } else if(what == "mcobj"){
