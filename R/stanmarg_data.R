@@ -226,10 +226,9 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           wigind = NULL, # wiggle indicator
                           pri_only = FALSE, # prior predictive sampling
                           do_reg = FALSE, # regression sampling
-                          multilev, mean_d, cov_w, S_PW_sat, log_lik_x, cov_d, # level 2 data
-                          nclus, cluster_size, ncluster_sizes, mean_d_full, mean_d_full_sat,
-                          cov_d_full, log_lik_x_full, xbar_w, xbar_b, cov_b, cov_b_sat, gs,
-                          cluster_sizes, cluster_size_ns, between_idx, N_between,
+                          multilev, mean_d, cov_w, log_lik_x, cov_d, nclus, cluster_size, # level 2 data
+                          ncluster_sizes, mean_d_full, cov_d_full, log_lik_x_full, xbar_w, xbar_b,
+                          cov_b, gs, cluster_sizes, cluster_size_ns, between_idx, N_between,
                           within_idx, N_within, both_idx, N_both, ov_idx1, ov_idx2, p_tilde, N_lev,
                           Lambda_y_skeleton_c = NULL, # level 2 matrices
                           B_skeleton_c = NULL, Theta_skeleton_c = NULL, Theta_r_skeleton_c = NULL,
@@ -337,17 +336,14 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   ## level 2 data
   dat$mean_d <- mean_d
   dat$cov_w <- cov_w
-  dat$S_PW_sat <- S_PW_sat
   dat$log_lik_x <- log_lik_x
   dat$cov_d <- cov_d
   dat$mean_d_full <- mean_d_full
-  dat$mean_d_full_sat <- mean_d_full_sat
   dat$cov_d_full <- cov_d_full
   dat$log_lik_x_full <- log_lik_x_full
   dat$xbar_w <- xbar_w
   dat$xbar_b <- xbar_b
   dat$cov_b <- cov_b
-  dat$cov_b_sat <- cov_b_sat
   dat$gs <- gs
   dat$nclus <- nclus
   dat$cluster_size <- cluster_size

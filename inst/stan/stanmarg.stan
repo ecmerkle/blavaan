@@ -615,11 +615,9 @@ data {
   array[Ng] matrix[p_tilde, p_tilde] cov_w; // observed "within" covariance matrix
   array[sum(nclus[,2])] vector[p_tilde] mean_d_full; // sample means/covs by cluster, for clusterwise log-densities
   array[sum(nclus[,2])] matrix[p_tilde, p_tilde] cov_d_full;
-  array[sum(nclus[,2])] vector[p_tilde] mean_d_full_sat; // sample means by cluster, with within-only tweak for saturated computation
   array[Ng] vector[p_tilde] xbar_w; // data estimates of within/between means/covs (for saturated logl)
   array[Ng] vector[p_tilde] xbar_b;
   array[Ng] matrix[p_tilde, p_tilde] cov_b;
-  array[Ng] matrix[p_tilde, p_tilde] cov_b_sat; // between covariance matrix for ppp computation
   array[Ng] real gs; // group size constant, for computation of saturated logl
   int N_within; // number of within variables
   int N_between; // number of between variables
@@ -630,7 +628,6 @@ data {
   array[N_lev[1]] int ov_idx1;
   array[N_lev[2]] int ov_idx2;
   array[N_both] int both_idx;
-  array[Ng] matrix[N_within + N_both, N_within + N_both] S_PW_sat; // within covariance matrix for ppp computation
   vector[multilev ? sum(ncluster_sizes) : Ng] log_lik_x; // ll of fixed x variables by unique cluster size
   vector[multilev ? sum(nclus[,2]) : Ng] log_lik_x_full; // ll of fixed x variables by cluster
   
@@ -1693,18 +1690,14 @@ generated quantities { // these matrices are saved in the output but do not figu
   array[Ng] real logdetS_rep_sat_grp;
   matrix[p + q, p + q] zmat;
   array[sum(nclus[,2])] vector[p_tilde] mean_d_rep;
-  array[sum(nclus[,2])] vector[p_tilde] mean_d_rep_sat;
   vector[multilev ? sum(nclus[,2]) : Ng] log_lik_x_rep;
   array[Ng] matrix[N_both + N_within, N_both + N_within] S_PW_rep;
   array[Ng] matrix[p_tilde, p_tilde] S_PW_rep_full;
-  array[Ng] matrix[N_both + N_within, N_both + N_within] S_PW_rep_sat;
-  array[Ng] matrix[p_tilde, p_tilde] S_PW_rep_full_sat;
   array[Ng] vector[p_tilde] ov_mean_rep;
   array[Ng] vector[p_tilde] xbar_b_rep;
   array[Ng] matrix[N_between, N_between] S2_rep;
   array[Ng] matrix[p_tilde, p_tilde] S_B_rep;
   array[Ng] matrix[p_tilde, p_tilde] cov_b_rep;
-  array[Ng] matrix[p_tilde, p_tilde] cov_b_rep_sat;
   real<lower=0, upper=1> ppp;
   
   // first deal with sign constraints:
@@ -1805,8 +1798,6 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  matrix[p + q, p + q] Sigma_chol = cholesky_decompose(Sigma[gg]);
 	  S_PW_rep[gg] = rep_matrix(0, N_both + N_within, N_both + N_within);
 	  S_PW_rep_full[gg] = rep_matrix(0, p_tilde, p_tilde);
-	  S_PW_rep_sat[gg] = rep_matrix(0, N_both + N_within, N_both + N_within);
-	  S_PW_rep_full_sat[gg] = rep_matrix(0, p_tilde, p_tilde);
 	  S_B_rep[gg] = rep_matrix(0, p_tilde, p_tilde);
 	  ov_mean_rep[gg] = rep_vector(0, p_tilde);
 
@@ -1832,7 +1823,6 @@ generated quantities { // these matrices are saved in the output but do not figu
 	    for (jj in 1:p_tilde) {
 	      mean_d_rep[clusidx, jj] = mean(YXstar_rep[r1:(r1 + cluster_size[clusidx] - 1), jj]);
             }
-	    mean_d_rep_sat[clusidx] = mean_d_rep[clusidx];
 
 	    r1 += cluster_size[clusidx];
 	    clusidx += 1;
@@ -1851,13 +1841,8 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  }
 	  
 	  for (cc in 1:nclus[gg, 2]) {
-	    if (N_within > 0) {
-	      mean_d_rep_sat[clusidx, within_idx] = ov_mean_rep[gg, within_idx];
-	    }
-	    
 	    for (ii in r1:(r1 + cluster_size[clusidx] - 1)) {
 	      S_PW_rep_full[gg] += tcrossprod(to_matrix(YXstar_rep[ii] - mean_d_rep[clusidx]));
-	      S_PW_rep_full_sat[gg] += tcrossprod(to_matrix(YXstar_rep[ii] - mean_d_rep_sat[clusidx]));
 	    }
 	    
 	    S_B_rep[gg] += cluster_size[clusidx] * tcrossprod(to_matrix(mean_d_rep[clusidx] - ov_mean_rep[gg]));
@@ -1869,7 +1854,6 @@ generated quantities { // these matrices are saved in the output but do not figu
 	    clusidx += 1;
 	  }
 	  S_PW_rep_full[gg] *= pow(nclus[gg, 1] - nclus[gg, 2], -1);
-	  S_PW_rep_full_sat[gg] *= pow(nclus[gg, 1] - nclus[gg, 2], -1);
 	  S_B_rep[gg] *= pow(nclus[gg, 2] - 1, -1);
 	  S2_rep[gg] *= pow(nclus[gg, 2], -1);
 	  // mods to between-only variables:
@@ -1893,10 +1877,8 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  }
 	  
 	  cov_b_rep[gg] = pow(gs[gg], -1) * (S_B_rep[gg] - S_PW_rep_full[gg]);
-	  cov_b_rep_sat[gg] = pow(gs[gg], -1) * (S_B_rep[gg] - S_PW_rep_full_sat[gg]);
 	  if (N_between > 0) {
 	    cov_b_rep[gg, between_idx[1:N_between], between_idx[1:N_between]] = S2_rep[gg];
-	    cov_b_rep_sat[gg, between_idx[1:N_between], between_idx[1:N_between]] = S2_rep[gg];
 	  }
 
 	  rr1 = r1 - nclus[gg, 1];
@@ -1909,7 +1891,6 @@ generated quantities { // these matrices are saved in the output but do not figu
 	    }
 	  }
 	  S_PW_rep[gg] = S_PW_rep_full[gg, notbidx, notbidx];
-	  S_PW_rep_sat[gg] = S_PW_rep_full_sat[gg, notbidx, notbidx];
 
 	  if (Nx[gg] > 0 || Nx_between[gg] > 0) {
 	    array[2] vector[p_tilde] mnvecs;
@@ -2093,23 +2074,22 @@ generated quantities { // these matrices are saved in the output but do not figu
 						  ov_idx1, ov_idx2, within_idx, between_idx,
 						  both_idx, p_tilde, N_within, N_between, N_both);
 
-	  log_lik_sat[rr1:rr2] = twolevel_logdens(mean_d_full_sat[rr1:rr2], cov_d_full[rr1:rr2],
-						  S_PW_sat[grpidx], YX[r3:r4],
+	  log_lik_sat[rr1:rr2] = twolevel_logdens(mean_d_full[rr1:rr2], cov_d_full[rr1:rr2],
+						  S_PW[grpidx], YX[r3:r4],
 						  nclus[grpidx,], cluster_size[rr1:rr2],
 						  cluster_size[rr1:rr2], nclus[grpidx,2],
 						  intone[1:nclus[grpidx,2]], xbar_w[grpidx, ov_idx1],
-						  S_PW_sat[grpidx], xbar_b[grpidx, ov_idx2],
-						  cov_b_sat[grpidx, ov_idx2, ov_idx2],
+						  S_PW[grpidx], xbar_b[grpidx, ov_idx2], cov_b[grpidx, ov_idx2, ov_idx2],
 						  ov_idx1, ov_idx2, within_idx, between_idx,
 						  both_idx, p_tilde, N_within, N_between, N_both);
 
-	  log_lik_rep_sat[rr1:rr2] = twolevel_logdens(mean_d_rep_sat[rr1:rr2], cov_d_full[rr1:rr2],
-						      S_PW_rep_sat[grpidx], YXstar_rep[r3:r4],
+	  log_lik_rep_sat[rr1:rr2] = twolevel_logdens(mean_d_rep[rr1:rr2], cov_d_full[rr1:rr2],
+						      S_PW_rep[grpidx], YXstar_rep[r3:r4],
 						      nclus[grpidx,], cluster_size[rr1:rr2],
 						      cluster_size[rr1:rr2], nclus[grpidx,2],
 						      intone[1:nclus[grpidx,2]], Mu_rep_sat[grpidx],
-						      S_PW_rep_sat[grpidx], xbar_b_rep[grpidx, ov_idx2],
-						      cov_b_rep_sat[grpidx, ov_idx2, ov_idx2],
+						      S_PW_rep[grpidx], xbar_b_rep[grpidx, ov_idx2],
+						      cov_b_rep[grpidx, ov_idx2, ov_idx2],
 						      ov_idx1, ov_idx2,
 						      within_idx, between_idx, both_idx, p_tilde,
 						      N_within, N_between, N_both);

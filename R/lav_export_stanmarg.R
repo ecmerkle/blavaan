@@ -1250,7 +1250,7 @@ lav2standata <- function(lavobject) {
     dat$log_lik_x <- array(rep(llx / dat$ncluster_sizes, dat$ncluster_sizes), sum(dat$ncluster_sizes))
 
     ## clusterwise data summaries, for loo and waic and etc
-    cidx <- cid <- lavInspect(lavobject, 'cluster.idx')
+    cidx <- lavInspect(lavobject, 'cluster.idx')
     if (inherits(cidx, "list")) {
       if (length(cidx) > 1) {
         for (g in 2:length(cidx)) {
@@ -1258,67 +1258,13 @@ lav2standata <- function(lavobject) {
         }
       }
       cidx <- unlist(cidx)
-    } else {
-      cid <- list(cid)
     }
     mean_d_full <- rowsum.default(as.matrix(dat$YX), cidx) / dat$cluster_size
-    mean_d_full_sat <- mean_d_full
-    if (dat$N_within > 0) {
-      for (i in 1:dat$N_within) {
-        mean_d_full_sat[, dat$within_idx[i]] <- mean(as.matrix(dat$YX)[, dat$within_idx[i]])
-      }
-    }
-
-    ## cinv for each group, for computing saturated _rep matrices for ppp
-    dat$gs <- array(unlist(sapply(YLp, function(x) x[[2]]$s, simplify = FALSE)))
-
-    ## computations for "sat" versions of S_PW and cov_b
-    S_PW_sat <- cov_b_sat <- vector("list", Ng)
-    nclus <- dat$nclus
-
-    srow <- 1; erow <- nclus[1, 2]
-    for (g in 1:Ng) {
-      Y2c <- t( t(mean_d_full_sat[srow:erow, , drop = FALSE]) - colMeans(YX[[g]]))
-      Y1a <- YX[[g]] - mean_d_full_sat[cid[[g]], , drop = FALSE]
-      S.w <- crossprod(Y1a) / (nclus[g, 1] - nclus[g, 2])
-
-      csize <- Lp[[g]]$cluster.size[[2]]
-      S.b <- crossprod(Y2c * csize, Y2c) / (nclus[g, 2] - 1)
-
-      if (dat$N_between > 0) {
-        bidx <- dat$between_idx[1:dat$N_between]
-
-        S.w[bidx, ] <- 0
-        S.w[, bidx] <- 0
-        
-        S.b[, bidx] <- (dat$gs[g] * nclus[g, 2] / nclus[g, 1]) * S.b[, bidx, drop = FALSE]
-        S.b[bidx, ] <- (dat$gs[g] * nclus[g, 2] / nclus[g, 1]) * S.b[bidx, , drop = FALSE]
-        S.b[bidx, bidx] <- dat$gs[g] * crossprod(Y2c[, bidx, drop = FALSE]) / nclus[g, 2]
-      }
-
-      Sigma.b <- (S.b - S.w)/dat$gs[g]
-
-      if (dat$N_within > 0) {
-        Sigma.b[dat$within_idx, ] <- 0
-        Sigma.b[, dat$within_idx] <- 0
-      }
-
-      notbidx <- dat$between_idx[(dat$N_between + 1):dat$p_tilde]
-      S_PW_sat[[g]] <- S.w[notbidx, notbidx, drop = FALSE]
-      cov_b_sat[[g]] <- Sigma.b
-      
-      srow <- srow + erow
-      if (g < Ng) erow <- erow + nclus[(g + 1), 2]
-    }
-
-    dat$S_PW_sat <- S_PW_sat
-    dat$cov_b_sat <- cov_b_sat
 
     tmpYX <- split.data.frame(dat$YX, cidx)
     dat$YX <- do.call("rbind", tmpYX)
     dat$log_lik_x_full <- llx_2l(Lp[[1]], dat$YX, mean_d_full, cidx)
     dat$mean_d_full <- lapply(1:nrow(mean_d_full), function(i) mean_d_full[i, dat$between_idx])
-    dat$mean_d_full_sat <- lapply(1:nrow(mean_d_full_sat), function(i) mean_d_full_sat[i, dat$between_idx])
 
     ## cov_d is variability across clusters of same size, so irrelevant for clusterwise
     ## (just send 0s to satisfy the Stan function)
@@ -1332,6 +1278,9 @@ lav2standata <- function(lavobject) {
                                                                            ncol(dat$xbar_b),
                                                                            Ng))
     dat$cov_b <- aperm(cov_b, c(3, 1, 2))
+    
+    ## cinv for each group, for computing saturated _rep matrices for ppp
+    dat$gs <- array(unlist(sapply(YLp, function(x) x[[2]]$s, simplify = FALSE)))
   } else {
     dat$nclus <- array(1, c(Ng, 2))
     dat$cluster_size <- array(1, Ng)
@@ -1351,17 +1300,14 @@ lav2standata <- function(lavobject) {
     
     dat$mean_d <- array(0, c(Ng, 0))
     dat$cov_w <- array(0, c(Ng, 0, 0))
-    dat$S_PW_sat <- array(0, c(Ng, 0, 0))
     dat$log_lik_x <- array(0, Ng)
     dat$log_lik_x_full <- array(0, Ng)
     dat$cov_d <- array(0, c(Ng, 0, 0))
     dat$mean_d_full <- array(0, c(Ng, 0))
-    dat$mean_d_full_sat <- array(0, c(Ng, 0))
     dat$cov_d_full <- array(0, c(Ng, 0, 0))
     dat$xbar_w <- array(0, c(Ng, 0))
     dat$xbar_b <- array(0, c(Ng, 0))
     dat$cov_b <- array(0, c(Ng, 0, 0))
-    dat$cov_b_sat <- array(0, c(Ng, 0, 0))
     dat$gs <- array(1, Ng)
   } # multilevel
   
