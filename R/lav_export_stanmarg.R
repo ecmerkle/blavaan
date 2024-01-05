@@ -623,7 +623,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       fpars <- res$wskel[1:veclen,1] == 0 | res$wskel[1:veclen,3] == 1
       nfree <- c(nfree, list(sum(fpars)))
       names(nfree)[length(nfree)] <- 'lvrho'
-      freeparnums[ptrows[fpars]] <- 1:sum(fpars)
+      freeparnums[twsel][ptrows[fpars]] <- 1:sum(fpars)
     }
 
     ## repeated for all free cov entries including blocks
