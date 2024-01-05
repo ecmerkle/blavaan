@@ -86,12 +86,12 @@ library(brms)
 Ans we will need to extract the posterior draws a matrix, 
 
 ```{r, eval=T}
-mc_out <- as.matrix(blavInspect(fit, "mcmc"))
+mc_out <- as.matrix(blavInspect(fit, "mcmc", add.labels = FALSE))
 dim(mc_out)
 colnames(mc_out)
 ```
 
-It is also important to note that the parameters in the posterior draws are named after the ```Stan``` underlying object names, instead of the ```(b)lavaan``` parameter names. You can see what each parameter name equates to with ```partable()``` function, as follows
+It is also important to note that the parameters in the posterior draws are named after the ```Stan``` underlying object names, instead of the ```(b)lavaan``` parameter names. This is due to the argument `add.labels = FALSE` and is used here to avoid trouble with parameter names that have tildes or equal signs in them. You can see what each parameter name equates to with the ```partable()``` function, as follows
 
 ```{r}
 pt <- partable(fit)[,c("lhs","op","rhs","pxnames")]
@@ -104,7 +104,7 @@ For this example we will focus on the regressions between factors
 pt[pt$op=="~",]
 ```
 
-Now, we can calculate pd, with the ```hypothesis()``` function from ```brms``` we can ask specific question of the posterior distributions, for example if we want to know what proportion of the regression ```dem65~ind60``` is higher than 0. The function requires 2 arguments, the posterior draws (```mc_out```) and a hypothesis (```bet_sign[2] > 0```), we are also adding the ``alpha``` argument that specifies the size for the credible intervals
+Now, we can calculate pd, with the ```hypothesis()``` function from ```brms```. We can ask specific questions of the posterior distributions, for example if we want to know what proportion of the regression ```dem65~ind60``` is higher than 0. The function requires 2 arguments, the posterior draws (```mc_out```) and a hypothesis (```bet_sign[2] > 0```). We are also adding the ``alpha``` argument that specifies the size for the credible intervals
 
 ```{r}
 hypothesis(mc_out, "bet_sign[2] > 0", alpha = 0.05)
