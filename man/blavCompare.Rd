@@ -13,7 +13,7 @@ blavCompare(object1, object2, ...)
 \arguments{
   \item{object1}{An object of class \code{blavaan}.}
   \item{object2}{A second object of class \code{blavaan}.}
-  \item{\dots}{Other arguments (unused for now).}
+  \item{\dots}{Other arguments to loo().}
 }
 \details{
 This function approximates the log-Bayes factor of two candidate models using the Laplace approximation to each model's marginal log-likelihood.
