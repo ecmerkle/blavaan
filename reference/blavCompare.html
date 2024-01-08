@@ -103,17 +103,24 @@
 </dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>This function approximates the log-Bayes factor of two candidate models using the Laplace approximation to each model's marginal log-likelihood.</p>
+    <p>This function computes Bayesian model comparison metrics, including a
+Bayes factor approximation, WAIC, and LOOIC.</p>
+<p>The log-Bayes factor of the two models is based on the Laplace
+approximation to each model's marginal log-likelihood.</p>
+<p>The WAIC and LOOIC metrics come from the loo package. The ELPD
+difference and SE specifically come from loo::loo_compare().</p>
     </div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     
 
-<p>The log-Bayes factor approximation, along with each model's approximate marginal log-likelihood.</p>
+<p>A list containing separate results for log-Bayes factor, WAIC, LOOIC,
+and differences between WAIC and LOOIC.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Raftery, A. E. (1993). Bayesian model selection in structural equation models. In K. A. Bollen &amp; J. S. Long (Eds.), Testing structural equation models (pp. 163-180). Beverly Hills, CA: Sage.</p>
+<p>Vehtari A, Gelman A, Gabry J (2017). “Practical Bayesian model evaluation using leave-one-out cross-validation and WAIC.” _Statistics and Computing_, *27*, 1413-1432.</p>
     </div>
 
     <div class="section level2">
