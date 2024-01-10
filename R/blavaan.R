@@ -328,9 +328,8 @@ blavaan <- function(...,  # default lavaan arguments
     if(lavInspect(LAV, 'nlevels') > 1){
         # ppp for within-only ovs turned off because saturated lik doesn't work
         if(length(LAV@Data@Lp[[1]]$within.idx[[1]]) > 0){
-            origtest <- "none"
-            dotdotdot$test <- "none"
-            cat('blavaan NOTE: ppp is currently unavailable for models with within-only ovs')
+            if(!("test" %in% dotNames)) origtest <- "none"
+            cat('blavaan NOTE: test="none" by default for models with within-only ovs, because the metrics appear to be unstable')
         }
     }
 
