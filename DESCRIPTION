@@ -40,5 +40,7 @@ LinkingTo: StanHeaders (>= 2.26.0), rstan (>= 2.26.0), BH (>= 1.69.0), Rcpp (>= 
 Suggests: runjags(>= 2.0.4-3), modeest(>= 2.3.3), rjags, cmdstanr, semTools, tinytest
 SystemRequirements: GNU make
 NeedsCompilation: yes
+URL: https://ecmerkle.github.io/blavaan/, https://github.com/ecmerkle/blavaan
+BugReports: https://github.com/ecmerkle/blavaan/issues
 Additional_repositories: https://mc-stan.org/r-packages/
 Config/Needs/website: brms
