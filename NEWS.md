@@ -1,3 +1,17 @@
+
+# Version 0.5-3
+## New features
+* Functionality to find unrestricted blocks of the model's psi matrix (lv covariance matrix). lkj priors are assigned to these unrestricted blocks, improving the positive definite issue described in the "Opaque priors" paper.
+
+* Improved functionality for obtaining posterior modes via, e.g., summary(., postmode = TRUE)
+
+* blavCompare() messaging is improved to clarify ELPD differences, and the function returns more output.
+
+* Bug fix in two-level models with within-only observed variables, messaging added for unstable ppp.
+
+* Bugs from 0.5-2 are fixed.
+
+
 # Version 0.5-2
 ## New features
 * This is a maintenance release, primarily adding the new array declaration syntax in Stan models (syntax that became available in the new version of rstan).
