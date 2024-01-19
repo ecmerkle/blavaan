@@ -9,6 +9,8 @@
 
 * Bug fix in two-level models with within-only observed variables, messaging added for unstable ppp.
 
+* When extracting posterior draws via blavInspect(., "mcmc"), column names now match lavaan parameter names. For old behavior involving Stan parameter names, use argument add.labels = FALSE
+
 * Bugs from 0.5-2 are fixed.
 
 
