@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-2.1223</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-3</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -87,6 +87,7 @@
 <li><p>Improved functionality for obtaining posterior modes via, e.g., summary(., postmode = TRUE)</p></li>
 <li><p>blavCompare() messaging is improved to clarify ELPD differences, and the function returns more output.</p></li>
 <li><p>Bug fix in two-level models with within-only observed variables, messaging added for unstable ppp.</p></li>
+<li><p>When extracting posterior draws via blavInspect(., “mcmc”), column names now match lavaan parameter names. For old behavior involving Stan parameter names, use argument add.labels = FALSE</p></li>
 <li><p>Bugs from 0.5-2 are fixed.</p></li>
 </ul></div>
 </div>
