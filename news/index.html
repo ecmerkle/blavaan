@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-3.1229</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,7 +80,7 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.5-3" id="version-05-3">Version 0.5-3<a class="anchor" aria-label="anchor" href="#version-05-3"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.5-3" id="version-05-3">Version 0.5-3<a class="anchor" aria-label="anchor" href="#version-05-3"></a></h2><p class="text-muted">CRAN release: 2024-01-19</p>
 <div class="section level3">
 <h3 id="new-features-0-5-3">New features<a class="anchor" aria-label="anchor" href="#new-features-0-5-3"></a></h3>
 <ul><li><p>Functionality to find unrestricted blocks of the model’s psi matrix (lv covariance matrix). lkj priors are assigned to these unrestricted blocks, improving the positive definite issue described in the “Opaque priors” paper.</p></li>
@@ -89,6 +89,10 @@
 <li><p>Bug fix in two-level models with within-only observed variables, messaging added for unstable ppp.</p></li>
 <li><p>When extracting posterior draws via blavInspect(., “mcmc”), column names now match lavaan parameter names. For old behavior involving Stan parameter names, use argument add.labels = FALSE</p></li>
 <li><p>Bugs from 0.5-2 are fixed.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="bugsglitches-discovered-after-the-release-0-5-3">Bugs/glitches discovered after the release:<a class="anchor" aria-label="anchor" href="#bugsglitches-discovered-after-the-release-0-5-3"></a></h3>
+<ul><li>Some models with exogenous covariates, fixed.x=TRUE, and missing data fail to converge and yield implausible parameter values (reported by DeAnne Hunter).</li>
 </ul></div>
 </div>
     <div class="section level2">
