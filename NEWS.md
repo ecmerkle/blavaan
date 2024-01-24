@@ -13,6 +13,9 @@
 
 * Bugs from 0.5-2 are fixed.
 
+## Bugs/glitches discovered after the release:
+* Some models with exogenous covariates, fixed.x=TRUE, and missing data fail to converge and yield implausible parameter values (reported by DeAnne Hunter).
+
 
 # Version 0.5-2
 ## New features
