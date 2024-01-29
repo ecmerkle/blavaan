@@ -184,15 +184,15 @@ item <strong>x9</strong>.</p>
 <span><span class="co">## </span></span>
 <span><span class="co">##               EAP Median     MAP     SD  lower  upper PPP_sim_GreaterThan_obs</span></span>
 <span><span class="co">## visual=~x9 34.745 34.870  34.315 10.956 17.035 52.612                   0.014</span></span>
-<span><span class="co">## x7~~x8     33.768 36.141  39.875 13.802 10.297 55.698                   0.068</span></span>
-<span><span class="co">## x8~~x9     26.210 12.057   2.696 40.700  0.000 66.572                   0.315</span></span>
-<span><span class="co">## x4~~x6     19.387  6.467 217.175 41.964  0.000 49.975                   0.479</span></span>
+<span><span class="co">## x7~~x8     33.768 36.141  39.875 13.802 10.297 55.698                   0.064</span></span>
+<span><span class="co">## x8~~x9     26.210 12.057   2.696 40.700  0.000 66.572                   0.308</span></span>
+<span><span class="co">## x4~~x6     19.387  6.467 217.175 41.964  0.000 49.975                   0.471</span></span>
 <span><span class="co">## visual=~x7 18.572 16.523  14.668 10.253  3.664 32.557                   0.011</span></span>
 <span><span class="co">##            PPP_sim_LessThan_obs</span></span>
 <span><span class="co">## visual=~x9                0.986</span></span>
-<span><span class="co">## x7~~x8                    0.932</span></span>
-<span><span class="co">## x8~~x9                    0.685</span></span>
-<span><span class="co">## x4~~x6                    0.521</span></span>
+<span><span class="co">## x7~~x8                    0.936</span></span>
+<span><span class="co">## x8~~x9                    0.692</span></span>
+<span><span class="co">## x4~~x6                    0.529</span></span>
 <span><span class="co">## visual=~x7                0.989</span></span></code></pre>
 <p>But according to the posterior median, the parameter that would have
 the highest impact would be the residual correlation between indicators
@@ -204,17 +204,17 @@ the highest impact would be the residual correlation between indicators
 <span><span class="co">## </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##                EAP Median    MAP     SD  lower  upper PPP_sim_GreaterThan_obs</span></span>
-<span><span class="co">## x7~~x8      33.768 36.141 39.875 13.802 10.297 55.698                   0.068</span></span>
+<span><span class="co">## x7~~x8      33.768 36.141 39.875 13.802 10.297 55.698                   0.064</span></span>
 <span><span class="co">## visual=~x9  34.745 34.870 34.315 10.956 17.035 52.612                   0.014</span></span>
 <span><span class="co">## visual=~x7  18.572 16.523 14.668 10.253  3.664 32.557                   0.011</span></span>
-<span><span class="co">## x8~~x9      26.210 12.057  2.696 40.700  0.000 66.572                   0.315</span></span>
-<span><span class="co">## textual=~x1 10.988  9.873  2.037  8.037  0.000 22.526                   0.222</span></span>
+<span><span class="co">## x8~~x9      26.210 12.057  2.696 40.700  0.000 66.572                   0.308</span></span>
+<span><span class="co">## textual=~x1 10.988  9.873  2.037  8.037  0.000 22.526                   0.223</span></span>
 <span><span class="co">##             PPP_sim_LessThan_obs</span></span>
-<span><span class="co">## x7~~x8                     0.932</span></span>
+<span><span class="co">## x7~~x8                     0.936</span></span>
 <span><span class="co">## visual=~x9                 0.986</span></span>
 <span><span class="co">## visual=~x7                 0.989</span></span>
-<span><span class="co">## x8~~x9                     0.685</span></span>
-<span><span class="co">## textual=~x1                0.778</span></span></code></pre>
+<span><span class="co">## x8~~x9                     0.692</span></span>
+<span><span class="co">## textual=~x1                0.777</span></span></code></pre>
 <p>The MI is still recommended as the best metric to indicate which
 parameter is best to include next, and we can use the SEPC to evaluate
 the <strong>likely</strong> effect size for the respective
@@ -226,17 +226,17 @@ parameters.</p>
 <span><span class="co">## </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##               EAP Median   MAP    SD lower upper PPP_sim_GreaterThan_obs</span></span>
-<span><span class="co">## x7~~x8      0.795  0.781 0.733 0.348 0.503 1.272                   0.042</span></span>
-<span><span class="co">## visual=~x9  0.518  0.499 0.474 0.133 0.333 0.708                   0.006</span></span>
-<span><span class="co">## textual=~x1 0.272  0.297 0.327 0.171 0.027 0.504                   0.118</span></span>
-<span><span class="co">## x1~~x9      0.246  0.245 0.244 0.040 0.200 0.300                   0.015</span></span>
-<span><span class="co">## x2~~x3      0.221  0.221 0.216 0.038 0.168 0.281                   0.026</span></span>
+<span><span class="co">## x7~~x8      0.795  0.781 0.733 0.348 0.503 1.272                   0.038</span></span>
+<span><span class="co">## visual=~x9  0.518  0.499 0.474 0.133 0.333 0.708                   0.008</span></span>
+<span><span class="co">## textual=~x1 0.272  0.297 0.327 0.171 0.027 0.504                   0.134</span></span>
+<span><span class="co">## x1~~x9      0.246  0.245 0.244 0.040 0.200 0.300                   0.021</span></span>
+<span><span class="co">## x2~~x3      0.221  0.221 0.216 0.038 0.168 0.281                   0.021</span></span>
 <span><span class="co">##             PPP_sim_LessThan_obs</span></span>
-<span><span class="co">## x7~~x8                     0.958</span></span>
-<span><span class="co">## visual=~x9                 0.994</span></span>
-<span><span class="co">## textual=~x1                0.882</span></span>
-<span><span class="co">## x1~~x9                     0.985</span></span>
-<span><span class="co">## x2~~x3                     0.974</span></span></code></pre>
+<span><span class="co">## x7~~x8                     0.962</span></span>
+<span><span class="co">## visual=~x9                 0.992</span></span>
+<span><span class="co">## textual=~x1                0.866</span></span>
+<span><span class="co">## x1~~x9                     0.979</span></span>
+<span><span class="co">## x2~~x3                     0.979</span></span></code></pre>
 <p>Here we see that for the 2 highest parameters, the likely SEPC is
 x7~~x8 = 0.795191942380968 and visual=~x9 = 0.518161872022017. With this
 information we can decide to include one of these new parameters in the
