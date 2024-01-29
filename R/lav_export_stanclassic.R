@@ -543,12 +543,11 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
   out$inits <- inits
 
   ## Now add data if we have it
-  datablk <- paste0("data{\n", t1, "int N;\n", t1, "int g[N];\n",
-                    t1, "int lvind[", length(lvindall), "];\n",
-                    t1, "int etaind[", length(etaind), "];\n")
+  datablk <- paste0("data{\n", t1, "int N;\n", t1, "array[N] int g;\n",
+                    t1, "array[", length(lvindall), "] int lvind;\n",
+                    t1, "array[", length(etaind), "] int etaind;\n")
   if(length(lv0.idx) > 0){
-    datablk <- paste0(datablk, t1, "int eta0ind[", length(lv0.idx),
-                      "];\n")
+    datablk <- paste0(datablk, t1, "array[", length(lv0.idx), "] int eta0ind;\n")
   }
 
   ## NB: if meanx is empty, we won't use it. so just
@@ -560,18 +559,18 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       meanx <- do.call("cbind", model@SampleStats@mean.x)
     }
   }
-  datablk <- paste0(datablk, t1, "real sampmean[", nrow(smean), ",",
-                    ncol(smean), "];\n", t1,
-                    "real meanx[", nrow(meanx), ",", ncol(meanx),
-                    "];\n")
+  datablk <- paste0(datablk, t1, "array[", nrow(smean), ",",
+                    ncol(smean), "] real sampmean;\n", t1,
+                    "array[", nrow(meanx), ",", ncol(meanx),
+                    "] real meanx;\n")
 
   if(length(ov.dummy.idx) == 0){
     ov.dummy.idx <- rep(0,2)
     lv.dummy.idx <- rep(0,2)
   }
-  datablk <- paste0(datablk, t1, "int dummyov[",
-                    length(ov.dummy.idx), "];\n", t1,
-                    "int dummylv[", length(lv.dummy.idx), "];\n")
+  datablk <- paste0(datablk, t1, "array[",
+                    length(ov.dummy.idx), "] int dummyov;\n", t1,
+                    "array[", length(lv.dummy.idx), "] int dummylv;\n")
 
   if(!is.null(lavdata) | inherits(model, "lavaan")){
     if(inherits(model, "lavaan")) lavdata <- model@Data
@@ -790,33 +789,33 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
 
     ## stan data block
     if(ny > 0){
-      datablk <- paste0(datablk, t1, "vector[", ny, "] y[N];\n")
+      datablk <- paste0(datablk, t1, "array[N] vector[", ny, "] y;\n")
     }
     if(n.psi.ov > 0){
-      datablk <- paste0(datablk, t1, "vector[", n.psi.ov,
-                        "] x[N];\n")
+      datablk <- paste0(datablk, t1, "array[N] vector[", n.psi.ov,
+                        "] x;\n")
     }
     if(missflag){
       if(ny > 0){
-        datablk <- paste0(datablk, t1, "int obsvar[N,", ny,
-                          "];\n", t1, "int misvar[N,", ny,
-                          "];\n", t1, "int nseen[N];\n",
-                          t1, "int nmis[N];\n")
+        datablk <- paste0(datablk, t1, "array[N,", ny,
+                          "] int obsvar;\n", t1, "array[N,", ny,
+                          "] int misvar;\n", t1, "array[N] int nseen;\n",
+                          t1, "array[N] int nmis;\n")
       }
     }
     if(miss.psi){
       if(n.psi.ov > 0){
-        datablk <- paste0(datablk, t1, "int obsvarx[", ngroups, ",",
+        datablk <- paste0(datablk, t1, "array[", ngroups, ",",
                           max(gpatt), ",", n.psi.ov,
-                          "];\n", t1, "int misvarx[N,", n.psi.ov,
-                          "];\n", t1, "int obsexo[N,",
-                          ncol(obsexo), "];\n", t1,
-                          "int nseenx[", ngroups, ",", max(gpatt),
-                          "];\n", t1,
-                          "int obspatt[N];\n", t1, 
-                          "int gpatt[", ngroups, "];\n", t1,
-                          "int nmisx[N];\n", t1,
-                          "int nseenexo[N];\n")
+                          "] int obsvarx;\n", t1, "array[N,", n.psi.ov,
+                          "] int misvarx;\n", t1, "array[N,",
+                          ncol(obsexo), "] int obsexo;\n", t1,
+                          "array[", ngroups, ",", max(gpatt),
+                          "] int nseenx;\n", t1,
+                          "array[N] int obspatt;\n", t1, 
+                          "array[", ngroups, "] int gpatt;\n", t1,
+                          "array[N] int nmisx;\n", t1,
+                          "array[N] int nseenexo;\n")
       }
     }
 
@@ -861,8 +860,8 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       tmpname <- tpnames[i]
 
       if(tmpname == "lambda" & std.lv){
-        GQ <- paste0(GQ, t1, "real lambda[", tmpdim[1], ",",
-                     tmpdim[2], ",", tmpdim[3], "];\n")
+        GQ <- paste0(GQ, t1, "array[", tmpdim[1], ",",
+                     tmpdim[2], ",", tmpdim[3], "] real lambda;\n")
         GQ <- paste0(GQ, t1, "matrix[N,", tmpdim[2], "] eta;\n")
         gqeqs <- paste0(gqeqs, t1, "lambda = lambdaUNC;\n", t1, 
                         "eta = etaUNC;\n")
@@ -871,52 +870,52 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
       }
 
       if(tmpname == "beta" & std.lv){
-        GQ <- paste0(GQ, t1, "real beta[", tmpdim[1], ",",
-                     tmpdim[2], ",", tmpdim[3], "];\n")
+        GQ <- paste0(GQ, t1, "array[", tmpdim[1], ",",
+                     tmpdim[2], ",", tmpdim[3], "] real beta;\n")
         gqeqs <- paste0(gqeqs, t1, "beta = betaUNC;\n")
 
         tmpname <- "betaUNC"
       }
 
       if(tmpname == "psi" & std.lv){
-        GQ <- paste0(GQ, t1, "real psi[", tmpdim[1], ",",
-                     tmpdim[2], ",", tmpdim[3], "];\n")
+        GQ <- paste0(GQ, t1, "array[", tmpdim[1], ",",
+                     tmpdim[2], ",", tmpdim[3], "] real psi;\n")
         gqeqs <- paste0(gqeqs, t1, "psi = psiUNC;\n")
 
         tmpname <- "psiUNC"
       }
       
-      datdecs <- paste0(datdecs, t1, "real ",
-                        names(pmats)[i], "[", tmpdim[1],
-                        ",", tmpdim[2], ",", tmpdim[3], "];\n")
-      tpdecs <- paste0(tpdecs, t1, "real ",
-                       tmpname, "[", tmpdim[1],
-                       ",", tmpdim[2], ",", tmpdim[3], "];\n")
+      datdecs <- paste0(datdecs, t1, "array[", tmpdim[1],
+                        ",", tmpdim[2], ",", tmpdim[3], "] real ",
+                        names(pmats)[i], ";\n")
+      tpdecs <- paste0(tpdecs, t1, "array[", tmpdim[1],
+                       ",", tmpdim[2], ",", tmpdim[3], "] real ",
+                       tmpname, ";\n")
 
       if(tmpname == "theta"){
-        tpdecs <- paste0(tpdecs, t1, "matrix[", ny,
-                         ",", ny, "] thetld[", tmpdim[3],
-                         "];\n")
+        tpdecs <- paste0(tpdecs, t1, "array[", tmpdim[3],
+                         "] matrix[", ny,
+                         ",", ny, "] thetld;\n")
       }
 
       tpeqs <- paste0(tpeqs, t1, tmpname, " = ",
                       names(pmats)[i], ";\n")
     }
-    tpdecs <- paste0(tpdecs, t1, "real mu[N,", nov, "];\n")
+    tpdecs <- paste0(tpdecs, t1, "array[N,", nov, "] real mu;\n")
     GQ <- paste0(GQ, gqeqs, "\n")
 
     if(any(partable$mat == "def")){
       ndecs <- sum(partable$mat == "def" &
                    partable$group == 1)
-      tpdecs <- paste0(tpdecs, "\n", t1, "real def[", ndecs, ",1,",
-                       ngroups, "];\n")
+      tpdecs <- paste0(tpdecs, "\n", t1, "array[", ndecs, ",1,",
+                       ngroups, "] real def;\n")
     }
 
     if(nlv + n.psi.ov > 0){
       tpdecs <- paste0(tpdecs, t1, "matrix[N,", (nlv + n.psi.ov), "] ", etaname, ";\n")
       if(nlvno0 < nlv){
-        tpdecs <- paste0(tpdecs, t1, "vector[", (nlv + n.psi.ov),
-                         "] mueta[N];\n")
+        tpdecs <- paste0(tpdecs, t1, "array[N] vector[", (nlv + n.psi.ov),
+                         "] mueta;\n")
       }
       tpdecs <- paste0(tpdecs, "\n", t1, etaname,
                        " = rep_matrix(0, N, ", (nlv + n.psi.ov),
@@ -930,9 +929,9 @@ lav2stan <- function(model, lavdata = NULL, dp = NULL, n.chains = 1, mcmcextra =
         pmats <- c(pmats, list(beta = array(0, c(matrows[["psi"]],
                                                  matcols[["psi"]],
                                                  ngroups))))
-        datdecs <- paste0(datdecs, t1, "real beta[",
+        datdecs <- paste0(datdecs, t1, "array[",
                           matrows[["psi"]], ",", matcols[["psi"]],
-                          ",", ngroups, "];\n")
+                          ",", ngroups, "] real beta;\n")
     }
 
     ## add cholesky decomp of theta matrix (and psi for nov.x);

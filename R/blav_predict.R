@@ -5,7 +5,7 @@ function(object, newdata = NULL) {
     blavPredict(object, newdata = newdata)
 })
 
-blavPredict <- function(object, newdata = NULL, type = "lv") {
+blavPredict <- function(object, newdata = NULL, type = "lv", level = 1L) {
 
   stopifnot(inherits(object, "blavaan"))
   blavmodel <- object@Model
@@ -30,6 +30,11 @@ blavPredict <- function(object, newdata = NULL, type = "lv") {
   stantarget <- lavopt$target == "stan"
 
   if(lavInspect(object, "categorical") & type == "ymis") stop("blavaan ERROR: ymis is not yet implemented for ordinal models.", call. = FALSE)
+
+  if(level == 2L){
+    if(all(unlist(lavInspect(object, "nclusters")) == 1)) stop("blavaan ERROR: level 2 was requested but this does not appear to be a 2-level model.", call. = FALSE)
+    if(type %in% c("yhat", "ypred", "ymis")) stop("blavaan ERROR: option", type, "is not yet implemented for two-level models.", call. = FALSE)
+  }
   
   if(!is.null(newdata)) stop("blavaan ERROR: posterior predictions for newdata are not currently supported")
   
@@ -39,14 +44,25 @@ blavPredict <- function(object, newdata = NULL, type = "lv") {
   ## ypred: posterior predictive distribution of ovs conditioned on lv samples; mcmc list
   ## ymis: posterior predictive distribution of missing values conditioned on observed values; matrix
   if(type == "lv") {
-    FS <- do.call("rbind", blavInspect(object, 'lvs'))
+    FS <- do.call("rbind", blavInspect(object, 'lvs', level = level))
 
     ## N and latent variable names, to set dimensions
-    N <- sum(lavInspect(object, "ntotal"))
-    etas <- lavNames(object, "lv")
+    lvmn <- lavInspect(object, "mean.lv")
+    if(!inherits(lvmn, "list")){
+      lvmn <- list(lvmn)
+    }
+    if(level == 1L){
+      nlv <- length(lvmn[[1]])
+      N <- sum(lavInspect(object, "ntotal"))
+      etas <- names(lvmn[[1]])
+    } else {
+      nlv <- length(lvmn[[2]])
+      N <- sum(unlist(lavInspect(object, "nclusters")))
+      etas <- names(lvmn[[2]])
+    }
 
     out <- lapply(1:NROW(FS), function(i) {
-      rowmat <- matrix(FS[i,], N, length(etas))
+      rowmat <- matrix(FS[i,], N, nlv)
       colnames(rowmat) <- etas
       rowmat } )
   } else if(type == "lvmeans") {

@@ -41,16 +41,7 @@ summary.bfi <- function(object,
     }
 
     if ("mode" %in% central.tendency || "map" %in% central.tendency) {
-      ## can the modeest package be used?
-      if (suppressMessages(requireNamespace("modeest", quietly = TRUE)) & length(unique(x[!is.na(x)])) > 1) {
-        out <- c(out, MAP =  modeest::mlv(x, method = "kernel", na.rm = TRUE))
-      } else if(!all(is.na(x))) {
-        ## if not, use the quick-and-dirty way
-        dd <- density(x, na.rm = TRUE)
-        out <- c(out, MAP = dd$x[which.max(dd$y)])
-      } else {
-        out <- c(out, NA)
-      }
+      out <- c(out, MAP = modeapprox(x))
     }
 
     out <- c(out, SD = sd(x, na.rm = TRUE))
@@ -58,10 +49,13 @@ summary.bfi <- function(object,
     if (hpd & !all(is.na(x))) {
       if (!"package:coda" %in% search()) attachNamespace("coda")
       out <- c(out, HPDinterval(as.mcmc(x), prob = prob)[1, ] )
+    } else if (hpd) {
+      out <- c(out, NA, NA)
     }
 
     out
   }
+
   ## apply function to each fit index
   indexSummaries <- lapply(object@indices, FUN)
   out <- as.data.frame(do.call(rbind, indexSummaries))
@@ -113,6 +107,9 @@ blavFitIndices <- function(object, thin = 1, pD = c("loo","waic","dic"),
   }
   if (blavInspect(object, "categorical")) {
     stop('blavaan ERROR: Fit indices are currently unavailable for ordinal models')
+  }
+  if (blavInspect(object, "nlevels") > 1) {
+    stop('blavaan ERROR: Fit indices are currently unavailable for multilevel models')
   }
   
   rescale <- tolower(as.character(rescale[1])) #FIXME: make sure references to "devM" check for "devm"

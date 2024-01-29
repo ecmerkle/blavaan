@@ -158,6 +158,7 @@ dist2r <- function(priors, target){
         rosetta <- rosetta
         prisplit <- strsplit(priors, "[, ()]+")
         pridist <- sapply(prisplit, function(x) x[1])
+        pridist <- paste0(pridist, "_lpdf")
         newdist <- rosetta$RFunction[match(pridist, rosetta$StanFunction)]
         for(i in 1:length(newdist)){
             if(!is.na(newdist[i])) prisplit[[i]][1] <- newdist[i]
@@ -235,7 +236,7 @@ make_mcmc <- function(mcmcout, stanlvs = NULL){
     lavmcmc <- as.array(mcmcout)
     lavmcmc <- lapply(seq(dim(lavmcmc)[2]), function(x) lavmcmc[,x,])
     reord <- match(rownames(tmpsumm$summary), colnames(lavmcmc[[1]]))
-    lavmcmc <- lapply(lavmcmc, function(x) x[,reord])
+    lavmcmc <- lapply(lavmcmc, function(x) x[, reord, drop = FALSE])
 
     if(is.array(stanlvs)){
       stanlvs <- lapply(seq(dim(stanlvs)[2]), function(x) stanlvs[,x,])
@@ -429,13 +430,14 @@ checkcovs <- function(lavobject){
 
 ## check whether model cov matrix is block diagonal
 ## uses matrices from lavInspect(, "free")
-blkdiag <- function(mat) {
+## eqcon is attributes(lavInspect(, "free"))$header
+blkdiag <- function(mat, eqcon = NULL) {
   isblk <- TRUE
   cnum <- 1L
   nblks <- 0
   matrows <- NROW(mat)
-  blkse <- matrix(0, matrows, 3) # start/end of each block, and first free param in that block
-  while (isblk && cnum <= matrows) {
+  blkse <- matrix(0, matrows, 3) # start/end of each block, is it a fully unrestricted block
+  while (cnum <= matrows) {
     ## ending row of this potential block
     currend <- which(mat[, cnum] > 0)
     if (length(currend) > 0) {
@@ -445,41 +447,84 @@ blkdiag <- function(mat) {
       currend <- cnum
     }
 
+    nblks <- nblks + 1
     if (currend > cnum) {
       ## check that columns cnum+1 to max() also equal max()
       othend <- sapply((cnum + 1):currend, function(i) {
         nzents <- which(mat[,i] > 0)
         if (length(nzents) > 0) {
-          out <- max(nzents)
+          out <- max(nzents, i)
         } else {
           out <- i
         }
         out})
-        
+
       if (all(othend == currend)) {
         ## is this entire submatrix free?
         submat <- mat[cnum:currend, cnum:currend]
-        if (all(submat[lower.tri(submat)] > 0)) {
-          nblks <- nblks + 1
-          blkse[nblks,] <- c(cnum, currend, min(submat[lower.tri(submat)]))
-          cnum <- currend + 1
+        submat <- submat[lower.tri(submat)]
+        if (all(submat > 0) & all(!(submat %in% as.numeric(eqcon$rhs)))) {
+          blkse[nblks,] <- c(cnum, currend, TRUE)
         } else {
           isblk <- FALSE
+          blkse[nblks,] <- c(cnum, currend, FALSE)
         }
       } else {
         isblk <- FALSE
+        blkse[nblks,] <- c(cnum, currend, FALSE)
       }
     } else if (currend == cnum) {
       ## 1x1 block
-      nblks <- nblks + 1
-      blkse[nblks,] <- c(cnum, cnum, 0)
-      cnum <- cnum + 1
+      blkse[nblks,] <- c(cnum, cnum, TRUE)
     } else {
       isblk <- FALSE
     }
+    cnum <- currend + 1
   }
 
-  if (isblk) blkse <- blkse[1:nblks, , drop = FALSE]
+  if (nrow(blkse) > 0) blkse <- blkse[1:nblks, , drop = FALSE]
   
   list(isblk = isblk, nblks = nblks, blkse = blkse)
+}
+
+## level labels for two-level models. this is taken from the similar lavaan function
+## with some small modifications.
+blav_partable_level_values <- function(partable) {
+    if(is.null(partable$level)) {
+        level.values <- 1L
+    } else if(is.numeric(partable$level)) {
+        tmp <- partable$level[  partable$level > 0L &
+                               !partable$op %in% c("==", "<", ">", ":=") ]
+        level.values <- unique(na.omit(tmp))
+    } else { # character
+        tmp <- partable$level[ nchar(partable$level) > 0L &
+                              !partable$op %in% c("==", "<", ">", ":=") ]
+        level.values <- unique(na.omit(tmp))
+    }
+
+    level.values
+}
+
+## Approximate posterior modes
+modeapprox <- function(draws) {
+  if(!inherits(draws, "matrix")) draws <- as.matrix(draws)
+  
+  ## can the modeest package be used?
+  out <- rep(NA, ncol(draws))
+  if (suppressMessages(requireNamespace("modeest", quietly = TRUE))) {
+    tryMode <- try(apply(draws, 2, modeest::mlv, method = "kernel", na.rm = TRUE),
+                   silent = TRUE)
+    if (!inherits(tryMode, "try-error") && is.numeric(tryMode)) {
+      out <- tryMode
+    }
+  }
+
+  if (all(is.na(out))) {
+    ## if not, use the quick-and-dirty way
+    dd <- try(apply(draws, 2, density, na.rm = TRUE), silent = TRUE)
+
+    if (!inherits(dd, "try-error")) out <- sapply(dd, function(z) z$x[which.max(z$y)])
+  }
+
+  out
 }

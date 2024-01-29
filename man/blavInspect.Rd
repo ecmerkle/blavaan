@@ -1,7 +1,7 @@
 \name{blavInspect}
 \alias{blavInspect}
 \alias{blavTech}
-\title{Inspect or Extract Information from a fitted blavaan object}
+\title{Inspect or Extract Information from a Fitted blavaan Object}
 \description{
 The \code{blavInspect()} and \code{blavTech()} functions can be used to
 inspect/extract information that is stored inside (or can be computed from) a
@@ -14,7 +14,7 @@ blavTech(blavobject, what, ...)
 \arguments{
 \item{blavobject}{An object of class blavaan.}
 \item{what}{Character. What needs to be inspected/extracted? See Details for Bayes-specific options, and see \code{\link{lavaan}}'s \code{lavInspect()} for additional options. Note: the \code{what} argument is not case-sensitive (everything is converted to lower case.)}
-\item{...}{Default lavaan arguments supplied to \code{lavInspect()}; see \code{\link{lavaan}}.}
+\item{...}{lavaan arguments supplied to \code{lavInspect()}; see \code{\link{lavaan}}.}
 }
 \details{
 Below is a list of Bayesian-specific values for the \code{what}
@@ -37,11 +37,9 @@ documentation.
   \item{\code{"postmode"}:}{Estimated posterior mode of each free parameter.}
   \item{\code{"postmean"}:}{Estimated posterior mean of each free parameter.}
   \item{\code{"postmedian"}:}{Estimated posterior median of each free parameter.}
-  \item{\code{"lvs"}:}{An object of class \code{mcmc} containing latent
-  variable (factor score) draws.}
-  \item{\code{"lvmeans"}:}{A matrix of mean factor scores (rows are
-  observations, columns are variables).}
-  \item{\code{"hpd"}:}{HPD interval of each free parameter. In this case, an additional argument \code{level} can be supplied to specify a number in (0,1) reflecting the percentage of the interval.}
+  \item{\code{"lvs"}:}{An object of class \code{mcmc} containing latent variable (factor score) draws. In two-level models, use \code{level = 1} or \code{level = 2} to specify which factor scores you want.}
+  \item{\code{"lvmeans"}:}{A matrix of mean factor scores (rows are observations, columns are variables). Use the additional \code{level} argument in the same way.}
+  \item{\code{"hpd"}:}{HPD interval of each free parameter. In this case, the \code{prob} argument can be used to specify a number in (0,1) reflecting the desired percentage of the interval.}
 }
 }
 \seealso{
@@ -59,6 +57,6 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939,
 
 # extract information
 blavInspect(fit, "psrf")
-blavInspect(fit, "hpd", level = .9)
+blavInspect(fit, "hpd", prob = .9)
 }
 }

@@ -138,7 +138,7 @@ set_inits_stan <- function(partable, nfree, n.chains, inits,
       }
       lvrhorows <- which(!is.na(freepartable$rhoidx) &
                          freepartable$free > 0 &
-                         freepartable$mat == "lvrho")
+                         freepartable$mat == "lvrho" & !grepl("lkj", freepartable$prior))
       if(length(rhorows) > 0){
           freepartable$freeparnums[lvrhorows] <- 1:length(lvrhorows)
       }
@@ -199,7 +199,7 @@ set_inits_stan <- function(partable, nfree, n.chains, inits,
     ##   ivs <- ivs^powval
     ##   ivs[ivs <= 0] <- -ivs[ivs <= 0]
     ## }
-    if(grepl("beta", freepartable$prior[i])){
+    if(grepl("beta", freepartable$prior[i]) | grepl("lkj", freepartable$prior[i])){
       ivs <- rep(.5, n.chains)
     }
 

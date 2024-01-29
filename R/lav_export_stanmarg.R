@@ -15,7 +15,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
 
   ## for corrmats, only use lower triangle
   if (grepl("_r", mat)) {
-    matskel[upper.tri(matskel)] <- 0    
+    matskel[upper.tri(matskel)] <- 0
     for (i in 1:Ng) {
       free[[i]][upper.tri(free[[i]])] <- 0
 
@@ -110,9 +110,10 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
             ## find sign-constrained loadings of the two lvs
             lampar1 <- lamfree[[i]][,fpar[j,2]]
             lampar12 <- lamfree2[[i]][,fpar[j,2]]
+
             ## see whether any are equality constrained
             l1match <- match(lampar1, constraint$rhs, nomatch = 0L)
-            transconst <- transtab[match(constraint$lhs[l1match], transtab[,1]), 2]
+            transconst <- transtab[match(constraint$lhs[l1match], transtab[,1]), 2*i]
             lampar12[l1match != 0] <- as.numeric(transconst)
             if (all(lampar12 == 0)) { # ov converted to lv
               l1 <- 1
@@ -127,7 +128,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
             lampar2 <- lamfree[[i]][,fpar[j,1]]
             lampar22 <- lamfree2[[i]][,fpar[j,1]]
             l2match <- match(lampar2, constraint$rhs, nomatch = 0L)
-            transconst <- transtab[match(constraint$lhs[l2match], transtab[,1]), 2]
+            transconst <- transtab[match(constraint$lhs[l2match], transtab[,1]), 2*i]
             lampar22[l2match != 0] <- as.numeric(transconst)
             if (all(lampar22 == 0)) {
               l2 <- 1
@@ -226,11 +227,13 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   free2 <- list()
   nfree <- list()
   lavpartable <- parTable(lavobject)
+
+  levlabs <- blav_partable_level_values(lavpartable)
   lavpartable <- lavMatrixRepresentation(lavpartable, add.attributes = TRUE)
   if (multilevel & level == 1L) {
-    lavpartable <- subset(lavpartable, level == "within")
+    lavpartable <- subset(lavpartable, (lavpartable$level == levlabs[1]) | (lavpartable$op %in% c("==", ":=")))
   } else if (multilevel & level == 2L) {
-    lavpartable <- subset(lavpartable, level == "between")
+    lavpartable <- subset(lavpartable, (lavpartable$level == levlabs[2]) | (lavpartable$op %in% c("==", ":=")))
   } else if (level == 2L) {
     lavpartable <- lavpartable[0,]
   }
@@ -535,13 +538,66 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   }
 
   ## 10. Psi_r
-  dat$fullpsi <- 0L
   if ("psi" %in% names(freemats[[1]])) {
     fr <- lapply(freemats, function(x){
       dmat <- x$psi
       diag(dmat) <- 0L
       dmat}
       )
+
+    blkinfo <- lapply(freemats, function(x) blkdiag(x$psi, attributes(freemats)$header))
+    blkpsi <- all(sapply(blkinfo, function(x) x$isblk))
+    blkse <- do.call("rbind", lapply(blkinfo, function(x) x$blkse))
+    if (nrow(blkse) > 0) {
+      blkse <- blkse[(blkse[,3] == 1) & (blkse[,2] - blkse[,1] > 1), , drop = FALSE]
+      blksizes <- blkse[,2] - blkse[,1] + 1
+      ublksizes <- unique(blksizes)
+      ublksizes <- ublksizes[order(ublksizes)]
+    } else {
+      ublksizes <- NULL
+    }
+
+    ## for now, we only support 5 unique block dimensions because each dimension requires
+    ## a separate parameter specification in Stan
+    if (length(ublksizes) > 5 | length(ublksizes) == 0) {
+      blkinfo <- NULL
+      if (length(ublksizes) > 5) blkpsi <- FALSE
+      dat$nblk <- array(0, dim = 5)
+      dat$psidims <- array(3, dim = 5)
+      dat$blkse <- matrix(nrow = 0, ncol = 7)
+    } else {
+      blkgrp <- rep(1:length(blkinfo), times = sapply(blkinfo, function(x) sum(x$blkse[,2] - x$blkse[,1] > 1)))
+      arrayidx <- as.numeric(as.factor(ublksizes))
+      dupsiz <- duplicated(blksizes)
+      blkidx <- rep(NA, nrow(blkse))
+      for (i in 1:length(ublksizes)) {
+        sizeidx <- blksizes == ublksizes[i]
+        blkidx[sizeidx] <- cumsum(dupsiz[sizeidx]) + 1
+      }
+      blkse <- cbind(blkse, blkgrp, arrayidx, blkidx, rep(1, nrow(blkse))) ## col 7 is for priors, handled later
+
+      nblk <- c(summary(factor(blksizes)), rep(0, 5 - length(ublksizes)))
+      dat$nblk <- array(nblk, dim = 5)
+      psidims <- c(ublksizes, rep(3, 5 - length(ublksizes)))
+      dat$psidims <- array(psidims, dim = 5)
+      dat$blkse <- blkse
+    }
+
+    ## zero out cors that are covered by a block, to get separate indexing for the full
+    ## cov matrix and for the matrix without blocks
+    frnoblock <- fr
+    if (with(dat, any(blkse[,3] == 1 & (blkse[,2] - blkse[,1] > 1)))) {
+      for (g in 1:Ng) {
+        tmpblk <- dat$blkse
+        tmpblk <- tmpblk[tmpblk[,3] == 1 & (tmpblk[,2] - tmpblk[,1] > 1) & tmpblk[,4] == g, , drop = FALSE]
+        if (nrow(tmpblk) > 0) {
+          for (j in 1:nrow(tmpblk)) {
+            srow <- tmpblk[j, 1]; erow <- tmpblk[j, 2]
+            frnoblock[[g]][srow:erow, srow:erow] <- 0
+          }
+        }
+      }
+    }
     
     es <- lapply(estmats, function(x){
       dmat <- x$psi
@@ -550,6 +606,27 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       dmat}
       )
 
+    frnums <- sapply(frnoblock, function(x) as.numeric(x[x != 0]))
+    twsel <- lavpartable$free %in% frnums
+    tmpwig <- lavpartable[twsel,'free'][which(lavpartable[twsel, 'plabel'] %in% wig)]
+
+    res <- matattr(frnoblock, es, constrain, mat = "Psi_r", Ng, opts$std.lv, tmpwig,
+                   free1 = free2$lambda, free2 = lyfree2, sign = dat$lam_y_sign,
+                   dest = dest)
+
+    dat$Psi_r_skeleton <- res$matskel
+    dat$w10skel <- res$wskel
+    dat$psi_r_sign <- res$sign
+    ptrows <- with(lavpartable[twsel, , drop = FALSE], which(mat == "psi" & free > 0 & row != col))
+    veclen <- length(ptrows)
+    if (veclen > 0) {
+      fpars <- res$wskel[1:veclen,1] == 0 | res$wskel[1:veclen,3] == 1
+      nfree <- c(nfree, list(sum(fpars)))
+      names(nfree)[length(nfree)] <- 'lvrho'
+      freeparnums[twsel][ptrows[fpars]] <- 1:sum(fpars)
+    }
+
+    ## repeated for all free cov entries including blocks
     frnums <- sapply(fr, function(x) as.numeric(x[x != 0]))
     twsel <- lavpartable$free %in% frnums
     tmpwig <- lavpartable[twsel,'free'][which(lavpartable[twsel, 'plabel'] %in% wig)]
@@ -558,34 +635,27 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
                    free1 = free2$lambda, free2 = lyfree2, sign = dat$lam_y_sign,
                    dest = dest)
 
-    dat$Psi_r_skeleton <- res$matskel
-    dat$w10skel <- res$wskel
-    dat$psi_r_sign <- res$sign
     free2 <- c(free2, list(rpsi = res$free))
-    ptrows <- with(lavpartable, which(mat == "psi" & free > 0 & row != col))
-    veclen <- length(ptrows)
-    if (veclen > 0) {
-      fpars <- res$wskel[1:veclen,1] == 0 | res$wskel[1:veclen,3] == 1
-      nfree <- c(nfree, list(sum(fpars)))
-      names(nfree)[length(nfree)] <- 'lvrho'
-      freeparnums[ptrows[fpars]] <- 1:sum(fpars)
-    }
-    ## check for completely unrestricted correlation matrix, for lkj
-    fpars <- sapply(res$free2, function(x) as.numeric(x[lower.tri(x)]))
-    if (length(unlist(fpars)) > 0) {
-      if (all(!duplicated(fpars)) & all(fpars > 0) & all(res$wskel[,1] == 0) &
-          all(lavpartable[ptrows, 'prior'] == "")) dat$fullpsi <- 1L
-    }
+    dat$Psi_r_skeleton_f <- res$matskel
+    dat$w11skel <- res$wskel
+    dat$psi_r_sign_f <- res$sign
   } else {
+    blkpsi <- TRUE
     dat$Psi_r_skeleton <- array(0, dim = c(Ng, 0, 0))
     dat$w10skel <- matrix(0, 0, 3)
     dat$psi_r_sign <- matrix(0, 0, 3)
+    dat$Psi_r_skeleton_f <- array(0, dim = c(Ng, 0, 0))
+    dat$w11skel <- matrix(0, 0, 3)
+    dat$psi_r_sign_f <- matrix(0, 0, 3)
+    dat$blkse <- matrix(0, 0, 7)
+    dat$nblk <- array(0, dim = 5)
+    dat$psidims <- array(3, dim = 5)
   }
 
   if (level == 1L) {
     ## 11. Phi unused
     dat$Phi_skeleton <- array(0, dim = c(Ng, 0, 0))
-    dat$w11skel <- matrix(0, 0, 3)
+    ## w11skel was previously used for this
 
     ## 12. Phi_r unused
     dat$Phi_r_skeleton <- array(0, dim = c(Ng, 0, 0))
@@ -708,17 +778,38 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   if (nrow(lpt) > 0) {
     stanprires <- set_stanpars("", lpt, prifree, dp, "")
     lavpartable$prior <- stanprires$partable$prior
+
+    ## for correlations in blocks, replace beta with lkj and deal with lkj priors
+    if (nrow(dat$blkse) > 0) {
+      for (b in 1:nrow(blkse)) {
+        lkjrows <- with(lavpartable, which(group == blkse[b, 'blkgrp'] & mat == "lvrho" &
+                                           row >= blkse[b,1] & col <= blkse[b,2] & row != col))
+        nolkj <- lkjrows[!grepl("lkj", lavpartable$prior[lkjrows])]
+        if (length(nolkj) > 0) {
+          lavpartable$prior[nolkj] <- gsub("(\\w+)\\(([^,]+),([^)]+)\\)", "lkj_corr(\\2)", lavpartable$prior[nolkj])
+        }
+        lptrow <- with(lavpartable, which(row == blkse[b,1] & col == (blkse[b,1] + 1) &
+                                          group == blkse[b,4] & mat == "lvrho"))
+        blkse[b,7] <- as.numeric(gsub("(\\w+)\\(([^,]+)\\)", "\\2", lavpartable$prior[lptrow]))
+        lavpartable$prior[lkjrows] <- lavpartable$prior[lptrow]
+      }
+    }
   }
 
+  ## remove priors from equality-constrained parameters
+  rmpri <- !(lavpartable$prior == "") & ((lavpartable$plabel %in% lavpartable$rhs[lavpartable$op == "=="]) | (lavpartable$label %in% lavpartable$rhs[lavpartable$op == "=="]))
+  lavpartable$prior[rmpri] <- ""
+  
+  ## add priors to wiggle params (mean value is handled in stan)
   dat$wigind <- 0L
   if (length(wig) > 0) {
-    ## assign prior to wiggle params, (mean value is handled in stan)
     needpri <- (lavpartable$prior == "") & (lavpartable$plabel %in% wig)
     lavpartable$prior[needpri] <- wigls$stanpris[wigls$stanpris != ""]
     dat$wigind <- 1L
   }
 
   ## add inits (manipulate partable to re-use set_inits_stan)
+  ## TODO inits for blocks
   lavpartable$freeparnums <- freeparnums
 
   ## FIXME theta_x, cov.x not handled
@@ -734,19 +825,19 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     for (i in 1:length(ini)) {
       nmidx <- match(names(ini[[i]]), mapping)
       names(ini[[i]]) <- names(mapping)[nmidx]
-      if (dat$fullpsi) {
-        ## remove Psi_r_free because handled as corr_mat
-        ini[[i]]$Psi_r_free <- array(0, 0)
-        psidim <- dim(dat$Psi_skeleton)[2]
-        psimat <- array(diag(1, psidim), dim = c(psidim, psidim, dat$Ng))
-        ini[[i]]$Psi_r_mat <- aperm(psimat, perm = c(3, 1, 2))
-      }
 
       ## for target = "stan", translate correlation parameters from (0,1) to (-1,1)
       ## (needed because set_inits_stan() is also used for stanclassic and stancond targets
       if ("Theta_r_free" %in% names(ini[[i]])) ini[[i]]$Theta_r_free <- -1 + 2 * ini[[i]]$Theta_r_free
       if ("Psi_r_free" %in% names(ini[[i]])) ini[[i]]$Psi_r_free <- -1 + 2 * ini[[i]]$Psi_r_free
-        
+
+      if (any(dat$nblk > 0)) {
+        for (j in 1:sum(dat$nblk > 0)) {
+          tmpmat <- array(diag(dat$psidims[j]), c(dat$psidims[j], dat$psidims[j], dat$nblk[j]))
+          ini[[i]][[paste0("Psi_r_mat_", j)]] <- aperm(tmpmat, c(3, 1, 2))
+        }
+      }
+      
       if (level == 2L) {
         names(ini[[i]]) <- paste0(names(ini[[i]]), "_c")
       } else {
@@ -772,11 +863,13 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   }
 
   ## index of dummy lvs, for sampling lvs
+  dumlv <- NULL
   if (level == 1L) {
     dumlv <- c(lavobject@Model@ov.x.dummy.lv.idx[[1]],
                lavobject@Model@ov.y.dummy.lv.idx[[1]])
-  } else {
-    dumlv <- NULL
+  } else if (multilevel) {
+    dumlv <- c(lavobject@Model@ov.x.dummy.lv.idx[[2]],
+               lavobject@Model@ov.y.dummy.lv.idx[[2]])
   }
 
   ## for level 2, add _c to names
@@ -786,7 +879,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   }
   
   return(list(dat = dat, free2 = free2, lavpartable = lavpartable,
-              init = ini, dumlv = dumlv, wigpris = wigpris))
+              init = ini, dumlv = dumlv, wigpris = wigpris, blkpsi = blkpsi))
 }
 
 
@@ -822,19 +915,20 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
                Alpha_free = "alpha", Tau_free = "tau")
   matmod <- ""
   olpt <- lavpartable
+  levlabs <- blav_partable_level_values(lavpartable)
   if (level == 2L) {
     names(mapping) <- paste0(names(mapping), "_c")
-    lavpartable <- lapply(lavpartable, function(x) x[lavpartable$level == "between"])
+    lavpartable <- lapply(lavpartable, function(x) x[lavpartable$level == levlabs[2]])
     matmod <- "_c"
   } else if ("level" %in% names(lavpartable)) {
-    lavpartable <- lapply(lavpartable, function(x) x[lavpartable$level == "within"])
+    lavpartable <- lapply(lavpartable, function(x) x[lavpartable$level == levlabs[1] | lavpartable$op %in% c("==", ":=")])
   }
 
   ## lavaan pars to w?skel (for equality constraints)
   mapping2 <- c("lambda", "gamma", "beta", "theta",
                 "theta", "cov.x", "cov.x", "psi",
                 "psi", "nu", "alpha", "tau")
-  names(mapping2) <- as.character(c(1, 3, 4, 7, 5, 8, 6, 10, 9,
+  names(mapping2) <- as.character(c(1, 3, 4, 7, 5, 8, 6, 11, 9,
                                     13, 14, 15))
 
   ## stan pars to free2 pars
@@ -964,13 +1058,13 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
     olpt <- lavMatrixRepresentation(olpt, add.attributes = TRUE, as.data.frame. = FALSE)
 
     if(level == 2L){
-      olpt <- lapply(olpt, function(x) x[olpt$level == "between"])
+      olpt <- lapply(olpt, function(x) x[olpt$level == levlabs[2]])
     } else {
-      olpt <- lapply(olpt, function(x) x[olpt$level == "within"])
+      olpt <- lapply(olpt, function(x) x[olpt$level == levlabs[1] | olpt$op %in% c("==", ":=")])
     }
     lavpartable <- c(lavpartable, list(mat = olpt$mat, row = olpt$row, col = olpt$col))
   } else {
-    lavpartable <- lavMatrixRepresentation(lavpartable, add.attributes = TRUE, as.data.frame = FALSE)
+    lavpartable <- lavMatrixRepresentation(lavpartable, add.attributes = TRUE, as.data.frame. = FALSE)
   } 
   
   list(x = lavpartable$est[lavpartable$free > 0],
@@ -1122,8 +1216,10 @@ lav2standata <- function(lavobject) {
     ## what sizes belong to which group.
     dat$cluster_size <- unlist(sapply(Lp, function(x) x$cluster.size[[2]], simplify = FALSE)) 
     dat$cluster_sizes <- unlist(sapply(Lp, function(x) x$cluster.sizes[[2]], simplify = FALSE))
+    dat$cluster_sizes <- array(dat$cluster_sizes, length(dat$cluster_sizes))
     dat$ncluster_sizes <- array(sapply(Lp, function(x) length(x$cluster.sizes[[2]])), Ng)
     dat$cluster_size_ns <- unlist(sapply(Lp, function(x) x$cluster.size.ns[[2]], simplify = FALSE))
+    dat$cluster_size_ns <- array(dat$cluster_size_ns, length(dat$cluster_size_ns))
     ## we assume variable indices are the same across groups, this could be revisited later
     dat$between_idx <- array(Lp[[1]]$between.idx[[2]], length(Lp[[1]]$between.idx[[2]]))
     dat$N_between <- length(dat$between_idx)
@@ -1151,7 +1247,7 @@ lav2standata <- function(lavobject) {
     dat$cov_d <- cov_d
     ## this evenly distributes loglik.x across unique cluster sizes; sums to correct value
     llx <- sapply(YLp, function(x) x[[2]]$loglik.x)
-    dat$log_lik_x <- rep(llx / dat$ncluster_sizes, dat$ncluster_sizes)
+    dat$log_lik_x <- array(rep(llx / dat$ncluster_sizes, dat$ncluster_sizes), sum(dat$ncluster_sizes))
 
     ## clusterwise data summaries, for loo and waic and etc
     cidx <- lavInspect(lavobject, 'cluster.idx')
@@ -1164,11 +1260,7 @@ lav2standata <- function(lavobject) {
       cidx <- unlist(cidx)
     }
     mean_d_full <- rowsum.default(as.matrix(dat$YX), cidx) / dat$cluster_size
-    if (dat$N_within > 0) {
-      for (i in 1:dat$N_within) {
-        mean_d_full[, dat$within_idx[i]] <- mean(as.matrix(dat$YX)[, dat$within_idx[i]])
-      }
-    }
+
     tmpYX <- split.data.frame(dat$YX, cidx)
     dat$YX <- do.call("rbind", tmpYX)
     dat$log_lik_x_full <- llx_2l(Lp[[1]], dat$YX, mean_d_full, cidx)
@@ -1225,13 +1317,13 @@ lav2standata <- function(lavobject) {
     dat$YXo <- dat$YX[, ordidx, drop=FALSE]
     if (misflag) {
       dat$Noent <- sum(dat$YXo > 0)
-      dat$Nordobs <- do.call("c", lapply(Mp, function(x) rowSums(x$pat[,ordidx])))
-      OrdObsvar <- do.call("c", lapply(Mp, function(x) apply(x$pat[,ordidx], 1, which, simplify = FALSE)))
+      dat$Nordobs <- do.call("c", lapply(Mp, function(x) rowSums(x$pat[, ordidx, drop = FALSE])))
+      OrdObsvar <- do.call("c", lapply(Mp, function(x) apply(x$pat[, ordidx, drop = FALSE], 1, which, simplify = FALSE)))
 
       dat$OrdObsvar <- matrix(0, dat$Np, ncol(dat$YXo))
       allvars <- 1:ncol(dat$YXo)
       for (i in 1:dat$Np) {
-        dat$OrdObsvar[i, 1:dat$Nordobs[i]] <- OrdObsvar[[i]]
+        if (dat$Nordobs[i] > 0) dat$OrdObsvar[i, 1:dat$Nordobs[i]] <- OrdObsvar[[i]]
         if (dat$Nordobs[i] < ncol(dat$YXo)) {
           dat$OrdObsvar[i, (dat$Nordobs[i] + 1):ncol(dat$YXo)] <- allvars[!(allvars %in% OrdObsvar[[i]])]
         }

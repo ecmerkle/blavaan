@@ -45,7 +45,7 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
   } else {
     implied <- lav_model_implied(lavmodel, delta = (lavmodel@parameterization == "delta"))
   }
-  
+
   ## check for missing, to see if we can easily get baseline ll for chisq
   mis <- FALSE
   if(any(is.na(unlist(lavdata@X)))){
@@ -344,58 +344,62 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
       ord.idx <- unique(TH.idx)
       ord.idx <- ord.idx[ord.idx %in% obsidx[1:Nobs[mm]]]
       nord <- length(ord.idx)
-      if(length(obsnum) > 0){
-        s12s22i <- cmat[ord.idx, obsnum] %*% chol2inv(chol(cmat[obsnum, obsnum]))
-        cov.ord <- cmat[ord.idx, ord.idx] - s12s22i %*% cmat[obsnum, ord.idx]
-      } else {
-        tmpll <- rep(0, r2 - r1 + 1)
-        cov.ord <- cmat[ord.idx, ord.idx, drop=FALSE]
-        mu.ord <- mnvec[ord.idx]
-      }
 
-      mm.in.group <- 1:lavmodel@nmat[g] + cumsum(c(0,lavmodel@nmat))[g]
-      mms <- lavmodel@GLIST[mm.in.group]
-      tau <- mms$tau
-
-      ## thresholds for all cases
-      lowtau <- hitau <- matrix(NA, NROW(YX[r1:r2,]), length(ord.idx))
-      for(j in seq_len(nord)){
-        tmptau <- c(-Inf, tau[TH.idx == ord.idx[j]], Inf)
-        lowtau[,j] <- tmptau[YX[r1:r2,ord.idx[j]]]
-        hitau[,j] <- tmptau[YX[r1:r2,ord.idx[j]] + 1]
-      }
-
-      for(i in r1:r2){
-        llidx <- i - r1 + 1
-
-        if(conditional){
-          catprob <- pnorm(hitau[llidx,], mean = mnvec[i,ord.idx], sd = sqrt(diag(cmat)[ord.idx])) -
-            pnorm(lowtau[llidx,], mean = mnvec[i,ord.idx], sd = sqrt(diag(cmat)[ord.idx]))
-          lsigi <- sum( dbinom(1, size = 1, prob = catprob, log = TRUE) )
-          tmpll[llidx] <- tmpll[llidx] + lsigi
+      ## only proceed if this missingness pattern has ordinal variables!
+      if(nord > 0){
+        if(length(obsnum) > 0){
+          s12s22i <- cmat[ord.idx, obsnum] %*% chol2inv(chol(cmat[obsnum, obsnum]))
+          cov.ord <- cmat[ord.idx, ord.idx] - s12s22i %*% cmat[obsnum, ord.idx]
         } else {
-          if(length(obsnum) > 0){
-            mu.ord <- mnvec[ord.idx] + s12s22i %*% (YX[i,obsnum] - mnvec[obsnum])
-          }
+          tmpll <- rep(0, r2 - r1 + 1)
+          cov.ord <- cmat[ord.idx, ord.idx, drop=FALSE]
+          mu.ord <- mnvec[ord.idx]
+        }
 
-          if("llnsamp" %in% names(lavoptions)){
-            ## run tmvnsim to approximate marginal logl
-            lsigi <- try(tmvnsim::tmvnsim(llnsamp, nord,
-                                          lower = lowtau[llidx,], upper = hitau[llidx,],
-                                          means = mu.ord, sigma = cov.ord), silent = TRUE)
-            if(!inherits(lsigi, 'try-error')) lsigi <- mean(lsigi$wts)
-          } else {
-            lsigi <- try(mnormt::sadmvn(lowtau[llidx,], hitau[llidx,], mean = mu.ord, varcov = cov.ord, abseps = 1e-2))
-          }
+        mm.in.group <- 1:lavmodel@nmat[g] + cumsum(c(0,lavmodel@nmat))[g]
+        mms <- lavmodel@GLIST[mm.in.group]
+        tau <- mms$tau
 
-          if(inherits(lsigi, 'try-error')){
-            tmpll[llidx] <- NA
+        ## thresholds for all cases
+        lowtau <- hitau <- matrix(NA, NROW(YX[r1:r2,]), length(ord.idx))
+        for(j in seq_len(nord)){
+          tmptau <- c(-Inf, tau[TH.idx == ord.idx[j]], Inf)
+          lowtau[,j] <- tmptau[YX[r1:r2,ord.idx[j]]]
+          hitau[,j] <- tmptau[YX[r1:r2,ord.idx[j]] + 1]
+        }
+
+        for(i in r1:r2){
+          llidx <- i - r1 + 1
+
+          if(conditional){
+            catprob <- pnorm(hitau[llidx,], mean = mnvec[i,ord.idx], sd = sqrt(diag(cmat)[ord.idx])) -
+              pnorm(lowtau[llidx,], mean = mnvec[i,ord.idx], sd = sqrt(diag(cmat)[ord.idx]))
+            lsigi <- sum( dbinom(1, size = 1, prob = catprob, log = TRUE) )
+            tmpll[llidx] <- tmpll[llidx] + lsigi
           } else {
-            tmpll[llidx] <- tmpll[llidx] + log(lsigi)
+            if(length(obsnum) > 0){
+              mu.ord <- mnvec[ord.idx] + s12s22i %*% (YX[i,obsnum] - mnvec[obsnum])
+            }
+
+            if("llnsamp" %in% names(lavoptions)){
+              ## run tmvnsim to approximate marginal logl
+              lsigi <- try(tmvnsim::tmvnsim(llnsamp, nord,
+                                            lower = lowtau[llidx,], upper = hitau[llidx,],
+                                            means = mu.ord, sigma = cov.ord), silent = TRUE)
+              if(!inherits(lsigi, 'try-error')) lsigi <- mean(lsigi$wts)
+            } else {
+              lsigi <- try(mnormt::sadmvn(lowtau[llidx,], hitau[llidx,], mean = mu.ord, varcov = cov.ord, abseps = 1e-2))
+            }
+
+            if(inherits(lsigi, 'try-error')){
+              tmpll[llidx] <- NA
+            } else {
+              tmpll[llidx] <- tmpll[llidx] + log(lsigi)
+            }
           }
         }
       }
-            
+
       if(casewise){
         ll.samp[r1:r2] <- tmpll
       } else {
@@ -538,7 +542,8 @@ case_lls <- function(lavjags        = NULL,
                      lavmcmc        = NULL,
                      lavobject      = NULL,
                      conditional    = FALSE,
-                     thin           = 1){
+                     thin           = 1,
+                     debug          = FALSE){
 
   lavdata <- lavobject@Data
   
@@ -556,7 +561,13 @@ case_lls <- function(lavjags        = NULL,
       get_ll(lavmcmc[[j]][itnums[i],], lavobject,
              casewise = TRUE, conditional = conditional)},
       j = j, future.seed = TRUE)
-    tmpres[[j]] <- t(do.call("future_sapply", loop.args))
+
+    loopcom <- "future_sapply"
+    if(debug) {
+      loop.args$future.seed <- NULL
+      loopcom <- "sapply"
+    }
+    tmpres[[j]] <- t(do.call(loopcom, loop.args))
   }
 
   llmat <- do.call("rbind", tmpres)
@@ -587,7 +598,7 @@ llx_2l <- function(Lp, YX, mean_d, cidx){
   } else {
     loglik.x.b <- rep(0, nrow(mean_d))
   }
-  loglik.x <- loglik.x.w.clus + loglik.x.b
+  loglik.x <- loglik.x.w.clus + as.numeric(loglik.x.b)
 
   array(loglik.x, length(loglik.x))
 }

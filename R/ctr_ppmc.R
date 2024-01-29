@@ -55,19 +55,7 @@ summary.ppmc <- function(object, discFUN, dist = c("obs","sim"),
     }
 
     if ("mode" %in% central.tendency || "map" %in% central.tendency) {
-      ## can the modeest package be used?
-      if (suppressMessages(requireNamespace("modeest", quietly = TRUE))) {
-        tryMode <- try(modeest::mlv(x, method = "kernel", na.rm = TRUE),
-                       silent = TRUE)
-        if (!inherits(tryMode, "try-error") && is.numeric(tryMode)) {
-          out <- c(out, MAP = tryMode[1])
-        }
-      }
-      ## if the mode was not obtained above, use the quick-and-dirty way
-      if (is.na(out["MAP"])) {
-        dd <- density(x, na.rm = TRUE)
-        out <- c(out, MAP = dd$x[which.max(dd$y)])
-      }
+      out <- c(out, MAP = modeapprox(x)[1])
     }
 
     out <- c(out, SD = sd(x, na.rm = TRUE))
@@ -362,19 +350,7 @@ plot.blavPPMC <- function(x, ..., discFUN, element, central.tendency = "",
     }
 
     if (any(central.tendency[1] %in% c("mode","map"))) {
-      ## can the modeest package be used?
-      if (suppressMessages(requireNamespace("modeest", quietly = TRUE))) {
-        tryMode <- try(modeest::mlv(x, method = "kernel", na.rm = TRUE),
-                       silent = TRUE)
-        if (!inherits(tryMode, "try-error") && is.numeric(tryMode)) {
-          out <- c(out, MAP = tryMode[1])
-        }
-      }
-      if (is.na(out["MAP"])) {
-        ## if not, use the quick-and-dirty way
-        dd <- density(x, na.rm = TRUE)
-        out <- c(out, MAP = dd$x[which.max(dd$y)])
-      }
+      out <- c(out, MAP = modeapprox(x)[1])
     }
 
     out <- c(out, SD = sd(x, na.rm = TRUE))
@@ -586,6 +562,8 @@ ppmc <- function(object, thin = 1, fit.measures = c("srmr","chisq"),
                  #baseline.model = NULL,
                  discFUN = NULL, conditional = FALSE) {
 
+  if (blavInspect(object, "nlevels") > 1) stop('blavaan ERROR: ppmc is currently unavailable for multilevel models.')
+  
   ## check custom discrepancy function(s)
   if (!is.null(discFUN)) {
     if (!is.list(discFUN)) {

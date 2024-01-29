@@ -1,6 +1,6 @@
 \name{plot.blavaan}
 \alias{plot.blavaan}
-\title{blavaan traceplots and more}
+\title{blavaan Diagnostic Plots}
 \description{
 Convenience functions to create plots of blavaan objects, via the
 bayesplot package.

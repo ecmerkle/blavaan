@@ -122,7 +122,7 @@ format_priors <- function(lavpartable, level = 1L) {
     } else {
       prisel <- prisel & (lavpartable$mat == mat)
     }
-  
+
     prisel <- prisel & (lavpartable$free > 0)
     thepris <- lavpartable$prior[prisel]
 
@@ -135,6 +135,11 @@ format_priors <- function(lavpartable, level = 1L) {
 
       if (!grepl("\\[", prisplit[[1]][3])) {
         param2 <- sapply(prisplit, function(x) x[3])
+        if (any(is.na(param2)) & mat == "lvrho") {
+          ## omit lkj here
+          param1 <- param1[!is.na(param2)]
+          param2 <- param2[!is.na(param2)]
+        }
       } else {
         param2 <- rep(NA, length(param1))
       }
@@ -168,7 +173,7 @@ format_priors <- function(lavpartable, level = 1L) {
       out[[ transtab[[i]][4] ]] <- powpar
     }
   } # mats
-  
+
   return(out)
 }
 
@@ -181,11 +186,14 @@ check_priors <- function(lavpartable) {
   right_pris <- sapply(dpriors(target = "stan"), function(x) strsplit(x, "[, ()]+")[[1]][1])
   pt_pris <- sapply(lavpartable$prior[lavpartable$prior != ""], function(x) strsplit(x, "[, ()]+")[[1]][1])
   names(pt_pris) <- lavpartable$mat[lavpartable$prior != ""]
-
+  right_pris <- c(right_pris, lvrho = "lkj_corr")
   primatch <- match(names(pt_pris), names(right_pris))
-
   badpris <- which(pt_pris != right_pris[primatch])
 
+  ## lvrho entries could also receive beta priors
+  okpris <- which(names(pt_pris[badpris]) == "lvrho" & pt_pris[badpris] == "beta")
+  if (length(okpris) > 0) badpris <- badpris[-okpris]
+  
   if (length(badpris) > 0) {
     badtxt <- unique(paste(names(pt_pris)[badpris], pt_pris[badpris]))
     stop(paste0("blavaan ERROR: For target='stan', the following priors are not allowed:\n", paste(badtxt, collapse = "\n"), "\n See dpriors(target='stan') for each parameter's required distribution."))
@@ -204,14 +212,15 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           Lambda_x_skeleton, Gamma_skeleton, B_skeleton,
                           Theta_skeleton, Theta_r_skeleton,
                           Theta_x_skeleton, Theta_x_r_skeleton,
-                          Psi_skeleton, Psi_r_skeleton, Phi_skeleton,
+                          Psi_skeleton, Psi_r_skeleton, Psi_r_skeleton_f, Phi_skeleton,
                           Phi_r_skeleton, Nu_skeleton, Alpha_skeleton, Tau_skeleton,
                           w1skel, w2skel, w3skel, # eq constraint matrices
                           w4skel, w5skel, w6skel, w7skel, w8skel,
                           w9skel, w10skel, w11skel, w12skel, w13skel,
                           w14skel, w15skel, emiter,
                           lam_y_sign, lam_x_sign, # sign constraint matrices
-                          gam_sign, b_sign, psi_r_sign, fullpsi, phi_r_sign,
+                          gam_sign, b_sign, psi_r_sign, psi_r_sign_f,
+                          nblk, psidims, blkse, phi_r_sign,
                           lavpartable = NULL, # for priors
                           dumlv = NULL, # for sampling lvs
                           wigind = NULL, # wiggle indicator
@@ -223,12 +232,14 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           within_idx, N_within, both_idx, N_both, ov_idx1, ov_idx2, p_tilde, N_lev,
                           Lambda_y_skeleton_c = NULL, # level 2 matrices
                           B_skeleton_c = NULL, Theta_skeleton_c = NULL, Theta_r_skeleton_c = NULL,
-                          Psi_skeleton_c = NULL, Psi_r_skeleton_c = NULL, Nu_skeleton_c = NULL,
-                          Alpha_skeleton_c = NULL,
+                          Psi_skeleton_c = NULL, Psi_r_skeleton_c = NULL, Psi_r_skeleton_f_c = NULL,
+                          Nu_skeleton_c = NULL, Alpha_skeleton_c = NULL,
                           w1skel_c = NULL, w4skel_c = NULL, w5skel_c = NULL, w7skel_c = NULL,
-                          w9skel_c = NULL, w10skel_c = NULL, w13skel_c = NULL, w14skel_c = NULL,
+                          w9skel_c = NULL, w10skel_c = NULL, w11skel_c = NULL, w13skel_c = NULL,
+                          w14skel_c = NULL,
                           lam_y_sign_c = NULL, b_sign_c = NULL, psi_r_sign_c = NULL,
-                          phi_r_sign_c = NULL, fullpsi_c = NULL, dumlv_c = NULL, wigind_c = NULL,
+                          psi_r_sign_f_c, nblk_c, psidims_c, blkse_c,                          
+                          phi_r_sign_c = NULL, dumlv_c = NULL, wigind_c = NULL,
                           ...) {
   
   dat <- list()
@@ -351,7 +362,8 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                                  Gamma_skeleton, B_skeleton, Theta_skeleton,
                                  Theta_r_skeleton, Theta_x_skeleton, Theta_x_r_skeleton,
                                  Psi_skeleton, Psi_r_skeleton, Phi_skeleton, Phi_r_skeleton,
-                                 Nu_skeleton, Alpha_skeleton, Tau_skeleton, dumlv, level = 1L))
+                                 Nu_skeleton, Alpha_skeleton, Tau_skeleton, dumlv,
+                                 Psi_r_skeleton_f, level = 1L))
   dat$lam_y_sign <- lam_y_sign
   dat$w1skel <- w1skel
   #dat$lam_x_sign <- lam_x_sign
@@ -365,12 +377,12 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$w8skel <- w8skel
   dat$w9skel <- w9skel
   dat$w10skel <- w10skel
+  dat$w11skel <- w11skel
   dat$psi_r_sign <- psi_r_sign
-  dat$fullpsi <- fullpsi
+  dat$nblk <- nblk
+  dat$psidims <- psidims
+  dat$blkse <- blkse
 
-  #dat$w11skel <- w11skel
-  #dat$w12skel <- w12skel
-  #dat$phi_r_sign <- phi_r_sign
   dat$w13skel <- w13skel
   dat$w14skel <- w14skel
   dat$w15skel <- w15skel
@@ -380,6 +392,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                                  B_skeleton = B_skeleton_c, Theta_skeleton = Theta_skeleton_c,
                                  Theta_r_skeleton = Theta_r_skeleton_c,
                                  Psi_skeleton = Psi_skeleton_c, Psi_r_skeleton = Psi_r_skeleton_c,
+                                 Psi_r_skeleton_f = Psi_r_skeleton_f_c,
                                  Nu_skeleton = Nu_skeleton_c, Alpha_skeleton = Alpha_skeleton_c,
                                  dumlv = dumlv_c, level = 2L))
   dat$lam_y_sign_c <- lam_y_sign_c
@@ -390,8 +403,11 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$w7skel_c <- w7skel_c
   dat$w9skel_c <- w9skel_c
   dat$w10skel_c <- w10skel_c
+  dat$w11skel_c <- w11skel_c
   dat$psi_r_sign_c <- psi_r_sign_c
-  dat$fullpsi_c <- fullpsi_c
+  dat$nblk_c <- nblk_c
+  dat$psidims_c <- psidims_c
+  dat$blkse_c <- blkse_c
   dat$w13skel_c <- w13skel_c
   dat$w14skel_c <- w14skel_c
   
@@ -405,8 +421,9 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
     dat <- c(dat, format_priors(lavpartable))
     dat <- c(dat, format_priors(lavpartable[0,], level = 2L))
   } else {
-    dat <- c(dat, format_priors(subset(lavpartable, level == "within")))
-    dat <- c(dat, format_priors(subset(lavpartable, level == "between"), level = 2L))
+    levlabs <- blav_partable_level_values(lavpartable)
+    dat <- c(dat, format_priors(lavpartable[lavpartable$level == levlabs[1],]))
+    dat <- c(dat, format_priors(lavpartable[lavpartable$level == levlabs[2],], level = 2L))
   }
   
   return(dat)
@@ -420,7 +437,8 @@ stanmarg_matdata <- function(indat, Lambda_y_skeleton, Lambda_x_skeleton = NULL,
                              Theta_x_r_skeleton = NULL, Psi_skeleton,
                              Psi_r_skeleton, Phi_skeleton = NULL,
                              Phi_r_skeleton = NULL, Nu_skeleton, Alpha_skeleton,
-                             Tau_skeleton = NULL, dumlv = NULL, level = 1L) {
+                             Tau_skeleton = NULL, dumlv = NULL, Psi_r_skeleton_f = NULL,
+                             level = 1L) {
 
   dat <- list()
   dat$p <- dim(Lambda_y_skeleton)[2]
@@ -539,6 +557,15 @@ stanmarg_matdata <- function(indat, Lambda_y_skeleton, Lambda_x_skeleton = NULL,
   dat$v10 <- tmpres$v
   dat$u10 <- tmpres$u
   dat$wg10 <- array(tmpres$g_len, length(tmpres$g_len))
+
+  if (!is.null(Psi_r_skeleton_f)) {
+    tmpres <- group_sparse_skeleton(Psi_r_skeleton_f)
+    dat$len_w11 <- max(tmpres$g_len)
+    dat$w11 <- tmpres$w
+    dat$v11 <- tmpres$v
+    dat$u11 <- tmpres$u
+    dat$wg11 <- array(tmpres$g_len, length(tmpres$g_len))
+  }
 
   if (level == 1L) {
     dPhi <- Phi_skeleton

@@ -16,6 +16,8 @@ blavInspect <- function(blavobject, what, ...) {
     dotNames <- names(dotdotdot)
     add.labels <- TRUE
     if(any(dotNames == "add.labels")) add.labels <- dotdotdot$add.labels
+    level <- 1L
+    if(any(dotNames == "level")) level <- dotdotdot$level
 
     jagtarget <- lavInspect(blavobject, "options")$target == "jags"
   
@@ -87,14 +89,19 @@ blavInspect <- function(blavobject, what, ...) {
             pt$free[pt$op == ":="] <- max(pt$free, na.rm = TRUE) + 1:sum(pt$op == ":=")
             labs <- lav_partable_labels(pt, type = "free")
             draws <- make_mcmc(blavobject@external$mcmcout)
-            draws <- lapply(draws, function(x) mcmc(x[,idx]))
+            draws <- lapply(draws, function(x) mcmc(x[, idx, drop = FALSE]))
             draws <- mcmc.list(draws)
+            if(add.labels) {
+                for (i in 1:length(draws)) {
+                    colnames(draws[[i]]) <- labs
+                }
+            }
             if(what == "hpd"){
                 pct <- .95
                 if("level" %in% dotNames) pct <- dotdotdot$level
+                if("prob" %in% dotNames) pct <- dotdotdot$prob
                 draws <- mcmc(do.call("rbind", draws))
                 draws <- HPDinterval(draws, pct)
-                if(add.labels) rownames(draws) <- labs
             }
             draws
         } else if(what == "mcobj"){
@@ -108,27 +115,40 @@ blavInspect <- function(blavobject, what, ...) {
 
             ## how many lvs, excluding phantoms
             lvmn <- lavInspect(blavobject, "mean.lv")
-            if(inherits(lvmn, "list")){
-                lvmn <- lvmn[[1]]
+            if(!inherits(lvmn, "list")){
+                lvmn <- list(lvmn)
             }
-            nlv <- length(lvmn)
+            if(level == 1L){
+              nlv <- length(lvmn[[1]])
+              nsamp <- sum(lavInspect(blavobject, "nobs"))
+            } else {
+              nlv <- length(lvmn[[2]])
+              nsamp <- unlist(lavInspect(blavobject, "nclusters"))
+            }
 
-            if(nlv == 0) stop("blavaan ERROR: no latent variables are in the model")
-            if(!etas) stop("blavaan ERROR: factor scores not saved; set save.lvs=TRUE")
-            
-            nsamp <- sum(lavInspect(blavobject, "nobs"))
+            if(nlv == 0) stop("blavaan ERROR: no latent variables are at this level of the model")
+            if(!etas) stop("blavaan ERROR: factor scores not saved; set save.lvs=TRUE")            
+
+            if(level == 2L & all(nsamp == 1)) stop("blavaan ERROR: level 2 was requested but the model is not multilevel")
 
             draws <- make_mcmc(blavobject@external$mcmcout, blavobject@external$stanlvs)
-            drawcols <- grep("^eta", colnames(draws[[1]]))
 
             if(jagtarget){
+                drawcols <- grep("^eta\\[", colnames(draws[[1]]))
                 ## remove phantoms
                 drawcols <- drawcols[1:(nlv * nsamp)]
             } else {
-                nfound <- length(drawcols)/nsamp
-                drawcols <- drawcols[as.numeric(matrix(1:length(drawcols),
-                                                       nsamp, nfound,
-                                                       byrow=TRUE)[,1:nlv])]
+              if(level == 1L){
+                drawcols <- grep("^eta\\[", colnames(draws[[1]]))
+              } else {
+                drawcols <- grep("^eta_b", colnames(draws[[1]]))
+                nsamp <- sum(nsamp)
+              }
+              nfound <- length(drawcols)/nsamp
+              
+              drawcols <- drawcols[as.numeric(matrix(1:length(drawcols),
+                                                     nsamp, nfound,
+                                                     byrow=TRUE)[,1:nlv])]
             }
             draws <- lapply(draws, function(x) mcmc(x[,drawcols]))
 
@@ -171,11 +191,15 @@ blavInspect <- function(blavobject, what, ...) {
                     summ <- blavobject@external$stansumm
                     summname <- "mean"
                 }
-                mnrows <- grep("^eta", rownames(summ))
+                if(level == 1L){
+                  mnrows <- grep("^eta\\[", rownames(summ))
+                } else {
+                  mnrows <- grep("^eta_b", rownames(summ))
+                }
 
                 draws <- matrix(summ[mnrows,summname], nsamp,
                                 length(mnrows)/nsamp, byrow=br)[,1:nlv,drop=FALSE]
-                colnames(draws) <- names(lvmn)
+                colnames(draws) <- names(lvmn[[level]])
 
                 if(blavobject@Options$target == "stan" & mis){
                     draws[rank(rorig),] <- draws
@@ -212,7 +236,8 @@ blavInspect <- function(blavobject, what, ...) {
                 if(jagtarget){
                     OUT <- mcmcsumm[idx,'Mode']
                 } else {
-                    stop("blavaan ERROR: Modes unavailable for Stan.")
+                    draws <- do.call("rbind", blavInspect(blavobject, "mcmc"))
+                    OUT <- modeapprox(draws)
                 }
             }
             if(add.labels) names(OUT) <- labs
