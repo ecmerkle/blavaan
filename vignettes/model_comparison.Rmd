@@ -188,7 +188,7 @@ bc12
 In this case we can see that model 1 has lower LOOIC, and the ratio shows that the LOO differences is 5 SE of magnitude. This indicates that the model with the estimated regressions is better
 
 ```{r, eval=T}
-abs(bc12$diff_loo[1] / bc12$diff_loo[2])
+abs(bc12$diff_loo[,"elpd_diff"] / bc12$diff_loo[,"se_diff"])
 ```
 
 Now, lets look at an example with a smaller difference between models, where only the smallest regression (```dem65~ind60```) is fixed to 0.
@@ -249,7 +249,7 @@ When we see the LOOIC, we see that the difference between the two models is mini
 ```{r}
 bc13
 
-abs(bc13$diff_loo[1] / bc13$diff_loo[2])
+abs(bc13$diff_loo[,"elpd_diff"] / bc13$diff_loo[,"se_diff"])
 ```
 
 Lets do one last model, where only the largest regression (```dem65~dem60```) is fixed to 0.
@@ -309,7 +309,7 @@ In this case, by looking at the LOOIC, we see that model one is better (lower va
 
 ```{r}
 bc14
-abs(bc14$diff_loo[1] / bc14$diff_loo[2])
+abs(bc14$diff_loo[,"elpd_diff"] / bc14$diff_loo[,"se_diff"])
 ```
 
 
@@ -322,7 +322,7 @@ In the Bayesian literature you will the the use of the Bayes factor (BF) to comp
 
 ### Summary
 
-We recommend the use of LOO or WAIC as general model comparison metrics for BSEM. They allow us to estimate the models' out-of-sample predictive accuracies, and the respective differences across posterior draws. They also provide us uncertainty estimates in the comparison. 
+We recommend the use of LOO or WAIC as general model comparison metrics for BSEM. They allow us to estimate the models' out-of-sample predictive accuracy, and the respective differences across posterior draws. They also provide us uncertainty estimates in the comparison. 
 
 In most cases LOO and WAIC will lead to similar results, and LOO is recommended as the most stable metric [@vehtari_practical_2017]. In general, a $\Delta elpd$ of at least 2 standard errors and preferably 4 standard errors can be interpreted as evidence of differential predictive accuracy.
 
