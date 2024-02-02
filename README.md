@@ -9,6 +9,7 @@ blavaan is a free, open source R package for Bayesian latent variable analysis. 
 The blavaan functions and syntax are similar to lavaan. For example, consider the Political Democracy example from Bollen (1989):
 
 ```r
+library(lavaan) # for the PoliticalDemocracy data
 library(blavaan)
 
 model <- '
