@@ -97,7 +97,7 @@
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
     <dl><dt>...</dt>
-<dd><p>Default lavaan arguments.  See <code>lavaan</code>.</p></dd>
+<dd><p>Default lavaan arguments.  See <code><a href="https://rdrr.io/pkg/lavaan/man/lavaan.html" class="external-link">lavaan</a></code>.</p></dd>
 
 <dt>cp</dt>
 <dd><p>Handling of prior distributions on covariance parameters:
@@ -148,7 +148,7 @@ to 10000 for target="jags" and 1000 for Stan targets.</p></dd>
 <dd><p>If it is a character string, the options are currently
     <code>"simple"</code> (default), <code>"Mplus"</code>, <code>"prior"</code>, or <code>"jags"</code>.  In the first two
     cases, parameter values are set as though they will be estimated via
-    ML (see <code>lavaan</code>).  The starting parameter value for
+    ML (see <code><a href="https://rdrr.io/pkg/lavaan/man/lavaan.html" class="external-link">lavaan</a></code>).  The starting parameter value for
     each chain is then perturbed from the original values through the
     addition of random uniform noise.  If <code>"prior"</code> is used, the starting
     parameter values are obtained based on the prior distributions
@@ -217,7 +217,7 @@ to 10000 for target="jags" and 1000 for Stan targets.</p></dd>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The <code>bsem</code> function is a wrapper for the more general
     <code><a href="blavaan.html">blavaan</a></code> function, using the following default
-    <code>lavaan</code> arguments:
+    <code><a href="https://rdrr.io/pkg/lavaan/man/lavaan.html" class="external-link">lavaan</a></code> arguments:
     <code>int.ov.free = TRUE</code>, <code>int.lv.free = FALSE</code>,
     <code>auto.fix.first = TRUE</code> (unless <code>std.lv = TRUE</code>),
     <code>auto.fix.single = TRUE</code>, <code>auto.var = TRUE</code>,
@@ -229,7 +229,7 @@ to 10000 for target="jags" and 1000 for Stan targets.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     
 
-<p>An object of class <code>lavaan</code>, for which several methods
+<p>An object of class <code><a href="https://rdrr.io/pkg/lavaan/man/lavaan-class.html" class="external-link">lavaan</a></code>, for which several methods
   are available, including a <code>summary</code> method.</p>
     </div>
     <div class="section level2">

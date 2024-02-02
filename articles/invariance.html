@@ -123,9 +123,9 @@ we may first estimate two models:</p>
 <span><span class="st">              textual =~ x4 + x5 + x6</span></span>
 <span><span class="st">              speed   =~ x7 + x8 + x9 '</span></span>
 <span></span>
-<span><span class="va">fit1</span> <span class="op">&lt;-</span> <span class="fu">cfa</span><span class="op">(</span><span class="va">HS.model</span>, data <span class="op">=</span> <span class="va">HolzingerSwineford1939</span>, group <span class="op">=</span> <span class="st">"school"</span><span class="op">)</span></span>
+<span><span class="va">fit1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/lavaan/man/cfa.html" class="external-link">cfa</a></span><span class="op">(</span><span class="va">HS.model</span>, data <span class="op">=</span> <span class="va">HolzingerSwineford1939</span>, group <span class="op">=</span> <span class="st">"school"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">fit2</span> <span class="op">&lt;-</span> <span class="fu">cfa</span><span class="op">(</span><span class="va">HS.model</span>, data <span class="op">=</span> <span class="va">HolzingerSwineford1939</span>, group <span class="op">=</span> <span class="st">"school"</span>,</span>
+<span><span class="va">fit2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/lavaan/man/cfa.html" class="external-link">cfa</a></span><span class="op">(</span><span class="va">HS.model</span>, data <span class="op">=</span> <span class="va">HolzingerSwineford1939</span>, group <span class="op">=</span> <span class="st">"school"</span>,</span>
 <span>            group.equal <span class="op">=</span> <span class="st">"loadings"</span><span class="op">)</span></span></code></pre></div>
 <p>and then examine the absolute fit of <code>fit1</code>. We could also
 compare <code>fit2</code> to <code>fit1</code> via a Likelihood Ratio
@@ -139,11 +139,11 @@ methods.</p>
 <span><span class="va">bfit2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcfa.html">bcfa</a></span><span class="op">(</span><span class="va">HS.model</span>, data <span class="op">=</span> <span class="va">HolzingerSwineford1939</span>, group <span class="op">=</span> <span class="st">"school"</span>, </span>
 <span>              group.equal <span class="op">=</span> <span class="st">"loadings"</span><span class="op">)</span></span></code></pre></div>
 <p>Model fit and comparison statistics are then available via the
-<code>fitMeasures()</code> and <code><a href="../reference/blavCompare.html">blavCompare()</a></code> functions:</p>
+<code><a href="https://rdrr.io/pkg/lavaan/man/fitMeasures.html" class="external-link">fitMeasures()</a></code> and <code><a href="../reference/blavCompare.html">blavCompare()</a></code> functions:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">fitMeasures</span><span class="op">(</span><span class="va">bfit1</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/lavaan/man/fitMeasures.html" class="external-link">fitMeasures</a></span><span class="op">(</span><span class="va">bfit1</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">fitMeasures</span><span class="op">(</span><span class="va">bfit2</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/lavaan/man/fitMeasures.html" class="external-link">fitMeasures</a></span><span class="op">(</span><span class="va">bfit2</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/blavCompare.html">blavCompare</a></span><span class="op">(</span><span class="va">bfit1</span>, <span class="va">bfit2</span><span class="op">)</span></span></code></pre></div>
 </div>

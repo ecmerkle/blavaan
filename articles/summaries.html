@@ -174,10 +174,10 @@ model. It is sometimes helpful to try to fit the same model in
 </h3>
 <p>Next, we may wish to examine some model fit metrics. While many
 metrics are available from the <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> output, more are
-available from the <code>fitMeasures()</code> function:</p>
+available from the <code><a href="https://rdrr.io/pkg/lavaan/man/fitMeasures.html" class="external-link">fitMeasures()</a></code> function:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
-<span><span class="fu">fitMeasures</span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/pkg/lavaan/man/fitMeasures.html" class="external-link">fitMeasures</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p>For judging absolute fit, <em>blavaan</em> supplies a posterior
 predictive p-value that is based on the likelihood ratio statistic.
 Good-fitting models have values near 0.5 on this metric. For examining
@@ -238,7 +238,7 @@ format; for a matrix, see the last line of code below.</p>
 <p>Finally, not fully related to latent variables: the
 <code><a href="../reference/standardizedPosterior.html">standardizedPosterior()</a></code> function will return standardized
 posterior draws. It calls the <em>lavaan</em> function
-<code>standardizedSolution()</code> in the background and has some of
+<code><a href="https://rdrr.io/pkg/lavaan/man/standardizedSolution.html" class="external-link">standardizedSolution()</a></code> in the background and has some of
 that function’s flexibility.</p>
 </div>
 <div class="section level3 unnumbered">

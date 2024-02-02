@@ -105,7 +105,8 @@
 <p>blavaan is a free, open source R package for Bayesian latent variable analysis. It relies on JAGS and Stan to estimate models via MCMC.</p>
 <p>The blavaan functions and syntax are similar to lavaan. For example, consider the Political Democracy example from Bollen (1989):</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ecmerkle.github.io/blavaan/" class="external-link">blavaan</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://lavaan.ugent.be" class="external-link">lavaan</a></span><span class="op">)</span> <span class="co"># for the PoliticalDemocracy data</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ecmerkle.github.io/blavaan/" class="external-link">blavaan</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">model</span> <span class="op">&lt;-</span> <span class="st">'</span></span>
 <span><span class="st">   # latent variable definitions</span></span>
