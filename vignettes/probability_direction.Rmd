@@ -83,7 +83,7 @@ To calculate the probability of direction we will use a function from the packag
 library(brms)
 ```
 
-Ans we will need to extract the posterior draws a matrix, 
+And we will need to extract the posterior draws as a matrix, 
 
 ```{r, eval=T}
 mc_out <- as.matrix(blavInspect(fit, "mcmc", add.labels = FALSE))
