@@ -67,7 +67,7 @@ fit <- bsem(model, data=PoliticalDemocracy,
 
 ### Convergence 
 
-The primary convergence diagnostic is that $\hat{R}$, which compares the between- and within-chain samples of model parameters and other univariate quantities of interest [@new_rhat]. If chains have not mixed well (ie, the between- and within-chain estimates don't agree), $\hat{R}$ is larger than 1. We recommend running at least three chains by default and only using the posterior samples if $\hat{R} < 1.05$ for all the parameters. 
+The primary convergence diagnostic is $\hat{R}$, which compares the between- and within-chain samples of model parameters and other univariate quantities of interest [@new_rhat]. If chains have not mixed well (ie, the between- and within-chain estimates don't agree), $\hat{R}$ is larger than 1. We recommend running at least three chains by default and only using the posterior samples if $\hat{R} < 1.05$ for all the parameters. 
 
 ```blavaan``` presents the $\hat{R}$ reported by the underlying MCMC program, either Stan or JAGS (Stan by default). We can obtain the $\hat{R}$ from the ```summary()``` function, and we can also extract it with the ```blavInspect()``` function
 
@@ -95,7 +95,7 @@ and/or change the model priors with the ```dpriors()``` function. These address 
 
 We should also evaluate the efficiency of the posterior samples. Effective sample size (ESS) is a useful measure for sampling efficiency, and is well defined even if the chains do not have finite mean or variance [@new_rhat].
 
-In short, the posterior samples produced by MCMC are autocorrelated. This means that, if you draw 500 posterior samples, you do not have 500 independent pieces of information about the posterior distribution, because the samples are autocorlated. The ESS metric is <a href="https://www.johndcook.com/blog/2017/06/27/effective-sample-size-for-mcmc/">like a currency conversion,</a> telling you how much your autocorrelated samples are worth if we were to convert them to indepndent samples. In ```blavaan``` we can print it from the ```summary``` function with the ```neff``` argument
+In short, the posterior samples produced by MCMC are autocorrelated. This means that, if you draw 500 posterior samples, you do not have 500 independent pieces of information about the posterior distribution, because the samples are autocorlated. The ESS metric is <a href="https://www.johndcook.com/blog/2017/06/27/effective-sample-size-for-mcmc/">like a currency conversion,</a> telling you how much your autocorrelated samples are worth if we were to convert them to independent samples. In ```blavaan``` we can print it from the ```summary``` function with the ```neff``` argument
 
 ```{r, eval=F}
 summary(fit, neff=T)
