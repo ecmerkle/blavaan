@@ -150,7 +150,7 @@ Democracy example <span class="citation">(Bollen 1989)</span>.</p>
 <div class="section level3">
 <h3 id="convergence">Convergence<a class="anchor" aria-label="anchor" href="#convergence"></a>
 </h3>
-<p>The primary convergence diagnostic is that <span class="math inline">\(\hat{R}\)</span>, which compares the between- and
+<p>The primary convergence diagnostic is <span class="math inline">\(\hat{R}\)</span>, which compares the between- and
 within-chain samples of model parameters and other univariate quantities
 of interest <span class="citation">(Vehtari et al. 2021)</span>. If
 chains have not mixed well (ie, the between- and within-chain estimates
@@ -165,25 +165,25 @@ function</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"rhat"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##   ind60=~x1   ind60=~x2   ind60=~x3           a           b           c </span></span>
-<span><span class="co">##   1.0001431   1.0008037   0.9997661   1.0005565   1.0020001   1.0002123 </span></span>
+<span><span class="co">##   1.0000689   1.0006037   1.0000773   0.9994117   1.0002946   0.9996901 </span></span>
 <span><span class="co">##           d           a           b           c           d dem60~ind60 </span></span>
-<span><span class="co">##   1.0005479   1.0005565   1.0020001   1.0002123   1.0005479   0.9995362 </span></span>
+<span><span class="co">##   1.0006789   0.9994117   1.0002946   0.9996901   1.0006789   1.0006087 </span></span>
 <span><span class="co">## dem65~ind60 dem65~dem60      y1~~y5      y2~~y4      y2~~y6      y3~~y7 </span></span>
-<span><span class="co">##   1.0001747   1.0005600   0.9998990   1.0002082   0.9997830   0.9995830 </span></span>
+<span><span class="co">##   0.9999798   1.0000694   1.0001940   0.9996124   0.9993053   1.0003731 </span></span>
 <span><span class="co">##      y4~~y8      y6~~y8      x1~~x1      x2~~x2      x3~~x3      y1~~y1 </span></span>
-<span><span class="co">##   1.0005464   0.9998400   0.9992273   0.9991681   0.9991721   1.0005170 </span></span>
+<span><span class="co">##   0.9999227   1.0004360   1.0009418   1.0000992   0.9996869   0.9997236 </span></span>
 <span><span class="co">##      y2~~y2      y3~~y3      y4~~y4      y5~~y5      y6~~y6      y7~~y7 </span></span>
-<span><span class="co">##   0.9991712   1.0000128   1.0004876   1.0008794   0.9994045   1.0010502 </span></span>
+<span><span class="co">##   0.9997942   0.9996611   1.0000554   0.9996450   1.0005178   0.9993950 </span></span>
 <span><span class="co">##      y8~~y8        x1~1        x2~1        x3~1        y1~1        y2~1 </span></span>
-<span><span class="co">##   0.9999111   1.0007901   1.0000590   1.0017111   1.0000759   0.9999572 </span></span>
+<span><span class="co">##   0.9998765   1.0015317   1.0006786   1.0020279   1.0008310   1.0006755 </span></span>
 <span><span class="co">##        y3~1        y4~1        y5~1        y6~1        y7~1        y8~1 </span></span>
-<span><span class="co">##   1.0000209   1.0004938   0.9993078   0.9997694   0.9997010   0.9997912</span></span></code></pre>
+<span><span class="co">##   1.0007540   1.0012295   1.0003705   1.0000946   1.0009214   1.0015388</span></span></code></pre>
 <p>With large models it can be cumbersome to look over all of these
 entries. We can instead find the largest <span class="math inline">\(\hat{R}\)</span> to see if they are all less than
 <span class="math inline">\(1.05\)</span></p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"psrf"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] 1.002</span></span></code></pre>
+<pre><code><span><span class="co">## [1] 1.002028</span></span></code></pre>
 <p>If all <span class="math inline">\(\hat{R} &lt; 1.05\)</span> then we
 can establish that the MCMC chains have converged to a stable solution.
 If the model has not converged, you might increase the number of
@@ -214,7 +214,7 @@ independent pieces of information about the posterior distribution,
 because the samples are autocorlated. The ESS metric is
 <a href="https://www.johndcook.com/blog/2017/06/27/effective-sample-size-for-mcmc/" class="external-link">like
 a currency conversion,</a> telling you how much your autocorrelated
-samples are worth if we were to convert them to indepndent samples. In
+samples are worth if we were to convert them to independent samples. In
 <code>blavaan</code> we can print it from the <code>summary</code>
 function with the <code>neff</code> argument</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
@@ -224,19 +224,19 @@ function</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"neff"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##   ind60=~x1   ind60=~x2   ind60=~x3           a           b           c </span></span>
-<span><span class="co">##    1520.199    1495.829    1783.543    1722.600    2528.210    2366.767 </span></span>
+<span><span class="co">##    1978.356    1833.584    2065.755    2023.288    2254.148    2086.202 </span></span>
 <span><span class="co">##           d           a           b           c           d dem60~ind60 </span></span>
-<span><span class="co">##    2097.700    1722.600    2528.210    2366.767    2097.700    2167.813 </span></span>
+<span><span class="co">##    1844.714    2023.288    2254.148    2086.202    1844.714    2267.963 </span></span>
 <span><span class="co">## dem65~ind60 dem65~dem60      y1~~y5      y2~~y4      y2~~y6      y3~~y7 </span></span>
-<span><span class="co">##    3277.433    3281.561    1793.463    3121.237    3718.743    2850.916 </span></span>
+<span><span class="co">##    2975.766    3376.878    2398.606    2303.505    3409.139    2856.776 </span></span>
 <span><span class="co">##      y4~~y8      y6~~y8      x1~~x1      x2~~x2      x3~~x3      y1~~y1 </span></span>
-<span><span class="co">##    2576.708    1500.111    2199.869    1635.632    2973.255    2215.518 </span></span>
+<span><span class="co">##    2480.206    2404.297    2284.651    1956.567    3427.091    2809.777 </span></span>
 <span><span class="co">##      y2~~y2      y3~~y3      y4~~y4      y5~~y5      y6~~y6      y7~~y7 </span></span>
-<span><span class="co">##    3743.482    3382.134    2640.027    1429.499    2594.523    2388.527 </span></span>
+<span><span class="co">##    3136.524    2816.901    2335.411    2642.352    3049.613    3002.390 </span></span>
 <span><span class="co">##      y8~~y8        x1~1        x2~1        x3~1        y1~1        y2~1 </span></span>
-<span><span class="co">##    1608.775    1372.673    1323.676    1484.975    1465.765    1834.814 </span></span>
+<span><span class="co">##    2614.509    1313.867    1270.351    1396.257    1263.723    1678.282 </span></span>
 <span><span class="co">##        y3~1        y4~1        y5~1        y6~1        y7~1        y8~1 </span></span>
-<span><span class="co">##    1632.872    1391.314    1332.876    1413.921    1295.652    1234.866</span></span></code></pre>
+<span><span class="co">##    1410.500    1302.322    1206.832    1318.768    1134.707    1240.110</span></span></code></pre>
 <p>ESS is a sample size, so it should be at least 100 (optimally, much
 more than 100) times the number of chains in order to be reliable and to
 indicate that estimates of the posterior quantiles are reliable. In this
@@ -246,7 +246,7 @@ example, because we have 3 chains, we would want to see at least
 function:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"neff"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] 1234.866</span></span></code></pre>
+<pre><code><span><span class="co">## [1] 1134.707</span></span></code></pre>
 </div>
 <div class="section level3 unnumbered">
 <h3 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>

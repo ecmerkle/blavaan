@@ -154,10 +154,10 @@ standard deviation, and the 90% Credible Interval</p>
 <span><span class="co">## Posterior summary statistics and highest posterior density (HPD) 90% credible intervals for devm-based fit indices:</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##                EAP Median   MAP    SD lower upper</span></span>
-<span><span class="co">## BRMSEA       0.098  0.098 0.097 0.005 0.089 0.106</span></span>
+<span><span class="co">## BRMSEA       0.099  0.098 0.097 0.005 0.090 0.107</span></span>
 <span><span class="co">## BGammaHat    0.956  0.957 0.958 0.004 0.950 0.964</span></span>
-<span><span class="co">## adjBGammaHat 0.908  0.909 0.912 0.010 0.893 0.923</span></span>
-<span><span class="co">## BMc          0.903  0.904 0.907 0.010 0.887 0.919</span></span></code></pre>
+<span><span class="co">## adjBGammaHat 0.906  0.907 0.910 0.010 0.892 0.922</span></span>
+<span><span class="co">## BMc          0.903  0.903 0.906 0.010 0.888 0.918</span></span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="incremental-fit-indices">Incremental Fit Indices<a class="anchor" aria-label="anchor" href="#incremental-fit-indices"></a>
@@ -168,7 +168,7 @@ Such indices compare your model’s <span class="math inline">\(\chi^2_H\)</span
 <span class="math inline">\(\chi^2_0\)</span> in different ways. Indices
 include the Comparative Fit Index (CFI), Tucker-Lewis Index (TLI), and
 Normed Fit Index (NFI).</p>
-<p>To estimate these indices we need to defined and estimate the
+<p>To estimate these indices we need to define and estimate the
 respective <em>null</em> model. The standard <em>null</em> model used by
 default in frequentist SEM programs (like <em>lavaan</em>) includes only
 the indicators variances and intercepts, and no covariances between
@@ -199,14 +199,14 @@ of fit indices</p>
 <span><span class="co">## Posterior summary statistics and highest posterior density (HPD) 90% credible intervals for devm-based fit indices:</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##                EAP Median   MAP    SD lower upper</span></span>
-<span><span class="co">## BRMSEA       0.098  0.098 0.097 0.005 0.089 0.106</span></span>
+<span><span class="co">## BRMSEA       0.099  0.098 0.097 0.005 0.090 0.107</span></span>
 <span><span class="co">## BGammaHat    0.956  0.957 0.958 0.004 0.950 0.964</span></span>
-<span><span class="co">## adjBGammaHat 0.908  0.909 0.912 0.010 0.893 0.923</span></span>
-<span><span class="co">## BMc          0.903  0.904 0.907 0.010 0.887 0.919</span></span>
-<span><span class="co">## BCFI         0.930  0.931 0.932 0.008 0.918 0.942</span></span>
-<span><span class="co">## BTLI         0.885  0.886 0.887 0.012 0.865 0.904</span></span>
-<span><span class="co">## BNFI         0.910  0.910 0.911 0.007 0.899 0.921</span></span></code></pre>
-<p>The <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> method now presents the central tendicy
+<span><span class="co">## adjBGammaHat 0.906  0.907 0.910 0.010 0.892 0.922</span></span>
+<span><span class="co">## BMc          0.903  0.903 0.906 0.010 0.888 0.918</span></span>
+<span><span class="co">## BCFI         0.930  0.931 0.933 0.008 0.918 0.942</span></span>
+<span><span class="co">## BTLI         0.882  0.883 0.887 0.013 0.862 0.902</span></span>
+<span><span class="co">## BNFI         0.910  0.911 0.913 0.007 0.899 0.921</span></span></code></pre>
+<p>The <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> method now presents the central tendency
 measure you asked for, standard deviation, and credible interval for the
 noncentrality and incremental fit indices.</p>
 </div>
@@ -220,12 +220,12 @@ diagnostic plots using the <code>bayesplot</code> package.</p>
 <code class="sourceCode R"><span><span class="va">dist_fits</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="va">gl_fits_all</span><span class="op">@</span><span class="va">indices</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">dist_fits</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##       BRMSEA BGammaHat adjBGammaHat       BMc      BCFI      BTLI      BNFI</span></span>
-<span><span class="co">## 1 0.10050015 0.9544959    0.9035933 0.8982873 0.9266896 0.8787327 0.9063128</span></span>
-<span><span class="co">## 2 0.08724439 0.9653192    0.9265239 0.9223456 0.9446241 0.9083993 0.9235121</span></span>
-<span><span class="co">## 3 0.08867996 0.9642096    0.9241732 0.9198751 0.9429220 0.9055838 0.9219232</span></span>
-<span><span class="co">## 4 0.08969807 0.9634134    0.9224862 0.9181026 0.9417400 0.9036286 0.9208336</span></span>
-<span><span class="co">## 5 0.09467356 0.9594112    0.9140072 0.9092017 0.9348373 0.8922104 0.9141155</span></span>
-<span><span class="co">## 6 0.09578530 0.9584922    0.9120600 0.9071595 0.9335562 0.8900912 0.9129605</span></span></code></pre>
+<span><span class="co">## 1 0.09660234 0.9583492    0.9105667 0.9068420 0.9332477 0.8872001 0.9129780</span></span>
+<span><span class="co">## 2 0.10162008 0.9541137    0.9014721 0.8974396 0.9266525 0.8760554 0.9067728</span></span>
+<span><span class="co">## 3 0.10649449 0.9498322    0.8922788 0.8879504 0.9190642 0.8632325 0.8993859</span></span>
+<span><span class="co">## 4 0.11399015 0.9429387    0.8774769 0.8727053 0.9069088 0.8426920 0.8876269</span></span>
+<span><span class="co">## 5 0.10529809 0.9508981    0.8945674 0.8903112 0.9204483 0.8655714 0.9006151</span></span>
+<span><span class="co">## 6 0.09728974 0.9577795    0.9093434 0.9055763 0.9320860 0.8852371 0.9118014</span></span></code></pre>
 <p>Once we have saved the posterior distributions, we can explore the
 the histogram and scatterplots between indices.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
