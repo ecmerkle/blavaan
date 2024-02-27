@@ -1261,6 +1261,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   vector[len_free[4]] b_primn;
   vector[len_free[14]] alpha_primn;
   array[Ng] int matdim;
+  array[Ng] vector[m] corrfac; // correction for std.lv
 
   array[Ntot] vector[m] eta;
 
@@ -1346,6 +1347,7 @@ generated quantities { // these matrices are saved in the output but do not figu
     b_prior_prec[g] = fill_matrix(pow(to_vector(b_sd), -2), B_skeleton[g], w4skel, g_start4[g,1], g_start4[g,2]);
     Psi_prior_shape[g] = fill_matrix(to_vector(psi_sd_shape), Psi_skeleton[g], w9skel, g_start9[g,1], g_start9[g,2]);
     Psi_prior_rate[g] = fill_matrix(to_vector(psi_sd_rate), Psi_skeleton[g], w9skel, g_start9[g,1], g_start9[g,2]);
+    corrfac[g] = rep_vector(1, m);
 
     if (g == Ng) {
       matdim[g] = (len_free[4] - g_start4[g, 1] + 1) + (len_free[14] - g_start14[g, 1] + 1);
@@ -1431,11 +1433,11 @@ generated quantities { // these matrices are saved in the output but do not figu
 
       if (Ndum_x[mm] == 0) {
         for (ridx in r1:r2) {
-	  eta[ridx] = multi_normal_cholesky_rng(D * (d + Lamt_Thet_inv * (YX[ridx] - to_vector(Nu[g]))), Dchol);
+	  eta[ridx] = multi_normal_cholesky_rng(D * (d + Lamt_Thet_inv * (YX[ridx] - to_vector(Nu[g]))), Dchol) ./ corrfac[g];
 	}
       } else {
 	for (ridx in r1:r2) {
-	  eta[ridx] = multi_normal_cholesky_rng(D * (d + to_vector(Psi0_inv * IBinv * B[g, , dum_lv_x_idx[mm, 1:Ndum_x[mm]]] * YX[ridx, dum_ov_x_idx[mm, 1:Ndum_x[mm]]]) + Lamt_Thet_inv * (YX[ridx] - to_vector(Nu[g]))), Dchol);
+	  eta[ridx] = multi_normal_cholesky_rng(D * (d + to_vector(Psi0_inv * IBinv * B[g, , dum_lv_x_idx[mm, 1:Ndum_x[mm]]] * YX[ridx, dum_ov_x_idx[mm, 1:Ndum_x[mm]]]) + Lamt_Thet_inv * (YX[ridx] - to_vector(Nu[g]))), Dchol) ./ corrfac[g];
 	  
 	  eta[ridx, dum_lv_idx[mm, 1:Ndum[mm]]] = YX[ridx, dum_ov_idx[mm, 1:Ndum[mm]]];
         }
@@ -1549,6 +1551,8 @@ generated quantities { // these matrices are saved in the output but do not figu
 	    // line numbers are off by about 156 here
 	    if (is_inf(Psi_skeleton[gg, srow, srow])) {
 	      Psi[gg, srow, srow] = inv_gamma_rng(.5 * (r2 - r1 + 1) + Psi_prior_shape[gg, srow, srow], .5 * residcp[srow, srow] + Psi_prior_rate[gg, srow, srow]);
+	    } else if (Psi_skeleton[gg, srow, srow] == 1) {
+	      corrfac[gg, srow] = pow(inv_gamma_rng(.5 * (r2 - r1 + 1) + Psi_prior_shape[gg, srow, srow], .5 * residcp[srow, srow] + Psi_prior_rate[gg, srow, srow]), .5);
 	    }
 	  }
 	}
