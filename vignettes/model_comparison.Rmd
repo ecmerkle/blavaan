@@ -116,7 +116,7 @@ As both WAIC and LOO approximate the models' performance across posterior draws,
 
 The model differences estimate the differences across the Expected Log-Pointwise-Predictive-Density (elpd), and the standard error of the respective difference.
 
-There are no clear cutoff rules on how to interpret and present these comparisons, and the researchers need to use their expert knowledge as part of the decision process. The best recommendation is the present the differences in elpd $\Delta elpd$, the standard error, and the ratio between them. If the ratio is at least 2 can be consider evidence of differences between the models, and a ratio of 4 would be considered stronger evidence.
+There are no clear cutoff rules on how to interpret and present these comparisons, and the researchers need to use their expert knowledge as part of the decision process. The best recommendation is to present the differences in elpd $\Delta elpd$, the standard error, and the ratio between them. If the ratio is at least 2 can be consider evidence of differences between the models, and a ratio of 4 would be considered stronger evidence.
 
 For the first example, we will compare the standard political democracy model, with a model where all factor regressions are fixed to 0.
 
@@ -317,7 +317,7 @@ abs(bc14$diff_loo[,"elpd_diff"] / bc14$diff_loo[,"se_diff"])
 
 ### Bayes factor
 
-In the Bayesian literature you will the the use of the Bayes factor (BF) to compare models. There are a number of criticisms related to the use of the BF in BSEM, including (1) the BF is unstable for large models (like most SEMs), (2) it is highly sensitive to model priors, (3) it requires strong priors to have stable estimation of it, (4) it can require large number of posterior draws, (5) the estimation using the marginal likelihood ignores a lot of information from the posterior distributions. For more details on this discussion please see @tendeiro_review_2019 and @schad_workflow_2022. These criticisms lead us to recommend against use of the BF in everyday BSEM estimation. For researchers who commit to their prior distributions and who commit to exploring the noise in their computations, the BF can used to describe the relative odds of one model over another, which is more intuitive than some other model comparison metrics.
+In the Bayesian literature you will make use of the Bayes factor (BF) to compare models. There are a number of criticisms related to the use of the BF in BSEM, including (1) the BF is unstable for large models (like most SEMs), (2) it is highly sensitive to model priors, (3) it requires strong priors to have stable estimation of it, (4) it can require large number of posterior draws, (5) the estimation using the marginal likelihood ignores a lot of information from the posterior distributions. For more details on this discussion please see @tendeiro_review_2019 and @schad_workflow_2022. These criticisms lead us to recommend against use of the BF in everyday BSEM estimation. For researchers who commit to their prior distributions and who commit to exploring the noise in their computations, the BF can used to describe the relative odds of one model over another, which is more intuitive than some other model comparison metrics.
 
 
 ### Summary

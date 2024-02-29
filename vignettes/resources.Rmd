@@ -14,7 +14,7 @@ Other resources are listed below:
 
 - A Stan case study on *blavaan*, by Feng Ji and colleagues: <a href="https://mc-stan.org/users/documentation/case-studies/sem.html">html</a>
 
-- Many recorded presentations are available on the internets:
+- Many recorded presentations are available on the internet:
     - The longest talk with the most details: <a href="https://youtu.be/xJy5zIkzgvg">Presentation to the Oslo UseR Group,</a> including real-time coding examples near the end. (Code from those examples is <a href="https://ecmerkle.github.io/pub/merkle_oslo_script.R">here.</a>)
 
     - Details about how the package works: <a href="https://www.youtube.com/watch?v=Mm6oP_Ss6qg">A virtual presentation</a> to the <a href="https://www.psychoco.org/2022/">2022 International Workshop on Psychometric Computing.</a>

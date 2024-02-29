@@ -55,7 +55,7 @@ summary(gl_fits, central.tendency = c("mean","median","mode"), prob = .90)
 
 Another group of fit indices compares the hypothesized model with the *worst* possible model, so they are called incremental indices. Such indices compare your model's $\chi^2_H$ to the *null* model's $\chi^2_0$ in different ways. Indices include the Comparative Fit Index (CFI), Tucker-Lewis Index (TLI), and Normed Fit Index (NFI). 
 
-To estimate these indices we need to defined and estimate the respective *null* model. The standard *null* model used by default in frequentist SEM programs (like *lavaan*) includes only the indicators variances and intercepts, and no covariances between items. 
+To estimate these indices we need to define and estimate the respective *null* model. The standard *null* model used by default in frequentist SEM programs (like *lavaan*) includes only the indicators variances and intercepts, and no covariances between items. 
 
 You can specify your *null* model by including only the respective indicator variances in your model syntax, such as
 
@@ -98,7 +98,7 @@ gl_fits_all <- blavFitIndices(fit, baseline.model = fit_null)
 summary(gl_fits_all, central.tendency = c("mean","median","mode"), prob = .90)
 ```
 
-The ```summary()``` method now presents the central tendicy measure you asked for, standard deviation, and credible interval for the noncentrality and incremental fit indices. 
+The ```summary()``` method now presents the central tendency measure you asked for, standard deviation, and credible interval for the noncentrality and incremental fit indices. 
 
 ### Access the indices posterior distributions
 

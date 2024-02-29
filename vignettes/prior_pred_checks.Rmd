@@ -24,7 +24,7 @@ The prior predictive distribution is just like the posterior predictive distribu
 
 This is easy to carry out mechanically by simulating parameters $θ^{sim}∼p(\theta)$ according to the priors, then simulating data $y^{sim}∼p(y∣ \theta^{sim})$  according to the sampling distribution given the simulated parameters. The result is a simulation from the joint distribution, $(y^{sim},θ^{sim})∼p(y,\theta)$ and thus $y^{sim}∼p(y)$ is a simulation from the prior predictive distribution.
 
-In *blavaan* we can get PPC when we use the argument ```prisamp=TRUE``` , this will tell blavaan to ignore the data and buil distributions only from the priors. Here we will start by adjusting the priors, instead of using the default priors.
+In *blavaan* we can get PPC when we use the argument ```prisamp=TRUE``` , this will tell blavaan to ignore the data and build distributions only from the priors. Here we will start by adjusting the priors, instead of using the default priors.
 
 #### Weakly informative priors
 
@@ -77,11 +77,12 @@ You can also pick which parameters to plot, like the factor correlations by chos
 plot(fit_wi, pars=19:21, plot.type = "dens")
 ```
 
-From the factor loadings distributions we see that the first loading on each factor is bounded by 0, this is due to a modeling identification constraint in blavaan, and with a maximum values aroun 6. And for all other distributions they range between -6 to 6 or -4 to 4, and for all priors the most likely value is around 0. This would be described as weakly informative priors as it allows them to range between begative and positive values but without allowing crazy high/low values 
+From the factor loading distributions we see that the first loading on each factor is bounded by 0, this is due to a modeling identification constraint in blavaan, and with a maximum value around 6. And for all other distributions they range between -6 to 6 or -4 to 4, and for all priors the most likely value is around 0. This would be described as weakly informative as it allows negative and positive values but without allowing crazy high/low values. 
 
-Note that what would be a *realistic* range would dependen on the parameter, model specification, and data. So, consider these priors in function of those characterictics. 
+What would be a *realistic* range would depend on the parameter, model specification, and data. So, consider these priors in function of those characteristics. 
 
-For the factor correlations we kept the deafult diffuse priors, so these allowed from very high and low correlation, but the prior distributions are not flat across all possible correlation values. 
+For the factor correlations we kept the default diffuse priors, so these allowed very high and low correlation, but the prior distributions are not flat across all possible correlation values. 
+
 
 #### Default priors
 
