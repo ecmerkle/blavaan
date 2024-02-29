@@ -376,7 +376,7 @@ single parameter to a different value, the Jacobian is the absolute
 value of this derivative, which is <span class="math inline">\(2
 \sigma^{-3}\)</span>. In the Stan file, we would then add the log of
 this Jacobian to <code>target</code>:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>target <span class="op">+=</span> log<span class="op">(</span><span class="dv">2</span><span class="op">)</span> <span class="op">-</span> <span class="dv">3</span><span class="op">*</span>log<span class="op">(</span>sigma<span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>target <span class="op">+=</span> log<span class="op">(</span><span class="dv">2</span><span class="op">)</span> <span class="op">-</span> <span class="dv">3</span><span class="op">*</span>log<span class="op">(</span>sigma<span class="op">)</span></span></code></pre></div>
 <p>Further examples and discussion can be found in:</p>
 <p><a href="https://mc-stan.org/users/documentation/case-studies/mle-params.html" class="external-link uri">https://mc-stan.org/users/documentation/case-studies/mle-params.html</a></p>
 </div>
@@ -396,7 +396,7 @@ sensitivity analyses, and also to report bugs!</p>
 <div class="section level3 unnumbered">
 <h3 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h3>
-<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
 <div id="ref-aspmut21" class="csl-entry">
 Asparouhov, Tihomir, and Bengt Muthén. 2021. <span>“Advances in
 <span>Bayesian</span> Model Fit Evaluation for Structural Equation
