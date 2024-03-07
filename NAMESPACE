@@ -94,7 +94,7 @@ import(rstantools)
 
 export("blavaan", "bcfa", "bsem", "bgrowth", "dpriors", "BF", "blavCompare",
        "blavTech", "blavInspect", "blavFitIndices", "labelfun", "standardizedposterior",
-       "standardizedPosterior", "ppmc", "blavPredict")
+       "standardizedPosterior", "ppmc", "blavPredict", "sampleData")
 
 exportClasses("blavaan", "blavPPMC", "blavFitIndices")
 

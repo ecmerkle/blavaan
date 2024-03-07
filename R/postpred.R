@@ -324,6 +324,21 @@ postpred <- function(samplls = NULL, lavobject = NULL, measure = "logl", thin = 
 }
 
 
+## exported function for sampling data from prior or posterior
+sampleData <- sampledata <- function(object, nrep = NULL, conditional = FALSE, type = "response", ...){
+  blavoptions <- blavInspect(object, 'options')
+
+  maxreps <- with(blavoptions, n.chains * sample)
+  if (is.null(nrep)) nrep <- maxreps
+  if (nrep > maxreps) stop("blavaan ERROR: nrep must be <= total number of posterior samples")
+  if (!blavoptions$do.fit) stop("blavaan ERROR: to sample data, do.fit must be TRUE")
+
+  out <- postdata(object, nrep, conditional, type, ...)
+
+  out
+}
+
+
 ## generate data from posterior predictive dist
 postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, type = "response", ...){
 
