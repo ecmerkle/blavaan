@@ -23,6 +23,7 @@ sampleData(object, nrep = NULL, conditional = FALSE, type = "response", ...)
   data). The \code{type = "response"} option generates ordinal data. The
 \code{type = "link"} option generates continuous variables underlying
 ordinal data (which would be cut by thresholds to yield ordinal data).}
+\item{...}{Other arguments, which for now is only \code{parallel}. Parallelization via \code{future_lapply()} is available by setting \code{parallel = TRUE}.}
 }
 \details{
 This is a convenience function to generate data for posterior or prior
