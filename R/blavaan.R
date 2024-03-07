@@ -502,6 +502,9 @@ blavaan <- function(...,  # default lavaan arguments
     lavoptions$prisamp   <- prisamp
     lavoptions$target    <- target
     lavoptions$optim.method <- "mcmc"
+    lavoptions$burnin <- burnin
+    lavoptions$sample <- sample
+    lavoptions$n.chains <- n.chains
     if("llnsamp" %in% names(mcmcextra$data)){
         if(length(mcmcextra$data$llnsamp) > 1 ||
            (!inherits(mcmcextra$data$llnsamp, "numeric") &&
