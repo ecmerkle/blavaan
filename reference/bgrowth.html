@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-3.1230</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-3.1243</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -253,6 +253,8 @@ http://www.jstatsoft.org/v48/i02/.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
 <span class="r-in"><span><span class="co">## linear growth model with a time-varying covariate</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">Demo.growth</span>, package <span class="op">=</span> <span class="st">"lavaan"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">model.syntax</span> <span class="op">&lt;-</span> <span class="st">'</span></span></span>
 <span class="r-in"><span><span class="st">  # intercept and slope with fixed coefficients</span></span></span>
 <span class="r-in"><span><span class="st">    i =~ 1*t1 + 1*t2 + 1*t3 + 1*t4</span></span></span>
@@ -269,7 +271,7 @@ http://www.jstatsoft.org/v48/i02/.</p>
 <span class="r-in"><span><span class="st">    t4 ~ c4</span></span></span>
 <span class="r-in"><span><span class="st">'</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu">bgrowth</span><span class="op">(</span><span class="va">model.syntax</span>, data<span class="op">=</span><span class="va">Demo.growth</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu">bgrowth</span><span class="op">(</span><span class="va">model.syntax</span>, data <span class="op">=</span> <span class="va">Demo.growth</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
 </code></pre></div>

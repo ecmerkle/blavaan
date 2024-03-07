@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-3.1230</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-3.1243</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,17 +126,19 @@ and differences between WAIC and LOOIC.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">HolzingerSwineford1939</span>, package <span class="op">=</span> <span class="st">"lavaan"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">hsm1</span> <span class="op">&lt;-</span> <span class="st">' visual  =~ x1 + x2 + x3 + x4</span></span></span>
 <span class="r-in"><span><span class="st">          textual =~ x4 + x5 + x6</span></span></span>
 <span class="r-in"><span><span class="st">          speed   =~ x7 + x8 + x9 '</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">fit1</span> <span class="op">&lt;-</span> <span class="fu"><a href="bcfa.html">bcfa</a></span><span class="op">(</span><span class="va">hsm1</span>, data<span class="op">=</span><span class="va">HolzingerSwineford1939</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">fit1</span> <span class="op">&lt;-</span> <span class="fu"><a href="bcfa.html">bcfa</a></span><span class="op">(</span><span class="va">hsm1</span>, data <span class="op">=</span> <span class="va">HolzingerSwineford1939</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">hsm2</span> <span class="op">&lt;-</span> <span class="st">' visual  =~ x1 + x2 + x3</span></span></span>
 <span class="r-in"><span><span class="st">          textual =~ x4 + x5 + x6 + x7</span></span></span>
 <span class="r-in"><span><span class="st">          speed   =~ x7 + x8 + x9 '</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">fit2</span> <span class="op">&lt;-</span> <span class="fu"><a href="bcfa.html">bcfa</a></span><span class="op">(</span><span class="va">hsm2</span>, data<span class="op">=</span><span class="va">HolzingerSwineford1939</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">fit2</span> <span class="op">&lt;-</span> <span class="fu"><a href="bcfa.html">bcfa</a></span><span class="op">(</span><span class="va">hsm2</span>, data <span class="op">=</span> <span class="va">HolzingerSwineford1939</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">blavCompare</span><span class="op">(</span><span class="va">fit1</span>, <span class="va">fit2</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
