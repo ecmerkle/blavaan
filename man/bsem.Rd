@@ -125,6 +125,8 @@ http://www.jstatsoft.org/v48/i02/.
 \dontrun{
 ## The industrialization and Political Democracy Example
 ## Bollen (1989), page 332
+data(PoliticalDemocracy, package = "lavaan")
+
 model <- '
   # latent variable definitions
      ind60 =~ x1 + x2 + x3
@@ -144,8 +146,8 @@ model <- '
 '
 
 ## unique priors for mv intercepts
-fit <- bsem(model, data=PoliticalDemocracy,
-            dp=dpriors(nu="normal(5,10)"))
+fit <- bsem(model, data = PoliticalDemocracy,
+            dp = dpriors(nu = "normal(5,10)"))
 summary(fit)
 }
 }

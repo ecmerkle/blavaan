@@ -36,17 +36,19 @@ Vehtari A., Gelman A., Gabry J. (2017). Practical Bayesian model evaluation usin
 }
 \examples{
 \dontrun{
+data(HolzingerSwineford1939, package = "lavaan")
+
 hsm1 <- ' visual  =~ x1 + x2 + x3 + x4
           textual =~ x4 + x5 + x6
           speed   =~ x7 + x8 + x9 '
 
-fit1 <- bcfa(hsm1, data=HolzingerSwineford1939)
+fit1 <- bcfa(hsm1, data = HolzingerSwineford1939)
 
 hsm2 <- ' visual  =~ x1 + x2 + x3
           textual =~ x4 + x5 + x6 + x7
           speed   =~ x7 + x8 + x9 '
 
-fit2 <- bcfa(hsm2, data=HolzingerSwineford1939)
+fit2 <- bcfa(hsm2, data = HolzingerSwineford1939)
 
 blavCompare(fit1, fit2)
 }

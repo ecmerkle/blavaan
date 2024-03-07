@@ -26,11 +26,13 @@ An invisible ggplot object that, if desired, can be further customized.
 }
 \examples{
 \dontrun{
+data(HolzingerSwineford1939, package = "lavaan")
+
 HS.model <- ' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6
               speed   =~ x7 + x8 + x9 '
 
-fit <- bcfa(HS.model, data=HolzingerSwineford1939)
+fit <- bcfa(HS.model, data = HolzingerSwineford1939)
 
 # trace plots of free loadings
 plot(fit, pars = 1:6)

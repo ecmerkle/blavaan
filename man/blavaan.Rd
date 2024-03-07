@@ -114,14 +114,16 @@ http://www.jstatsoft.org/v48/i02/.
 }
 \examples{
 \dontrun{
+data(HolzingerSwineford1939, package = "lavaan")
+
 # The Holzinger and Swineford (1939) example
 HS.model <- ' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6
               speed   =~ x7 + x8 + x9 '
 
-fit <- blavaan(HS.model, data=HolzingerSwineford1939,
-               auto.var=TRUE, auto.fix.first=TRUE,
-               auto.cov.lv.x=TRUE)
+fit <- blavaan(HS.model, data = HolzingerSwineford1939,
+               auto.var = TRUE, auto.fix.first = TRUE,
+               auto.cov.lv.x = TRUE)
 summary(fit)
 coef(fit)
 }

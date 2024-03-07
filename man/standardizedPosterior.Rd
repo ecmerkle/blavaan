@@ -23,6 +23,8 @@ immediately suited to posterior distributions.
 }
 \examples{
 \dontrun{
+data(PoliticalDemocracy, package = "lavaan")
+
 model <- ' 
   # latent variable definitions
      ind60 =~ x1 + x2 + x3
@@ -41,9 +43,8 @@ model <- '
     y6 ~~ y8
 '
 
-fit <- bsem(model, data=PoliticalDemocracy,
-            dp=dpriors(nu="dnorm(5,1e-2)"),
-            bcontrol=list(method="rjparallel"))
+fit <- bsem(model, data = PoliticalDemocracy,
+            dp = dpriors(nu = "normal(5, 10)"))
 
 standardizedPosterior(fit)
 }

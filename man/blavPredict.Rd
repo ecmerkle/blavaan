@@ -56,11 +56,11 @@ values conditioned on observed variables. Returns a matrix with
 Users may also wish to generate the posterior predictive distribution of
 observed data, not conditioned on the latent variables; this
 would often be viewed as data from new clusters (people) that were not
-observed in the original dataset. For that, see \code{postdata()}.
+observed in the original dataset. For that, see \code{sampleData()}.
 }
 \examples{
 \dontrun{
-data(HolzingerSwineford1939)
+data(HolzingerSwineford1939, package = "lavaan")
 
 ## fit model
 HS.model <- ' visual  =~ x1 + x2 + x3

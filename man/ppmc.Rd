@@ -132,6 +132,8 @@ Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@gmail.com})
   doi:10.1080/10705511.2011.607723
 }
 \examples{ \dontrun{
+data(HolzingerSwineford1939, package = "lavaan")
+
 HS.model <- ' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6
               speed   =~ x7 + x8 + x9 '

@@ -125,6 +125,8 @@ http://www.jstatsoft.org/v48/i02/.
 \examples{
 \dontrun{
 ## linear growth model with a time-varying covariate
+data(Demo.growth, package = "lavaan")
+
 model.syntax <- '
   # intercept and slope with fixed coefficients
     i =~ 1*t1 + 1*t2 + 1*t3 + 1*t4
@@ -141,7 +143,7 @@ model.syntax <- '
     t4 ~ c4
 '
 
-fit <- bgrowth(model.syntax, data=Demo.growth)
+fit <- bgrowth(model.syntax, data = Demo.growth)
 summary(fit)
 }
 }
