@@ -325,7 +325,7 @@ postpred <- function(samplls = NULL, lavobject = NULL, measure = "logl", thin = 
 
 
 ## exported function for sampling data from prior or posterior
-sampleData <- sampledata <- function(object, nrep = NULL, conditional = FALSE, type = "response", ...){
+sampleData <- sampledata <- function(object, nrep = NULL, conditional = FALSE, type = "response", simplify = FALSE, ...){
   blavoptions <- blavInspect(object, 'options')
 
   maxreps <- with(blavoptions, n.chains * sample)
@@ -335,6 +335,8 @@ sampleData <- sampledata <- function(object, nrep = NULL, conditional = FALSE, t
 
   out <- postdata(object, nrep, conditional, type, ...)
 
+  if(simplify & blavInspect(object, 'ngroups') == 1L) out <- lapply(out, function(x) x[[1]])
+  
   out
 }
 

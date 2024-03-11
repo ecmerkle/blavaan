@@ -8,7 +8,7 @@
   posterior predictive checks, as well as prior predictive checks (setting
   prisamp = TRUE during model estimation).}
 \usage{
-sampleData(object, nrep = NULL, conditional = FALSE, type = "response", ...)
+sampleData(object, nrep = NULL, conditional = FALSE, type = "response", simplify = FALSE, ...)
 }
 \arguments{
 \item{object}{An object of class \code{\linkS4class{blavaan}}.}
@@ -23,6 +23,9 @@ sampleData(object, nrep = NULL, conditional = FALSE, type = "response", ...)
   data). The \code{type = "response"} option generates ordinal data. The
 \code{type = "link"} option generates continuous variables underlying
 ordinal data (which would be cut by thresholds to yield ordinal data).}
+\item{simplify}{For single-group models, should the list structure be
+  simplified? This makes each dataset a single list entry, instead of a
+  list within a list (which reflects group 1 of dataset 1). Defaults to \code{FALSE}.}
 \item{...}{Other arguments, which for now is only \code{parallel}. Parallelization via \code{future_lapply()} is available by setting \code{parallel = TRUE}.}
 }
 \details{
