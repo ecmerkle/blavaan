@@ -14,7 +14,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-3.1245</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-3.1246</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -101,8 +101,8 @@
 <dd><p>An object of class <code><a href="blavaan-class.html">blavaan</a></code>.</p></dd>
 
 <dt>newdata</dt>
-<dd><p>Currently unused. (An optional data.frame, containing the same variables as
-the data.frame used when fitting the model in object.)</p></dd>
+<dd><p>An optional data.frame, containing the same variables as
+the data.frame used when fitting the model in object.</p></dd>
 
 <dt>type</dt>
 <dd><p>A character string. If <code>"lv"</code>, estimated values for the latent
@@ -135,7 +135,7 @@ conditioned on the sampled latent variables. Returns a list with
 are observations and columns are observed variables.</p>
 <p><code>type="ypred"</code>: The posterior predictive distribution of observed
 variables conditioned on the sampled latent variables (including
-residual variances). Returns a list with "number of samples" entries,
+residual variability). Returns a list with "number of samples" entries,
 where each entry is a data frame where rows are observations and columns
 are observed variables.</p>
 <p><code>type="ymis"</code>: The posterior predictive distribution of missing
@@ -145,7 +145,7 @@ values conditioned on observed variables. Returns a matrix with
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p>Users may also wish to generate the posterior predictive distribution of
-observed data, not conditioned on the latent variables; this
+observed data, not conditioned on the latent variables. This
 would often be viewed as data from new clusters (people) that were not
 observed in the original dataset. For that, see <code><a href="sampleData.html">sampleData()</a></code>.</p></div>
     </div>
