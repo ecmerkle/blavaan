@@ -11,8 +11,8 @@ blavPredict(object, newdata = NULL, type = "lv", level = 1L)
 }
 \arguments{
 \item{object}{An object of class \code{\linkS4class{blavaan}}.}
-\item{newdata}{Currently unused. (An optional data.frame, containing the same variables as
-the data.frame used when fitting the model in object.)}
+\item{newdata}{An optional data.frame, containing the same variables as
+the data.frame used when fitting the model in object.}
 \item{type}{A character string. If \code{"lv"}, estimated values for the latent
 variables in the model are computed. If \code{"ov"} or \code{"yhat"}, predicted means for
 the observed variables in the model are computed. If
@@ -43,7 +43,7 @@ are observations and columns are observed variables.
 
 \code{type="ypred"}: The posterior predictive distribution of observed
 variables conditioned on the sampled latent variables (including
-residual variances). Returns a list with "number of samples" entries,
+residual variability). Returns a list with "number of samples" entries,
 where each entry is a data frame where rows are observations and columns
 are observed variables.
 
@@ -54,7 +54,7 @@ values conditioned on observed variables. Returns a matrix with
 }
 \seealso{
 Users may also wish to generate the posterior predictive distribution of
-observed data, not conditioned on the latent variables; this
+observed data, not conditioned on the latent variables. This
 would often be viewed as data from new clusters (people) that were not
 observed in the original dataset. For that, see \code{sampleData()}.
 }

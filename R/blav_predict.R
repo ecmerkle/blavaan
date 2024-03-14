@@ -36,7 +36,12 @@ blavPredict <- function(object, newdata = NULL, type = "lv", level = 1L) {
     if(type %in% c("yhat", "ypred", "ymis")) stop("blavaan ERROR: option", type, "is not yet implemented for two-level models.", call. = FALSE)
   }
   
-  if(!is.null(newdata)) stop("blavaan ERROR: posterior predictions for newdata are not currently supported")
+  if(!is.null(newdata)) {
+    if(!stantarget) stop("blavaan ERROR: newdata is currently only available for target='stan'")
+    if(lavInspect(object, "categorical")) stop("blavaan ERROR: newdata is not yet available for ordinal data.")
+    object <- blav_fill_newdata(object, newdata)
+  }
+
   
   ## lv: posterior dist of lvs (use blavInspect functionality); matrix frame
   ## lvmeans: use blavInspect functionality; matrix
@@ -119,4 +124,45 @@ blavPredict <- function(object, newdata = NULL, type = "lv", level = 1L) {
   }
   
   out
+}
+
+## fill blavaan object with newdata, then sample lvs given already-sampled parameters
+blav_fill_newdata <- function(object, newdat) {
+
+  lavd <- getFromNamespace("lavData", "lavaan")
+  olddata <- object@Data
+  OV <- olddata@ov
+  object@Data <- lavd(data = newdat,
+                      group = olddata@group,
+                      ov.names = olddata@ov.names,
+                      ov.names.x = olddata@ov.names.x,
+                      ordered = OV$names[ OV$type == "ordered" ],
+                      lavoptions = object@Options, allow.single.case = TRUE)
+  
+  ## Stan-formatted newdata
+  l2s <- lav2stanmarg(object, dp = blavInspect(object, 'options')$dp,
+                      n.chains = blavInspect(object, 'nchains'), inits = "simple")
+  l2slev2 <- lav2stanmarg(object, dp = blavInspect(object, 'options')$dp,
+                          n.chains = blavInspect(object, 'nchains'),
+                          inits = "simple", level = 2, indat = l2s$dat)
+  l2s$dat <- c(l2s$dat, l2slev2$dat)
+  l2s$dat <- l2s$dat[!duplicated(names(l2s$dat))]
+  l2s$free2 <- c(l2s$free2, l2slev2$free2)
+  l2s$lavpartable <- rbind(l2s$lavpartable, l2slev2$lavpartable)
+  l2s$wigpris <- c(l2s$wigpris, l2slev2$wigpris)
+  l2s$init <- lapply(1:length(l2s$init), function(i) c(l2s$init[[i]], l2slev2$init[[i]]))
+  ldargs <- c(l2s$dat, list(lavpartable = l2s$lavpartable, dumlv = l2s$dumlv, dumlv_c = l2slev2$dumlv,
+                            save_lvs = TRUE, do_test = FALSE))
+  smd <- do.call("stanmarg_data", ldargs)
+
+  newlvs <- samp_lvs(object@external$mcmcout, object@Model, object@ParTable, smd, eeta = NULL, categorical = FALSE)
+  lvsumm <- as.matrix(rstan::monitor(newlvs, print=FALSE))
+  cmatch <- match(colnames(object@external$stansumm), colnames(lvsumm))
+  stansumm <- object@external$stansumm
+  lvcols <- grep("^eta", rownames(stansumm))
+  if (length(lvcols) > 0) stansumm <- stansumm[-lvcols, ]
+  object@external$stansumm <- rbind(stansumm, lvsumm[,cmatch])
+  object@external$stanlvs <- newlvs
+  
+  object
 }
