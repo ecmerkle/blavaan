@@ -76,7 +76,9 @@ fit_cl <- bcfa(HS.model.cl, data=HolzingerSwineford1939,
             std.lv=TRUE, meanstructure=T)
 ```
 
-Then you can look at the ```summary()``` of this model and evaluate the cross-loadings. You can specifically see whether any of the cross-loadings seem large enough to suggest that they should be kept in the model, by looking at the posterior mean (```Estimate```) and credible interval. 
+It is important that, for each factor, the first variable after `=~` is one whose loading we expect to be far from 0. So, in the above model, we specified the regular cfa first (whose loadings we expect to be larger), then the loadings with small-variance priors on a separate line. This is important because, in blavaan, the first loading is either sign constrained or fixed to 1 (depending on `std.lv`). If the posterior distribution of that constrained loading is centered near 0, we may experience identification problems.
+
+After estimation, you can look at the ```summary()``` of this model and evaluate the cross-loadings. You can specifically see whether any of the cross-loadings seem large enough to suggest that they should be kept in the model, by looking at the posterior mean (```Estimate```) and credible interval. 
 
 ```{r}
 summary(fit_cl)
