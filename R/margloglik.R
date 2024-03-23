@@ -55,7 +55,18 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
   ## first deal with any wishart priors
   wps <- which(sapply(pricom, function(x) x[1] %in% c("dwish", "lkj_corr")))
   if(length(wps) > 0){
-    ngroups <- max(lavpartable$group)
+    if("group" %in% names(lavpartable)){
+      ngroups <- max(lavpartable$group)
+    } else {
+      if("block" %in% names(lavpartable)){
+        lavpartable$group <- lavpartable$block
+        ngroups <- max(lavpartable$block)
+      } else {
+        lavpartable$group <- rep(1, length(lavpartable$lhs))
+        ngroups <- 1
+      }
+    }
+
     targdist <- ifelse(grepl("stan", target), "lkj_corr", "dwish")
     for(k in 1:ngroups){
       ## TODO? ensure that covpars are ordered the same as varpars?
