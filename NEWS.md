@@ -1,4 +1,12 @@
 
+# Version 0.5-4
+## New features
+* New function sampleData() for generating data from a blavaan object.
+
+* Functionality for the newdata argument in blavPredict(), which can generate lv (and other) predictions for new data from a model that has already been estimated (continuous data only, target = "stan" only).
+
+* Bugs from 0.5-3 are fixed.
+
 # Version 0.5-3
 ## New features
 * Functionality to find unrestricted blocks of the model's psi matrix (lv covariance matrix). lkj priors are assigned to these unrestricted blocks, improving the positive definite issue described in the "Opaque priors" paper.
@@ -15,7 +23,6 @@
 
 ## Bugs/glitches discovered after the release:
 * Some models with exogenous covariates, fixed.x=TRUE, and missing data fail to converge and yield implausible parameter values (reported by DeAnne Hunter).
-
 
 # Version 0.5-2
 ## New features

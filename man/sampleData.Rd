@@ -8,7 +8,8 @@
   posterior predictive checks, as well as prior predictive checks (setting
   prisamp = TRUE during model estimation).}
 \usage{
-sampleData(object, nrep = NULL, conditional = FALSE, type = "response", simplify = FALSE, ...)
+sampleData(object, nrep = NULL, conditional = FALSE, type = "response",
+           simplify = FALSE, ...)
 }
 \arguments{
 \item{object}{An object of class \code{\linkS4class{blavaan}}.}
