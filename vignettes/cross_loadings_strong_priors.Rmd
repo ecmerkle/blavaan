@@ -76,7 +76,7 @@ fit_cl <- bcfa(HS.model.cl, data=HolzingerSwineford1939,
             std.lv=TRUE, meanstructure=T)
 ```
 
-It is important that, for each factor, the first variable after `=~` is one whose loading we expect to be far from 0. So, in the above model, we specified the regular cfa first (whose loadings we expect to be larger), then the loadings with small-variance priors on a separate line. This is important because, in blavaan, the first loading is either sign constrained or fixed to 1 (depending on `std.lv`). If the posterior distribution of that constrained loading is centered near 0, we may experience identification problems.
+It is important that, for each factor, the first variable after `=~` is one whose loading we expect to be far from 0. So, in the above model, we specified the regular cfa first (whose loadings we expect to be larger), then the loadings with small-variance priors on a separate line. This is important because, in blavaan, the first loading is either constrained to be positive or fixed to 1 (depending on `std.lv`). If the posterior distribution of that constrained loading is centered near 0, we may experience identification problems. Reverse-coded variables can also be problematic here, because a positive constraint on a reverse-coded loading can lead other loadings to assume negative values. If you use informative priors in this situation, then you should verify that the prior density is on the correct side of 0.
 
 After estimation, you can look at the ```summary()``` of this model and evaluate the cross-loadings. You can specifically see whether any of the cross-loadings seem large enough to suggest that they should be kept in the model, by looking at the posterior mean (```Estimate```) and credible interval. 
 
