@@ -402,7 +402,10 @@ blavaan <- function(...,  # default lavaan arguments
                      LAV@ParTable$rhs %in% LAV@ParTable$plabel[cov.pars]) &
                      LAV@ParTable$op == "=="))
     if(con.cov) LAV@Options$auto.cov.lv.x <- FALSE
-    
+
+    # ensure group is in the parTable
+    if(!("group" %in% names(LAV@ParTable))) LAV@ParTable$group <- rep(1L, length(LAV@ParTable$lhs))
+  
     # if std.lv, truncate the prior of each lv's first loading
     loadpt <- LAV@ParTable$op == "=~"
     lvs <- unique(LAV@ParTable$lhs[loadpt])
