@@ -321,7 +321,15 @@ blavaan <- function(...,  # default lavaan arguments
     dotdotdot$do.fit <- TRUE; dotdotdot$warn <- FALSE
     if(LAV@Data@data.type != "moment" && target == "stan"){
         ## if no missing, set missing = "listwise" to avoid meanstructure if possible
-        if(!any(is.na(unlist(lavInspect(LAV, 'data'))))) dotdotdot$missing <- "listwise"
+        if(!any(is.na(unlist(lavInspect(LAV, 'data'))))){
+            dotdotdot$missing <- "listwise"
+        } else {
+            if("cluster" %in% dotNames) {
+                ## set missing = "listwise" for two-level models
+                dotdotdot$missing <- "listwise"
+                cat("blavaan NOTE: for two-level models, listwise deletion is currently the only missingness option.\n\n")
+            }
+        }
     }
 
     # for initial values/some parameter setup:
