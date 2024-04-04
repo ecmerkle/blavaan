@@ -70,7 +70,7 @@ function(object, header       = TRUE,
                  ci           = TRUE,
                  standardized = FALSE,
                  rsquare      = FALSE,
-                 std.nox      = FALSE,
+                 std.nox      = FALSE, #TODO: remove deprecated argument in early 2025
                  psrf         = TRUE,
                  neff         = FALSE,
                  postmedian   = FALSE,
@@ -79,7 +79,7 @@ function(object, header       = TRUE,
                  bf           = FALSE,
                  nd = 3L) {
 
-    if(std.nox) standardized <- TRUE
+    #TODO: remove (deprecated):  if(std.nox) standardized <- TRUE
 
     # print the 'short' summary
     if(header) {
@@ -122,9 +122,10 @@ function(object, header       = TRUE,
 
         if(!("group" %in% names(PE))) PE$group <- 1
         if(!("level" %in% names(PE))) PE$level <- "within"
-        if(standardized && std.nox) {
-            PE$std.all <- PE$std.nox
-        }
+        #TODO: remove deprecated argument in early 2025
+        # if(standardized && std.nox) {
+        #     PE$std.all <- PE$std.nox
+        # }
         PE$group[PE$group == 0] <- 1
 
         if("target" %in% names(object@call)){
