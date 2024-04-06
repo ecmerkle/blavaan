@@ -147,22 +147,24 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
       }
     } else if (lammat) {
       for (i in 1:length(free2)) {
-        for (j in 1:NCOL(free2[[i]])) {
-          col <- free[[i]][,j]
-          col2 <- free2[[i]][,j]
-          porg <- col[col != 0L]
-          parnums <- col2[col2 != 0L]
-          if (length(parnums) > 0) {
-            psign <- parnums[which.min(porg)] # sign constrain the first loading from user syntax
-            ## if equality constraint, sign must involve the
-            ## "free" parameter
-            if (wskel[psign,1] == 1L) {
-              psign <- wskel[psign,2]
-            } else {
-              psign <- psign - sum(wskel[1:(psign-1),1] == 1)
+        if (NCOL(free2[[i]]) > 0) {
+          for (j in 1:NCOL(free2[[i]])) {
+            col <- free[[i]][,j]
+            col2 <- free2[[i]][,j]
+            porg <- col[col != 0L]
+            parnums <- col2[col2 != 0L]
+            if (length(parnums) > 0) {
+              psign <- parnums[which.min(porg)] # sign constrain the first loading from user syntax
+              ## if equality constraint, sign must involve the
+              ## "free" parameter
+              if (wskel[psign,1] == 1L) {
+                psign <- wskel[psign,2]
+              } else {
+                psign <- psign - sum(wskel[1:(psign-1),1] == 1)
+              }
+              sign[parnums, 1] <- 1L
+              sign[parnums, 2] <- psign
             }
-            sign[parnums, 1] <- 1L
-            sign[parnums, 2] <- psign
           }
         }
       }
