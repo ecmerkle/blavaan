@@ -332,6 +332,7 @@ sampleData <- sampledata <- function(object, nrep = NULL, conditional = FALSE, t
   if (is.null(nrep)) nrep <- maxreps
   if (nrep > maxreps) stop("blavaan ERROR: nrep must be <= total number of posterior samples")
   if (!blavoptions$do.fit) stop("blavaan ERROR: to sample data, do.fit must be TRUE")
+  if (blavoptions$.multilevel) stop("blavaan ERROR: sampleData() cannot yet sample from two-level models")
 
   out <- postdata(object, nrep, conditional, type, ...)
 
