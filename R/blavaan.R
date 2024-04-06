@@ -353,8 +353,8 @@ blavaan <- function(...,  # default lavaan arguments
     # save.lvs in a model with no lvs
     if(save.lvs){
         clv <- lavInspect(LAV, 'cov.lv')
-        if(is.list(clv)) clv <- clv[[1]]
-        if(nrow(clv) == 0) warning("blavaan WARNING: save.lvs=TRUE, but there are no lvs in the model.", call. = FALSE)
+        if(!is.list(clv)) clv <- list(clv)
+        if(all(sapply(clv, nrow) == 0)) warning("blavaan WARNING: save.lvs=TRUE, but there are no lvs in the model.", call. = FALSE)
     }
         
     # turn warnings back on by default
@@ -1118,13 +1118,15 @@ blavaan <- function(...,  # default lavaan arguments
         lavInspect(blavaan, "post.check")
     }
 
-    if( "psi" %in% lavpartable$mat &&
-        ( (target == "stan" && !l2s$blkpsi) ||
-          (target != "stan" && with(covres, !(diagpsi | fullpsi))) ) ) {
-      warning("blavaan WARNING: As specified, the psi covariance matrix is neither diagonal nor unrestricted, so the actual prior might differ from the stated prior. See\n https://arxiv.org/abs/2301.08667", call. = FALSE)
-    }
-    if( "theta" %in% lavpartable$mat && with(covres, !(diagthet | fullthet)) ) {
-      warning("blavaan WARNING: As specified, the theta covariance matrix is neither diagonal nor unrestricted, so the actual prior might differ from the stated prior. See\n https://arxiv.org/abs/2301.08667", call. = FALSE)
+    if(!lavoptions$.multilevel) { # because checkcovs() has not been adapted to it
+      if( "psi" %in% lavpartable$mat &&
+          ( (target == "stan" && !l2s$blkpsi) ||
+            (target != "stan" && with(covres, !(diagpsi | fullpsi))) ) ) {
+        warning("blavaan WARNING: As specified, the psi covariance matrix is neither diagonal nor unrestricted, so the actual prior might differ from the stated prior. See\n https://arxiv.org/abs/2301.08667", call. = FALSE)
+      }
+      if( "theta" %in% lavpartable$mat && with(covres, !(diagthet | fullthet)) ) {
+        warning("blavaan WARNING: As specified, the theta covariance matrix is neither diagonal nor unrestricted, so the actual prior might differ from the stated prior. See\n https://arxiv.org/abs/2301.08667", call. = FALSE)
+      }
     }
     
     if(jag.do.fit & lavoptions$warn & !prisamp & !usevb & !grepl("stan", target)){
