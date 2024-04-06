@@ -327,7 +327,7 @@ blavaan <- function(...,  # default lavaan arguments
             if("cluster" %in% dotNames) {
                 ## set missing = "listwise" for two-level models
                 dotdotdot$missing <- "listwise"
-                cat("blavaan NOTE: for two-level models, listwise deletion is currently the only missingness option.\n\n")
+                cat("blavaan NOTE: listwise deletion is in use! (currently the only missingness option for two-level models)\n\n")
             }
         }
     }
