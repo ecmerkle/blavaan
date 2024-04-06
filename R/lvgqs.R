@@ -320,7 +320,9 @@ samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable,
         standata$Ntot <- sum(standata$nclus[,2])
         standata$Nobs <- with(standata, rep(N_between + N_both, Np))
         standata$Obsvar <- with(standata, matrix(1:standata$Nobs[1], Np, N_between + N_both, byrow = TRUE))
-        tmpmat2[j,,] <- lvgqs(modmat2, standata, eeta[2*(1:standata$Ng)])
+        if (standata$m > 0) {
+          tmpmat2[j,,] <- lvgqs(modmat2, standata, eeta[2*(1:standata$Ng)])
+        }
 
         ## now level 1
         standata <- stanorig
@@ -331,7 +333,9 @@ samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable,
           if(!("beta" %in% names(modmat1[[g]]))) modmat1[[g]]$beta <- matrix(0, standata$m, standata$m)
         }
 
-        tmpmat[j,,] <- lvgqs(modmat1, standata, eeta[2 * (1:standata$Ng) - 1])
+        if (standata$m > 0) {
+          tmpmat[j,,] <- lvgqs(modmat1, standata, eeta[2 * (1:standata$Ng) - 1])
+        }
       }
       list(tmpmat, tmpmat2)})
   if(!debug) {
