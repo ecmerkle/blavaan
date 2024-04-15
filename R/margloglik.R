@@ -88,7 +88,12 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
       tmpmat <- diag(lavpartable$est[varpars])
 
       if(length(covpars) > 0){
-        tmpmat[lower.tri(tmpmat)] <- lavpartable$est[covpars]
+        if(sum(lower.tri(tmpmat)) != length(covpars)){
+          ## TODO need to evaluate blocks of the matrix at a time
+          stop("blavaan ERROR: margloglik problem evaluating covariance matrix")
+        } else {
+          tmpmat[lower.tri(tmpmat)] <- lavpartable$est[covpars]
+        }
       }
       tmpmat <- tmpmat + t(tmpmat)
       diag(tmpmat) <- diag(tmpmat)/2
