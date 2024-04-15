@@ -5,6 +5,8 @@
 
 * Functionality for the newdata argument in blavPredict(), which can generate lv (and other) predictions for new data from a model that has already been estimated (continuous data only, target = "stan" only).
 
+* Refinements to two-level models (handle missingness via listwise deletion; lvs only at one level; improved messaging)
+
 * Bugs from 0.5-3 are fixed.
 
 # Version 0.5-3
