@@ -1,5 +1,5 @@
 pandoc: 3.1.11
-pkgdown: 2.0.7
+pkgdown: 2.0.8
 pkgdown_sha: ~
 articles:
   approx_fi: approx_fi.html
@@ -13,13 +13,13 @@ articles:
   multilevel: multilevel.html
   ordinal: ordinal.html
   plotting: plotting.html
-  prior: prior.html
   prior_pred_checks: prior_pred_checks.html
+  prior: prior.html
   probability_direction: probability_direction.html
   resources: resources.html
   start: start.html
   summaries: summaries.html
-last_built: 2024-04-10T02:57Z
+last_built: 2024-04-15T00:40Z
 urls:
   reference: http://ecmerkle.github.io/blavaan/reference
   article: http://ecmerkle.github.io/blavaan/articles
