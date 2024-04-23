@@ -96,7 +96,7 @@ summary.ppmc <- function(object, discFUN, dist = c("obs","sim"),
                                            round(prob*100, 2),
                                            "% credible intervals")
                                   }, ""),
-                                  " for the posterior ",
+                                  "\n for the posterior ",
                                   if (dist == "sim") "predictive ",
                                   "distribution of ",
                                   if (dist == "obs") "realized ",
@@ -105,7 +105,7 @@ summary.ppmc <- function(object, discFUN, dist = c("obs","sim"),
                                   if (dist == "sim") {
                                     "data simulated from the posterior, "
                                   } else "data, ",
-                                  "along with posterior predictive p values ",
+                                  "\n along with posterior predictive p values ",
                                   "to test hypotheses in either direction:\n",
                                   sep = "")
   } else {
@@ -143,7 +143,7 @@ summary.ppmc <- function(object, discFUN, dist = c("obs","sim"),
                                                round(prob*100, 2),
                                                "% credible intervals")
                                       }, ""),
-                                      " for the posterior ",
+                                      "\n for the posterior ",
                                       if (dist == "sim") "predictive ",
                                       "distribution of ",
                                       if (dist == "obs") "realized ",
@@ -152,7 +152,7 @@ summary.ppmc <- function(object, discFUN, dist = c("obs","sim"),
                                       if (dist == "sim") {
                                         "data simulated from the posterior, "
                                       } else "data, ",
-                                      "along with posterior predictive p values ",
+                                      "\n along with posterior predictive p values ",
                                       "to test hypotheses in either direction:\n",
                                       sep = "")
 
@@ -184,7 +184,7 @@ summary.ppmc <- function(object, discFUN, dist = c("obs","sim"),
             attr(out[[mm]], "header") <- paste0("Highest posterior density (HPD) ",
                                                 round(prob*100, 2), "% ",
                                                 toupper(names(out)[[mm]]),
-                                                " credible-interval limits for the posterior ",
+                                                " credible-interval limits for the\n posterior ",
                                                 if (dist == "sim") "predictive ",
                                                 "distribution of ",
                                                 if (dist == "obs") "realized ",

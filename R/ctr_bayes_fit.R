@@ -61,7 +61,7 @@ summary.bfi <- function(object,
   out <- as.data.frame(do.call(rbind, indexSummaries))
   class(out) <- c("lavaan.data.frame","data.frame")
   attr(out, "header") <- paste0("Posterior summary statistics and highest",
-                                " posterior density (HPD) ", round(prob*100, 2),
+                                " posterior density (HPD)\n ", round(prob*100, 2),
                                 "% credible intervals for ",
                                 object@details$rescale,
                                 "-based fit indices:", sep = "")
