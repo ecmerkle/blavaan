@@ -353,7 +353,8 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$between_idx <- between_idx; dat$N_between <- N_between
   dat$within_idx <- within_idx; dat$N_within <- N_within
   dat$both_idx <- both_idx; dat$N_both <- N_both
-  dat$ov_idx1 <- ov_idx1; dat$ov_idx2 <- ov_idx2
+  dat$ov_idx1 <- array(ov_idx1, dim = length(ov_idx1))
+  dat$ov_idx2 <- array(ov_idx2, dim = length(ov_idx2))
   dat$p_tilde <- p_tilde
   dat$N_lev <- N_lev
 
