@@ -327,8 +327,8 @@ postpred <- function(samplls = NULL, lavobject = NULL, measure = "logl", thin = 
 ## exported function for sampling data from prior or posterior
 sampleData <- sampledata <- function(object, nrep = NULL, conditional = FALSE, type = "response", simplify = FALSE, ...){
   blavoptions <- blavInspect(object, 'options')
-
-  maxreps <- with(blavoptions, n.chains * sample)
+  nsamps <- length(sampnums(object@external$mcmcout, thin = 1))
+  maxreps <- blavoptions$n.chains * nsamps
   if (is.null(nrep)) nrep <- maxreps
   if (nrep > maxreps) stop("blavaan ERROR: nrep must be <= total number of posterior samples")
   if (!blavoptions$do.fit) stop("blavaan ERROR: to sample data, do.fit must be TRUE")
