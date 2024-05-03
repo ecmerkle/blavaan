@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-4.1266</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-4.1269</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -87,6 +87,11 @@
 <li><p>Functionality for the newdata argument in blavPredict(), which can generate lv (and other) predictions for new data from a model that has already been estimated (continuous data only, target = “stan” only).</p></li>
 <li><p>Refinements to two-level models (handle missingness via listwise deletion; lvs only at one level; improved messaging)</p></li>
 <li><p>Bugs from 0.5-3 are fixed.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="bugsglitches-discovered-after-the-release-0-5-4">Bugs/glitches discovered after the release:<a class="anchor" aria-label="anchor" href="#bugsglitches-discovered-after-the-release-0-5-4"></a></h3>
+<ul><li><p>Some two-level models fail when only one observed variable appears at a level (reported by Carl Falk).</p></li>
+<li><p>For target = “stan”, some models fail when loadings are equality constrained and std.lv = TRUE (reported by Amos Pagin).</p></li>
 </ul></div>
 </div>
     <div class="section level2">
