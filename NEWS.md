@@ -9,6 +9,11 @@
 
 * Bugs from 0.5-3 are fixed.
 
+## Bugs/glitches discovered after the release:
+* Some two-level models fail when only one observed variable appears at a level (reported by Carl Falk).
+
+* For target = "stan", some models fail when loadings are equality constrained and std.lv = TRUE (reported by Amos Pagin).
+
 # Version 0.5-3
 ## New features
 * Functionality to find unrestricted blocks of the model's psi matrix (lv covariance matrix). lkj priors are assigned to these unrestricted blocks, improving the positive definite issue described in the "Opaque priors" paper.

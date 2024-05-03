@@ -96,8 +96,8 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
     if (lvmat & length(ddd$sign) > 0) {
       lamfree <- ddd$free1
       lamfree2 <- ddd$free2
-      transtab <- cbind(sapply(lamfree, function(x) x[x != 0]),
-                        sapply(lamfree2, function(x) x[x != 0]))
+      transtab <- cbind(as.numeric(sapply(lamfree, function(x) x[x != 0])),
+                        as.numeric(sapply(lamfree2, function(x) x[x != 0])))
       lamsign <- ddd$sign
 
       for (i in 1:length(free2)) {
@@ -113,7 +113,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
 
             ## see whether any are equality constrained
             l1match <- match(lampar1, constraint$rhs, nomatch = 0L)
-            transconst <- transtab[match(constraint$lhs[l1match], transtab[,1]), 2*i]
+            transconst <- transtab[match(constraint$lhs[l1match], transtab[,1]), 2]
             lampar12[l1match != 0] <- as.numeric(transconst)
             if (all(lampar12 == 0)) { # ov converted to lv
               l1 <- 1
@@ -122,13 +122,13 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
               l1 <- lampar12[which(lampar12 %in% lamsign[,2])]
               ## for across-group equality constraint:
               if (length(l1) == 0) l1 <- lampar12[lampar12 != 0][1]
-              if (lamsign[l1,1] == 1) l1 <- lamsign[l1,2]
+              if (lamsign[l1[1],1] == 1) l1 <- lamsign[l1[1],2]
             }
 
             lampar2 <- lamfree[[i]][,fpar[j,1]]
             lampar22 <- lamfree2[[i]][,fpar[j,1]]
             l2match <- match(lampar2, constraint$rhs, nomatch = 0L)
-            transconst <- transtab[match(constraint$lhs[l2match], transtab[,1]), 2*i]
+            transconst <- transtab[match(constraint$lhs[l2match], transtab[,1]), 2]
             lampar22[l2match != 0] <- as.numeric(transconst)
             if (all(lampar22 == 0)) {
               l2 <- 1
@@ -136,7 +136,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
               lampar22 <- lampar22[lampar22 != 0]
               l2 <- lampar22[which(lampar22 %in% lamsign[,2])]
               if (length(l2) == 0) l2 <- lampar22[lampar22 != 0][1]
-              if (lamsign[l2,1] == 1) l2 <- lamsign[l2,2]
+              if (lamsign[l2[1],1] == 1) l2 <- lamsign[l2[1],2]
             }
 
             rowloc <- free2[[i]][fpar[j,1], fpar[j,2]]
@@ -632,7 +632,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     frnums <- sapply(fr, function(x) as.numeric(x[x != 0]))
     twsel <- lavpartable$free %in% frnums
     tmpwig <- lavpartable[twsel,'free'][which(lavpartable[twsel, 'plabel'] %in% wig)]
-    
+
     res <- matattr(fr, es, constrain, mat = "Psi_r", Ng, opts$std.lv, tmpwig,
                    free1 = free2$lambda, free2 = lyfree2, sign = dat$lam_y_sign,
                    dest = dest)
