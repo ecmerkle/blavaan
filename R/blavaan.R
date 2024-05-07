@@ -7,8 +7,8 @@ blavaan <- function(...,  # default lavaan arguments
                     burnin             ,
                     sample             ,
                     adapt              ,
-                    mcmcfile            = FALSE,
-                    mcmcextra           = list(),
+                    mcmcfile           = FALSE,
+                    mcmcextra          = list(),
                     inits              = "simple",
                     convergence        = "manual",
                     target             = "stan",
@@ -86,7 +86,7 @@ blavaan <- function(...,  # default lavaan arguments
 
     # mcmcextra args
     if(length(mcmcextra) > 0){
-      goodnm <- names(mcmcextra) %in% c('data', 'monitor', 'syntax', 'llnsamp', 'moment_match_k_threshold')
+      goodnm <- names(mcmcextra) %in% c('data', 'monitor', 'syntax', 'llnsamp', 'moment_match_k_threshold', 'dosam')
       if(!all(goodnm)){
         stop(paste0("blavaan ERROR: invalid list names in mcmcextra:\n  ", paste(names(mcmcextra)[!goodnm], collapse=" ")))
       }
@@ -101,6 +101,9 @@ blavaan <- function(...,  # default lavaan arguments
         if("syntax" %in% names(mcmcextra)) stop(paste0("blavaan ERROR: mcmcextra$syntax is not available for target='", target, "'."))
       }
     } else if(target == "jags"){
+      if(length(mcmcextra) > 0){
+        if("dosam" %in% names(mcmcextra)) stop("blavaan ERROR: SAM requires target = 'stan'")
+      }
       if(!pkgcheck("runjags")){
         ## go to rstan if they have it
         if(pkgcheck("rstan")){

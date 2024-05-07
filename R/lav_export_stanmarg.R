@@ -201,6 +201,10 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     Ng <- indat$Ng
   }
 
+  ## is this SAM?
+  dosam <- FALSE
+  if ("dosam" %in% names(mcmcextra)) dosam <- mcmcextra$dosam
+
   freemats <- lavInspect(lavobject, 'free')
   constrain <- attr(freemats, 'header')
   if (multilevel) {
@@ -551,7 +555,11 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     blkpsi <- all(sapply(blkinfo, function(x) x$isblk))
     blkse <- do.call("rbind", lapply(blkinfo, function(x) x$blkse))
     if (nrow(blkse) > 0) {
-      blkse <- blkse[(blkse[,3] == 1) & (blkse[,2] - blkse[,1] > 1), , drop = FALSE]
+      if (dosam) {
+        blkse <- blkse[blkse[,3] == 1, , drop = FALSE]
+      } else {
+        blkse <- blkse[(blkse[,3] == 1) & (blkse[,2] - blkse[,1] > 1), , drop = FALSE]
+      }
       blksizes <- blkse[,2] - blkse[,1] + 1
       ublksizes <- unique(blksizes)
       ublksizes <- ublksizes[order(ublksizes)]
@@ -568,7 +576,11 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       dat$psidims <- array(3, dim = 5)
       dat$blkse <- matrix(nrow = 0, ncol = 7)
     } else {
-      blkgrp <- rep(1:length(blkinfo), times = sapply(blkinfo, function(x) sum(x$blkse[,2] - x$blkse[,1] > 1)))
+      if (dosam) {
+        blkgrp <- rep(1:length(blkinfo), times = sapply(blkinfo, function(x) nrow(x$blkse)))
+      } else {
+        blkgrp <- rep(1:length(blkinfo), times = sapply(blkinfo, function(x) sum(x$blkse[,2] - x$blkse[,1] > 1)))
+      }
       arrayidx <- as.numeric(as.factor(ublksizes))
       dupsiz <- duplicated(blksizes)
       blkidx <- rep(NA, nrow(blkse))
@@ -792,7 +804,11 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
         }
         lptrow <- with(lavpartable, which(row == blkse[b,1] & col == (blkse[b,1] + 1) &
                                           group == blkse[b,4] & mat == "lvrho"))
-        blkse[b,7] <- as.numeric(gsub("(\\w+)\\(([^,]+)\\)", "\\2", lavpartable$prior[lptrow]))
+        if (!dosam | length(lptrow) > 0) {
+          blkse[b,7] <- as.numeric(gsub("(\\w+)\\(([^,]+)\\)", "\\2", lavpartable$prior[lptrow]))
+        } else {
+          blkse[b,7] <- 1
+        }
         lavpartable$prior[lkjrows] <- lavpartable$prior[lptrow]
       }
     }
@@ -859,6 +875,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
           ini[[i]] <- c(ini[[i]], list(z_aug = z_aug))
         }
       }
+      if (dosam) ini[[i]]$Psi_sd_tmp <- ini[[i]]$Psi_sd_free
     }
   } else {
     ini <- NULL
