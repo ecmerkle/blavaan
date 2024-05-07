@@ -1149,9 +1149,10 @@ bcfa <- bsem <- function(..., cp = "srs", dp = NULL,
     dotdotdot <- list(...)
     std.lv <- ifelse(any(names(dotdotdot) == "std.lv"), dotdotdot$std.lv, FALSE)
 
-    mc <- match.call()  
+    mc <- match.call()
     mc$model.type      = as.character( mc[[1L]] )
     if(length(mc$model.type) == 3L) mc$model.type <- mc$model.type[3L]
+    mc$model.type <- gsub("^b", "", mc$model.type)
     mc$n.chains        = n.chains
     mc$int.ov.free     = TRUE
     mc$int.lv.free     = FALSE
