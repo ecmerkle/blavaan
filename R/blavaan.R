@@ -90,6 +90,10 @@ blavaan <- function(...,  # default lavaan arguments
       if(!all(goodnm)){
         stop(paste0("blavaan ERROR: invalid list names in mcmcextra:\n  ", paste(names(mcmcextra)[!goodnm], collapse=" ")))
       }
+
+      if(!("dosam" %in% names(mcmcextra))) mcmcextra$dosam <- FALSE
+    } else {
+      mcmcextra$dosam <- FALSE
     }
   
     # ensure rstan/runjags are here. if target is not installed but
@@ -683,7 +687,11 @@ blavaan <- function(...,  # default lavaan arguments
                 fext <- ifelse(target=="jags", "jag", "stan")
                 fnm <- paste0(jagdir, "/sem.", fext)
                 if(target %in% c("stan", "cmdstan")){
-                    cat(stanmodels$stanmarg@model_code, file = fnm)
+                    if(mcmcextra$dosam){
+                        cat(bsam::bsam_model$stanmarg_bsam@model_code, file = fnm)
+                    } else {
+                        cat(stanmodels$stanmarg@model_code, file = fnm)
+                    }
                 } else {
                     cat(jagtrans$model, file = fnm)
                 }
@@ -708,6 +716,11 @@ blavaan <- function(...,  # default lavaan arguments
                                            init = inits))
             } else if(target == "cmdstan"){
               rjarg <- with(jagtrans, list(data = data, init = inits))
+            } else if(mcmcextra$dosam){
+              rjarg <- with(jagtrans, list(object = bsam::bsam_model$stanmarg_bsam,
+                                           data = data,
+                                           pars = sampparms,
+                                           init = inits))
             } else {
               rjarg <- with(jagtrans, list(object = stanmodels$stanmarg,
                                            data = data,

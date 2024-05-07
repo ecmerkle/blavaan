@@ -185,9 +185,13 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   ## if not multilevel, this creates empty matrices to pass to stan for level 2
   ## if (!multilevel & level > 1) stop("blavaan ERROR: higher levels requested, but this is not a multilevel model.")
 
+  ## is this SAM?
+  dosam <- FALSE
+  if ("dosam" %in% names(mcmcextra)) dosam <- mcmcextra$dosam
+  
   ## data characteristics
   if (length(indat) == 0) {
-    dat <- lav2standata(lavobject)
+    dat <- lav2standata(lavobject, dosam = dosam)
     ## model
     if ("emiter" %in% names(mcmcextra$data)) {
       dat$emiter <- mcmcextra$data$emiter
@@ -200,10 +204,6 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     dat <- list()
     Ng <- indat$Ng
   }
-
-  ## is this SAM?
-  dosam <- FALSE
-  if ("dosam" %in% names(mcmcextra)) dosam <- mcmcextra$dosam
 
   freemats <- lavInspect(lavobject, 'free')
   constrain <- attr(freemats, 'header')
@@ -1093,7 +1093,7 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
 }
 
 ## organize information about the observed data for Stan (separately from model information)
-lav2standata <- function(lavobject) {
+lav2standata <- function(lavobject, dosam = FALSE) {
   dat <- list()
 
   Ng <- dat$Ng <- lavInspect(lavobject, 'ngroups')
@@ -1129,6 +1129,35 @@ lav2standata <- function(lavobject) {
   }
   allvars <- 1:nvar
 
+  if (dosam) {
+    lavmodel <- lavobject@Model
+
+    ## single group only
+    lvs <- lavNames(lavobject, type = 'lv')
+    lvvars <- 1:length(lvs)
+    
+    dummy.ov.x.idx <- lavmodel@ov.x.dummy.ov.idx[[1]]
+    dummy.lv.x.idx <- lavmodel@ov.x.dummy.lv.idx[[1]]
+    dummy.ov.idx <- c(lavmodel@ov.y.dummy.ov.idx[[1]], dummy.ov.x.idx)
+    dummy.lv.idx <- c(lavmodel@ov.y.dummy.lv.idx[[1]], dummy.lv.x.idx)
+
+    dat$Ndum <- array(length(dummy.ov.idx), 1)
+    dum_ov_idx <- c(allvars[allvars %in% dummy.ov.idx],
+                    allvars[!(allvars %in% dummy.ov.idx)])
+    dat$dum_ov_idx <- array(dum_ov_idx, c(1, length(dum_ov_idx)))
+    dum_lv_idx <- c(lvvars[lvvars %in% dummy.lv.idx],
+                    lvvars[!(lvvars %in% dummy.lv.idx)])
+    dat$dum_lv_idx <- array(dum_lv_idx, c(1, length(dum_lv_idx)))
+
+    dat$Ndum_x <- array(length(dummy.ov.x.idx), 1)
+    dum_ov_x_idx <- c(allvars[allvars %in% dummy.ov.x.idx],
+                      allvars[!(allvars %in% dummy.ov.x.idx)])
+    dat$dum_ov_x_idx <- array(dum_ov_x_idx, c(1, length(dum_ov_x_idx)))
+    dum_lv_x_idx <- c(lvvars[lvvars %in% dummy.lv.x.idx],
+                      lvvars[!(lvvars %in% dummy.lv.x.idx)])
+    dat$dum_lv_x_idx <- array(dum_lv_x_idx, c(1, length(dum_lv_x_idx)))
+  }
+  
   ## lavobject@SampleStats@missing.flag is TRUE when missing='ml',
   ## regardless of whether data are missing
   misflag <- any(sapply(lavobject@Data@X, function(x) any(is.na(x))))
