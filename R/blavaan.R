@@ -105,9 +105,7 @@ blavaan <- function(...,  # default lavaan arguments
         if("syntax" %in% names(mcmcextra)) stop(paste0("blavaan ERROR: mcmcextra$syntax is not available for target='", target, "'."))
       }
     } else if(target == "jags"){
-      if(length(mcmcextra) > 0){
-        if("dosam" %in% names(mcmcextra)) stop("blavaan ERROR: SAM requires target = 'stan'")
-      }
+      if(mcmcextra$dosam) stop("blavaan ERROR: SAM requires target = 'stan'")
       if(!pkgcheck("runjags")){
         ## go to rstan if they have it
         if(pkgcheck("rstan")){
