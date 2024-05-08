@@ -1133,8 +1133,7 @@ lav2standata <- function(lavobject, dosam = FALSE) {
     lavmodel <- lavobject@Model
 
     ## single group only
-    lvs <- lavNames(lavobject, type = 'lv')
-    lvvars <- 1:length(lvs)
+    lvvars <- 1:NCOL(lavmodel@GLIST$lambda)
     
     dummy.ov.x.idx <- lavmodel@ov.x.dummy.ov.idx[[1]]
     dummy.lv.x.idx <- lavmodel@ov.x.dummy.lv.idx[[1]]
