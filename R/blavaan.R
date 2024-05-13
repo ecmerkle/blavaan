@@ -910,6 +910,12 @@ blavaan <- function(...,  # default lavaan arguments
         }
         attr(x, "control") <- bcontrol
 
+        ## for sam, replace fixed psi entries with sampled means
+        if (mcmcextra$dosam & LAV@Options$std.lv) {
+          LAV@Model@GLIST$psi <- matrix(stansumm[grep("^PS\\[", rownames(stansumm)), 'mean'],
+                                        jagtrans$data$m, jagtrans$data$m, byrow = TRUE)
+        }
+        
         ## log-likelihoods
         LAV@Options$target <- "jags" ## to ensure computation in R, vs extraction of the
                                      ## log-likehoods from Stan
