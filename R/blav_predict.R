@@ -127,7 +127,7 @@ blavPredict <- function(object, newdata = NULL, type = "lv", level = 1L) {
 }
 
 ## fill blavaan object with newdata, then sample lvs given already-sampled parameters
-blav_fill_newdata <- function(object, newdat) {
+blav_fill_newdata <- function(object, newdat, lvs = TRUE) {
 
   lavd <- getFromNamespace("lavData", "lavaan")
   olddata <- object@Data
@@ -138,7 +138,7 @@ blav_fill_newdata <- function(object, newdat) {
                       ov.names.x = olddata@ov.names.x,
                       ordered = OV$names[ OV$type == "ordered" ],
                       lavoptions = object@Options, allow.single.case = TRUE)
-  
+
   ## Stan-formatted newdata
   l2s <- lav2stanmarg(object, dp = blavInspect(object, 'options')$dp,
                       n.chains = blavInspect(object, 'nchains'), inits = "simple")
@@ -154,15 +154,18 @@ blav_fill_newdata <- function(object, newdat) {
   ldargs <- c(l2s$dat, list(lavpartable = l2s$lavpartable, dumlv = l2s$dumlv, dumlv_c = l2slev2$dumlv,
                             save_lvs = TRUE, do_test = FALSE))
   smd <- do.call("stanmarg_data", ldargs)
+  object@external$mcmcdata <- smd
 
-  newlvs <- samp_lvs(object@external$mcmcout, object@Model, object@ParTable, smd, eeta = NULL, categorical = FALSE)
-  lvsumm <- as.matrix(rstan::monitor(newlvs, print=FALSE))
-  cmatch <- match(colnames(object@external$stansumm), colnames(lvsumm))
-  stansumm <- object@external$stansumm
-  lvcols <- grep("^eta", rownames(stansumm))
-  if (length(lvcols) > 0) stansumm <- stansumm[-lvcols, ]
-  object@external$stansumm <- rbind(stansumm, lvsumm[,cmatch])
-  object@external$stanlvs <- newlvs
+  if (lvs) {
+    newlvs <- samp_lvs(object@external$mcmcout, object@Model, object@ParTable, smd, eeta = NULL, categorical = FALSE)
+    lvsumm <- as.matrix(rstan::monitor(newlvs, print=FALSE))
+    cmatch <- match(colnames(object@external$stansumm), colnames(lvsumm))
+    stansumm <- object@external$stansumm
+    lvcols <- grep("^eta", rownames(stansumm))
+    if (length(lvcols) > 0) stansumm <- stansumm[-lvcols, ]
+    object@external$stansumm <- rbind(stansumm, lvsumm[,cmatch])
+    object@external$stanlvs <- newlvs
+  }
   
   object
 }

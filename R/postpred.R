@@ -371,12 +371,13 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, type = "res
   }
 
   if(conditional){
-    if(!(("eta" %in% names(lavobject@external) & "implied" %in% names(lavobject@external)))){
+    if(!(("stanlvs" %in% names(lavobject@external)) | ("eta" %in% names(lavobject@external) & "implied" %in% names(lavobject@external)))){
       stop("blavaan ERROR: could not find lvs.")
     }
+    lavmcmc <- make_mcmc(lavjags, lavobject@external$stanlvs)
+  } else {  
+    lavmcmc <- make_mcmc(lavjags)
   }
-  
-  lavmcmc <- make_mcmc(lavjags)
   n.chains <- length(lavmcmc)
   chnums <- 1:n.chains
 
@@ -419,7 +420,17 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, type = "res
 
       ## generate data (some code from lav_bootstrap.R)
       if(conditional){
-        implied <- lavobject@external$implied
+        if ("implied" %in% names(lavobject@external)){
+          implied <- lavobject@external$implied
+        } else {
+          implied <- lav_model_implied(lavmodel, delta = (lavmodel@parameterization == "delta"))
+          imp2 <- cond_moments(lavmcmc[[j]][i,], lavmodel, lavpartable, lavsamplestats,
+                               lavdata, fit)
+          implied$mean <- imp2$mean
+          #implied$cov <- imp2$cov
+          #fit@external$eta <- eta
+          fit@external$implied <- implied
+        }
       } else {
         implied <- lav_model_implied(lavmodel, delta = (lavmodel@parameterization == "delta"))
       }
@@ -510,14 +521,22 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, type = "res
         }
 
         ## convert to ordinal if requested
-        if(ordresp){
-          for(oj in ordidx){
-            tmpth <- implied$mean[[g]][oj] + implied$th[[g]][thidx[[g]] == oj] * sqrt(implied$cov[[g]][oj, oj])
-            tmpth <- c(-Inf, tmpth, Inf)
-            dataX[[g]][, oj] <- cut(dataX[[g]][, oj], breaks = tmpth, labels = FALSE)
+        if(ordresp) {
+          if(conditional) {
+            for(oj in ordidx) {
+              dataX[[g]][, oj] <- (dataX[[g]][, oj]) / sqrt(imp2$cov[[g]][oj, oj])
+              tmpth <- implied$th[[g]][thidx[[g]] == oj] * sqrt(implied$cov[[g]][oj, oj])
+              tmpth <- c(-Inf, tmpth, Inf)
+              dataX[[g]][, oj] <- cut(dataX[[g]][, oj], breaks = tmpth, labels = FALSE)
+            }
+          } else {
+            for(oj in ordidx){
+              tmpth <- implied$mean[[g]][oj] + implied$th[[g]][thidx[[g]] == oj] * sqrt(implied$cov[[g]][oj, oj])
+              tmpth <- c(-Inf, tmpth, Inf)
+              dataX[[g]][, oj] <- cut(dataX[[g]][, oj], breaks = tmpth, labels = FALSE)
+            }
           }
         }
-        
         dataX[[g]][is.na(origlavdata@X[[g]])] <- NA
 
         ## get rid of completely missing
