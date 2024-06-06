@@ -1,6 +1,6 @@
 Package: blavaan
 Title: Bayesian Latent Variable Analysis
-Version: 0.5-4.1278
+Version: 0.5-4.1279
 Authors@R: c(person(given = "Edgar", family = "Merkle",
                     role = c("aut", "cre"),
                     email = "merklee@missouri.edu",
@@ -42,5 +42,5 @@ SystemRequirements: GNU make
 NeedsCompilation: yes
 URL: https://ecmerkle.github.io/blavaan/, https://github.com/ecmerkle/blavaan
 BugReports: https://github.com/ecmerkle/blavaan/issues
-Additional_repositories: https://mc-stan.org/r-packages/
+Additional_repositories: https://stan-dev.r-universe.dev
 Config/Needs/website: brms

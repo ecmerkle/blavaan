@@ -238,6 +238,7 @@ blavaan <- function(...,  # default lavaan arguments
     }
     dotdotdot$parameterization <- "theta"
     dotdotdot$estimator <- "default"
+    if(ordmod) dotdotdot$estimator <- "DWLS" ## to avoid errors setting up weight matrix
     dotdotdot$conditional.x <- FALSE
   
     # jags args
@@ -375,7 +376,7 @@ blavaan <- function(...,  # default lavaan arguments
     # ordinal only for stan
     ordmod <- lavInspect(LAV, 'categorical')
     if(ordmod) {
-        if(!(target %in% c("stan", "cmdstan"))) stop("blavaan ERROR: ordinal variables only work for target='stan' or 'cmdstan'.")
+        if(!(target %in% c("stan", "cmdstan", "vb"))) stop("blavaan ERROR: ordinal variables only work for target='stan' or 'cmdstan' or 'vb'.")
     }
         
     ineq <- which(LAV@ParTable$op %in% c("<",">"))
