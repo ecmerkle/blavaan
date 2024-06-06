@@ -332,6 +332,7 @@ blavaan <- function(...,  # default lavaan arguments
     ordmod <- lavInspect(LAV, 'categorical')
     if(ordmod) {
         if(!(target %in% c("stan", "cmdstan"))) stop("blavaan ERROR: ordinal variables only work for target='stan' or 'cmdstan'.")
+        dotdotdot$estimator <- "DWLS"
     }
         
     ineq <- which(LAV@ParTable$op %in% c("<",">"))
