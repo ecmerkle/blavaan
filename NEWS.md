@@ -1,3 +1,8 @@
+# Version 0.5-5
+## New features
+* Minor changes to ensure compatability with lavaan 0.6-18. 
+
+* Bugs from 0.5-4 are fixed.
 
 # Version 0.5-4
 ## New features
@@ -10,6 +15,8 @@
 * Bugs from 0.5-3 are fixed.
 
 ## Bugs/glitches discovered after the release:
+* sampleData() ignores thinning when determining number of posterior samples (reported by Luna Fazio).
+
 * Some two-level models fail when only one observed variable appears at a level (reported by Carl Falk).
 
 * For target = "stan", some models fail when loadings are equality constrained and std.lv = TRUE (reported by Amos Pagin).
