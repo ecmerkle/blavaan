@@ -695,8 +695,8 @@ blavaan <- function(...,  # default lavaan arguments
                 fext <- ifelse(target=="jags", "jag", "stan")
                 fnm <- paste0(jagdir, "/sem.", fext)
                 if(target %in% c("stan", "cmdstan")){
-                    if(mcmcextra$dosam){
-                        cat(bsam::stanmodels$stanmarg_bsam@model_code, file = fnm)
+                    if(FALSE){#mcmcextra$dosam){
+                        #cat(bsam::stanmodels$stanmarg_bsam@model_code, file = fnm)
                     } else {
                         cat(stanmodels$stanmarg@model_code, file = fnm)
                     }
@@ -724,11 +724,11 @@ blavaan <- function(...,  # default lavaan arguments
                                            init = inits))
             } else if(target == "cmdstan"){
               rjarg <- with(jagtrans, list(data = data, init = inits))
-            } else if(mcmcextra$dosam){
-              rjarg <- with(jagtrans, list(object = bsam::stanmodels$stanmarg_bsam,
-                                           data = data,
-                                           pars = sampparms,
-                                           init = inits))
+            } else if(FALSE){#mcmcextra$dosam){
+              #rjarg <- with(jagtrans, list(object = bsam::stanmodels$stanmarg_bsam,
+              #                             data = data,
+              #                             pars = sampparms,
+              #                             init = inits))
             } else {
               rjarg <- with(jagtrans, list(object = stanmodels$stanmarg,
                                            data = data,
