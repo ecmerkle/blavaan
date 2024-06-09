@@ -122,9 +122,8 @@ http://www.jstatsoft.org/v48/i02/.
 \code{\link{blavaan}}
 }
 \examples{
-\dontrun{
-## The industrialization and Political Democracy Example
-## Bollen (1989), page 332
+# The industrialization and Political Democracy Example
+# Bollen (1989), page 332
 data(PoliticalDemocracy, package = "lavaan")
 
 model <- '
@@ -145,9 +144,16 @@ model <- '
     y6 ~~ y8
 '
 
-## unique priors for mv intercepts
+\dontrun{
+# mildly informative priors for mv intercepts and loadings
 fit <- bsem(model, data = PoliticalDemocracy,
-            dp = dpriors(nu = "normal(5,10)"))
+            dp = dpriors(nu = "normal(5,10)", lambda = "normal(1,.5)"))
 summary(fit)
 }
+
+# A short run for rough results
+fit <- bsem(model, data = PoliticalDemocracy, burnin = 100, sample = 100,
+            dp = dpriors(nu = "normal(5,10)", lambda = "normal(1,.5)"),
+            n.chains = 2)
+summary(fit)
 }
