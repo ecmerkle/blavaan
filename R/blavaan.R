@@ -352,6 +352,15 @@ blavaan <- function(...,  # default lavaan arguments
         if(!inherits(LAV2, 'try-error')) LAV <- LAV2
     }
 
+    ## ensure verbose appears in lavoptions, for 0.6-18 (FIXME also warn/debug?)
+    if(!("verbose" %in% names(LAV@Options))) {
+      if(!("verbose" %in% names(dotdotdot))) {
+        LAV@Options$verbose <- FALSE
+      } else {
+        LAV@Options$verbose <- dotdotdot$verbose
+      }
+    }
+  
     if(LAV@Data@data.type == "moment") {
         if(target != "stan") stop('blavaan ERROR: full data are required for ', target, ' target.\n  Try target="stan", or consider using kd() from package semTools.')
     }
