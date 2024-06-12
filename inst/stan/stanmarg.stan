@@ -560,7 +560,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   }   
 }
 data {
-  // see https://books.google.com/books?id=9AC-s50RjacC&lpg=PP1&dq=LISREL&pg=PA2#v=onepage&q=LISREL&f=false
+  // see p. 2 https://books.google.com/books?id=9AC-s50RjacC
   int<lower=0> p; // number of manifest response variables
   int<lower=0> p_c; // number of manifest level 2 variables
   int<lower=0> q; // number of manifest predictors
@@ -1296,7 +1296,7 @@ transformed parameters {
     Psi_r_c = fill_cov(Psi_r_c, blkse_c, nblk_c, Psi_r_mat_1_c, Psi_r_mat_2_c, Psi_r_mat_3_c, Psi_r_mat_4_c, Psi_r_mat_5_c);
   }
 
-  // see https://books.google.com/books?id=9AC-s50RjacC&lpg=PP1&dq=LISREL&pg=PA3#v=onepage&q=LISREL&f=false
+  // see p. 3 https://books.google.com/books?id=9AC-s50RjacC
   for (g in 1:Ng) {
     if (m > 0) {
       Lambda_y_A[g] = mdivide_right(Lambda_y[g], I - B[g]);     // = Lambda_y * (I - B)^{-1}
@@ -1647,7 +1647,7 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   }
 }
 generated quantities { // these matrices are saved in the output but do not figure into the likelihood
-  // see https://books.google.com/books?id=9AC-s50RjacC&lpg=PP1&dq=LISREL&pg=PA34#v=onepage&q=LISREL&f=false
+  // see p. 34 https://books.google.com/books?id=9AC-s50RjacC
 
   // sign constraints and correlations
   vector[len_free[1]] ly_sign;
