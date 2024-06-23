@@ -4,6 +4,11 @@
 
 * Bugs from 0.5-4 are fixed.
 
+## Bugs/glitches discovered after the release:
+* On some systems, blavaan installation fails with a "parser failed badly" message from rstan (reported by Larry Hunsicker).
+
+* blavPredict(, type="ov"/"ypred") can fail when the sample size of newdata differs from the sample size of the original data (reported by Niels Skovgaard-Olsen).
+
 # Version 0.5-4
 ## New features
 * New function sampleData() for generating data from a blavaan object.

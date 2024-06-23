@@ -40,6 +40,10 @@ blavPredict <- function(object, newdata = NULL, type = "lv", level = 1L) {
     if(!stantarget) stop("blavaan ERROR: newdata is currently only available for target='stan'")
     if(lavInspect(object, "categorical")) stop("blavaan ERROR: newdata is not yet available for ordinal data.")
     object <- blav_fill_newdata(object, newdata)
+
+    blavsamplestats <- object@SampleStats
+    blavdata <- object@Data
+    standata <- object@external$mcmcdata
   }
 
   
@@ -138,6 +142,7 @@ blav_fill_newdata <- function(object, newdat, lvs = TRUE) {
                       ov.names.x = olddata@ov.names.x,
                       ordered = OV$names[ OV$type == "ordered" ],
                       lavoptions = object@Options, allow.single.case = TRUE)
+  object@SampleStats@ntotal <- NROW(newdat)
 
   ## Stan-formatted newdata
   l2s <- lav2stanmarg(object, dp = blavInspect(object, 'options')$dp,
