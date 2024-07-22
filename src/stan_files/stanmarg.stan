@@ -307,7 +307,9 @@ data {
   int<lower=0, upper=1> do_test; // should we do everything in generated quantities?
   array[Np] vector[p + q - Nord] YXbar; // sample means of continuous manifest variables
   array[Np] matrix[(p + q - Nord + 1), (p + q - Nord + 1)] S;     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
-
+  int<lower=0, upper=1> use_cov;
+  int<lower=0, upper=1> fullpsi;
+  
   
   /* sparse matrix representations of skeletons of coefficient matrices, 
      which is not that interesting but necessary because you cannot pass
@@ -424,7 +426,6 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
   array[Ng] matrix[p, p] Theta_r_skeleton;
   array[Ng] matrix[m, m] Psi_skeleton;
   array[Ng] matrix[m, m] Psi_r_skeleton;
-  array[Ng] matrix[m, m] Psi_r_skeleton_f;
   array[Ng] matrix[p, 1] Nu_skeleton;
   array[Ng] matrix[m, 1] Alpha_skeleton;
   array[Ng] matrix[sum(nlevs) - Nord, 1] Tau_skeleton;
@@ -471,7 +472,6 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
     Theta_r_skeleton[g] = to_dense_matrix(p, p, w7[g], v7[g,], u7[g,]);
     Psi_skeleton[g] = to_dense_matrix(m, m, w9[g], v9[g,], u9[g,]);
     Psi_r_skeleton[g] = to_dense_matrix(m, m, w10[g], v10[g,], u10[g,]);
-    Psi_r_skeleton_f[g] = to_dense_matrix(m, m, w11[g], v11[g,], u11[g,]);
     if (!use_cov) {
       Nu_skeleton[g] = to_dense_matrix((p + q), 1, w13[g], v13[g,], u13[g,]);
       Alpha_skeleton[g] = to_dense_matrix((m + n), 1, w14[g], v14[g,], u14[g,]);
@@ -596,7 +596,6 @@ parameters {
   // free elements (possibly with inequality constraints) for coefficient matrices
   vector[len_free[1]] Lambda_y_free;
   //vector[len_free[2]] Lambda_x_free;
-  vector[len_free[3]] Gamma_free;
   vector[len_free[4]] B_free;
   vector<lower=0>[len_free[5]] Theta_sd_free;
   vector<lower=0,upper=1>[len_free[7]] Theta_r_free; // to use beta prior
@@ -854,7 +853,6 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   
   /* prior densities in log-units */
   target += normal_lpdf(Lambda_y_free | lambda_y_primn, lambda_y_sd);
-  target += normal_lpdf(Gamma_free    | gamma_mn, gamma_sd);
   target += normal_lpdf(B_free        | b_primn, b_sd);
 
   target += normal_lpdf(Nu_free       | nu_primn, nu_sd);
