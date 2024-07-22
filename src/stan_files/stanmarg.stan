@@ -11,7 +11,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
       other: if output element is fixed to that number
     @return matrix of coefficients
   */
-  matrix fill_matrix(vector free_elements, matrix skeleton, int[,] eq_skeleton, int pos_start, int spos_start) {
+  matrix fill_matrix(vector free_elements, matrix skeleton, array[,] int eq_skeleton, int pos_start, int spos_start) {
     int R = rows(skeleton);
     int C = cols(skeleton);
     matrix[R, C] out;
@@ -37,9 +37,9 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     }
     return out;
   }
-    
-  vector fill_prior(vector free_elements, real[] pri_mean, int[,] eq_skeleton) {
-    int R = size(eq_skeleton);
+
+  vector fill_prior(vector free_elements, array[] real pri_mean, array[,] int eq_skeleton) {
+    int R = dims(eq_skeleton)[1];
     int eqelem = 0;
     int pos = 1;
     vector[num_elements(pri_mean)] out;
@@ -65,7 +65,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   /*
    * This is a bug-free version of csr_to_dense_matrix and has the same arguments
    */
-  matrix to_dense_matrix(int m, int n, vector w, int[] v, int[] u) {
+  matrix to_dense_matrix(int m, int n, vector w, array[] int v, array[] int u) {
     matrix[m, n] out = rep_matrix(0, m, n);
     int pos = 1;
     for (i in 1:m) {
@@ -88,7 +88,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   }
 
   // sign-constrain a vector of loadings
-  vector sign_constrain_load(vector free_elements, int npar, int[,] sign_mat) {
+  vector sign_constrain_load(vector free_elements, int npar, array[,] int sign_mat) {
     vector[npar] out;
     for (i in 1:npar) {
       if (sign_mat[i,1]) {
@@ -106,7 +106,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   }
 
   // sign-constrain a vector of regressions or covariances
-  vector sign_constrain_reg(vector free_elements, int npar, int[,] sign_mat, vector load_par1, vector load_par2) {
+  vector sign_constrain_reg(vector free_elements, int npar, array[,] int sign_mat, vector load_par1, vector load_par2) {
     vector[npar] out;
     for (i in 1:npar) {
       if (sign_mat[i,1]) {
@@ -125,10 +125,9 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   }
 
   // obtain covariance parameter vector for correlation/sd matrices
-  vector cor2cov(matrix[] cormat, matrix[] sdmat, int num_free_elements, matrix[] matskel, int[,] wskel, int ngrp) {
+  vector cor2cov(array[] matrix cormat, array[] matrix sdmat, int num_free_elements, array[] matrix matskel, array[,] int wskel, int ngrp) {
     vector[num_free_elements] out;
     int R = rows(to_matrix(cormat[1]));
-    int C = cols(to_matrix(cormat[1]));
     int pos = 1; // position of eq_skeleton
     int freepos = 1; // position of free_elements
     
@@ -147,12 +146,12 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   }
 
   // E step of EM algorithm on latent continuous space
-  matrix[] estep(vector[] YXstar, vector[] Mu, matrix[] Sigma, int[] Nobs, int[,] Obsvar, int[] startrow, int[] endrow, int[] grpnum, int Np, int Ng) {
+  array[] matrix estep(array[] vector YXstar, array[] vector Mu, array[] matrix Sigma, array[] int Nobs, array[,] int Obsvar, array[] int startrow, array[] int endrow, array[] int grpnum, int Np, int Ng) {
     int p = dims(YXstar)[2];
-    matrix[p, p + 1] out[Ng]; //mean vec + cov mat
+    array[Ng] matrix[p, p + 1] out; //mean vec + cov mat
     matrix[dims(YXstar)[1], p] YXfull; // columns consistenly ordered
     matrix[p, p] T2pat;
-    int obsidx[p];
+    array[p] int obsidx;
     int r1;
     int r2;
     int grpidx;
@@ -215,7 +214,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     return out;
   }
 
-  matrix sig_inv_update(matrix Sigmainv, int[] obsidx, int Nobs, int np, real logdet) {
+  matrix sig_inv_update(matrix Sigmainv, array[] int obsidx, int Nobs, int np, real logdet) {
     matrix[Nobs + 1, Nobs + 1] out = rep_matrix(0, Nobs + 1, Nobs + 1);
     int nrm = np - Nobs;
     matrix[nrm, nrm] H;
@@ -242,6 +241,8 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     // using elementwise multiplication + sum here for efficiency
     out = -.5 * N * ( sum(Supdate[1:Nobs, 1:Nobs] .* (S + (xbar - Mu) * (xbar - Mu)')) + Supdate[Nobs + 1, Nobs + 1] + Nobs * log(2 * pi()) );
 
+    if(is_nan(out) || out == positive_infinity()) out = negative_infinity();
+    
     return(out);
   }
 
@@ -270,7 +271,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   }  
 }
 data {
-  // see https://books.google.com/books?id=9AC-s50RjacC&lpg=PP1&dq=LISREL&pg=PA2#v=onepage&q=LISREL&f=false
+  // see p. 2 https://books.google.com/books?id=9AC-s50RjacC
   int<lower=0> p; // number of manifest response variables
   int<lower=0> q; // number of manifest predictors
   int<lower=0> m; // number of latent endogenous variables
@@ -279,229 +280,185 @@ data {
   int<lower=0, upper=1> missing; // are there missing values?
   int<lower=0, upper=1> save_lvs; // should we save lvs?
   int<lower=1> Np; // number of group-by-missing patterns combos
-  int<lower=1> N[Ng]; // number of observations per group
-  int<lower=1> Nobs[Np]; // number of observed variables in each missing pattern
-  int<lower=0> Nordobs[Np]; // number of ordinal observed variables in each missing pattern
-  int<lower=0> Obsvar[Np, p + q]; // indexing of observed variables
+  array[Ng] int<lower=1> N; // number of observations per group
+  array[Np] int<lower=1> Nobs; // number of observed variables in each missing pattern
+  array[Np] int<lower=0> Nordobs; // number of ordinal observed variables in each missing pattern
+  array[Np, p + q] int<lower=0> Obsvar; // indexing of observed variables
   int<lower=1> Ntot; // number of observations across all groups
-  int<lower=1> startrow[Np]; // starting row for each missing pattern
-  int<lower=1,upper=Ntot> endrow[Np]; // ending row for each missing pattern
-  int<lower=1,upper=Ng> grpnum[Np]; // group number for each row of data
+  array[Np] int<lower=1> startrow; // starting row for each missing pattern
+  array[Np] int<lower=1,upper=Ntot> endrow; // ending row for each missing pattern
+  array[Np] int<lower=1,upper=Ng> grpnum; // group number for each row of data
   int<lower=0,upper=1> wigind; // do any parameters have approx equality constraint ('wiggle')?
   int<lower=0, upper=1> has_data; // are the raw data on y and x available?
   int<lower=0, upper=1> ord; // are there any ordinal variables?
   int<lower=0> Nord; // how many ordinal variables?
-  int<lower=0> ordidx[Nord]; // indexing of ordinal variables
-  int<lower=0> OrdObsvar[Np, Nord]; // indexing of observed ordinal variables in YXo
+  array[Nord] int<lower=0> ordidx; // indexing of ordinal variables
+  array[Np, Nord] int<lower=0> OrdObsvar; // indexing of observed ordinal variables in YXo
   int<lower=0> Noent; // how many observed entries of ordinal variables (for data augmentation)
-  int<lower=0> contidx[p + q - Nord]; // indexing of continuous variables
-  int<lower=1> nlevs[Nord]; // how many levels does each ordinal variable have
-  vector[p + q - Nord] YX[Ntot]; // continuous data
-  int YXo[Ntot, Nord]; // ordinal data
-  int<lower=0> Nx[Np]; // number of fixed.x variables
-  int<lower=0> Xvar[Np, p + q]; // indexing of fixed.x variables
-  int<lower=0> Xdatvar[Np, p + q]; // indexing of fixed.x in data (differs from Xvar when missing)
+  array[p + q - Nord] int<lower=0> contidx; // indexing of continuous variables
+  array[Nord] int<lower=1> nlevs; // how many levels does each ordinal variable have
+  array[Ntot] vector[p + q - Nord] YX; // continuous data
+  array[Ntot, Nord] int YXo; // ordinal data
+  array[Np] int<lower=0> Nx; // number of fixed.x variables
+  array[Np, p + q] int<lower=0> Xvar; // indexing of fixed.x variables (within)
+  array[Np, p + q] int<lower=0> Xdatvar; // indexing of fixed.x in data (differs from Xvar when missing)
   int<lower=0> emiter; // number of em iterations for saturated model in ppp (missing data only)
   int<lower=0, upper=1> use_suff; // should we compute likelihood via mvn sufficient stats?
   int<lower=0, upper=1> do_test; // should we do everything in generated quantities?
-  vector[p + q - Nord] YXbar[Np]; // sample means of continuous manifest variables
-  matrix[p + q - Nord + 1, p + q - Nord + 1] S[Np];     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
+  array[Np] vector[p + q - Nord] YXbar; // sample means of continuous manifest variables
+  array[Np] matrix[(p + q - Nord + 1), (p + q - Nord + 1)] S;     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
 
   
   /* sparse matrix representations of skeletons of coefficient matrices, 
      which is not that interesting but necessary because you cannot pass
      missing values into the data block of a Stan program from R */
   int<lower=0> len_w1;        // max number of free elements in Lambda_y per grp
-  int<lower=0> wg1[Ng];           // number of free elements in Lambda_y per grp
-  vector[len_w1] w1[Ng];          // values of free elements in Lambda_y
-  int<lower=1> v1[Ng, len_w1];    // index  of free elements in Lambda_y
-  int<lower=1> u1[Ng, p + 1];     // index  of free elements in Lambda_y
-  int<lower=0> w1skel[sum(wg1), 3];
-  int<lower=0> lam_y_sign[sum(wg1), 2];
+  array[Ng] int<lower=0> wg1;           // number of free elements in Lambda_y per grp
+  array[Ng] vector[len_w1] w1;          // values of free elements in Lambda_y
+  array[Ng, len_w1] int<lower=1> v1;    // index  of free elements in Lambda_y
+  array[Ng, p + 1] int<lower=1> u1;     // index  of free elements in Lambda_y
+  array[sum(wg1), 3] int<lower=0> w1skel;
+  array[sum(wg1), 2] int<lower=0> lam_y_sign;
   int<lower=0> len_lam_y;     // number of free elements minus equality constraints
-  real lambda_y_mn[len_lam_y];           // prior
-  real<lower=0> lambda_y_sd[len_lam_y];
+  array[len_lam_y] real lambda_y_mn;           // prior
+  array[len_lam_y] real<lower=0> lambda_y_sd;
 
-  // same things but for Gamma
-  int<lower=0> len_w3;
-  int<lower=0> wg3[Ng];
-  vector[len_w3] w3[Ng];
-  int<lower=1> v3[Ng, len_w3];
-  int<lower=1> u3[Ng, m + 1];
-  int<lower=0> w3skel[sum(wg3), 3];
-  int<lower=0> gam_sign[sum(wg3), 3];
-  int<lower=0> len_gam;
-  real gamma_mn[len_gam];
-  real<lower=0> gamma_sd[len_gam];
-  
   // same things but for B
   int<lower=0> len_w4;
-  int<lower=0> wg4[Ng];
-  vector[len_w4] w4[Ng];
-  int<lower=1> v4[Ng, len_w4];
-  int<lower=1> u4[Ng, m + 1];
-  int<lower=0> w4skel[sum(wg4), 3];
-  int<lower=0> b_sign[sum(wg4), 3];
+  array[Ng] int<lower=0> wg4;
+  array[Ng] vector[len_w4] w4;
+  array[Ng, len_w4] int<lower=1> v4;
+  array[Ng, m + 1] int<lower=1> u4;
+  array[sum(wg4), 3] int<lower=0> w4skel;
+  array[sum(wg4), 3] int<lower=0> b_sign;
   int<lower=0> len_b;
-  real b_mn[len_b];
-  real<lower=0> b_sd[len_b];
+  array[len_b] real b_mn;
+  array[len_b] real<lower=0> b_sd;
   
   // same things but for diag(Theta)
   int<lower=0> len_w5;
-  int<lower=0> wg5[Ng];
-  vector[len_w5] w5[Ng];
-  int<lower=1> v5[Ng, len_w5];
-  int<lower=1> u5[Ng, p + 1];
-  int<lower=0> w5skel[sum(wg5), 3];
+  array[Ng] int<lower=0> wg5;
+  array[Ng] vector[len_w5] w5;
+  array[Ng, len_w5] int<lower=1> v5;
+  array[Ng, p + 1] int<lower=1> u5;
+  array[sum(wg5), 3] int<lower=0> w5skel;
   int<lower=0> len_thet_sd;
-  real<lower=0> theta_sd_shape[len_thet_sd];
-  real<lower=0> theta_sd_rate[len_thet_sd];
+  array[len_thet_sd] real<lower=0> theta_sd_shape;
+  array[len_thet_sd] real<lower=0> theta_sd_rate;
   int<lower=-2, upper=2> theta_pow;
-  int<lower=0> w5use;
-  int<lower=1> usethet[w5use];
 
   // same things but for Theta_r
   int<lower=0> len_w7;
-  int<lower=0> wg7[Ng];
-  vector[len_w7] w7[Ng];
-  int<lower=1> v7[Ng, len_w7];
-  int<lower=1> u7[Ng, p + 1];
-  int<lower=0> w7skel[sum(wg7), 3];
+  array[Ng] int<lower=0> wg7;
+  array[Ng] vector[len_w7] w7;
+  array[Ng, len_w7] int<lower=1> v7;
+  array[Ng, p + 1] int<lower=1> u7;
+  array[sum(wg7), 3] int<lower=0> w7skel;
   int<lower=0> len_thet_r;
-  real<lower=0> theta_r_alpha[len_thet_r];
-  real<lower=0> theta_r_beta[len_thet_r];
-  
-  // same things but for Theta_r_x
-  int<lower=0> len_w8;
-  int<lower=0> wg8[Ng];
-  vector[len_w8] w8[Ng];
-  int<lower=1> v8[Ng, len_w8];
-  int<lower=1> u8[Ng, q + 1];
-  int<lower=0> w8skel[sum(wg8), 3];
-  int<lower=0> len_thet_x_r;
-  real<lower=0> theta_x_r_alpha[len_thet_x_r];
-  real<lower=0> theta_x_r_beta[len_thet_x_r];
+  array[len_thet_r] real<lower=0> theta_r_alpha;
+  array[len_thet_r] real<lower=0> theta_r_beta;
   
   // same things but for Psi
   int<lower=0> len_w9;
-  int<lower=0> wg9[Ng];
-  vector[len_w9] w9[Ng];
-  int<lower=1> v9[Ng, len_w9];
-  int<lower=1> u9[Ng, m + 1];
-  int<lower=0> w9skel[sum(wg9), 3];
+  array[Ng] int<lower=0> wg9;
+  array[Ng] vector[len_w9] w9;
+  array[Ng, len_w9] int<lower=1> v9;
+  array[Ng, m + 1] int<lower=1> u9;
+  array[sum(wg9), 3] int<lower=0> w9skel;
   int<lower=0> len_psi_sd;
-  real<lower=0> psi_sd_shape[len_psi_sd];
-  real<lower=0> psi_sd_rate[len_psi_sd];
+  array[len_psi_sd] real<lower=0> psi_sd_shape;
+  array[len_psi_sd] real<lower=0> psi_sd_rate;
   int<lower=-2,upper=2> psi_pow;
-  int<lower=0> w9use;
-  int<lower=1> usepsi[w9use];
-  int<lower=0> w9no;
-  int<lower=1> nopsi[w9no];
   
   // same things but for Psi_r
   int<lower=0> len_w10;
-  int<lower=0> wg10[Ng];
-  vector[len_w10] w10[Ng];
-  int<lower=1> v10[Ng, len_w10];
-  int<lower=1> u10[Ng, m + 1];
-  int<lower=0> w10skel[sum(wg10), 3];
-  int<lower=0> psi_r_sign[sum(wg10), 3];
+  array[Ng] int<lower=0> wg10;
+  array[Ng] vector[len_w10] w10;
+  array[Ng, len_w10] int<lower=1> v10;
+  array[Ng, m + 1] int<lower=1> u10;
+  array[sum(wg10), 3] int<lower=0> w10skel;
+  array[sum(wg10), 3] int<lower=0> psi_r_sign;
   int<lower=0> len_psi_r;
-  real<lower=0> psi_r_alpha[len_psi_r];
-  real<lower=0> psi_r_beta[len_psi_r];
-  int<lower=0,upper=1> fullpsi;
-    
+  array[len_psi_r] real<lower=0> psi_r_alpha;
+  array[len_psi_r] real<lower=0> psi_r_beta;
+
   // same things but for Nu
   int<lower=0> len_w13;
-  int<lower=0> wg13[Ng];
-  vector[len_w13] w13[Ng];
-  int<lower=1> v13[Ng, len_w13];
-  int<lower=1> u13[Ng, p + q + 1];
-  int<lower=0> w13skel[sum(wg13), 3];
+  array[Ng] int<lower=0> wg13;
+  array[Ng] vector[len_w13] w13;
+  array[Ng, len_w13] int<lower=1> v13;
+  array[Ng, use_cov ? 1 : p + q + 1] int<lower=1> u13;
+  array[sum(wg13), 3] int<lower=0> w13skel;
   int<lower=0> len_nu;
-  real nu_mn[len_nu];
-  real<lower=0> nu_sd[len_nu];
+  array[len_nu] real nu_mn;
+  array[len_nu] real<lower=0> nu_sd;
   
   // same things but for Alpha
   int<lower=0> len_w14;
-  int<lower=0> wg14[Ng];
-  vector[len_w14] w14[Ng];
-  int<lower=0> v14[Ng, len_w14];
-  int<lower=1> u14[Ng, m + n + 1];
-  int<lower=0> w14skel[sum(wg14), 3];
+  array[Ng] int<lower=0> wg14;
+  array[Ng] vector[len_w14] w14;
+  array[Ng, len_w14] int<lower=0> v14;
+  array[Ng, use_cov ? 1 : m + n + 1] int<lower=1> u14;
+  array[sum(wg14), 3] int<lower=0> w14skel;
   int<lower=0> len_alph;
-  real alpha_mn[len_alph];
-  real<lower=0> alpha_sd[len_alph];
+  array[len_alph] real alpha_mn;
+  array[len_alph] real<lower=0> alpha_sd;
 
   // same things but for Tau
-  int<lower=0> len_w15;
-  int<lower=0> wg15[Ng];
-  vector[len_w15] w15[Ng];
-  int<lower=0> v15[Ng, len_w15];
-  int<lower=1> u15[Ng, sum(nlevs) - Nord + 1];
-  int<lower=0> w15skel[sum(wg15), 3];
-  int<lower=0> len_tau;
   int<lower=0, upper=1> use_dirch;
   int<lower=0, upper=1> use_normal;
-  real tau_mn[len_tau];
-  real<lower=0> tau_sd[len_tau];
+  int<lower=0> len_w15;
+  array[Ng] int<lower=0> wg15;
+  array[Ng] vector[len_w15] w15;
+  array[Ng, len_w15] int<lower=0> v15;
+  array[Ng, sum(nlevs) - Nord + 1] int<lower=1> u15;
+  array[sum(wg15), 3] int<lower=0> w15skel;
+  int<lower=0> len_tau;
+  array[len_tau] real tau_mn;
+  array[len_tau] real<lower=0> tau_sd;
 }
 transformed data { // (re)construct skeleton matrices in Stan (not that interesting)
-  matrix[p, m] Lambda_y_skeleton[Ng];
-  //matrix[q, n] Lambda_x_skeleton[Ng];
-  matrix[m, n] Gamma_skeleton[Ng];
-  matrix[m, m] B_skeleton[Ng];
-  matrix[p, p] Theta_skeleton[Ng];
-  matrix[p, p] Theta_r_skeleton[Ng];
-  matrix[m, m] Psi_skeleton[Ng];
-  matrix[m, m] Psi_r_skeleton[Ng];
-  //matrix[n, n] Phi_skeleton[Ng];
-  //matrix[n, n] Phi_r_skeleton[Ng];
-  matrix[(p + q), 1] Nu_skeleton[Ng];
-  matrix[(m + n), 1] Alpha_skeleton[Ng];
-  matrix[sum(nlevs) - Nord, 1] Tau_skeleton[Ng];
-  vector[ord ? 0 : (p + q)] YXbarstar[Np];
-  matrix[ord ? 0 : (p + q), ord ? 0 : (p + q)] Sstar[Np];
+  array[Ng] matrix[p, m] Lambda_y_skeleton;
+  array[Ng] matrix[m, m] B_skeleton;
+  array[Ng] matrix[p, p] Theta_skeleton;
+  array[Ng] matrix[p, p] Theta_r_skeleton;
+  array[Ng] matrix[m, m] Psi_skeleton;
+  array[Ng] matrix[m, m] Psi_r_skeleton;
+  array[Ng] matrix[m, m] Psi_r_skeleton_f;
+  array[Ng] matrix[p, 1] Nu_skeleton;
+  array[Ng] matrix[m, 1] Alpha_skeleton;
+  array[Ng] matrix[sum(nlevs) - Nord, 1] Tau_skeleton;
+  array[Np] vector[ord ? 0 : (p + q)] YXbarstar;
+  array[Np] matrix[ord ? 0 : (p + q), ord ? 0 : (p + q)] Sstar;
 
   matrix[m, m] I = diag_matrix(rep_vector(1, m));
 
   int Ncont = p + q - Nord;
   
-  int g_start1[Ng];
-  int g_start2[Ng];
-  int g_start3[Ng];
-  int g_start4[Ng];
-  int g_start5[Ng];
-  int g_start6[Ng];
-  int g_start7[Ng];
-  int g_start8[Ng];
-  int g_start9[Ng];
-  int g_start10[Ng];
-  int g_start11[Ng];
-  int g_start12[Ng];
-  int g_start13[Ng];
-  int g_start14[Ng];
-  int g_start15[Ng];
+  array[Ng] int g_start1;
+  array[Ng] int g_start4;
+  array[Ng] int g_start5;
+  array[Ng] int g_start7;
+  array[Ng] int g_start9;
+  array[Ng] int g_start10;
+  array[Ng] int g_start13;
+  array[Ng] int g_start14;
+  array[Ng] int g_start15;
+
+  array[Ng] int f_start1;
+  array[Ng] int f_start4;
+  array[Ng] int f_start5;
+  array[Ng] int f_start7;
+  array[Ng] int f_start9;
+  array[Ng] int f_start10;
+  array[Ng] int f_start13;
+  array[Ng] int f_start14;
+  array[Ng] int f_start15;
+
   
-  int f_start1[Ng];
-  int f_start2[Ng];
-  int f_start3[Ng];
-  int f_start4[Ng];
-  int f_start5[Ng];
-  int f_start6[Ng];
-  int f_start7[Ng];
-  int f_start8[Ng];
-  int f_start9[Ng];
-  int f_start10[Ng];
-  int f_start11[Ng];
-  int f_start12[Ng];
-  int f_start13[Ng];
-  int f_start14[Ng];
-  int f_start15[Ng];
-  
-  int len_free[15];
-  int pos[15];
-  
+  array[15] int len_free;
+  array[15] int pos;
+    
   for (i in 1:15) {
     len_free[i] = 0;
     pos[i] = 1;
@@ -509,14 +466,16 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
   
   for (g in 1:Ng) {
     Lambda_y_skeleton[g] = to_dense_matrix(p, m, w1[g], v1[g,], u1[g,]);
-    Gamma_skeleton[g] = to_dense_matrix(m, n, w3[g], v3[g,], u3[g,]);
     B_skeleton[g] = to_dense_matrix(m, m, w4[g], v4[g,], u4[g,]);
     Theta_skeleton[g] = to_dense_matrix(p, p, w5[g], v5[g,], u5[g,]);
     Theta_r_skeleton[g] = to_dense_matrix(p, p, w7[g], v7[g,], u7[g,]);
     Psi_skeleton[g] = to_dense_matrix(m, m, w9[g], v9[g,], u9[g,]);
     Psi_r_skeleton[g] = to_dense_matrix(m, m, w10[g], v10[g,], u10[g,]);
-    Nu_skeleton[g] = to_dense_matrix((p + q), 1, w13[g], v13[g,], u13[g,]);
-    Alpha_skeleton[g] = to_dense_matrix((m + n), 1, w14[g], v14[g,], u14[g,]);
+    Psi_r_skeleton_f[g] = to_dense_matrix(m, m, w11[g], v11[g,], u11[g,]);
+    if (!use_cov) {
+      Nu_skeleton[g] = to_dense_matrix((p + q), 1, w13[g], v13[g,], u13[g,]);
+      Alpha_skeleton[g] = to_dense_matrix((m + n), 1, w14[g], v14[g,], u14[g,]);
+    }
     Tau_skeleton[g] = to_dense_matrix(sum(nlevs) - Nord, 1, w15[g], v15[g,], u15[g,]);
     
     // count free elements in Lambda_y_skeleton
@@ -528,18 +487,6 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
 	  if (w1skel[pos[1],2] == 0 || w1skel[pos[1],3] == 1) len_free[1] += 1;
 	  pos[1] += 1;
         }
-      }
-    }
-
-    // same thing but for Gamma_skeleton
-    g_start3[g] = len_free[3] + 1;
-    f_start3[g] = pos[3];
-    for (i in 1:m) {
-      for (j in 1:n) {
-	if (is_inf(Gamma_skeleton[g,i,j])) {
-	  if (w3skel[pos[3],2] == 0 || w3skel[pos[3],3] == 1) len_free[3] += 1;
-	  pos[3] += 1;
-	}
       }
     }
 
@@ -599,24 +546,26 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
       }
     }
 
-    // same thing but for Nu_skeleton
-    // pos = len_free13 + 1;
-    g_start13[g] = len_free[13] + 1;
-    f_start13[g] = pos[13];
-    for (i in 1:(p+q)) {
-      if (is_inf(Nu_skeleton[g,i,1])) {
-	if (w13skel[pos[13],2] == 0 || w13skel[pos[13],3] == 1) len_free[13] += 1;
-	pos[13] += 1;
+    if (!use_cov) {
+      // same thing but for Nu_skeleton
+      // pos = len_free13 + 1;
+      g_start13[g] = len_free[13] + 1;
+      f_start13[g] = pos[13];
+      for (i in 1:(p+q)) {
+	if (is_inf(Nu_skeleton[g,i,1])) {
+	  if (w13skel[pos[13],2] == 0 || w13skel[pos[13],3] == 1) len_free[13] += 1;
+	  pos[13] += 1;
+	}
       }
-    }
 
-    // same thing but for Alpha_skeleton
-    g_start14[g] = len_free[14] + 1;
-    f_start14[g] = pos[14];
-    for (i in 1:(m+n)) {
-      if (is_inf(Alpha_skeleton[g,i,1])) {
-	if (w14skel[pos[14],2] == 0 || w14skel[pos[14],3] == 1) len_free[14] += 1;
-	pos[14] += 1;
+      // same thing but for Alpha_skeleton
+      g_start14[g] = len_free[14] + 1;
+      f_start14[g] = pos[14];
+      for (i in 1:(m+n)) {
+	if (is_inf(Alpha_skeleton[g,i,1])) {
+	  if (w14skel[pos[14],2] == 0 || w14skel[pos[14],3] == 1) len_free[14] += 1;
+	  pos[14] += 1;
+	}
       }
     }
 
@@ -661,25 +610,23 @@ parameters {
   vector<lower=0,upper=1>[Noent] z_aug; //augmented ordinal data
 }
 transformed parameters {
-  matrix[p, m] Lambda_y[Ng];
-  matrix[m, n] Gamma[Ng];
-  matrix[m, m] B[Ng];
-  matrix[p, p] Theta_sd[Ng];
-  matrix[p, p] T_r_lower[Ng];
-  matrix[p, p] Theta_r[Ng];
-  matrix[p + q, 1] Nu[Ng];
-  matrix[m + n, 1] Alpha[Ng];
+  array[Ng] matrix[p, m] Lambda_y;
+  array[Ng] matrix[m, m] B;
+  array[Ng] matrix[p, p] Theta_sd;
+  array[Ng] matrix[p, p] T_r_lower;
+  array[Ng] matrix[p, p] Theta_r;
+  array[Ng] matrix[p + q, 1] Nu;
+  array[Ng] matrix[m + n, 1] Alpha;
 
-  matrix[sum(nlevs) - Nord, 1] Tau_un[Ng];
-  matrix[sum(nlevs) - Nord, 1] Tau[Ng];
+  array[Ng] matrix[sum(nlevs) - Nord, 1] Tau_un;
+  array[Ng] matrix[sum(nlevs) - Nord, 1] Tau;
   vector[len_free[15]] Tau_free;
   real tau_jacobian;
-  
-  matrix[m, m] Psi[Ng];
-  
-  matrix[m, m] Psi_sd[Ng];
-  matrix[m, m] Psi_r_lower[Ng];
-  matrix[m, m] Psi_r[Ng];
+
+  array[Ng] matrix[m, m] Psi;
+  array[Ng] matrix[m, m] Psi_sd;
+  array[Ng] matrix[m, m] Psi_r_lower;
+  array[Ng] matrix[m, m] Psi_r;
 
   vector[len_free[1]] lambda_y_primn;
   vector[len_free[4]] b_primn;
@@ -687,28 +634,29 @@ transformed parameters {
   vector[len_free[14]] alpha_primn;
   vector[len_free[15]] tau_primn;
 
-  matrix[p, m] Lambda_y_A[Ng];     // = Lambda_y * (I - B)^{-1}
+  array[Ng] matrix[p, m] Lambda_y_A;     // = Lambda_y * (I - B)^{-1}
 
-  vector[p + q] Mu[Ng];
-  matrix[p + q, p + q] Sigma[Ng];  // model covariance matrix
-  matrix[p + q, p + q] Sigmainv_grp[Ng];
-  real logdetSigma_grp[Ng];
-  matrix[p + q + 1, p + q + 1] Sigmainv[Np];  // for updating S^-1 by missing data pattern
+  array[Ng] vector[p + q] Mu;
+  array[Ng] matrix[p + q, p + q] Sigma;  // model covariance matrix
+  array[Ng] matrix[p + q, p + q] Sigmainv_grp;  // model covariance matrix
+  array[Ng] real logdetSigma_grp;
+  array[Np] matrix[p + q + 1, p + q + 1] Sigmainv;  // for updating S^-1 by missing data pattern  
   
-  matrix[p, q] top_right[Ng]; // top right block of Sigma
-  vector[p + q] YXstar[Ntot];
-  vector[Nord] YXostar[Ntot]; // ordinal data
+  array[Ntot] vector[p + q] YXstar;
+  array[Ntot] vector[Nord] YXostar; // ordinal data
 
   for (g in 1:Ng) {
     // model matrices
     Lambda_y[g] = fill_matrix(Lambda_y_free, Lambda_y_skeleton[g], w1skel, g_start1[g], f_start1[g]);
-    Gamma[g] = fill_matrix(Gamma_free, Gamma_skeleton[g], w3skel, g_start3[g], f_start3[g]);
     B[g] = fill_matrix(B_free, B_skeleton[g], w4skel, g_start4[g], f_start4[g]);
     Theta_sd[g] = fill_matrix(Theta_sd_free, Theta_skeleton[g], w5skel, g_start5[g], f_start5[g]);
     T_r_lower[g] = fill_matrix(2*Theta_r_free - 1, Theta_r_skeleton[g], w7skel, g_start7[g], f_start7[g]);
     Theta_r[g] = T_r_lower[g] + transpose(T_r_lower[g]) - diag_matrix(rep_vector(1, p));
-    Nu[g] = fill_matrix(Nu_free, Nu_skeleton[g], w13skel, g_start13[g], f_start13[g]);
-    Alpha[g] = fill_matrix(Alpha_free, Alpha_skeleton[g], w14skel, g_start14[g], f_start14[g]);
+
+    if (!use_cov) {
+      Nu[g] = fill_matrix(Nu_free, Nu_skeleton[g], w13skel, g_start13[g], f_start13[g]);
+      Alpha[g] = fill_matrix(Alpha_free, Alpha_skeleton[g], w14skel, g_start14[g], f_start14[g]);
+    }
 
     Psi[g] = diag_matrix(rep_vector(0, m));
   
@@ -724,7 +672,7 @@ transformed parameters {
     }
   }
 
-  // see https://books.google.com/books?id=9AC-s50RjacC&lpg=PP1&dq=LISREL&pg=PA3#v=onepage&q=LISREL&f=false
+  // see p. 3 https://books.google.com/books?id=9AC-s50RjacC
   for (g in 1:Ng) {
     if (m > 0) {
       Lambda_y_A[g] = mdivide_right(Lambda_y[g], I - B[g]);     // = Lambda_y * (I - B)^{-1}
@@ -868,9 +816,9 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   
   /* log-likelihood */
   if (has_data) {
-    int obsidx[p + q];
-    int xidx[p + q];
-    int xdatidx[p + q];
+    array[p + q] int obsidx;
+    array[p + q] int xidx;
+    array[p + q] int xdatidx;
     int grpidx;
     int r1;
     int r2;
@@ -937,10 +885,6 @@ model { // N.B.: things declared in the model block do not get saved in the outp
     target += normal_lpdf(Tau_ufree      | tau_primn, tau_sd);
   }
 
-  if (use_normal) {
-    print(Tau_ufree);
-  }
-
   /* transform sd parameters to var or prec, depending on
      what the user wants. */
   Theta_pri = Theta_sd_free;
@@ -971,20 +915,19 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   }
 }
 generated quantities { // these matrices are saved in the output but do not figure into the likelihood
-  // see https://books.google.com/books?id=9AC-s50RjacC&lpg=PP1&dq=LISREL&pg=PA34#v=onepage&q=LISREL&f=false
+  // see p. 34 https://books.google.com/books?id=9AC-s50RjacC
 
   // sign constraints and correlations
   vector[len_free[1]] ly_sign;
-  matrix[p, m] L_Y[Ng];
+  array[Ng] matrix[p, m] L_Y;
   //vector[len_free[2]] lx_sign;
   //matrix[q, n] L_X[Ng];
   vector[len_free[3]] g_sign;
-  matrix[m, n] Gam[Ng];
   vector[len_free[4]] bet_sign;
-  matrix[m, m] Bet[Ng];
-  matrix[p, p] Theta[Ng];
-  matrix[m, m] PSmat[Ng];
-  matrix[m, m] PS[Ng];
+  array[Ng] matrix[m, m] Bet;
+  array[Ng] matrix[p, p] Theta;
+  array[Ng] matrix[m, m] PSmat;
+  array[Ng] matrix[m, m] PS;
   vector[len_free[7]] Theta_cov;
   vector[len_free[5]] Theta_var;
   vector[len_free[10]] P_r;
@@ -993,21 +936,21 @@ generated quantities { // these matrices are saved in the output but do not figu
 
   vector[Ntot] log_lik; // for loo, etc
   vector[Ntot] log_lik_sat; // for ppp
-  vector[p + q] YXstar_rep[Ntot]; // artificial data
+  array[Ntot] vector[p + q] YXstar_rep; // artificial data
   vector[Ntot] log_lik_rep; // for loo, etc
   vector[Ntot] log_lik_rep_sat; // for ppp
-  matrix[p + q, p + q + 1] satout[Ng];
-  matrix[p + q, p + q + 1] satrep_out[Ng];
-  vector[p + q] Mu_sat[Ng];
-  matrix[p + q, p + q] Sigma_sat[Ng];
-  matrix[p + q, p + q] Sigma_sat_inv_grp[Ng];
-  real logdetS_sat_grp[Ng];
-  matrix[p + q + 1, p + q + 1] Sigma_sat_inv[Np];
-  vector[p + q] Mu_rep_sat[Ng];
-  matrix[p + q, p + q] Sigma_rep_sat[Ng];
-  matrix[p + q, p + q] Sigma_rep_sat_inv_grp[Ng];
-  matrix[p + q + 1, p + q + 1] Sigma_rep_sat_inv[Np];
-  real logdetS_rep_sat_grp[Ng];
+  array[Ng] matrix[p + q, p + q + 1] satout;
+  array[Ng] matrix[p + q, p + q + 1] satrep_out;
+  array[Ng] vector[p + q] Mu_sat;
+  array[Ng] matrix[p + q, p + q] Sigma_sat;
+  array[Ng] matrix[p + q, p + q] Sigma_sat_inv_grp;
+  array[Ng] real logdetS_sat_grp;
+  array[Np] matrix[p + q + 1, p + q + 1] Sigma_sat_inv;
+  array[Ng] vector[p + q] Mu_rep_sat;
+  array[Ng] matrix[p + q, p + q] Sigma_rep_sat;
+  array[Ng] matrix[p + q, p + q] Sigma_rep_sat_inv_grp;
+  array[Np] matrix[p + q + 1, p + q + 1] Sigma_rep_sat_inv;
+  array[Ng] real logdetS_rep_sat_grp;
   matrix[p + q, p + q] zmat;
   real<lower=0, upper=1> ppp;
   
@@ -1020,8 +963,6 @@ generated quantities { // these matrices are saved in the output but do not figu
   
   for (g in 1:Ng) {
     L_Y[g] = fill_matrix(ly_sign, Lambda_y_skeleton[g], w1skel, g_start1[g], f_start1[g]);
-
-    Gam[g] = fill_matrix(g_sign, Gamma_skeleton[g], w3skel, g_start3[g], f_start3[g]);
 
     Bet[g] = fill_matrix(bet_sign, B_skeleton[g], w4skel, g_start4[g], f_start4[g]);
 
@@ -1046,7 +987,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   if (m > 0 && len_free[10] > 0) {
     /* iden is created so that we can re-use cor2cov, even though
        we don't need to multiply to get covariances */
-    matrix[m, m] iden[Ng];
+    array[Ng] matrix[m, m] iden;
     for (g in 1:Ng) {
       iden[g] = diag_matrix(rep_vector(1, m));
     }
@@ -1057,9 +998,9 @@ generated quantities { // these matrices are saved in the output but do not figu
   Psi_var = Psi_sd_free .* Psi_sd_free;
 
   { // log-likelihood
-    int obsidx[p + q];
-    int xidx[p + q];
-    int xdatidx[p + q];
+    array[p + q] int obsidx;
+    array[p + q] int xidx;
+    array[p + q] int xdatidx;
     int r1;
     int r2;
     int grpidx;
@@ -1101,7 +1042,7 @@ generated quantities { // these matrices are saved in the output but do not figu
       } else {
 	// complete data; Np patterns must only correspond to groups
 	for (mm in 1:Np) {
-	  int arr_dims[3] = dims(YXstar);
+	  array[3] int arr_dims = dims(YXstar);
 	  matrix[endrow[mm] - startrow[mm] + 1, arr_dims[2]] YXsmat; // crossprod needs matrix
 	  matrix[endrow[mm] - startrow[mm] + 1, arr_dims[2]] YXsrepmat;
 	  r1 = startrow[mm];
