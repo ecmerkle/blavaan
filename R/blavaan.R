@@ -311,6 +311,15 @@ blavaan <- function(...,  # default lavaan arguments
         stop("blavaan ERROR: full data are required. consider using kd() from package semTools.")
     }
 
+    ## ensure verbose appears in lavoptions, for 0.6-18 (FIXME also warn/debug?)
+    if(!("verbose" %in% names(LAV@Options))) {
+      if(!("verbose" %in% names(dotdotdot))) {
+        LAV@Options$verbose <- FALSE
+      } else {
+        LAV@Options$verbose <- dotdotdot$verbose
+      }
+    }
+  
     # save.lvs in a model with no lvs
     if(save.lvs){
         clv <- lavInspect(LAV, 'cov.lv')
@@ -1025,6 +1034,7 @@ bcfa <- bsem <- function(..., cp = "srs", dp = NULL,
     mc <- match.call()  
     mc$model.type      = as.character( mc[[1L]] )
     if(length(mc$model.type) == 3L) mc$model.type <- mc$model.type[3L]
+    mc$model.type <- gsub("^b", "", mc$model.type)
     mc$n.chains        = n.chains
     mc$int.ov.free     = TRUE
     mc$int.lv.free     = FALSE

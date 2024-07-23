@@ -135,7 +135,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
               lampar22 <- lampar22[lampar22 != 0]
               l2 <- lampar22[which(lampar22 %in% lamsign[,2])]
               if (length(l2) == 0) l2 <- lampar22[lampar22 != 0][1]
-              if (lamsign[l2,1] == 1) l2 <- lamsign[l2,2]
+              if (lamsign[l2[1],1] == 1) l2 <- lamsign[l2[1],2]
             }
 
             rowloc <- free2[[i]][fpar[j,1], fpar[j,2]]
