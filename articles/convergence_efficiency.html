@@ -5,30 +5,24 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<meta name="description" content="blavaan">
 <title>Convergence and Efficiency Evaluation • blavaan</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
-<!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.11/clipboard.min.js" integrity="sha512-7O5pXpc0oCRrxk8RUfDYFgn0nO1t+jLuIOQdOMRp4APB7uZ4vSjspzp5y6YDtDs4VzUSTbWzBFZ/LKJhnyFOKw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Convergence and Efficiency Evaluation">
-<meta property="og:description" content="blavaan">
-<!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
-<script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-<script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-<![endif]-->
+<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Convergence and Efficiency Evaluation">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
-    
 
-    <nav class="navbar fixed-top navbar-dark navbar-expand-lg bg-primary" data-bs-theme="dark"><div class="container">
-    
+
+    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
+
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-5.1290</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-5.1291</small>
 
-    
+
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -36,62 +30,42 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="active nav-item dropdown">
-  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-basics">Basics</a>
-  <div class="dropdown-menu" aria-labelledby="dropdown-basics">
-    <a class="dropdown-item" href="../articles/start.html">Getting Started</a>
-    <a class="dropdown-item" href="../articles/prior.html">Prior Specification</a>
-    <a class="dropdown-item" href="../articles/estimate.html">Estimation</a>
-    <a class="dropdown-item" href="../articles/convergence_efficiency.html">Convergence and Efficiency Evaluation</a>
-    <a class="dropdown-item" href="../articles/summaries.html">Model Summaries</a>
-    <a class="dropdown-item" href="../articles/plotting.html">Plots</a>
-  </div>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-basics" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Basics</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-basics">
+<li><a class="dropdown-item" href="../articles/start.html">Getting Started</a></li>
+    <li><a class="dropdown-item" href="../articles/prior.html">Prior Specification</a></li>
+    <li><a class="dropdown-item" href="../articles/estimate.html">Estimation</a></li>
+    <li><a class="dropdown-item" href="../articles/convergence_efficiency.html">Convergence and Efficiency Evaluation</a></li>
+    <li><a class="dropdown-item" href="../articles/summaries.html">Model Summaries</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting.html">Plots</a></li>
+  </ul>
 </li>
 <li class="nav-item dropdown">
-  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-examples-details">Examples/Details</a>
-  <div class="dropdown-menu" aria-labelledby="dropdown-examples-details">
-    <a class="dropdown-item" href="../articles/ordinal.html">Estimation with Ordinal Data</a>
-    <a class="dropdown-item" href="../articles/multilevel.html">Two-level Estimation</a>
-    <a class="dropdown-item" href="../articles/invariance.html">Measurement Invariance</a>
-    <a class="dropdown-item" href="../articles/approx_fi.html">Approximate Fit Indices</a>
-    <a class="dropdown-item" href="../articles/model_comparison.html">Model Comparison</a>
-    <a class="dropdown-item" href="../articles/cross_loadings_strong_priors.html">Cross-loadings with Strong Priors</a>
-    <a class="dropdown-item" href="../articles/mod_indices.html">Modification Indices</a>
-    <a class="dropdown-item" href="../articles/prior_pred_checks.html">Prior Predictive Checks</a>
-    <a class="dropdown-item" href="../articles/convergence_loop.html">Convergence Loop</a>
-    <a class="dropdown-item" href="../articles/probability_direction.html">Probability of Direction</a>
-  </div>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-examples-details" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Examples/Details</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-examples-details">
+<li><a class="dropdown-item" href="../articles/ordinal.html">Estimation with Ordinal Data</a></li>
+    <li><a class="dropdown-item" href="../articles/multilevel.html">Two-level Estimation</a></li>
+    <li><a class="dropdown-item" href="../articles/invariance.html">Measurement Invariance</a></li>
+    <li><a class="dropdown-item" href="../articles/approx_fi.html">Approximate Fit Indices</a></li>
+    <li><a class="dropdown-item" href="../articles/model_comparison.html">Model Comparison</a></li>
+    <li><a class="dropdown-item" href="../articles/cross_loadings_strong_priors.html">Cross-loadings with Strong Priors</a></li>
+    <li><a class="dropdown-item" href="../articles/mod_indices.html">Modification Indices</a></li>
+    <li><a class="dropdown-item" href="../articles/prior_pred_checks.html">Prior Predictive Checks</a></li>
+    <li><a class="dropdown-item" href="../articles/convergence_loop.html">Convergence Loop</a></li>
+    <li><a class="dropdown-item" href="../articles/probability_direction.html">Probability of Direction</a></li>
+  </ul>
 </li>
-<li class="nav-item">
-  <a class="nav-link" href="../news/index.html">News</a>
-</li>
-<li class="nav-item">
-  <a class="nav-link" href="../articles/resources.html">Resources</a>
-</li>
-<li class="nav-item">
-  <a class="nav-link" href="../reference/index.html">Functions</a>
-</li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
+<li class="nav-item"><a class="nav-link" href="../articles/resources.html">Resources</a></li>
+<li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
       </ul>
-<form class="form-inline my-2 my-lg-0" role="search">
-        <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="../search.json" id="search-input" placeholder="Search for" autocomplete="off">
-</form>
-
-      <ul class="navbar-nav">
-<li class="nav-item">
-  <a class="external-link nav-link" href="https://github.com/ecmerkle/blavaan">
-    <span class="fab fa fab fa-github fa-lg"></span>
-     
-  </a>
-</li>
-<li class="nav-item">
-  <a class="external-link nav-link" href="https://groups.google.com/d/forum/blavaan">
-    <span class="fa fa-users"></span>
-     
-  </a>
-</li>
+<ul class="navbar-nav">
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/ecmerkle/blavaan"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://groups.google.com/d/forum/blavaan"><span class="fa fa-users"></span></a></li>
       </ul>
 </div>
 
-    
+
   </div>
 </nav><div class="container template-article">
 
@@ -100,12 +74,13 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="" class="logo" alt=""><h1>Convergence and Efficiency Evaluation</h1>
+
+      <h1>Convergence and Efficiency Evaluation</h1>
                         <h4 data-toc-skip class="author">Mauricio
 Garnier-Villarreal</h4>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/ecmerkle/blavaan/blob/HEAD/vignettes/convergence_efficiency.Rmd" class="external-link"><code>vignettes/convergence_efficiency.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/ecmerkle/blavaan/blob/master/vignettes/convergence_efficiency.Rmd" class="external-link"><code>vignettes/convergence_efficiency.Rmd</code></a></small>
       <div class="d-none name"><code>convergence_efficiency.Rmd</code></div>
     </div>
 
@@ -150,18 +125,23 @@ Democracy example <span class="citation">(Bollen 1989)</span>.</p>
 <div class="section level3">
 <h3 id="convergence">Convergence<a class="anchor" aria-label="anchor" href="#convergence"></a>
 </h3>
-<p>The primary convergence diagnostic is <span class="math inline">\(\hat{R}\)</span>, which compares the between- and
-within-chain samples of model parameters and other univariate quantities
-of interest <span class="citation">(Vehtari et al. 2021)</span>. If
-chains have not mixed well (ie, the between- and within-chain estimates
-don’t agree), <span class="math inline">\(\hat{R}\)</span> is larger
-than 1. We recommend running at least three chains by default and only
-using the posterior samples if <span class="math inline">\(\hat{R} &lt;
-1.05\)</span> for all the parameters.</p>
-<p><code>blavaan</code> presents the <span class="math inline">\(\hat{R}\)</span> reported by the underlying MCMC
-program, either Stan or JAGS (Stan by default). We can obtain the <span class="math inline">\(\hat{R}\)</span> from the <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>
-function, and we can also extract it with the <code><a href="../reference/blavInspect.html">blavInspect()</a></code>
-function</p>
+<p>The primary convergence diagnostic is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><mi>R</mi><mo accent="true">̂</mo></mover><annotation encoding="application/x-tex">\hat{R}</annotation></semantics></math>,
+which compares the between- and within-chain samples of model parameters
+and other univariate quantities of interest <span class="citation">(Vehtari et al. 2021)</span>. If chains have not mixed
+well (ie, the between- and within-chain estimates don’t agree),
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><mi>R</mi><mo accent="true">̂</mo></mover><annotation encoding="application/x-tex">\hat{R}</annotation></semantics></math>
+is larger than 1. We recommend running at least three chains by default
+and only using the posterior samples if
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><mi>R</mi><mo accent="true">̂</mo></mover><mo>&lt;</mo><mn>1.05</mn></mrow><annotation encoding="application/x-tex">\hat{R} &lt; 1.05</annotation></semantics></math>
+for all the parameters.</p>
+<p><code>blavaan</code> presents the
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><mi>R</mi><mo accent="true">̂</mo></mover><annotation encoding="application/x-tex">\hat{R}</annotation></semantics></math>
+reported by the underlying MCMC program, either Stan or JAGS (Stan by
+default). We can obtain the
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><mi>R</mi><mo accent="true">̂</mo></mover><annotation encoding="application/x-tex">\hat{R}</annotation></semantics></math>
+from the <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> function, and we can also extract it
+with the <code><a href="../reference/blavInspect.html">blavInspect()</a></code> function</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"rhat"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##   ind60=~x1   ind60=~x2   ind60=~x3           a           b           c </span></span>
@@ -179,15 +159,18 @@ function</p>
 <span><span class="co">##        y3~1        y4~1        y5~1        y6~1        y7~1        y8~1 </span></span>
 <span><span class="co">##   1.0006281   1.0035112   1.0024221   1.0042214   1.0050368   1.0028954</span></span></code></pre>
 <p>With large models it can be cumbersome to look over all of these
-entries. We can instead find the largest <span class="math inline">\(\hat{R}\)</span> to see if they are all less than
-<span class="math inline">\(1.05\)</span></p>
+entries. We can instead find the largest
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><mi>R</mi><mo accent="true">̂</mo></mover><annotation encoding="application/x-tex">\hat{R}</annotation></semantics></math>
+to see if they are all less than
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>1.05</mn><annotation encoding="application/x-tex">1.05</annotation></semantics></math></p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"psrf"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] 1.006283</span></span></code></pre>
-<p>If all <span class="math inline">\(\hat{R} &lt; 1.05\)</span> then we
-can establish that the MCMC chains have converged to a stable solution.
-If the model has not converged, you might increase the number of
-<code>burnin</code> iterations</p>
+<p>If all
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><mi>R</mi><mo accent="true">̂</mo></mover><mo>&lt;</mo><mn>1.05</mn></mrow><annotation encoding="application/x-tex">\hat{R} &lt; 1.05</annotation></semantics></math>
+then we can establish that the MCMC chains have converged to a stable
+solution. If the model has not converged, you might increase the number
+of <code>burnin</code> iterations</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bsem.html">bsem</a></span><span class="op">(</span><span class="va">model</span>, data<span class="op">=</span><span class="va">PoliticalDemocracy</span>,</span>
 <span>            std.lv<span class="op">=</span><span class="cn">T</span>, meanstructure<span class="op">=</span><span class="cn">T</span>, n.chains<span class="op">=</span><span class="fl">3</span>,</span>
@@ -260,13 +243,14 @@ Probability and Mathematical Statistics. John Wiley &amp; Sons, Inc.
 <div id="ref-new_rhat" class="csl-entry">
 Vehtari, Aki, Andrew Gelman, Daniel Simpson, Bob Carpenter, and
 Paul-Christian Bürkner. 2021. <span>“<span class="nocase">Rank-Normalization, Folding, and Localization: An
-Improved <span class="math inline">\(\widehat{R}\)</span> for Assessing
-Convergence of MCMC (with Discussion)</span>.”</span> <em>Bayesian
-Analysis</em> 16 (2): 667–718. <a href="https://doi.org/10.1214/20-BA1221" class="external-link">https://doi.org/10.1214/20-BA1221</a>.
+Improved
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><mi>R</mi><mo accent="true">̂</mo></mover><annotation encoding="application/x-tex">\widehat{R}</annotation></semantics></math>
+for Assessing Convergence of MCMC (with Discussion)</span>.”</span>
+<em>Bayesian Analysis</em> 16 (2): 667–718. <a href="https://doi.org/10.1214/20-BA1221" class="external-link">https://doi.org/10.1214/20-BA1221</a>.
 </div>
 </div>
 </div>
-  </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
 </div>
 
@@ -277,15 +261,15 @@ Analysis</em> 16 (2): 667–718. <a href="https://doi.org/10.1214/20-BA1221" cla
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
 </div>
 
     </footer>
 </div>
 
-  
 
-  
+
+
 
   </body>
 </html>
