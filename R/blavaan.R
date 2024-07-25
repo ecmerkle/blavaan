@@ -1037,9 +1037,24 @@ blavaan <- function(...,  # default lavaan arguments
     domll <- TRUE
     covres <- checkcovs(LAV)
     ## in these cases, we cannot reliably evaluate the priors
-    if(ordmod | !(covres$diagthet | covres$fullthet)) domll <- FALSE
-    if(target == "stan" && !l2s$blkpsi) domll <- FALSE
-    if(target != "stan" && !(covres$diagpsi | covres$fullpsi)) domll <- FALSE
+    if(ordmod) domll <- FALSE
+    if(target == "stan") {
+      if(covres$dobf) {
+        domll <- TRUE
+      } else if((covres$diagthet | covres$fullthet) & l2s$blkpsi) {
+        domll <- TRUE
+      } else {
+        domll <- FALSE
+      }
+    } else {
+      if(covres$dobf) {
+        domll <- TRUE
+      } else if((covres$diagpsi | covres$fullpsi) & covres$diagthet) {
+        domll <- TRUE
+      } else {
+        domll <- FALSE
+      }
+    }
 
     if(lavoptions$test != "none") { # && attr(x, "converged")) {
         TEST <- blav_model_test(lavmodel            = lavmodel,

@@ -409,9 +409,21 @@ checkcovs <- function(lavobject){
     psinums <- sapply(psis, function(x) x[lower.tri(x)])
     diagpsi <- all(unlist(psinums) == 0L, na.rm = TRUE)
     fullpsi <- all(unlist(psinums) > 0L, na.rm = TRUE) & (anyDuplicated(unlist(psinums), MARGIN = 0) == 0L)
+    ## check for blocks of free covariances that have no impact on each other
+    psiblk <- sapply(psis, function(x) {
+      x[!lower.tri(x)] <- 0
+      frnums <- which(x > 0, arr.ind = TRUE)
+      if (nrow(frnums) > 0) {
+        blk <- !duplicated(as.numeric(frnums))
+      } else {
+        blk <- TRUE
+      }
+      blk} )
+    blkp <- all(psiblk)
   } else {
     diagpsi <- FALSE
     fullpsi <- TRUE
+    blkp <- TRUE
   }
 
   if (nrow(free[[1]]$theta) > 0) {
@@ -420,12 +432,24 @@ checkcovs <- function(lavobject){
     diagthet <- all(unlist(thetnums) == 0L, na.rm = TRUE)
     ## surprising if this happens:
     fullthet <- all(unlist(thetnums) > 0L, na.rm = TRUE) & (anyDuplicated(unlist(thetnums), MARGIN = 0) == 0L)
+    ## check for blocks of free covariances that have no impact on each other
+    thetblk <- sapply(thets, function(x) {
+      x[!lower.tri(x)] <- 0
+      frnums <- which(x > 0, arr.ind = TRUE)
+      if (nrow(frnums) > 0) {
+        blk <- !duplicated(as.numeric(frnums))
+      } else {
+        blk <- TRUE
+      }
+      blk} )
+    blkt <- all(thetblk)
   } else {
     diagthet <- FALSE
     fullthet <- TRUE
+    blkt <- TRUE
   }
 
-  list(diagpsi = diagpsi, fullpsi = fullpsi, diagthet = diagthet, fullthet = fullthet)
+  list(diagpsi = diagpsi, fullpsi = fullpsi, diagthet = diagthet, fullthet = fullthet, dobf = (blkp && blkt))
 }
 
 ## check whether model cov matrix is block diagonal
