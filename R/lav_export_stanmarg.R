@@ -1391,7 +1391,7 @@ lav2standata <- function(lavobject, dosam = FALSE) {
     for(i in 1:length(ordidx)){
       ordvar <- unlist(lapply(lavobject@Data@X, function(x) x[,ordidx[i]]))
       ordvar <- ordvar[!is.na(ordvar)]
-      nlevs[i] <- length(unique(ordvar))
+      nlevs[i] <- max(ordvar) #length(unique(ordvar))
     }
 
     maxcat <- max(nlevs)
