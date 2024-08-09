@@ -186,7 +186,7 @@ blavaan <- function(...,  # default lavaan arguments
     }
   
     # which arguments do we override?
-    lavArgsOverride <- c("missing", "estimator", "conditional.x", "parser")
+    lavArgsOverride <- c("missing", "estimator", "conditional.x", "parser", "cat.wls.w")
     if(target != "stan") lavArgsOverride <- c(lavArgsOverride, "meanstructure")
     # always warn?
     warn.idx <- which(lavArgsOverride %in% dotNames)
@@ -217,6 +217,7 @@ blavaan <- function(...,  # default lavaan arguments
     }
     dotdotdot$do.fit <- FALSE
     dotdotdot$se <- "none"; dotdotdot$test <- "none"
+    dotdotdot$cat.wls.w <- FALSE
     # run for 1 iteration to obtain info about equality constraints, for npar
     dotdotdot$control <- list(iter.max = 1, eval.max = 1); dotdotdot$warn <- TRUE
     dotdotdot$optim.force.converged <- TRUE
