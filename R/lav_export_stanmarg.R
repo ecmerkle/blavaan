@@ -1386,14 +1386,7 @@ lav2standata <- function(lavobject, dosam = FALSE) {
     dat$YX <- dat$YX[, -ordidx, drop=FALSE]
 
 
-    nlevs <- rep(NA, length(ordidx))
-    neach <- vector("list", length(ordidx))
-    for(i in 1:length(ordidx)){
-      ordvar <- unlist(lapply(lavobject@Data@X, function(x) x[,ordidx[i]]))
-      ordvar <- ordvar[!is.na(ordvar)]
-      nlevs[i] <- max(ordvar) #length(unique(ordvar))
-    }
-
+    nlevs <- 1 + as.numeric( table(pta$th.idx[[1]]) )
     maxcat <- max(nlevs)
 
     dat$Nord <- length(ordidx)
@@ -1414,7 +1407,6 @@ lav2standata <- function(lavobject, dosam = FALSE) {
       dat$contidx <- array(1:ptot, ptot)
     }
     dat$nlevs <- array(0, 0)
-    dat$neach <- matrix(0, 0, 0)
   }
 
   return(dat)
