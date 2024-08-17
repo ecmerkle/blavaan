@@ -119,9 +119,10 @@ function(object, header       = TRUE,
                                  remove.eq = FALSE, remove.system.eq = TRUE,
                                  remove.ineq = FALSE, remove.def = FALSE,
                                  header = TRUE, output = "text")
-
+        
         if(!("group" %in% names(PE))) PE$group <- 1
         if(!("level" %in% names(PE))) PE$level <- "within"
+        if(!("psrf" %in% names(PE))) PE$psrf <- NA
         #TODO: remove deprecated argument in early 2025
         # if(standardized && std.nox) {
         #     PE$std.all <- PE$std.nox
@@ -148,9 +149,17 @@ function(object, header       = TRUE,
         }
         peentry <- match(with(newpt, paste(lhs[pte2], op[pte2], rhs[pte2], group[pte2], level[pte2], sep="")),
                          paste(PE$lhs, PE$op, PE$rhs, PE$group, PE$level, sep=""))
+        if(!("ci.lower" %in% names(PE))) {
+          PE$ci.lower <- PE$ci.upper <- NA
+        }
         if(jagtarget){
+          if('Lower95' %in% colnames(object@external$mcmcout$HPD)){
             PE$ci.lower[peentry] <- object@external$mcmcout$HPD[newpt$jagpnum[pte2],'Lower95']
             PE$ci.upper[peentry] <- object@external$mcmcout$HPD[newpt$jagpnum[pte2],'Upper95']
+          } else {
+            PE$ci.lower[peentry] <- rep(NA, length(peentry))
+            PE$ci.upper[peentry] <- rep(NA, length(peentry))
+          }
         } else {
             parsumm <- rstan::summary(object@external$mcmcout)
             if('2.5%' %in% colnames(parsumm[[1]]) & '97.5%' %in% colnames(parsumm[[1]])){
@@ -166,18 +175,17 @@ function(object, header       = TRUE,
         ##    making changes to lavaan's print.lavaan.parameterEstimates(). But maybe
         ##    this should actually go in the lavaan function.
         char.format <- paste("%", max(8, nd + 5), "s", sep="")
-        PE$ci.lower <- formatC(PE$ci.lower, digits = nd, format = "f")
+        PE$ci.lower <- formatC(as.numeric(PE$ci.lower), digits = nd, format = "f")
         PE$ci.lower[PE$ci.lower == formatC(PE$est, digits = nd, format = "f")] <- ""
         PE$ci.lower <- sprintf(char.format, PE$ci.lower)
-        PE$ci.upper <- formatC(PE$ci.upper, digits = nd, format = "f")
+        PE$ci.upper <- formatC(as.numeric(PE$ci.upper), digits = nd, format = "f")
         PE$ci.upper[PE$ci.upper == formatC(PE$est, digits = nd, format = "f")] <- ""
         PE$ci.upper <- sprintf(char.format, PE$ci.upper)
 
         ## FIXME defined parameters never get psrf + others;
         ## see line 200 of lav_print.R
         if(psrf){
-          PE$psrf <- rep(NA, nrow(PE))
-          PE$psrf[peentry] <- formatC(newpt$psrf[pte2], digits = nd, format = "f")
+          PE$psrf[peentry] <- formatC(as.numeric(newpt$psrf[pte2]), digits = nd, format = "f")
           PE$psrf[is.na(PE$psrf)] <- ""
           PE$psrf <- sprintf(char.format, PE$psrf)
         }
