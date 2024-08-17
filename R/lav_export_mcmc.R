@@ -796,7 +796,7 @@ coeffun <- function(lavpartable, pxpartable, rjob, fun = "mean") {
   ## NB this automatically removes fixed parameters, just
   ##    like the psrf
   lmatch <- match(lavpartable$pxnames[lavpartable$free > 0],
-                  rownames(rjob$crosscorr))
+                  rownames(rjob$crosscorr), nomatch = 0)
   vcorr <- rjob$crosscorr[lmatch, lmatch]
   smatch <- match(lavpartable$pxnames[lavpartable$free > 0 | lavpartable$op == ":="],
                   rownames(rjob$summary$statistics),
