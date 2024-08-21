@@ -11,7 +11,7 @@
 \description{
 This function allows users to conduct a posterior predictive model check to
 assess the global or local fit of a latent variable model using any discrepancy
-function that can be applied to a \code{\linkS4class{lavaan}} model.}
+function that can be applied to a \code{\linkS4class[lavaan]{lavaan}} model.}
 \usage{
 ppmc(object, thin = 1, fit.measures = c("srmr","chisq"), discFUN = NULL,
      conditional = FALSE)
@@ -44,7 +44,7 @@ ppmc(object, thin = 1, fit.measures = c("srmr","chisq"), discFUN = NULL,
     \code{discFUN}. For ordinal models, the \code{"logl"} or \code{"chisq"}
     computations are done via lavaan.}
   \item{discFUN}{\code{function}, or a \code{list} of functions, that can be
-    called on an object of class \code{\linkS4class{lavaan}}. Each function
+    called on an object of class \code{\linkS4class[lavaan]{lavaan}}. Each function
     must return an object whose \code{\link{mode}} is \code{numeric}, but may
     be a \code{vector}, \code{matrix}, or multidimensional \code{array}. In
     the \code{summary} and \code{plot} methods, \code{discFUN} is a

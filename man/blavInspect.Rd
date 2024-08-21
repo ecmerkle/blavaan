@@ -13,8 +13,8 @@ blavTech(blavobject, what, ...)
 }
 \arguments{
 \item{blavobject}{An object of class blavaan.}
-\item{what}{Character. What needs to be inspected/extracted? See Details for Bayes-specific options, and see \code{\link{lavaan}}'s \code{lavInspect()} for additional options. Note: the \code{what} argument is not case-sensitive (everything is converted to lower case.)}
-\item{...}{lavaan arguments supplied to \code{lavInspect()}; see \code{\link{lavaan}}.}
+\item{what}{Character. What needs to be inspected/extracted? See Details for Bayes-specific options, and see \code{\link[lavaan]{lavaan}}'s \code{lavInspect()} for additional options. Note: the \code{what} argument is not case-sensitive (everything is converted to lower case.)}
+\item{...}{lavaan arguments supplied to \code{lavInspect()}; see \code{\link[lavaan]{lavaan}}.}
 }
 \details{
 Below is a list of Bayesian-specific values for the \code{what}
@@ -43,7 +43,7 @@ documentation.
 }
 }
 \seealso{
-\code{\link{lavInspect}}, \code{\link{bcfa}}, \code{\link{bsem}}, \code{\link{bgrowth}}
+\code{\link[lavaan]{lavInspect}}, \code{\link{bcfa}}, \code{\link{bsem}}, \code{\link{bgrowth}}
 }
 \examples{
 \dontrun{

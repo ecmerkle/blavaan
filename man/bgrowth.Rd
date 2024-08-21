@@ -11,7 +11,7 @@ save.lvs = FALSE, wiggle = NULL, wiggle.sd = 0.1, prisamp = FALSE,
 jags.ic = FALSE, seed = NULL, bcontrol = list())
 }
 \arguments{
-\item{...}{Default lavaan arguments.  See \code{\link{lavaan}}.}
+\item{...}{Default lavaan arguments.  See \code{\link[lavaan]{lavaan}}.}
 \item{cp}{Handling of prior distributions on covariance parameters:
   possible values are \code{"srs"} (default) or \code{"fa"}. Option \code{"fa"} is only available for \code{target="jags"}.}
 \item{dp}{Default prior distributions on different types of
@@ -44,7 +44,7 @@ to 10000 for target="jags" and 1000 for Stan targets.}
 \item{inits}{If it is a character string, the options are currently
     \code{"simple"} (default), \code{"Mplus"}, \code{"prior"}, or \code{"jags"}.  In the first two
     cases, parameter values are set as though they will be estimated via
-    ML (see \code{\link{lavaan}}).  The starting parameter value for
+    ML (see \code{\link[lavaan]{lavaan}}).  The starting parameter value for
     each chain is then perturbed from the original values through the
     addition of random uniform noise.  If \code{"prior"} is used, the starting
     parameter values are obtained based on the prior distributions
@@ -94,7 +94,7 @@ to 10000 for target="jags" and 1000 for Stan targets.}
 \details{
       The \code{bgrowth} function is a wrapper for the more general
       \code{\link{blavaan}} function, using the following default
-      \code{\link{lavaan}} arguments:
+      \code{\link[lavaan]{lavaan}} arguments:
     \code{meanstructure = TRUE}, 
     \code{int.ov.free = FALSE}, \code{int.lv.free = TRUE},
     \code{auto.fix.first = TRUE} (unless \code{std.lv = TRUE}),

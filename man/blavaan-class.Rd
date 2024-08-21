@@ -79,7 +79,7 @@ the independence model) (if available).}
       If \code{standardized = TRUE},
       the standardized solution is also printed.  Note that \emph{SE}s and
       tests are still based on unstandardized estimates. Use
-      \code{\link{standardizedSolution}} to obtain \emph{SE}s and test
+      \code{\link[lavaan]{standardizedSolution}} to obtain \emph{SE}s and test
       statistics for standardized estimates.
       If \code{rsquare=TRUE}, the R-Square values for the dependent variables
       in the model are printed.
@@ -112,8 +112,7 @@ Modeling. Journal of Statistical Software, 48(2), 1-36. URL
 http://www.jstatsoft.org/v48/i02/.
 }
 \seealso{
-\code{\link{bcfa}}, \code{\link{bsem}}, \code{\link{bgrowth}},
-\code{\link{fitMeasures}}
+\code{\link{bcfa}}, \code{\link{bsem}}, \code{\link{bgrowth}}
 }
 \examples{
 \dontrun{

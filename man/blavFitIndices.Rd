@@ -48,7 +48,7 @@ blavFitIndices(object, thin = 1L, pD = c("loo","waic","dic"),
     \code{"BGammaHat"}, \code{"adjBGammaHat"}, \code{"BMc"}, \code{"BCFI"},
     \code{"BTLI"}, or \code{"BNFI"}. If \code{rescale = "MCMC"}, the user may
     request any indices returned by \code{\link[lavaan]{fitMeasures}} for
-    objects of class \code{\linkS4class{lavaan}}.}
+    objects of class \code{\linkS4class[lavaan]{lavaan}}.}
   \item{baseline.model}{If not \code{NULL}, an object of class
     \code{\linkS4class{blavaan}}, representing a user-specified baseline model.
     If a \code{baseline.model} is provided, incremental fit indices (BCFI,

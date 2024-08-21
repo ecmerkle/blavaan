@@ -12,7 +12,7 @@ bcfa(..., cp = "srs",
      seed = NULL, bcontrol = list())
 }
 \arguments{
-\item{...}{Default lavaan arguments.  See \code{\link{lavaan}}.}
+\item{...}{Default lavaan arguments.  See \code{\link[lavaan]{lavaan}}.}
 \item{cp}{Handling of prior distributions on covariance parameters:
   possible values are \code{"srs"} (default) or
     \code{"fa"}. Option \code{"fa"} is only available for \code{target="jags"}.}
@@ -46,7 +46,7 @@ to 10000 for target="jags" and 1000 for Stan targets.}
 \item{inits}{If it is a character string, the options are currently
     \code{"simple"} (default), \code{"Mplus"}, \code{"prior"}, or \code{"jags"}.  In the first two
     cases, parameter values are set as though they will be estimated via
-    ML (see \code{\link{lavaan}}).  The starting parameter value for
+    ML (see \code{\link[lavaan]{lavaan}}).  The starting parameter value for
     each chain is then perturbed from the original values through the
     addition of random uniform noise.  If \code{"prior"} is used, the starting
     parameter values are obtained based on the prior distributions
@@ -96,7 +96,7 @@ to 10000 for target="jags" and 1000 for Stan targets.}
 \details{
     The \code{bcfa} function is a wrapper for the more general
     \code{\link{blavaan}} function, using the following default
-    \code{\link{lavaan}} arguments:
+    \code{\link[lavaan]{lavaan}} arguments:
     \code{int.ov.free = TRUE}, \code{int.lv.free = FALSE},
     \code{auto.fix.first = TRUE} (unless \code{std.lv = TRUE}),
     \code{auto.fix.single = TRUE}, \code{auto.var = TRUE},
@@ -105,7 +105,7 @@ to 10000 for target="jags" and 1000 for Stan targets.}
     and \code{auto.cov.y = TRUE}.
 }
 \value{
-  An object of class \code{\linkS4class{lavaan}}, for which several methods
+  An object that inherits from class \code{\linkS4class[lavaan]{lavaan}}, for which several methods
   are available, including a \code{summary} method.
 }
 \references{
