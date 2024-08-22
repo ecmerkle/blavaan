@@ -94,7 +94,7 @@ to 10000 for target="jags" and 1000 for Stan targets.}
     overview of the additional parameters that can be set.}
 }
 \value{
-  An object that inherits from class \code{\linkS4class[lavaan]{lavaan}}, for which several methods
+  An object that inherits from class \link[lavaan:lavaan-class]{lavaan}, for which several methods
   are available, including a \code{summary} method.
 }
 \references{

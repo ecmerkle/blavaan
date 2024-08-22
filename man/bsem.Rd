@@ -103,7 +103,7 @@ to 10000 for target="jags" and 1000 for Stan targets.}
     and \code{auto.cov.y = TRUE}.
   }
 \value{
-  An object of class \code{\linkS4class[lavaan]{lavaan}}, for which several methods
+  An object of class \link[lavaan:lavaan-class]{lavaan}, for which several methods
   are available, including a \code{summary} method.
 }
 \references{
