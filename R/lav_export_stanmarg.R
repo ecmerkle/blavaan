@@ -1386,7 +1386,7 @@ lav2standata <- function(lavobject, dosam = FALSE) {
     dat$YX <- dat$YX[, -ordidx, drop=FALSE]
 
 
-    nlevs <- 1 + as.numeric( table(pta$th.idx[[1]]) )
+    nlevs <- 1 + as.numeric( table(pta$th.idx[[1]][pta$th.idx[[1]] != 0L]) )
     maxcat <- max(nlevs)
 
     dat$Nord <- length(ordidx)
