@@ -696,8 +696,8 @@ blavaan <- function(...,  # default lavaan arguments
                 fext <- ifelse(target=="jags", "jag", "stan")
                 fnm <- paste0(jagdir, "/sem.", fext)
                 if(target %in% c("stan", "cmdstan")){
-                    if(mcmcextra$dosam){
-                        cat(bsam::stanmodels$stanmarg_bsam@model_code, file = fnm)
+                    if(FALSE){#mcmcextra$dosam){
+                        #cat(bsam::stanmodels$stanmarg_bsam@model_code, file = fnm)
                     } else {
                         cat(stanmodels$stanmarg@model_code, file = fnm)
                     }
