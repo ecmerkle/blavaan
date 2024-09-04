@@ -414,7 +414,7 @@ checkcovs <- function(lavobject){
       x[!lower.tri(x)] <- 0
       frnums <- which(x > 0, arr.ind = TRUE)
       if (nrow(frnums) > 0) {
-        blk <- !duplicated(as.numeric(frnums))
+        blk <- all(!duplicated(as.numeric(frnums)))
       } else {
         blk <- TRUE
       }
