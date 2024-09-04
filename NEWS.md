@@ -1,6 +1,10 @@
+# Version 0.5-6
+## New features
+* This release contains minor improvements and bug fixes.
+
 # Version 0.5-5
 ## New features
-* Minor changes to ensure compatability with lavaan 0.6-18. 
+* Minor changes to ensure compatibility with lavaan 0.6-18. 
 
 * Bugs from 0.5-4 are fixed.
 
