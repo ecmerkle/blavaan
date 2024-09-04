@@ -725,11 +725,11 @@ blavaan <- function(...,  # default lavaan arguments
                                            init = inits))
             } else if(target == "cmdstan"){
               rjarg <- with(jagtrans, list(data = data, init = inits))
-            } else if(mcmcextra$dosam){
-              rjarg <- with(jagtrans, list(object = bsam::stanmodels$stanmarg_bsam,
-                                           data = data,
-                                           pars = sampparms,
-                                           init = inits))
+            } else if(FALSE){#mcmcextra$dosam){
+              #rjarg <- with(jagtrans, list(object = bsam::stanmodels$stanmarg_bsam,
+              #                             data = data,
+              #                             pars = sampparms,
+              #                             init = inits))
             } else {
               rjarg <- with(jagtrans, list(object = stanmodels$stanmarg,
                                            data = data,
