@@ -458,6 +458,9 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
     dat <- c(dat, format_priors(lavpartable[lavpartable$level == levlabs[1],]))
     dat <- c(dat, format_priors(lavpartable[lavpartable$level == levlabs[2],], level = 2L))
   }
+  priblks <- table(with(dat, c(lambda_y_blk, b_blk, nu_blk, alpha_blk)))[-1]
+  dat$npriblks <- length(priblks)
+  dat$priblklen <- max(priblks)
   
   return(dat)
 }
