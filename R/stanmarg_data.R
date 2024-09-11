@@ -73,14 +73,14 @@ format_priors <- function(lavpartable, level = 1L) {
     lavpartable <- lavpartable[order(lavpartable$col, lavpartable$row),]
   }
 
-  transtab <- list(c('lambda_y_mn', 'lambda_y_sd', 'len_lam_y'),
-                   c('b_mn', 'b_sd', 'len_b'),
+  transtab <- list(c('lambda_y_mn', 'lambda_y_sd', 'len_lam_y', 'lambda_y_pri', 'lambda_y_blk'),
+                   c('b_mn', 'b_sd', 'len_b', 'b_pri', 'b_blk'),
                    c('theta_sd_shape', 'theta_sd_rate', 'len_thet_sd', 'theta_pow'),
                    c('theta_r_alpha', 'theta_r_beta', 'len_thet_r'),
                    c('psi_sd_shape', 'psi_sd_rate', 'len_psi_sd', 'psi_pow'),
                    c('psi_r_alpha', 'psi_r_beta', 'len_psi_r'),
-                   c('nu_mn', 'nu_sd', 'len_nu'),
-                   c('alpha_mn', 'alpha_sd', 'len_alph'),
+                   c('nu_mn', 'nu_sd', 'len_nu', 'nu_pri', 'nu_blk'),
+                   c('alpha_mn', 'alpha_sd', 'len_alph', 'alpha_pri', 'alpha_blk'),
                    c('tau_mn', 'tau_sd', 'len_tau'))
 
   mats <- c('lambda', 'beta', 'thetavar', 'thetaoff',
@@ -94,6 +94,14 @@ format_priors <- function(lavpartable, level = 1L) {
   }
 
   out <- list()
+
+  ## if we have prior blocks specified via <.>, number them for the whole partable
+  blkpris <- grep("<?>", lavpartable$prior)
+  blknum <- rep(0, length(lavpartable$prior))
+  if (length(blkpris) > 0) {
+    blknum[blkpris] <- as.numeric( as.factor(lavpartable$prior[blkpris]) )
+  }
+  lavpartable$blknum <- blknum
   
   for (i in 1:length(mats)) {
     mat <- origmat <- mats[i]
@@ -119,6 +127,8 @@ format_priors <- function(lavpartable, level = 1L) {
 
     prisel <- prisel & (lavpartable$free > 0)
     thepris <- lavpartable$prior[prisel]
+    priblks <- lavpartable$blknum[prisel]
+    blkmats <- mat %in% c("nu", "lambda", "beta", "alpha")
 
     if (length(thepris) > 0) {
       textpris <- thepris[thepris != ""]
@@ -126,14 +136,21 @@ format_priors <- function(lavpartable, level = 1L) {
       prisplit <- strsplit(textpris, "[, ()]+")
       
       param1 <- sapply(prisplit, function(x) x[2])
+      prinms <- sapply(prisplit, function(x) x[1])
 
-      if (!grepl("\\[", prisplit[[1]][3])) {
+      if (!grepl("\\[", prisplit[[1]][3]) & !blkmats) {
         param2 <- sapply(prisplit, function(x) x[3])
         if (any(is.na(param2)) & mat == "lvrho") {
           ## omit lkj here
           param1 <- param1[!is.na(param2)]
           param2 <- param2[!is.na(param2)]
         }
+      } else if (blkmats) {
+        param2 <- sapply(prisplit, function(x) x[3])
+        param2 <- as.numeric(param2)
+        param2[is.na(param2)] <- 1 ## we don't need it, but we don't want NA to go to Stan
+        pritype <- array(0, length(param2))
+        pritype[prinms == "shrink_t"] <- 1
       } else {
         param2 <- rep(NA, length(param1))
       }
@@ -157,6 +174,8 @@ format_priors <- function(lavpartable, level = 1L) {
       param1 <- array(0, 0)
       param2 <- array(0, 0)
       powpar <- 1
+      pritype <- array(0, 0)
+      priblks <- array(0, 0)
     }
 
     out[[ transtab[[i]][1] ]] <- param1
@@ -165,6 +184,10 @@ format_priors <- function(lavpartable, level = 1L) {
 
     if (origmat %in% c('thetavar', 'cov.xvar', 'psivar', 'phivar')) {
       out[[ transtab[[i]][4] ]] <- powpar
+    }
+    if (blkmats) {
+      out[[ transtab[[i]][4] ]] <- pritype
+      out[[ transtab[[i]][5] ]] <- priblks
     }
   } # mats
 
