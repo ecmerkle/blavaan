@@ -184,12 +184,18 @@ format_priors <- function(lavpartable, level = 1L) {
 # @return nothing
 check_priors <- function(lavpartable) {
   right_pris <- sapply(dpriors(target = "stan"), function(x) strsplit(x, "[, ()]+")[[1]][1])
+  ## add additional prior options here
+  new_pri <- rep("shrink_t", 4); names(new_pri) <- c("nu", "alpha", "lambda", "beta")
+  right_pris <- c(right_pris, new_pri)
   pt_pris <- sapply(lavpartable$prior[lavpartable$prior != ""], function(x) strsplit(x, "[, ()]+")[[1]][1])
   names(pt_pris) <- lavpartable$mat[lavpartable$prior != ""]
   right_pris <- c(right_pris, lvrho = "lkj_corr")
   primatch <- match(names(pt_pris), names(right_pris))
-  badpris <- which(pt_pris != right_pris[primatch])
-
+  badpris <- rep(FALSE, length(pt_pris))
+  for (i in 1:length(pt_pris)) {
+    badpris[i] <- !(pt_pris[i] %in% right_pris[names(right_pris) == names(pt_pris)[i]])
+  }
+  badpris <- which(badpris)
   ## lvrho entries could also receive beta priors
   okpris <- which(names(pt_pris[badpris]) == "lvrho" & pt_pris[badpris] == "beta")
   if (length(okpris) > 0) badpris <- badpris[-okpris]
