@@ -74,23 +74,17 @@ format_priors <- function(lavpartable, level = 1L) {
   }
 
   transtab <- list(c('lambda_y_mn', 'lambda_y_sd', 'len_lam_y'),
-                   c('lambda_x_mn', 'lambda_x_sd', 'len_lam_x'),
-                   c('gamma_mn', 'gamma_sd', 'len_gam'),
                    c('b_mn', 'b_sd', 'len_b'),
                    c('theta_sd_shape', 'theta_sd_rate', 'len_thet_sd', 'theta_pow'),
-                   c('theta_x_sd_shape', 'theta_x_sd_rate', 'len_thet_x_sd', 'theta_x_pow'),
                    c('theta_r_alpha', 'theta_r_beta', 'len_thet_r'),
-                   c('theta_x_r_alpha', 'theta_x_r_beta', 'len_thet_x_r'),
                    c('psi_sd_shape', 'psi_sd_rate', 'len_psi_sd', 'psi_pow'),
                    c('psi_r_alpha', 'psi_r_beta', 'len_psi_r'),
-                   c('phi_sd_shape', 'phi_sd_rate', 'len_phi_sd', 'phi_pow'),
-                   c('phi_r_alpha', 'phi_r_beta', 'len_phi_r'),
                    c('nu_mn', 'nu_sd', 'len_nu'),
                    c('alpha_mn', 'alpha_sd', 'len_alph'),
                    c('tau_mn', 'tau_sd', 'len_tau'))
 
-  mats <- c('lambda', 'lambda_x', 'gamma', 'beta', 'thetavar', 'cov.xvar', 'thetaoff',
-            'cov.xoff', 'psivar', 'psioff', 'phivar', 'phioff', 'nu', 'alpha', 'tau')
+  mats <- c('lambda', 'beta', 'thetavar', 'thetaoff',
+            'psivar', 'psioff', 'nu', 'alpha', 'tau')
   if (level == 2L) {
     newmats <- c('lambda', 'beta', 'thetavar', 'thetaoff', 'psivar', 'psioff', 'nu', 'alpha')
     subloc <- match(newmats, mats)
