@@ -146,11 +146,11 @@ format_priors <- function(lavpartable, level = 1L) {
           param2 <- param2[!is.na(param2)]
         }
       } else if (blkmats) {
-        param2 <- sapply(prisplit, function(x) x[3])
-        param2 <- as.numeric(param2)
-        param2[is.na(param2)] <- 1 ## we don't need it, but we don't want NA to go to Stan
-        pritype <- array(0, length(param2))
+        pritype <- array(0, length(param1))
         pritype[prinms == "shrink_t"] <- 1
+        param2 <- sapply(prisplit, function(x) x[3])
+        param2[pritype == 1] <- 1 ## we don't need it, but we don't want NA to go to Stan
+        param2 <- as.numeric(param2)
       } else {
         param2 <- rep(NA, length(param1))
       }
