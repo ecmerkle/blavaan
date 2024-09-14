@@ -460,7 +460,8 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   }
   priblks <- table(with(dat, c(lambda_y_blk, b_blk, nu_blk, alpha_blk)))[-1]
   dat$npriblks <- length(priblks)
-  dat$priblklen <- max(priblks)
+  dat$priblklen <- 0
+  if (dat$npriblks > 0) dat$priblklen <- max(priblks)
   
   return(dat)
 }
