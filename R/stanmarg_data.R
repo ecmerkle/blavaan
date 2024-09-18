@@ -95,6 +95,11 @@ format_priors <- function(lavpartable, level = 1L) {
 
   out <- list()
 
+  ## shrinkage priors without <.>
+  shrpris <- which(grepl("shrink_t", lavpartable$prior) & !grepl("<?>", lavpartable$prior))
+  if (length(shrpris) > 0) {
+    lavpartable$prior[shrpris] <- paste0(lavpartable$prior[shrpris], "<999>")
+  }
   ## if we have prior blocks specified via <.>, number them for the whole partable
   blkpris <- grep("<?>", lavpartable$prior)
   blknum <- rep(0, length(lavpartable$prior))
@@ -149,7 +154,6 @@ format_priors <- function(lavpartable, level = 1L) {
         pritype <- array(0, length(param1))
         pritype[prinms == "shrink_t"] <- 1
         param2 <- sapply(prisplit, function(x) x[3])
-        param2[pritype == 1] <- 1 ## we don't need it, but we don't want NA to go to Stan
         param2 <- as.numeric(param2)
       } else {
         param2 <- rep(NA, length(param1))
@@ -458,11 +462,19 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
     dat <- c(dat, format_priors(lavpartable[lavpartable$level == levlabs[1],]))
     dat <- c(dat, format_priors(lavpartable[lavpartable$level == levlabs[2],], level = 2L))
   }
-  priblks <- table(with(dat, c(lambda_y_blk, b_blk, nu_blk, alpha_blk)))[-1]
+  allblks <- with(dat, c(lambda_y_blk, b_blk, nu_blk, alpha_blk))
+  priblks <- table(c(0, allblks))[-1]
   dat$npriblks <- length(priblks)
   dat$priblklen <- 0
-  if (dat$npriblks > 0) dat$priblklen <- max(priblks)
-  
+  dat$blkparm1 <- array(0, 0)
+  dat$blkparm2 <- array(0, 0)
+  if (dat$npriblks > 0) {
+    dat$priblklen <- max(priblks)
+    allparm1 <- with(dat, c(lambda_y_mn, b_mn, nu_mn, alpha_mn))
+    dat$blkparm1 <- array(tapply(allparm1[allblks > 0], allblks[allblks > 0], head, 1), dat$npriblks)
+    allparm2 <- with(dat, c(lambda_y_sd, b_sd, nu_sd, alpha_sd))
+    dat$blkparm2 <- array(tapply(allparm2[allblks > 0], allblks[allblks > 0], head, 1), dat$npriblks)
+  }  
   return(dat)
 }
 
