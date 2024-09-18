@@ -614,7 +614,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
 	  }
 	}
 	out += normal_lpdf(parvec[1:(npars - 1)] | 0, sd0[i]);
-	out += student_t_lpdf(sd0[i] | blkparm1[i], 0, blkparm2[i]);
+	out += student_t_lpdf(sd0[i] | blkparm1[i], 0, blkparm2[i]) - log(.5); // left-truncated at 0
       }
     }
     return out;
