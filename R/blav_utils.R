@@ -433,6 +433,7 @@ checkcovs <- function(lavobject){
     ## surprising if this happens:
     fullthet <- all(unlist(thetnums) > 0L, na.rm = TRUE) & (anyDuplicated(unlist(thetnums), MARGIN = 0) == 0L)
     ## check for blocks of free covariances that have no impact on each other
+    ## FIXME
     thetblk <- sapply(thets, function(x) {
       x[!lower.tri(x)] <- 0
       frnums <- which(x > 0, arr.ind = TRUE)
@@ -442,7 +443,7 @@ checkcovs <- function(lavobject){
         blk <- TRUE
       }
       blk} )
-    blkt <- all(thetblk)
+    blkt <- all(unlist(thetblk))
   } else {
     diagthet <- FALSE
     fullthet <- TRUE
