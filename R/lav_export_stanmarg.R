@@ -581,7 +581,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       } else {
         blkgrp <- rep(1:length(blkinfo), times = sapply(blkinfo, function(x) sum(x$blkse[,2] - x$blkse[,1] > 1)))
       }
-      arrayidx <- as.numeric(as.factor(ublksizes))
+      arrayidx <- as.numeric(as.factor(blksizes))
       dupsiz <- duplicated(blksizes)
       blkidx <- rep(NA, nrow(blkse))
       for (i in 1:length(ublksizes)) {
