@@ -1,6 +1,10 @@
 ## short examples to test functionality
 set.seed(341)
 
+## seems to be needed for stanclassic:
+oopts <- options(future.globals.maxSize = 1.0 * 1e9)
+on.exit(options(oopts))
+
 x1 <- rnorm(100)
 y1 <- 0.5 + 2*x1 + rnorm(100)
 g <- rep(1:2, each=50)
