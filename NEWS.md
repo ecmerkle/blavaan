@@ -2,6 +2,9 @@
 ## New features
 * This release contains minor improvements and bug fixes.
 
+## Bugs/glitches discovered after the release:
+* Models with the <~ operator fail under target = "jags" (reported by Thomas Riecke).
+
 # Version 0.5-5
 ## New features
 * Minor changes to ensure compatibility with lavaan 0.6-18. 
