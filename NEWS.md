@@ -5,6 +5,8 @@
 ## Bugs/glitches discovered after the release:
 * Models with the <~ operator fail under target = "jags" (reported by Thomas Riecke).
 
+* For multi-group models with free latent means and std.lv=TRUE, signs of latent means can be incorrect (positive instead of negative; reported by Joshua Pritikin).
+
 # Version 0.5-5
 ## New features
 * Minor changes to ensure compatibility with lavaan 0.6-18. 

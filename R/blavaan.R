@@ -613,7 +613,7 @@ blavaan <- function(...,  # default lavaan arguments
                         if(inherits(jagtrans, "try-error")) stop(jagtrans)
 
                         stanmon <- c("ly_sign", "bet_sign", "Theta_cov", "Theta_var",
-                                     "Psi_cov", "Psi_var", "Nu_free", "Alpha_free", "Tau_free")
+                                     "Psi_cov", "Psi_var", "Nu_free", "al_sign", "Tau_free")
                         if(lavoptions$.multilevel){
                           stanmon <- c(stanmon, paste0(stanmon, "_c"))
                           stanmon <- stanmon[-which(stanmon == "Tau_free_c")]
@@ -656,7 +656,7 @@ blavaan <- function(...,  # default lavaan arguments
                     moment_match_monitors <- c(moment_match_monitors,
                                                paste0(moment_match_monitors, "_c"))
                     moment_match_monitors <- c(moment_match_monitors, "Tau_ufree", 
-                                               "z_aug", "ly_sign", "bet_sign", "Theta_cov",
+                                               "z_aug", "ly_sign", "bet_sign", "al_sign", "Theta_cov",
                                                "Theta_var", "Psi_cov", "Psi_var", "Tau_free",
                                                "log_lik", "log_lik_sat", "ppp")
                     jagtrans$monitors <- c(jagtrans$monitors, moment_match_monitors[!(moment_match_monitors %in% jagtrans$monitors)])

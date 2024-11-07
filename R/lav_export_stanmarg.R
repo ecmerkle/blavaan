@@ -89,7 +89,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
     wskel[wskel[,1]==1,2] <- freepars[wskel[wskel[,1]==1,2]]
   }
 
-  lvmat <- mat %in% c('Gamma', 'B', 'Psi_r')
+  lvmat <- mat %in% c('Alpha', 'Gamma', 'B', 'Psi_r')
   lammat <- grepl('Lambda', mat)
   sign <- matrix(0, len, 2 + lvmat)
   if (std.lv & (lvmat | lammat)) {
@@ -721,10 +721,13 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     twsel <- lavpartable$free %in% frnums
     tmpwig <- lavpartable[twsel,'free'][which(lavpartable[twsel, 'plabel'] %in% wig)]
     
-    res <- matattr(fr, es, constrain, mat = "Alpha", Ng, opts$std.lv, tmpwig)
+    res <- matattr(fr, es, constrain, mat = "Alpha", Ng, opts$std.lv, tmpwig,
+                   free1 = free2$lambda, free2 = lyfree2, sign = dat$lam_y_sign,
+                   dest = dest)
 
     dat$Alpha_skeleton <- res$matskel
     dat$w14skel <- res$wskel
+    dat$alph_sign <- res$sign
     free2 <- c(free2, list(alpha = res$free))
     ptrows <- with(lavpartable, which(mat == "alpha" & free > 0))
     veclen <- length(ptrows)
@@ -737,6 +740,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   } else {
     dat$Alpha_skeleton <- array(0, dim = c(Ng, 0, 0))
     dat$w14skel <- matrix(0, 0, 3)
+    dat$alph_sign <- matrix(0, 0, 3)
   }
 
   ## 15. Tau
@@ -931,7 +935,7 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
                Theta_var = "theta", Theta_x_cov = "cov.x",
                Theta_x_var = "cov.x", Psi_cov = "psi",
                Psi_var = "psi", Nu_free = "nu", ## includes mean.x!
-               Alpha_free = "alpha", Tau_free = "tau")
+               al_sign = "alpha", Tau_free = "tau")
   matmod <- ""
   olpt <- lavpartable
   levlabs <- blav_partable_level_values(lavpartable)
@@ -956,7 +960,7 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
                 dtheta = "Theta_var", rtheta_x = "Theta_x_cov",
                 dtheta_x = "Theta_x_var", rpsi = "Psi_cov",
                 dpsi = "Psi_var", nu = "Nu_free",
-                alpha = "Alpha_free", tau = "Tau_free")
+                alpha = "al_sign", tau = "Tau_free")
   if (level == 2L) {
     mapping3 <- sapply(mapping3, function(x) paste0(x, "_c"))
     names(mapping3) <- sapply(names(mapping3), function(x) paste0(x, "_c"))

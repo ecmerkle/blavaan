@@ -734,6 +734,7 @@ data {
   array[Ng, len_w14] int<lower=0> v14;
   array[Ng, use_cov ? 1 : m + n + 1] int<lower=1> u14;
   array[sum(wg14), 3] int<lower=0> w14skel;
+  array[sum(wg14), 3] int<lower=0> alph_sign;
   int<lower=0> len_alph;
   array[len_alph] real alpha_mn;
   array[len_alph] real<lower=0> alpha_sd;
@@ -850,6 +851,7 @@ data {
   array[Ng, len_w14_c] int<lower=0> v14_c;
   array[Ng, m_c + 1] int<lower=1> u14_c;
   array[sum(wg14_c), 3] int<lower=0> w14skel_c;
+  array[sum(wg14_c), 3] int<lower=0> alph_sign_c;
   int<lower=0> len_alph_c;
   array[len_alph_c] real alpha_mn_c;
   array[len_alph_c] real<lower=0> alpha_sd_c;
@@ -1652,6 +1654,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   // sign constraints and correlations
   vector[len_free[1]] ly_sign;
   vector[len_free[4]] bet_sign;
+  vector[len_free[14]] al_sign;
   array[Ng] matrix[m, m] PSmat;
   array[Ng] matrix[m, m] PS;
   vector[len_free[7]] Theta_cov;
@@ -1663,6 +1666,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   // level 2
   vector[len_free_c[1]] ly_sign_c;
   vector[len_free_c[4]] bet_sign_c;
+  vector[len_free_c[14]] al_sign_c;
   array[Ng] matrix[m_c, m_c] PSmat_c;
   array[Ng] matrix[m_c, m_c] PS_c;
   vector[len_free_c[7]] Theta_cov_c;
@@ -1705,12 +1709,14 @@ generated quantities { // these matrices are saved in the output but do not figu
   // first deal with sign constraints:
   ly_sign = sign_constrain_load(Lambda_y_free, len_free[1], lam_y_sign);
   bet_sign = sign_constrain_reg(B_free, len_free[4], b_sign, Lambda_y_free, Lambda_y_free);
+  al_sign = sign_constrain_reg(Alpha_free, len_free[14], alph_sign, Lambda_y_free, rep_vector(1, len_free[1]));
   if (len_free[10] > 0) {
     P_r = sign_constrain_reg(Psi_r_free, len_free[10], psi_r_sign, Lambda_y_free, Lambda_y_free);
   }
 
   ly_sign_c = sign_constrain_load(Lambda_y_free_c, len_free_c[1], lam_y_sign_c);
   bet_sign_c = sign_constrain_reg(B_free_c, len_free_c[4], b_sign_c, Lambda_y_free_c, Lambda_y_free_c);
+  al_sign_c = sign_constrain_reg(Alpha_free_c, len_free_c[14], alph_sign_c, Lambda_y_free_c, rep_vector(1, len_free_c[1]));
   if (len_free_c[10] > 0) {
     P_r_c = sign_constrain_reg(Psi_r_free_c, len_free_c[10], psi_r_sign_c, Lambda_y_free_c, Lambda_y_free_c);
   }
