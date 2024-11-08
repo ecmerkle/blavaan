@@ -1421,11 +1421,11 @@ transformed parameters {
 	  idxvec += 1;
 	  if (obspos > 1) vecpos += sum(nlevs[1:(obspos - 1)]) - (obspos - 1);
 	  if (YXo[i,obspos] == 1) {
-	    YXostar[i,obspos] = -10 + (Tau[grpnum[patt], (vecpos + 1), 1] + 10) .* z_aug[idxvec];
-	    tau_jacobian += log(abs(Tau[grpnum[patt], (vecpos + 1), 1] + 10));  // must add log(U) to tau_jacobian
+	    YXostar[i,obspos] = -30 + (Tau[grpnum[patt], (vecpos + 1), 1] + 30) .* z_aug[idxvec];
+	    tau_jacobian += log(abs(Tau[grpnum[patt], (vecpos + 1), 1] + 30));  // must add log(U) to tau_jacobian
 	  } else if (YXo[i,obspos] == nlevs[obspos]) {
-	    YXostar[i,obspos] = Tau[grpnum[patt], vecpos, 1] + (10 - Tau[grpnum[patt], vecpos, 1]) .* z_aug[idxvec];
-	    tau_jacobian += log(abs(10 - Tau[grpnum[patt], vecpos, 1]));
+	    YXostar[i,obspos] = Tau[grpnum[patt], vecpos, 1] + (30 - Tau[grpnum[patt], vecpos, 1]) .* z_aug[idxvec];
+	    tau_jacobian += log(abs(30 - Tau[grpnum[patt], vecpos, 1]));
 	  } else {
 	    YXostar[i,obspos] = Tau[grpnum[patt], vecpos, 1] + (Tau[grpnum[patt], (vecpos + 1), 1] - Tau[grpnum[patt], vecpos, 1]) .* z_aug[idxvec];
 	    tau_jacobian += Tau_un[grpnum[patt], (vecpos + 1), 1]; // jacobian is log(exp(Tau_un))
