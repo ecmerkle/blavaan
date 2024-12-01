@@ -187,7 +187,7 @@ blavaan <- function(...,  # default lavaan arguments
   
     # which arguments do we override?
     lavArgsOverride <- c("missing", "estimator", "conditional.x", "parser", "cat.wls.w")
-    if(target != "stan") lavArgsOverride <- c(lavArgsOverride, "meanstructure")
+    if(!(target %in% c("stan", "cmdstan"))) lavArgsOverride <- c(lavArgsOverride, "meanstructure")
     # always warn?
     warn.idx <- which(lavArgsOverride %in% dotNames)
     if(length(warn.idx) > 0L) {
@@ -758,7 +758,12 @@ blavaan <- function(...,  # default lavaan arguments
                 } else if(target == "cmdstan"){
                     fname <- paste0("stanmarg_", packageDescription("blavaan")["Version"])
                     fdir <- paste0(cmdstanr::cmdstan_path(), "/")
-                    blavmod <- cmdstanr::cmdstan_model(cmdstanr::write_stan_file(stanmodels$stanmarg@model_code,
+                    if(mcmcextra$dosam) {
+                      obj <- getFromNamespace("stanmodels", "bsam")$stanmarg_bsam
+                    } else {
+                      obj <- stanmodels$stanmarg
+                    }
+                    blavmod <- cmdstanr::cmdstan_model(cmdstanr::write_stan_file(obj@model_code,
                                                                                  dir = fdir,
                                                                                  basename = fname) )
                     rjcall <- blavmod$sample
