@@ -1136,14 +1136,18 @@ lav2standata <- function(lavobject, dosam = FALSE) {
   if (dosam) {
     lavmodel <- lavobject@Model
 
+    dat$ngh <- 1L
+    dat$ghnode <- array(0, 1)
+    dat$ghwt <- array(1, 1)
+    
     ## single group only
     lvvars <- 1:NCOL(lavmodel@GLIST$lambda)
-    
+
     dummy.ov.x.idx <- lavmodel@ov.x.dummy.ov.idx[[1]]
     dummy.lv.x.idx <- lavmodel@ov.x.dummy.lv.idx[[1]]
     dummy.ov.idx <- c(lavmodel@ov.y.dummy.ov.idx[[1]], dummy.ov.x.idx)
     dummy.lv.idx <- c(lavmodel@ov.y.dummy.lv.idx[[1]], dummy.lv.x.idx)
-
+    
     dat$Ndum <- array(length(dummy.ov.idx), 1)
     dum_ov_idx <- c(allvars[allvars %in% dummy.ov.idx],
                     allvars[!(allvars %in% dummy.ov.idx)])

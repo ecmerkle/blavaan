@@ -242,6 +242,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           phi_r_sign_c = NULL, dumlv_c = NULL, wigind_c = NULL,
                           Ndum = NULL, dum_ov_idx = NULL, dum_lv_idx = NULL, # for bsam
                           Ndum_x = NULL, dum_ov_x_idx = NULL, dum_lv_x_idx = NULL,
+                          ngh = NULL, ghnode = NULL, ghwt = NULL,
                           ...) {
   
   dat <- list()
@@ -283,7 +284,10 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$Ndum_x <- Ndum_x
   dat$dum_ov_x_idx <- dum_ov_x_idx
   dat$dum_lv_x_idx <- dum_lv_x_idx
-
+  dat$ngh <- ngh
+  dat$ghnode <- ghnode
+  dat$ghwt <- ghwt
+  
   dat$use_suff <- 1L
   if (ord | multilev) dat$use_suff <- 0L
 
