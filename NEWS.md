@@ -1,10 +1,15 @@
+# Version 0.5-7
+## New features
+* This release contains minor improvements and bug fixes.
+
+## Bugs/glitches:
+* Models with the <~ operator fail under target = "jags" (reported by Thomas Riecke).
+
 # Version 0.5-6
 ## New features
 * This release contains minor improvements and bug fixes.
 
 ## Bugs/glitches discovered after the release:
-* Models with the <~ operator fail under target = "jags" (reported by Thomas Riecke).
-
 * For multi-group models with free latent means and std.lv=TRUE, signs of latent means can be incorrect (positive instead of negative; reported by Joshua Pritikin).
 
 # Version 0.5-5
