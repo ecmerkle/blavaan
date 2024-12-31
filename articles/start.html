@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-6.1316</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,19 +84,21 @@
 
     
     
+<pre><code><span><span class="co">## Error in get(paste0(generic, ".", class), envir = get_method_env()) : </span></span>
+<span><span class="co">##   object 'type_sum.accel' not found</span></span></code></pre>
 <p>This page contains some tips for getting started with the
 <em>blavaan</em> package.</p>
 <div class="section level3">
 <h3 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h3>
 <p><em>blavaan</em> can be installed from CRAN in the usual way:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"blavaan"</span><span class="op">)</span></span></code></pre></div>
 <p>In some situations, you may wish to install <em>blavaan</em> from
 GitHub. The GitHub version sometimes contains bug fixes that are not yet
 on CRAN, though it can also be less stable. To install from GitHub, use
 the following command.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"ecmerkle/blavaan"</span>, INSTALL_opts <span class="op">=</span> <span class="st">"--no-multiarch"</span><span class="op">)</span></span></code></pre></div>
 <p>This command requires that your system can compile Stan models, which
 is not guaranteed if you usually install <em>blavaan</em> from CRAN. If
