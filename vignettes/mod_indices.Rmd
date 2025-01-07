@@ -17,7 +17,7 @@ There are a couple of common methods for this, (a) testing for high residual cor
 
 ### Modification Indices
 
-Modification indices present different **indices** to quantify the effect of each parameter, and we will focus on two here. These are (a) the modification index (MI) or Lagrange multiplier, which estimates the extent to which the model’s chi-square ($\chi^2$) test statistic would decrease if a parameter were added to the model and freely estimated, and (b) standardized expected parameter change (SEPC), which is the approximated standardized value of the parameter if it were to be estimated in the model [@whittaker_using_2012]. 
+Modification indices present different **indices** to quantify the effect of each parameter, and we will focus on two here. These are (a) the modification index (MI) or Lagrange multiplier, which estimates the extent to which the model’s chi-square ($\chi^2$) test statistic would decrease if a parameter were added to the model and freely estimated, and (b) standardized expected parameter change (SEPC), which is the approximated standardized value of the parameter if it were to be estimated in the model [@whittaker_using_2012; @garniervillarreal_evaluating_2024]. 
 
 MI presents the possible effect on the overall model, and SEPC presents the effect size for the missed parameter. 
 
@@ -114,12 +114,15 @@ And you can check if the added parameter has the expected impact on overall fit 
 
 It is important to consider also the theoretical relevance of the suggested parameters, and to ensure that they make sense, instead of just adding parameters until having **good** fit.
 
+
 ### Summary
+
+You can see more details about the application an test  of these indices in Bayesian SEM in @garniervillarreal_evaluating_2024.
 
 In this tutorial we show how to calculate the MI and SEPC across posterior distributions, and evaluate which parameters can be added. 
 
 With the ```ppmc()``` function we are able to calculate relevant information after model estimation, and build posterior distributions of them. 
 
-The general recommendations are to use MI to identify the most likely parameter to add, and SEPC as the effect size of the new parameter. 
+The general recommendations are to use MI to identify the most likely parameter to add, and SEPC as the effect size of the new parameter [@garniervillarreal_evaluating_2024]. 
 
 ### References
