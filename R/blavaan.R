@@ -697,7 +697,7 @@ blavaan <- function(...,  # default lavaan arguments
                 fnm <- paste0(jagdir, "/sem.", fext)
                 if(target %in% c("stan", "cmdstan")){
                     if(mcmcextra$dosam){
-                        cat(getFromNamespace("stanmodels", "bsam")$stanmarg_bsam@model_code, file = fnm)
+                        cat(getFromNamespace("stanmodels", "blavsam")$stanmarg_bsam@model_code, file = fnm)
                     } else {
                         cat(stanmodels$stanmarg@model_code, file = fnm)
                     }
@@ -726,7 +726,7 @@ blavaan <- function(...,  # default lavaan arguments
             } else if(target == "cmdstan"){
               rjarg <- with(jagtrans, list(data = data, init = inits))
             } else if(mcmcextra$dosam){
-              rjarg <- with(jagtrans, list(object = getFromNamespace("stanmodels", "bsam")$stanmarg_bsam,
+              rjarg <- with(jagtrans, list(object = getFromNamespace("stanmodels", "blavsam")$stanmarg_bsam,
                                            data = data,
                                            pars = sampparms,
                                            init = inits))
@@ -759,7 +759,7 @@ blavaan <- function(...,  # default lavaan arguments
                     fname <- paste0("stanmarg_", packageDescription("blavaan")["Version"])
                     fdir <- paste0(cmdstanr::cmdstan_path(), "/")
                     if(mcmcextra$dosam) {
-                      obj <- getFromNamespace("stanmodels", "bsam")$stanmarg_bsam
+                      obj <- getFromNamespace("stanmodels", "blavsam")$stanmarg_bsam
                     } else {
                       obj <- stanmodels$stanmarg
                     }
