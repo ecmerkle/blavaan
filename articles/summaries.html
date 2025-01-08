@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,13 +84,11 @@
 
     
     
-<pre><code><span><span class="co">## Error in get(paste0(generic, ".", class), envir = get_method_env()) : </span></span>
-<span><span class="co">##   object 'type_sum.accel' not found</span></span></code></pre>
 <p>Say that we specify a model of the Bollen political democracy data
 and draw posterior samples using the following <em>blavaan</em> code
 (where <code>save.lvs</code> saves the latent variable samples for
 further use):</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span>  <span class="va">model</span> <span class="op">&lt;-</span> <span class="st">' </span></span>
 <span><span class="st">    # latent variable definitions</span></span>
 <span><span class="st">    ind60 =~ x1 + x2 + x3</span></span>
@@ -125,7 +123,7 @@ metrics, and samples of latent variables. These are discussed below.</p>
 “goodness” of the posterior samples, including convergence to a
 stationary distribution and autocorrelation. Popular convergence metrics
 are available via the <code><a href="../reference/blavInspect.html">blavInspect()</a></code> function:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">'rhat'</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">'neff'</span><span class="op">)</span></span></code></pre></div>
 <p>where R-hat values near 1.00 indicate convergence, and large
@@ -152,7 +150,7 @@ model. It is sometimes helpful to try to fit the same model in
 <p>Next, we may wish to examine some model fit metrics. While many
 metrics are available from the <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> output, more are
 available from the <code><a href="https://rdrr.io/pkg/lavaan/man/fitMeasures.html" class="external-link">fitMeasures()</a></code> function:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/lavaan/man/fitMeasures.html" class="external-link">fitMeasures</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p>For judging absolute fit, <em>blavaan</em> supplies a posterior
@@ -187,13 +185,13 @@ latent variables. These posterior samples are returned as a list of
 length <code>n.chains</code>, where each list entry has a row per
 posterior sample (and number of columns is total number of latent
 variables in the model):</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">postmns</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, what <span class="op">=</span> <span class="st">"lvmeans"</span><span class="op">)</span></span>
 <span><span class="va">postsamps</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blavInspect.html">blavInspect</a></span><span class="op">(</span><span class="va">fit</span>, what <span class="op">=</span> <span class="st">"lvs"</span><span class="op">)</span></span></code></pre></div>
 <p>Some related, but different, information can be obtained by
 <code><a href="../reference/blavPredict.html">blavPredict()</a></code>. This function will also return posterior
 samples of latent variables, but in a matrix instead of a list:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">postsamps</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blavPredict.html">blavPredict</a></span><span class="op">(</span><span class="va">fit</span>, type <span class="op">=</span> <span class="st">"lv"</span><span class="op">)</span></span></code></pre></div>
 <p>The <code><a href="../reference/blavPredict.html">blavPredict()</a></code> function will also return predictions
 of observed variables conditioned on the sampled latent variables. The
@@ -205,7 +203,7 @@ observed variables including residual noise (essentially
 returns posterior predictions of missing variables conditioned on
 observed. These expected values and predictions are returned in list
 format; for a matrix, see the last line of code below.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">evpreds</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blavPredict.html">blavPredict</a></span><span class="op">(</span><span class="va">fit</span>, type <span class="op">=</span> <span class="st">"yhat"</span><span class="op">)</span></span>
 <span><span class="va">postpreds</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blavPredict.html">blavPredict</a></span><span class="op">(</span><span class="va">fit</span>, type <span class="op">=</span> <span class="st">"ypred"</span><span class="op">)</span></span>
 <span><span class="va">mispreds</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blavPredict.html">blavPredict</a></span><span class="op">(</span><span class="va">fit</span>, type <span class="op">=</span> <span class="st">"ymis"</span><span class="op">)</span></span>
