@@ -4,7 +4,7 @@ bibliography:
   - refs.bib
 ---
 
-```{r echo=FALSE, message=FALSE}
+```{r include=FALSE, echo=FALSE, message=FALSE}
 library(blavaan, quietly=TRUE)
 library(lavaan, quietly=TRUE)
 ```
