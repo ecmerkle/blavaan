@@ -151,7 +151,7 @@ format_priors <- function(lavpartable, level = 1L) {
           param2 <- param2[!is.na(param2)]
         }
       } else if (blkmats) {
-        priblks <- priblks[thepris != ""]
+        priblks <- array(priblks[thepris != ""], sum(thepris != ""))
         pritype <- array(0, length(param1))
         pritype[prinms == "shrink_t"] <- 1
         param2 <- sapply(prisplit, function(x) x[3])
