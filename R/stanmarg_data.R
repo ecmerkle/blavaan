@@ -73,24 +73,18 @@ format_priors <- function(lavpartable, level = 1L) {
     lavpartable <- lavpartable[order(lavpartable$col, lavpartable$row),]
   }
 
-  transtab <- list(c('lambda_y_mn', 'lambda_y_sd', 'len_lam_y'),
-                   c('lambda_x_mn', 'lambda_x_sd', 'len_lam_x'),
-                   c('gamma_mn', 'gamma_sd', 'len_gam'),
-                   c('b_mn', 'b_sd', 'len_b'),
+  transtab <- list(c('lambda_y_mn', 'lambda_y_sd', 'len_lam_y', 'lambda_y_pri', 'lambda_y_blk'),
+                   c('b_mn', 'b_sd', 'len_b', 'b_pri', 'b_blk'),
                    c('theta_sd_shape', 'theta_sd_rate', 'len_thet_sd', 'theta_pow'),
-                   c('theta_x_sd_shape', 'theta_x_sd_rate', 'len_thet_x_sd', 'theta_x_pow'),
                    c('theta_r_alpha', 'theta_r_beta', 'len_thet_r'),
-                   c('theta_x_r_alpha', 'theta_x_r_beta', 'len_thet_x_r'),
                    c('psi_sd_shape', 'psi_sd_rate', 'len_psi_sd', 'psi_pow'),
                    c('psi_r_alpha', 'psi_r_beta', 'len_psi_r'),
-                   c('phi_sd_shape', 'phi_sd_rate', 'len_phi_sd', 'phi_pow'),
-                   c('phi_r_alpha', 'phi_r_beta', 'len_phi_r'),
-                   c('nu_mn', 'nu_sd', 'len_nu'),
-                   c('alpha_mn', 'alpha_sd', 'len_alph'),
+                   c('nu_mn', 'nu_sd', 'len_nu', 'nu_pri', 'nu_blk'),
+                   c('alpha_mn', 'alpha_sd', 'len_alph', 'alpha_pri', 'alpha_blk'),
                    c('tau_mn', 'tau_sd', 'len_tau'))
 
-  mats <- c('lambda', 'lambda_x', 'gamma', 'beta', 'thetavar', 'cov.xvar', 'thetaoff',
-            'cov.xoff', 'psivar', 'psioff', 'phivar', 'phioff', 'nu', 'alpha', 'tau')
+  mats <- c('lambda', 'beta', 'thetavar', 'thetaoff',
+            'psivar', 'psioff', 'nu', 'alpha', 'tau')
   if (level == 2L) {
     newmats <- c('lambda', 'beta', 'thetavar', 'thetaoff', 'psivar', 'psioff', 'nu', 'alpha')
     subloc <- match(newmats, mats)
@@ -100,6 +94,19 @@ format_priors <- function(lavpartable, level = 1L) {
   }
 
   out <- list()
+
+  ## shrinkage priors without <.>
+  shrpris <- which(grepl("shrink_t", lavpartable$prior) & !grepl("<?>", lavpartable$prior))
+  if (length(shrpris) > 0) {
+    lavpartable$prior[shrpris] <- paste0(lavpartable$prior[shrpris], "<999>")
+  }
+  ## if we have prior blocks specified via <.>, number them for the whole partable
+  blkpris <- grep("<?>", lavpartable$prior)
+  blknum <- rep(0, length(lavpartable$prior))
+  if (length(blkpris) > 0) {
+    blknum[blkpris] <- as.numeric( as.factor(lavpartable$prior[blkpris]) )
+  }
+  lavpartable$blknum <- blknum
   
   for (i in 1:length(mats)) {
     mat <- origmat <- mats[i]
@@ -125,6 +132,8 @@ format_priors <- function(lavpartable, level = 1L) {
 
     prisel <- prisel & (lavpartable$free > 0)
     thepris <- lavpartable$prior[prisel]
+    priblks <- lavpartable$blknum[prisel]
+    blkmats <- mat %in% c("nu", "lambda", "beta", "alpha")
 
     if (length(thepris) > 0) {
       textpris <- thepris[thepris != ""]
@@ -132,14 +141,20 @@ format_priors <- function(lavpartable, level = 1L) {
       prisplit <- strsplit(textpris, "[, ()]+")
       
       param1 <- sapply(prisplit, function(x) x[2])
+      prinms <- sapply(prisplit, function(x) x[1])
 
-      if (!grepl("\\[", prisplit[[1]][3])) {
+      if (!grepl("\\[", prisplit[[1]][3]) & !blkmats) {
         param2 <- sapply(prisplit, function(x) x[3])
         if (any(is.na(param2)) & mat == "lvrho") {
           ## omit lkj here
           param1 <- param1[!is.na(param2)]
           param2 <- param2[!is.na(param2)]
         }
+      } else if (blkmats) {
+        pritype <- array(0, length(param1))
+        pritype[prinms == "shrink_t"] <- 1
+        param2 <- sapply(prisplit, function(x) x[3])
+        param2 <- as.numeric(param2)
       } else {
         param2 <- rep(NA, length(param1))
       }
@@ -163,6 +178,8 @@ format_priors <- function(lavpartable, level = 1L) {
       param1 <- array(0, 0)
       param2 <- array(0, 0)
       powpar <- 1
+      pritype <- array(0, 0)
+      priblks <- array(0, 0)
     }
 
     out[[ transtab[[i]][1] ]] <- param1
@@ -171,6 +188,10 @@ format_priors <- function(lavpartable, level = 1L) {
 
     if (origmat %in% c('thetavar', 'cov.xvar', 'psivar', 'phivar')) {
       out[[ transtab[[i]][4] ]] <- powpar
+    }
+    if (blkmats) {
+      out[[ transtab[[i]][4] ]] <- pritype
+      out[[ transtab[[i]][5] ]] <- priblks
     }
   } # mats
 
@@ -184,12 +205,18 @@ format_priors <- function(lavpartable, level = 1L) {
 # @return nothing
 check_priors <- function(lavpartable) {
   right_pris <- sapply(dpriors(target = "stan"), function(x) strsplit(x, "[, ()]+")[[1]][1])
+  ## add additional prior options here
+  new_pri <- rep("shrink_t", 4); names(new_pri) <- c("nu", "alpha", "lambda", "beta")
+  right_pris <- c(right_pris, new_pri)
   pt_pris <- sapply(lavpartable$prior[lavpartable$prior != ""], function(x) strsplit(x, "[, ()]+")[[1]][1])
   names(pt_pris) <- lavpartable$mat[lavpartable$prior != ""]
   right_pris <- c(right_pris, lvrho = "lkj_corr")
   primatch <- match(names(pt_pris), names(right_pris))
-  badpris <- which(pt_pris != right_pris[primatch])
-
+  badpris <- rep(FALSE, length(pt_pris))
+  for (i in 1:length(pt_pris)) {
+    badpris[i] <- !(pt_pris[i] %in% right_pris[names(right_pris) == names(pt_pris)[i]])
+  }
+  badpris <- which(badpris)
   ## lvrho entries could also receive beta priors
   okpris <- which(names(pt_pris[badpris]) == "lvrho" & pt_pris[badpris] == "beta")
   if (length(okpris) > 0) badpris <- badpris[-okpris]
@@ -441,7 +468,19 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
     dat <- c(dat, format_priors(lavpartable[lavpartable$level == levlabs[1],]))
     dat <- c(dat, format_priors(lavpartable[lavpartable$level == levlabs[2],], level = 2L))
   }
-  
+  allblks <- with(dat, c(lambda_y_blk, b_blk, nu_blk, alpha_blk))
+  priblks <- table(c(0, allblks))[-1]
+  dat$npriblks <- length(priblks)
+  dat$priblklen <- 0
+  dat$blkparm1 <- array(0, 0)
+  dat$blkparm2 <- array(0, 0)
+  if (dat$npriblks > 0) {
+    dat$priblklen <- max(priblks)
+    allparm1 <- with(dat, c(lambda_y_mn, b_mn, nu_mn, alpha_mn))
+    dat$blkparm1 <- array(tapply(allparm1[allblks > 0], allblks[allblks > 0], head, 1), dat$npriblks)
+    allparm2 <- with(dat, c(lambda_y_sd, b_sd, nu_sd, alpha_sd))
+    dat$blkparm2 <- array(tapply(allparm2[allblks > 0], allblks[allblks > 0], head, 1), dat$npriblks)
+  }  
   return(dat)
 }
 

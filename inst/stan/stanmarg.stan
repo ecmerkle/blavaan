@@ -557,7 +557,68 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     }  
 
     return out;
-  }   
+  }
+
+  real eval_priors(vector Lambda_y_free, vector B_free, vector Nu_free, vector Alpha_free, vector sd0, vector lambda_y_primn, array[] real lambda_y_sd, array[] int lambda_y_pri, array[] int lambda_y_blk, vector b_primn, array[] real b_sd, array[] int b_pri, array[] int b_blk, vector nu_primn, array[] real nu_sd, array[] int nu_pri, array[] int nu_blk, vector alpha_primn, array[] real alpha_sd, array[] int alpha_pri, array[] int alpha_blk, array[] int len_free, vector blkparm1, vector blkparm2, int priblklen, int npriblks) {
+    real out = 0.0;
+    if (npriblks == 0) {
+      out += normal_lpdf(Lambda_y_free | lambda_y_primn, lambda_y_sd);
+      out += normal_lpdf(B_free        | b_primn, b_sd);
+      out += normal_lpdf(Nu_free       | nu_primn, nu_sd);
+      out += normal_lpdf(Alpha_free    | alpha_primn, alpha_sd);
+    } else {
+      for (i in 1:npriblks) {
+	vector[priblklen] parvec;
+	int npars = 1;
+	if (len_free[1] > 0) {
+	  for (j in 1:len_free[1]) {
+	    if (lambda_y_pri[j] == 0) {
+	      out += normal_lpdf(Lambda_y_free[j] | lambda_y_primn[j], lambda_y_sd[j]);
+	    } else if (lambda_y_blk[j] == i && lambda_y_pri[j] == 1) {
+	      parvec[npars] = Lambda_y_free[j];
+	      npars += 1;
+	    }
+	  }
+	}
+
+	if (len_free[4] > 0) {
+	  for (j in 1:len_free[4]) {
+	    if (b_pri[j] == 0) {
+	      out += normal_lpdf(B_free[j] | b_primn[j], b_sd[j]);
+	    } else if (b_blk[j] == i && b_pri[j] == 1) {
+	      parvec[npars] = B_free[j];
+	      npars += 1;
+	    }
+	  }
+	}
+
+	if (len_free[13] > 0) {
+	  for (j in 1:len_free[13]) {
+	    if (nu_pri[j] == 0) {
+	      out += normal_lpdf(Nu_free[j] | nu_primn[j], nu_sd[j]);
+	    } else if (nu_blk[j] == i && nu_pri[j] == 1) {
+	      parvec[npars] = Nu_free[j];
+	      npars += 1;
+	    }
+	  }
+	}
+
+	if (len_free[14] > 0) {
+	  for (j in 1:len_free[14]) {
+	    if (alpha_pri[j] == 0) {
+	      out += normal_lpdf(Alpha_free[j] | alpha_primn[j], alpha_sd[j]);
+	    } else if (alpha_blk[j] == i && alpha_pri[j] == 1) {
+	      parvec[npars] = Alpha_free[j];
+	      npars += 1;
+	    }
+	  }
+	}
+	out += normal_lpdf(parvec[1:(npars - 1)] | 0, sd0[i]);
+	out += student_t_lpdf(sd0[i] | blkparm1[i], 0, blkparm2[i]) - log(.5); // left-truncated at 0
+      }
+    }
+    return out;
+  }
 }
 data {
   // see p. 2 https://books.google.com/books?id=9AC-s50RjacC
@@ -602,6 +663,10 @@ data {
   int<lower=0, upper=1> do_test; // should we do everything in generated quantities?
   array[Np] vector[multilev ? p_tilde : p + q - Nord] YXbar; // sample means of continuous manifest variables
   array[Np] matrix[multilev ? (p_tilde + 1) : (p + q - Nord + 1), multilev ? (p_tilde + 1) : (p + q - Nord + 1)] S;     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
+  int<lower=0> npriblks;  // how many blocks of parameters for prior distributions?
+  int<lower=0> priblklen; // max number of parameters in a block
+  vector[npriblks] blkparm1; // parameters of block priors
+  vector[npriblks] blkparm2;
   
   array[sum(nclus[,2])] int<lower=1> cluster_size; // number of obs per cluster
   array[Ng] int<lower=1> ncluster_sizes; // number of unique cluster sizes
@@ -631,7 +696,6 @@ data {
   vector[multilev ? sum(ncluster_sizes) : Ng] log_lik_x; // ll of fixed x variables by unique cluster size
   vector[multilev ? sum(nclus[,2]) : Ng] log_lik_x_full; // ll of fixed x variables by cluster
   
-  
   /* sparse matrix representations of skeletons of coefficient matrices, 
      which is not that interesting but necessary because you cannot pass
      missing values into the data block of a Stan program from R */
@@ -645,6 +709,8 @@ data {
   int<lower=0> len_lam_y;     // number of free elements minus equality constraints
   array[len_lam_y] real lambda_y_mn;           // prior
   array[len_lam_y] real<lower=0> lambda_y_sd;
+  array[len_lam_y] int<lower=0> lambda_y_pri;
+  array[len_lam_y] int<lower=0> lambda_y_blk;
 
   // same things but for B
   int<lower=0> len_w4;
@@ -657,6 +723,8 @@ data {
   int<lower=0> len_b;
   array[len_b] real b_mn;
   array[len_b] real<lower=0> b_sd;
+  array[len_b] int<lower=0> b_pri;
+  array[len_b] int<lower=0> b_blk;
   
   // same things but for diag(Theta)
   int<lower=0> len_w5;
@@ -726,6 +794,8 @@ data {
   int<lower=0> len_nu;
   array[len_nu] real nu_mn;
   array[len_nu] real<lower=0> nu_sd;
+  array[len_nu] int<lower=0> nu_pri;
+  array[len_nu] int<lower=0> nu_blk;
   
   // same things but for Alpha
   int<lower=0> len_w14;
@@ -738,7 +808,9 @@ data {
   int<lower=0> len_alph;
   array[len_alph] real alpha_mn;
   array[len_alph] real<lower=0> alpha_sd;
-
+  array[len_alph] int<lower=0> alpha_pri;
+  array[len_alph] int<lower=0> alpha_blk;
+  
   // same things but for Tau
   int<lower=0> len_w15;
   array[Ng] int<lower=0> wg15;
@@ -1172,6 +1244,7 @@ parameters {
   vector[len_free[13]] Nu_free;
   vector[len_free[14]] Alpha_free;
   vector[len_free[15]] Tau_ufree;
+  vector<lower=0>[npriblks] sd0; // shrink_t parameters
 
   vector<lower=0,upper=1>[Noent] z_aug; //augmented ordinal data
   vector[len_free_c[1]] Lambda_y_free_c;
@@ -1552,11 +1625,8 @@ model { // N.B.: things declared in the model block do not get saved in the outp
     }
   }
   
-  /* prior densities in log-units */
-  target += normal_lpdf(Lambda_y_free | lambda_y_primn, lambda_y_sd);
-  target += normal_lpdf(B_free        | b_primn, b_sd);
-  target += normal_lpdf(Nu_free       | nu_primn, nu_sd);
-  target += normal_lpdf(Alpha_free    | alpha_primn, alpha_sd);
+  /* prior densities in log-units, first for unbounded parameters that could have shrinkage priors */
+  target += eval_priors(Lambda_y_free, B_free, Nu_free, Alpha_free, sd0, lambda_y_primn, lambda_y_sd, lambda_y_pri, lambda_y_blk, b_primn, b_sd, b_pri, b_blk, nu_primn, nu_sd, nu_pri, nu_blk, alpha_primn, alpha_sd, alpha_pri, alpha_blk, len_free, blkparm1, blkparm2, priblklen, npriblks);
   target += normal_lpdf(Tau_ufree      | tau_primn, tau_sd);
 
   target += normal_lpdf(Lambda_y_free_c | lambda_y_primn_c, lambda_y_sd_c);
