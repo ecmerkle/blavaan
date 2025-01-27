@@ -927,7 +927,7 @@ blavaan <- function(...,  # default lavaan arguments
         attr(x, "control") <- bcontrol
 
         ## for sam, replace fixed psi entries with sampled means
-        if (mcmcextra$dosam & LAV@Options$std.lv) {
+        if (mcmcextra$dosam && jag.do.fit && LAV@Options$std.lv) {
           LAV@Model@GLIST$psi <- matrix(stansumm[grep("^PS\\[", rownames(stansumm)), 'mean'],
                                         jagtrans$data$m, jagtrans$data$m, byrow = TRUE)
         }
@@ -1204,16 +1204,11 @@ bcfa <- bsem <- function(..., cp = "srs", dp = NULL,
     mc$model.type      = as.character( mc[[1L]] )
     if(length(mc$model.type) == 3L) mc$model.type <- mc$model.type[3L]
     mc$model.type <- gsub("^b", "", mc$model.type)
-    mc$n.chains        = n.chains
-    mc$int.ov.free     = TRUE
-    mc$int.lv.free     = FALSE
-    mc$auto.fix.first  = !std.lv
-    mc$auto.fix.single = TRUE
-    mc$auto.var        = TRUE
-    mc$auto.cov.lv.x   = TRUE
-    mc$auto.cov.y      = TRUE
-    mc$auto.th         = TRUE
-    mc$auto.delta      = TRUE
+    mc$n.chains <- n.chains
+    defparms <- c(int.ov.free = TRUE, int.lv.free = TRUE, auto.fix.first = !std.lv,
+                  auto.fix.single = TRUE, auto.var = TRUE, auto.cov.lv.x = TRUE,
+                  auto.cov.y = TRUE, auto.th = TRUE, auto.delta = TRUE)
+    mc[names(defparms)[!(names(defparms) %in% names(mc))]] <- defparms[!(names(defparms) %in% names(mc))]
     mc[[1L]] <- quote(blavaan)
 
     ## change defaults depending on jags vs stan
@@ -1248,15 +1243,11 @@ bgrowth <- function(..., cp = "srs", dp = NULL,
 
     mc <- match.call()
     mc$model.type      = "growth"
-    mc$int.ov.free     = FALSE
-    mc$int.lv.free     = TRUE
-    mc$auto.fix.first  = !std.lv
-    mc$auto.fix.single = TRUE
-    mc$auto.var        = TRUE
-    mc$auto.cov.lv.x   = TRUE
-    mc$auto.cov.y      = TRUE
-    mc$auto.th         = TRUE
-    mc$auto.delta      = TRUE
+    mc$n.chains <- n.chains
+    defparms <- c(int.ov.free = FALSE, int.lv.free = TRUE, auto.fix.first  = !std.lv,
+                  auto.fix.single = TRUE, auto.var = TRUE, auto.cov.lv.x   = TRUE,
+                  auto.cov.y = TRUE, auto.th = TRUE, auto.delta = TRUE)
+    mc[names(defparms)[!(names(defparms) %in% names(mc))]] <- defparms[!(names(defparms) %in% names(mc))]
     mc[[1L]] <- quote(blavaan)
 
     ## change defaults depending on jags vs stan
