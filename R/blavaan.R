@@ -1205,7 +1205,7 @@ bcfa <- bsem <- function(..., cp = "srs", dp = NULL,
     if(length(mc$model.type) == 3L) mc$model.type <- mc$model.type[3L]
     mc$model.type <- gsub("^b", "", mc$model.type)
     mc$n.chains <- n.chains
-    defparms <- c(int.ov.free = TRUE, int.lv.free = TRUE, auto.fix.first = !std.lv,
+    defparms <- c(int.ov.free = TRUE, int.lv.free = FALSE, auto.fix.first = !std.lv,
                   auto.fix.single = TRUE, auto.var = TRUE, auto.cov.lv.x = TRUE,
                   auto.cov.y = TRUE, auto.th = TRUE, auto.delta = TRUE)
     mc[names(defparms)[!(names(defparms) %in% names(mc))]] <- defparms[!(names(defparms) %in% names(mc))]
