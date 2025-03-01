@@ -533,8 +533,14 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   // fill covariance matrix with blocks
   array[] matrix fill_cov(array[] matrix covmat, array[,] int blkse, array[] int nblk,
 			  array[] matrix mat_1, array[] matrix mat_2, array[] matrix mat_3,
-			  array[] matrix mat_4, array[] matrix mat_5) {
-    array[dims(covmat)[1]] matrix[dims(covmat)[2], dims(covmat)[3]] out = covmat;
+			  array[] matrix mat_4, array[] matrix mat_5, array[,] int psiorder,
+			  array[,] int psirevord) {
+    int Ng = dims(covmat)[1];
+    array[Ng] matrix[dims(covmat)[2], dims(covmat)[3]] out;
+
+    for (g in 1:Ng) {
+      out[g] = covmat[g, psiorder[g], psiorder[g]];
+    }
 
     for (k in 1:sum(nblk)) {
       int blkidx = blkse[k, 6];
@@ -554,7 +560,11 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
       } else {
 	out[blkgrp, srow:erow, srow:erow] = mat_5[blkidx];
       }
-    }  
+    }
+
+    for (g in 1:Ng) {
+      out[g] = out[g, psirevord[g], psirevord[g]];
+    }
 
     return out;
   }
@@ -783,7 +793,9 @@ data {
   array[Ng, len_w11] int<lower=1> v11;
   array[Ng, m + 1] int<lower=1> u11;
   array[sum(wg11), 3] int<lower=0> w11skel;
-    
+  array[Ng, m] int<lower=1> psiorder;
+  array[Ng, m] int<lower=1> psirevord;
+
   // same things but for Nu
   int<lower=0> len_w13;
   array[Ng] int<lower=0> wg13;
@@ -904,6 +916,8 @@ data {
   array[Ng, len_w11_c] int<lower=1> v11_c;
   array[Ng, m_c + 1] int<lower=1> u11_c;
   array[sum(wg11_c), 3] int<lower=0> w11skel_c;
+  array[Ng, m_c] int<lower=1> psiorder_c;
+  array[Ng, m_c] int<lower=1> psirevord_c;
   
   // same things but for Nu
   int<lower=0> len_w13_c;
@@ -1364,11 +1378,11 @@ transformed parameters {
   if (sum(nblk) > 0) {
     // we need to define a separate parameter for each dimension of correlation matrix,
     // so we need all these Psi_r_mats    
-    Psi_r = fill_cov(Psi_r, blkse, nblk, Psi_r_mat_1, Psi_r_mat_2, Psi_r_mat_3, Psi_r_mat_4, Psi_r_mat_5);
+    Psi_r = fill_cov(Psi_r, blkse, nblk, Psi_r_mat_1, Psi_r_mat_2, Psi_r_mat_3, Psi_r_mat_4, Psi_r_mat_5, psiorder, psirevord);
   }
 
   if (sum(nblk_c) > 0) {
-    Psi_r_c = fill_cov(Psi_r_c, blkse_c, nblk_c, Psi_r_mat_1_c, Psi_r_mat_2_c, Psi_r_mat_3_c, Psi_r_mat_4_c, Psi_r_mat_5_c);
+    Psi_r_c = fill_cov(Psi_r_c, blkse_c, nblk_c, Psi_r_mat_1_c, Psi_r_mat_2_c, Psi_r_mat_3_c, Psi_r_mat_4_c, Psi_r_mat_5_c, psiorder_c, psirevord_c);
   }
 
   // see p. 3 https://books.google.com/books?id=9AC-s50RjacC
@@ -1802,11 +1816,11 @@ generated quantities { // these matrices are saved in the output but do not figu
   }
 
   if (sum(nblk) > 0) {
-    PSmat = fill_cov(PSmat, blkse, nblk, Psi_r_mat_1, Psi_r_mat_2, Psi_r_mat_3, Psi_r_mat_4, Psi_r_mat_5);
+    PSmat = fill_cov(PSmat, blkse, nblk, Psi_r_mat_1, Psi_r_mat_2, Psi_r_mat_3, Psi_r_mat_4, Psi_r_mat_5, psiorder, psirevord);
   }
 
   if (sum(nblk_c) > 0) {
-    PSmat_c = fill_cov(PSmat_c, blkse_c, nblk_c, Psi_r_mat_1_c, Psi_r_mat_2_c, Psi_r_mat_3_c, Psi_r_mat_4_c, Psi_r_mat_5_c);
+    PSmat_c = fill_cov(PSmat_c, blkse_c, nblk_c, Psi_r_mat_1_c, Psi_r_mat_2_c, Psi_r_mat_3_c, Psi_r_mat_4_c, Psi_r_mat_5_c, psiorder_c, psirevord_c);
   }
   
   for (g in 1:Ng) {

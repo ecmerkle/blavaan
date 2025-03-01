@@ -66,6 +66,9 @@ importFrom("future.apply",
 importFrom("tmvnsim",
            "tmvnsim")
 
+importFrom("igraph",
+           "graph_from_adjacency_matrix", "components")
+
 ## need to import something, though others could be used
 importFrom("bayesplot",
            "mcmc_trace")

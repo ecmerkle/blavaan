@@ -554,6 +554,8 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     blkinfo <- lapply(freemats, function(x) blkdiag(x$psi, attributes(freemats)$header))
     blkpsi <- all(sapply(blkinfo, function(x) x$isblk))
     blkse <- do.call("rbind", lapply(blkinfo, function(x) x$blkse))
+    psiorder <- do.call("rbind", lapply(blkinfo, function(x) x$neworder))
+    psirevord <- do.call("rbind", lapply(blkinfo, function(x) x$revorder))
     if (nrow(blkse) > 0) {
       if (dosam) {
         blkse <- blkse[blkse[,3] == 1, , drop = FALSE]
@@ -575,6 +577,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       dat$nblk <- array(0, dim = 5)
       dat$psidims <- array(3, dim = 5)
       dat$blkse <- matrix(nrow = 0, ncol = 7)
+      dat$psiorder <- dat$psirevord <- matrix(1, nrow = dat$Ng, ncol = dim(dat$Psi_skeleton)[3])
     } else {
       if (dosam) {
         blkgrp <- rep(1:length(blkinfo), times = sapply(blkinfo, function(x) nrow(x$blkse)))
@@ -595,6 +598,8 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       psidims <- c(ublksizes, rep(3, 5 - length(ublksizes)))
       dat$psidims <- array(psidims, dim = 5)
       dat$blkse <- blkse
+      dat$psiorder <- psiorder
+      dat$psirevord <- psirevord
     }
 
     ## zero out cors that are covered by a block, to get separate indexing for the full
@@ -602,14 +607,18 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     frnoblock <- fr
     if (with(dat, any(blkse[,3] == 1 & (blkse[,2] - blkse[,1] > 1)))) {
       for (g in 1:Ng) {
+        neworder <- blkinfo[[g]]$neworder
+        revorder <- blkinfo[[g]]$revorder
+        permmat <- frnoblock[[g]][neworder, neworder, drop = FALSE]
         tmpblk <- dat$blkse
         tmpblk <- tmpblk[tmpblk[,3] == 1 & (tmpblk[,2] - tmpblk[,1] > 1) & tmpblk[,4] == g, , drop = FALSE]
         if (nrow(tmpblk) > 0) {
           for (j in 1:nrow(tmpblk)) {
             srow <- tmpblk[j, 1]; erow <- tmpblk[j, 2]
-            frnoblock[[g]][srow:erow, srow:erow] <- 0
+            permmat[srow:erow, srow:erow] <- 0
           }
         }
+        frnoblock[[g]] <- permmat[revorder, revorder, drop = FALSE]
       }
     }
     
@@ -664,6 +673,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     dat$blkse <- matrix(0, 0, 7)
     dat$nblk <- array(0, dim = 5)
     dat$psidims <- array(3, dim = 5)
+    dat$psiorder <- dat$psirevord <- array(1, dim = c(Ng, 0))
   }
 
   if (level == 1L) {
@@ -800,14 +810,16 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     ## for correlations in blocks, replace beta with lkj and deal with lkj priors
     if (nrow(dat$blkse) > 0) {
       for (b in 1:nrow(blkse)) {
+        blkgrp <- blkse[b, 'blkgrp']
+        vrows <- dat$psiorder[blkgrp, blkse[b,1]:blkse[b,2]]
         lkjrows <- with(lavpartable, which(group == blkse[b, 'blkgrp'] & mat == "lvrho" &
-                                           row >= blkse[b,1] & col <= blkse[b,2] & row != col))
+                                           (row %in% vrows) & (col %in% vrows) & row != col))
         nolkj <- lkjrows[!grepl("lkj", lavpartable$prior[lkjrows])]
         if (length(nolkj) > 0) {
           lavpartable$prior[nolkj] <- gsub("(\\w+)\\(([^,]+),([^)]+)\\)", "lkj_corr(\\2)", lavpartable$prior[nolkj])
         }
-        lptrow <- with(lavpartable, which(row == blkse[b,1] & col == (blkse[b,1] + 1) &
-                                          group == blkse[b,4] & mat == "lvrho"))
+        lptrow <- with(lavpartable, which(row == vrows[1] & col == vrows[2] &
+                                          group == blkgrp & mat == "lvrho"))
         if (!dosam | length(lptrow) > 0) {
           blkse[b,7] <- as.numeric(gsub("(\\w+)\\(([^,]+)\\)", "\\2", lavpartable$prior[lptrow]))
         } else {

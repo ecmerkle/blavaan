@@ -458,58 +458,46 @@ checkcovs <- function(lavobject){
 ## eqcon is attributes(lavInspect(, "free"))$header
 blkdiag <- function(mat, eqcon = NULL) {
   isblk <- TRUE
-  cnum <- 1L
-  nblks <- 0
-  matrows <- NROW(mat)
-  blkse <- matrix(0, matrows, 3) # start/end of each block, is it a fully unrestricted block
-  while (cnum <= matrows) {
-    ## ending row of this potential block
-    currend <- which(mat[, cnum] > 0)
-    if (length(currend) > 0) {
-      currend <- max(currend)
-    } else {
-      ## a fixed diagonal entry, which is its own block
-      currend <- cnum
-    }
 
-    nblks <- nblks + 1
-    if (currend > cnum) {
-      ## check that columns cnum+1 to max() also equal max()
-      othend <- sapply((cnum + 1):currend, function(i) {
-        nzents <- which(mat[,i] > 0)
-        if (length(nzents) > 0) {
-          out <- max(nzents, i)
-        } else {
-          out <- i
-        }
-        out})
+  g <- graph_from_adjacency_matrix( (mat != 0) * 1, mode = "undirected")
+  blks <- components(g)
+  blklabs <- blks$membership
+  ublks <- unique(blklabs)
+  nblks <- length(ublks)
 
-      if (all(othend == currend)) {
-        ## is this entire submatrix free?
-        submat <- mat[cnum:currend, cnum:currend]
-        submat <- submat[lower.tri(submat)]
-        if (all(submat > 0) & all(!(submat %in% as.numeric(eqcon$rhs)))) {
-          blkse[nblks,] <- c(cnum, currend, TRUE)
-        } else {
+  neworder <- order(blklabs)
+  revorder <- order(neworder)
+  permmat <- mat[neworder, neworder]
+
+  blkse <- matrix(0, nblks, 3) # start/end of each block, is it a fully unrestricted block
+  if (nblks > 0) {
+    startidx <- 1
+    for (i in 1:nblks) {
+      blksize <- sum(blklabs == ublks[i])
+      endidx <- startidx + blksize - 1
+
+      blkse[i, 1:2] <- c(startidx, endidx)
+
+      if (blksize > 1) {
+        tempmat <- permmat[startidx:endidx, startidx:endidx]
+        submat <- tempmat[lower.tri(tempmat)]
+        if (any(submat == 0) | any(submat %in% as.numeric(eqcon$rhs))) {
+          blkse[i, 3] <- FALSE
           isblk <- FALSE
-          blkse[nblks,] <- c(cnum, currend, FALSE)
+        } else {
+          blkse[i, 3] <- TRUE
         }
-      } else {
-        isblk <- FALSE
-        blkse[nblks,] <- c(cnum, currend, FALSE)
       }
-    } else if (currend == cnum) {
-      ## 1x1 block
-      blkse[nblks,] <- c(cnum, cnum, TRUE)
-    } else {
-      isblk <- FALSE
+      startidx <- endidx + 1
     }
-    cnum <- currend + 1
   }
 
-  if (nrow(blkse) > 0) blkse <- blkse[1:nblks, , drop = FALSE]
-  
-  list(isblk = isblk, nblks = nblks, blkse = blkse)
+  ## isblk: are all blocks unrestricted
+  ## nblks: how many blocks
+  ## blkse: start/end of each block
+  ## neworder: permutation of rows/columns that gives us blocks
+  ## revorder: reverse permutation to go back to original ordering
+  list(isblk = isblk, nblks = nblks, blkse = blkse, neworder = neworder, revorder = revorder)
 }
 
 ## level labels for two-level models. this is taken from the similar lavaan function

@@ -248,7 +248,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           w14skel, w15skel, emiter,
                           lam_y_sign, lam_x_sign, alph_sign, # sign constraint matrices
                           gam_sign, b_sign, psi_r_sign, psi_r_sign_f,
-                          nblk, psidims, blkse, phi_r_sign,
+                          nblk, psidims, blkse, psiorder, psirevord, phi_r_sign,
                           lavpartable = NULL, # for priors
                           dumlv = NULL, # for sampling lvs
                           wigind = NULL, # wiggle indicator
@@ -266,7 +266,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           w9skel_c = NULL, w10skel_c = NULL, w11skel_c = NULL, w13skel_c = NULL,
                           w14skel_c = NULL,
                           lam_y_sign_c = NULL, b_sign_c = NULL, alph_sign_c = NULL, psi_r_sign_c = NULL,
-                          psi_r_sign_f_c, nblk_c, psidims_c, blkse_c,                          
+                          psi_r_sign_f_c, nblk_c, psidims_c, blkse_c, psiorder_c, psirevord_c,
                           phi_r_sign_c = NULL, dumlv_c = NULL, wigind_c = NULL,
                           Ndum = NULL, dum_ov_idx = NULL, dum_lv_idx = NULL, # for bsam
                           Ndum_x = NULL, dum_ov_x_idx = NULL, dum_lv_x_idx = NULL,
@@ -424,6 +424,8 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$nblk <- nblk
   dat$psidims <- psidims
   dat$blkse <- blkse
+  dat$psiorder <- psiorder
+  dat$psirevord <- psirevord
 
   dat$w13skel <- w13skel
   dat$w14skel <- w14skel
@@ -451,6 +453,8 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$nblk_c <- nblk_c
   dat$psidims_c <- psidims_c
   dat$blkse_c <- blkse_c
+  dat$psiorder_c <- psiorder_c
+  dat$psirevord_c <- psirevord_c
   dat$w13skel_c <- w13skel_c
   dat$alph_sign_c <- alph_sign_c
   dat$w14skel_c <- w14skel_c
