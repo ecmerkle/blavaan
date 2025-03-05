@@ -784,9 +784,9 @@ data {
   array[len_psi_r] real<lower=0> psi_r_beta;
 
   // for blocks within Psi_r that receive lkj
-  array[5] int<lower=0> nblk;
+  array[5] int<lower=0> psinblk;
   array[5] int<lower=3> psidims;
-  array[sum(nblk), 7] int<lower=0> blkse;
+  array[sum(psinblk), 7] int<lower=0> psiblkse;
   int<lower=0> len_w11;
   array[Ng] int<lower=0> wg11;
   array[Ng] vector[len_w11] w11;
@@ -907,9 +907,9 @@ data {
   array[len_psi_r_c] real<lower=0> psi_r_beta_c;
 
   // for blocks within Psi_r that receive lkj
-  array[5] int<lower=0> nblk_c;
+  array[5] int<lower=0> psinblk_c;
   array[5] int<lower=3> psidims_c;
-  array[sum(nblk_c), 7] int<lower=0> blkse_c;
+  array[sum(psinblk_c), 7] int<lower=0> psiblkse_c;
   int<lower=0> len_w11_c;
   array[Ng] int<lower=0> wg11_c;
   array[Ng] vector[len_w11_c] w11_c;
@@ -1249,11 +1249,11 @@ parameters {
   vector<lower=0>[len_free[5]] Theta_sd_free;
   vector<lower=-1,upper=1>[len_free[7]] Theta_r_free; // to use beta prior
   vector<lower=0>[len_free[9]] Psi_sd_free;
-  array[nblk[1]] corr_matrix[psidims[1]] Psi_r_mat_1;
-  array[nblk[2]] corr_matrix[psidims[2]] Psi_r_mat_2;
-  array[nblk[3]] corr_matrix[psidims[3]] Psi_r_mat_3;
-  array[nblk[4]] corr_matrix[psidims[4]] Psi_r_mat_4;
-  array[nblk[5]] corr_matrix[psidims[5]] Psi_r_mat_5;
+  array[psinblk[1]] corr_matrix[psidims[1]] Psi_r_mat_1;
+  array[psinblk[2]] corr_matrix[psidims[2]] Psi_r_mat_2;
+  array[psinblk[3]] corr_matrix[psidims[3]] Psi_r_mat_3;
+  array[psinblk[4]] corr_matrix[psidims[4]] Psi_r_mat_4;
+  array[psinblk[5]] corr_matrix[psidims[5]] Psi_r_mat_5;
   vector<lower=-1,upper=1>[len_free[10]] Psi_r_free;
   vector[len_free[13]] Nu_free;
   vector[len_free[14]] Alpha_free;
@@ -1266,11 +1266,11 @@ parameters {
   vector<lower=0>[len_free_c[5]] Theta_sd_free_c;
   vector<lower=-1,upper=1>[len_free_c[7]] Theta_r_free_c; // to use beta prior
   vector<lower=0>[len_free_c[9]] Psi_sd_free_c;
-  array[nblk_c[1]] corr_matrix[psidims_c[1]] Psi_r_mat_1_c;
-  array[nblk_c[2]] corr_matrix[psidims_c[2]] Psi_r_mat_2_c;
-  array[nblk_c[3]] corr_matrix[psidims_c[3]] Psi_r_mat_3_c;
-  array[nblk_c[4]] corr_matrix[psidims_c[4]] Psi_r_mat_4_c;
-  array[nblk_c[5]] corr_matrix[psidims_c[5]] Psi_r_mat_5_c;
+  array[psinblk_c[1]] corr_matrix[psidims_c[1]] Psi_r_mat_1_c;
+  array[psinblk_c[2]] corr_matrix[psidims_c[2]] Psi_r_mat_2_c;
+  array[psinblk_c[3]] corr_matrix[psidims_c[3]] Psi_r_mat_3_c;
+  array[psinblk_c[4]] corr_matrix[psidims_c[4]] Psi_r_mat_4_c;
+  array[psinblk_c[5]] corr_matrix[psidims_c[5]] Psi_r_mat_5_c;
   vector<lower=-1,upper=1>[len_free_c[10]] Psi_r_free_c;
   vector[len_free_c[13]] Nu_free_c;
   vector[len_free_c[14]] Alpha_free_c;
@@ -1375,14 +1375,14 @@ transformed parameters {
     }
   }
 
-  if (sum(nblk) > 0) {
+  if (sum(psinblk) > 0) {
     // we need to define a separate parameter for each dimension of correlation matrix,
     // so we need all these Psi_r_mats    
-    Psi_r = fill_cov(Psi_r, blkse, nblk, Psi_r_mat_1, Psi_r_mat_2, Psi_r_mat_3, Psi_r_mat_4, Psi_r_mat_5, psiorder, psirevord);
+    Psi_r = fill_cov(Psi_r, psiblkse, psinblk, Psi_r_mat_1, Psi_r_mat_2, Psi_r_mat_3, Psi_r_mat_4, Psi_r_mat_5, psiorder, psirevord);
   }
 
-  if (sum(nblk_c) > 0) {
-    Psi_r_c = fill_cov(Psi_r_c, blkse_c, nblk_c, Psi_r_mat_1_c, Psi_r_mat_2_c, Psi_r_mat_3_c, Psi_r_mat_4_c, Psi_r_mat_5_c, psiorder_c, psirevord_c);
+  if (sum(psinblk_c) > 0) {
+    Psi_r_c = fill_cov(Psi_r_c, psiblkse_c, psinblk_c, Psi_r_mat_1_c, Psi_r_mat_2_c, Psi_r_mat_3_c, Psi_r_mat_4_c, Psi_r_mat_5_c, psiorder_c, psirevord_c);
   }
 
   // see p. 3 https://books.google.com/books?id=9AC-s50RjacC
@@ -1669,21 +1669,21 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   target += gamma_lpdf(Psi_pri | psi_sd_shape, psi_sd_rate);
 
   target += beta_lpdf(.5 * (1 + Theta_r_free) | theta_r_alpha, theta_r_beta) + log(.5) * len_free[7]; // the latter term is the jacobian moving from (-1,1) to (0,1), because beta_lpdf is defined on (0,1)
-  if (sum(nblk) > 0) {
-    for (k in 1:sum(nblk)) {
-      int blkidx = blkse[k, 6];
-      int arrayidx = blkse[k, 5];
+  if (sum(psinblk) > 0) {
+    for (k in 1:sum(psinblk)) {
+      int blkidx = psiblkse[k, 6];
+      int arrayidx = psiblkse[k, 5];
 
       if (arrayidx == 1) {
-	target += lkj_corr_lpdf(Psi_r_mat_1[blkidx] | blkse[k,7]);
+	target += lkj_corr_lpdf(Psi_r_mat_1[blkidx] | psiblkse[k,7]);
       } else if (arrayidx == 2) {
-	target += lkj_corr_lpdf(Psi_r_mat_2[blkidx] | blkse[k,7]);
+	target += lkj_corr_lpdf(Psi_r_mat_2[blkidx] | psiblkse[k,7]);
       } else if (arrayidx == 3) {
-	target += lkj_corr_lpdf(Psi_r_mat_3[blkidx] | blkse[k,7]);	
+	target += lkj_corr_lpdf(Psi_r_mat_3[blkidx] | psiblkse[k,7]);	
       } else if (arrayidx == 4) {
-	target += lkj_corr_lpdf(Psi_r_mat_4[blkidx] | blkse[k,7]);
+	target += lkj_corr_lpdf(Psi_r_mat_4[blkidx] | psiblkse[k,7]);
       } else {
-	target += lkj_corr_lpdf(Psi_r_mat_5[blkidx] | blkse[k,7]);
+	target += lkj_corr_lpdf(Psi_r_mat_5[blkidx] | psiblkse[k,7]);
       }      
     }
   }
@@ -1711,21 +1711,21 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   target += gamma_lpdf(Psi_pri_c | psi_sd_shape_c, psi_sd_rate_c);
 
   target += beta_lpdf(.5 * (1 + Theta_r_free_c) | theta_r_alpha_c, theta_r_beta_c) + log(.5) * len_free_c[7];
-  if (sum(nblk_c) > 0) {
-    for (k in 1:sum(nblk_c)) {
-      int blkidx = blkse_c[k, 6];
-      int arrayidx = blkse_c[k, 5];
+  if (sum(psinblk_c) > 0) {
+    for (k in 1:sum(psinblk_c)) {
+      int blkidx = psiblkse_c[k, 6];
+      int arrayidx = psiblkse_c[k, 5];
 
       if (arrayidx == 1) {
-	target += lkj_corr_lpdf(Psi_r_mat_1_c[blkidx] | blkse_c[k,7]);
+	target += lkj_corr_lpdf(Psi_r_mat_1_c[blkidx] | psiblkse_c[k,7]);
       } else if (arrayidx == 2) {
-	target += lkj_corr_lpdf(Psi_r_mat_2_c[blkidx] | blkse_c[k,7]);
+	target += lkj_corr_lpdf(Psi_r_mat_2_c[blkidx] | psiblkse_c[k,7]);
       } else if (arrayidx == 3) {
-	target += lkj_corr_lpdf(Psi_r_mat_3_c[blkidx] | blkse_c[k,7]);	
+	target += lkj_corr_lpdf(Psi_r_mat_3_c[blkidx] | psiblkse_c[k,7]);	
       } else if (arrayidx == 4) {
-	target += lkj_corr_lpdf(Psi_r_mat_4_c[blkidx] | blkse_c[k,7]);
+	target += lkj_corr_lpdf(Psi_r_mat_4_c[blkidx] | psiblkse_c[k,7]);
       } else {
-	target += lkj_corr_lpdf(Psi_r_mat_5_c[blkidx] | blkse_c[k,7]);
+	target += lkj_corr_lpdf(Psi_r_mat_5_c[blkidx] | psiblkse_c[k,7]);
       }      
     }
   } else if (len_free_c[10] > 0) {
@@ -1815,12 +1815,12 @@ generated quantities { // these matrices are saved in the output but do not figu
     }
   }
 
-  if (sum(nblk) > 0) {
-    PSmat = fill_cov(PSmat, blkse, nblk, Psi_r_mat_1, Psi_r_mat_2, Psi_r_mat_3, Psi_r_mat_4, Psi_r_mat_5, psiorder, psirevord);
+  if (sum(psinblk) > 0) {
+    PSmat = fill_cov(PSmat, psiblkse, psinblk, Psi_r_mat_1, Psi_r_mat_2, Psi_r_mat_3, Psi_r_mat_4, Psi_r_mat_5, psiorder, psirevord);
   }
 
-  if (sum(nblk_c) > 0) {
-    PSmat_c = fill_cov(PSmat_c, blkse_c, nblk_c, Psi_r_mat_1_c, Psi_r_mat_2_c, Psi_r_mat_3_c, Psi_r_mat_4_c, Psi_r_mat_5_c, psiorder_c, psirevord_c);
+  if (sum(psinblk_c) > 0) {
+    PSmat_c = fill_cov(PSmat_c, psiblkse_c, psinblk_c, Psi_r_mat_1_c, Psi_r_mat_2_c, Psi_r_mat_3_c, Psi_r_mat_4_c, Psi_r_mat_5_c, psiorder_c, psirevord_c);
   }
   
   for (g in 1:Ng) {

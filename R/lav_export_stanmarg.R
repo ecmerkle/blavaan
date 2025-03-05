@@ -400,6 +400,60 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       diag(dmat) <- 0L
       dmat}
       )
+
+    blkinfo <- lapply(freemats, function(x) blkdiag(x$theta, attributes(freemats)$header))
+    blkthet <- all(sapply(blkinfo, function(x) x$isblk))
+    blkse <- do.call("rbind", lapply(blkinfo, function(x) x$blkse))
+    thetorder <- do.call("rbind", lapply(blkinfo, function(x) x$neworder))
+    thetrevord <- do.call("rbind", lapply(blkinfo, function(x) x$revorder))
+    if (nrow(blkse) > 0) {
+      if (dosam) {
+        blkse <- blkse[blkse[,3] == 1, , drop = FALSE]
+      } else {
+        blkse <- blkse[(blkse[,3] == 1) & (blkse[,2] - blkse[,1] > 1), , drop = FALSE]
+      }
+      blksizes <- blkse[,2] - blkse[,1] + 1
+      ublksizes <- unique(blksizes)
+      ublksizes <- ublksizes[order(ublksizes)]
+    } else {
+      ublksizes <- NULL
+    }
+
+    ## for now, we only support 5 unique block dimensions because each dimension requires
+    ## a separate parameter specification in Stan
+    if (length(ublksizes) > 5 | length(ublksizes) == 0) {
+      blkinfo <- NULL
+      if (length(ublksizes) > 5) blkthet <- FALSE
+      dat$nblkthet <- array(0, dim = 5)
+      dat$thetdims <- array(3, dim = 5)
+      dat$thetblkse <- matrix(nrow = 0, ncol = 7)
+      dat$thetorder <- dat$thetrevord <- matrix(1, nrow = dat$Ng, ncol = dim(dat$Theta_skeleton)[3])
+    } else {
+      if (dosam) {
+        blkgrp <- rep(1:length(blkinfo), times = sapply(blkinfo, function(x) nrow(x$blkse)))
+      } else {
+        blkgrp <- rep(1:length(blkinfo), times = sapply(blkinfo, function(x) sum(x$blkse[,2] - x$blkse[,1] > 1)))
+      }
+      arrayidx <- as.numeric(as.factor(blksizes))
+      dupsiz <- duplicated(blksizes)
+      blkidx <- rep(NA, nrow(blkse))
+      for (i in 1:length(ublksizes)) {
+        sizeidx <- blksizes == ublksizes[i]
+        blkidx[sizeidx] <- cumsum(dupsiz[sizeidx]) + 1
+      }
+      blkse <- cbind(blkse, blkgrp, arrayidx, blkidx, rep(1, nrow(blkse))) ## col 7 is for priors, handled later
+
+      nblk <- c(summary(factor(blksizes)), rep(0, 5 - length(ublksizes)))
+      dat$nblk <- array(nblk, dim = 5)
+      psidims <- c(ublksizes, rep(3, 5 - length(ublksizes)))
+      dat$psidims <- array(psidims, dim = 5)
+      dat$blkse <- blkse
+      dat$psiorder <- psiorder
+      dat$psirevord <- psirevord
+    }
+
+
+
     
     es <- lapply(estmats, function(x){
       dmat <- x$theta
@@ -551,76 +605,9 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       dmat}
       )
 
-    blkinfo <- lapply(freemats, function(x) blkdiag(x$psi, attributes(freemats)$header))
-    blkpsi <- all(sapply(blkinfo, function(x) x$isblk))
-    blkse <- do.call("rbind", lapply(blkinfo, function(x) x$blkse))
-    psiorder <- do.call("rbind", lapply(blkinfo, function(x) x$neworder))
-    psirevord <- do.call("rbind", lapply(blkinfo, function(x) x$revorder))
-    if (nrow(blkse) > 0) {
-      if (dosam) {
-        blkse <- blkse[blkse[,3] == 1, , drop = FALSE]
-      } else {
-        blkse <- blkse[(blkse[,3] == 1) & (blkse[,2] - blkse[,1] > 1), , drop = FALSE]
-      }
-      blksizes <- blkse[,2] - blkse[,1] + 1
-      ublksizes <- unique(blksizes)
-      ublksizes <- ublksizes[order(ublksizes)]
-    } else {
-      ublksizes <- NULL
-    }
-
-    ## for now, we only support 5 unique block dimensions because each dimension requires
-    ## a separate parameter specification in Stan
-    if (length(ublksizes) > 5 | length(ublksizes) == 0) {
-      blkinfo <- NULL
-      if (length(ublksizes) > 5) blkpsi <- FALSE
-      dat$nblk <- array(0, dim = 5)
-      dat$psidims <- array(3, dim = 5)
-      dat$blkse <- matrix(nrow = 0, ncol = 7)
-      dat$psiorder <- dat$psirevord <- matrix(1, nrow = dat$Ng, ncol = dim(dat$Psi_skeleton)[3])
-    } else {
-      if (dosam) {
-        blkgrp <- rep(1:length(blkinfo), times = sapply(blkinfo, function(x) nrow(x$blkse)))
-      } else {
-        blkgrp <- rep(1:length(blkinfo), times = sapply(blkinfo, function(x) sum(x$blkse[,2] - x$blkse[,1] > 1)))
-      }
-      arrayidx <- as.numeric(as.factor(blksizes))
-      dupsiz <- duplicated(blksizes)
-      blkidx <- rep(NA, nrow(blkse))
-      for (i in 1:length(ublksizes)) {
-        sizeidx <- blksizes == ublksizes[i]
-        blkidx[sizeidx] <- cumsum(dupsiz[sizeidx]) + 1
-      }
-      blkse <- cbind(blkse, blkgrp, arrayidx, blkidx, rep(1, nrow(blkse))) ## col 7 is for priors, handled later
-
-      nblk <- c(summary(factor(blksizes)), rep(0, 5 - length(ublksizes)))
-      dat$nblk <- array(nblk, dim = 5)
-      psidims <- c(ublksizes, rep(3, 5 - length(ublksizes)))
-      dat$psidims <- array(psidims, dim = 5)
-      dat$blkse <- blkse
-      dat$psiorder <- psiorder
-      dat$psirevord <- psirevord
-    }
-
-    ## zero out cors that are covered by a block, to get separate indexing for the full
-    ## cov matrix and for the matrix without blocks
-    frnoblock <- fr
-    if (with(dat, any(blkse[,3] == 1 & (blkse[,2] - blkse[,1] > 1)))) {
-      for (g in 1:Ng) {
-        neworder <- blkinfo[[g]]$neworder
-        revorder <- blkinfo[[g]]$revorder
-        permmat <- frnoblock[[g]][neworder, neworder, drop = FALSE]
-        tmpblk <- dat$blkse
-        tmpblk <- tmpblk[tmpblk[,3] == 1 & (tmpblk[,2] - tmpblk[,1] > 1) & tmpblk[,4] == g, , drop = FALSE]
-        if (nrow(tmpblk) > 0) {
-          for (j in 1:nrow(tmpblk)) {
-            srow <- tmpblk[j, 1]; erow <- tmpblk[j, 2]
-            permmat[srow:erow, srow:erow] <- 0
-          }
-        }
-        frnoblock[[g]] <- permmat[revorder, revorder, drop = FALSE]
-      }
-    }
+    blkres <- block_cov(fr, attributes(freemats)$header, mat = "psi", skel = dat$Psi_skeleton, Ng = dat$Ng, dosam = dosam)
+    dat <- c(dat, blkres$out)
+    frnoblock <- blkres$frnoblock
     
     es <- lapply(estmats, function(x){
       dmat <- x$psi
@@ -670,8 +657,8 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     dat$Psi_r_skeleton_f <- array(0, dim = c(Ng, 0, 0))
     dat$w11skel <- matrix(0, 0, 3)
     dat$psi_r_sign_f <- matrix(0, 0, 3)
-    dat$blkse <- matrix(0, 0, 7)
-    dat$nblk <- array(0, dim = 5)
+    dat$psiblkse <- matrix(0, 0, 7) #
+    dat$psinblk <- array(0, dim = 5) #
     dat$psidims <- array(3, dim = 5)
     dat$psiorder <- dat$psirevord <- array(1, dim = c(Ng, 0))
   }
@@ -1430,4 +1417,82 @@ lav2standata <- function(lavobject, dosam = FALSE) {
   }
 
   return(dat)
+}
+
+## get data about covariance matrix blocks
+block_cov <- function(fr, frhead, mat, skel, Ng, dosam = FALSE) {
+  out <- list()
+  
+  blkinfo <- lapply(freemats, function(x) blkdiag(x[[mat]], frhead))
+  blkmats <- all(sapply(blkinfo, function(x) x$isblk))
+  blkse <- do.call("rbind", lapply(blkinfo, function(x) x$blkse))
+  matorder <- do.call("rbind", lapply(blkinfo, function(x) x$neworder))
+  matrevord <- do.call("rbind", lapply(blkinfo, function(x) x$revorder))
+  if (nrow(blkse) > 0) {
+    if (dosam) {
+      blkse <- blkse[blkse[,3] == 1, , drop = FALSE]
+    } else {
+      blkse <- blkse[(blkse[,3] == 1) & (blkse[,2] - blkse[,1] > 1), , drop = FALSE]
+    }
+    blksizes <- blkse[,2] - blkse[,1] + 1
+    ublksizes <- unique(blksizes)
+    ublksizes <- ublksizes[order(ublksizes)]
+  } else {
+    ublksizes <- NULL
+  }
+
+  ## for now, we only support 5 unique block dimensions because each dimension requires
+  ## a separate parameter specification in Stan
+  if (length(ublksizes) > 5 | length(ublksizes) == 0) {
+    blkinfo <- NULL
+    if (length(ublksizes) > 5) blkmats <- FALSE
+      out$nblk <- array(0, dim = 5)
+      out[[paste0(mat, "dims")]] <- array(3, dim = 5)
+      out[[paste0(mat, "blkse")]] <- matrix(nrow = 0, ncol = 7)
+      out[[paste0(mat, "order")]] <- out[[paste0(mat, "revord")]] <- matrix(1, nrow = Ng, ncol = dim(skel)[3])
+  } else {
+    if (dosam) {
+      blkgrp <- rep(1:length(blkinfo), times = sapply(blkinfo, function(x) nrow(x$blkse)))
+    } else {
+      blkgrp <- rep(1:length(blkinfo), times = sapply(blkinfo, function(x) sum(x$blkse[,2] - x$blkse[,1] > 1)))
+    }
+    arrayidx <- as.numeric(as.factor(blksizes))
+    dupsiz <- duplicated(blksizes)
+    blkidx <- rep(NA, nrow(blkse))
+    for (i in 1:length(ublksizes)) {
+      sizeidx <- blksizes == ublksizes[i]
+      blkidx[sizeidx] <- cumsum(dupsiz[sizeidx]) + 1
+    }
+    blkse <- cbind(blkse, blkgrp, arrayidx, blkidx, rep(1, nrow(blkse))) ## col 7 is for priors, handled later
+
+    nblk <- c(summary(factor(blksizes)), rep(0, 5 - length(ublksizes)))
+    out[[paste0(mat, "nblk")]] <- array(nblk, dim = 5)
+    matdims <- c(ublksizes, rep(3, 5 - length(ublksizes)))
+    out[[paste0(mat, "dims")]] <- array(matdims, dim = 5)
+    out[[paste0(mat, "blkse")]] <- blkse
+    out[[paste0(mat, "order")]] <- matorder
+    out[[paste0(mat, "revord")]] <- matrevord
+  }
+
+  ## zero out cors that are covered by a block, to get separate indexing for the full
+  ## cov matrix and for the matrix without blocks
+  frnoblock <- fr
+  if (any(blkse[,3] == 1 & (blkse[,2] - blkse[,1] > 1))) {
+    for (g in 1:Ng) {
+      neworder <- blkinfo[[g]]$neworder
+      revorder <- blkinfo[[g]]$revorder
+      permmat <- frnoblock[[g]][neworder, neworder, drop = FALSE]
+      tmpblk <- blkse
+      tmpblk <- tmpblk[tmpblk[,3] == 1 & (tmpblk[,2] - tmpblk[,1] > 1) & tmpblk[,4] == g, , drop = FALSE]
+      if (nrow(tmpblk) > 0) {
+        for (j in 1:nrow(tmpblk)) {
+          srow <- tmpblk[j, 1]; erow <- tmpblk[j, 2]
+          permmat[srow:erow, srow:erow] <- 0
+        }
+      }
+      frnoblock[[g]] <- permmat[revorder, revorder, drop = FALSE]
+    }
+  }
+  
+  list(out = out, frnoblock = frnoblock)
 }

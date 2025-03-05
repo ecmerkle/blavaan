@@ -248,7 +248,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           w14skel, w15skel, emiter,
                           lam_y_sign, lam_x_sign, alph_sign, # sign constraint matrices
                           gam_sign, b_sign, psi_r_sign, psi_r_sign_f,
-                          nblk, psidims, blkse, psiorder, psirevord, phi_r_sign,
+                          psinblk, psidims, psiblkse, psiorder, psirevord, phi_r_sign,
                           lavpartable = NULL, # for priors
                           dumlv = NULL, # for sampling lvs
                           wigind = NULL, # wiggle indicator
@@ -266,7 +266,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           w9skel_c = NULL, w10skel_c = NULL, w11skel_c = NULL, w13skel_c = NULL,
                           w14skel_c = NULL,
                           lam_y_sign_c = NULL, b_sign_c = NULL, alph_sign_c = NULL, psi_r_sign_c = NULL,
-                          psi_r_sign_f_c, nblk_c, psidims_c, blkse_c, psiorder_c, psirevord_c,
+                          psi_r_sign_f_c, psinblk_c, psidims_c, psiblkse_c, psiorder_c, psirevord_c,
                           phi_r_sign_c = NULL, dumlv_c = NULL, wigind_c = NULL,
                           Ndum = NULL, dum_ov_idx = NULL, dum_lv_idx = NULL, # for bsam
                           Ndum_x = NULL, dum_ov_x_idx = NULL, dum_lv_x_idx = NULL,
@@ -421,9 +421,9 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$w10skel <- w10skel
   dat$w11skel <- w11skel
   dat$psi_r_sign <- psi_r_sign
-  dat$nblk <- nblk
+  dat$psinblk <- psinblk
   dat$psidims <- psidims
-  dat$blkse <- blkse
+  dat$psiblkse <- psiblkse
   dat$psiorder <- psiorder
   dat$psirevord <- psirevord
 
@@ -450,9 +450,9 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$w10skel_c <- w10skel_c
   dat$w11skel_c <- w11skel_c
   dat$psi_r_sign_c <- psi_r_sign_c
-  dat$nblk_c <- nblk_c
+  dat$psinblk_c <- psinblk_c
   dat$psidims_c <- psidims_c
-  dat$blkse_c <- blkse_c
+  dat$psiblkse_c <- psiblkse_c
   dat$psiorder_c <- psiorder_c
   dat$psirevord_c <- psirevord_c
   dat$w13skel_c <- w13skel_c
