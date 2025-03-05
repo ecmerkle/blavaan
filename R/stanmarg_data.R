@@ -249,6 +249,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           lam_y_sign, lam_x_sign, alph_sign, # sign constraint matrices
                           gam_sign, b_sign, psi_r_sign, psi_r_sign_f,
                           psinblk, psidims, psiblkse, psiorder, psirevord, phi_r_sign,
+                          thetanblk, thetadims, thetablkse, thetaorder, thetarevord,
                           lavpartable = NULL, # for priors
                           dumlv = NULL, # for sampling lvs
                           wigind = NULL, # wiggle indicator
@@ -267,6 +268,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           w14skel_c = NULL,
                           lam_y_sign_c = NULL, b_sign_c = NULL, alph_sign_c = NULL, psi_r_sign_c = NULL,
                           psi_r_sign_f_c, psinblk_c, psidims_c, psiblkse_c, psiorder_c, psirevord_c,
+                          thetanblk_c, thetadims_c, thetablkse_c, thetaorder_c, thetarevord_c,
                           phi_r_sign_c = NULL, dumlv_c = NULL, wigind_c = NULL,
                           Ndum = NULL, dum_ov_idx = NULL, dum_lv_idx = NULL, # for bsam
                           Ndum_x = NULL, dum_ov_x_idx = NULL, dum_lv_x_idx = NULL,
@@ -426,6 +428,11 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$psiblkse <- psiblkse
   dat$psiorder <- psiorder
   dat$psirevord <- psirevord
+  dat$thetanblk <- thetanblk
+  dat$thetablkse <- thetablkse
+  dat$thetadims <- thetadims
+  dat$thetaorder <- thetaorder
+  dat$thetarevord <- thetarevord
 
   dat$w13skel <- w13skel
   dat$w14skel <- w14skel
@@ -458,6 +465,11 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$w13skel_c <- w13skel_c
   dat$alph_sign_c <- alph_sign_c
   dat$w14skel_c <- w14skel_c
+  dat$thetanblk_c <- thetanblk_c
+  dat$thetablkse_c <- thetablkse_c
+  dat$thetadims_c <- thetadims_c
+  dat$thetaorder_c <- thetaorder_c
+  dat$thetarevord_c <- thetarevord_c
   
 
   ## priors, first making sure they match what is in the stan file
