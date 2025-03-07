@@ -401,11 +401,6 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       dmat}
       )
 
-    blkres <- block_cov(freemats, fr, mat = "theta", skel = dat$Theta_skeleton, Ng = dat$Ng, dosam = dosam)
-    dat <- c(dat, blkres$out)
-    frnoblock <- blkres$frnoblock
-    blkthet <- blkres$blkmats
-    
     es <- lapply(estmats, function(x){
       dmat <- x$theta
       diag(dmat) <- 1L
@@ -413,6 +408,12 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       dmat}
       )
 
+    tmpatt <- matattr(fr, es, constrain, mat = "Theta_r", Ng, opts$std.lv, tmpwig, dest = dest)
+    blkres <- block_cov(freemats, fr, mat = "theta", skel = tmpatt$matskel, Ng = dat$Ng, dosam = dosam)
+    dat <- c(dat, blkres$out)
+    frnoblock <- blkres$frnoblock
+    blkthet <- blkres$blkmats
+    
     frnums <- sapply(frnoblock, function(x) as.numeric(x[x != 0]))
     twsel <- lavpartable$free %in% frnums
     tmpwig <- lavpartable[twsel,'free'][which(lavpartable[twsel, 'plabel'] %in% wig)]
@@ -421,7 +422,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
 
     dat$Theta_r_skeleton <- res$matskel
     dat$w7skel <- res$wskel
-    free2 <- c(free2, list(rtheta = res$free))
+
     ptrows <- with(lavpartable, which(mat == "theta" & free > 0 & row != col))
     veclen <- length(ptrows)
     if (veclen > 0) {
@@ -430,89 +431,27 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       names(nfree)[length(nfree)] <- 'rho'
       freeparnums[ptrows[fpars]] <- 1:sum(fpars)
     }
+
+    ## repeated for all free cov entries including blocks
+    frnums <- sapply(fr, function(x) as.numeric(x[x != 0]))
+    twsel <- lavpartable$free %in% frnums
+    tmpwig <- lavpartable[twsel,'free'][which(lavpartable[twsel, 'plabel'] %in% wig)]
+
+    res <- matattr(fr, es, constrain, mat = "Theta_r", Ng, opts$std.lv, tmpwig, dest = dest)
+
+    free2 <- c(free2, list(rtheta = res$free))
+    dat$Theta_r_skeleton_f <- res$matskel
+    dat$w8skel <- res$wskel
   } else {
     blkthet <- TRUE
     dat$Theta_r_skeleton <- array(0, dim = c(Ng, 0, 0))
     dat$w7skel <- matrix(0, 0, 3)
+    dat$Theta_r_skeleton_f <- array(0, dim = c(Ng, 0, 0))
+    dat$w8skel <- matrix(0, 0, 3)
     dat$thetablkse <- matrix(0, 0, 7)
     dat$thetanblk <- array(0, dim = 5)
     dat$thetadims <- array(3, dim = 5)
     dat$thetaorder <- dat$thetarevord <- array(1, dim = c(Ng, 0))
-  }
-
-  if (level == 1L) {
-    ## 6. diag(Theta_x)
-    if ("cov.x" %in% names(freemats[[1]])) {
-      fr <- lapply(freemats, function(x){
-        dmat <- x$cov.x
-        dmat[lower.tri(dmat)] <- dmat[upper.tri(dmat)] <- 0
-        dmat}
-        )
-    
-      es <- lapply(estmats, function(x){
-        dmat <- x$cov.x
-        dmat[lower.tri(dmat)] <- dmat[upper.tri(dmat)] <- 0
-        dmat}
-        )
-      dest <- es
-
-      frnums <- sapply(fr, function(x) as.numeric(x[x != 0]))
-      twsel <- lavpartable$free %in% frnums
-      tmpwig <- lavpartable[twsel,'free'][which(lavpartable[twsel, 'plabel'] %in% wig)]
-    
-      res <- matattr(fr, es, constrain, mat = "Theta_x", Ng, opts$std.lv, tmpwig)
-
-      dat$Theta_x_skeleton <- res$matskel
-      dat$w6skel <- res$wskel
-      free2 <- c(free2, list(cov.x = res$free))
-      ptrows <- with(lavpartable, which(mat == "cov.x" & free > 0 & row == col))
-      veclen <- length(ptrows)
-      if (veclen > 0) {
-        fpars <- res$wskel[1:veclen,1] == 0 | res$wskel[1:veclen,3] == 1
-        nfree <- c(nfree, list(cov.x = sum(fpars)))
-        freeparnums[ptrows[fpars]] <- 1:sum(fpars)
-      }
-    } else {
-      dat$Theta_x_skeleton <- array(0, dim = c(Ng, 0, 0))
-      dat$w6skel <- matrix(0, 0, 3)
-    }
-
-
-    ## 8. Theta_x_r
-    if ("cov.x" %in% names(freemats[[1]])) {
-      fr <- lapply(freemats, function(x){
-        dmat <- x$cov.x
-        diag(dmat) <- 0L
-        dmat}
-        )
-    
-      es <- lapply(estmats, function(x){
-        dmat <- x$cov.x
-        diag(dmat) <- 1L
-        dmat[upper.tri(dmat)] <- 0L
-        dmat}
-        )
-
-      frnums <- sapply(fr, function(x) as.numeric(x[x != 0]))
-      twsel <- lavpartable$free %in% frnums
-      tmpwig <- lavpartable[twsel,'free'][which(lavpartable[twsel, 'plabel'] %in% wig)]
-      
-      res <- matattr(fr, es, constrain, mat = "Theta_x_r", Ng, opts$std.lv, tmpwig, dest = dest)
-
-      dat$Theta_x_r_skeleton <- res$matskel
-      dat$w8skel <- res$wskel
-      free2 <- c(free2, list(cov.x = res$free))
-      ptrows <- with(lavpartable, which(mat == "cov.x" & free > 0 & row != col))
-      veclen <- length(ptrows)
-      if (veclen > 0) {
-        fpars <- res$wskel[1:veclen,1] == 0 | res$wskel[1:veclen,3] == 1
-        nfree <- c(nfree, list(cov.x = sum(fpars)))
-        freeparnums[ptrows[fpars]] <- 1:sum(fpars)
-      }
-    } else {
-      dat$Theta_x_r_skeleton <- array(0, dim = c(Ng, 0, 0))
-      dat$w8skel <- matrix(0, 0, 3)
-    }
   }
 
   ## 9. diag(Psi)
@@ -561,17 +500,19 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       dmat}
       )
 
-    blkres <- block_cov(freemats, fr, mat = "psi", skel = dat$Psi_skeleton, Ng = dat$Ng, dosam = dosam)
-    dat <- c(dat, blkres$out)
-    frnoblock <- blkres$frnoblock
-    blkpsi <- blkres$blkmats
-
     es <- lapply(estmats, function(x){
       dmat <- x$psi
       diag(dmat) <- 1L
       dmat[upper.tri(dmat)] <- 0L
       dmat}
       )
+
+    tmpatt <- matattr(fr, es, constrain, mat = "Psi_r", Ng, opts$std.lv, tmpwig, dest = dest)
+    blkres <- block_cov(freemats, fr, mat = "psi", skel = tmpatt$matskel, Ng = dat$Ng, dosam = dosam)
+    dat <- c(dat, blkres$out)
+    frnoblock <- blkres$frnoblock
+    blkpsi <- blkres$blkmats
+
 
     frnums <- sapply(frnoblock, function(x) as.numeric(x[x != 0]))
     twsel <- lavpartable$free %in% frnums
@@ -1412,7 +1353,7 @@ block_cov <- function(freemats, fr, mat, skel, Ng, dosam = FALSE) {
     if (dosam) {
       blkse <- blkse[blkse[,3] == 1, , drop = FALSE]
     } else {
-      blkse <- blkse[(blkse[,3] == 1) & (blkse[,2] - blkse[,1] > 1), , drop = FALSE]
+      blkse <- blkse[(blkse[,3] == 1) & (blkse[,2] - blkse[,1] > 0), , drop = FALSE]
     }
     blksizes <- blkse[,2] - blkse[,1] + 1
     ublksizes <- unique(blksizes)
@@ -1424,7 +1365,6 @@ block_cov <- function(freemats, fr, mat, skel, Ng, dosam = FALSE) {
   ## for now, we only support 5 unique block dimensions because each dimension requires
   ## a separate parameter specification in Stan
   if (length(ublksizes) > 5 | length(ublksizes) == 0) {
-    blkinfo <- NULL
     if (length(ublksizes) > 5) blkmats <- FALSE
       out[[paste0(mat, "nblk")]] <- array(0, dim = 5)
       out[[paste0(mat, "dims")]] <- array(3, dim = 5)
@@ -1457,13 +1397,13 @@ block_cov <- function(freemats, fr, mat, skel, Ng, dosam = FALSE) {
   ## zero out cors that are covered by a block, to get separate indexing for the full
   ## cov matrix and for the matrix without blocks
   frnoblock <- fr
-  if (any(blkse[,3] == 1 & (blkse[,2] - blkse[,1] > 1))) {
+  if (any(blkse[,3] == 1 & (blkse[,2] - blkse[,1] > 0))) {
     for (g in 1:Ng) {
       neworder <- blkinfo[[g]]$neworder
       revorder <- blkinfo[[g]]$revorder
       permmat <- frnoblock[[g]][neworder, neworder, drop = FALSE]
       tmpblk <- blkse
-      tmpblk <- tmpblk[tmpblk[,3] == 1 & (tmpblk[,2] - tmpblk[,1] > 1) & tmpblk[,4] == g, , drop = FALSE]
+      tmpblk <- tmpblk[tmpblk[,3] == 1 & (tmpblk[,2] - tmpblk[,1] > 0) & tmpblk[,4] == g, , drop = FALSE]
       if (nrow(tmpblk) > 0) {
         for (j in 1:nrow(tmpblk)) {
           srow <- tmpblk[j, 1]; erow <- tmpblk[j, 2]

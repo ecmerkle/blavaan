@@ -758,6 +758,20 @@ data {
   int<lower=0> len_thet_r;
   array[len_thet_r] real<lower=0> theta_r_alpha;
   array[len_thet_r] real<lower=0> theta_r_beta;
+
+  // for blocks within Theta_r that receive lkj
+  array[5] int<lower=0> thetanblk;
+  array[5] int<lower=2> thetadims;
+  array[sum(thetanblk), 7] int<lower=0> thetablkse;
+  int<lower=0> len_w8;
+  array[Ng] int<lower=0> wg8;
+  array[Ng] vector[len_w8] w8;
+  array[Ng, len_w8] int<lower=1> v8;
+  array[Ng, p + 1] int<lower=1> u8;
+  array[sum(wg8), 3] int<lower=0> w8skel;
+  array[Ng, p] int<lower=1> thetaorder;
+  array[Ng, p] int<lower=1> thetarevord;
+
   
   // same things but for Psi
   int<lower=0> len_w9;
@@ -785,7 +799,7 @@ data {
 
   // for blocks within Psi_r that receive lkj
   array[5] int<lower=0> psinblk;
-  array[5] int<lower=3> psidims;
+  array[5] int<lower=2> psidims;
   array[sum(psinblk), 7] int<lower=0> psiblkse;
   int<lower=0> len_w11;
   array[Ng] int<lower=0> wg11;
@@ -881,6 +895,19 @@ data {
   int<lower=0> len_thet_r_c;
   array[len_thet_r_c] real<lower=0> theta_r_alpha_c;
   array[len_thet_r_c] real<lower=0> theta_r_beta_c;
+
+  // for blocks within Theta_r that receive lkj
+  array[5] int<lower=0> thetanblk_c;
+  array[5] int<lower=2> thetadims_c;
+  array[sum(thetanblk_c), 7] int<lower=0> thetablkse_c;
+  int<lower=0> len_w8_c;
+  array[Ng] int<lower=0> wg8_c;
+  array[Ng] vector[len_w8_c] w8_c;
+  array[Ng, len_w8_c] int<lower=1> v8_c;
+  array[Ng, p_c + 1] int<lower=1> u8_c;
+  array[sum(wg8_c), 3] int<lower=0> w8skel_c;
+  array[Ng, p_c] int<lower=1> thetaorder_c;
+  array[Ng, p_c] int<lower=1> thetarevord_c;
   
   // same things but for Psi
   int<lower=0> len_w9_c;
@@ -908,7 +935,7 @@ data {
 
   // for blocks within Psi_r that receive lkj
   array[5] int<lower=0> psinblk_c;
-  array[5] int<lower=3> psidims_c;
+  array[5] int<lower=2> psidims_c;
   array[sum(psinblk_c), 7] int<lower=0> psiblkse_c;
   int<lower=0> len_w11_c;
   array[Ng] int<lower=0> wg11_c;
@@ -947,6 +974,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
   array[Ng] matrix[m, m] B_skeleton;
   array[Ng] matrix[p, p] Theta_skeleton;
   array[Ng] matrix[p, p] Theta_r_skeleton;
+  array[Ng] matrix[p, p] Theta_r_skeleton_f;
   array[Ng] matrix[m, m] Psi_skeleton;
   array[Ng] matrix[m, m] Psi_r_skeleton;
   array[Ng] matrix[m, m] Psi_r_skeleton_f;
@@ -960,6 +988,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
   array[Ng] matrix[m_c, m_c] B_skeleton_c;
   array[Ng] matrix[p_c, p_c] Theta_skeleton_c;
   array[Ng] matrix[p_c, p_c] Theta_r_skeleton_c;
+  array[Ng] matrix[p_c, p_c] Theta_r_skeleton_f_c;
   array[Ng] matrix[m_c, m_c] Psi_skeleton_c;
   array[Ng] matrix[m_c, m_c] Psi_r_skeleton_c;
   array[Ng] matrix[m_c, m_c] Psi_r_skeleton_f_c;
@@ -1008,6 +1037,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
     B_skeleton[g] = to_dense_matrix(m, m, w4[g], v4[g,], u4[g,]);
     Theta_skeleton[g] = to_dense_matrix(p, p, w5[g], v5[g,], u5[g,]);
     Theta_r_skeleton[g] = to_dense_matrix(p, p, w7[g], v7[g,], u7[g,]);
+    Theta_r_skeleton_f[g] = to_dense_matrix(p, p, w8[g], v8[g,], u8[g,]);
     Psi_skeleton[g] = to_dense_matrix(m, m, w9[g], v9[g,], u9[g,]);
     Psi_r_skeleton[g] = to_dense_matrix(m, m, w10[g], v10[g,], u10[g,]);
     Psi_r_skeleton_f[g] = to_dense_matrix(m, m, w11[g], v11[g,], u11[g,]);
@@ -1021,6 +1051,7 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
     B_skeleton_c[g] = to_dense_matrix(m_c, m_c, w4_c[g], v4_c[g,], u4_c[g,]);
     Theta_skeleton_c[g] = to_dense_matrix(p_c, p_c, w5_c[g], v5_c[g,], u5_c[g,]);
     Theta_r_skeleton_c[g] = to_dense_matrix(p_c, p_c, w7_c[g], v7_c[g,], u7_c[g,]);
+    Theta_r_skeleton_f_c[g] = to_dense_matrix(p_c, p_c, w8_c[g], v8_c[g,], u8_c[g,]);
     Psi_skeleton_c[g] = to_dense_matrix(m_c, m_c, w9_c[g], v9_c[g,], u9_c[g,]);
     Psi_r_skeleton_c[g] = to_dense_matrix(m_c, m_c, w10_c[g], v10_c[g,], u10_c[g,]);
     Psi_r_skeleton_f_c[g] = to_dense_matrix(m_c, m_c, w11_c[g], v11_c[g,], u11_c[g,]);
@@ -1069,6 +1100,10 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
 	if (is_inf(Theta_r_skeleton[g,j,i])) {
 	  if (w7skel[pos[7],2] == 0 || w7skel[pos[7],3] == 1) len_free[7] += 1;
 	  pos[7] += 1;
+	}
+	if (is_inf(Theta_r_skeleton_f[g,j,i])) {
+	  if (w8skel[pos[8],2] == 0 || w8skel[pos[8],3] == 1) len_free[8] += 1;
+	  pos[8] += 1;
 	}
       }
     }
@@ -1176,6 +1211,10 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
 	  if (w7skel_c[pos_c[7],2] == 0 || w7skel_c[pos_c[7],3] == 1) len_free_c[7] += 1;
 	  pos_c[7] += 1;
 	}
+	if (is_inf(Theta_r_skeleton_f_c[g,j,i])) {
+	  if (w8skel_c[pos_c[8],2] == 0 || w8skel_c[pos_c[8],3] == 1) len_free_c[8] += 1;
+	  pos_c[8] += 1;
+	}
       }
     }
 
@@ -1247,6 +1286,11 @@ parameters {
   vector[len_free[1]] Lambda_y_free;
   vector[len_free[4]] B_free;
   vector<lower=0>[len_free[5]] Theta_sd_free;
+  array[thetanblk[1]] corr_matrix[thetadims[1]] Theta_r_mat_1;
+  array[thetanblk[2]] corr_matrix[thetadims[2]] Theta_r_mat_2;
+  array[thetanblk[3]] corr_matrix[thetadims[3]] Theta_r_mat_3;
+  array[thetanblk[4]] corr_matrix[thetadims[4]] Theta_r_mat_4;
+  array[thetanblk[5]] corr_matrix[thetadims[5]] Theta_r_mat_5;  
   vector<lower=-1,upper=1>[len_free[7]] Theta_r_free; // to use beta prior
   vector<lower=0>[len_free[9]] Psi_sd_free;
   array[psinblk[1]] corr_matrix[psidims[1]] Psi_r_mat_1;
@@ -1264,6 +1308,11 @@ parameters {
   vector[len_free_c[1]] Lambda_y_free_c;
   vector[len_free_c[4]] B_free_c;
   vector<lower=0>[len_free_c[5]] Theta_sd_free_c;
+  array[thetanblk_c[1]] corr_matrix[thetadims_c[1]] Theta_r_mat_1_c;
+  array[thetanblk_c[2]] corr_matrix[thetadims_c[2]] Theta_r_mat_2_c;
+  array[thetanblk_c[3]] corr_matrix[thetadims_c[3]] Theta_r_mat_3_c;
+  array[thetanblk_c[4]] corr_matrix[thetadims_c[4]] Theta_r_mat_4_c;
+  array[thetanblk_c[5]] corr_matrix[thetadims_c[5]] Theta_r_mat_5_c;
   vector<lower=-1,upper=1>[len_free_c[7]] Theta_r_free_c; // to use beta prior
   vector<lower=0>[len_free_c[9]] Psi_sd_free_c;
   array[psinblk_c[1]] corr_matrix[psidims_c[1]] Psi_r_mat_1_c;
@@ -1375,9 +1424,19 @@ transformed parameters {
     }
   }
 
-  if (sum(psinblk) > 0) {
+  if (sum(thetanblk) > 0) {
     // we need to define a separate parameter for each dimension of correlation matrix,
-    // so we need all these Psi_r_mats    
+    // so we need all these Theta_r_mats
+    Theta_r = fill_cov(Theta_r, thetablkse, thetanblk, Theta_r_mat_1, Theta_r_mat_2, Theta_r_mat_3, Theta_r_mat_4, Theta_r_mat_5, thetaorder, thetarevord);
+  }
+
+  if (sum(thetanblk_c) > 0) {
+    // we need to define a separate parameter for each dimension of correlation matrix,
+    // so we need all these Theta_r_mats
+    Theta_r_c = fill_cov(Theta_r_c, thetablkse_c, thetanblk_c, Theta_r_mat_1_c, Theta_r_mat_2_c, Theta_r_mat_3_c, Theta_r_mat_4_c, Theta_r_mat_5_c, thetaorder_c, thetarevord_c);
+  }
+  
+  if (sum(psinblk) > 0) {
     Psi_r = fill_cov(Psi_r, psiblkse, psinblk, Psi_r_mat_1, Psi_r_mat_2, Psi_r_mat_3, Psi_r_mat_4, Psi_r_mat_5, psiorder, psirevord);
   }
 
@@ -1690,7 +1749,25 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   if (len_free[10] > 0) {
     target += beta_lpdf(.5 * (1 + Psi_r_free) | psi_r_alpha, psi_r_beta) + log(.5) * len_free[10];
   }
+  if (sum(thetanblk) > 0) {
+    for (k in 1:sum(thetanblk)) {
+      int blkidx = thetablkse[k, 6];
+      int arrayidx = thetablkse[k, 5];
 
+      if (arrayidx == 1) {
+	target += lkj_corr_lpdf(Theta_r_mat_1[blkidx] | thetablkse[k,7]);
+      } else if (arrayidx == 2) {
+	target += lkj_corr_lpdf(Theta_r_mat_2[blkidx] | thetablkse[k,7]);
+      } else if (arrayidx == 3) {
+	target += lkj_corr_lpdf(Theta_r_mat_3[blkidx] | thetablkse[k,7]);	
+      } else if (arrayidx == 4) {
+	target += lkj_corr_lpdf(Theta_r_mat_4[blkidx] | thetablkse[k,7]);
+      } else {
+	target += lkj_corr_lpdf(Theta_r_mat_5[blkidx] | thetablkse[k,7]);
+      }      
+    }
+  }
+  
   // and the same for level 2
   Theta_pri_c = Theta_sd_free_c;
   if (len_free_c[5] > 0 && theta_pow_c != 1) {
@@ -1710,7 +1787,6 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   target += gamma_lpdf(Theta_pri_c | theta_sd_shape_c, theta_sd_rate_c);
   target += gamma_lpdf(Psi_pri_c | psi_sd_shape_c, psi_sd_rate_c);
 
-  target += beta_lpdf(.5 * (1 + Theta_r_free_c) | theta_r_alpha_c, theta_r_beta_c) + log(.5) * len_free_c[7];
   if (sum(psinblk_c) > 0) {
     for (k in 1:sum(psinblk_c)) {
       int blkidx = psiblkse_c[k, 6];
@@ -1731,6 +1807,27 @@ model { // N.B.: things declared in the model block do not get saved in the outp
   } else if (len_free_c[10] > 0) {
     target += beta_lpdf(.5 * (1 + Psi_r_free_c) | psi_r_alpha_c, psi_r_beta_c) + log(.5) * len_free_c[10];
   }
+
+  if (sum(thetanblk_c) > 0) {
+    for (k in 1:sum(thetanblk_c)) {
+      int blkidx = thetablkse_c[k, 6];
+      int arrayidx = thetablkse_c[k, 5];
+
+      if (arrayidx == 1) {
+	target += lkj_corr_lpdf(Theta_r_mat_1_c[blkidx] | thetablkse_c[k,7]);
+      } else if (arrayidx == 2) {
+	target += lkj_corr_lpdf(Theta_r_mat_2_c[blkidx] | thetablkse_c[k,7]);
+      } else if (arrayidx == 3) {
+	target += lkj_corr_lpdf(Theta_r_mat_3_c[blkidx] | thetablkse_c[k,7]);	
+      } else if (arrayidx == 4) {
+	target += lkj_corr_lpdf(Theta_r_mat_4_c[blkidx] | thetablkse_c[k,7]);
+      } else {
+	target += lkj_corr_lpdf(Theta_r_mat_5_c[blkidx] | thetablkse_c[k,7]);
+      }      
+    }
+  } else if (len_free_c[7] > 0) {
+    target += beta_lpdf(.5 * (1 + Theta_r_free_c) | theta_r_alpha_c, theta_r_beta_c) + log(.5) * len_free_c[7];
+  }
 }
 generated quantities { // these matrices are saved in the output but do not figure into the likelihood
   // see p. 34 https://books.google.com/books?id=9AC-s50RjacC
@@ -1739,6 +1836,8 @@ generated quantities { // these matrices are saved in the output but do not figu
   vector[len_free[1]] ly_sign;
   vector[len_free[4]] bet_sign;
   vector[len_free[14]] al_sign;
+  array[Ng] matrix[p, p] Thetmat;
+  array[Ng] matrix[p, p] Thet;
   array[Ng] matrix[m, m] PSmat;
   array[Ng] matrix[m, m] PS;
   vector[len_free[7]] Theta_cov;
@@ -1751,6 +1850,8 @@ generated quantities { // these matrices are saved in the output but do not figu
   vector[len_free_c[1]] ly_sign_c;
   vector[len_free_c[4]] bet_sign_c;
   vector[len_free_c[14]] al_sign_c;
+  array[Ng] matrix[p_c, p_c] Thetmat_c;
+  array[Ng] matrix[p_c, p_c] Thet_c;
   array[Ng] matrix[m_c, m_c] PSmat_c;
   array[Ng] matrix[m_c, m_c] PS_c;
   vector[len_free_c[7]] Theta_cov_c;
@@ -1806,15 +1907,33 @@ generated quantities { // these matrices are saved in the output but do not figu
   }
   
   for (g in 1:Ng) {
+    matrix[p, p] Thtmp = fill_matrix(Theta_r_free, Theta_r_skeleton[g], w7skel, g_start7[g,1], g_start7[g,2]);
+    Thetmat[g] = Thtmp + transpose(Thtmp) - diag_matrix(rep_vector(1, p));
+    
     if (m > 0) {
-      PSmat[g] = fill_matrix(P_r, Psi_r_skeleton[g], w10skel, g_start10[g,1], g_start10[g,2]) + transpose(fill_matrix(P_r, Psi_r_skeleton[g], w10skel, g_start10[g,1], g_start10[g,2])) - diag_matrix(rep_vector(1, m));
+      matrix[m, m] Pstmp = fill_matrix(P_r, Psi_r_skeleton[g], w10skel, g_start10[g,1], g_start10[g,2]);
+      PSmat[g] = Pstmp + transpose(Pstmp) - diag_matrix(rep_vector(1, m));
+    }
+
+    if (p_c > 0) {
+      matrix[p_c, p_c] Thtmp_c = fill_matrix(Theta_r_free_c, Theta_r_skeleton_c[g], w7skel_c, g_start7_c[g,1], g_start7_c[g,2]);
+      Thetmat_c[g] = Thtmp_c + transpose(Thtmp_c) - diag_matrix(rep_vector(1, p_c));
     }
 
     if (m_c > 0) {
-      PSmat_c[g] = fill_matrix(P_r_c, Psi_r_skeleton_c[g], w10skel_c, g_start10_c[g,1], g_start10_c[g,2]) + transpose(fill_matrix(P_r_c, Psi_r_skeleton_c[g], w10skel_c, g_start10_c[g,1], g_start10_c[g,2])) - diag_matrix(rep_vector(1, m_c));
+      matrix[m_c, m_c] Pstmp_c = fill_matrix(P_r_c, Psi_r_skeleton_c[g], w10skel_c, g_start10_c[g,1], g_start10_c[g,2]);
+      PSmat_c[g] = Pstmp_c + transpose(Pstmp_c) - diag_matrix(rep_vector(1, m_c));
     }
   }
 
+  if (sum(thetanblk) > 0) {
+    Thetmat = fill_cov(Thetmat, thetablkse, thetanblk, Theta_r_mat_1, Theta_r_mat_2, Theta_r_mat_3, Theta_r_mat_4, Theta_r_mat_5, thetaorder, thetarevord);
+  }
+
+  if (sum(thetanblk_c) > 0) {
+    Thetmat_c = fill_cov(Thetmat_c, thetablkse_c, thetanblk_c, Theta_r_mat_1_c, Theta_r_mat_2_c, Theta_r_mat_3_c, Theta_r_mat_4_c, Theta_r_mat_5_c, thetaorder_c, thetarevord_c);
+  }
+  
   if (sum(psinblk) > 0) {
     PSmat = fill_cov(PSmat, psiblkse, psinblk, Psi_r_mat_1, Psi_r_mat_2, Psi_r_mat_3, Psi_r_mat_4, Psi_r_mat_5, psiorder, psirevord);
   }
@@ -1824,17 +1943,25 @@ generated quantities { // these matrices are saved in the output but do not figu
   }
   
   for (g in 1:Ng) {
+    Thet[g] = quad_form_sym(Thetmat[g], Theta_sd[g]);
+    Thet_c[g] = quad_form_sym(Thetmat_c[g], Theta_sd_c[g]);
     PS[g] = quad_form_sym(PSmat[g], Psi_sd[g]);
     PS_c[g] = quad_form_sym(PSmat_c[g], Psi_sd_c[g]);
   }
   
   // off-diagonal covariance parameter vectors, from cor/sd matrices:
-  Theta_cov = cor2cov(Theta_r, Theta_sd, num_elements(Theta_r_free), Theta_r_skeleton, w7skel, Ng);
+  if (p > 0  && len_free[7] > 0) {
+    /* iden is created so that we can re-use cor2cov, even though
+       we don't need to multiply to get covariances */
+    array[Ng] matrix[p, p] iden;
+    for (g in 1:Ng) {
+      iden[g] = diag_matrix(rep_vector(1, p));
+    }
+    Theta_cov = cor2cov(Thet, iden, len_free[7], Theta_r_skeleton, w7skel, Ng);
+  }
   Theta_var = Theta_sd_free .* Theta_sd_free;
 
   if (m > 0 && len_free[11] > 0) {
-    /* iden is created so that we can re-use cor2cov, even though
-       we don't need to multiply to get covariances */
     array[Ng] matrix[m, m] iden;
     for (g in 1:Ng) {
       iden[g] = diag_matrix(rep_vector(1, m));
@@ -1846,8 +1973,15 @@ generated quantities { // these matrices are saved in the output but do not figu
   Psi_var = Psi_sd_free .* Psi_sd_free;
 
   // and for level 2
-  Theta_cov_c = cor2cov(Theta_r_c, Theta_sd_c, num_elements(Theta_r_free_c), Theta_r_skeleton_c, w7skel_c, Ng);
+  if (p_c > 0 && len_free_c[7] > 0) {
+    array[Ng] matrix[p, p] iden;
+    for (g in 1:Ng) {
+      iden[g] = diag_matrix(rep_vector(1, p));
+    }
+    Theta_cov_c = cor2cov(Thet_c, iden, len_free_c[7], Theta_r_skeleton_c, w7skel_c, Ng);
+  }
   Theta_var_c = Theta_sd_free_c .* Theta_sd_free_c;
+
   if (m_c > 0 && len_free_c[11] > 0) {
     array[Ng] matrix[m_c, m_c] iden_c;
     for (g in 1:Ng) {

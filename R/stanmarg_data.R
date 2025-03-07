@@ -145,7 +145,7 @@ format_priors <- function(lavpartable, level = 1L) {
 
       if (!grepl("\\[", prisplit[[1]][3]) & !blkmats) {
         param2 <- sapply(prisplit, function(x) x[3])
-        if (any(is.na(param2)) & mat == "lvrho") {
+        if (any(is.na(param2)) & mat %in% c("rho", "lvrho")) {
           ## omit lkj here
           param1 <- param1[!is.na(param2)]
           param2 <- param2[!is.na(param2)]
@@ -211,15 +211,16 @@ check_priors <- function(lavpartable) {
   right_pris <- c(right_pris, new_pri)
   pt_pris <- sapply(lavpartable$prior[lavpartable$prior != ""], function(x) strsplit(x, "[, ()]+")[[1]][1])
   names(pt_pris) <- lavpartable$mat[lavpartable$prior != ""]
-  right_pris <- c(right_pris, lvrho = "lkj_corr")
+  right_pris <- c(right_pris, rho = "lkj_corr", lvrho = "lkj_corr")
   primatch <- match(names(pt_pris), names(right_pris))
   badpris <- rep(FALSE, length(pt_pris))
   for (i in 1:length(pt_pris)) {
     badpris[i] <- !(pt_pris[i] %in% right_pris[names(right_pris) == names(pt_pris)[i]])
   }
   badpris <- which(badpris)
-  ## lvrho entries could also receive beta priors
-  okpris <- which(names(pt_pris[badpris]) == "lvrho" & pt_pris[badpris] == "beta")
+  ## rho entries could also receive beta priors
+  okpris <- c( which(names(pt_pris[badpris]) == "lvrho" & pt_pris[badpris] == "beta"),
+               which(names(pt_pris[badpris]) == "rho" & pt_pris[badpris] == "beta"))
   if (length(okpris) > 0) badpris <- badpris[-okpris]
   
   if (length(badpris) > 0) {
@@ -238,12 +239,11 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           startrow, endrow, save_lvs = FALSE, do_test = TRUE,
                           Lambda_y_skeleton, # skeleton matrices
                           Lambda_x_skeleton, Gamma_skeleton, B_skeleton,
-                          Theta_skeleton, Theta_r_skeleton,
-                          Theta_x_skeleton, Theta_x_r_skeleton,
+                          Theta_skeleton, Theta_r_skeleton, Theta_r_skeleton_f,
                           Psi_skeleton, Psi_r_skeleton, Psi_r_skeleton_f, Phi_skeleton,
                           Phi_r_skeleton, Nu_skeleton, Alpha_skeleton, Tau_skeleton,
                           w1skel, w2skel, w3skel, # eq constraint matrices
-                          w4skel, w5skel, w6skel, w7skel, w8skel,
+                          w4skel, w5skel, w7skel, w8skel,
                           w9skel, w10skel, w11skel, w12skel, w13skel,
                           w14skel, w15skel, emiter,
                           lam_y_sign, lam_x_sign, alph_sign, # sign constraint matrices
@@ -261,9 +261,10 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           within_idx, N_within, both_idx, N_both, ov_idx1, ov_idx2, p_tilde, N_lev,
                           Lambda_y_skeleton_c = NULL, # level 2 matrices
                           B_skeleton_c = NULL, Theta_skeleton_c = NULL, Theta_r_skeleton_c = NULL,
+                          Theta_r_skeleton_f_c = NULL,
                           Psi_skeleton_c = NULL, Psi_r_skeleton_c = NULL, Psi_r_skeleton_f_c = NULL,
                           Nu_skeleton_c = NULL, Alpha_skeleton_c = NULL,
-                          w1skel_c = NULL, w4skel_c = NULL, w5skel_c = NULL, w7skel_c = NULL,
+                          w1skel_c = NULL, w4skel_c = NULL, w5skel_c = NULL, w7skel_c = NULL, w8skel_c = NULL,
                           w9skel_c = NULL, w10skel_c = NULL, w11skel_c = NULL, w13skel_c = NULL,
                           w14skel_c = NULL,
                           lam_y_sign_c = NULL, b_sign_c = NULL, alph_sign_c = NULL, psi_r_sign_c = NULL,
@@ -404,10 +405,10 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   ## level 1 matrix info
   dat <- c(dat, stanmarg_matdata(dat, Lambda_y_skeleton, Lambda_x_skeleton,
                                  Gamma_skeleton, B_skeleton, Theta_skeleton,
-                                 Theta_r_skeleton, Theta_x_skeleton, Theta_x_r_skeleton,
+                                 Theta_r_skeleton, 
                                  Psi_skeleton, Psi_r_skeleton, Phi_skeleton, Phi_r_skeleton,
                                  Nu_skeleton, Alpha_skeleton, Tau_skeleton, dumlv,
-                                 Psi_r_skeleton_f, level = 1L))
+                                 Psi_r_skeleton_f, Theta_r_skeleton_f, level = 1L))
   dat$lam_y_sign <- lam_y_sign
   dat$w1skel <- w1skel
   #dat$lam_x_sign <- lam_x_sign
@@ -416,7 +417,6 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$w4skel <- w4skel
   dat$b_sign <- b_sign
   dat$w5skel <- w5skel
-  dat$w6skel <- w6skel
   dat$w7skel <- w7skel
   dat$w8skel <- w8skel
   dat$w9skel <- w9skel
@@ -442,7 +442,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   ## level 2 matrices
   dat <- c(dat, stanmarg_matdata(dat, Lambda_y_skeleton = Lambda_y_skeleton_c,
                                  B_skeleton = B_skeleton_c, Theta_skeleton = Theta_skeleton_c,
-                                 Theta_r_skeleton = Theta_r_skeleton_c,
+                                 Theta_r_skeleton = Theta_r_skeleton_c, Theta_r_skeleton_f = Theta_r_skeleton_f_c,
                                  Psi_skeleton = Psi_skeleton_c, Psi_r_skeleton = Psi_r_skeleton_c,
                                  Psi_r_skeleton_f = Psi_r_skeleton_f_c,
                                  Nu_skeleton = Nu_skeleton_c, Alpha_skeleton = Alpha_skeleton_c,
@@ -453,6 +453,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$b_sign_c <- b_sign_c
   dat$w5skel_c <- w5skel_c
   dat$w7skel_c <- w7skel_c
+  dat$w8skel_c <- w8skel_c
   dat$w9skel_c <- w9skel_c
   dat$w10skel_c <- w10skel_c
   dat$w11skel_c <- w11skel_c
@@ -505,12 +506,11 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
 ## create data on model matrices
 stanmarg_matdata <- function(indat, Lambda_y_skeleton, Lambda_x_skeleton = NULL,
                              Gamma_skeleton = NULL, B_skeleton, Theta_skeleton,
-                             Theta_r_skeleton, Theta_x_skeleton = NULL,
-                             Theta_x_r_skeleton = NULL, Psi_skeleton,
+                             Theta_r_skeleton, Psi_skeleton,
                              Psi_r_skeleton, Phi_skeleton = NULL,
                              Phi_r_skeleton = NULL, Nu_skeleton, Alpha_skeleton,
                              Tau_skeleton = NULL, dumlv = NULL, Psi_r_skeleton_f = NULL,
-                             level = 1L) {
+                             Theta_r_skeleton_f = NULL, level = 1L) {
 
   dat <- list()
   dat$p <- dim(Lambda_y_skeleton)[2]
@@ -568,21 +568,6 @@ stanmarg_matdata <- function(indat, Lambda_y_skeleton, Lambda_x_skeleton = NULL,
   dat$w5use <- length(usethet)
   dat$usethet <- usethet
 
-  if (level == 1L) {
-    dThetx <- Theta_x_skeleton
-    for (g in 1:indat$Ng) {
-      tmpmat <- as.matrix(dThetx[g,,])
-      tmpmat[lower.tri(tmpmat)] <- tmpmat[upper.tri(tmpmat)] <- 0L
-      dThetx[g,,] <- tmpmat
-    }
-    tmpres <- group_sparse_skeleton(dThetx)
-    dat$len_w6 <- max(tmpres$g_len)
-    dat$w6 <- tmpres$w
-    dat$v6 <- tmpres$v
-    dat$u6 <- tmpres$u
-    dat$wg6 <- array(tmpres$g_len, length(tmpres$g_len))
-  }
-
   tmpres <- group_sparse_skeleton(Theta_r_skeleton)
   dat$len_w7 <- max(tmpres$g_len)
   dat$w7 <- tmpres$w
@@ -590,8 +575,8 @@ stanmarg_matdata <- function(indat, Lambda_y_skeleton, Lambda_x_skeleton = NULL,
   dat$u7 <- tmpres$u
   dat$wg7 <- array(tmpres$g_len, length(tmpres$g_len))
 
-  if (level == 1L) {
-    tmpres <- group_sparse_skeleton(Theta_x_r_skeleton)
+  if (!is.null(Theta_r_skeleton_f)) {
+    tmpres <- group_sparse_skeleton(Theta_r_skeleton_f)
     dat$len_w8 <- max(tmpres$g_len)
     dat$w8 <- tmpres$w
     dat$v8 <- tmpres$v
