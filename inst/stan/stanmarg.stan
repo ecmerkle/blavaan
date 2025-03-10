@@ -1950,7 +1950,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   }
   
   // off-diagonal covariance parameter vectors, from cor/sd matrices:
-  if (p > 0  && len_free[7] > 0) {
+  if (p > 0  && len_free[8] > 0) {
     /* iden is created so that we can re-use cor2cov, even though
        we don't need to multiply to get covariances */
     array[Ng] matrix[p, p] iden;

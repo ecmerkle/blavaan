@@ -1378,7 +1378,7 @@ block_cov <- function(freemats, fr, mat, skel, Ng, dosam = FALSE) {
     if (dosam) {
       blkgrp <- rep(1:length(blkinfo), times = sapply(blkinfo, function(x) nrow(x$blkse)))
     } else {
-      blkgrp <- rep(1:length(blkinfo), times = sapply(blkinfo, function(x) sum(x$blkse[,2] - x$blkse[,1] > 1)))
+      blkgrp <- rep(1:length(blkinfo), times = sapply(blkinfo, function(x) sum(x$blkse[,2] - x$blkse[,1] > 0)))
     }
     arrayidx <- as.numeric(as.factor(blksizes))
     dupsiz <- duplicated(blksizes)
