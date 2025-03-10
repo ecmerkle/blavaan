@@ -518,9 +518,9 @@ samp_lls <- function(lavjags        = NULL,
         tmpmat[j,1:2] <- get_ll(lavmcmc[[j]][itnums[i],],
                                 lavobject, conditional = conditional, standata = standata)
       }
-      tmpmat})#, future.seed = TRUE)
+      tmpmat}, future.seed = TRUE)
 
-    llmat <- do.call("lapply", loop.args)#"future_lapply", loop.args)
+    llmat <- do.call("future_lapply", loop.args)
     llmat <- array(unlist(llmat), c(nchain, 2, nsamps)) ## logl + baseline logl
     llmat <- aperm(llmat, c(3,1,2))
   } else {
