@@ -512,15 +512,15 @@ samp_lls <- function(lavjags        = NULL,
   nchain <- length(lavmcmc)
 
   if(lavoptions$target != "stan" | conditional | lavInspect(lavobject, "categorical") | !lavInspect(lavobject, "meanstructure")) {
-    loop.args <- list(X = 1:nsamps, future.seed = TRUE, FUN = function(i){
+    loop.args <- list(X = 1:nsamps, FUN = function(i){
       tmpmat <- matrix(NA, nchain, 2)
       for(j in 1:nchain){
         tmpmat[j,1:2] <- get_ll(lavmcmc[[j]][itnums[i],],
                                 lavobject, conditional = conditional, standata = standata)
       }
-      tmpmat})
+      tmpmat})#, future.seed = TRUE)
 
-    llmat <- do.call("future_lapply", loop.args)
+    llmat <- do.call("lapply", loop.args)#"future_lapply", loop.args)
     llmat <- array(unlist(llmat), c(nchain, 2, nsamps)) ## logl + baseline logl
     llmat <- aperm(llmat, c(3,1,2))
   } else {

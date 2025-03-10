@@ -651,7 +651,7 @@ blavaan <- function(...,  # default lavaan arguments
                 if("data" %in% names(mcmcextra) & "moment_match_k_threshold" %in% names(mcmcextra$data)){
                     ## FIXME these do not cover level 2 parameters
                     moment_match_monitors <- c("Lambda_y_free", "B_free", 
-                        "Theta_sd_free", "Theta_r_free", "Psi_sd_free", 
+                        "Theta_sd_free", paste0("Theta_r_mat_", 1:5), "Theta_r_free", "Psi_sd_free", 
                         paste0("Psi_r_mat_", 1:5), "Psi_r_free", "Nu_free", "Alpha_free")
                     moment_match_monitors <- c(moment_match_monitors,
                                                paste0(moment_match_monitors, "_c"))
@@ -1047,7 +1047,7 @@ blavaan <- function(...,  # default lavaan arguments
     if(target == "stan") {
       if(covres$dobf) {
         domll <- TRUE
-      } else if((covres$diagthet | covres$fullthet) & l2s$blkpsi) {
+      } else if(l2s$blktheta & l2s$blkpsi) {
         domll <- TRUE
       } else {
         domll <- FALSE

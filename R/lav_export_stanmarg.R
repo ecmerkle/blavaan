@@ -412,7 +412,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     blkres <- block_cov(freemats, fr, mat = "theta", skel = tmpatt$matskel, Ng = dat$Ng, dosam = dosam)
     dat <- c(dat, blkres$out)
     frnoblock <- blkres$frnoblock
-    blkthet <- blkres$blkmats
+    blktheta <- blkres$blkmats
     
     frnums <- sapply(frnoblock, function(x) as.numeric(x[x != 0]))
     twsel <- lavpartable$free %in% frnums
@@ -442,7 +442,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     dat$Theta_r_skeleton_f <- res$matskel
     dat$w8skel <- res$wskel
   } else {
-    blkthet <- TRUE
+    blktheta <- TRUE
     dat$Theta_r_skeleton <- array(0, dim = c(Ng, 0, 0))
     dat$w7skel <- matrix(0, 0, 3)
     dat$Theta_r_skeleton_f <- array(0, dim = c(Ng, 0, 0))
@@ -828,7 +828,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   }
   
   return(list(dat = dat, free2 = free2, lavpartable = lavpartable,
-              init = ini, dumlv = dumlv, wigpris = wigpris, blkpsi = blkpsi))
+              init = ini, dumlv = dumlv, wigpris = wigpris, blkpsi = blkpsi, blktheta = blktheta))
 }
 
 
@@ -858,8 +858,7 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
   ## lavaan pars to stan par vectors
   mapping <- c(ly_sign = "lambda", g_sign = "gamma",
                bet_sign = "beta", Theta_cov = "theta",
-               Theta_var = "theta", Theta_x_cov = "cov.x",
-               Theta_x_var = "cov.x", Psi_cov = "psi",
+               Theta_var = "theta", Psi_cov = "psi",
                Psi_var = "psi", Nu_free = "nu", ## includes mean.x!
                al_sign = "alpha", Tau_free = "tau")
   matmod <- ""
@@ -875,16 +874,15 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
 
   ## lavaan pars to w?skel (for equality constraints)
   mapping2 <- c("lambda", "gamma", "beta", "theta",
-                "theta", "cov.x", "cov.x", "psi",
+                "theta", "psi",
                 "psi", "nu", "alpha", "tau")
-  names(mapping2) <- as.character(c(1, 3, 4, 7, 5, 8, 6, 11, 9,
+  names(mapping2) <- as.character(c(1, 3, 4, 8, 5, 11, 9,
                                     13, 14, 15))
 
   ## stan pars to free2 pars
   mapping3 <- c(lambda = "ly_sign", gamma = "g_sign",
                 beta = "bet_sign", rtheta = "Theta_cov",
-                dtheta = "Theta_var", rtheta_x = "Theta_x_cov",
-                dtheta_x = "Theta_x_var", rpsi = "Psi_cov",
+                dtheta = "Theta_var", rpsi = "Psi_cov",
                 dpsi = "Psi_var", nu = "Nu_free",
                 alpha = "al_sign", tau = "Tau_free")
   if (level == 2L) {

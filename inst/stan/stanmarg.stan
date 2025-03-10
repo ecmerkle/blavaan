@@ -1840,7 +1840,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   array[Ng] matrix[p, p] Thet;
   array[Ng] matrix[m, m] PSmat;
   array[Ng] matrix[m, m] PS;
-  vector[len_free[7]] Theta_cov;
+  vector[len_free[8]] Theta_cov;
   vector[len_free[5]] Theta_var;
   vector[len_free[10]] P_r;
   vector[len_free[11]] Psi_cov;
@@ -1854,7 +1854,7 @@ generated quantities { // these matrices are saved in the output but do not figu
   array[Ng] matrix[p_c, p_c] Thet_c;
   array[Ng] matrix[m_c, m_c] PSmat_c;
   array[Ng] matrix[m_c, m_c] PS_c;
-  vector[len_free_c[7]] Theta_cov_c;
+  vector[len_free_c[8]] Theta_cov_c;
   vector[len_free_c[5]] Theta_var_c;
   vector[len_free_c[10]] P_r_c;
   vector[len_free_c[11]] Psi_cov_c;
@@ -1957,7 +1957,7 @@ generated quantities { // these matrices are saved in the output but do not figu
     for (g in 1:Ng) {
       iden[g] = diag_matrix(rep_vector(1, p));
     }
-    Theta_cov = cor2cov(Thet, iden, len_free[7], Theta_r_skeleton, w7skel, Ng);
+    Theta_cov = cor2cov(Thet, iden, len_free[8], Theta_r_skeleton_f, w8skel, Ng);
   }
   Theta_var = Theta_sd_free .* Theta_sd_free;
 

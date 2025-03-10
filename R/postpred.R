@@ -113,7 +113,7 @@ postpred <- function(samplls = NULL, lavobject = NULL, measure = "logl", thin = 
           fit@external$eta <- eta
           fit@external$implied <- implied
         }
-        
+
         ## Apply custom "discFUN" to observed data
         chisq.obs <- vector("list", length(discFUN))
         for (d in seq_along(discFUN)) {
@@ -280,9 +280,9 @@ postpred <- function(samplls = NULL, lavobject = NULL, measure = "logl", thin = 
 
     result <- list(ind = ind, csdist = csdist, csboots = csboots)
     result
-  }, future.seed = TRUE)
+  })#, future.seed = TRUE)
 
-  res <- do.call("future_lapply", loop.args)
+  res <- do.call("lapply", loop.args)#do.call("future_lapply", loop.args)
   
   ## extract PPP and posterior (realized & predictive) distributions
   if (length(discFUN)) {
