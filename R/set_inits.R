@@ -132,7 +132,7 @@ set_inits_stan <- function(partable, nfree, n.chains, inits,
   if("rhoidx" %in% names(freepartable)){
       rhorows <- which(!is.na(freepartable$rhoidx) &
                        freepartable$free > 0 &
-                       freepartable$mat == "rho")
+                       freepartable$mat == "rho" & !grepl("lkj", freepartable$prior))
       if(length(rhorows) > 0){
           freepartable$freeparnums[rhorows] <- 1:length(rhorows)
       }

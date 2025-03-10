@@ -422,14 +422,13 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
 
     dat$Theta_r_skeleton <- res$matskel
     dat$w7skel <- res$wskel
-
-    ptrows <- with(lavpartable, which(mat == "theta" & free > 0 & row != col))
+    ptrows <- with(lavpartable[twsel, , drop = FALSE], which(mat == "theta" & free > 0 & row != col))
     veclen <- length(ptrows)
     if (veclen > 0) {
       fpars <- res$wskel[1:veclen,1] == 0 | res$wskel[1:veclen,3] == 1
       nfree <- c(nfree, list(sum(fpars)))
       names(nfree)[length(nfree)] <- 'rho'
-      freeparnums[ptrows[fpars]] <- 1:sum(fpars)
+      freeparnums[twsel][ptrows[fpars]] <- 1:sum(fpars)
     }
 
     ## repeated for all free cov entries including blocks
@@ -777,6 +776,13 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
         for (j in 1:sum(dat$psinblk > 0)) {
           tmpmat <- array(diag(dat$psidims[j]), c(dat$psidims[j], dat$psidims[j], dat$psinblk[j]))
           ini[[i]][[paste0("Psi_r_mat_", j)]] <- aperm(tmpmat, c(3, 1, 2))
+        }
+      }
+
+      if (any(dat$thetanblk > 0)) {
+        for (j in 1:sum(dat$thetanblk > 0)) {
+          tmpmat <- array(diag(dat$thetadims[j]), c(dat$thetadims[j], dat$thetadims[j], dat$thetanblk[j]))
+          ini[[i]][[paste0("Theta_r_mat_", j)]] <- aperm(tmpmat, c(3, 1, 2))
         }
       }
       
