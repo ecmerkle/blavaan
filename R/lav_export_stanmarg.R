@@ -413,11 +413,11 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     dat <- c(dat, blkres$out)
     frnoblock <- blkres$frnoblock
     blktheta <- blkres$blkmats
-    
+
     frnums <- sapply(frnoblock, function(x) as.numeric(x[x != 0]))
     twsel <- lavpartable$free %in% frnums
     tmpwig <- lavpartable[twsel,'free'][which(lavpartable[twsel, 'plabel'] %in% wig)]
-    
+
     res <- matattr(frnoblock, es, constrain, mat = "Theta_r", Ng, opts$std.lv, tmpwig, dest = dest)
 
     dat$Theta_r_skeleton <- res$matskel
@@ -1348,7 +1348,18 @@ lav2standata <- function(lavobject, dosam = FALSE) {
 block_cov <- function(freemats, fr, mat, skel, Ng, dosam = FALSE) {
   out <- list()
 
-  blkinfo <- lapply(freemats, function(x) blkdiag(x[[mat]], attributes(x)$header))
+  cons <- attributes(freemats)$header
+  freemats <- lapply(freemats, function(x) {
+    outmat <- x[[mat]]
+    #outmat[outmat %in% cons$rhs] <- 0
+    outmat
+  })
+  fr <- lapply(fr, function(x) {
+    x[x %in% cons$rhs] <- 0
+    x
+  })
+  
+  blkinfo <- lapply(freemats, function(x) blkdiag(x, cons))
   blkmats <- all(sapply(blkinfo, function(x) x$isblk))
   blkse <- do.call("rbind", lapply(blkinfo, function(x) x$blkse))
   matorder <- do.call("rbind", lapply(blkinfo, function(x) x$neworder))
@@ -1378,7 +1389,7 @@ block_cov <- function(freemats, fr, mat, skel, Ng, dosam = FALSE) {
     if (dosam) {
       blkgrp <- rep(1:length(blkinfo), times = sapply(blkinfo, function(x) nrow(x$blkse)))
     } else {
-      blkgrp <- rep(1:length(blkinfo), times = sapply(blkinfo, function(x) sum(x$blkse[,2] - x$blkse[,1] > 0)))
+      blkgrp <- rep(1:length(blkinfo), times = sapply(blkinfo, function(x) sum((x$blkse[,2] - x$blkse[,1] > 0) & x$blkse[,3] == 1)))
     }
     arrayidx <- as.numeric(as.factor(blksizes))
     dupsiz <- duplicated(blksizes)
