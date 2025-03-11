@@ -409,7 +409,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       )
 
     tmpatt <- matattr(fr, es, constrain, mat = "Theta_r", Ng, opts$std.lv, tmpwig, dest = dest)
-    blkres <- block_cov(freemats, fr, mat = "theta", skel = tmpatt$matskel, Ng = dat$Ng, dosam = dosam)
+    blkres <- block_cov(freemats, fr, mat = "theta", skel = tmpatt$matskel, Ng = Ng, dosam = dosam)
     dat <- c(dat, blkres$out)
     frnoblock <- blkres$frnoblock
     blktheta <- blkres$blkmats
@@ -507,7 +507,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       )
 
     tmpatt <- matattr(fr, es, constrain, mat = "Psi_r", Ng, opts$std.lv, tmpwig, dest = dest)
-    blkres <- block_cov(freemats, fr, mat = "psi", skel = tmpatt$matskel, Ng = dat$Ng, dosam = dosam)
+    blkres <- block_cov(freemats, fr, mat = "psi", skel = tmpatt$matskel, Ng = Ng, dosam = dosam)
     dat <- c(dat, blkres$out)
     frnoblock <- blkres$frnoblock
     blkpsi <- blkres$blkmats

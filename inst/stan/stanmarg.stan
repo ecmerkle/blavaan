@@ -771,7 +771,6 @@ data {
   array[sum(wg8), 3] int<lower=0> w8skel;
   array[Ng, p] int<lower=1> thetaorder;
   array[Ng, p] int<lower=1> thetarevord;
-
   
   // same things but for Psi
   int<lower=0> len_w9;
@@ -1290,7 +1289,7 @@ parameters {
   array[thetanblk[2]] corr_matrix[thetadims[2]] Theta_r_mat_2;
   array[thetanblk[3]] corr_matrix[thetadims[3]] Theta_r_mat_3;
   array[thetanblk[4]] corr_matrix[thetadims[4]] Theta_r_mat_4;
-  array[thetanblk[5]] corr_matrix[thetadims[5]] Theta_r_mat_5;  
+  array[thetanblk[5]] corr_matrix[thetadims[5]] Theta_r_mat_5;
   vector<lower=-1,upper=1>[len_free[7]] Theta_r_free; // to use beta prior
   vector<lower=0>[len_free[9]] Psi_sd_free;
   array[psinblk[1]] corr_matrix[psidims[1]] Psi_r_mat_1;
