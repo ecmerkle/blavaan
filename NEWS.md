@@ -1,9 +1,11 @@
-# Version 0.5-7
+# Version 0.5-8
 ## New features
 * This release contains minor improvements and bug fixes.
 
 ## Bugs/glitches:
 * Models with the <~ operator fail under target = "jags" (reported by Thomas Riecke).
+
+* Ordinal models with missing data and only one missing data pattern fail (reported by Curtis Atkisson).
 
 # Version 0.5-6
 ## New features

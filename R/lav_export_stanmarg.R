@@ -1289,14 +1289,15 @@ lav2standata <- function(lavobject, dosam = FALSE) {
     dat$cov_b <- array(0, c(Ng, 0, 0))
     dat$gs <- array(1, Ng)
   } # multilevel
-  
+
   if (ord) {
     pta <- lav_partable_attributes(parTable(lavobject))
     ordidx <- pta$vidx$ov.ord[[1]]
     dat$YXo <- dat$YX[, ordidx, drop=FALSE]
     if (misflag) {
       dat$Noent <- sum(dat$YXo > 0)
-      dat$Nordobs <- do.call("c", lapply(Mp, function(x) rowSums(x$pat[, ordidx, drop = FALSE])))
+      Nordobs <- do.call("c", lapply(Mp, function(x) rowSums(x$pat[, ordidx, drop = FALSE])))
+      dat$Nordobs <- array(Nordobs, length(Nordobs))
       OrdObsvar <- do.call("c", lapply(Mp, function(x) apply(x$pat[, ordidx, drop = FALSE], 1, which, simplify = FALSE)))
 
       dat$OrdObsvar <- matrix(0, dat$Np, ncol(dat$YXo))
