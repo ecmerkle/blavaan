@@ -664,6 +664,22 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     }
   }
 
+  ## 16. For SAM, blocks of lambda lambda' + theta
+  if (dosam && level == 1L) {
+    measblk <- lapply(freemats, function(x) with(x, blkdiag(lambda %*% t(lambda) + theta)))
+
+    measnblk <- sapply(measblk, function(x) x$nblks)
+    dat$measnblk <- array(measnblk, dim = length(measnblk))
+    measblkse <- lapply(measblk, function(x) x$blkse)
+    measblkse <- do.call("rbind", measblkse)
+    dat$measblkse <- measblkse
+    measneworder <- sapply(measblk, function(x) x$neworder)
+    dat$measorder <- t(measneworder)
+    measrevorder <- sapply(measblk, function(x) x$revorder)
+    dat$measrevord <- t(measrevorder)
+    ## TODO handle missingness patterns
+  }
+  
   ## add priors by using set_stanpars() from classic approach
   ## needs some partable mods
   lavpartable$rhoidx <- rep(0, length(lavpartable$mat))

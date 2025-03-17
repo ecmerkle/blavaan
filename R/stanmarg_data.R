@@ -273,6 +273,7 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           phi_r_sign_c = NULL, dumlv_c = NULL, wigind_c = NULL,
                           Ndum = NULL, dum_ov_idx = NULL, dum_lv_idx = NULL, # for bsam
                           Ndum_x = NULL, dum_ov_x_idx = NULL, dum_lv_x_idx = NULL,
+                          measnblk = NULL, measblkse = NULL, measorder = NULL, measrevord = NULL,
                           ngh = NULL, ghnode = NULL, ghwt = NULL,
                           ...) {
   
@@ -315,6 +316,10 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$Ndum_x <- Ndum_x
   dat$dum_ov_x_idx <- dum_ov_x_idx
   dat$dum_lv_x_idx <- dum_lv_x_idx
+  dat$measnblk <- measnblk
+  dat$measblkse <- measblkse
+  dat$measorder <- measorder
+  dat$measrevord <- measrevord
   dat$ngh <- ngh
   dat$ghnode <- ghnode
   dat$ghwt <- ghwt
