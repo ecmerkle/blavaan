@@ -409,7 +409,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       )
 
     tmpatt <- matattr(fr, es, constrain, mat = "Theta_r", Ng, opts$std.lv, tmpwig, dest = dest)
-    blkres <- block_cov(freemats, fr, mat = "theta", skel = tmpatt$matskel, Ng = Ng, dosam = dosam)
+    blkres <- block_cov(freemats, fr, mat = "theta", skel = tmpatt$matskel, Ng = Ng, dosam = FALSE)
     dat <- c(dat, blkres$out)
     frnoblock <- blkres$frnoblock
     blktheta <- blkres$blkmats
@@ -666,7 +666,12 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
 
   ## 16. For SAM, blocks of lambda lambda' + theta
   if (dosam && level == 1L) {
-    measblk <- lapply(freemats, function(x) with(x, blkdiag(lambda %*% t(lambda) + theta)))
+    measblk <- lapply(1:length(freemats), function(i) {
+      lamfr <- freemats[[i]]$lambda + estmats[[i]]$lambda
+      thfr <- freemats[[i]]$theta + estmats[[i]]$theta
+
+      blkdiag(lamfr %*% t(lamfr) + thfr, dosam = TRUE)
+      })
 
     measnblk <- sapply(measblk, function(x) x$nblks)
     dat$measnblk <- array(measnblk, dim = length(measnblk))
@@ -1376,7 +1381,7 @@ block_cov <- function(freemats, fr, mat, skel, Ng, dosam = FALSE) {
     x
   })
   
-  blkinfo <- lapply(freemats, function(x) blkdiag(x, cons))
+  blkinfo <- lapply(freemats, function(x) blkdiag(x, cons, dosam))
   blkmats <- all(sapply(blkinfo, function(x) x$isblk))
   blkse <- do.call("rbind", lapply(blkinfo, function(x) x$blkse))
   matorder <- do.call("rbind", lapply(blkinfo, function(x) x$neworder))
@@ -1404,7 +1409,7 @@ block_cov <- function(freemats, fr, mat, skel, Ng, dosam = FALSE) {
       out[[paste0(mat, "order")]] <- out[[paste0(mat, "revord")]] <- matrix(1, nrow = Ng, ncol = dim(skel)[3])
   } else {
     if (dosam) {
-      blkgrp <- rep(1:length(blkinfo), times = sapply(blkinfo, function(x) nrow(x$blkse)))
+      blkgrp <- rep(1:length(blkinfo), times = sapply(blkinfo, function(x) sum(x$blkse[,3] == 1)))
     } else {
       blkgrp <- rep(1:length(blkinfo), times = sapply(blkinfo, function(x) sum((x$blkse[,2] - x$blkse[,1] > 0) & x$blkse[,3] == 1)))
     }

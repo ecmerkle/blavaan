@@ -456,7 +456,7 @@ checkcovs <- function(lavobject){
 ## check whether model cov matrix is block diagonal
 ## uses matrices from lavInspect(, "free")
 ## eqcon is attributes(lavInspect(, "free"))$header
-blkdiag <- function(mat, eqcon = NULL) {
+blkdiag <- function(mat, eqcon = NULL, dosam = FALSE) {
   isblk <- TRUE
 
   g <- graph_from_adjacency_matrix( (mat != 0) * 1, mode = "undirected")
@@ -486,6 +486,11 @@ blkdiag <- function(mat, eqcon = NULL) {
           isblk <- FALSE
         } else {
           blkse[i, 3] <- TRUE
+        }
+      } else if (dosam) {
+        blkse[i, 3] <- TRUE
+        if (permmat[startidx, startidx] == 0) {
+          blkse[i, 3] <- FALSE
         }
       }
       startidx <- endidx + 1
