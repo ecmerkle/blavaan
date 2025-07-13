@@ -8,6 +8,8 @@ Please use the blavaan discussion group for all questions/issues related to blav
 
 Other resources are listed below:
 
+- Materials from the 2025 IMPS workshop titled *Bayesian psychometric modeling and blavaan*. <a href="https://ecmerkle.github.io/pub/merkle_imps25.pdf">pdf</a> <a href="https://ecmerkle.github.io/pub/merkle_imps25.R">R</a>
+
 - Materials from the 2024 NCME workshop titled *Bayesian latent variable modeling in education research*. <a href="https://ecmerkle.github.io/pub/merkle_ncme24.pdf">pdf</a> <a href="https://ecmerkle.github.io/pub/merkle_ncme24.R">R</a>
 
 - The <a href="http://lavaan.ugent.be/resources/index.html">lavaan resources page</a> is helpful for model specification examples; it is mostly the same specification that is used in blavaan, and the main blavaan commands just add the letter "b" to the start of the main lavaan commands.
