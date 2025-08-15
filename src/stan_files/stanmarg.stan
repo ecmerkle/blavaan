@@ -715,15 +715,15 @@ transformed parameters {
 		Tau[g, vecpos, 1] = Tau[g, (vecpos - 1), 1] + exp(Tau_un[g, vecpos, 1]);
 	      }
 
-	      Tau_free[ofreepos] = Tau[g, vecpos, 1];	      
+	      Tau_free[ofreepos] = Tau[g, vecpos, 1] / sqrt(Sigma[g, ordidx[i], ordidx[i]]);
 	      // this is used if a prior goes on Tau_free, instead of Tau_ufree:
 	      if (j > 1 && use_dirch) {
-	        tau_jacobian += Tau_un[g, vecpos, 1]; // see https://mc-stan.org/docs/2_24/reference-manual/ordered-vector.html
+	        tau_jacobian += Tau_un[g, vecpos, 1] - .5 * log(Sigma[g, ordidx[i], ordidx[i]]); // see https://mc-stan.org/docs/2_24/reference-manual/ordered-vector.html
 	      }
 	      ofreepos += 1;
 	    } else if (eq == 1) {
 	      int eqent = w15skel[opos, 2];
-	      Tau[g, vecpos, 1] = Tau_free[eqent];
+	      Tau[g, vecpos, 1] = Tau_free[eqent] * sqrt(Sigma[g, ordidx[i], ordidx[i]]); // NB unscaled proportions are equal!!
 	    }	    
 	    opos += 1;
 	  } else {
