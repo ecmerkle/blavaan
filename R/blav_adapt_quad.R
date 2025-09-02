@@ -174,9 +174,9 @@ eta_moments <- function(samps, N) {
   for (i in 1:N) {
     tmpcol <- grep(paste0("eta[", i, ","), colnames(etasamps), fixed = TRUE)
 
-    etamns[[i]] <- colMeans(etasamps[, tmpcol])
+    etamns[[i]] <- colMeans(etasamps[, tmpcol, drop = FALSE])
 
-    etacovs[[i]] <- cov(etasamps[, tmpcol])
+    etacovs[[i]] <- cov(etasamps[, tmpcol, drop = FALSE])
   }
 
   list(etamns, etacovs)
