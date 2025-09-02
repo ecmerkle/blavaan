@@ -30,7 +30,11 @@ adapted_ghq <- function(fit, ngq, samprow = NULL) {
                       casewise = TRUE, conditional = TRUE)
   }
 
-  out <- exp(out) * do.call("rbind", w.star.list)
+  if (nrow(etamncov[[2]][[1]]) == 1) {
+    out <- exp(out) * t(do.call("cbind", w.star.list))
+  } else {
+    out <- exp(out) * do.call("rbind", w.star.list)
+  }
   
   return( log( rowSums(out) ) )
 }
