@@ -15,9 +15,9 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
 
   ## for corrmats, only use lower triangle
   if (grepl("_r", mat)) {
-    matskel[upper.tri(matskel)] <- 0
     for (i in 1:Ng) {
-      free[[i]][upper.tri(free[[i]])] <- 0
+      matskel[i,,][upper.tri(matskel[i,,])] <- 0L      
+      free[[i]][upper.tri(free[[i]])] <- 0L
 
       ## fixed covs that need to be cors
       fcov <- which(est[[i]] != 0 & free[[i]] == 0, arr.ind = TRUE)
@@ -34,7 +34,7 @@ matattr <- function(free, est, constraint, mat, Ng, std.lv, wig, ...) {
   start <- 1L
   free2 <- free
   for (i in 1:Ng) {
-    tmpmat <- est[[i]]
+    tmpmat <- round(est[[i]], 10)
     tmpmat[free[[i]] != 0L] <- Inf
     matskel[i, , ] <- tmpmat
     

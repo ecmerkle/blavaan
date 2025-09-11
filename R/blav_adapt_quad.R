@@ -2,6 +2,12 @@
 adapted_ghq <- function(fit, ngq, samprow = NULL) {
   samps <- do.call("rbind", make_mcmc(fit@external$mcmcout, fit@external$stanlvs))
 
+  if (is.null(samprow)) {
+    ## compute ll at posterior mean
+    samps[1,] <- colMeans(samps)
+    samprow <- 1
+  }
+  
   lavmodel <- fill_params(samps[samprow, , drop = FALSE], fit@Model, fit@ParTable)
   GLIST <- lavmodel@GLIST
   if (any(GLIST$theta[lower.tri(GLIST$theta)] != 0L)) stop("blavaan ERROR: The quadrature method cannot be used with non-diagonal theta matrix.")
