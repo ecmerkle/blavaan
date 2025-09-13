@@ -7,6 +7,8 @@
 
 * Ordinal models with missing data and only one missing data pattern fail (reported by Curtis Atkisson).
 
+* Floating point error for some models with >2 groups and equality constraints causes an "is 0, but must be greater than or equal to 1.000000" error during Stan sampling (reported by Roy Levy).
+
 # Version 0.5-6
 ## New features
 * This release contains minor improvements and bug fixes.
