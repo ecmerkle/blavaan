@@ -64,6 +64,7 @@
 <h3 id="bugsglitches-0-5-8">Bugs/glitches:<a class="anchor" aria-label="anchor" href="#bugsglitches-0-5-8"></a></h3>
 <ul><li><p>Models with the &lt;~ operator fail under target = “jags” (reported by Thomas Riecke).</p></li>
 <li><p>Ordinal models with missing data and only one missing data pattern fail (reported by Curtis Atkisson).</p></li>
+<li><p>Floating point error for some models with &gt;2 groups and equality constraints causes an “is 0, but must be greater than or equal to 1.000000” error during Stan sampling (reported by Roy Levy).</p></li>
 </ul></div>
 </div>
     <div class="section level2">
