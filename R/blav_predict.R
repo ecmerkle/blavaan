@@ -35,7 +35,7 @@ blavPredict <- function(object, newdata = NULL, type = "lv", level = 1L) {
     if(all(unlist(lavInspect(object, "nclusters")) == 1)) stop("blavaan ERROR: level 2 was requested but this does not appear to be a 2-level model.", call. = FALSE)
     if(type %in% c("yhat", "ypred", "ymis")) stop("blavaan ERROR: option", type, "is not yet implemented for two-level models.", call. = FALSE)
   }
-  
+
   if(!is.null(newdata)) {
     if(!stantarget) stop("blavaan ERROR: newdata is currently only available for target='stan'")
     if(lavInspect(object, "categorical")) stop("blavaan ERROR: newdata is not yet available for ordinal data.")
@@ -136,14 +136,28 @@ blav_fill_newdata <- function(object, newdat, lvs = TRUE) {
   lavd <- getFromNamespace("lavData", "lavaan")
   olddata <- object@Data
   OV <- olddata@ov
+  grp <- olddata@group
+  if (length(grp) == 0L) grp <- NULL
+  clus <- olddata@cluster
+  if (length(clus) == 0L) clus <- NULL
+
   object@Data <- lavd(data = newdat,
-                      group = olddata@group,
+                      group = grp,
+                      cluster = clus,
                       ov.names = olddata@ov.names,
                       ov.names.x = olddata@ov.names.x,
-                      ordered = OV$names[ OV$type == "ordered" ],
+                      ordered = OV$name[ OV$type == "ordered" ],
                       lavoptions = object@Options, allow.single.case = TRUE)
-  object@SampleStats@ntotal <- NROW(newdat)
 
+  ## hacks for things that lavd missed
+  object@Data@Lp[[1]]$ov.idx <- olddata@Lp[[1]]$ov.idx
+  object@Data@Lp[[1]]$between.idx <- olddata@Lp[[1]]$between.idx
+  object@Data@Lp[[1]]$within.idx <- olddata@Lp[[1]]$within.idx
+  object@Data@Lp[[1]]$both.idx <- olddata@Lp[[1]]$both.idx
+  if (length(clus) > 0L) object@Data@nlevels <- 2L
+
+  object@SampleStats <- lav_samplestats_from_data(object@Data, object@Options)
+  
   ## Stan-formatted newdata
   l2s <- lav2stanmarg(object, dp = blavInspect(object, 'options')$dp,
                       n.chains = blavInspect(object, 'nchains'), inits = "simple")
