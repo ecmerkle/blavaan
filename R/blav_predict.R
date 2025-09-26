@@ -150,10 +150,10 @@ blav_fill_newdata <- function(object, newdat, lvs = TRUE) {
                       lavoptions = object@Options, allow.single.case = TRUE)
 
   ## hacks for things that lavd missed
-  object@Data@Lp[[1]]$ov.idx <- olddata@Lp[[1]]$ov.idx
-  object@Data@Lp[[1]]$between.idx <- olddata@Lp[[1]]$between.idx
-  object@Data@Lp[[1]]$within.idx <- olddata@Lp[[1]]$within.idx
-  object@Data@Lp[[1]]$both.idx <- olddata@Lp[[1]]$both.idx
+  if ("ov.idx" %in% names(olddata@Lp[[1]])) object@Data@Lp[[1]]$ov.idx <- olddata@Lp[[1]]$ov.idx
+  if ("between.idx" %in% names(olddata@Lp[[1]]))  object@Data@Lp[[1]]$between.idx <- olddata@Lp[[1]]$between.idx
+  if ("within.idx" %in% names(olddata@Lp[[1]]))  object@Data@Lp[[1]]$within.idx <- olddata@Lp[[1]]$within.idx
+  if ("both.idx" %in% names(olddata@Lp[[1]]))  object@Data@Lp[[1]]$both.idx <- olddata@Lp[[1]]$both.idx
   if (length(clus) > 0L) object@Data@nlevels <- 2L
 
   object@SampleStats <- lav_samplestats_from_data(object@Data, object@Options)
