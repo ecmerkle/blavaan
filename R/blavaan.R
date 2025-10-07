@@ -654,7 +654,7 @@ blavaan <- function(...,  # default lavaan arguments
                         paste0("Psi_r_mat_", 1:5), "Psi_r_free", "Nu_free", "Alpha_free")
                     moment_match_monitors <- c(moment_match_monitors,
                                                paste0(moment_match_monitors, "_c"))
-                    moment_match_monitors <- c(moment_match_monitors, "Tau_ufree", 
+                    moment_match_monitors <- c(moment_match_monitors, "Tau_ufree", "sd0",
                                                "z_aug", "ly_sign", "bet_sign", "al_sign", "Theta_cov",
                                                "Theta_var", "Psi_cov", "Psi_var", "Tau_free",
                                                "log_lik", "log_lik_sat", "ppp")
