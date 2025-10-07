@@ -57,7 +57,6 @@ blavaan <- function(...,  # default lavaan arguments
 
     # multilevel functionality
     if("cluster" %in% dotNames) {
-        cat("blavaan NOTE: two-level models are new, please report bugs!\nhttps://github.com/ecmerkle/blavaan/issues\n\n")
         if(!(target == "stan")) stop("blavaan ERROR: two-level functionality is not available for ", target, ".")
     }
   

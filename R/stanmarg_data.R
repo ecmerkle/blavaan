@@ -42,7 +42,8 @@ group_sparse_skeleton <- function(skeleton) {
     tmpv <- c(tmpv, list(parts$v))
   }
 
-  vdat <- wdat <- matrix(0, Ng, max(g_len))
+  vdat <- matrix(1, Ng, max(g_len))
+  wdat <- matrix(0, Ng, max(g_len))
   udat <- matrix(0, Ng, max(u_len))
 
   for (g in 1:Ng) {
