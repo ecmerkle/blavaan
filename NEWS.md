@@ -1,3 +1,10 @@
+# Version 0.5-9
+## New features
+* This release contains bug fixes and internal improvements to how model covariance matrices are handled.
+
+## Bugs/glitches:
+* For some ordinal models with no latent variables, information criteria are incorrect (inflated effective number of parameters).
+
 # Version 0.5-8
 ## New features
 * This release contains minor improvements and bug fixes.
