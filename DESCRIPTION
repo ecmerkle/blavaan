@@ -1,6 +1,6 @@
 Package: blavaan
 Title: Bayesian Latent Variable Analysis
-Version: 0.5-9.1369
+Version: 0.5-9.1370
 Authors@R: c(person(given = "Edgar", family = "Merkle",
                     role = c("aut", "cre"),
                     email = "merklee@missouri.edu",
@@ -39,7 +39,6 @@ Imports: stats, utils, graphics, lavaan(>= 0.6-18), coda, mnormt, nonnest2(>= 0.
 LinkingTo: StanHeaders (>= 2.26.0), rstan (>= 2.26.0), BH (>= 1.69.0), Rcpp (>= 0.12.15), RcppEigen (>= 0.3.3.4.0), RcppParallel (>= 5.0.1)
 Suggests: runjags(>= 2.0.4-3), modeest(>= 2.3.3), rjags, cmdstanr, semTools, blavsam, tinytest
 SystemRequirements: GNU make
-NeedsCompilation: yes
 URL: https://ecmerkle.github.io/blavaan/, https://github.com/ecmerkle/blavaan
 BugReports: https://github.com/ecmerkle/blavaan/issues
 Additional_repositories: https://ecmerkle.github.io/drat
