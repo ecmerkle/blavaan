@@ -5,6 +5,9 @@ x2 <- rnorm(100)
 y1 <- 0.5 + 2*x1 + rnorm(100)
 Data <- data.frame(y1 = y1, x1 = x1, x2 = x2)
 
+## check that jags is installed
+hasjags <- !all(Sys.which(c("jags", "jags-terminal")) == "")
+
 model <- ' y1 ~ x1 '
 
 ## auto convergence in stan
@@ -27,10 +30,12 @@ expect_error(bsem(model2, data=Data, fixed.x=TRUE))
 
 model2 <- ' y1 ~ b1*x1 + b2*x2
             b1 == -b2/2 '
-fit <- bsem(model2, data=Data, target='jags', adapt=1,
-            burnin=1, sample=3)
-## ensure that == constraints are being respected
-expect_true(round(2*fit@Fit@x[1] + fit@Fit@x[2], 5) == 0L)
+if (hasjags) {
+  fit <- bsem(model2, data=Data, target='jags', adapt=1,
+              burnin=1, sample=3)
+  ## ensure that == constraints are being respected
+  expect_true(round(2*fit@Fit@x[1] + fit@Fit@x[2], 5) == 0L)
+}
 
 ## do.fit=FALSE
 fit <- bsem(model, data=Data, fixed.x=TRUE, adapt=2,
@@ -84,7 +89,9 @@ HS.model <- ' visual  =~ x1 + x2 + x3 '
 
 expect_equal(class(bcfa(HS.model, data=HolzingerSwineford1939, target="stan", do.fit=FALSE, group="school", group.equal=c("intercepts","loadings"), wiggle=c("intercepts"), wiggle.sd=.1))[1], "blavaan")
 expect_equal(class(bcfa(HS.model, data=HolzingerSwineford1939, target="stanclassic", do.fit=FALSE, group="school", group.equal=c("intercepts","loadings"), wiggle=c("intercepts"), wiggle.sd=.1))[1], "blavaan")
-expect_equal(class(bcfa(HS.model, data=HolzingerSwineford1939, target="jags", do.fit=FALSE, group="school", group.equal=c("intercepts","loadings"), wiggle=c("intercepts"), wiggle.sd=.1))[1], "blavaan")
+if (hasjags) {
+  expect_equal(class(bcfa(HS.model, data=HolzingerSwineford1939, target="jags", do.fit=FALSE, group="school", group.equal=c("intercepts","loadings"), wiggle=c("intercepts"), wiggle.sd=.1))[1], "blavaan")
+}
 
 ## moment match mcmcextra
 set.seed(341)
