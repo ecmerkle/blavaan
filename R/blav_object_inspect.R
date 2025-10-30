@@ -84,18 +84,44 @@ blavInspect <- function(blavobject, what, ...) {
             if(add.labels) names(OUT) <- labs
             OUT
         } else if(what %in% c("mcmc", "draws", "samples", "hpd")){
-            ## add defined parameters to labels
+            ## add defined parameters to labels or, for stan, compute defined parameters
             pt <- blavobject@ParTable
-            pt$free[pt$op == ":="] <- max(pt$free, na.rm = TRUE) + 1:sum(pt$op == ":=")
-            labs <- lav_partable_labels(pt, type = "free")
-            draws <- make_mcmc(blavobject@external$mcmcout)
-            draws <- lapply(draws, function(x) mcmc(x[, idx, drop = FALSE]))
-            draws <- mcmc.list(draws)
-            if(add.labels) {
-                for (i in 1:length(draws)) {
-                    colnames(draws[[i]]) <- labs
+            if (!(blavobject@Options$target %in% c("stan", "cmdstan", "vb"))) {
+                pt$free[pt$op == ":="] <- max(pt$free, na.rm = TRUE) + 1:sum(pt$op == ":=")
+                labs <- lav_partable_labels(pt, type = "free")
+                draws <- make_mcmc(blavobject@external$mcmcout)
+                draws <- lapply(draws, function(x) mcmc(x[, idx, drop = FALSE]))
+                draws <- mcmc.list(draws)
+                if(add.labels) {
+                    for (i in 1:length(draws)) {
+                        colnames(draws[[i]]) <- labs
+                    }
                 }
+            } else {
+              labs <- lav_partable_labels(pt, type = "free")
+              draws <- make_mcmc(blavobject@external$mcmcout)
+              draws <- lapply(draws, function(x) mcmc(x[, idx, drop = FALSE]))
+              draws <- mcmc.list(draws)
+              labs <- lav_partable_labels(pt, type = "free")
+              if(add.labels) {
+                for (i in 1:length(draws)) {
+                  colnames(draws[[i]]) <- labs
+                }
+              }
+
+              ndef <- sum(pt$op == ":=")
+              if (ndef > 0) {
+                defpt <- which(pt$op == ":=")
+                for (j in 1:length(draws)) {
+                  for (i in defpt) {
+                    thisop <- pt$rhs[i]
+                    draws[[j]] <- cbind(draws[[j]], eval(parse(text = thisop), envir = as.data.frame(draws[[j]])))
+                    colnames(draws[[j]])[ncol(draws[[j]])] <- pt$lhs[i]
+                  }
+                }
+              }
             }
+                  
             if(what == "hpd"){
                 pct <- .95
                 if("level" %in% dotNames) pct <- dotdotdot$level
