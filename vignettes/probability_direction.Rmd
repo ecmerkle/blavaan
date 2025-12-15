@@ -150,7 +150,7 @@ You can use this as the argument ```alpha``` argument in the ```hypothesis``` fu
 
 Although this allows testing of hypotheses in a similar manner as in the frequentist null-hypothesis testing framework, we strongly argue against using arbitrary cutoffs (e.g., p < .05) to determine the 'existence' of an effect.
 
-ROPE is sensitive to scale, so be aware that the value of interest is representative in the respective scale. For this, standardize parameters are useful to have in a commonly used scale
+ROPE is sensitive to scale, so be aware that the value of interest is representative in the respective scale. For this, standardized parameters are useful to have in a commonly used scale.
 
 ### References
 

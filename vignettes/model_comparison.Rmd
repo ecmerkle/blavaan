@@ -10,16 +10,15 @@ library(blavaan, quietly=TRUE)
 library(lavaan, quietly=TRUE)
 ```
 
+### Introduction
 
-### Introduction 
+The traditional method for model comparison in frequentist SEM (fSEM) is the $\chi^2$ (Likelihood Ratio Test) and its variations. But for BSEM, we would take the Bayesian model comparison methods, and apply them to SEM.
 
-The traditional method for model comparison in frequentist SEM (fSEM) is the $\chi^2$ (Likelihood Ratio Test) and its variations. But for BSEM, we would take the Bayesian model comparison methods, and apply them to SEM. 
-
-Specifically, we will focus on two information criteria, (1) Widely Applicable Information Criterion (WAIC), and (2) Leave-One-Out cross-validation (LOO). 
+Specifically, we will focus on two information criteria, (1) Widely Applicable Information Criterion (WAIC), and (2) Leave-One-Out cross-validation (LOO).
 
 These methods intend to evaluate the out-of-sample predictive accuracy of the models, and compare that performance. This is the ability to predict a datapoint that hasn't been used in the **training** model [@mcelreath_statistical_2020]
 
-For this example we will use the Industrialization and Political Democracy example [@bollen_structural_1989]. 
+For this example we will use the Industrialization and Political Democracy example [@bollen_structural_1989].
 
 ```{r, eval=T, include=FALSE, cache=TRUE}
 model <- '
@@ -73,53 +72,49 @@ fit1 <- bsem(model, data=PoliticalDemocracy,
 
 WAIC [@watanabeAsymptoticEquivalenceBayesa] can be seen as a fully Bayesian generalization of the Akaike Information Criteria (AIC), where we have a measure of uncertainty/information of the model prediction for each row in the data across all posterior draws. This is the Log-Pointwise-Predictive-Density (lppd). The WAIC is defined as
 
+\begin{equation}
+\text{WAIC} = -2\text{lppd} + 2\text{efp}_\text{WAIC},
+\end{equation} The first term involves the log-likelihoods of observed data (marginal over latent variables) and the second term is the effective number of parameters. The first term, $\text{lppd}$, is estimated as:
 
 \begin{equation}
-WAIC= -2lppd + 2efp_{WAIC},
-\end{equation}
-The first term involves the log-likelihoods of observed data (marginal over latent variables) and the second term is the effective number of parameters. The first term, $lppd$, is estimated as:
-
-\begin{equation}
-\widehat{lppd} = \sum^{n}_{i = 1} log \Bigg(\frac{1}{S}\sum^{S}_{S=1}f(y_{i}|\theta^{S}) \Bigg)
+\widehat{\text{lppd}} = \sum^{n}_{i = 1} \log \Bigg(\frac{1}{S}\sum^{S}_{S=1}f(y_{i}|\theta^{S}) \Bigg)
 \end{equation}
 
 where $S$ is the number of posterior draws and $f(y_{i}|\theta^{S})$ is the density of observation $i$ with respect to the parameter sampled at iteration $s$.
 
-The effective number of parameter ($efp_{WAIC}$)  is calculated as:
+The effective number of parameter ($\text{efp}_{\text{WAIC}}$) is calculated as:
 
 \begin{equation}\label{eq:efpWAIC}
-efp_{WAIC} = \sum^n_{i=1}var_{s}(logf(y_{i}|\theta))
+\text{efp}_\text{WAIC} = \sum^n_{i=1}\text{var}_{s}(\log f(y_{i}|\theta))
 \end{equation}
 
 A separate variance is estimated for each observation $i$ across the $S$ posterior draws.
 
 ### Leave-One-Out cross-validation
 
-The LOO measures the predictive density of each observation holding out one observation at the time and use the rest of the observations to update the prior. This estimation is calculated via [@vehtari_practical_2017]:
+The $\text{LOO}$ measures the predictive density of each observation holding out one observation at the time and use the rest of the observations to update the prior. This estimation is calculated via [@vehtari_practical_2017]:
 
 \begin{equation}
-    LOO = -2\sum_{i=1}^{n} log \Bigg(\frac{\sum^{S}_{s =1} w^{s}_{i}f(y_{i}|\theta^{s})}{\sum^{s}_{s=1} w^{s}_{i}}\Bigg)
+    \text{LOO} = -2\sum_{i=1}^{n} \log \Bigg(\frac{\sum^{S}_{s =1} w^{s}_{i}f(y_{i}|\theta^{s})}{\sum^{s}_{s=1} w^{s}_{i}}\Bigg)
 \end{equation}
 
-Where the $w^s_{i}$ are Pareto-smoothed sampling weights based on the relative magnitude of individual $i$ density function across the $S$ posterior samples. 
+Where the $w^s_{i}$ are Pareto-smoothed sampling weights based on the relative magnitude of individual $i$ density function across the $S$ posterior samples.
 
-The LOO effective number of parameters involves the $lppd$ term from WAIC:
+The $\text{LOO}$ effective number of parameters involves the $\text{lppd}$ term from $\text{WAIC}$:
 
 \begin{equation}
-    efp_{LOO} = lppd + LOO/2
+    \text{efp}_\text{LOO} = \text{lppd} + \text{LOO}/2
 \end{equation}
-
 
 ### Model comparison
 
-As both WAIC and LOO approximate the models' performance across posterior draws, we are able to calculate a standard error for them and for model comparisons involving  them. 
+As both WAIC and LOO approximate the models' performance across posterior draws, we are able to calculate a standard error for them and for model comparisons involving them.
 
 The model differences estimate the differences across the Expected Log-Pointwise-Predictive-Density (elpd), and the standard error of the respective difference.
 
-There are no clear cutoff rules on how to interpret and present these comparisons, and the researchers need to use their expert knowledge as part of the decision process. The best recommendation is to present the differences in elpd $\Delta elpd$, the standard error, and the ratio between them. If the ratio is at least 2 can be consider evidence of differences between the models, and a ratio of 4 would be considered stronger evidence.
+There are no clear cutoff rules on how to interpret and present these comparisons, and the researchers need to use their expert knowledge as part of the decision process. The best recommendation is to present the differences in elpd $\Delta \text{elpd}$, the standard error, and the ratio between them. If the ratio is at least $2$ can be consider evidence of differences between the models, and a ratio of $4$ would be considered stronger evidence.
 
-For the first example, we will compare the standard political democracy model, with a model where all factor regressions are fixed to 0.
-
+For the first example, we will compare the standard political democracy model, with a model where all factor regressions are fixed to $0$.
 
 ```{r, eval=T, include=FALSE, cache=TRUE}
 model <- '
@@ -169,7 +164,7 @@ fit2 <- bsem(model, data=PoliticalDemocracy,
             burnin=500, sample=1000)
 ```
 
-Once we have the 2 models, we can compare them with the ```blavCompare``` 
+Once we have the $2$ models, we can compare them with the `blavCompare`
 
 ```{r, eval=T, include=FALSE, cache=TRUE}
 bc12 <- blavCompare(fit1, fit2)
@@ -185,13 +180,13 @@ By looking into this comparison object, you can see the WAIC, LOO, estimates, an
 bc12
 ```
 
-In this case we can see that model 1 has lower LOOIC, and the ratio shows that the LOO differences is 5 SE of magnitude. This indicates that the model with the estimated regressions is better
+In this case we can see that model 1 has lower LOOIC, and the ratio shows that the LOO differences is $5$ SEs of magnitude. This indicates that the model with the estimated regressions is better
 
 ```{r, eval=T}
 abs(bc12$diff_loo[,"elpd_diff"] / bc12$diff_loo[,"se_diff"])
 ```
 
-Now, lets look at an example with a smaller difference between models, where only the smallest regression (```dem65~ind60```) is fixed to 0.
+Now, lets look at an example with a smaller difference between models, where only the smallest regression (`dem65~ind60`) is fixed to $0$.
 
 ```{r, eval=T, include=FALSE, cache=TRUE}
 model <- '
@@ -218,7 +213,6 @@ fit3 <- bsem(model, data=PoliticalDemocracy,
 bc13 <- blavCompare(fit1, fit3)
 ```
 
-
 ```{r, eval=F}
 model <- '
   # latent variable definitions
@@ -244,7 +238,7 @@ fit3 <- bsem(model, data=PoliticalDemocracy,
 bc13 <- blavCompare(fit1, fit3)
 ```
 
-When we see the LOOIC, we see that the difference between the two models is minimal, and the ratio is 0.21. This indicates that the models are functionally equivalent. In a case like this, it is up to the researchers to decide which model is a **better** representation, and theoretically stronger.
+When we see the LOOIC, we see that the difference between the two models is minimal, and the ratio is $0.21$. This indicates that the models are functionally equivalent. In a case like this, it is up to the researchers to decide which model is a **better** representation, and theoretically stronger.
 
 ```{r}
 bc13
@@ -252,8 +246,7 @@ bc13
 abs(bc13$diff_loo[,"elpd_diff"] / bc13$diff_loo[,"se_diff"])
 ```
 
-Lets do one last model, where only the largest regression (```dem65~dem60```) is fixed to 0.
-
+Lets do one last model, where only the largest regression (`dem65~dem60`) is fixed to $0$.
 
 ```{r, eval=T, include=FALSE, cache=TRUE}
 model <- '
@@ -305,28 +298,21 @@ fit4 <- bsem(model, data=PoliticalDemocracy,
 bc14 <- blavCompare(fit1, fit4)
 ```
 
-In this case, by looking at the LOOIC, we see that model one is better (lower value), and the ratio of the difference shows that the model is 5 SE in magnitude. Indicating that there is evidence of model predictive differences
+In this case, by looking at the LOOIC, we see that model one is better (lower value), and the ratio of the difference shows that the model is $5$ SEs in magnitude. Indicating that there is evidence of model predictive differences
 
 ```{r}
 bc14
 abs(bc14$diff_loo[,"elpd_diff"] / bc14$diff_loo[,"se_diff"])
 ```
 
-
-
-
 ### Bayes factor
 
 In the Bayesian literature you will make use of the Bayes factor (BF) to compare models. There are a number of criticisms related to the use of the BF in BSEM, including (1) the BF is unstable for large models (like most SEMs), (2) it is highly sensitive to model priors, (3) it requires strong priors to have stable estimation of it, (4) it can require large number of posterior draws, (5) the estimation using the marginal likelihood ignores a lot of information from the posterior distributions. For more details on this discussion please see @tendeiro_review_2019 and @schad_workflow_2022. These criticisms lead us to recommend against use of the BF in everyday BSEM estimation. For researchers who commit to their prior distributions and who commit to exploring the noise in their computations, the BF can used to describe the relative odds of one model over another, which is more intuitive than some other model comparison metrics.
 
-
 ### Summary
 
-We recommend the use of LOO or WAIC as general model comparison metrics for BSEM. They allow us to estimate the models' out-of-sample predictive accuracy, and the respective differences across posterior draws. They also provide us uncertainty estimates in the comparison. 
+We recommend the use of LOO or WAIC as general model comparison metrics for BSEM. They allow us to estimate the models' out-of-sample predictive accuracy, and the respective differences across posterior draws. They also provide us uncertainty estimates in the comparison.
 
-In most cases LOO and WAIC will lead to similar results, and LOO is recommended as the most stable metric [@vehtari_practical_2017]. In general, a $\Delta elpd$ of at least 2 standard errors and preferably 4 standard errors can be interpreted as evidence of differential predictive accuracy.
-
-
+In most cases LOO and WAIC will lead to similar results, and LOO is recommended as the most stable metric [@vehtari_practical_2017]. In general, a $\Delta \text{elpd}$ of at least $2$ standard errors and preferably $4$ standard errors can be interpreted as evidence of differential predictive accuracy.
 
 ### References
-
