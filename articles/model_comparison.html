@@ -135,16 +135,16 @@ fully Bayesian generalization of the Akaike Information Criteria (AIC),
 where we have a measure of uncertainty/information of the model
 prediction for each row in the data across all posterior draws. This is
 the Log-Pointwise-Predictive-Density (lppd). The WAIC is defined as</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>W</mi><mi>A</mi><mi>I</mi><mi>C</mi><mo>=</mo><mo>−</mo><mn>2</mn><mi>l</mi><mi>p</mi><mi>p</mi><mi>d</mi><mo>+</mo><mn>2</mn><mi>e</mi><mi>f</mi><msub><mi>p</mi><mrow><mi>W</mi><mi>A</mi><mi>I</mi><mi>C</mi></mrow></msub><mo>,</mo></mrow><annotation encoding="application/x-tex">\begin{equation}
-WAIC= -2lppd + 2efp_{WAIC},
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">WAIC</mtext><mo>=</mo><mo>−</mo><mn>2</mn><mtext mathvariant="normal">lppd</mtext><mo>+</mo><mn>2</mn><msub><mtext mathvariant="normal">efp</mtext><mtext mathvariant="normal">WAIC</mtext></msub><mo>,</mo></mrow><annotation encoding="application/x-tex">\begin{equation}
+\text{WAIC} = -2\text{lppd} + 2\text{efp}_\text{WAIC},
 \end{equation}</annotation></semantics></math> The first term involves
 the log-likelihoods of observed data (marginal over latent variables)
 and the second term is the effective number of parameters. The first
 term,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>l</mi><mi>p</mi><mi>p</mi><mi>d</mi></mrow><annotation encoding="application/x-tex">lppd</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="normal">lppd</mtext><annotation encoding="application/x-tex">\text{lppd}</annotation></semantics></math>,
 is estimated as:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><mrow><mi>l</mi><mi>p</mi><mi>p</mi><mi>d</mi></mrow><mo accent="true">̂</mo></mover><mo>=</mo><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mi>l</mi><mi>o</mi><mi>g</mi><mo minsize="3.0" maxsize="3.0" stretchy="false" form="prefix">(</mo><mfrac><mn>1</mn><mi>S</mi></mfrac><munderover><mo>∑</mo><mrow><mi>S</mi><mo>=</mo><mn>1</mn></mrow><mi>S</mi></munderover><mi>f</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>y</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">|</mo><msup><mi>θ</mi><mi>S</mi></msup><mo stretchy="true" form="postfix">)</mo></mrow><mo minsize="3.0" maxsize="3.0" stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\begin{equation}
-\widehat{lppd} = \sum^{n}_{i = 1} log \Bigg(\frac{1}{S}\sum^{S}_{S=1}f(y_{i}|\theta^{S}) \Bigg)
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><mtext mathvariant="normal">lppd</mtext><mo accent="true">̂</mo></mover><mo>=</mo><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mo>log</mo><mo minsize="3.0" maxsize="3.0" stretchy="false" form="prefix">(</mo><mfrac><mn>1</mn><mi>S</mi></mfrac><munderover><mo>∑</mo><mrow><mi>S</mi><mo>=</mo><mn>1</mn></mrow><mi>S</mi></munderover><mi>f</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>y</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">|</mo><msup><mi>θ</mi><mi>S</mi></msup><mo stretchy="true" form="postfix">)</mo></mrow><mo minsize="3.0" maxsize="3.0" stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\begin{equation}
+\widehat{\text{lppd}} = \sum^{n}_{i = 1} \log \Bigg(\frac{1}{S}\sum^{S}_{S=1}f(y_{i}|\theta^{S}) \Bigg)
 \end{equation}</annotation></semantics></math></p>
 <p>where
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>S</mi><annotation encoding="application/x-tex">S</annotation></semantics></math>
@@ -155,10 +155,10 @@ is the density of observation
 with respect to the parameter sampled at iteration
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math>.</p>
 <p>The effective number of parameter
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>e</mi><mi>f</mi><msub><mi>p</mi><mrow><mi>W</mi><mi>A</mi><mi>I</mi><mi>C</mi></mrow></msub></mrow><annotation encoding="application/x-tex">efp_{WAIC}</annotation></semantics></math>)
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mtext mathvariant="normal">efp</mtext><mtext mathvariant="normal">WAIC</mtext></msub><annotation encoding="application/x-tex">\text{efp}_{\text{WAIC}}</annotation></semantics></math>)
 is calculated as:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>e</mi><mi>f</mi><msub><mi>p</mi><mrow><mi>W</mi><mi>A</mi><mi>I</mi><mi>C</mi></mrow></msub><mo>=</mo><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mi>v</mi><mi>a</mi><msub><mi>r</mi><mi>s</mi></msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>l</mi><mi>o</mi><mi>g</mi><mi>f</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>y</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">|</mo><mi>θ</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\begin{equation}\label{eq:efpWAIC}
-efp_{WAIC} = \sum^n_{i=1}var_{s}(logf(y_{i}|\theta))
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext mathvariant="normal">efp</mtext><mtext mathvariant="normal">WAIC</mtext></msub><mo>=</mo><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mtext mathvariant="normal">var</mtext><mi>s</mi></msub><mrow><mo stretchy="true" form="prefix">(</mo><mo>log</mo><mi>f</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>y</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">|</mo><mi>θ</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\begin{equation}\label{eq:efpWAIC}
+\text{efp}_\text{WAIC} = \sum^n_{i=1}\text{var}_{s}(\log f(y_{i}|\theta))
 \end{equation}</annotation></semantics></math></p>
 <p>A separate variance is estimated for each observation
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>
@@ -169,11 +169,13 @@ posterior draws.</p>
 <div class="section level3">
 <h3 id="leave-one-out-cross-validation">Leave-One-Out cross-validation<a class="anchor" aria-label="anchor" href="#leave-one-out-cross-validation"></a>
 </h3>
-<p>The LOO measures the predictive density of each observation holding
-out one observation at the time and use the rest of the observations to
-update the prior. This estimation is calculated via <span class="citation">(Vehtari, Gelman, and Gabry 2017)</span>:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mi>O</mi><mi>O</mi><mo>=</mo><mo>−</mo><mn>2</mn><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mi>l</mi><mi>o</mi><mi>g</mi><mo minsize="3.0" maxsize="3.0" stretchy="false" form="prefix">(</mo><mfrac><mrow><munderover><mo>∑</mo><mrow><mi>s</mi><mo>=</mo><mn>1</mn></mrow><mi>S</mi></munderover><msubsup><mi>w</mi><mi>i</mi><mi>s</mi></msubsup><mi>f</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>y</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">|</mo><msup><mi>θ</mi><mi>s</mi></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><mrow><munderover><mo>∑</mo><mrow><mi>s</mi><mo>=</mo><mn>1</mn></mrow><mi>s</mi></munderover><msubsup><mi>w</mi><mi>i</mi><mi>s</mi></msubsup></mrow></mfrac><mo minsize="3.0" maxsize="3.0" stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\begin{equation}
-    LOO = -2\sum_{i=1}^{n} log \Bigg(\frac{\sum^{S}_{s =1} w^{s}_{i}f(y_{i}|\theta^{s})}{\sum^{s}_{s=1} w^{s}_{i}}\Bigg)
+<p>The
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="normal">LOO</mtext><annotation encoding="application/x-tex">\text{LOO}</annotation></semantics></math>
+measures the predictive density of each observation holding out one
+observation at the time and use the rest of the observations to update
+the prior. This estimation is calculated via <span class="citation">(Vehtari, Gelman, and Gabry 2017)</span>:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">LOO</mtext><mo>=</mo><mo>−</mo><mn>2</mn><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mo>log</mo><mo minsize="3.0" maxsize="3.0" stretchy="false" form="prefix">(</mo><mfrac><mrow><munderover><mo>∑</mo><mrow><mi>s</mi><mo>=</mo><mn>1</mn></mrow><mi>S</mi></munderover><msubsup><mi>w</mi><mi>i</mi><mi>s</mi></msubsup><mi>f</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>y</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">|</mo><msup><mi>θ</mi><mi>s</mi></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><mrow><munderover><mo>∑</mo><mrow><mi>s</mi><mo>=</mo><mn>1</mn></mrow><mi>s</mi></munderover><msubsup><mi>w</mi><mi>i</mi><mi>s</mi></msubsup></mrow></mfrac><mo minsize="3.0" maxsize="3.0" stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\begin{equation}
+    \text{LOO} = -2\sum_{i=1}^{n} \log \Bigg(\frac{\sum^{S}_{s =1} w^{s}_{i}f(y_{i}|\theta^{s})}{\sum^{s}_{s=1} w^{s}_{i}}\Bigg)
 \end{equation}</annotation></semantics></math></p>
 <p>Where the
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>w</mi><mi>i</mi><mi>s</mi></msubsup><annotation encoding="application/x-tex">w^s_{i}</annotation></semantics></math>
@@ -183,11 +185,14 @@ individual
 density function across the
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>S</mi><annotation encoding="application/x-tex">S</annotation></semantics></math>
 posterior samples.</p>
-<p>The LOO effective number of parameters involves the
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>l</mi><mi>p</mi><mi>p</mi><mi>d</mi></mrow><annotation encoding="application/x-tex">lppd</annotation></semantics></math>
-term from WAIC:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>e</mi><mi>f</mi><msub><mi>p</mi><mrow><mi>L</mi><mi>O</mi><mi>O</mi></mrow></msub><mo>=</mo><mi>l</mi><mi>p</mi><mi>p</mi><mi>d</mi><mo>+</mo><mi>L</mi><mi>O</mi><mi>O</mi><mi>/</mi><mn>2</mn></mrow><annotation encoding="application/x-tex">\begin{equation}
-    efp_{LOO} = lppd + LOO/2
+<p>The
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="normal">LOO</mtext><annotation encoding="application/x-tex">\text{LOO}</annotation></semantics></math>
+effective number of parameters involves the
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="normal">lppd</mtext><annotation encoding="application/x-tex">\text{lppd}</annotation></semantics></math>
+term from
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="normal">WAIC</mtext><annotation encoding="application/x-tex">\text{WAIC}</annotation></semantics></math>:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext mathvariant="normal">efp</mtext><mtext mathvariant="normal">LOO</mtext></msub><mo>=</mo><mtext mathvariant="normal">lppd</mtext><mo>+</mo><mtext mathvariant="normal">LOO</mtext><mi>/</mi><mn>2</mn></mrow><annotation encoding="application/x-tex">\begin{equation}
+    \text{efp}_\text{LOO} = \text{lppd} + \text{LOO}/2
 \end{equation}</annotation></semantics></math></p>
 </div>
 <div class="section level3">
@@ -203,13 +208,16 @@ respective difference.</p>
 comparisons, and the researchers need to use their expert knowledge as
 part of the decision process. The best recommendation is to present the
 differences in elpd
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><mi>e</mi><mi>l</mi><mi>p</mi><mi>d</mi></mrow><annotation encoding="application/x-tex">\Delta elpd</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><mtext mathvariant="normal">elpd</mtext></mrow><annotation encoding="application/x-tex">\Delta \text{elpd}</annotation></semantics></math>,
 the standard error, and the ratio between them. If the ratio is at least
-2 can be consider evidence of differences between the models, and a
-ratio of 4 would be considered stronger evidence.</p>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>2</mn><annotation encoding="application/x-tex">2</annotation></semantics></math>
+can be consider evidence of differences between the models, and a ratio
+of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>4</mn><annotation encoding="application/x-tex">4</annotation></semantics></math>
+would be considered stronger evidence.</p>
 <p>For the first example, we will compare the standard political
 democracy model, with a model where all factor regressions are fixed to
-0.</p>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>0</mn><annotation encoding="application/x-tex">0</annotation></semantics></math>.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="st">'</span></span>
 <span><span class="st">  # latent variable definitions</span></span>
@@ -232,8 +240,9 @@ democracy model, with a model where all factor regressions are fixed to
 <span><span class="va">fit2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bsem.html">bsem</a></span><span class="op">(</span><span class="va">model</span>, data<span class="op">=</span><span class="va">PoliticalDemocracy</span>,</span>
 <span>            std.lv<span class="op">=</span><span class="cn">T</span>, meanstructure<span class="op">=</span><span class="cn">T</span>, n.chains<span class="op">=</span><span class="fl">3</span>,</span>
 <span>            burnin<span class="op">=</span><span class="fl">500</span>, sample<span class="op">=</span><span class="fl">1000</span><span class="op">)</span></span></code></pre></div>
-<p>Once we have the 2 models, we can compare them with the
-<code>blavCompare</code></p>
+<p>Once we have the
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>2</mn><annotation encoding="application/x-tex">2</annotation></semantics></math>
+models, we can compare them with the <code>blavCompare</code></p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bc12</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blavCompare.html">blavCompare</a></span><span class="op">(</span><span class="va">fit1</span>, <span class="va">fit2</span><span class="op">)</span></span></code></pre></div>
 <p>By looking into this comparison object, you can see the WAIC, LOO,
@@ -312,15 +321,18 @@ the lowest value</p>
 <span><span class="co">## model1   0.0       0.0  </span></span>
 <span><span class="co">## model2 -40.7       7.9</span></span></code></pre>
 <p>In this case we can see that model 1 has lower LOOIC, and the ratio
-shows that the LOO differences is 5 SE of magnitude. This indicates that
-the model with the estimated regressions is better</p>
+shows that the LOO differences is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>5</mn><annotation encoding="application/x-tex">5</annotation></semantics></math>
+SEs of magnitude. This indicates that the model with the estimated
+regressions is better</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">bc12</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span>,<span class="st">"elpd_diff"</span><span class="op">]</span> <span class="op">/</span> <span class="va">bc12</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span>,<span class="st">"se_diff"</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##  model1  model2 </span></span>
 <span><span class="co">##     NaN 5.15663</span></span></code></pre>
 <p>Now, lets look at an example with a smaller difference between
 models, where only the smallest regression (<code>dem65~ind60</code>) is
-fixed to 0.</p>
+fixed to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>0</mn><annotation encoding="application/x-tex">0</annotation></semantics></math>.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="st">'</span></span>
 <span><span class="st">  # latent variable definitions</span></span>
@@ -345,10 +357,11 @@ fixed to 0.</p>
 <span>            burnin<span class="op">=</span><span class="fl">500</span>, sample<span class="op">=</span><span class="fl">1000</span><span class="op">)</span></span>
 <span><span class="va">bc13</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blavCompare.html">blavCompare</a></span><span class="op">(</span><span class="va">fit1</span>, <span class="va">fit3</span><span class="op">)</span></span></code></pre></div>
 <p>When we see the LOOIC, we see that the difference between the two
-models is minimal, and the ratio is 0.21. This indicates that the models
-are functionally equivalent. In a case like this, it is up to the
-researchers to decide which model is a <strong>better</strong>
-representation, and theoretically stronger.</p>
+models is minimal, and the ratio is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>0.21</mn><annotation encoding="application/x-tex">0.21</annotation></semantics></math>.
+This indicates that the models are functionally equivalent. In a case
+like this, it is up to the researchers to decide which model is a
+<strong>better</strong> representation, and theoretically stronger.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bc13</span></span></code></pre></div>
 <pre><code><span><span class="co">## $bf</span></span>
@@ -425,7 +438,8 @@ representation, and theoretically stronger.</p>
 <pre><code><span><span class="co">##     model2     model1 </span></span>
 <span><span class="co">##        NaN 0.05690067</span></span></code></pre>
 <p>Lets do one last model, where only the largest regression
-(<code>dem65~dem60</code>) is fixed to 0.</p>
+(<code>dem65~dem60</code>) is fixed to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>0</mn><annotation encoding="application/x-tex">0</annotation></semantics></math>.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="st">'</span></span>
 <span><span class="st">  # latent variable definitions</span></span>
@@ -451,8 +465,10 @@ representation, and theoretically stronger.</p>
 <span><span class="va">bc14</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blavCompare.html">blavCompare</a></span><span class="op">(</span><span class="va">fit1</span>, <span class="va">fit4</span><span class="op">)</span></span></code></pre></div>
 <p>In this case, by looking at the LOOIC, we see that model one is
 better (lower value), and the ratio of the difference shows that the
-model is 5 SE in magnitude. Indicating that there is evidence of model
-predictive differences</p>
+model is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>5</mn><annotation encoding="application/x-tex">5</annotation></semantics></math>
+SEs in magnitude. Indicating that there is evidence of model predictive
+differences</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bc14</span></span></code></pre></div>
 <pre><code><span><span class="co">## $bf</span></span>
@@ -556,9 +572,13 @@ draws. They also provide us uncertainty estimates in the comparison.</p>
 <p>In most cases LOO and WAIC will lead to similar results, and LOO is
 recommended as the most stable metric <span class="citation">(Vehtari,
 Gelman, and Gabry 2017)</span>. In general, a
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><mi>e</mi><mi>l</mi><mi>p</mi><mi>d</mi></mrow><annotation encoding="application/x-tex">\Delta elpd</annotation></semantics></math>
-of at least 2 standard errors and preferably 4 standard errors can be
-interpreted as evidence of differential predictive accuracy.</p>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><mtext mathvariant="normal">elpd</mtext></mrow><annotation encoding="application/x-tex">\Delta \text{elpd}</annotation></semantics></math>
+of at least
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>2</mn><annotation encoding="application/x-tex">2</annotation></semantics></math>
+standard errors and preferably
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>4</mn><annotation encoding="application/x-tex">4</annotation></semantics></math>
+standard errors can be interpreted as evidence of differential
+predictive accuracy.</p>
 </div>
 <div class="section level3 unnumbered">
 <h3 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
@@ -611,7 +631,7 @@ Learning Theory.”</span> <em>Journal of Machine Learning Research</em>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

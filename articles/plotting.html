@@ -108,7 +108,7 @@ argument. So, for example, a trace plot of the first four model
 parameters looks like</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span>, pars <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, plot.type <span class="op">=</span> <span class="st">"trace"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="plotting_files/figure-html/p1-1.png" width="700"></p>
+<p><img src="plotting_files/figure-html/p1-1.png" class="r-plt" width="700"></p>
 <p>Many other plot types are available, coming from the
 <em>bayesplot</em> package. In general, for <em>bayesplot</em> functions
 that begin with <code>mcmc_</code>, the corresponding
@@ -129,7 +129,7 @@ starting point for exploring <em>ggplot2</em> is <a href="https://ggplot2.tidyve
 <code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span>, pars <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, plot.type <span class="op">=</span> <span class="st">"trace"</span>, showplot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">p</span> <span class="op">+</span> <span class="fu"><a href="https://mc-stan.org/bayesplot/reference/bayesplot-helpers.html" class="external-link">facet_text</a></span><span class="op">(</span>size<span class="op">=</span><span class="fl">15</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://mc-stan.org/bayesplot/reference/bayesplot-helpers.html" class="external-link">legend_none</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="plotting_files/figure-html/p2-1.png" width="700"></p>
+<p><img src="plotting_files/figure-html/p2-1.png" class="r-plt" width="700"></p>
 <p>Alternatively, users may wish to create a plot that is entirely
 different from what is available via <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>. This can be
 facilitated by extracting the posterior samples or the Stan model, via
@@ -168,7 +168,7 @@ Bayesian Models.”</span> <a href="https://mc-stan.org/bayesplot/" class="exter
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>
