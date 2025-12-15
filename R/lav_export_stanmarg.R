@@ -1175,11 +1175,6 @@ lav2standata <- function(lavobject, dosam = FALSE) {
     dat$Np <- dat$Ng
     dat$Nobs <- array(nvar, dat$Np)
     dat$Obsvar <- matrix(1:nvar, dat$Np, nvar, byrow=TRUE)
-    if (multilevel) {
-      ptot <- length(unique(c(Lp[[1]]$ov.idx[[1]]))) #, Lp$ov.idx[[2]])))
-      dat$Obsvar <- matrix(1:ptot, dat$Np, ptot, byrow=TRUE)
-      dat$Nobs <- array(ptot, dat$Np)
-    }
     dat$Nx <- array(length(xidx), dat$Np)
     dat$Nx_between <- array(length(xidxb), dat$Np)
 
@@ -1210,6 +1205,10 @@ lav2standata <- function(lavobject, dosam = FALSE) {
   dat$grpnum <- array(dat$grpnum, length(dat$grpnum))
 
   if (multilevel) {
+    ptot <- length(unique(c(Lp[[1]]$ov.idx[[1]]))) #, Lp$ov.idx[[2]])))
+    dat$Obsvar <- matrix(1:ptot, dat$Np, ptot, byrow=TRUE)
+    dat$Nobs <- array(ptot, dat$Np)
+
     ## NB: Lp has one list entry per group
     dat$nclus <- array(t(sapply(Lp, function(x) unlist(x$nclusters))), dim = c(Ng, 2))
     ## these are in one vector to avoid ragged arrays in Stan. We need ncluster_sizes to decide
