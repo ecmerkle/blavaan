@@ -236,15 +236,15 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> Chain 1: Iteration: 180 / 200 [ 90%]  (Sampling)
 #> Chain 1: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 1: 
-#> Chain 1:  Elapsed Time: 0.363 seconds (Warm-up)
-#> Chain 1:                0.3 seconds (Sampling)
-#> Chain 1:                0.663 seconds (Total)
+#> Chain 1:  Elapsed Time: 0.394 seconds (Warm-up)
+#> Chain 1:                0.328 seconds (Sampling)
+#> Chain 1:                0.722 seconds (Total)
 #> Chain 1: 
 #> 
 #> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 2).
 #> Chain 2: 
-#> Chain 2: Gradient evaluation took 0.000215 seconds
-#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.15 seconds.
+#> Chain 2: Gradient evaluation took 0.000211 seconds
+#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.11 seconds.
 #> Chain 2: Adjust your expectations accordingly!
 #> Chain 2: 
 #> Chain 2: 
@@ -269,9 +269,9 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> Chain 2: Iteration: 180 / 200 [ 90%]  (Sampling)
 #> Chain 2: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 2: 
-#> Chain 2:  Elapsed Time: 0.354 seconds (Warm-up)
-#> Chain 2:                0.347 seconds (Sampling)
-#> Chain 2:                0.701 seconds (Total)
+#> Chain 2:  Elapsed Time: 0.39 seconds (Warm-up)
+#> Chain 2:                0.378 seconds (Sampling)
+#> Chain 2:                0.768 seconds (Total)
 #> Chain 2: 
 #> Warning: The largest R-hat is NA, indicating chains have not mixed.
 #> Running the chains for more iterations may help. See
@@ -284,7 +284,7 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> https://mc-stan.org/misc/warnings.html#tail-ess
 #> Computing post-estimation metrics (including lvs if requested)...
 summary(fit)
-#> blavaan 0.5.9.1372 ended normally after 100 iterations
+#> blavaan 0.5.9.1376 ended normally after 100 iterations
 #> 
 #>   Estimator                                      BAYES
 #>   Optimization method                             MCMC
