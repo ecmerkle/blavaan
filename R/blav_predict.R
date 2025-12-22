@@ -133,7 +133,11 @@ blavPredict <- function(object, newdata = NULL, type = "lv", level = 1L) {
 ## fill blavaan object with newdata, then sample lvs given already-sampled parameters
 blav_fill_newdata <- function(object, newdat, lvs = TRUE) {
 
-  lavd <- getFromNamespace("lavData", "lavaan")
+  if (packageDescription("lavaan")$Version > "0.6-20") {
+    lavd <- getFromNamespace("lav_lavdata", "lavaan")
+  } else {
+    lavd <- getFromNamespace("lavData", "lavaan")
+  }
   olddata <- object@Data
   OV <- olddata@ov
   grp <- olddata@group

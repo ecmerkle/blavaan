@@ -884,7 +884,11 @@ blavaan <- function(...,  # default lavaan arguments
                 if(save.lvs & target == "stan"){
                     if(lavoptions$.multilevel){
                         ## this handles dummy lvs so that we use the appropriate alpha:
-                        lav_eeta <- getFromNamespace("computeEETA", "lavaan")
+                        if (packageDescription("lavaan")$Version > "0.6-20") {
+                            lav_eeta <- getFromNamespace("lav_model_eeta", "lavaan")
+                        } else {
+                            lav_eeta <- getFromNamespace("computeEETA", "lavaan")
+                        }
                         eeta <- lav_eeta(lavmodel = lavmodel, lavsamplestats = lavsamplestats)
                         stanlvs <- samp_lvs_2lev(res, lavmodel, lavsamplestats, lavdata, parests$lavpartable, jagtrans$data, eeta)
                     } else {
