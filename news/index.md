@@ -14,6 +14,9 @@ CRAN release: 2025-10-10
 - For some ordinal models with no latent variables, information criteria
   are incorrect (inflated effective number of parameters).
 
+- For two-level datasets where rows are not ordered by cluster, latent
+  variable predictions may not be ordered as expected.
+
 ## Version 0.5-8
 
 CRAN release: 2025-01-08
