@@ -1256,12 +1256,13 @@ lav2standata <- function(lavobject, dosam = FALSE) {
           cidx[[g]] <- cidx[[g]] + max(cidx[[(g - 1)]])
         }
       }
-      cidx <- unlist(cidx)
+      cidx <- unlist(cidx) ## FIXME assumes group 2 observations come after group 1 observations
     }
     mean_d_full <- rowsum.default(as.matrix(dat$YX), cidx) / dat$cluster_size
 
     tmpYX <- split.data.frame(dat$YX, cidx)
     dat$YX <- do.call("rbind", tmpYX)
+    dat$orig_id <- unlist(split(1:nrow(dat$YX), cidx))
     dat$log_lik_x_full <- llx_2l(Lp[[1]], dat$YX, mean_d_full, cidx)
     dat$mean_d_full <- lapply(1:nrow(mean_d_full), function(i) mean_d_full[i, dat$between_idx])
 

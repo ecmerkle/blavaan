@@ -303,7 +303,7 @@ samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable,
         between.idx <- Lp$between.idx[[2]]
 
         if(length(between.idx) > 0L){
-          YX.B[, between.idx] <- stanorig$YX[!duplicated(Lp$cluster.idx[[2]]), between.idx]
+          YX.B[, between.idx] <- stanorig$YX[order(standata$orig_id),][!duplicated(Lp$cluster.idx[[2]]), between.idx] #stanorig$YX[!duplicated(Lp$cluster.idx[[2]]), between.idx]
         }
 
         ## manipulations to reuse existing lvgqs code
@@ -326,6 +326,7 @@ samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable,
 
         ## now level 1
         standata <- stanorig
+        ## the YX matrix has been ordered by cluster already:
         clusidx <- rep(1:length(standata$cluster_size), standata$cluster_size)
         standata$YX <- with(standata, YX[, between_idx[(N_between + 1):p_tilde]]) - clusmns[clusidx,]
         modmat1 <- modmats[2 * (1:standata$Ng) - 2 + 1]
@@ -346,10 +347,14 @@ samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable,
   }
 
   etasamps <- do.call(funcall, loop.args)
-
   etaout <- vector("list", 2)
+  idmap <- standata$orig_id ## to put the lvs back in their original order
   for (i in 1:2) {
-    tmpeta <- lapply(etasamps, function(x) x[[i]])
+    if (i == 1) {
+      tmpeta <- lapply(etasamps, function(x) x[[i]][, order(idmap), ])
+    } else if (i == 2) {
+      tmpeta <- lapply(etasamps, function(x) x[[i]])
+    }
     tmpN <- ifelse(i==1, standata$Ntot, sum(standata$nclus[,2]))
     tmpw9 <- ifelse(i==1, standata$w9use + standata$w9no, standata$w9use_c + standata$w9no_c)
 
