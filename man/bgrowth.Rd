@@ -6,7 +6,7 @@ Fit a Growth Curve model.}
 \usage{
 bgrowth(..., cp = "srs", dp = NULL, n.chains = 3,
 burnin, sample, adapt, mcmcfile = FALSE, mcmcextra = list(), 
-inits = "simple", convergence = "manual", target = "stan",
+inits = "simple", convergence = "manual", target = getOption("blavaan.target", "stan"),
 save.lvs = FALSE, wiggle = NULL, wiggle.sd = 0.1, prisamp = FALSE,
 jags.ic = FALSE, seed = NULL, bcontrol = list())
 }
