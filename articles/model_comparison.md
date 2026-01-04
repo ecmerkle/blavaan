@@ -226,8 +226,8 @@ that the model with the estimated regressions is better
 abs(bc12$diff_loo[,"elpd_diff"] / bc12$diff_loo[,"se_diff"])
 ```
 
-    ##  model1  model2 
-    ##     NaN 5.15663
+    ##   model1   model2 
+    ##      NaN 5.156885
 
 Now, lets look at an example with a smaller difference between models,
 where only the smallest regression (`dem65~ind60`) is fixed to $0$.
@@ -342,7 +342,7 @@ abs(bc13$diff_loo[,"elpd_diff"] / bc13$diff_loo[,"se_diff"])
 ```
 
     ##     model2     model1 
-    ##        NaN 0.05690067
+    ##        NaN 0.05527664
 
 Lets do one last model, where only the largest regression
 (`dem65~dem60`) is fixed to $0$.
@@ -456,7 +456,7 @@ abs(bc14$diff_loo[,"elpd_diff"] / bc14$diff_loo[,"se_diff"])
 ```
 
     ##   model1   model2 
-    ##      NaN 5.944526
+    ##      NaN 5.943907
 
 ### Bayes factor
 

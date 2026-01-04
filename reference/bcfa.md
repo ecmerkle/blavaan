@@ -8,9 +8,9 @@ Fit a Confirmatory Factor Analysis (CFA) model.
 bcfa(..., cp = "srs",
      dp = NULL, n.chains = 3, burnin, sample,
      adapt, mcmcfile = FALSE, mcmcextra = list(), inits = "simple",
-     convergence = "manual", target = "stan", save.lvs = FALSE,
-     wiggle = NULL, wiggle.sd = 0.1, prisamp = FALSE, jags.ic = FALSE,
-     seed = NULL, bcontrol = list())
+     convergence = "manual", target = getOption("blavaan.target", "stan"),
+     save.lvs = FALSE, wiggle = NULL, wiggle.sd = 0.1, prisamp = FALSE,
+     jags.ic = FALSE, seed = NULL, bcontrol = list())
 ```
 
 ## Arguments
@@ -210,8 +210,8 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> 
 #> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 1).
 #> Chain 1: 
-#> Chain 1: Gradient evaluation took 0.000239 seconds
-#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.39 seconds.
+#> Chain 1: Gradient evaluation took 0.000255 seconds
+#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.55 seconds.
 #> Chain 1: Adjust your expectations accordingly!
 #> Chain 1: 
 #> Chain 1: 
@@ -236,15 +236,15 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> Chain 1: Iteration: 180 / 200 [ 90%]  (Sampling)
 #> Chain 1: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 1: 
-#> Chain 1:  Elapsed Time: 0.355 seconds (Warm-up)
-#> Chain 1:                0.297 seconds (Sampling)
-#> Chain 1:                0.652 seconds (Total)
+#> Chain 1:  Elapsed Time: 0.394 seconds (Warm-up)
+#> Chain 1:                0.317 seconds (Sampling)
+#> Chain 1:                0.711 seconds (Total)
 #> Chain 1: 
 #> 
 #> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 2).
 #> Chain 2: 
-#> Chain 2: Gradient evaluation took 0.000198 seconds
-#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 1.98 seconds.
+#> Chain 2: Gradient evaluation took 0.000216 seconds
+#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.16 seconds.
 #> Chain 2: Adjust your expectations accordingly!
 #> Chain 2: 
 #> Chain 2: 
@@ -269,9 +269,9 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> Chain 2: Iteration: 180 / 200 [ 90%]  (Sampling)
 #> Chain 2: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 2: 
-#> Chain 2:  Elapsed Time: 0.349 seconds (Warm-up)
-#> Chain 2:                0.341 seconds (Sampling)
-#> Chain 2:                0.69 seconds (Total)
+#> Chain 2:  Elapsed Time: 0.376 seconds (Warm-up)
+#> Chain 2:                0.372 seconds (Sampling)
+#> Chain 2:                0.748 seconds (Total)
 #> Chain 2: 
 #> Warning: The largest R-hat is NA, indicating chains have not mixed.
 #> Running the chains for more iterations may help. See

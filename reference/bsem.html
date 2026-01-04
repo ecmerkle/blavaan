@@ -64,9 +64,9 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">bsem</span><span class="op">(</span><span class="va">...</span>, cp <span class="op">=</span> <span class="st">"srs"</span>,</span>
 <span>     dp <span class="op">=</span> <span class="cn">NULL</span>, n.chains <span class="op">=</span> <span class="fl">3</span>, <span class="va">burnin</span>, <span class="va">sample</span>,</span>
 <span>     <span class="va">adapt</span>, mcmcfile <span class="op">=</span> <span class="cn">FALSE</span>, mcmcextra <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, inits <span class="op">=</span> <span class="st">"simple"</span>,</span>
-<span>     convergence <span class="op">=</span> <span class="st">"manual"</span>, target <span class="op">=</span> <span class="st">"stan"</span>, save.lvs <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>     wiggle <span class="op">=</span> <span class="cn">NULL</span>, wiggle.sd <span class="op">=</span> <span class="fl">0.1</span>, prisamp <span class="op">=</span> <span class="cn">FALSE</span>, jags.ic <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>     seed <span class="op">=</span> <span class="cn">NULL</span>, bcontrol <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span>     convergence <span class="op">=</span> <span class="st">"manual"</span>, target <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"blavaan.target"</span>, <span class="st">"stan"</span><span class="op">)</span>,</span>
+<span>     save.lvs <span class="op">=</span> <span class="cn">FALSE</span>, wiggle <span class="op">=</span> <span class="cn">NULL</span>, wiggle.sd <span class="op">=</span> <span class="fl">0.1</span>, prisamp <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>     jags.ic <span class="op">=</span> <span class="cn">FALSE</span>, seed <span class="op">=</span> <span class="cn">NULL</span>, bcontrol <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -261,8 +261,8 @@ http://www.jstatsoft.org/v48/i02/.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 1).</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Gradient evaluation took 0.000232 seconds</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.32 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Gradient evaluation took 0.000249 seconds</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.49 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Adjust your expectations accordingly!</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: </span>
@@ -287,15 +287,15 @@ http://www.jstatsoft.org/v48/i02/.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Iteration: 180 / 200 [ 90%]  (Sampling)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Iteration: 200 / 200 [100%]  (Sampling)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:  Elapsed Time: 0.493 seconds (Warm-up)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:                0.371 seconds (Sampling)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:                0.864 seconds (Total)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:  Elapsed Time: 0.516 seconds (Warm-up)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:                0.384 seconds (Sampling)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:                0.9 seconds (Total)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 2).</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: Gradient evaluation took 0.000212 seconds</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.12 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: Gradient evaluation took 0.000226 seconds</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.26 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: Adjust your expectations accordingly!</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: </span>
@@ -320,9 +320,9 @@ http://www.jstatsoft.org/v48/i02/.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: Iteration: 180 / 200 [ 90%]  (Sampling)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: Iteration: 200 / 200 [100%]  (Sampling)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2:  Elapsed Time: 0.513 seconds (Warm-up)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2:                0.443 seconds (Sampling)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2:                0.956 seconds (Total)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2:  Elapsed Time: 0.53 seconds (Warm-up)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2:                0.46 seconds (Sampling)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2:                0.99 seconds (Total)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: </span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>The largest R-hat is 1.1, indicating chains have not mixed.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> Running the chains for more iterations may help. See</span>

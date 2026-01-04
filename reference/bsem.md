@@ -8,9 +8,9 @@ Fit a Structural Equation Model (SEM).
 bsem(..., cp = "srs",
      dp = NULL, n.chains = 3, burnin, sample,
      adapt, mcmcfile = FALSE, mcmcextra = list(), inits = "simple",
-     convergence = "manual", target = "stan", save.lvs = FALSE,
-     wiggle = NULL, wiggle.sd = 0.1, prisamp = FALSE, jags.ic = FALSE,
-     seed = NULL, bcontrol = list())
+     convergence = "manual", target = getOption("blavaan.target", "stan"),
+     save.lvs = FALSE, wiggle = NULL, wiggle.sd = 0.1, prisamp = FALSE,
+     jags.ic = FALSE, seed = NULL, bcontrol = list())
 ```
 
 ## Arguments
@@ -228,8 +228,8 @@ fit <- bsem(model, data = PoliticalDemocracy, burnin = 100, sample = 100,
 #> 
 #> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 1).
 #> Chain 1: 
-#> Chain 1: Gradient evaluation took 0.000232 seconds
-#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.32 seconds.
+#> Chain 1: Gradient evaluation took 0.000249 seconds
+#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.49 seconds.
 #> Chain 1: Adjust your expectations accordingly!
 #> Chain 1: 
 #> Chain 1: 
@@ -254,15 +254,15 @@ fit <- bsem(model, data = PoliticalDemocracy, burnin = 100, sample = 100,
 #> Chain 1: Iteration: 180 / 200 [ 90%]  (Sampling)
 #> Chain 1: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 1: 
-#> Chain 1:  Elapsed Time: 0.493 seconds (Warm-up)
-#> Chain 1:                0.371 seconds (Sampling)
-#> Chain 1:                0.864 seconds (Total)
+#> Chain 1:  Elapsed Time: 0.516 seconds (Warm-up)
+#> Chain 1:                0.384 seconds (Sampling)
+#> Chain 1:                0.9 seconds (Total)
 #> Chain 1: 
 #> 
 #> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 2).
 #> Chain 2: 
-#> Chain 2: Gradient evaluation took 0.000212 seconds
-#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.12 seconds.
+#> Chain 2: Gradient evaluation took 0.000226 seconds
+#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.26 seconds.
 #> Chain 2: Adjust your expectations accordingly!
 #> Chain 2: 
 #> Chain 2: 
@@ -287,9 +287,9 @@ fit <- bsem(model, data = PoliticalDemocracy, burnin = 100, sample = 100,
 #> Chain 2: Iteration: 180 / 200 [ 90%]  (Sampling)
 #> Chain 2: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 2: 
-#> Chain 2:  Elapsed Time: 0.513 seconds (Warm-up)
-#> Chain 2:                0.443 seconds (Sampling)
-#> Chain 2:                0.956 seconds (Total)
+#> Chain 2:  Elapsed Time: 0.53 seconds (Warm-up)
+#> Chain 2:                0.46 seconds (Sampling)
+#> Chain 2:                0.99 seconds (Total)
 #> Chain 2: 
 #> Warning: The largest R-hat is 1.1, indicating chains have not mixed.
 #> Running the chains for more iterations may help. See
