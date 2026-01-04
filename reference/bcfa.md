@@ -210,8 +210,8 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> 
 #> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 1).
 #> Chain 1: 
-#> Chain 1: Gradient evaluation took 0.000255 seconds
-#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.55 seconds.
+#> Chain 1: Gradient evaluation took 0.000238 seconds
+#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.38 seconds.
 #> Chain 1: Adjust your expectations accordingly!
 #> Chain 1: 
 #> Chain 1: 
@@ -236,15 +236,15 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> Chain 1: Iteration: 180 / 200 [ 90%]  (Sampling)
 #> Chain 1: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 1: 
-#> Chain 1:  Elapsed Time: 0.394 seconds (Warm-up)
-#> Chain 1:                0.317 seconds (Sampling)
-#> Chain 1:                0.711 seconds (Total)
+#> Chain 1:  Elapsed Time: 0.318 seconds (Warm-up)
+#> Chain 1:                0.27 seconds (Sampling)
+#> Chain 1:                0.588 seconds (Total)
 #> Chain 1: 
 #> 
 #> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 2).
 #> Chain 2: 
-#> Chain 2: Gradient evaluation took 0.000216 seconds
-#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.16 seconds.
+#> Chain 2: Gradient evaluation took 0.000219 seconds
+#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.19 seconds.
 #> Chain 2: Adjust your expectations accordingly!
 #> Chain 2: 
 #> Chain 2: 
@@ -269,9 +269,9 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> Chain 2: Iteration: 180 / 200 [ 90%]  (Sampling)
 #> Chain 2: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 2: 
-#> Chain 2:  Elapsed Time: 0.376 seconds (Warm-up)
-#> Chain 2:                0.372 seconds (Sampling)
-#> Chain 2:                0.748 seconds (Total)
+#> Chain 2:  Elapsed Time: 0.316 seconds (Warm-up)
+#> Chain 2:                0.307 seconds (Sampling)
+#> Chain 2:                0.623 seconds (Total)
 #> Chain 2: 
 #> Warning: The largest R-hat is NA, indicating chains have not mixed.
 #> Running the chains for more iterations may help. See
@@ -284,7 +284,7 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> https://mc-stan.org/misc/warnings.html#tail-ess
 #> Computing post-estimation metrics (including lvs if requested)...
 summary(fit)
-#> blavaan 0.5.9.1378 ended normally after 100 iterations
+#> blavaan 0.5.9.1382 ended normally after 100 iterations
 #> 
 #>   Estimator                                      BAYES
 #>   Optimization method                             MCMC

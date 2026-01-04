@@ -33,6 +33,9 @@
 - **Matthew Emery**. Contributor.  
   loo moment_match
 
+- **Michael S. Truong**. Contributor.  
+  blavaan.target option
+
 ## Citation
 
 Source:
