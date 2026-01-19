@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 0.5-10
+
+### New features
+
+- Ability to set options(blavaan.target = ““) so that user does not need
+  to use the target argument for each model estimation.
+
+- Bug fixes and internal improvements.
+
 ## Version 0.5-9
 
 CRAN release: 2025-10-10
@@ -16,6 +25,9 @@ CRAN release: 2025-10-10
 
 - For two-level datasets where rows are not ordered by cluster, latent
   variable predictions may not be ordered as expected.
+
+- LKJ priors on (sub-)blocks of covariance matrices only accept integer
+  parameters (reported by Julius Pfadt).
 
 ## Version 0.5-8
 

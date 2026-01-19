@@ -34,7 +34,7 @@
   loo moment_match
 
 - **Michael S. Truong**. Contributor.  
-  blavaan.target option
+  options(blavaan.target)
 
 ## Citation
 
