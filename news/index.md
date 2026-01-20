@@ -2,6 +2,8 @@
 
 ## Version 0.5-10
 
+CRAN release: 2026-01-20
+
 ### New features
 
 - Ability to set options(blavaan.target = ““) so that user does not need
