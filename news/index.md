@@ -11,6 +11,11 @@ CRAN release: 2026-01-20
 
 - Bug fixes and internal improvements.
 
+### Bugs/glitches:
+
+- plot() does not display certain level 2 parameters in two-level
+  models.
+
 ## Version 0.5-9
 
 CRAN release: 2025-10-10

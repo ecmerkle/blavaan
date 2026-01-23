@@ -39,7 +39,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/ecmerkle/blavaan/blob/v0.5-10/inst/CITATION)
+[`inst/CITATION`](https://github.com/ecmerkle/blavaan/blob/master/inst/CITATION)
 
 Merkle EC, Fitzsimmons E, Uanhoro J, Goodrich B (2021). “Efficient
 Bayesian Structural Equation Modeling in Stan.” *Journal of Statistical
