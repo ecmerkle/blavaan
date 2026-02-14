@@ -62,9 +62,9 @@ discFUN <- list(
 ```
 
 Then we will pass this function to the
-[`ppmc()`](http://ecmerkle.github.io/blavaan/reference/ppmc.md) function
-of *blavaan*. With this function, the MI and SEPC are computed for each
-posterior sample, leading to posterior distributions for each of them.
+[`ppmc()`](https://blavaan.org/reference/ppmc.md) function of *blavaan*.
+With this function, the MI and SEPC are computed for each posterior
+sample, leading to posterior distributions for each of them.
 
 ``` r
 out <- ppmc(fit, discFUN = discFUN)
@@ -169,7 +169,7 @@ fit2 <- bcfa(HS.model, data=HolzingerSwineford1939, std.lv=TRUE)
 
 And you can check if the added parameter has the expected impact on
 overall fit with the
-[`blavFitIndices()`](http://ecmerkle.github.io/blavaan/reference/blavFitIndices.md)
+[`blavFitIndices()`](https://blavaan.org/reference/blavFitIndices.md)
 and the [`summary()`](https://rdrr.io/r/base/summary.html) functions.
 
 It is important to consider also the theoretical relevance of the
@@ -184,9 +184,9 @@ in Bayesian SEM in Garnier-Villarreal and Jorgensen (2024).
 In this tutorial we show how to calculate the MI and SEPC across
 posterior distributions, and evaluate which parameters can be added.
 
-With the [`ppmc()`](http://ecmerkle.github.io/blavaan/reference/ppmc.md)
-function we are able to calculate relevant information after model
-estimation, and build posterior distributions of them.
+With the [`ppmc()`](https://blavaan.org/reference/ppmc.md) function we
+are able to calculate relevant information after model estimation, and
+build posterior distributions of them.
 
 The general recommendations are to use MI to identify the most likely
 parameter to add, and SEPC as the effect size of the new parameter

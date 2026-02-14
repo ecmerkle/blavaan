@@ -30,10 +30,9 @@ bcfa(..., cp = "srs",
 
   Default prior distributions on different types of parameters,
   typically the result of a call to
-  [`dpriors()`](http://ecmerkle.github.io/blavaan/reference/dpriors.md).
-  See the
-  [`dpriors()`](http://ecmerkle.github.io/blavaan/reference/dpriors.md)
-  help file for more information.
+  [`dpriors()`](https://blavaan.org/reference/dpriors.md). See the
+  [`dpriors()`](https://blavaan.org/reference/dpriors.md) help file for
+  more information.
 
 - n.chains:
 
@@ -156,8 +155,8 @@ bcfa(..., cp = "srs",
 ## Details
 
 The `bcfa` function is a wrapper for the more general
-[`blavaan`](http://ecmerkle.github.io/blavaan/reference/blavaan.md)
-function, using the following default
+[`blavaan`](https://blavaan.org/reference/blavaan.md) function, using
+the following default
 [`lavaan`](https://rdrr.io/pkg/lavaan/man/lavaan.html) arguments:
 `int.ov.free = TRUE`, `int.lv.free = FALSE`, `auto.fix.first = TRUE`
 (unless `std.lv = TRUE`), `auto.fix.single = TRUE`, `auto.var = TRUE`,
@@ -187,7 +186,7 @@ http://www.jstatsoft.org/v48/i02/.
 
 ## See also
 
-[`blavaan`](http://ecmerkle.github.io/blavaan/reference/blavaan.md)
+[`blavaan`](https://blavaan.org/reference/blavaan.md)
 
 ## Examples
 
@@ -210,8 +209,8 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> 
 #> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 1).
 #> Chain 1: 
-#> Chain 1: Gradient evaluation took 0.000254 seconds
-#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.54 seconds.
+#> Chain 1: Gradient evaluation took 0.000243 seconds
+#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.43 seconds.
 #> Chain 1: Adjust your expectations accordingly!
 #> Chain 1: 
 #> Chain 1: 
@@ -236,15 +235,15 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> Chain 1: Iteration: 180 / 200 [ 90%]  (Sampling)
 #> Chain 1: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 1: 
-#> Chain 1:  Elapsed Time: 0.375 seconds (Warm-up)
-#> Chain 1:                0.305 seconds (Sampling)
-#> Chain 1:                0.68 seconds (Total)
+#> Chain 1:  Elapsed Time: 0.357 seconds (Warm-up)
+#> Chain 1:                0.299 seconds (Sampling)
+#> Chain 1:                0.656 seconds (Total)
 #> Chain 1: 
 #> 
 #> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 2).
 #> Chain 2: 
-#> Chain 2: Gradient evaluation took 0.000199 seconds
-#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 1.99 seconds.
+#> Chain 2: Gradient evaluation took 0.000198 seconds
+#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 1.98 seconds.
 #> Chain 2: Adjust your expectations accordingly!
 #> Chain 2: 
 #> Chain 2: 
@@ -269,9 +268,9 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> Chain 2: Iteration: 180 / 200 [ 90%]  (Sampling)
 #> Chain 2: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 2: 
-#> Chain 2:  Elapsed Time: 0.361 seconds (Warm-up)
-#> Chain 2:                0.351 seconds (Sampling)
-#> Chain 2:                0.712 seconds (Total)
+#> Chain 2:  Elapsed Time: 0.352 seconds (Warm-up)
+#> Chain 2:                0.342 seconds (Sampling)
+#> Chain 2:                0.694 seconds (Total)
 #> Chain 2: 
 #> Warning: The largest R-hat is NA, indicating chains have not mixed.
 #> Running the chains for more iterations may help. See

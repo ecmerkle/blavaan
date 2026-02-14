@@ -17,7 +17,7 @@ sampleData(object, nrep = NULL, conditional = FALSE, type = "response",
 - object:
 
   An object of class
-  [`blavaan`](http://ecmerkle.github.io/blavaan/reference/blavaan-class.md).
+  [`blavaan`](https://blavaan.org/reference/blavaan-class.md).
 
 - nrep:
 
@@ -58,14 +58,13 @@ for posterior predictive p-value computation.
 ## See also
 
 This function overlaps with
-[`blavPredict()`](http://ecmerkle.github.io/blavaan/reference/blavPredict.md).
-The
-[`blavPredict()`](http://ecmerkle.github.io/blavaan/reference/blavPredict.md)
-function is more focused on generating pieces of data conditioned on
-other pieces of observed data (i.e., latent variables conditioned on
-observed variables; missing variables conditioned on observed
-variables). In contrast, the `sampleData()` function is more focused on
-generating new data given the sampled model parameters.
+[`blavPredict()`](https://blavaan.org/reference/blavPredict.md). The
+[`blavPredict()`](https://blavaan.org/reference/blavPredict.md) function
+is more focused on generating pieces of data conditioned on other pieces
+of observed data (i.e., latent variables conditioned on observed
+variables; missing variables conditioned on observed variables). In
+contrast, the `sampleData()` function is more focused on generating new
+data given the sampled model parameters.
 
 ## Examples
 

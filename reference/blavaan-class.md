@@ -8,11 +8,10 @@ representation, and if the model was fitted, the fitting results.
 ## Objects from the Class
 
 Objects can be created via the
-[`bcfa`](http://ecmerkle.github.io/blavaan/reference/bcfa.md),
-[`bsem`](http://ecmerkle.github.io/blavaan/reference/bsem.md),
-[`bgrowth`](http://ecmerkle.github.io/blavaan/reference/bgrowth.md) or
-[`blavaan`](http://ecmerkle.github.io/blavaan/reference/blavaan.md)
-functions.
+[`bcfa`](https://blavaan.org/reference/bcfa.md),
+[`bsem`](https://blavaan.org/reference/bsem.md),
+[`bgrowth`](https://blavaan.org/reference/bgrowth.md) or
+[`blavaan`](https://blavaan.org/reference/blavaan.md) functions.
 
 ## Slots
 
@@ -169,9 +168,9 @@ http://www.jstatsoft.org/v48/i02/.
 
 ## See also
 
-[`bcfa`](http://ecmerkle.github.io/blavaan/reference/bcfa.md),
-[`bsem`](http://ecmerkle.github.io/blavaan/reference/bsem.md),
-[`bgrowth`](http://ecmerkle.github.io/blavaan/reference/bgrowth.md)
+[`bcfa`](https://blavaan.org/reference/bcfa.md),
+[`bsem`](https://blavaan.org/reference/bsem.md),
+[`bgrowth`](https://blavaan.org/reference/bgrowth.md)
 
 ## Examples
 

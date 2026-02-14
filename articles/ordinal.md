@@ -162,8 +162,8 @@ the amount of time that it takes. If users wish to use `tmvnsim()`, they
 must declare the number of importance samples to draw. This is
 accomplished by setting `llnsamp` within the `mcmcextra$data` argument.
 For example, to draw 100 samples for the approximation, a call to
-[`bsem()`](http://ecmerkle.github.io/blavaan/reference/bsem.md) or
-similar functions would include the argument
+[`bsem()`](https://blavaan.org/reference/bsem.md) or similar functions
+would include the argument
 
 ``` r
 mcmcextra = list(data = list(llnsamp = 100))

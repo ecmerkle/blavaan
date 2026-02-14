@@ -52,8 +52,7 @@ program, either Stan or JAGS (Stan by default). We can obtain the
 $\widehat{R}$ from the
 [`summary()`](https://rdrr.io/r/base/summary.html) function, and we can
 also extract it with the
-[`blavInspect()`](http://ecmerkle.github.io/blavaan/reference/blavInspect.md)
-function
+[`blavInspect()`](https://blavaan.org/reference/blavInspect.md) function
 
 ``` r
 blavInspect(fit, "rhat")
@@ -95,14 +94,14 @@ fit <- bsem(model, data=PoliticalDemocracy,
 ```
 
 and/or change the model priors with the
-[`dpriors()`](http://ecmerkle.github.io/blavaan/reference/dpriors.md)
-function. These address issues where the model failed to converge due to
-needing more iterations or due to a model misspecification (such as bad
-priors). As a rule of thumb, we seldom see a model require more than
-1,000 burnin samples in Stan. If your model is not converging after
-1,000 burnin samples, it is likely that the default prior distributions
-clash with your data. This can happen, e.g., if your variables contain
-values in the 100s or 1000s.
+[`dpriors()`](https://blavaan.org/reference/dpriors.md) function. These
+address issues where the model failed to converge due to needing more
+iterations or due to a model misspecification (such as bad priors). As a
+rule of thumb, we seldom see a model require more than 1,000 burnin
+samples in Stan. If your model is not converging after 1,000 burnin
+samples, it is likely that the default prior distributions clash with
+your data. This can happen, e.g., if your variables contain values in
+the 100s or 1000s.
 
 ### Efficiency
 
@@ -125,8 +124,7 @@ summary(fit, neff=T)
 ```
 
 We can also extract only those with the
-[`blavInspect()`](http://ecmerkle.github.io/blavaan/reference/blavInspect.md)
-function
+[`blavInspect()`](https://blavaan.org/reference/blavInspect.md) function
 
 ``` r
 blavInspect(fit, "neff")

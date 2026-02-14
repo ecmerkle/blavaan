@@ -17,7 +17,7 @@ blavPredict(object, newdata = NULL, type = "lv", level = 1L)
 - object:
 
   An object of class
-  [`blavaan`](http://ecmerkle.github.io/blavaan/reference/blavaan-class.md).
+  [`blavaan`](https://blavaan.org/reference/blavaan-class.md).
 
 - newdata:
 
@@ -74,7 +74,7 @@ Users may also wish to generate the posterior predictive distribution of
 observed data, not conditioned on the latent variables. This would often
 be viewed as data from new clusters (people) that were not observed in
 the original dataset. For that, see
-[`sampleData()`](http://ecmerkle.github.io/blavaan/reference/sampleData.md).
+[`sampleData()`](https://blavaan.org/reference/sampleData.md).
 
 ## Examples
 

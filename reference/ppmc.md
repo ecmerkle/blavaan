@@ -39,7 +39,7 @@ pairs(x, discFUN, horInd = 1:DIM, verInd = 1:DIM,
 - object,x:
 
   An object of class
-  [`blavaan`](http://ecmerkle.github.io/blavaan/reference/blavaan-class.md).
+  [`blavaan`](https://blavaan.org/reference/blavaan-class.md).
 
 - thin:
 

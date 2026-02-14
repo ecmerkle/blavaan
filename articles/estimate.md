@@ -2,17 +2,16 @@
 
 Models are specified using *lavaan* syntax, and prior distribution
 specification has already been covered on the [previous
-page](http://ecmerkle.github.io/blavaan/articles/prior.md). The
-specified model can then be estimated via the
-[`bsem()`](http://ecmerkle.github.io/blavaan/reference/bsem.md) command,
-with other models being estimated via
-[`bcfa()`](http://ecmerkle.github.io/blavaan/reference/bcfa.md),
-[`bgrowth()`](http://ecmerkle.github.io/blavaan/reference/bgrowth.md),
-or
-[`blavaan()`](http://ecmerkle.github.io/blavaan/reference/blavaan.md).
-Regardless of the command, there are many arguments that allow you to
-tailor the model estimation to your needs. We discuss here some of the
-most popular arguments, as well as some easy-to-miss arguments.
+page](https://blavaan.org/articles/prior.md). The specified model can
+then be estimated via the
+[`bsem()`](https://blavaan.org/reference/bsem.md) command, with other
+models being estimated via
+[`bcfa()`](https://blavaan.org/reference/bcfa.md),
+[`bgrowth()`](https://blavaan.org/reference/bgrowth.md), or
+[`blavaan()`](https://blavaan.org/reference/blavaan.md). Regardless of
+the command, there are many arguments that allow you to tailor the model
+estimation to your needs. We discuss here some of the most popular
+arguments, as well as some easy-to-miss arguments.
 
 ### Primary arguments
 
@@ -41,8 +40,8 @@ latent variable sampling can take a large amount of memory, and can slow
 down some post-estimation summaries. But setting `save.lvs = TRUE`
 allows for model summaries of latent variables and observed variable
 predictions using
-[`blavPredict()`](http://ecmerkle.github.io/blavaan/reference/blavPredict.md)
-and other functions.
+[`blavPredict()`](https://blavaan.org/reference/blavPredict.md) and
+other functions.
 
 By setting `mcmcfile = TRUE`, users can obtain the Stan (JAGS) code and
 data for the specified model. These files are written to the `lavExport`

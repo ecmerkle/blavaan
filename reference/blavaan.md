@@ -30,10 +30,9 @@ blavaan(..., cp = "srs",
 
   Default prior distributions on different types of parameters,
   typically the result of a call to
-  [`dpriors()`](http://ecmerkle.github.io/blavaan/reference/dpriors.md).
-  See the
-  [`dpriors()`](http://ecmerkle.github.io/blavaan/reference/dpriors.md)
-  help file for more information.
+  [`dpriors()`](https://blavaan.org/reference/dpriors.md). See the
+  [`dpriors()`](https://blavaan.org/reference/dpriors.md) help file for
+  more information.
 
 - n.chains:
 
@@ -176,9 +175,9 @@ http://www.jstatsoft.org/v48/i02/.
 
 ## See also
 
-[`bcfa`](http://ecmerkle.github.io/blavaan/reference/bcfa.md),
-[`bsem`](http://ecmerkle.github.io/blavaan/reference/bsem.md),
-[`bgrowth`](http://ecmerkle.github.io/blavaan/reference/bgrowth.md)
+[`bcfa`](https://blavaan.org/reference/bcfa.md),
+[`bsem`](https://blavaan.org/reference/bsem.md),
+[`bgrowth`](https://blavaan.org/reference/bgrowth.md)
 
 ## Examples
 

@@ -73,9 +73,9 @@ comparing the marginal likelihood of the observed data (marginal over
 all latent variables) to the marginal likelihood of artificial data, for
 each iteration of MCMC sampling. For finer-grained model assessment, we
 encourage users to try
-[`ppmc()`](http://ecmerkle.github.io/blavaan/reference/ppmc.md). It
-allows you to compute a posterior predictive p-value using your own,
-custom model assessment (defined as an R function).
+[`ppmc()`](https://blavaan.org/reference/ppmc.md). It allows you to
+compute a posterior predictive p-value using your own, custom model
+assessment (defined as an R function).
 
 ### Concluding Thoughts
 

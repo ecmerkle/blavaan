@@ -30,7 +30,7 @@ fit <- bcfa(HS.model, data=HolzingerSwineford1939, std.lv=TRUE)
 ```
 
 You then need to pass the model to the
-[`blavFitIndices()`](http://ecmerkle.github.io/blavaan/reference/blavFitIndices.md)
+[`blavFitIndices()`](https://blavaan.org/reference/blavFitIndices.md)
 function
 
 ``` r

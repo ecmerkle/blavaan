@@ -37,7 +37,7 @@ bfit2 <- bcfa(HS.model, data = HolzingerSwineford1939, group = "school",
 
 Model fit and comparison statistics are then available via the
 [`fitMeasures()`](https://rdrr.io/pkg/lavaan/man/fitMeasures.html) and
-[`blavCompare()`](http://ecmerkle.github.io/blavaan/reference/blavCompare.md)
+[`blavCompare()`](https://blavaan.org/reference/blavCompare.md)
 functions:
 
 ``` r

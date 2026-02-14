@@ -33,11 +33,11 @@ know *lavaan*, then you should already be able to do many things in
 *blavaan*. In particular, many *blavaan* commands add the letter “b” to
 the start of the *lavaan* command. For example,
 [`sem()`](https://rdrr.io/pkg/lavaan/man/sem.html) becomes
-[`bsem()`](http://ecmerkle.github.io/blavaan/reference/bsem.md), and
+[`bsem()`](https://blavaan.org/reference/bsem.md), and
 [`lavInspect()`](https://rdrr.io/pkg/lavaan/man/lavInspect.html) becomes
-[`blavInspect()`](http://ecmerkle.github.io/blavaan/reference/blavInspect.md).
-It is also sometimes possible to use a *lavaan* command on a *blavaan*
-object, though the results may not always be what you expect.
+[`blavInspect()`](https://blavaan.org/reference/blavInspect.md). It is
+also sometimes possible to use a *lavaan* command on a *blavaan* object,
+though the results may not always be what you expect.
 
 With these details in mind, look at the [lavaan
 tutorial](https://lavaan.ugent.be/tutorial/index.html) for many examples

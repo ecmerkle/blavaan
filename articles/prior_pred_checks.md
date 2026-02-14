@@ -115,7 +115,7 @@ not flat across all possible correlation values.
 In this next example, we will estimate the PPC with the package default
 priors, that would consider diffuse priors. You can see the blavaan
 default priors with the function
-[`dpriors()`](http://ecmerkle.github.io/blavaan/reference/dpriors.md)
+[`dpriors()`](https://blavaan.org/reference/dpriors.md)
 
 ``` r
 dpriors()

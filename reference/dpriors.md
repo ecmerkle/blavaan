@@ -70,9 +70,9 @@ Software, 85(4), 1-30. URL http://www.jstatsoft.org/v85/i04/.
 
 ## See also
 
-[`bcfa`](http://ecmerkle.github.io/blavaan/reference/bcfa.md),
-[`bsem`](http://ecmerkle.github.io/blavaan/reference/bsem.md),
-[`bgrowth`](http://ecmerkle.github.io/blavaan/reference/bgrowth.md)
+[`bcfa`](https://blavaan.org/reference/bcfa.md),
+[`bsem`](https://blavaan.org/reference/bsem.md),
+[`bgrowth`](https://blavaan.org/reference/bgrowth.md)
 
 ## Examples
 

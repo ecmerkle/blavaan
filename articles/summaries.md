@@ -43,7 +43,7 @@ Following model estimation, we immediately wish to look at the
 “goodness” of the posterior samples, including convergence to a
 stationary distribution and autocorrelation. Popular convergence metrics
 are available via the
-[`blavInspect()`](http://ecmerkle.github.io/blavaan/reference/blavInspect.md)
+[`blavInspect()`](https://blavaan.org/reference/blavInspect.md)
 function:
 
 ``` r
@@ -92,14 +92,14 @@ relative fits, *blavaan* supplies the DIC, WAIC, and LOOIC. The latter
 two metrics are computed with the help of the *loo* package (Vehtari et
 al. 2020). Comparison of multiple models on these criteria is
 facilitated via
-[`blavCompare()`](http://ecmerkle.github.io/blavaan/reference/blavCompare.md),
-which provides standard errors of the difference between two criteria.
+[`blavCompare()`](https://blavaan.org/reference/blavCompare.md), which
+provides standard errors of the difference between two criteria.
 
 Other notable functions include
-[`blavFitIndices()`](http://ecmerkle.github.io/blavaan/reference/blavFitIndices.md)
+[`blavFitIndices()`](https://blavaan.org/reference/blavFitIndices.md)
 for alternative measures of absolute fit and
-[`ppmc()`](http://ecmerkle.github.io/blavaan/reference/ppmc.md) for
-general posterior predictive checks.
+[`ppmc()`](https://blavaan.org/reference/ppmc.md) for general posterior
+predictive checks.
 
 ### Latent Variables & Standardization
 
@@ -109,18 +109,17 @@ and latent variables. To access this functionality in *blavaan*, users
 must set `save.lvs = TRUE` during model estimation, as is done at the
 top of this page. After model estimation, uses can access this
 information via
-[`blavInspect()`](http://ecmerkle.github.io/blavaan/reference/blavInspect.md)
-or
-[`blavPredict()`](http://ecmerkle.github.io/blavaan/reference/blavPredict.md).
+[`blavInspect()`](https://blavaan.org/reference/blavInspect.md) or
+[`blavPredict()`](https://blavaan.org/reference/blavPredict.md).
 Relevant arguments to
-[`blavInspect()`](http://ecmerkle.github.io/blavaan/reference/blavInspect.md)
-include `lvmeans` and `lvs`. The former returns posterior means of
-latent variables, which are similar to the predictions supplied by
-frequentist models. The latter returns posterior samples of latent
-variables, so that users could summarize their uncertainties or other
-functions of latent variables. These posterior samples are returned as a
-list of length `n.chains`, where each list entry has a row per posterior
-sample (and number of columns is total number of latent variables in the
+[`blavInspect()`](https://blavaan.org/reference/blavInspect.md) include
+`lvmeans` and `lvs`. The former returns posterior means of latent
+variables, which are similar to the predictions supplied by frequentist
+models. The latter returns posterior samples of latent variables, so
+that users could summarize their uncertainties or other functions of
+latent variables. These posterior samples are returned as a list of
+length `n.chains`, where each list entry has a row per posterior sample
+(and number of columns is total number of latent variables in the
 model):
 
 ``` r
@@ -129,16 +128,15 @@ postsamps <- blavInspect(fit, what = "lvs")
 ```
 
 Some related, but different, information can be obtained by
-[`blavPredict()`](http://ecmerkle.github.io/blavaan/reference/blavPredict.md).
-This function will also return posterior samples of latent variables,
-but in a matrix instead of a list:
+[`blavPredict()`](https://blavaan.org/reference/blavPredict.md). This
+function will also return posterior samples of latent variables, but in
+a matrix instead of a list:
 
 ``` r
 postsamps <- blavPredict(fit, type = "lv")
 ```
 
-The
-[`blavPredict()`](http://ecmerkle.github.io/blavaan/reference/blavPredict.md)
+The [`blavPredict()`](https://blavaan.org/reference/blavPredict.md)
 function will also return predictions of observed variables conditioned
 on the sampled latent variables. The `type = "yhat"` argument returns
 expected values of observed variables conditioned on latent variable
@@ -159,7 +157,7 @@ evpreds <- do.call("rbind", evpreds)
 ```
 
 Finally, not fully related to latent variables: the
-[`standardizedPosterior()`](http://ecmerkle.github.io/blavaan/reference/standardizedPosterior.md)
+[`standardizedPosterior()`](https://blavaan.org/reference/standardizedPosterior.md)
 function will return standardized posterior draws. It calls the *lavaan*
 function
 [`standardizedSolution()`](https://rdrr.io/pkg/lavaan/man/standardizedSolution.html)

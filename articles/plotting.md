@@ -59,7 +59,7 @@ Alternatively, users may wish to create a plot that is entirely
 different from what is available via
 [`plot()`](https://rdrr.io/r/graphics/plot.default.html). This can be
 facilitated by extracting the posterior samples or the Stan model, via
-[`blavInspect()`](http://ecmerkle.github.io/blavaan/reference/blavInspect.md):
+[`blavInspect()`](https://blavaan.org/reference/blavInspect.md):
 
 ``` r
 ## list of draws

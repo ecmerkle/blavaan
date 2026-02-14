@@ -24,7 +24,7 @@ summary(object, central.tendency = c("mean","median","mode"),
 - object:
 
   An object of class
-  [`blavaan`](http://ecmerkle.github.io/blavaan/reference/blavaan-class.md).
+  [`blavaan`](https://blavaan.org/reference/blavaan-class.md).
 
 - thin:
 
@@ -72,7 +72,7 @@ summary(object, central.tendency = c("mean","median","mode"),
 - baseline.model:
 
   If not `NULL`, an object of class
-  [`blavaan`](http://ecmerkle.github.io/blavaan/reference/blavaan-class.md),
+  [`blavaan`](https://blavaan.org/reference/blavaan-class.md),
   representing a user-specified baseline model. If a `baseline.model` is
   provided, incremental fit indices (BCFI, BTLI, or BNFI) can be
   requested in `fit.measures`. Ignored if `rescale = "MCMC"`.

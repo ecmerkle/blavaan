@@ -35,8 +35,7 @@ and LV is latent variable):
     ##         "Threshold"
 
 For further information about priors on thresholds, see the [ordinal
-modeling
-details](http://ecmerkle.github.io/blavaan/articles/ordinal.md).
+modeling details](https://blavaan.org/articles/ordinal.md).
 
 For `target = "stan"` (the default), priors are currently restricted to
 one distribution per parameter type. You can change the prior
@@ -52,8 +51,7 @@ model via `mcmcfile = TRUE`, edit the file as needed, then fit it via
 the rstan package.
 
 To modify prior distributions, we could simply supply a new text string
-to [`dpriors()`](http://ecmerkle.github.io/blavaan/reference/dpriors.md)
-like this:
+to [`dpriors()`](https://blavaan.org/reference/dpriors.md) like this:
 
 ``` r
 mydp <- dpriors(lambda="normal(1,2)")
@@ -70,13 +68,11 @@ mydp
 so that the default prior for loadings is now normal with mean 1 and
 standard deviation 2, and the rest of the parameters remain at the
 original defaults. The next time we estimate a model (via
-[`bsem()`](http://ecmerkle.github.io/blavaan/reference/bsem.md),
-[`bcfa()`](http://ecmerkle.github.io/blavaan/reference/bcfa.md),
-[`bgrowth()`](http://ecmerkle.github.io/blavaan/reference/bgrowth.md),
-or
-[`blavaan()`](http://ecmerkle.github.io/blavaan/reference/blavaan.md)),
-we would add the argument `dp=mydp` to use this new set of default
-priors.
+[`bsem()`](https://blavaan.org/reference/bsem.md),
+[`bcfa()`](https://blavaan.org/reference/bcfa.md),
+[`bgrowth()`](https://blavaan.org/reference/bgrowth.md), or
+[`blavaan()`](https://blavaan.org/reference/blavaan.md)), we would add
+the argument `dp=mydp` to use this new set of default priors.
 
 ### Individual Parameters
 

@@ -29,10 +29,9 @@ jags.ic = FALSE, seed = NULL, bcontrol = list())
 
   Default prior distributions on different types of parameters,
   typically the result of a call to
-  [`dpriors()`](http://ecmerkle.github.io/blavaan/reference/dpriors.md).
-  See the
-  [`dpriors()`](http://ecmerkle.github.io/blavaan/reference/dpriors.md)
-  help file for more information.
+  [`dpriors()`](https://blavaan.org/reference/dpriors.md). See the
+  [`dpriors()`](https://blavaan.org/reference/dpriors.md) help file for
+  more information.
 
 - n.chains:
 
@@ -155,8 +154,8 @@ jags.ic = FALSE, seed = NULL, bcontrol = list())
 ## Details
 
 The `bgrowth` function is a wrapper for the more general
-[`blavaan`](http://ecmerkle.github.io/blavaan/reference/blavaan.md)
-function, using the following default
+[`blavaan`](https://blavaan.org/reference/blavaan.md) function, using
+the following default
 [`lavaan`](https://rdrr.io/pkg/lavaan/man/lavaan.html) arguments:
 `meanstructure = TRUE`, `int.ov.free = FALSE`, `int.lv.free = TRUE`,
 `auto.fix.first = TRUE` (unless `std.lv = TRUE`),
@@ -166,8 +165,8 @@ function, using the following default
 ## Value
 
 An object of class
-[`blavaan`](http://ecmerkle.github.io/blavaan/reference/blavaan.md), for
-which several methods are available, including a `summary` method.
+[`blavaan`](https://blavaan.org/reference/blavaan.md), for which several
+methods are available, including a `summary` method.
 
 ## References
 
@@ -186,7 +185,7 @@ http://www.jstatsoft.org/v48/i02/.
 
 ## See also
 
-[`blavaan`](http://ecmerkle.github.io/blavaan/reference/blavaan.md)
+[`blavaan`](https://blavaan.org/reference/blavaan.md)
 
 ## Examples
 
