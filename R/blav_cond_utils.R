@@ -174,7 +174,7 @@ cond_moments <- function(postsamp, lavmodel, lavpartable, lavsamplestats, lavdat
   ngroups <- lavsamplestats@ngroups
   implied <- list(cov = covmat, mean = mnvec,
                   slopes = vector("list", ngroups),
-                  th = vector("list", ngroups),
+                  th = lav_model_implied(lavmodel, delta = (lavmodel@parameterization == "delta"))$th,
                   group.w = vector("list", ngroups))
 
   implied

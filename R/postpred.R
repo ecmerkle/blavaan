@@ -421,7 +421,7 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, type = "res
       ## generate data (some code from lav_bootstrap.R)
       if(conditional){
         if ("implied" %in% names(lavobject@external)){
-          implied <- lavobject@external$implied
+          implied <- imp2 <- lavobject@external$implied
         } else {
           implied <- lav_model_implied(lavmodel, delta = (lavmodel@parameterization == "delta"))
           imp2 <- cond_moments(lavmcmc[[j]][i,], lavmodel, lavpartable, lavsamplestats,
