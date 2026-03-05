@@ -209,8 +209,8 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> 
 #> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 1).
 #> Chain 1: 
-#> Chain 1: Gradient evaluation took 0.000265 seconds
-#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.65 seconds.
+#> Chain 1: Gradient evaluation took 0.000225 seconds
+#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.25 seconds.
 #> Chain 1: Adjust your expectations accordingly!
 #> Chain 1: 
 #> Chain 1: 
@@ -235,15 +235,15 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> Chain 1: Iteration: 180 / 200 [ 90%]  (Sampling)
 #> Chain 1: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 1: 
-#> Chain 1:  Elapsed Time: 0.402 seconds (Warm-up)
-#> Chain 1:                0.366 seconds (Sampling)
-#> Chain 1:                0.768 seconds (Total)
+#> Chain 1:  Elapsed Time: 0.348 seconds (Warm-up)
+#> Chain 1:                0.295 seconds (Sampling)
+#> Chain 1:                0.643 seconds (Total)
 #> Chain 1: 
 #> 
 #> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 2).
 #> Chain 2: 
-#> Chain 2: Gradient evaluation took 0.000253 seconds
-#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.53 seconds.
+#> Chain 2: Gradient evaluation took 0.0002 seconds
+#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2 seconds.
 #> Chain 2: Adjust your expectations accordingly!
 #> Chain 2: 
 #> Chain 2: 
@@ -268,9 +268,9 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> Chain 2: Iteration: 180 / 200 [ 90%]  (Sampling)
 #> Chain 2: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 2: 
-#> Chain 2:  Elapsed Time: 0.37 seconds (Warm-up)
-#> Chain 2:                0.357 seconds (Sampling)
-#> Chain 2:                0.727 seconds (Total)
+#> Chain 2:  Elapsed Time: 0.344 seconds (Warm-up)
+#> Chain 2:                0.335 seconds (Sampling)
+#> Chain 2:                0.679 seconds (Total)
 #> Chain 2: 
 #> Warning: The largest R-hat is NA, indicating chains have not mixed.
 #> Running the chains for more iterations may help. See
