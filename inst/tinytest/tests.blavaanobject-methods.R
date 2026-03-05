@@ -59,7 +59,7 @@ expect_equal(length(fitMeasures(fitstan)),
 expect_equal(dim(parameterEstimates(fitstan)), c(10, 6))
 expect_equal(dim(parameterEstimates(fitstanc)), c(10, 6))
 
-expect_equal(dim(standardizedposterior(fitjags)),
+expect_equal(dim(standardizedposterior(fitstanc)),
              dim(standardizedposterior(fitstan)))
 
 ## various blavInspect args
