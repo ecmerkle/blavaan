@@ -9,7 +9,7 @@ library("blavaan")
 
 set.seed(12345)
 
-mytarg <- "stan"
+mytarg <- Sys.getenv("test_target", unset = "stan")
 
 ## ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -84,15 +84,15 @@ fit <- bsem(model, data=PoliticalDemocracy, target=mytarg, burnin=20, sample=20,
 expect_true(inherits(fit, "blavaan"))
 
 ## sample.cov
-fit <- bsem(model, sample.cov=cov(PoliticalDemocracy), sample.nobs=nrow(PoliticalDemocracy), burnin=200, sample=200, dp=dpriors(lambda="normal(1,.3)"))
+fit <- bsem(model, sample.cov=cov(PoliticalDemocracy), sample.nobs=nrow(PoliticalDemocracy), burnin=200, sample=200, dp=dpriors(lambda="normal(1,.3)"), target=mytarg)
 expect_true(inherits(fit, "blavaan"))
 expect_true(fitMeasures(fit, 'p_dic') > 24 && fitMeasures(fit, 'p_dic') < 28)
 
 ## meanstructure/sample.mean arguments without data
-expect_error(fit <- bsem(model, sample.cov=cov(PoliticalDemocracy), sample.nobs=nrow(PoliticalDemocracy), sample.mean=colMeans(PoliticalDemocracy), burnin=10, sample=10, dp=dpriors(lambda="normal(1,.3)")))
+expect_error(fit <- bsem(model, sample.cov=cov(PoliticalDemocracy), sample.nobs=nrow(PoliticalDemocracy), sample.mean=colMeans(PoliticalDemocracy), burnin=10, sample=10, dp=dpriors(lambda="normal(1,.3)"), target=mytarg))
 
 ## sample.mean/sample.cov arguments with data
-fit <- bsem(model, data=PoliticalDemocracy, sample.cov=cov(PoliticalDemocracy), sample.nobs=nrow(PoliticalDemocracy), sample.mean=colMeans(PoliticalDemocracy), burnin=200, sample=200, dp=dpriors(lambda="normal(1,.3)"))
+fit <- bsem(model, data=PoliticalDemocracy, sample.cov=cov(PoliticalDemocracy), sample.nobs=nrow(PoliticalDemocracy), sample.mean=colMeans(PoliticalDemocracy), burnin=200, sample=200, dp=dpriors(lambda="normal(1,.3)"), target=mytarg)
 fitb <- sem(model, data=PoliticalDemocracy, meanstructure=TRUE)
 
 expect_true(all(abs(coef(fit) - coef(fitb)) < 1))
@@ -198,7 +198,7 @@ model <- "
   y1 ~~ y5
 "
 
-bfit <- bsem(model, data = PoliticalDemocracy, n.chains = 1, burnin = 50, sample = 100)
+bfit <- bsem(model, data = PoliticalDemocracy, n.chains = 1, burnin = 50, sample = 100, target=mytarg)
 expect_true(!is.na(fitMeasures(bfit, "margloglik")[[1]]))
 
 ## variation where MLL should *not* be computed when theta is not diagonal/full
@@ -215,7 +215,7 @@ model <- "
   y1 ~~ y6
 "
 
-bfit <- bsem(model, data = PoliticalDemocracy, n.chains = 1, burnin = 50, sample = 100)
+bfit <- bsem(model, data = PoliticalDemocracy, n.chains = 1, burnin = 50, sample = 100, target=mytarg)
 expect_true(is.na(fitMeasures(bfit, "margloglik")[[1]]))
 
 
@@ -313,7 +313,7 @@ expect_true(inherits(tmp, "list"))
 try({
 
 ## sample.cov
-expect_error(bcfa(HS.model, sample.cov=cov(HolzingerSwineford1939[,paste0('x', 1:9)]), sample.nobs=nrow(HolzingerSwineford1939), meanstructure=TRUE))
+expect_error(bcfa(HS.model, sample.cov=cov(HolzingerSwineford1939[,paste0('x', 1:9)]), sample.nobs=nrow(HolzingerSwineford1939), meanstructure=TRUE, target=mytarg))
 fit2 <- bcfa(HS.model, sample.cov=cov(HolzingerSwineford1939[,paste0('x', 1:9)]), sample.nobs=nrow(HolzingerSwineford1939), target=mytarg, sample=200, burnin=100, dp=dpriors(lambda="normal(1,.3)"))
 expect_true(inherits(fit2, "blavaan"))
 expect_true(fitMeasures(fit2, 'p_dic') > 19 && fitMeasures(fit2, 'p_dic') < 23)
@@ -767,7 +767,7 @@ mod2 <- ' visual  =~ c("l1","l1")*x1 + c("l2","l2")*x2 + c("l3","l3")*x3
           visual ~~ c(1, NA)*visual
           textual ~~ c(1, NA)*textual '
 
-fit2 <- bcfa(mod2, data = HolzingerSwineford1939, burnin=200, sample=200, group = "school", std.lv = TRUE, meanstructure = TRUE)
+fit2 <- bcfa(mod2, data = HolzingerSwineford1939, burnin=200, sample=200, group = "school", std.lv = TRUE, meanstructure = TRUE, target=mytarg)
 fit <- cfa(mod2, data = HolzingerSwineford1939, group = "school", std.lv = TRUE, meanstructure = TRUE)
 
 fit2@optim$converged <- TRUE
@@ -832,7 +832,7 @@ model <- '
   xi1 ~~ prior("lkj_corr(4)") * xi2
 '
 
-fit <- bsem(model, data = Data, burnin = 150, sample = 150, dp = dpriors(lambda = "normal(1,.5)"), meanstructure = TRUE)
+fit <- bsem(model, data = Data, burnin = 150, sample = 150, dp = dpriors(lambda = "normal(1,.5)"), meanstructure = TRUE, target=mytarg)
 fitb <- sem(model, data = Data, meanstructure = TRUE, parser='old')
 
 fit@optim$converged <- TRUE
@@ -865,7 +865,7 @@ model <- '
   xi2 ~~ prior("lkj_corr(4)") * xi3
 '
 
-fit <- bsem(model, data = Data, burnin = 150, sample = 150, dp = dpriors(lambda = "normal(1,.5)"), meanstructure = TRUE)
+fit <- bsem(model, data = Data, burnin = 150, sample = 150, dp = dpriors(lambda = "normal(1,.5)"), meanstructure = TRUE, target=mytarg)
 fitb <- sem(model, data = Data, meanstructure = TRUE, parser='old')
 
 fit@optim$converged <- TRUE
@@ -940,7 +940,7 @@ model <- '
   xi7 ~~ xi8
   '
 
-fit <- bsem(model, data = Data, burnin = 150, sample = 150, dp = dpriors(lambda = "normal(1,.3)"), meanstructure = TRUE)
+fit <- bsem(model, data = Data, burnin = 150, sample = 150, dp = dpriors(lambda = "normal(1,.3)"), meanstructure = TRUE, target=mytarg)
 fitb <- sem(model, data = Data, meanstructure = TRUE)
 
 fit@optim$converged <- TRUE
@@ -985,7 +985,7 @@ model <- '
   xi7 ~~ xi8
   '
 
-fit <- bsem(model, data = Data, burnin = 150, sample = 150, dp = dpriors(lambda = "normal(1,.3)"), meanstructure = TRUE)
+fit <- bsem(model, data = Data, burnin = 150, sample = 150, dp = dpriors(lambda = "normal(1,.3)"), meanstructure = TRUE, target=mytarg)
 fitb <- sem(model, data = Data, meanstructure = TRUE)
 
 
@@ -1063,7 +1063,7 @@ expect_true(fitMeasures(fit,'ppp') > .2 & fitMeasures(fit,'ppp') < .8)
 expect_true(compll(fit))
 
 ## sample.cov
-fit <- bsem(model, sample.cov=cov(datfull), sample.nobs=nrow(datfull), fixed.x=TRUE, burnin=200, sample=200)
+fit <- bsem(model, sample.cov=cov(datfull), sample.nobs=nrow(datfull), fixed.x=TRUE, burnin=200, sample=200, target=mytarg)
 expect_true(inherits(fit, 'blavaan'))
 expect_true(fitMeasures(fit, 'p_dic') > 12 && fitMeasures(fit, 'p_dic') < 16)
 
@@ -1083,7 +1083,7 @@ expect_true(compll(fit))
 
 
 ## sample.cov
-fit <- bsem(model, sample.cov=cov(datfull), sample.nobs=nrow(datfull), fixed.x=FALSE, burnin=200, sample=200)
+fit <- bsem(model, sample.cov=cov(datfull), sample.nobs=nrow(datfull), fixed.x=FALSE, burnin=200, sample=200, target=mytarg)
 expect_true(inherits(fit, 'blavaan'))
 expect_true(fitMeasures(fit, 'p_dic') > 14 && fitMeasures(fit, 'p_dic') < 18)
 
@@ -1525,7 +1525,7 @@ fit <- bcfa(bcfa.model.expressions.stan, burnin=300, sample=3000, target="stancl
 tmp <- blavInspect(fit, 'lvmeans')
 expect_true(max(abs(tmp - c(73.08, 80, 91.08))) < .25)
 
-fit <- bcfa(bcfa.model.expressions.stan, burnin=300, sample=2000, save.lvs=TRUE, test="none", data=test.data)
+fit <- bcfa(bcfa.model.expressions.stan, burnin=300, sample=2000, save.lvs=TRUE, test="none", data=test.data, target=mytarg)
 tmp <- blavInspect(fit, 'lvmeans')
 expect_true(max(abs(tmp - c(73.08, 80, 91.08))) < .25)
 
@@ -1548,7 +1548,7 @@ fit <- blavaan(blavaan.model.expressions.stan, burnin=300, sample=4000, target="
 expect_true(abs(59.39 - fit@external$stansumm['theta[1,1,1]', 'mean']) < 2*(21/sqrt(10000))) ## posterior sd is 21, so se is about 21/sqrt(nsamps), and we want to be within 2 ses
 expect_true(abs(21 - fit@external$stansumm['theta[1,1,1]', 'sd']) < 1)
 
-fit <- blavaan(blavaan.model.expressions.stan, burnin=1000, sample=10000, test="none", data=test.data)
+fit <- blavaan(blavaan.model.expressions.stan, burnin=1000, sample=10000, test="none", data=test.data, target=mytarg)
 expect_true(abs(59.39 - fit@external$stansumm['Theta_var[1]', 'mean']) < 2*(21/sqrt(30000)))
 expect_true(abs(21 - fit@external$stansumm['Theta_var[1]', 'sd']) < 1)
 
@@ -1585,13 +1585,13 @@ HS.model <- ' visual  =~ x1 + x2 + x3
               speed   =~ x7 + x8 + x9 '
 ## fit target model
 fit1 <- bcfa(HS.model, data = HolzingerSwineford1939, 
-             n.chains = 2, burnin = 100, sample = 100)
+             n.chains = 2, burnin = 100, sample = 100, target=mytarg)
 expect_true(inherits(fit1, "blavaan"))
 
 ## fit null model to calculate CFI, TLI, and NFI
 null.model <- c(paste0("x", 1:9, " ~~ x", 1:9), paste0("x", 1:9, " ~ 1"))
 fit0 <- bcfa(null.model, data = HolzingerSwineford1939, 
-             n.chains = 2, burnin = 100, sample = 100)
+             n.chains = 2, burnin = 100, sample = 100, target=mytarg)
 expect_true(inherits(fit0, "blavaan"))
 
 ML <- blavFitIndices(fit1, baseline.model = fit0)
