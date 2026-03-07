@@ -236,7 +236,8 @@ make_mcmc <- function(mcmcout, stanlvs = NULL){
     ##           so reorder
     cmdstanfit <- inherits(mcmcout, "CmdStanFit")
     if(cmdstanfit){
-      lavmcmc <- mcmcout$draws()
+      mons <- get_stanmons()
+      lavmcmc <- mcmcout$draws(variables = mons[mons %in% mcmcout$metadata()$stan_variables])
     } else {
       tmpsumm <- rstan::summary(mcmcout)
       lavmcmc <- as.array(mcmcout)
@@ -554,4 +555,20 @@ modeapprox <- function(draws) {
   }
 
   out
+}
+
+## List of Stan parameters we want to keep, to reduce large cmdstan draws arrays
+get_stanmons <- function() {
+  ## basics
+  stanmon <- c("ly_sign", "bet_sign", "Theta_cov", "Theta_var",
+               "Psi_cov", "Psi_var", "Nu_free", "al_sign", "Tau_free")
+  ## add level 2
+  stanmon <- c(stanmon, paste0(stanmon, "_c"))
+  stanmon <- stanmon[-which(stanmon == "Tau_free_c")]
+  ## loglik + friends, FIXME sat and ppp not always needed
+  stanmon <- c(stanmon, c("log_lik", "log_lik_sat", "ppp"))
+  ## latent variables
+  stanmon <- c(stanmon, "eta", "YXostar")
+
+  stanmon
 }

@@ -136,7 +136,8 @@ blavInspect <- function(blavobject, what, ...) {
             if(jagtarget){
                 etas <- any(blavobject@external$mcmcout$monitor == "eta")
             } else {
-                etas <- any(grepl("^eta", rownames(blavobject@external$stansumm)))
+                etas <- any(grepl("^eta", rownames(blavobject@external$stansumm))) ||
+                  any(grepl("^eta", blavobject@external$stansumm[,1]))
             }
 
             ## how many lvs, excluding phantoms

@@ -878,7 +878,7 @@ blavaan <- function(...,  # default lavaan arguments
                     lavpartable$est <- lav_model_get_parameters(lavmodel = lavmodel, type = "user", extra = TRUE)
                 }
                 ## lvs now in R instead of Stan
-                if(save.lvs & target == "stan"){
+                if(save.lvs & target %in% c("stan", "cmdstan")){
                     if(lavoptions$.multilevel){
                         ## this handles dummy lvs so that we use the appropriate alpha:
                         if (packageDescription("lavaan")$Version > "0.6-20") {
@@ -894,7 +894,16 @@ blavaan <- function(...,  # default lavaan arguments
 
                     for(j in 1:(1 + lavoptions$.multilevel)){
                         if(dim(stanlvs[[j]])[3L] > 0){
-                            lvsumm <- as.matrix(rstan::monitor(stanlvs[[j]], print=FALSE))
+                            if(target == "stan"){
+                                lvsumm <- as.matrix(rstan::monitor(stanlvs[[j]], print=FALSE))
+                            } else {
+                              lvsumm <- posterior::summarise_draws(stanlvs[[j]], posterior::default_summary_measures(),
+                                                                   posterior::default_convergence_measures(),
+                                                                   extra_quantiles = ~posterior::quantile2(., probs = c(.025, .5, .975)))
+                              lvnames <- colnames(lvsumm)
+                              oldnames <- c("q2.5", "q50", "q97.5", "ess_bulk", "rhat")
+                              names(lvsumm)[match(oldnames, lvnames)] <- c("2.5%", "50%", "97.5%", "n_eff", "Rhat")
+                            }
                             cmatch <- match(colnames(stansumm), colnames(lvsumm))
                             stansumm <- rbind(stansumm, lvsumm[,cmatch])
                         }
@@ -945,6 +954,7 @@ blavaan <- function(...,  # default lavaan arguments
                 fullpmeans <- summary(make_mcmc(res))[[1]][,"Mean"]
             } else {
                 fullpmeans <- stansumm[,"mean"]
+                if(is.null(names(fullpmeans))) names(fullpmeans) <- stansumm$variable
             }
             cfx <- get_ll(fullpmeans, lavobject = LAV, conditional = TRUE)[1]
         } else {
