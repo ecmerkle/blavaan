@@ -37,6 +37,8 @@ rearr_params <- function(mcmc         = NULL,
 sampnums <- function(lavmcmc, thin, lout = FALSE){
     if("mcmc" %in% names(lavmcmc)){
         niter <- nrow(lavmcmc$mcmc[[1]])
+    } else if(inherits(lavmcmc, "CmdStanFit")){
+        niter <- lavmcmc$metadata()$iter_sampling
     } else {
         niter <- dim(as.array(lavmcmc))[1]
     }
@@ -232,11 +234,18 @@ make_mcmc <- function(mcmcout, stanlvs = NULL){
   } else {
     ## for stan: as.array() gives parameters in a different order from summary()
     ##           so reorder
-    tmpsumm <- rstan::summary(mcmcout)
-    lavmcmc <- as.array(mcmcout)
-    lavmcmc <- lapply(seq(dim(lavmcmc)[2]), function(x) lavmcmc[,x,])
-    reord <- match(rownames(tmpsumm$summary), colnames(lavmcmc[[1]]))
-    lavmcmc <- lapply(lavmcmc, function(x) x[, reord, drop = FALSE])
+    cmdstanfit <- inherits(mcmcout, "CmdStanFit")
+    if(cmdstanfit){
+      lavmcmc <- mcmcout$draws()
+    } else {
+      tmpsumm <- rstan::summary(mcmcout)
+      lavmcmc <- as.array(mcmcout)
+    }
+    lavmcmc <- lapply(seq(dim(lavmcmc)[2]), function(x) lavmcmc[,x,,drop = TRUE])
+    if(!cmdstanfit){
+      reord <- match(rownames(tmpsumm$summary), colnames(lavmcmc[[1]]))
+      lavmcmc <- lapply(lavmcmc, function(x) x[, reord, drop = FALSE])
+    }
 
     if(is.array(stanlvs)){
       stanlvs <- lapply(seq(dim(stanlvs)[2]), function(x) stanlvs[,x,])

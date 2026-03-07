@@ -815,26 +815,23 @@ blavaan <- function(...,  # default lavaan arguments
         start.time <- proc.time()[3]
         if(jag.do.fit) cat("Computing post-estimation metrics (including lvs if requested)...\n")
         
-        ## FIXME: there is no pars argument. this saves all parameters and uses unnecessary memory
-        ## see res@sim and line 284 of stan_csv.R... might cut it down manually
-        if(target == "cmdstan"){
-          res <- rstan::read_stan_csv(res$output_files())
-        }
-        
         if(target == "jags"){
           parests <- coeffun(lavpartable, jagtrans$pxpartable, res)
           stansumm <- NA
         } else if(target %in% c("stanclassic", "stancond")){
-          parests <- coeffun_stan(lavpartable, jagtrans$pxpartable,
-                                  res)
+          parests <- coeffun_stan(lavpartable, jagtrans$pxpartable, res)
           stansumm <- parests$stansumm
         } else {
           if(jag.do.fit) {
-            draw_mat <- as.matrix(res)
+            if(inherits(res, "CmdStanFit")) {
+              draw_mat <- res$draws(variables = sampparms[sampparms %in% res$metadata()$stan_variables], format = "matrix")
+            } else {
+              draw_mat <- as.matrix(res)
+            }
           } else {
             draw_mat <- NULL
           }
-          
+
           if(lavoptions$.multilevel) {
             Ng <- lavInspect(LAV, 'ngroups')
             parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')[2*(1:Ng) - 1], l2s$free2, jagtrans$data, res, colnames(draw_mat))
@@ -947,7 +944,7 @@ blavaan <- function(...,  # default lavaan arguments
             if(target == "jags"){
                 fullpmeans <- summary(make_mcmc(res))[[1]][,"Mean"]
             } else {
-                fullpmeans <- stansumm[,"mean"] #rstan::summary(res)$summary[,"mean"]
+                fullpmeans <- stansumm[,"mean"]
             }
             cfx <- get_ll(fullpmeans, lavobject = LAV, conditional = TRUE)[1]
         } else {
