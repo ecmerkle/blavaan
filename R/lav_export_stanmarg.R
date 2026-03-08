@@ -866,13 +866,15 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
   stanfit <- !is.null(rsob)
   cmdstanfit <- inherits(rsob, "CmdStanFit")
   if (cmdstanfit){
-    rssumm <- as.data.frame(rsob$summary(variables = dmnames,
-                                         posterior::default_summary_measures(),
-                                         posterior::default_convergence_measures(),
-                                         extra_quantiles = ~posterior::quantile2(., probs = c(.025, .5, .975))))
+    rssumm <- rsob$summary(variables = dmnames,
+                           posterior::default_summary_measures(),
+                           posterior::default_convergence_measures(),
+                           extra_quantiles = ~posterior::quantile2(., probs = c(.025, .5, .975)))
+    class(rssumm) <- "data.frame"
     rsnames <- colnames(rssumm)
     oldnames <- c("q2.5", "q50", "q97.5", "ess_bulk", "rhat")
     names(rssumm)[match(oldnames, rsnames)] <- c("2.5%", "50%", "97.5%", "n_eff", "Rhat")
+    rownames(rssumm) <- rssumm$variable
     rssumm <- list(summary = rssumm)
   } else if(stanfit){
     rssumm <- rstan::summary(rsob)

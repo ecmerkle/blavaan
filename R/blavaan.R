@@ -900,9 +900,11 @@ blavaan <- function(...,  # default lavaan arguments
                               lvsumm <- posterior::summarise_draws(stanlvs[[j]], posterior::default_summary_measures(),
                                                                    posterior::default_convergence_measures(),
                                                                    extra_quantiles = ~posterior::quantile2(., probs = c(.025, .5, .975)))
+                              class(lvsumm) <- "data.frame"
                               lvnames <- colnames(lvsumm)
                               oldnames <- c("q2.5", "q50", "q97.5", "ess_bulk", "rhat")
                               names(lvsumm)[match(oldnames, lvnames)] <- c("2.5%", "50%", "97.5%", "n_eff", "Rhat")
+                              rownames(lvsumm) <- lvsumm$variable
                             }
                             cmatch <- match(colnames(stansumm), colnames(lvsumm))
                             stansumm <- rbind(stansumm, lvsumm[,cmatch])
@@ -1139,7 +1141,7 @@ blavaan <- function(...,  # default lavaan arguments
                     burnin = burnin, sample = sample)
     if(grepl("stan", target)){
       extslot <- c(extslot, list(stansumm = stansumm))
-      if(save.lvs & target=="stan") extslot <- c(extslot, list(stanlvs = stanlvs))
+      if(save.lvs & target %in% c("stan", "cmdstan")) extslot <- c(extslot, list(stanlvs = stanlvs))
     }
     if(jags.ic) extslot <- c(extslot, list(sampkls = sampkls))
     if(save.lvs && !ordmod && !lavoptions$.multilevel && lavInspect(LAV, "meanstructure")) {
