@@ -227,8 +227,8 @@ fit <- bsem(model, data = PoliticalDemocracy, burnin = 100, sample = 100,
 #> 
 #> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 1).
 #> Chain 1: 
-#> Chain 1: Gradient evaluation took 0.00023 seconds
-#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.3 seconds.
+#> Chain 1: Gradient evaluation took 0.000251 seconds
+#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.51 seconds.
 #> Chain 1: Adjust your expectations accordingly!
 #> Chain 1: 
 #> Chain 1: 
@@ -253,15 +253,15 @@ fit <- bsem(model, data = PoliticalDemocracy, burnin = 100, sample = 100,
 #> Chain 1: Iteration: 180 / 200 [ 90%]  (Sampling)
 #> Chain 1: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 1: 
-#> Chain 1:  Elapsed Time: 0.705 seconds (Warm-up)
-#> Chain 1:                0.415 seconds (Sampling)
-#> Chain 1:                1.12 seconds (Total)
+#> Chain 1:  Elapsed Time: 0.696 seconds (Warm-up)
+#> Chain 1:                0.408 seconds (Sampling)
+#> Chain 1:                1.104 seconds (Total)
 #> Chain 1: 
 #> 
 #> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 2).
 #> Chain 2: 
-#> Chain 2: Gradient evaluation took 0.000204 seconds
-#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.04 seconds.
+#> Chain 2: Gradient evaluation took 0.000201 seconds
+#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.01 seconds.
 #> Chain 2: Adjust your expectations accordingly!
 #> Chain 2: 
 #> Chain 2: 
@@ -286,9 +286,9 @@ fit <- bsem(model, data = PoliticalDemocracy, burnin = 100, sample = 100,
 #> Chain 2: Iteration: 180 / 200 [ 90%]  (Sampling)
 #> Chain 2: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 2: 
-#> Chain 2:  Elapsed Time: 0.485 seconds (Warm-up)
-#> Chain 2:                0.445 seconds (Sampling)
-#> Chain 2:                0.93 seconds (Total)
+#> Chain 2:  Elapsed Time: 0.478 seconds (Warm-up)
+#> Chain 2:                0.437 seconds (Sampling)
+#> Chain 2:                0.915 seconds (Total)
 #> Chain 2: 
 #> Warning: The largest R-hat is 1.09, indicating chains have not mixed.
 #> Running the chains for more iterations may help. See
