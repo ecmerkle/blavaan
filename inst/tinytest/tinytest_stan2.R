@@ -15,7 +15,11 @@ mytarg <- Sys.getenv("test_target", unset = "stan")
 
 ## compare logliks in stan vs lavaan
 compll <- function(blavobject) {
-  lls <- loo::extract_log_lik(blavobject@external$mcmcout)
+  if(inherits(blavobject@external$mcmcout, "CmdStanFit")) {
+    lls <- blavobject@external$mcmcout$draws("log_lik", format = "matrix")
+  } else {
+    lls <- loo::extract_log_lik(blavobject@external$mcmcout)
+  }
   lavmcmc <- blavaan:::make_mcmc(blavobject@external$mcmcout)
   blavobject@Options$target <- "jags"
   blavobject@Options$estimator <- "ML"
@@ -243,6 +247,7 @@ fit2@optim$converged <- TRUE
 expect_true(all(abs(coef(fit2) - coef(fit2b)) < 1))
 expect_true(all(sqrt(diag(vcov(fit2))) - sqrt(diag(vcov(fit2b))) < 1))
 expect_true(fitMeasures(fit2, 'ppp') < .8)
+expect_true(inherits(standardizedPosterior(fit2), "matrix"))
 
 
 ## multi group missing with exo fixed.x
@@ -340,6 +345,7 @@ expect_true(fitMeasures(fit2, 'ppp') < .8)
 ## meanstructure=TRUE
 fit2 <- bcfa(HS.model, data=HolzingerSwineford1939, target=mytarg, sample=200, burnin=100, std.lv=TRUE, dp=dpriors(psi="gamma(1,1)", target='stan'), meanstructure=TRUE)
 fit2b <- cfa(HS.model, data=HolzingerSwineford1939, std.lv=TRUE, meanstructure=TRUE)
+expect_true(all(abs(coef(fit2) - coef(fit2b)) < 1))
 expect_true(compll(fit2))
 
 

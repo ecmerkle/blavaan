@@ -57,7 +57,7 @@ blavaan <- function(...,  # default lavaan arguments
 
     # multilevel functionality
     if("cluster" %in% dotNames) {
-        if(!(target == "stan")) stop("blavaan ERROR: two-level functionality is not available for ", target, ".")
+        if(!(target %in% c("stan", "cmdstan"))) stop("blavaan ERROR: two-level functionality is not available for ", target, ".")
     }
   
     # prior predictives only for stan
@@ -221,7 +221,7 @@ blavaan <- function(...,  # default lavaan arguments
     dotdotdot$control <- list(iter.max = 1, eval.max = 1); dotdotdot$warn <- TRUE
     dotdotdot$optim.force.converged <- TRUE
     if(packageDescription("lavaan")$Version > "0.6-16") dotdotdot$parser <- "old"
-    if(target != "stan") dotdotdot$meanstructure <- TRUE
+    if(!(target %in% c("stan", "cmdstan"))) dotdotdot$meanstructure <- TRUE
     dotdotdot$missing <- "direct"   # direct/ml creates error? (bug in lavaan?)
     ordmod <- FALSE
     if("ordered" %in% dotNames) ordmod <- TRUE
@@ -325,7 +325,7 @@ blavaan <- function(...,  # default lavaan arguments
     # for warnings related to setting up model/data:
     LAV <- do.call("lavaan", dotdotdot)
     dotdotdot$do.fit <- TRUE; dotdotdot$warn <- FALSE
-    if(LAV@Data@data.type != "moment" && target == "stan"){
+    if(LAV@Data@data.type != "moment" && target %in% c("stan", "cmdstan")){
         ## if no missing, set missing = "listwise" to avoid meanstructure if possible
         if(!any(is.na(unlist(lavInspect(LAV, 'data'))))){
             dotdotdot$missing <- "listwise"
@@ -873,7 +873,7 @@ blavaan <- function(...,  # default lavaan arguments
                 wrmup <- ifelse(length(rjarg$warmup) > 0,
                                 rjarg$warmup, floor(rjarg$iter/2))
                 attr(x, "iterations") <- sample
-                if(target == "stan"){
+                if(target %in% c("stan", "cmdstan")){
                     ## defined variables come from delta method:
                     lavpartable$est <- lav_model_get_parameters(lavmodel = lavmodel, type = "user", extra = TRUE)
                 }
@@ -1005,7 +1005,7 @@ blavaan <- function(...,  # default lavaan arguments
       }
       
       if(save.lvs && !ordmod && !lavoptions$.multilevel && lavInspect(LAV, "meanstructure")) {
-        if(target == "stan"){
+        if(target %in% c("stan", "cmdstan")){
           lavmcmc <- make_mcmc(res, stanlvs) ## add on lvs
         }
         csamplls <- samp_lls(res, lavmcmc, lavobject = LAV, conditional = TRUE)
@@ -1056,7 +1056,7 @@ blavaan <- function(...,  # default lavaan arguments
     covres <- checkcovs(LAV)
     ## in these cases, we cannot reliably evaluate the priors
     if(ordmod) domll <- FALSE
-    if(target == "stan") {
+    if(target %in% c("stan", "cmdstan")) {
       if(covres$dobf) {
         domll <- TRUE
       } else if(l2s$blktheta & l2s$blkpsi) {
@@ -1183,8 +1183,8 @@ blavaan <- function(...,  # default lavaan arguments
 
     if(!lavoptions$.multilevel) { # because checkcovs() has not been adapted to it
       if( "psi" %in% lavpartable$mat &&
-          ( (target == "stan" && !l2s$blkpsi) ||
-            (target != "stan" && with(covres, !(diagpsi | fullpsi))) ) ) {
+          ( (target %in% c("stan", "cmdstan") && !l2s$blkpsi) ||
+            (!(target %in% c("stan", "cmdstan")) && with(covres, !(diagpsi | fullpsi))) ) ) {
         warning("blavaan WARNING: As specified, the psi covariance matrix is neither diagonal nor unrestricted, so the actual prior might differ from the stated prior. See\n https://arxiv.org/abs/2301.08667", call. = FALSE)
       }
       if( "theta" %in% lavpartable$mat && with(covres, !(diagthet | fullthet)) ) {
