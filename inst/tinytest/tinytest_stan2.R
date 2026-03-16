@@ -120,7 +120,7 @@ bin <- 200
 samp <- 200
 pd60 <- PoliticalDemocracy[1:60,]
 newd <- PoliticalDemocracy[61:75,]
-fit <- bsem(model, data=pd60, burnin=bin, sample=samp, save.lvs=TRUE, target='stan', jags.ic=TRUE)
+fit <- bsem(model, data=pd60, burnin=bin, sample=samp, save.lvs=TRUE, target=mytarg, jags.ic=TRUE)
 expect_silent(tmp <- blavInspect(fit, 'lvmeans'))
 expect_true(!is.na(tmp[1,1]))
 expect_silent(tmp <- blavPredict(fit, type = 'yhat'))
@@ -128,6 +128,7 @@ expect_silent(tmp <- blavPredict(fit, type = 'ypred'))
 expect_error(blavPredict(fit, type = 'ymis')) # no missing data
 expect_identical(class(fitMeasures(fit))[1], "lavaan.vector")
 expect_identical(class(blavPredict(fit))[1], "list")
+expect_silent(tmp <- blavInspect(fit, 'neff'))
 expect_silent(tmp <- blavInspect(fit, "postmode"))
 expect_silent(tmp <- blavInspect(fit, "postmedian"))
 expect_silent(tmp <- blavPredict(fit, newdata = newd, type = "ov"))
@@ -141,7 +142,7 @@ expect_true(cor(mns, lvmn[,3]) > .95)
 
 
 ## same but with meanstructure
-fit <- bsem(model, data=PoliticalDemocracy, burnin=bin, sample=samp, save.lvs=TRUE, target='stan', jags.ic=TRUE, meanstructure=TRUE, dp=dpriors(lambda="normal(1,.3)"))
+fit <- bsem(model, data=PoliticalDemocracy, burnin=bin, sample=samp, save.lvs=TRUE, target=mytarg, jags.ic=TRUE, meanstructure=TRUE, dp=dpriors(lambda="normal(1,.3)"))
 expect_silent(tmp <- blavInspect(fit, 'lvmeans'))
 expect_identical(class(fitMeasures(fit))[1], "lavaan.vector")
 expect_identical(class(blavPredict(fit))[1], "list")
@@ -333,7 +334,7 @@ expect_true(fitMeasures(fit2, 'p_dic') > 19 && fitMeasures(fit2, 'p_dic') < 23)
 try({
 
 ## std.lv=TRUE, where need to change sign of lv covs
-fit2 <- bcfa(HS.model, data=HolzingerSwineford1939, target=mytarg, sample=200, burnin=100, std.lv=TRUE, dp=dpriors(psi="gamma(1,1)", target='stan')) # for stanclassic: dp=dpriors(ipsi="gamma(.1,.1)", target='stan'))
+fit2 <- bcfa(HS.model, data=HolzingerSwineford1939, target=mytarg, sample=200, burnin=100, std.lv=TRUE, dp=dpriors(psi="gamma(1,1)", target=mytarg)) # for stanclassic: dp=dpriors(ipsi="gamma(.1,.1)", target='stan'))
 fit2b <- cfa(HS.model, data=HolzingerSwineford1939, std.lv=TRUE)
 
 fit2@optim$converged <- TRUE
@@ -343,7 +344,7 @@ expect_true(fitMeasures(fit2, 'ppp') < .8)
 
 
 ## meanstructure=TRUE
-fit2 <- bcfa(HS.model, data=HolzingerSwineford1939, target=mytarg, sample=200, burnin=100, std.lv=TRUE, dp=dpriors(psi="gamma(1,1)", target='stan'), meanstructure=TRUE)
+fit2 <- bcfa(HS.model, data=HolzingerSwineford1939, target=mytarg, sample=200, burnin=100, std.lv=TRUE, dp=dpriors(psi="gamma(1,1)", target=mytarg), meanstructure=TRUE)
 fit2b <- cfa(HS.model, data=HolzingerSwineford1939, std.lv=TRUE, meanstructure=TRUE)
 expect_true(all(abs(coef(fit2) - coef(fit2b)) < 1))
 expect_true(compll(fit2))
@@ -1445,7 +1446,7 @@ obs <- rbinom(prod(dim(Data)), 1, .8)
 datmis <- Data*obs
 datmis[datmis==0] <- NA
 
-fit <- bsem(model, data = datmis, burnin=200, sample=200, target='stan', group = "g")
+fit <- bsem(model, data = datmis, burnin=200, sample=200, target=mytarg, group = "g")
 fitb <- sem(model, data = datmis, missing='ml', group = "g")
 
 fit@optim$converged <- TRUE
@@ -1475,7 +1476,7 @@ model <- ' dv1 ~ dv3
            dv2 ~ dv1
            dv3 ~ dv2 '
 
-fit <- bsem(model, data=Data, burnin=200, sample=200, target='stan', dp=dpriors(beta="normal(.5,.5)"))
+fit <- bsem(model, data=Data, burnin=200, sample=200, target=mytarg, dp=dpriors(beta="normal(.5,.5)"))
 fitb <- sem(model, data = Data)
 
 fit@optim$converged <- TRUE
