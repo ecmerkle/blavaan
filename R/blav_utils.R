@@ -572,3 +572,25 @@ get_stanmons <- function() {
 
   stanmon
 }
+
+## create ordinal data from continuous, for testing
+makeord <- function(Data, vars = NULL, ncat = 2){
+  if(length(vars) == 0) vars <- 1:NCOL(Data)
+
+  if(length(ncat) != 1 && length(ncat) != length(vars)) stop("bad ncat")
+
+  ## for differing numbers of categories
+  Data <- rbind(Data, NA)
+  Data[nrow(Data), vars] <- ncat
+  
+  Data[,vars] <- apply(Data[,vars,drop = FALSE], 2,
+                       function(x){
+                         nc <- tail(x, 1)
+                         tmpp <- (1/nc) + runif(1, -.1/nc, .1/nc)
+                         brks <- c(min(x, na.rm = TRUE) - .1, seq(quantile(x, tmpp, na.rm = TRUE),
+                                                    quantile(x, 1 - tmpp, na.rm = TRUE),
+                                                    length.out = (nc-1)), max(x, na.rm = TRUE) + .1)
+                         cut(x, breaks = brks, labels = FALSE)})
+
+  Data[-nrow(Data),]
+}
