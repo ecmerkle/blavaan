@@ -217,6 +217,9 @@ blavaan <- function(...,  # default lavaan arguments
     dotdotdot$do.fit <- FALSE
     dotdotdot$se <- "none"; dotdotdot$test <- "none"
     dotdotdot$cat.wls.w <- FALSE
+    dotdotdot$h1 <- FALSE; dotdotdot$baseline <- FALSE; dotdotdot$implied <- FALSE
+    dotdotdot$check.post <- FALSE
+    dotdotdot$check.vcov <- FALSE
     # run for 1 iteration to obtain info about equality constraints, for npar
     dotdotdot$control <- list(iter.max = 1, eval.max = 1); dotdotdot$warn <- TRUE
     dotdotdot$optim.force.converged <- TRUE
@@ -314,7 +317,7 @@ blavaan <- function(...,  # default lavaan arguments
         if("cluster" %in% names(dotdotdot)) stop('blavaan ERROR: sample.cov cannot be used for two-level models')
     }
     if("meanstructure" %in% names(dotdotdot) && "sample.cov" %in% names(dotdotdot)) stop('blavaan ERROR: meanstructure is not currently allowed when sample.cov is supplied')
-  
+
     # call lavaan
     mcdebug <- FALSE
     if("debug" %in% dotNames){
