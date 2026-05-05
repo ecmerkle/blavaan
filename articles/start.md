@@ -8,6 +8,7 @@ package.
 *blavaan* can be installed from CRAN in the usual way:
 
 ``` r
+
 install.packages("blavaan")
 ```
 
@@ -17,6 +18,7 @@ though it can also be less stable. To install from GitHub, use the
 following command.
 
 ``` r
+
 remotes::install_github("ecmerkle/blavaan", INSTALL_opts = "--no-multiarch")
 ```
 

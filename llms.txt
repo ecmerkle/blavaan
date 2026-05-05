@@ -7,6 +7,7 @@ The blavaan functions and syntax are similar to lavaan. For example,
 consider the Political Democracy example from Bollen (1989):
 
 ``` r
+
 library(lavaan) # for the PoliticalDemocracy data
 library(blavaan)
 
@@ -36,6 +37,7 @@ blavaan from CRAN. A potential alternative is to install a binary from
 [R-universe.](https://ecmerkle.r-universe.dev/blavaan)
 
 ``` r
+
 remotes::install_github("ecmerkle/blavaan", INSTALL_opts = "--no-multiarch")
 ```
 

@@ -24,6 +24,7 @@ First we will estimate the regular model with no cross-loadings and
 default priors.
 
 ``` r
+
 HS.model <- ' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6
               speed   =~ x7 + x8 + x9 '
@@ -38,10 +39,11 @@ the posterior distribution for the factor loadings, correlations,
 intercepts and variances.
 
 ``` r
+
 summary(fit_df)
 ```
 
-    ## blavaan 0.5.10.1399 ended normally after 1000 iterations
+    ## blavaan 0.5.10.1400 ended normally after 1000 iterations
     ## 
     ##   Estimator                                      BAYES
     ##   Optimization method                             MCMC
@@ -109,10 +111,11 @@ summary(fit_df)
     ##     speed             1.000
 
 Next, we will add all possible cross-loadings with a strong prior of
-$N(0,\sigma = 0.08)$. The prior centers the loadings around 0 and allows
-them little space to move.
+$`N(0, \sigma = 0.08)`$. The prior centers the loadings around 0 and
+allows them little space to move.
 
 ``` r
+
 HS.model.cl<-' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6
               speed   =~ x7 + x8 + x9 
@@ -147,10 +150,11 @@ the model, by looking at the posterior mean (`Estimate`) and credible
 interval.
 
 ``` r
+
 summary(fit_cl)
 ```
 
-    ## blavaan 0.5.10.1399 ended normally after 1000 iterations
+    ## blavaan 0.5.10.1400 ended normally after 1000 iterations
     ## 
     ##   Estimator                                      BAYES
     ##   Optimization method                             MCMC
@@ -269,9 +273,8 @@ Prevent Detecting Important Misspecifications in Bayesian Confirmatory
 Factor Analysis.” In *Quantitative Psychology: The 83rd Annual Meeting
 of the Psychometric Society, New York, NY, 2018*, edited by Marie
 Wiberg, Steven Culpepper, Rianne Janssen, Jorge González, and Dylan
-Molenaar, 265:255–63. Springer Proceedings in Mathematics & Statistics.
-New York, NY, US: Springer.
-<https://doi.org/10.1007/978-3-030-01310-3_23>.
+Molenaar, vol. 265. Springer Proceedings in Mathematics & Statistics.
+Springer. <https://doi.org/10.1007/978-3-030-01310-3_23>.
 
 Muthén, Bengt, and Tihomir Asparouhov. 2012. “Bayesian Structural
 Equation Modeling: A More Flexible Representation of Substantive

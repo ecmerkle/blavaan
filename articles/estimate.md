@@ -89,6 +89,7 @@ requires an extra command prior to estimation. The most common commands
 would be
 
 ``` r
+
 library("future")
 plan("multicore") ## mac or linux
 plan("multisession") ## windows

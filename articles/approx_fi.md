@@ -4,7 +4,7 @@
 
 In SEM, one of the first steps is to evaluate the model’s global fit.
 This is commonly done by presenting multiple fit indices, with some of
-the most common being based on the model’s $\chi^{2}$. We have developed
+the most common being based on the model’s $`\chi^2`$. We have developed
 Bayesian versions of these indices (Garnier-Villarreal and Jorgensen
 2020) that can be computed with *blavaan*.
 
@@ -12,16 +12,17 @@ Bayesian versions of these indices (Garnier-Villarreal and Jorgensen
 
 This group of indices compares the hypothesized model against the
 perfect saturated model. It specifically uses the noncentrality
-parameter $\widehat{\lambda} = \chi^{2} - df$, with the df being
-adjusted by different model/data characterictics. Specific indices
-include Root Mean Square Error of approximation (RMSEA), McDonald’s
-centrality index (Mc), gamma-hat ($\widehat{\Gamma}$), and adjusted
-gamma-hat (${\widehat{\Gamma}}_{adj}$).
+parameter $`\hat{\lambda} = \chi^2 - df`$, with the df being adjusted by
+different model/data characterictics. Specific indices include Root Mean
+Square Error of approximation (RMSEA), McDonald’s centrality index (Mc),
+gamma-hat ($`\hat{\Gamma}`$), and adjusted gamma-hat
+($`\hat{\Gamma}_{adj}`$).
 
 We will show an example with the Holzinger and Swineford (1939) example.
 You first estimate your SEM/CFA model as usual
 
 ``` r
+
 HS.model <- ' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6
               speed   =~ x7 + x8 + x9 '
@@ -34,6 +35,7 @@ You then need to pass the model to the
 function
 
 ``` r
+
 gl_fits <- blavFitIndices(fit)
 ```
 
@@ -43,6 +45,7 @@ function. With this call, we see the 3 central tendency measures (mean
 median, and mode), the standard deviation, and the 90% Credible Interval
 
 ``` r
+
 summary(gl_fits, central.tendency = c("mean","median","mode"), prob = .90)
 ```
 
@@ -60,8 +63,8 @@ summary(gl_fits, central.tendency = c("mean","median","mode"), prob = .90)
 
 Another group of fit indices compares the hypothesized model with the
 *worst* possible model, so they are called incremental indices. Such
-indices compare your model’s $\chi_{H}^{2}$ to the *null* model’s
-$\chi_{0}^{2}$ in different ways. Indices include the Comparative Fit
+indices compare your model’s $`\chi^2_H`$ to the *null* model’s
+$`\chi^2_0`$ in different ways. Indices include the Comparative Fit
 Index (CFI), Tucker-Lewis Index (TLI), and Normed Fit Index (NFI).
 
 To estimate these indices we need to define and estimate the respective
@@ -73,6 +76,7 @@ You can specify your *null* model by including only the respective
 indicator variances in your model syntax, such as
 
 ``` r
+
 HS.model_null <- '
 x1 ~~ x1 
 x2 ~~ x2 
@@ -92,6 +96,7 @@ Once you have your hypothesized and null models, you pass both to the
 indices
 
 ``` r
+
 gl_fits_all <- blavFitIndices(fit, baseline.model = fit_null)
 
 summary(gl_fits_all, central.tendency = c("mean","median","mode"), prob = .90)
@@ -121,6 +126,7 @@ indices, this way you can explore further details. For example,
 diagnostic plots using the `bayesplot` package.
 
 ``` r
+
 dist_fits <- data.frame(gl_fits_all@indices)
 head(dist_fits)
 ```
@@ -137,6 +143,7 @@ Once we have saved the posterior distributions, we can explore the the
 histogram and scatterplots between indices.
 
 ``` r
+
 mcmc_pairs(dist_fits, pars = c("BRMSEA","BGammaHat","BCFI","BTLI"),
            diag_fun = "hist")
 ```
@@ -145,12 +152,12 @@ mcmc_pairs(dist_fits, pars = c("BRMSEA","BGammaHat","BCFI","BTLI"),
 
 ### Summary
 
-You can estimate posterior distributions for $\chi^{2}$ based global fit
+You can estimate posterior distributions for $`\chi^2`$ based global fit
 indices. Notice that here we only presented the fit indices based on the
 recommended method *devM* and with the recommended number of parameters
 metric *loo*. These can be adjusted by the user if desired.
 
-The general recommendation is to prefer $\widehat{\Gamma}$ and CFI, as
+The general recommendation is to prefer $`\hat{\Gamma}`$ and CFI, as
 these have shown to be less sensitive to model and data characteristics.
 
 These defaults and recommendations are made based on previous simulation

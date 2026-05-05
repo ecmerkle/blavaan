@@ -3,7 +3,7 @@
 ### Introduction
 
 The traditional method for model comparison in frequentist SEM (fSEM) is
-the $\chi^{2}$ (Likelihood Ratio Test) and its variations. But for BSEM,
+the $`\chi^2`$ (Likelihood Ratio Test) and its variations. But for BSEM,
 we would take the Bayesian model comparison methods, and apply them to
 SEM.
 
@@ -20,6 +20,7 @@ For this example we will use the Industrialization and Political
 Democracy example (Bollen 1989).
 
 ``` r
+
 model <- '
   # latent variable definitions
      ind60 =~ x1 + x2 + x3
@@ -51,42 +52,62 @@ uncertainty/information of the model prediction for each row in the data
 across all posterior draws. This is the Log-Pointwise-Predictive-Density
 (lppd). The WAIC is defined as
 
-$$\text{WAIC} = - 2\text{lppd} + 2\text{efp}_{\text{WAIC}},$$ The first
-term involves the log-likelihoods of observed data (marginal over latent
-variables) and the second term is the effective number of parameters.
-The first term, $\text{lppd}$, is estimated as:
+``` math
+\begin{equation}
+\text{WAIC} = -2\text{lppd} + 2\text{efp}_\text{WAIC},
+\end{equation}
+```
+The first term involves the log-likelihoods of observed data (marginal
+over latent variables) and the second term is the effective number of
+parameters. The first term, $`\text{lppd}`$, is estimated as:
 
-$$\widehat{\text{lppd}} = \sum\limits_{i = 1}^{n}\log(\frac{1}{S}\sum\limits_{S = 1}^{S}f\left( y_{i}|\theta^{S} \right))$$
+``` math
+\begin{equation}
+\widehat{\text{lppd}} = \sum^{n}_{i = 1} \log \Bigg(\frac{1}{S}\sum^{S}_{S=1}f(y_{i}|\theta^{S}) \Bigg)
+\end{equation}
+```
 
-where $S$ is the number of posterior draws and
-$f\left( y_{i}|\theta^{S} \right)$ is the density of observation $i$
-with respect to the parameter sampled at iteration $s$.
+where $`S`$ is the number of posterior draws and $`f(y_{i}|\theta^{S})`$
+is the density of observation $`i`$ with respect to the parameter
+sampled at iteration $`s`$.
 
-The effective number of parameter ($\text{efp}_{\text{WAIC}}$) is
+The effective number of parameter ($`\text{efp}_{\text{WAIC}}`$) is
 calculated as:
 
-$$\text{efp}_{\text{WAIC}} = \sum\limits_{i = 1}^{n}\text{var}_{s}\left( \log f\left( y_{i}|\theta \right) \right)$$
+``` math
+\begin{equation}\label{eq:efpWAIC}
+\text{efp}_\text{WAIC} = \sum^n_{i=1}\text{var}_{s}(\log f(y_{i}|\theta))
+\end{equation}
+```
 
-A separate variance is estimated for each observation $i$ across the $S$
-posterior draws.
+A separate variance is estimated for each observation $`i`$ across the
+$`S`$ posterior draws.
 
 ### Leave-One-Out cross-validation
 
-The $\text{LOO}$ measures the predictive density of each observation
+The $`\text{LOO}`$ measures the predictive density of each observation
 holding out one observation at the time and use the rest of the
 observations to update the prior. This estimation is calculated via
-(Vehtari, Gelman, and Gabry 2017):
+(Vehtari et al. 2017):
 
-$$\text{LOO} = - 2\sum\limits_{i = 1}^{n}\log(\frac{\sum\limits_{s = 1}^{S}w_{i}^{s}f\left( y_{i}|\theta^{s} \right)}{\sum\limits_{s = 1}^{s}w_{i}^{s}})$$
+``` math
+\begin{equation}
+    \text{LOO} = -2\sum_{i=1}^{n} \log \Bigg(\frac{\sum^{S}_{s =1} w^{s}_{i}f(y_{i}|\theta^{s})}{\sum^{s}_{s=1} w^{s}_{i}}\Bigg)
+\end{equation}
+```
 
-Where the $w_{i}^{s}$ are Pareto-smoothed sampling weights based on the
-relative magnitude of individual $i$ density function across the $S$
+Where the $`w^s_{i}`$ are Pareto-smoothed sampling weights based on the
+relative magnitude of individual $`i`$ density function across the $`S`$
 posterior samples.
 
-The $\text{LOO}$ effective number of parameters involves the
-$\text{lppd}$ term from $\text{WAIC}$:
+The $`\text{LOO}`$ effective number of parameters involves the
+$`\text{lppd}`$ term from $`\text{WAIC}`$:
 
-$$\text{efp}_{\text{LOO}} = \text{lppd} + \text{LOO}/2$$
+``` math
+\begin{equation}
+    \text{efp}_\text{LOO} = \text{lppd} + \text{LOO}/2
+\end{equation}
+```
 
 ### Model comparison
 
@@ -101,15 +122,16 @@ respective difference.
 There are no clear cutoff rules on how to interpret and present these
 comparisons, and the researchers need to use their expert knowledge as
 part of the decision process. The best recommendation is to present the
-differences in elpd $\Delta\text{elpd}$, the standard error, and the
-ratio between them. If the ratio is at least $2$ can be consider
-evidence of differences between the models, and a ratio of $4$ would be
-considered stronger evidence.
+differences in elpd $`\Delta \text{elpd}`$, the standard error, and the
+ratio between them. If the ratio is at least $`2`$ can be consider
+evidence of differences between the models, and a ratio of $`4`$ would
+be considered stronger evidence.
 
 For the first example, we will compare the standard political democracy
-model, with a model where all factor regressions are fixed to $0$.
+model, with a model where all factor regressions are fixed to $`0`$.
 
 ``` r
+
 model <- '
   # latent variable definitions
      ind60 =~ x1 + x2 + x3
@@ -133,9 +155,11 @@ fit2 <- bsem(model, data=PoliticalDemocracy,
             burnin=500, sample=1000)
 ```
 
-Once we have the $2$ models, we can compare them with the `blavCompare`
+Once we have the $`2`$ models, we can compare them with the
+`blavCompare`
 
 ``` r
+
 bc12 <- blavCompare(fit1, fit2)
 ```
 
@@ -145,6 +169,7 @@ information criteria, the **best** model is the one with the lowest
 value
 
 ``` r
+
 bc12
 ```
 
@@ -219,10 +244,11 @@ bc12
     ## model2 -40.7       7.9
 
 In this case we can see that model 1 has lower LOOIC, and the ratio
-shows that the LOO differences is $5$ SEs of magnitude. This indicates
+shows that the LOO differences is $`5`$ SEs of magnitude. This indicates
 that the model with the estimated regressions is better
 
 ``` r
+
 abs(bc12$diff_loo[,"elpd_diff"] / bc12$diff_loo[,"se_diff"])
 ```
 
@@ -230,9 +256,10 @@ abs(bc12$diff_loo[,"elpd_diff"] / bc12$diff_loo[,"se_diff"])
     ##      NaN 5.156885
 
 Now, lets look at an example with a smaller difference between models,
-where only the smallest regression (`dem65~ind60`) is fixed to $0$.
+where only the smallest regression (`dem65~ind60`) is fixed to $`0`$.
 
 ``` r
+
 model <- '
   # latent variable definitions
      ind60 =~ x1 + x2 + x3
@@ -258,12 +285,13 @@ bc13 <- blavCompare(fit1, fit3)
 ```
 
 When we see the LOOIC, we see that the difference between the two models
-is minimal, and the ratio is $0.21$. This indicates that the models are
-functionally equivalent. In a case like this, it is up to the
+is minimal, and the ratio is $`0.21`$. This indicates that the models
+are functionally equivalent. In a case like this, it is up to the
 researchers to decide which model is a **better** representation, and
 theoretically stronger.
 
 ``` r
+
 bc13
 ```
 
@@ -338,6 +366,7 @@ bc13
     ## model1 -0.1       1.0
 
 ``` r
+
 abs(bc13$diff_loo[,"elpd_diff"] / bc13$diff_loo[,"se_diff"])
 ```
 
@@ -345,9 +374,10 @@ abs(bc13$diff_loo[,"elpd_diff"] / bc13$diff_loo[,"se_diff"])
     ##        NaN 0.05527664
 
 Lets do one last model, where only the largest regression
-(`dem65~dem60`) is fixed to $0$.
+(`dem65~dem60`) is fixed to $`0`$.
 
 ``` r
+
 model <- '
   # latent variable definitions
      ind60 =~ x1 + x2 + x3
@@ -374,10 +404,11 @@ bc14 <- blavCompare(fit1, fit4)
 
 In this case, by looking at the LOOIC, we see that model one is better
 (lower value), and the ratio of the difference shows that the model is
-$5$ SEs in magnitude. Indicating that there is evidence of model
+$`5`$ SEs in magnitude. Indicating that there is evidence of model
 predictive differences
 
 ``` r
+
 bc14
 ```
 
@@ -452,6 +483,7 @@ bc14
     ## model2 -23.6       4.0
 
 ``` r
+
 abs(bc14$diff_loo[,"elpd_diff"] / bc14$diff_loo[,"se_diff"])
 ```
 
@@ -483,9 +515,9 @@ accuracy, and the respective differences across posterior draws. They
 also provide us uncertainty estimates in the comparison.
 
 In most cases LOO and WAIC will lead to similar results, and LOO is
-recommended as the most stable metric (Vehtari, Gelman, and Gabry 2017).
-In general, a $\Delta\text{elpd}$ of at least $2$ standard errors and
-preferably $4$ standard errors can be interpreted as evidence of
+recommended as the most stable metric (Vehtari et al. 2017). In general,
+a $`\Delta \text{elpd}`$ of at least $`2`$ standard errors and
+preferably $`4`$ standard errors can be interpreted as evidence of
 differential predictive accuracy.
 
 ### References
@@ -496,12 +528,12 @@ Sons, Inc.
 
 McElreath, Richard. 2020. *Statistical Rethinking: A Bayesian Course
 with Examples in R and Stan*. 2nd ed. CRC Texts in Statistical Science.
-Boca Raton: Taylor; Francis, CRC Press.
+Taylor; Francis, CRC Press.
 
 Schad, Daniel J., Bruno Nicenboim, Paul-Christian Bürkner, Michael
 Betancourt, and Shravan Vasishth. 2022. “Workflow Techniques for the
-Robust Use of Bayes Factors.” *Psychological Methods*, March.
-<https://doi.org/10.1037/met0000472>.
+Robust Use of Bayes Factors.” *Psychological Methods*, ahead of print,
+March. <https://doi.org/10.1037/met0000472>.
 
 Tendeiro, Jorge N., and Henk A. L. Kiers. 2019. “A Review of Issues
 about Null Hypothesis Bayesian Testing.” *Psychological Methods* 24 (6):

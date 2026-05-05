@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-10.1399</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-10.1400</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -221,11 +221,11 @@ parameters.</p>
 <span><span class="co">## x1~~x9                     0.978</span></span>
 <span><span class="co">## x2~~x3                     0.977</span></span></code></pre>
 <p>Here we see that for the 2 highest parameters, the likely SEPC is
-x7~~x8 = 0.807250019181851 and visual=~x9 = 0.520720661163884. With this
-information we can decide to include one of these new parameters in the
-model (one at the time). For this example, because factor loadings have
-a larger impact on the model-implied covariance matrix, I would choose
-<strong>visual=~x9</strong></p>
+x7<sub></sub>x8 = 0.807250019181851 and visual=~x9 = 0.520720661163884.
+With this information we can decide to include one of these new
+parameters in the model (one at the time). For this example, because
+factor loadings have a larger impact on the model-implied covariance
+matrix, I would choose <strong>visual=~x9</strong></p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">HS.model</span> <span class="op">&lt;-</span> <span class="st">' visual  =~ x1 + x2 + x3 + x9</span></span>
 <span><span class="st">              textual =~ x4 + x5 + x6</span></span>
@@ -256,7 +256,7 @@ parameter to add, and SEPC as the effect size of the new parameter <span class="
 <div class="section level3 unnumbered">
 <h3 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h3>
-<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
+<div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-bentler_fit_1990" class="csl-entry">
 Bentler, P. M. 1990. <span>“Fit <span>Indexes</span>,
 <span>Lagrange</span> <span>Multipliers</span>, <span>Constraint</span>

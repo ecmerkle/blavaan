@@ -11,6 +11,7 @@ can be specified in the model syntax. Each is discussed below.
 The default priors can be seen via
 
 ``` r
+
 dpriors()
 ```
 
@@ -54,6 +55,7 @@ To modify prior distributions, we could simply supply a new text string
 to [`dpriors()`](https://blavaan.org/reference/dpriors.md) like this:
 
 ``` r
+
 mydp <- dpriors(lambda="normal(1,2)")
 mydp
 ```
@@ -83,6 +85,7 @@ specification. For example, consider the following syntax for the
 Holzinger and Swineford (1939) confirmatory factor model:
 
 ``` r
+
 HS.model <- ' visual  =~ x1 + prior("normal(1,2)")*x2 + x3
               textual =~ x4 + x5 + prior("normal(3,1.5)")*x6
               speed   =~ x7 + x8 + x9 
@@ -115,6 +118,7 @@ with support on (-1,1). It is safest to stick with beta priors here. For
 example, the syntax
 
 ``` r
+
 HS.model <- ' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6
               speed   =~ x7 + x8 + x9 

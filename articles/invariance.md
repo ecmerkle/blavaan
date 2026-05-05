@@ -11,6 +11,7 @@ Consider a measurement invariance study of the Holzinger and Swineford
 (1939) data. In lavaan, we may first estimate two models:
 
 ``` r
+
 HS.model <- ' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6
               speed   =~ x7 + x8 + x9 '
@@ -29,6 +30,7 @@ To accomplish this via blavaan, we can fit Bayesian versions of `fit1`
 and `fit2` using similar syntax.
 
 ``` r
+
 bfit1 <- bcfa(HS.model, data = HolzingerSwineford1939, group = "school")
 
 bfit2 <- bcfa(HS.model, data = HolzingerSwineford1939, group = "school", 
@@ -41,6 +43,7 @@ Model fit and comparison statistics are then available via the
 functions:
 
 ``` r
+
 fitMeasures(bfit1)
 
 fitMeasures(bfit2)
@@ -56,6 +59,7 @@ distributions. The `wiggle` argument can be used to invoke these types
 of constraints. For example:
 
 ``` r
+
 HS.model <- ' visual  =~ x1 + c("a", "a")*x2 + c("b", "b")*x3
               textual =~ x4 + x5 + x6
               speed   =~ x7 + x8 + x9 '
@@ -73,6 +77,7 @@ Using the above strategy, the syntax can become very cumbersome. In many
 cases, the `group.equal` argument can help here. For example:
 
 ``` r
+
 HS.model <- ' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6
               speed   =~ x7 + x8 + x9 '

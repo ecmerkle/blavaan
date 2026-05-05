@@ -5,6 +5,7 @@ draw posterior samples using the following *blavaan* code (where
 `save.lvs` saves the latent variable samples for further use):
 
 ``` r
+
   model <- ' 
     # latent variable definitions
     ind60 =~ x1 + x2 + x3
@@ -47,6 +48,7 @@ are available via the
 function:
 
 ``` r
+
 blavInspect(fit, 'rhat')
 blavInspect(fit, 'neff')
 ```
@@ -81,6 +83,7 @@ available from the
 function:
 
 ``` r
+
 summary(fit)
 fitMeasures(fit)
 ```
@@ -123,6 +126,7 @@ length `n.chains`, where each list entry has a row per posterior sample
 model):
 
 ``` r
+
 postmns <- blavInspect(fit, what = "lvmeans")
 postsamps <- blavInspect(fit, what = "lvs")
 ```
@@ -133,6 +137,7 @@ function will also return posterior samples of latent variables, but in
 a matrix instead of a list:
 
 ``` r
+
 postsamps <- blavPredict(fit, type = "lv")
 ```
 
@@ -148,6 +153,7 @@ predictions are returned in list format; for a matrix, see the last line
 of code below.
 
 ``` r
+
 evpreds <- blavPredict(fit, type = "yhat")
 postpreds <- blavPredict(fit, type = "ypred")
 mispreds <- blavPredict(fit, type = "ymis")
@@ -165,7 +171,6 @@ in the background and has some of that function’s flexibility.
 
 ### References
 
-Vehtari, Aki, Jonah Gabry, Mans Magnusson, Yuling Yao, Paul-Christian
-Bürkner, Topi Paananen, and Andrew Gelman. 2020. “Loo: Efficient
-Leave-One-Out Cross-Validation and WAIC for Bayesian Models.”
+Vehtari, Aki, Jonah Gabry, Mans Magnusson, et al. 2020. *Loo: Efficient
+Leave-One-Out Cross-Validation and WAIC for Bayesian Models*.
 <https://mc-stan.org/loo/>.

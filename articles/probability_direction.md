@@ -28,6 +28,7 @@ Democracy example (Bollen 1989). We will first estimate the latent
 regression model
 
 ``` r
+
 model <- '
   # latent variable definitions
      ind60 =~ x1 + x2 + x3
@@ -52,13 +53,14 @@ fit <- bsem(model, data=PoliticalDemocracy,
 
 We can then look at the overall model results with the `summary`
 function, in this case we are also asking for the standardized
-estimates, and $R^{2}$
+estimates, and $`R^2`$
 
 ``` r
+
 summary(fit, standardize=T, rsquare=T)
 ```
 
-    ## blavaan 0.5.10.1399 ended normally after 1000 iterations
+    ## blavaan 0.5.10.1400 ended normally after 1000 iterations
     ## 
     ##   Estimator                                      BAYES
     ##   Optimization method                             MCMC
@@ -229,12 +231,14 @@ To calculate the probability of direction we will use a function from
 the package `brms` (Bürkner 2017)
 
 ``` r
+
 library(brms)
 ```
 
 And we will need to extract the posterior draws as a matrix,
 
 ``` r
+
 mc_out <- as.matrix(blavInspect(fit, "mcmc", add.labels = FALSE))
 dim(mc_out)
 ```
@@ -242,6 +246,7 @@ dim(mc_out)
     ## [1] 3000   42
 
 ``` r
+
 colnames(mc_out)
 ```
 
@@ -267,6 +272,7 @@ parameter name equates to with the
 as follows
 
 ``` r
+
 pt <- partable(fit)[,c("lhs","op","rhs","pxnames")]
 pt
 ```
@@ -328,6 +334,7 @@ pt
 For this example we will focus on the regressions between factors
 
 ``` r
+
 pt[pt$op=="~",]
 ```
 
@@ -346,6 +353,7 @@ arguments, the posterior draws (`mc_out`) and a hypothesis
 that specifies the size for the credible intervals
 
 ``` r
+
 hypothesis(mc_out, "bet_sign[2] > 0", alpha = 0.05)
 ```
 
@@ -376,8 +384,8 @@ respective measures of variability (deviation and credible interval).
 can say that 91% of the posterior distribution of `dem65~ind60` is lower
 than 0. This is equivalent to the one-tail test. And `Evid.Ratio` is the
 evidence ratio for the hypothesis, when the hypothesis is of the form
-$a > b$, the evidence ratio is the ratio of the posterior probability of
-$a > b$ and the posterior probability of $a < b$
+$`a > b`$, the evidence ratio is the ratio of the posterior probability
+of $`a > b`$ and the posterior probability of $`a < b`$
 
 In another example, we want to know what proportion of the regression
 `dem60~ind60` is higher than 0. Here we can see that 100% of the
@@ -386,6 +394,7 @@ posterior probability is higher than 0, in such a case
 fulfills the hypothesis.
 
 ``` r
+
 hypothesis(mc_out, "bet_sign[1] > 0", alpha = 0.05)
 ```
 
@@ -417,6 +426,7 @@ that `dem60~ind60` is higher than `dem65~ind60`, and the mean of the
 difference (`dem60~ind60 - dem65~ind60`) is `Estimate=0.46`
 
 ``` r
+
 hypothesis(mc_out, "bet_sign[1] - bet_sign[2] > 0", alpha = 0.05)
 ```
 
@@ -468,6 +478,7 @@ standardized regressions, in this case we find that `0.79` proportion of
 the posterior is above `0.1`
 
 ``` r
+
 hypothesis(mc_out, "bet_sign[2] > .1", alpha = 0.05)
 ```
 
@@ -548,4 +559,4 @@ the Bayesian Framework.” *Frontiers in Psychology* 10: 2767.
 
 McElreath, Richard. 2020. *Statistical Rethinking: A Bayesian Course
 with Examples in R and Stan*. 2nd ed. CRC Texts in Statistical Science.
-Boca Raton: Taylor; Francis, CRC Press.
+Taylor; Francis, CRC Press.

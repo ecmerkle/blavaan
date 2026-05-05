@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-10.1399</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-10.1400</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -135,7 +135,7 @@ fully Bayesian generalization of the Akaike Information Criteria (AIC),
 where we have a measure of uncertainty/information of the model
 prediction for each row in the data across all posterior draws. This is
 the Log-Pointwise-Predictive-Density (lppd). The WAIC is defined as</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">WAIC</mtext><mo>=</mo><mo>−</mo><mn>2</mn><mtext mathvariant="normal">lppd</mtext><mo>+</mo><mn>2</mn><msub><mtext mathvariant="normal">efp</mtext><mtext mathvariant="normal">WAIC</mtext></msub><mo>,</mo></mrow><annotation encoding="application/x-tex">\begin{equation}
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">WAIC</mtext><mo>=</mo><mi>−</mi><mn>2</mn><mtext mathvariant="normal">lppd</mtext><mo>+</mo><mn>2</mn><msub><mtext mathvariant="normal">efp</mtext><mtext mathvariant="normal">WAIC</mtext></msub><mo>,</mo></mrow><annotation encoding="application/x-tex">\begin{equation}
 \text{WAIC} = -2\text{lppd} + 2\text{efp}_\text{WAIC},
 \end{equation}</annotation></semantics></math> The first term involves
 the log-likelihoods of observed data (marginal over latent variables)
@@ -143,13 +143,13 @@ and the second term is the effective number of parameters. The first
 term,
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="normal">lppd</mtext><annotation encoding="application/x-tex">\text{lppd}</annotation></semantics></math>,
 is estimated as:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><mtext mathvariant="normal">lppd</mtext><mo accent="true">̂</mo></mover><mo>=</mo><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mo>log</mo><mo minsize="3.0" maxsize="3.0" stretchy="false" form="prefix">(</mo><mfrac><mn>1</mn><mi>S</mi></mfrac><munderover><mo>∑</mo><mrow><mi>S</mi><mo>=</mo><mn>1</mn></mrow><mi>S</mi></munderover><mi>f</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>y</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">|</mo><msup><mi>θ</mi><mi>S</mi></msup><mo stretchy="true" form="postfix">)</mo></mrow><mo minsize="3.0" maxsize="3.0" stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\begin{equation}
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><mtext mathvariant="normal">lppd</mtext><mo accent="true">̂</mo></mover><mo>=</mo><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mo minsize="300%" maxsize="300%" stretchy="true" form="prefix">(</mo><mfrac><mn>1</mn><mi>S</mi></mfrac><munderover><mo>∑</mo><mrow><mi>S</mi><mo>=</mo><mn>1</mn></mrow><mi>S</mi></munderover><mi>f</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>y</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">|</mo><msup><mi>θ</mi><mi>S</mi></msup><mo stretchy="false" form="postfix">)</mo><mo minsize="300%" maxsize="300%" stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\begin{equation}
 \widehat{\text{lppd}} = \sum^{n}_{i = 1} \log \Bigg(\frac{1}{S}\sum^{S}_{S=1}f(y_{i}|\theta^{S}) \Bigg)
 \end{equation}</annotation></semantics></math></p>
 <p>where
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>S</mi><annotation encoding="application/x-tex">S</annotation></semantics></math>
 is the number of posterior draws and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>y</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">|</mo><msup><mi>θ</mi><mi>S</mi></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">f(y_{i}|\theta^{S})</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>y</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">|</mo><msup><mi>θ</mi><mi>S</mi></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">f(y_{i}|\theta^{S})</annotation></semantics></math>
 is the density of observation
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>
 with respect to the parameter sampled at iteration
@@ -157,7 +157,7 @@ with respect to the parameter sampled at iteration
 <p>The effective number of parameter
 (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mtext mathvariant="normal">efp</mtext><mtext mathvariant="normal">WAIC</mtext></msub><annotation encoding="application/x-tex">\text{efp}_{\text{WAIC}}</annotation></semantics></math>)
 is calculated as:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext mathvariant="normal">efp</mtext><mtext mathvariant="normal">WAIC</mtext></msub><mo>=</mo><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mtext mathvariant="normal">var</mtext><mi>s</mi></msub><mrow><mo stretchy="true" form="prefix">(</mo><mo>log</mo><mi>f</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>y</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">|</mo><mi>θ</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\begin{equation}\label{eq:efpWAIC}
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext mathvariant="normal">efp</mtext><mtext mathvariant="normal">WAIC</mtext></msub><mo>=</mo><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mtext mathvariant="normal">var</mtext><mi>s</mi></msub><mo stretchy="false" form="prefix">(</mo><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mi>f</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>y</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">|</mo><mi>θ</mi><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\begin{equation}\label{eq:efpWAIC}
 \text{efp}_\text{WAIC} = \sum^n_{i=1}\text{var}_{s}(\log f(y_{i}|\theta))
 \end{equation}</annotation></semantics></math></p>
 <p>A separate variance is estimated for each observation
@@ -173,8 +173,8 @@ posterior draws.</p>
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="normal">LOO</mtext><annotation encoding="application/x-tex">\text{LOO}</annotation></semantics></math>
 measures the predictive density of each observation holding out one
 observation at the time and use the rest of the observations to update
-the prior. This estimation is calculated via <span class="citation">(Vehtari, Gelman, and Gabry 2017)</span>:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">LOO</mtext><mo>=</mo><mo>−</mo><mn>2</mn><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mo>log</mo><mo minsize="3.0" maxsize="3.0" stretchy="false" form="prefix">(</mo><mfrac><mrow><munderover><mo>∑</mo><mrow><mi>s</mi><mo>=</mo><mn>1</mn></mrow><mi>S</mi></munderover><msubsup><mi>w</mi><mi>i</mi><mi>s</mi></msubsup><mi>f</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>y</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">|</mo><msup><mi>θ</mi><mi>s</mi></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><mrow><munderover><mo>∑</mo><mrow><mi>s</mi><mo>=</mo><mn>1</mn></mrow><mi>s</mi></munderover><msubsup><mi>w</mi><mi>i</mi><mi>s</mi></msubsup></mrow></mfrac><mo minsize="3.0" maxsize="3.0" stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\begin{equation}
+the prior. This estimation is calculated via <span class="citation">(Vehtari et al. 2017)</span>:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">LOO</mtext><mo>=</mo><mi>−</mi><mn>2</mn><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mo minsize="300%" maxsize="300%" stretchy="true" form="prefix">(</mo><mfrac><mrow><munderover><mo>∑</mo><mrow><mi>s</mi><mo>=</mo><mn>1</mn></mrow><mi>S</mi></munderover><msubsup><mi>w</mi><mi>i</mi><mi>s</mi></msubsup><mi>f</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>y</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">|</mo><msup><mi>θ</mi><mi>s</mi></msup><mo stretchy="false" form="postfix">)</mo></mrow><mrow><munderover><mo>∑</mo><mrow><mi>s</mi><mo>=</mo><mn>1</mn></mrow><mi>s</mi></munderover><msubsup><mi>w</mi><mi>i</mi><mi>s</mi></msubsup></mrow></mfrac><mo minsize="300%" maxsize="300%" stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\begin{equation}
     \text{LOO} = -2\sum_{i=1}^{n} \log \Bigg(\frac{\sum^{S}_{s =1} w^{s}_{i}f(y_{i}|\theta^{s})}{\sum^{s}_{s=1} w^{s}_{i}}\Bigg)
 \end{equation}</annotation></semantics></math></p>
 <p>Where the
@@ -208,7 +208,7 @@ respective difference.</p>
 comparisons, and the researchers need to use their expert knowledge as
 part of the decision process. The best recommendation is to present the
 differences in elpd
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><mtext mathvariant="normal">elpd</mtext></mrow><annotation encoding="application/x-tex">\Delta \text{elpd}</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">elpd</mtext></mrow><annotation encoding="application/x-tex">\Delta \text{elpd}</annotation></semantics></math>,
 the standard error, and the ratio between them. If the ratio is at least
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>2</mn><annotation encoding="application/x-tex">2</annotation></semantics></math>
 can be consider evidence of differences between the models, and a ratio
@@ -570,9 +570,9 @@ metrics for BSEM. They allow us to estimate the models’ out-of-sample
 predictive accuracy, and the respective differences across posterior
 draws. They also provide us uncertainty estimates in the comparison.</p>
 <p>In most cases LOO and WAIC will lead to similar results, and LOO is
-recommended as the most stable metric <span class="citation">(Vehtari,
-Gelman, and Gabry 2017)</span>. In general, a
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><mtext mathvariant="normal">elpd</mtext></mrow><annotation encoding="application/x-tex">\Delta \text{elpd}</annotation></semantics></math>
+recommended as the most stable metric <span class="citation">(Vehtari et
+al. 2017)</span>. In general, a
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">elpd</mtext></mrow><annotation encoding="application/x-tex">\Delta \text{elpd}</annotation></semantics></math>
 of at least
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>2</mn><annotation encoding="application/x-tex">2</annotation></semantics></math>
 standard errors and preferably
@@ -583,7 +583,7 @@ predictive accuracy.</p>
 <div class="section level3 unnumbered">
 <h3 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h3>
-<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
+<div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-bollen_structural_1989" class="csl-entry">
 Bollen, Kenneth A. 1989. <em>Structural <span>Equations</span> with
 <span>Latent</span> <span>Variables</span></em>. Wiley Series in
@@ -593,13 +593,13 @@ Probability and Mathematical Statistics. John Wiley &amp; Sons, Inc.
 McElreath, Richard. 2020. <em>Statistical Rethinking: A
 <span>Bayesian</span> Course with Examples in <span>R</span> and
 <span>Stan</span></em>. 2nd ed. <span>CRC</span> Texts in Statistical
-Science. Boca Raton: Taylor; Francis, CRC Press.
+Science. Taylor; Francis, CRC Press.
 </div>
 <div id="ref-schad_workflow_2022" class="csl-entry">
 Schad, Daniel J., Bruno Nicenboim, Paul-Christian Bürkner, Michael
 Betancourt, and Shravan Vasishth. 2022. <span>“Workflow Techniques for
 the Robust Use of Bayes Factors.”</span> <em>Psychological Methods</em>,
-March. <a href="https://doi.org/10.1037/met0000472" class="external-link">https://doi.org/10.1037/met0000472</a>.
+ahead of print, March. <a href="https://doi.org/10.1037/met0000472" class="external-link">https://doi.org/10.1037/met0000472</a>.
 </div>
 <div id="ref-tendeiro_review_2019" class="csl-entry">
 Tendeiro, Jorge N., and Henk A. L. Kiers. 2019. <span>“A Review of

@@ -19,11 +19,12 @@ of iterations, and a convergence value higher than the desired such as
 `rhat <- 20`.
 
 Then the loop will be set stop when the convergence criteria (`rhat`) is
-lower than a desired value, like $\widehat{R} < 1.05$, we specify this
+lower than a desired value, like $`\hat{R} < 1.05`$, we specify this
 with `while(rhat > 1.05)`, meaning the the loop will continue as long as
 rhat is higher than 1.05.
 
 ``` r
+
 HS.model <- ' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6
               speed   =~ x7 + x8 + x9 '
@@ -45,11 +46,12 @@ while(rhat > 1.05) {
 
 Then inside the loop we will increase the number of `BURN` iterations by
 1000 in this example. And after estimating the model, we will evaluate
-the convergence by getting the highest estimated $\widehat{R}$, and
+the convergence by getting the highest estimated $`\hat{R}`$, and
 printing it in the screen so you will see how far is the model from
 converging.
 
 ``` r
+
 print(paste0("Rhat=",rhat))  
 ```
 
@@ -63,6 +65,7 @@ according to your case.
 And you can visualize the convergence with the trace plots
 
 ``` r
+
 plot(fit, pars = 1:9, plot.type = "trace")
 ```
 
@@ -70,17 +73,16 @@ plot(fit, pars = 1:9, plot.type = "trace")
 
 ### Convergence criteria
 
-In this example we use $\widehat{R} < 1.05$ as the convergence criteria.
-We recommend you to use this or $\widehat{R} < 1.01$ as the convergence
+In this example we use $`\hat{R} < 1.05`$ as the convergence criteria.
+We recommend you to use this or $`\hat{R} < 1.01`$ as the convergence
 criteria, but not higher.
 
-As $\widehat{R}$ approximates 1, we can argue that the model has
-converged as the estimates have achieve stability between and within
-chains (Gelman et al. 2014)
+As $`\hat{R}`$ approximates 1, we can argue that the model has converged
+as the estimates have achieve stability between and within chains
+(Gelman et al. 2014)
 
 ### References
 
 Gelman, Andrew, John Carlin, Hal Stern, David Dunson, Aki Vehtari, and
 Donald Rubin. 2014. *Bayesian Data Analysis, Third Edition (Chapman &
-Hall/CRC Texts in Statistical Science)*. Third. London: Chapman;
-Hall/CRC.
+Hall/CRC Texts in Statistical Science)*. Third. Chapman; Hall/CRC.

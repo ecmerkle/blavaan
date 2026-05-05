@@ -6,6 +6,7 @@ package (Gabry and Mahr 2021). We provide details here about how this
 functionality works. We will use a 3-factor model for demonstration:
 
 ``` r
+
 HS.model <- ' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6
               speed   =~ x7 + x8 + x9 '
@@ -26,6 +27,7 @@ So, for example, a trace plot of the first four model parameters looks
 like
 
 ``` r
+
 plot(fit, pars = 1:4, plot.type = "trace")
 ```
 
@@ -48,6 +50,7 @@ possibilities. One starting point for exploring *ggplot2* is
 [here](https://ggplot2.tidyverse.org/).
 
 ``` r
+
 p <- plot(fit, pars = 1:4, plot.type = "trace", showplot = FALSE)
 
 p + facet_text(size=15) + legend_none()
@@ -62,6 +65,7 @@ facilitated by extracting the posterior samples or the Stan model, via
 [`blavInspect()`](https://blavaan.org/reference/blavInspect.md):
 
 ``` r
+
 ## list of draws
 ## (one list entry per chain):
 draws <- blavInspect(fit, "mcmc")
@@ -77,5 +81,5 @@ modobj <- blavInspect(fit, "mcobj")
 
 ### References
 
-Gabry, Jonah, and Tristan Mahr. 2021. “Bayesplot: Plotting for Bayesian
-Models.” <https://mc-stan.org/bayesplot/>.
+Gabry, Jonah, and Tristan Mahr. 2021. *Bayesplot: Plotting for Bayesian
+Models*. <https://mc-stan.org/bayesplot/>.

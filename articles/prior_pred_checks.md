@@ -16,7 +16,7 @@ order to asses whether a prior is appropriate (Gabry et al. 2019). A
 posterior predictive check generates replicated data according to the
 posterior predictive distribution. In contrast, the prior predictive
 check generates data according to the prior predictive distribution
-$y^{sim} \sim p(y)$.
+$`y^{sim} ∼ p(y)`$.
 
 The prior predictive distribution is just like the posterior predictive
 distribution with no observed data, so that a prior predictive check is
@@ -24,13 +24,11 @@ nothing more than the limiting case of a posterior predictive check with
 no data.
 
 This is easy to carry out mechanically by simulating parameters
-$\theta^{sim} \sim p(\theta)$ according to the priors, then simulating
-data $y^{sim} \sim p\left( y \mid \theta^{sim} \right)$ according to the
-sampling distribution given the simulated parameters. The result is a
-simulation from the joint distribution,
-$\left( y^{sim},\theta^{sim} \right) \sim p(y,\theta)$ and thus
-$y^{sim} \sim p(y)$ is a simulation from the prior predictive
-distribution.
+$`θ^{sim}∼p(\theta)`$ according to the priors, then simulating data
+$`y^{sim}∼p(y∣ \theta^{sim})`$ according to the sampling distribution
+given the simulated parameters. The result is a simulation from the
+joint distribution, $`(y^{sim},θ^{sim})∼p(y,\theta)`$ and thus
+$`y^{sim}∼p(y)`$ is a simulation from the prior predictive distribution.
 
 In *blavaan* we can get PPC when we use the argument `prisamp=TRUE` ,
 this will tell blavaan to ignore the data and build distributions only
@@ -41,11 +39,12 @@ using the default priors.
 
 We will show an example with the Holzinger and Swineford (1939) data,
 first a case with weakly informative priors. Here we are stpecifying
-that the observeded variable intercepts will have a prior of $N(3,2)$,
-the factor loadings will have a prior of $N(0.4,2)$, and the residual
-standard deviation with a prior of $\Gamma(1,1)$.
+that the observeded variable intercepts will have a prior of
+$`N(3, 2)`$, the factor loadings will have a prior of $`N(0.4, 2)`$, and
+the residual standard deviation with a prior of $`\Gamma(1,1)`$.
 
 ``` r
+
 priors <- dpriors(nu="normal(3,2)",
                   lambda="normal(0.4, 2)",
                   theta="gamma(1,1)[sd]")
@@ -56,6 +55,7 @@ argument, and with `prisamp=TRUE`, so getting PPC instead of posterior
 distributions.
 
 ``` r
+
 HS.model <- ' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6
               speed   =~ x7 + x8 + x9 '
@@ -80,6 +80,7 @@ with the `plot.type = "dens"` argument we can plot the density
 distributions
 
 ``` r
+
 plot(fit_wi, pars=1:9, plot.type = "dens")
 ```
 
@@ -89,6 +90,7 @@ You can also pick which parameters to plot, like the factor correlations
 by chossing parameters `19:21` in this case
 
 ``` r
+
 plot(fit_wi, pars=19:21, plot.type = "dens")
 ```
 
@@ -118,6 +120,7 @@ default priors with the function
 [`dpriors()`](https://blavaan.org/reference/dpriors.md)
 
 ``` r
+
 dpriors()
 ```
 
@@ -133,6 +136,7 @@ with the default priors, and with `prisamp=TRUE`, so getting PPC instead
 of posterior distributions.
 
 ``` r
+
 fit_df <- bcfa(HS.model, data=HolzingerSwineford1939, 
             std.lv=TRUE, meanstructure=T, test = "none", 
             prisamp = T)
@@ -143,6 +147,7 @@ with the default diffuse priors, the model allows up to very high values
 such as -30 to 30
 
 ``` r
+
 plot(fit_df, pars=1:9, plot.type = "dens")
 ```
 
@@ -160,8 +165,8 @@ for the first factor loading) (Merkle et al. 2023)
 
 ### References
 
-Gabry, Jonah, and Tristan Mahr. 2021. “Bayesplot: Plotting for Bayesian
-Models.” <https://mc-stan.org/bayesplot/>.
+Gabry, Jonah, and Tristan Mahr. 2021. *Bayesplot: Plotting for Bayesian
+Models*. <https://mc-stan.org/bayesplot/>.
 
 Gabry, Jonah, Daniel Simpson, Aki Vehtari, Michael Betancourt, and
 Andrew Gelman. 2019. “Visualization in Bayesian Workflow.” *Journal of

@@ -33,24 +33,27 @@ parameters (the latent variables are integrated out of our likelihoods
 here; similar to the description from Merkle et al. (2021)).
 
 In our data augmentation implementation, each ordinal observation (e.g.,
-$y$) is used to generate a continuous, underlying counterpart (e.g.,
-$y^{*}$). This $y^{*}$ must obey the model’s threshold parameters
-(commonly denoted $\mathbf{τ}$), based on the value of the observed
-data. For example, ignoring subscripts on $y^{*}$ and assuming an
-ordinal variable with 4 categories, we would have $$\begin{aligned}
-{y^{*} < \tau_{1}} & {{\mspace{6mu}\text{if}\mspace{6mu}}y = 1} \\
-{\tau_{1} < \ y^{*} < \tau_{2}} & {{\mspace{6mu}\text{if}\mspace{6mu}}y = 2} \\
-{\tau_{2} < \ y^{*} < \tau_{3}} & {{\mspace{6mu}\text{if}\mspace{6mu}}y = 3} \\
-{y^{*} > \ \tau_{3}} & {{\mspace{6mu}\text{if}\mspace{6mu}}y = 4}
-\end{aligned}$$ where we require $\tau_{1} < \tau_{2} < \tau_{3}$. We
-generate such a $y^{*}$ separately for each ordinal observation in the
-dataset. These all become additional, bounded parameters in the Stan
-file.
+$`y`$) is used to generate a continuous, underlying counterpart (e.g.,
+$`y^\ast`$). This $`y^\ast`$ must obey the model’s threshold parameters
+(commonly denoted $`\mathbf{\tau}`$), based on the value of the observed
+data. For example, ignoring subscripts on $`y^\ast`$ and assuming an
+ordinal variable with 4 categories, we would have
+``` math
+\begin{align*}
+y^* < \tau_1 &\text{ if }y = 1 \\
+\tau_1 <\ y^* < \tau_2 &\text{ if }y = 2 \\
+\tau_2 <\ y^* < \tau_3 &\text{ if }y = 3 \\
+y^* >\ \tau_3 &\text{ if }y = 4
+\end{align*}
+```
+where we require $`\tau_1 < \tau_2 < \tau_3`$. We generate such a
+$`y^*`$ separately for each ordinal observation in the dataset. These
+all become additional, bounded parameters in the Stan file.
 
 The Stan User’s Guide has a helpful example of multivariate probit
 regression using a related approach; see
 <https://mc-stan.org/docs/2_27/stan-users-guide/multivariate-outcomes.html>.
-The trickiest parts involve enforcing the boundaries of the $y^{*}$
+The trickiest parts involve enforcing the boundaries of the $`y^*`$
 variables, and ensuring that the threshold parameters for each ordinal
 variable are ordered correctly (while allowing for the possibility that
 different ordinal variables have different numbers of thresholds). These
@@ -66,7 +69,7 @@ continuous data.
 
 ### Thresholds & Priors
 
-The prior distributions on the threshold ($\tau$) parameters are more
+The prior distributions on the threshold ($`\tau`$) parameters are more
 involved than they may appear. This is because, as described in the
 previous section, the threshold parameters for a single variable must be
 ordered. So if we say, for example, that all thresholds have a
@@ -81,7 +84,7 @@ quote from
 
 To address this issue, we first define an unconstrained, unordered
 parameter vector whose length equals the number of thresholds in the
-model. Call this vector ${\mathbf{τ}}^{*}$. We then obtain ordered
+model. Call this vector $`\mathbf{\tau}^*`$. We then obtain ordered
 thresholds by exponentiating the unordered parameter vector in a
 specific manner. The manner in which this works is exactly the same as
 how Stan defines a parameter of type `ordered`. See
@@ -92,33 +95,39 @@ package).
 
 The idea is most easily shown via example. Say that we have an ordinal
 variable with 4 categories. Then the three thresholds for this variable
-are obtained via: $$\begin{aligned}
-\tau_{1} & {= \tau_{1}^{*}} \\
-\tau_{2} & {= \tau_{1}^{*} + \exp\left( \tau_{2}^{*} \right)} \\
-\tau_{3} & {= \tau_{1}^{*} + \exp\left( \tau_{2}^{*} \right) + \exp\left( \tau_{3}^{*} \right).}
-\end{aligned}$$ We then place normal prior distributions on the
-unordered $\tau^{*}$ parameters, as opposed to placing priors on the
-ordered $\tau$ parameters. These normal priors imply that the lowest
-threshold ($\tau_{1}$ above) has a normal prior, while differences
-between successive $\tau$’s have log-normal priors. In blavaan, these
-priors can be specified in the usual two ways. First, we could add the
-`dp` argument to a model estimation command as follows.
+are obtained via:
+``` math
+\begin{align*}
+\tau_1 &= \tau^*_1 \\
+\tau_2 &= \tau^*_1 + \exp(\tau^*_2) \\
+\tau_3 &= \tau^*_1 + \exp(\tau^*_2) + \exp(\tau^*_3).
+\end{align*}
+```
+We then place normal prior distributions on the unordered $`\tau^*`$
+parameters, as opposed to placing priors on the ordered $`\tau`$
+parameters. These normal priors imply that the lowest threshold
+($`\tau_1`$ above) has a normal prior, while differences between
+successive $`\tau`$’s have log-normal priors. In blavaan, these priors
+can be specified in the usual two ways. First, we could add the `dp`
+argument to a model estimation command as follows.
 
 ``` r
+
 dp = dpriors(tau = "normal(0, .5)")
 ```
 
-which would assign this prior to all the unordered $\tau^{*}$ parameters
+which would assign this prior to all the unordered $`\tau^*`$ parameters
 in the model. Second, we could specify priors for specific threshold
 parameters in the model specification syntax. For example, say that we
 have a 4-category observed variable called `x1`. Then unique priors for
 each the three thresholds could be specified in the model syntax via
 
 ``` r
+
 x1 | prior("normal(-1, 1)") * t1 + prior("normal(0, .5)") * t2 + prior("normal(0, 1)") * t3
 ```
 
-It is not clear at this time that priors on the $\tau^{*}$ parameters
+It is not clear at this time that priors on the $`\tau^*`$ parameters
 are the best option. In a 2019 paper, Michael Betancourt describes a
 Dirichlet prior that regularizes the thresholds of an ordinal regression
 model. Such a strategy would seem to work for SEM, and it could be
@@ -132,19 +141,19 @@ variable are sparse. These issues warrant further study.
 Once we get to continuous data in the model block, it seems reasonable
 to expect simple likelihood computations. But it depends on what
 likelihood you want to compute. The likelihood used for sampling in Stan
-is a simple multivariate normal of the $y^{*}$ observations, combined
+is a simple multivariate normal of the $`y^*`$ observations, combined
 with any continuous observed variables in the model. This is indeed
 simple to compute. But it is not the likelihood you want to use for
-model comparison. For one thing, all the $y^{*}$ parameters associated
+model comparison. For one thing, all the $`y^*`$ parameters associated
 with ordinal data are involved in this likelihood, so quantities like
 the effective number of parameters become very inflated. The number of
 parameters involved in this likelihood also increases with sample size,
 which is generally bad in the land of model comparison metrics. See
-Merkle, Furr, and Rabe-Hesketh (2019) for more detail here.
+Merkle et al. (2019) for more detail here.
 
 All this means that, for quantities like WAIC and PSIS-LOO, we must
 compute a second model likelihood that involves the observed, ordinal
-$y$ variables and that integrates over the latent $y^{*}$ variables.
+$`y`$ variables and that integrates over the latent $`y^*`$ variables.
 This is a difficult problem that amounts to evaluating the CDF of a
 sometimes-high-dimensional, multivariate normal distribution (see Chib
 and Greenberg 1998, Equation 11). There are multiple possibilities for
@@ -166,6 +175,7 @@ For example, to draw 100 samples for the approximation, a call to
 would include the argument
 
 ``` r
+
 mcmcextra = list(data = list(llnsamp = 100))
 ```
 
@@ -181,21 +191,20 @@ On the other hand, approximation of the multivariate normal CDF is a
 general problem that has multiple fast, efficient, open implementations,
 so long as there are not too many ordinal variables in your model.
 
-There also exists a relatively new method by Z. I. Botev (2017) for
-evaluating the CDF of the multivariate normal, with an implementation of
-the method appearing in the package *TruncatedNormal* (Z. Botev and
-Belzile 2021). This method is especially useful for evaluating
-high-dimensional normal distributions (in our case, with more than about
-15 ordinal variables), and it may be incorporated in future versions of
-*blavaan*.
+There also exists a relatively new method by Botev (2017) for evaluating
+the CDF of the multivariate normal, with an implementation of the method
+appearing in the package *TruncatedNormal* (Botev and Belzile 2021).
+This method is especially useful for evaluating high-dimensional normal
+distributions (in our case, with more than about 15 ordinal variables),
+and it may be incorporated in future versions of *blavaan*.
 
 ### Comparison to *lavaan*
 
 Ordinal SEM is associated with two types of model parameterizations:
 *delta* and *theta*. These refer to different scale parameterizations of
-the $y^{*}$ variables: *delta* refers to the total standard deviation of
-$y^{*}$ (including variability due to latent variables), and *theta*
-refers to the residual standard deviation of $y^{*}$.
+the $`y^*`$ variables: *delta* refers to the total standard deviation of
+$`y^*`$ (including variability due to latent variables), and *theta*
+refers to the residual standard deviation of $`y^*`$.
 
 In *blavaan*, only the theta parameterization is implemented. So, if you
 want to compare *lavaan* results to *blavaan* results, you need to use
@@ -226,6 +235,7 @@ users can change the default by supplying an `emiter` value via the
 `mcmcextra` argument. For example,
 
 ``` r
+
 mcmcextra = list(data = list(emiter = 50))
 ```
 
@@ -267,12 +277,12 @@ the time of package installation). Say that the user wants priors on
 precisions. We transform the standard deviations to precisions in the
 `model` block, then put the prior on the precision. In addition to this
 prior, we need the Jacobian of the function that starts with a standard
-deviation (call it $\sigma$) and transforms to precision
-($\sigma^{- 2}$). The derivative of $\sigma^{- 2}$ with respect to
-$\sigma$ is $- 2\sigma^{- 3}$. And because this is a simple function
+deviation (call it $`\sigma`$) and transforms to precision
+($`\sigma^{-2}`$). The derivative of $`\sigma^{-2}`$ with respect to
+$`\sigma`$ is $`-2 \sigma^{-3}`$. And because this is a simple function
 mapping a single parameter to a different value, the Jacobian is the
-absolute value of this derivative, which is $2\sigma^{- 3}$. In the Stan
-file, we would then add the log of this Jacobian to `target`:
+absolute value of this derivative, which is $`2 \sigma^{-3}`$. In the
+Stan file, we would then add the log of this Jacobian to `target`:
 
 ``` cpp
 target += log(2) - 3*log(sigma)
@@ -302,7 +312,7 @@ Modeling: A Multidisciplinary Journal* 28 (1): 1–14.
 <https://doi.org/10.1080/10705511.2020.1764360>.
 
 Azzalini, A., and A. Genz. 2020. *The R Package `mnormt`: The
-Multivariate Normal and $t$ Distributions (Version 2.0.2)*.
+Multivariate Normal and $`t`$ Distributions (Version 2.0.2)*.
 <http://azzalini.stat.unipd.it/SW/Pkg-mnormt/>.
 
 Bhattacjarjee, Samsiddhi. 2016. *tmvnsim: Truncated Multivariate Normal

@@ -19,7 +19,7 @@ parameter that was not included (Bentler 1990).
 Modification indices present different **indices** to quantify the
 effect of each parameter, and we will focus on two here. These are (a)
 the modification index (MI) or Lagrange multiplier, which estimates the
-extent to which the model’s chi-square ($\chi^{2}$) test statistic would
+extent to which the model’s chi-square ($`\chi^2`$) test statistic would
 decrease if a parameter were added to the model and freely estimated,
 and (b) standardized expected parameter change (SEPC), which is the
 approximated standardized value of the parameter if it were to be
@@ -33,6 +33,7 @@ We will show an example with the Holzinger and Swineford (1939) model.
 You first estimate your SEM/CFA model as usual
 
 ``` r
+
 HS.model <- ' visual  =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6
               speed   =~ x7 + x8 + x9 '
@@ -45,6 +46,7 @@ modification indices. The list below contains two functions that
 estimate and save the MI and SEPC.
 
 ``` r
+
 discFUN <- list(
   mod.ind_mi = function(object){
     temp <- modificationindices(object, free.remove = F)
@@ -67,6 +69,7 @@ With this function, the MI and SEPC are computed for each posterior
 sample, leading to posterior distributions for each of them.
 
 ``` r
+
 out <- ppmc(fit, discFUN = discFUN)
 ```
 
@@ -76,6 +79,7 @@ impact in overall model fit (according to EAP) is **visual=~x9**, the
 cross-loading from the Visual factor to item **x9**.
 
 ``` r
+
 summary(out, prob=.9, discFUN = "mod.ind_mi", sort.by="EAP", decreasing=T)[1:5,]
 ```
 
@@ -103,6 +107,7 @@ highest impact would be the residual correlation between indicators
 **x7** and **x8**
 
 ``` r
+
 summary(out, prob=.9, discFUN = "mod.ind_mi", sort.by="Median", decreasing=T)[1:5,]
 ```
 
@@ -130,6 +135,7 @@ parameter is best to include next, and we can use the SEPC to evaluate
 the **likely** effect size for the respective parameters.
 
 ``` r
+
 summary(out, prob=.9, discFUN = "mod.ind_sepc.all", sort.by="EAP", decreasing=T)[1:5,]
 ```
 
@@ -152,14 +158,15 @@ summary(out, prob=.9, discFUN = "mod.ind_sepc.all", sort.by="EAP", decreasing=T)
     ## x1~~x9                     0.978
     ## x2~~x3                     0.977
 
-Here we see that for the 2 highest parameters, the likely SEPC is
-x7\~~x8 = 0.807250019181851 and visual=~x9 = 0.520720661163884. With
-this information we can decide to include one of these new parameters in
-the model (one at the time). For this example, because factor loadings
-have a larger impact on the model-implied covariance matrix, I would
-choose **visual=~x9**
+Here we see that for the 2 highest parameters, the likely SEPC is x7x8 =
+0.807250019181851 and visual=~x9 = 0.520720661163884. With this
+information we can decide to include one of these new parameters in the
+model (one at the time). For this example, because factor loadings have
+a larger impact on the model-implied covariance matrix, I would choose
+**visual=~x9**
 
 ``` r
+
 HS.model <- ' visual  =~ x1 + x2 + x3 + x9
               textual =~ x4 + x5 + x6
               speed   =~ x7 + x8 + x9 '

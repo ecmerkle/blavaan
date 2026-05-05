@@ -8,6 +8,7 @@ Consequently, examples involving *lavaan* also generally apply to
 *blavaan*, such as the *lavaan* tutorial example below.
 
 ``` r
+
 data(Demo.twolevel, package = "lavaan")
 
 model <- '
@@ -48,8 +49,8 @@ the `save.lvs = TRUE` argument in their `bcfa/bsem/bgrowth/blavaan`
 commands. Marginal information criteria (marginal over all latent
 variables) are also automatically computed, with these information
 criteria generally being preferred over those than condition on latent
-variables (see Merkle, Furr, and Rabe-Hesketh 2019 for detail in the
-context of single-level models).
+variables (see Merkle et al. 2019 for detail in the context of
+single-level models).
 
 ### Bayes-specific Options
 

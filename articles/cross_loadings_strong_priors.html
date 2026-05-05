@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-10.1399</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-10.1400</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -121,7 +121,7 @@ function, looking at the posterior distribution for the factor loadings,
 correlations, intercepts and variances.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit_df</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## blavaan 0.5.10.1399 ended normally after 1000 iterations</span></span>
+<pre><code><span><span class="co">## blavaan 0.5.10.1400 ended normally after 1000 iterations</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   Estimator                                      BAYES</span></span>
 <span><span class="co">##   Optimization method                             MCMC</span></span>
@@ -188,7 +188,7 @@ correlations, intercepts and variances.</p>
 <span><span class="co">##     textual           1.000                                                    </span></span>
 <span><span class="co">##     speed             1.000</span></span></code></pre>
 <p>Next, we will add all possible cross-loadings with a strong prior of
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>0</mn><mo>,</mo><mi>σ</mi><mo>=</mo><mn>0.08</mn><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">N(0, \sigma = 0.08)</annotation></semantics></math>.
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo stretchy="false" form="prefix">(</mo><mn>0</mn><mo>,</mo><mi>σ</mi><mo>=</mo><mn>0.08</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">N(0, \sigma = 0.08)</annotation></semantics></math>.
 The prior centers the loadings around 0 and allows them little space to
 move.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
@@ -223,7 +223,7 @@ be kept in the model, by looking at the posterior mean
 (<code>Estimate</code>) and credible interval.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit_cl</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## blavaan 0.5.10.1399 ended normally after 1000 iterations</span></span>
+<pre><code><span><span class="co">## blavaan 0.5.10.1400 ended normally after 1000 iterations</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   Estimator                                      BAYES</span></span>
 <span><span class="co">##   Optimization method                             MCMC</span></span>
@@ -334,7 +334,7 @@ al. 2019)</span>.</p>
 <div class="section level3 unnumbered">
 <h3 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h3>
-<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
+<div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-holswi39" class="csl-entry">
 Holzinger, K. J., and F. A. Swineford. 1939. <em>A Study of Factor
 Analysis: <span>T</span>he Stability of a Bi-Factor Solution</em>.
@@ -350,9 +350,8 @@ Can Prevent Detecting Important Misspecifications in
 <span>Psychometric</span> <span>Society</span>, <span>New</span>
 <span>York</span>, <span>NY</span>, 2018</em>, edited by Marie Wiberg,
 Steven Culpepper, Rianne Janssen, Jorge González, and Dylan Molenaar,
-265:255–63. Springer <span>Proceedings</span> in
-<span>Mathematics</span> &amp; <span>Statistics</span>. New York, NY,
-US: Springer. <a href="https://doi.org/10.1007/978-3-030-01310-3_23" class="external-link">https://doi.org/10.1007/978-3-030-01310-3_23</a>.
+vol. 265. Springer <span>Proceedings</span> in <span>Mathematics</span>
+&amp; <span>Statistics</span>. Springer. <a href="https://doi.org/10.1007/978-3-030-01310-3_23" class="external-link">https://doi.org/10.1007/978-3-030-01310-3_23</a>.
 </div>
 <div id="ref-muthen_bayesian_2012" class="csl-entry">
 Muthén, Bengt, and Tihomir Asparouhov. 2012. <span>“Bayesian Structural

@@ -14,6 +14,7 @@ For this example we will use the Industrialization and Political
 Democracy example (Bollen 1989).
 
 ``` r
+
 model <- '
   # latent variable definitions
      ind60 =~ x1 + x2 + x3
@@ -39,22 +40,22 @@ fit <- bsem(model, data=PoliticalDemocracy,
 
 ### Convergence
 
-The primary convergence diagnostic is $\widehat{R}$, which compares the
+The primary convergence diagnostic is $`\hat{R}`$, which compares the
 between- and within-chain samples of model parameters and other
 univariate quantities of interest (Vehtari et al. 2021). If chains have
 not mixed well (ie, the between- and within-chain estimates don’t
-agree), $\widehat{R}$ is larger than 1. We recommend running at least
+agree), $`\hat{R}`$ is larger than 1. We recommend running at least
 three chains by default and only using the posterior samples if
-$\widehat{R} < 1.05$ for all the parameters.
+$`\hat{R} < 1.05`$ for all the parameters.
 
-`blavaan` presents the $\widehat{R}$ reported by the underlying MCMC
+`blavaan` presents the $`\hat{R}`$ reported by the underlying MCMC
 program, either Stan or JAGS (Stan by default). We can obtain the
-$\widehat{R}$ from the
-[`summary()`](https://rdrr.io/r/base/summary.html) function, and we can
-also extract it with the
+$`\hat{R}`$ from the [`summary()`](https://rdrr.io/r/base/summary.html)
+function, and we can also extract it with the
 [`blavInspect()`](https://blavaan.org/reference/blavInspect.md) function
 
 ``` r
+
 blavInspect(fit, "rhat")
 ```
 
@@ -74,20 +75,22 @@ blavInspect(fit, "rhat")
     ##   1.0023612   1.0035633   1.0023965   1.0019605   1.0026057   1.0030892
 
 With large models it can be cumbersome to look over all of these
-entries. We can instead find the largest $\widehat{R}$ to see if they
-are all less than $1.05$
+entries. We can instead find the largest $`\hat{R}`$ to see if they are
+all less than $`1.05`$
 
 ``` r
+
 max(blavInspect(fit, "psrf"))
 ```
 
     ## [1] 1.003563
 
-If all $\widehat{R} < 1.05$ then we can establish that the MCMC chains
+If all $`\hat{R} < 1.05`$ then we can establish that the MCMC chains
 have converged to a stable solution. If the model has not converged, you
 might increase the number of `burnin` iterations
 
 ``` r
+
 fit <- bsem(model, data=PoliticalDemocracy,
             std.lv=T, meanstructure=T, n.chains=3,
             burnin=1000, sample=1000)
@@ -120,6 +123,7 @@ convert them to independent samples. In `blavaan` we can print it from
 the `summary` function with the `neff` argument
 
 ``` r
+
 summary(fit, neff=T)
 ```
 
@@ -127,6 +131,7 @@ We can also extract only those with the
 [`blavInspect()`](https://blavaan.org/reference/blavInspect.md) function
 
 ``` r
+
 blavInspect(fit, "neff")
 ```
 
@@ -155,6 +160,7 @@ And we can easily find the lowest ESS with the
 [`min()`](https://rdrr.io/r/base/Extremes.html) function:
 
 ``` r
+
 min(blavInspect(fit, "neff"))
 ```
 
@@ -168,6 +174,6 @@ Sons, Inc.
 
 Vehtari, Aki, Andrew Gelman, Daniel Simpson, Bob Carpenter, and
 Paul-Christian Bürkner. 2021. “Rank-Normalization, Folding, and
-Localization: An Improved $\widehat{R}$ for Assessing Convergence of
+Localization: An Improved $`\widehat{R}`$ for Assessing Convergence of
 MCMC (with Discussion).” *Bayesian Analysis* 16 (2): 667–718.
 <https://doi.org/10.1214/20-BA1221>.
