@@ -210,6 +210,10 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
     if(!inherits(fit.samp, "try-error")){
       fit.samp@Options$se <- "standard" # for nonnest2
       fit.samp@test[[1]]$test <- "standard" # for do.fit=FALSE
+      ## populate the model-implied moments; lavaan() with optim.method="none"
+      ## leaves @implied empty, which breaks fitMeasures()/lavResiduals() (srmr)
+      fit.samp@implied <- lav_model_implied(lavmodel,
+                                            delta = (lavmodel@parameterization == "delta"))
 
       if(casewise){
         ll.samp <- llcont(fit.samp)
@@ -445,6 +449,10 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
     if(!inherits(fit.samp, "try-error")){
       fit.samp@Options$se <- "standard" # for nonnest2
       fit.samp@test[[1]]$test <- "standard" # for do.fit=FALSE
+      ## populate the model-implied moments; lavaan() with optim.method="none"
+      ## leaves @implied empty, which breaks fitMeasures()/lavResiduals() (srmr)
+      fit.samp@implied <- lav_model_implied(lavmodel,
+                                            delta = (lavmodel@parameterization == "delta"))
 
       if(casewise){
         ll.samp <- llcont(fit.samp)
