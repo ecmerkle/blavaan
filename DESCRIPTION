@@ -45,3 +45,4 @@ URL: https://ecmerkle.github.io/blavaan/, https://github.com/ecmerkle/blavaan
 BugReports: https://github.com/ecmerkle/blavaan/issues
 Additional_repositories: https://stan-dev.r-universe.dev/, https://ecmerkle.github.io/drat
 Config/Needs/website: brms
+RoxygenNote: 7.3.3

@@ -36,7 +36,7 @@ generics::glance
 #' @return A \code{data.frame} with columns:
 #'   \item{term}{Parameter name (lhs, op, rhs combined)}
 #'   \item{op}{Operator from the model syntax}
-#'   \item{level} The level of a parameter estimate
+#'   \item{level}{The level of a parameter estimate}
 #'   \item{group}{Group number (for multigroup models)}
 #'   \item{estimate}{Posterior summary statistic determined by \code{estimate.method}}
 #'   \item{std.error}{Posterior standard deviation}
