@@ -117,7 +117,7 @@ tidy.blavaan <- function(x, estimate.method = c('mean', 'median', 'mode'),
   }
 
   # Add block and level information for multilevel models 
-  if ('level' %in% names(PE)) {
+  if (length(unique(PE$level)) > 1) {
     result$level <- PE$level
     if ("group" %in% names(result)) {
       result <- result[, c('term', 'op', 'level', 'group', 'estimate', 'std.error')]
@@ -167,30 +167,23 @@ tidy.blavaan <- function(x, estimate.method = c('mean', 'median', 'mode'),
 #' Glance at a blavaan object
 #'
 #' @param x A \code{blavaan} object
-#' @param fit.indices Character vector of fit indices to compute from
-#'   \code{blavFitIndices}. Use \code{"none"} to skip Bayesian fit indices
-#'   (faster). Use \code{"default"} for BRMSEA, BGammaHat, and BMc.
-#'   Default is \code{"none"}.
+#' @param fit.indices Character vector of fit indices to compute from \code{fitMeasures}
+#'    and \code{blavFitIndices}. Use \code{"TRUE"} to also compute \code{blavFitIndices} measures. 
+#'    Default is \code{"FALSE"}.
+#'   
 #' @param ... Additional arguments (currently ignored).
 #'
-#' @return A single-row \code{tibble} (if available) or \code{data.frame}
+#' @return A single-row \code{data.frame}
 #'   with columns:
 #'   \item{npar}{Number of estimated parameters}
-#'   \item{nobs}{Total number of observations}
 #'   \item{ngroups}{Number of groups}
-#'   \item{estimator}{Estimation method used}
 #'   \item{ppp}{Posterior predictive p-value}
-#'   \item{looic}{Leave-one-out information criterion}
-#'   \item{p_loo}{Effective number of parameters (LOO)}
-#'   \item{waic}{Widely applicable information criterion}
-#'   \item{p_waic}{Effective number of parameters (WAIC)}
-#'   \item{dic}{Deviance information criterion}
-#'   \item{p_dic}{Effective number of parameters (DIC)}
 #'   \item{bic}{Bayesian information criterion}
+#'   \item{dic}{Deviance information criterion}
+#'   \item{waic}{Widely applicable information criterion}
+#'   \item{looic}{Leave-one-out information criterion}
 #'   \item{margloglik}{Marginal log-likelihood}
-#'   \item{converged}{Logical indicating convergence (all Rhat < 1.05)}
-#'   \item{nchains}{Number of MCMC chains}
-#'   Additional columns from \code{blavFitIndices} are included if requested.
+#'   Additional EAP of fit measures from \code{blavFitIndices} are included if requested.
 #'
 #' @examples
 #' \dontrun{
@@ -199,95 +192,21 @@ tidy.blavaan <- function(x, estimate.method = c('mean', 'median', 'mode'),
 #' HS.model <- 'visual =~ x1 + x2 + x3'
 #' fit <- bcfa(HS.model, data = HolzingerSwineford1939, seed = 123)
 #' glance(fit)
-#' glance(fit, fit.indices = "default")  # includes BRMSEA etc.
+#' glance(fit, fit.indices = TRUE)  # includes BRMSEA
 #' }
 #'
 #' @export
-glance.blavaan <- function(x, fit.indices = "none", ...) {
+glance.blavaan <- function(x, fit.indices = FALSE, ...) {
 
-  # Get basic model information
-  ngroups <- blavInspect(x, "ngroups")
-  nobs <- blavInspect(x, "ntotal")
-  nchains <- blavInspect(x, "n.chains")
-
-  # Get fit measures
-  bopts <- blavInspect(x, "options")
-  test_available <- bopts$test != "none"
-
-  # Initialize result
-  result <- data.frame(
-    npar = as.integer(lavInspect(x, "npar")),
-    nobs = as.integer(nobs),
-    ngroups = as.integer(ngroups),
-    estimator = "Bayes",
-    stringsAsFactors = FALSE
-  )
-
-  # Get available fit measures
-  if (test_available) {
-    fm <- tryCatch(
-      blav_fit_measures(x, fit.measures = "all"),
-      error = function(e) NULL
-    )
-
-    if (!is.null(fm)) {
-      # Posterior predictive p-value
-      if ("ppp" %in% names(fm)) {
-        result$ppp <- unname(fm["ppp"])
-      }
-
-      # Information criteria
-      if ("looic" %in% names(fm)) {
-        result$looic <- unname(fm["looic"])
-        result$p_loo <- unname(fm["p_loo"])
-      }
-      if ("waic" %in% names(fm)) {
-        result$waic <- unname(fm["waic"])
-        result$p_waic <- unname(fm["p_waic"])
-      }
-      if ("dic" %in% names(fm)) {
-        result$dic <- unname(fm["dic"])
-        result$p_dic <- unname(fm["p_dic"])
-      }
-      if ("bic" %in% names(fm)) {
-        result$bic <- unname(fm["bic"])
-      }
-      if ("margloglik" %in% names(fm)) {
-        result$margloglik <- unname(fm["margloglik"])
-      }
-    }
+  if (isTRUE(fit.indices)) {
+    bayesFit <- blavFitIndices(x, fit.measures = "all") |> 
+      summary()
   }
-
-  # Check convergence (Rhat < 1.05 for all parameters)
-  rhat_vals <- tryCatch(
-    blavInspect(x, "rhat"),
-    error = function(e) NULL
-  )
-  if (!is.null(rhat_vals)) {
-    result$converged <- all(rhat_vals < 1.05, na.rm = TRUE)
-  }
-
-  result$nchains <- as.integer(nchains)
-
-  # Add Bayesian fit indices if requested
-  if (!identical(fit.indices, "none")) {
-    bfi <- tryCatch({
-      if (identical(fit.indices, "default")) {
-        blavFitIndices(x, fit.measures = c("BRMSEA", "BGammaHat", "BMc"))
-      } else {
-        blavFitIndices(x, fit.measures = fit.indices)
-      }
-    }, error = function(e) NULL)
-
-    if (!is.null(bfi)) {
-      bfi_summary <- summary(bfi, central.tendency = "mean", hpd = FALSE)
-      # Add EAP (posterior mean) for each fit index
-      for (i in seq_len(nrow(bfi_summary))) {
-        idx_name <- rownames(bfi_summary)[i]
-        result[[idx_name]] <- bfi_summary[i, "EAP"]
-      }
-    }
-  }
+  
+  bayesFitVec <- bayesFit$EAP
+  names(bayesFitVec) <- rownames(bayesFit)
+  
+  result <- c(fitMeasures(x), bayesFitVec)
 
   return(result)
 }

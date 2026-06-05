@@ -13,7 +13,7 @@ library(lobstr)
 cli::pretty_print_code()
 
 # To make things go fast
-options(blavaan.target = "cmdstan")
+# options(blavaan.target = "cmdstan")
 
 # First time loading
 #' pkgload::load_all(".", export_all = FALSE, compile = TRUE, debug = FALSE)
