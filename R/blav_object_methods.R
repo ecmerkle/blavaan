@@ -98,8 +98,10 @@ function(object, header       = TRUE,
     }
 
 
-  if(estimates) {
-        jagtarget <- lavInspect(object, "options")$target == "jags"
+    if(estimates) {
+        targ <- lavInspect(object, "options")$target
+        jagtarget <- targ == "jags"
+        cstarget <- targ == "cmdstan"
         newpt <- object@ParTable
         if(!("group" %in% names(newpt))) newpt$group <- rep(1, length(newpt$lhs))
         if(!("level" %in% names(newpt))) newpt$level <- rep("within", length(newpt$lhs))
@@ -161,10 +163,10 @@ function(object, header       = TRUE,
             PE$ci.upper[peentry] <- rep(NA, length(peentry))
           }
         } else {
-            parsumm <- rstan::summary(object@external$mcmcout)
-            if('2.5%' %in% colnames(parsumm[[1]]) & '97.5%' %in% colnames(parsumm[[1]])){
-                PE$ci.lower[peentry] <- parsumm$summary[newpt$stansumnum[pte2],'2.5%']
-                PE$ci.upper[peentry] <- parsumm$summary[newpt$stansumnum[pte2],'97.5%']
+            parsumm <- object@external$stansumm
+            if('2.5%' %in% colnames(parsumm) & '97.5%' %in% colnames(parsumm)){
+                PE$ci.lower[peentry] <- parsumm[newpt$stansumnum[pte2],'2.5%']
+                PE$ci.upper[peentry] <- parsumm[newpt$stansumnum[pte2],'97.5%']
             } else {
                 PE$ci.lower[peentry] <- rep(NA, length(peentry))
                 PE$ci.upper[peentry] <- rep(NA, length(peentry))

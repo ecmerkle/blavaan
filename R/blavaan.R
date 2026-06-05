@@ -57,7 +57,7 @@ blavaan <- function(...,  # default lavaan arguments
 
     # multilevel functionality
     if("cluster" %in% dotNames) {
-        if(!(target == "stan")) stop("blavaan ERROR: two-level functionality is not available for ", target, ".")
+        if(!(target %in% c("stan", "cmdstan"))) stop("blavaan ERROR: two-level functionality is not available for ", target, ".")
     }
   
     # prior predictives only for stan
@@ -217,11 +217,14 @@ blavaan <- function(...,  # default lavaan arguments
     dotdotdot$do.fit <- FALSE
     dotdotdot$se <- "none"; dotdotdot$test <- "none"
     dotdotdot$cat.wls.w <- FALSE
+    dotdotdot$h1 <- FALSE; dotdotdot$baseline <- FALSE; dotdotdot$implied <- FALSE
+    dotdotdot$check.post <- FALSE
+    dotdotdot$check.vcov <- FALSE
     # run for 1 iteration to obtain info about equality constraints, for npar
     dotdotdot$control <- list(iter.max = 1, eval.max = 1); dotdotdot$warn <- TRUE
     dotdotdot$optim.force.converged <- TRUE
     if(packageDescription("lavaan")$Version > "0.6-16") dotdotdot$parser <- "old"
-    if(target != "stan") dotdotdot$meanstructure <- TRUE
+    if(!(target %in% c("stan", "cmdstan"))) dotdotdot$meanstructure <- TRUE
     dotdotdot$missing <- "direct"   # direct/ml creates error? (bug in lavaan?)
     ordmod <- FALSE
     if("ordered" %in% dotNames) ordmod <- TRUE
@@ -314,7 +317,7 @@ blavaan <- function(...,  # default lavaan arguments
         if("cluster" %in% names(dotdotdot)) stop('blavaan ERROR: sample.cov cannot be used for two-level models')
     }
     if("meanstructure" %in% names(dotdotdot) && "sample.cov" %in% names(dotdotdot)) stop('blavaan ERROR: meanstructure is not currently allowed when sample.cov is supplied')
-  
+
     # call lavaan
     mcdebug <- FALSE
     if("debug" %in% dotNames){
@@ -325,7 +328,7 @@ blavaan <- function(...,  # default lavaan arguments
     # for warnings related to setting up model/data:
     LAV <- do.call("lavaan", dotdotdot)
     dotdotdot$do.fit <- TRUE; dotdotdot$warn <- FALSE
-    if(LAV@Data@data.type != "moment" && target == "stan"){
+    if(LAV@Data@data.type != "moment" && target %in% c("stan", "cmdstan")){
         ## if no missing, set missing = "listwise" to avoid meanstructure if possible
         if(!any(is.na(unlist(lavInspect(LAV, 'data'))))){
             dotdotdot$missing <- "listwise"
@@ -815,26 +818,23 @@ blavaan <- function(...,  # default lavaan arguments
         start.time <- proc.time()[3]
         if(jag.do.fit) cat("Computing post-estimation metrics (including lvs if requested)...\n")
         
-        ## FIXME: there is no pars argument. this saves all parameters and uses unnecessary memory
-        ## see res@sim and line 284 of stan_csv.R... might cut it down manually
-        if(target == "cmdstan"){
-          res <- rstan::read_stan_csv(res$output_files())
-        }
-        
         if(target == "jags"){
           parests <- coeffun(lavpartable, jagtrans$pxpartable, res)
           stansumm <- NA
         } else if(target %in% c("stanclassic", "stancond")){
-          parests <- coeffun_stan(lavpartable, jagtrans$pxpartable,
-                                  res)
+          parests <- coeffun_stan(lavpartable, jagtrans$pxpartable, res)
           stansumm <- parests$stansumm
         } else {
           if(jag.do.fit) {
-            draw_mat <- as.matrix(res)
+            if(inherits(res, "CmdStanFit")) {
+              draw_mat <- res$draws(variables = sampparms[sampparms %in% res$metadata()$stan_variables], format = "matrix")
+            } else {
+              draw_mat <- as.matrix(res)
+            }
           } else {
             draw_mat <- NULL
           }
-          
+
           if(lavoptions$.multilevel) {
             Ng <- lavInspect(LAV, 'ngroups')
             parests <- coeffun_stanmarg(lavpartable, lavInspect(LAV, 'free')[2*(1:Ng) - 1], l2s$free2, jagtrans$data, res, colnames(draw_mat))
@@ -876,12 +876,12 @@ blavaan <- function(...,  # default lavaan arguments
                 wrmup <- ifelse(length(rjarg$warmup) > 0,
                                 rjarg$warmup, floor(rjarg$iter/2))
                 attr(x, "iterations") <- sample
-                if(target == "stan"){
+                if(target %in% c("stan", "cmdstan")){
                     ## defined variables come from delta method:
                     lavpartable$est <- lav_model_get_parameters(lavmodel = lavmodel, type = "user", extra = TRUE)
                 }
                 ## lvs now in R instead of Stan
-                if(save.lvs & target == "stan"){
+                if(save.lvs & target %in% c("stan", "cmdstan")){
                     if(lavoptions$.multilevel){
                         ## this handles dummy lvs so that we use the appropriate alpha:
                         if (packageDescription("lavaan")$Version > "0.6-20") {
@@ -897,7 +897,18 @@ blavaan <- function(...,  # default lavaan arguments
 
                     for(j in 1:(1 + lavoptions$.multilevel)){
                         if(dim(stanlvs[[j]])[3L] > 0){
-                            lvsumm <- as.matrix(rstan::monitor(stanlvs[[j]], print=FALSE))
+                            if(target == "stan"){
+                                lvsumm <- as.matrix(rstan::monitor(stanlvs[[j]], print=FALSE))
+                            } else {
+                              lvsumm <- posterior::summarise_draws(stanlvs[[j]], posterior::default_summary_measures(),
+                                                                   posterior::default_convergence_measures(),
+                                                                   extra_quantiles = ~posterior::quantile2(., probs = c(.025, .5, .975)))
+                              class(lvsumm) <- "data.frame"
+                              lvnames <- colnames(lvsumm)
+                              oldnames <- c("q2.5", "q50", "q97.5", "ess_bulk", "rhat")
+                              names(lvsumm)[match(oldnames, lvnames)] <- c("2.5%", "50%", "97.5%", "n_eff", "Rhat")
+                              rownames(lvsumm) <- lvsumm$variable
+                            }
                             cmatch <- match(colnames(stansumm), colnames(lvsumm))
                             stansumm <- rbind(stansumm, lvsumm[,cmatch])
                         }
@@ -947,7 +958,8 @@ blavaan <- function(...,  # default lavaan arguments
             if(target == "jags"){
                 fullpmeans <- summary(make_mcmc(res))[[1]][,"Mean"]
             } else {
-                fullpmeans <- stansumm[,"mean"] #rstan::summary(res)$summary[,"mean"]
+                fullpmeans <- stansumm[,"mean"]
+                if(is.null(names(fullpmeans))) names(fullpmeans) <- stansumm$variable
             }
             cfx <- get_ll(fullpmeans, lavobject = LAV, conditional = TRUE)[1]
         } else {
@@ -996,7 +1008,7 @@ blavaan <- function(...,  # default lavaan arguments
       }
       
       if(save.lvs && !ordmod && !lavoptions$.multilevel && lavInspect(LAV, "meanstructure")) {
-        if(target == "stan"){
+        if(target %in% c("stan", "cmdstan")){
           lavmcmc <- make_mcmc(res, stanlvs) ## add on lvs
         }
         csamplls <- samp_lls(res, lavmcmc, lavobject = LAV, conditional = TRUE)
@@ -1047,7 +1059,7 @@ blavaan <- function(...,  # default lavaan arguments
     covres <- checkcovs(LAV)
     ## in these cases, we cannot reliably evaluate the priors
     if(ordmod) domll <- FALSE
-    if(target == "stan") {
+    if(target %in% c("stan", "cmdstan")) {
       if(covres$dobf) {
         domll <- TRUE
       } else if(l2s$blktheta & l2s$blkpsi) {
@@ -1132,7 +1144,7 @@ blavaan <- function(...,  # default lavaan arguments
                     burnin = burnin, sample = sample)
     if(grepl("stan", target)){
       extslot <- c(extslot, list(stansumm = stansumm))
-      if(save.lvs & target=="stan") extslot <- c(extslot, list(stanlvs = stanlvs))
+      if(save.lvs & target %in% c("stan", "cmdstan")) extslot <- c(extslot, list(stanlvs = stanlvs))
     }
     if(jags.ic) extslot <- c(extslot, list(sampkls = sampkls))
     if(save.lvs && !ordmod && !lavoptions$.multilevel && lavInspect(LAV, "meanstructure")) {
@@ -1174,8 +1186,8 @@ blavaan <- function(...,  # default lavaan arguments
 
     if(!lavoptions$.multilevel) { # because checkcovs() has not been adapted to it
       if( "psi" %in% lavpartable$mat &&
-          ( (target == "stan" && !l2s$blkpsi) ||
-            (target != "stan" && with(covres, !(diagpsi | fullpsi))) ) ) {
+          ( (target %in% c("stan", "cmdstan") && !l2s$blkpsi) ||
+            (!(target %in% c("stan", "cmdstan")) && with(covres, !(diagpsi | fullpsi))) ) ) {
         warning("blavaan WARNING: As specified, the psi covariance matrix is neither diagonal nor unrestricted, so the actual prior might differ from the stated prior. See\n https://arxiv.org/abs/2301.08667", call. = FALSE)
       }
       if( "theta" %in% lavpartable$mat && with(covres, !(diagthet | fullthet)) ) {

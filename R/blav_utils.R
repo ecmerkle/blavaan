@@ -37,6 +37,8 @@ rearr_params <- function(mcmc         = NULL,
 sampnums <- function(lavmcmc, thin, lout = FALSE){
     if("mcmc" %in% names(lavmcmc)){
         niter <- nrow(lavmcmc$mcmc[[1]])
+    } else if(inherits(lavmcmc, "CmdStanFit")){
+        niter <- lavmcmc$metadata()$iter_sampling
     } else {
         niter <- dim(as.array(lavmcmc))[1]
     }
@@ -232,11 +234,19 @@ make_mcmc <- function(mcmcout, stanlvs = NULL){
   } else {
     ## for stan: as.array() gives parameters in a different order from summary()
     ##           so reorder
-    tmpsumm <- rstan::summary(mcmcout)
-    lavmcmc <- as.array(mcmcout)
-    lavmcmc <- lapply(seq(dim(lavmcmc)[2]), function(x) lavmcmc[,x,])
-    reord <- match(rownames(tmpsumm$summary), colnames(lavmcmc[[1]]))
-    lavmcmc <- lapply(lavmcmc, function(x) x[, reord, drop = FALSE])
+    cmdstanfit <- inherits(mcmcout, "CmdStanFit")
+    if(cmdstanfit){
+      mons <- get_stanmons()
+      lavmcmc <- mcmcout$draws(variables = mons[mons %in% mcmcout$metadata()$stan_variables])
+    } else {
+      tmpsumm <- rstan::summary(mcmcout)
+      lavmcmc <- as.array(mcmcout)
+    }
+    lavmcmc <- lapply(seq(dim(lavmcmc)[2]), function(x) lavmcmc[,x,,drop = TRUE])
+    if(!cmdstanfit){
+      reord <- match(rownames(tmpsumm$summary), colnames(lavmcmc[[1]]))
+      lavmcmc <- lapply(lavmcmc, function(x) x[, reord, drop = FALSE])
+    }
 
     if(is.array(stanlvs)){
       stanlvs <- lapply(seq(dim(stanlvs)[2]), function(x) stanlvs[,x,])
@@ -545,4 +555,42 @@ modeapprox <- function(draws) {
   }
 
   out
+}
+
+## List of Stan parameters we want to keep, to reduce large cmdstan draws arrays
+get_stanmons <- function() {
+  ## basics
+  stanmon <- c("ly_sign", "bet_sign", "Theta_cov", "Theta_var",
+               "Psi_cov", "Psi_var", "Nu_free", "al_sign", "Tau_free")
+  ## add level 2
+  stanmon <- c(stanmon, paste0(stanmon, "_c"))
+  stanmon <- stanmon[-which(stanmon == "Tau_free_c")]
+  ## loglik + friends, FIXME sat and ppp not always needed
+  stanmon <- c(stanmon, c("log_lik", "log_lik_sat", "ppp"))
+  ## latent variables
+  stanmon <- c(stanmon, "eta", "YXostar")
+
+  stanmon
+}
+
+## create ordinal data from continuous, for testing
+makeord <- function(Data, vars = NULL, ncat = 2){
+  if(length(vars) == 0) vars <- 1:NCOL(Data)
+
+  if(length(ncat) != 1 && length(ncat) != length(vars)) stop("bad ncat")
+
+  ## for differing numbers of categories
+  Data <- rbind(Data, NA)
+  Data[nrow(Data), vars] <- ncat
+  
+  Data[,vars] <- apply(Data[,vars,drop = FALSE], 2,
+                       function(x){
+                         nc <- tail(x, 1)
+                         tmpp <- (1/nc) + runif(1, -.1/nc, .1/nc)
+                         brks <- c(min(x, na.rm = TRUE) - .1, seq(quantile(x, tmpp, na.rm = TRUE),
+                                                    quantile(x, 1 - tmpp, na.rm = TRUE),
+                                                    length.out = (nc-1)), max(x, na.rm = TRUE) + .1)
+                         cut(x, breaks = brks, labels = FALSE)})
+
+  Data[-nrow(Data),]
 }

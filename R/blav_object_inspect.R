@@ -19,7 +19,9 @@ blavInspect <- function(blavobject, what, ...) {
     level <- 1L
     if(any(dotNames == "level")) level <- dotdotdot$level
 
-    jagtarget <- lavInspect(blavobject, "options")$target == "jags"
+    thistarget <- lavInspect(blavobject, "options")$target
+    jagtarget <- thistarget == "jags"
+    cmdstarget <- thistarget == "cmdstan"
   
     ## whats unique to blavaan
     blavwhats <- c("start", "starting.values", "inits", "psrf",
@@ -59,7 +61,9 @@ blavInspect <- function(blavobject, what, ...) {
         } else if(what %in% c("psrf", "ac.10", "neff", "rhat", "n_eff")){
             if(jagtarget){
                 mcmcsumm <- blavobject@external$mcmcout$summaries
-            } else {
+            } else if (cmdstarget) {
+                mcmcsumm <- blavobject@external$stansumm
+            }   else {
                 mcmcsumm <- rstan::summary(blavobject@external$mcmcout)$summary
             }
             if(what %in% c("psrf", "rhat")){
@@ -136,7 +140,8 @@ blavInspect <- function(blavobject, what, ...) {
             if(jagtarget){
                 etas <- any(blavobject@external$mcmcout$monitor == "eta")
             } else {
-                etas <- any(grepl("^eta", rownames(blavobject@external$stansumm)))
+                etas <- any(grepl("^eta", rownames(blavobject@external$stansumm))) ||
+                  any(grepl("^eta", blavobject@external$stansumm[,1]))
             }
 
             ## how many lvs, excluding phantoms
