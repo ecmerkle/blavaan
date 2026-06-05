@@ -4,7 +4,7 @@ destination: "."
 
 template:
   bootstrap: 5
-  params:
+  bslib:
     bootswatch: cerulean
 
 resource_files:
