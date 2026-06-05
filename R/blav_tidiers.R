@@ -213,5 +213,5 @@ glance.blavaan <- function(x, fit.indices = FALSE, ...) {
     result <- c(fitMeasures(x))
   }
 
-  return(result)
+  return(as.data.frame(result))
 }
