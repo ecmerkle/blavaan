@@ -231,7 +231,7 @@ check_priors <- function(lavpartable) {
 }
 
 
-#' Obtain data list for stanmarg.
+# Obtain data list for stanmarg.
 stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           miss, Np, Nobs, Obsvar, # missing
                           ord, Nord, ordidx, contidx, nlevs,

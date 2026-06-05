@@ -24,14 +24,13 @@ generics::glance
 #'   \code{estimate.method}.
 #' @param conf.int Logical indicating whether to include credible intervals.
 #'   Default is \code{TRUE}.
-#' @param standardized Logical indicating whether to include standardized
-#'   posterior mean estimates. Default is \code{FALSE}.
 #' @param rhat Logical indicating whether to include the Rhat convergence
 #'   diagnostic. Default is \code{TRUE}.
 #' @param ess Logical indicating whether to include the effective sample size.
 #'   Default is \code{TRUE}.
 #' @param priors Logical indicating whether to include the prior distribution
 #'   specification. Default is \code{TRUE}.
+#' @param ... Additional arguments (currently ignored).
 #'
 #' @return A \code{data.frame} with columns:
 #'   \item{term}{Parameter name (lhs, op, rhs combined)}
@@ -84,7 +83,8 @@ generics::glance
 #'
 #' @export
 tidy.blavaan <- function(x, estimate.method = c('mean', 'median', 'mode'),
-                          conf.int = TRUE, rhat = TRUE, ess = TRUE, priors = TRUE) {
+                          conf.int = TRUE, rhat = TRUE, ess = TRUE, priors = TRUE,
+                          ...) {
 
   estimate.method <- match.arg(estimate.method)
 
@@ -128,11 +128,16 @@ tidy.blavaan <- function(x, estimate.method = c('mean', 'median', 'mode'),
     
   }
 
-  # Substitute estimate based on estimate.method
+  # Substitute estimate based on estimate.method. Only free parameters are
+  # summarized by the requested statistic (Post.Med/Post.Mode are NA for fixed
+  # and defined (:=) parameters), so fixed parameters retain their fixed values
+  # and defined parameters keep the standard summary() point estimate.
   if (estimate.method == "median") {
-    result$estimate <- PE$Post.Med
+    has_stat <- !is.na(PE$Post.Med)
+    result$estimate[has_stat] <- PE$Post.Med[has_stat]
   } else if (estimate.method == "mode") {
-    result$estimate <- PE$Post.Mode
+    has_stat <- !is.na(PE$Post.Mode)
+    result$estimate[has_stat] <- PE$Post.Mode[has_stat]
   }
 
   # If conf.int = TRUE, add confidence interval
@@ -168,9 +173,9 @@ tidy.blavaan <- function(x, estimate.method = c('mean', 'median', 'mode'),
 #'
 #' @param x A \code{blavaan} object
 #' @param fit.indices Character vector of fit indices to compute from \code{fitMeasures}
-#'    and \code{blavFitIndices}. Use \code{"TRUE"} to also compute \code{blavFitIndices} measures. 
+#'    and \code{blavFitIndices}. Use \code{"TRUE"} to also compute \code{blavFitIndices} measures.
 #'    Default is \code{"FALSE"}.
-#'   
+#'
 #' @param ... Additional arguments (currently ignored).
 #'
 #' @return A single-row \code{data.frame}
@@ -197,16 +202,16 @@ tidy.blavaan <- function(x, estimate.method = c('mean', 'median', 'mode'),
 #'
 #' @export
 glance.blavaan <- function(x, fit.indices = FALSE, ...) {
-
   if (isTRUE(fit.indices)) {
-    bayesFit <- blavFitIndices(x, fit.measures = "all") |> 
+    bayesFit <- blavFitIndices(x, fit.measures = "all") |>
       summary()
+    bayesFitVec <- bayesFit$EAP
+    names(bayesFitVec) <- rownames(bayesFit)
+
+    result <- c(fitMeasures(x), bayesFitVec)
+  } else {
+    result <- c(fitMeasures(x))
   }
-  
-  bayesFitVec <- bayesFit$EAP
-  names(bayesFitVec) <- rownames(bayesFit)
-  
-  result <- c(fitMeasures(x), bayesFitVec)
 
   return(result)
 }
