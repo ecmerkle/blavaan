@@ -77,8 +77,7 @@ function(object, header       = TRUE,
                  postmode     = FALSE,
                  priors       = TRUE,
                  bf           = FALSE,
-                 nd = 3L,
-                 print = TRUE) {
+                 nd = 3L) {
 
     #TODO: remove (deprecated):  if(std.nox) standardized <- TRUE
 
@@ -253,11 +252,8 @@ function(object, header       = TRUE,
         names(PE)[penames == "ci.upper"] <- "pi.upper"
         names(PE)[penames == "psrf"] <- "Rhat"
 
-        if (isTRUE(print)) {
-          print(PE, nd = nd)
-        }
-    invisible(PE)
-  } # parameter estimates
+        print(PE, nd = nd)
+    } # parameter estimates
 }
 )
 
