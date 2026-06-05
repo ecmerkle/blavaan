@@ -1612,8 +1612,10 @@ transformed parameters {
       Sigmainv_grp[g] = inverse_spd(Sigma[g]);
       logdetSigma_grp[g] = log_determinant(Sigma[g]);
     }
-    for (patt in 1:Np) {    
-      Sigmainv[patt, 1:(Nobs[patt] + 1), 1:(Nobs[patt] + 1)] = sig_inv_update(Sigmainv_grp[grpnum[patt]], Obsvar[patt,], Nobs[patt], p + q, logdetSigma_grp[grpnum[patt]]);
+    if (use_suff) {
+      for (patt in 1:Np) {    
+	Sigmainv[patt, 1:(Nobs[patt] + 1), 1:(Nobs[patt] + 1)] = sig_inv_update(Sigmainv_grp[grpnum[patt]], Obsvar[patt,], Nobs[patt], p + q, logdetSigma_grp[grpnum[patt]]);
+      }
     }
   }
 }
@@ -2271,14 +2273,29 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  }
 	}
       } else if (has_data && !multilev) {
-	for (jj in r1:r2) {
-	  log_lik[jj] = multi_normal_suff(YXstar[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu[grpidx, obsidx[1:Nobs[mm]]], Sigmainv[mm], 1);
-
-	  // TODO efficiency can be improved by getting inverse/chol of Sigma outside loop
+	matrix[p + q + 1, p + q + 1] Sigmainv_patt;
+	if (use_suff) {
 	  if (Nx[mm] > 0 && !missing) {
-	    log_lik[jj] += -1.0 * multi_normal_suff(YXstar[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigmainv[grpidx], xidx, Nx[mm], p + q, logdetSigma_grp[grpidx]), 1);
-	  } else if (Nx[mm] > 0) {
-	    log_lik[jj] += -1.0 * multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	    Sigmainv_patt[1:(Nx[mm] + 1), 1:(Nx[mm] + 1)] = sig_inv_update(Sigmainv[grpidx], xidx, Nx[mm], p + q, logdetSigma_grp[grpidx]);
+	  }
+	  for (jj in r1:r2) {
+	    log_lik[jj] = multi_normal_suff(YXstar[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu[grpidx, obsidx[1:Nobs[mm]]], Sigmainv[mm], 1);
+
+	    if (Nx[mm] > 0 && !missing) {
+	      log_lik[jj] += -1.0 * multi_normal_suff(YXstar[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu[grpidx, xidx[1:Nx[mm]]], Sigmainv_patt[1:(Nx[mm] + 1), 1:(Nx[mm] + 1)], 1);
+	    } else if (Nx[mm] > 0) {
+	      log_lik[jj] += -1.0 * multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	    }
+	  }
+	} else {
+	  Sigmainv_patt[1:Nobs[mm], 1:Nobs[mm]] = inverse_spd(Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+
+	  for (jj in r1:r2) {
+	    log_lik[jj] = multi_normal_prec_lpdf(YXstar[jj, 1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigmainv_patt[1:Nobs[mm], 1:Nobs[mm]]);
+
+	    if (Nx[mm] > 0) {
+	      log_lik[jj] += -1.0 * multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	    }
 	  }
 	}
       }
@@ -2337,32 +2354,62 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  log_lik_sat[rr1:rr2] -= log_lik[rr1:rr2];
 	  
 	} else if (!use_cov) {
+	  matrix[p + q + 1, p + q + 1] Sigmainv_patt;
+	  matrix[p + q + 1, p + q + 1] Sigmainv_sat_patt;
+	  matrix[p + q + 1, p + q + 1] Sigmainv_rep_sat_patt;
 	  r1 = startrow[mm];
 	  r2 = endrow[mm];
-	  for (jj in r1:r2) {
-	    // log_lik_rep, _sat, _rep_sat
-	    log_lik_rep[jj] = multi_normal_suff(YXstar_rep[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu[grpidx, obsidx[1:Nobs[mm]]], Sigmainv[mm], 1);
-
-	    log_lik_sat[jj] = multi_normal_suff(YXstar[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_sat_inv[mm], 1);	
-
-	    log_lik_rep_sat[jj] = multi_normal_suff(YXstar_rep[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu_rep_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_rep_sat_inv[mm], 1);
-	    
-	    // TODO efficiency can be improved by getting inverse/chol of Sigma outside loop
+	  if (use_suff) {
 	    if (Nx[mm] > 0 && !missing) {
-	      log_lik_rep[jj] += -1.0 * multi_normal_suff(YXstar_rep[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigmainv[grpidx], xidx, Nx[mm], p + q, logdetSigma_grp[grpidx]), 1);
-	    
-	      log_lik_sat[jj] += -1.0 * multi_normal_suff(YXstar[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu_sat[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigma_sat_inv[grpidx], xidx, Nx[mm], p + q, logdetS_sat_grp[grpidx]), 1);
-	      
-	      log_lik_rep_sat[jj] += -1.0 * multi_normal_suff(YXstar_rep[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu_rep_sat[grpidx, xidx[1:Nx[mm]]], sig_inv_update(Sigma_rep_sat_inv[grpidx], xidx, Nx[mm], p + q, logdetS_rep_sat_grp[grpidx]), 1);
-	    } else if (Nx[mm] > 0) {
-	      log_lik_rep[jj] += -1.0 * multi_normal_lpdf(YXstar_rep[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
-	    
-	      log_lik_sat[jj] += -1.0 * multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu_sat[grpidx, xidx[1:Nx[mm]]], Sigma_sat[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
-	      
-	      log_lik_rep_sat[jj] += -1.0 * multi_normal_lpdf(YXstar_rep[jj, xdatidx[1:Nx[mm]]] | Mu_rep_sat[grpidx, xidx[1:Nx[mm]]], Sigma_rep_sat[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	      Sigmainv_patt[1:(Nx[mm] + 1), 1:(Nx[mm] + 1)] = sig_inv_update(Sigmainv[grpidx], xidx, Nx[mm], p + q, logdetSigma_grp[grpidx]);
+	      Sigmainv_sat_patt[1:(Nx[mm] + 1), 1:(Nx[mm] + 1)] = sig_inv_update(Sigma_sat_inv[grpidx], xidx, Nx[mm], p + q, logdetS_sat_grp[grpidx]);
+	      Sigmainv_rep_sat_patt[1:(Nx[mm] + 1), 1:(Nx[mm] + 1)] = sig_inv_update(Sigma_rep_sat_inv[grpidx], xidx, Nx[mm], p + q, logdetS_rep_sat_grp[grpidx]);
 	    }
+	    for (jj in r1:r2) {
+	      // log_lik_rep, _sat, _rep_sat
+	      log_lik_rep[jj] = multi_normal_suff(YXstar_rep[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu[grpidx, obsidx[1:Nobs[mm]]], Sigmainv[mm], 1);
+
+	      log_lik_sat[jj] = multi_normal_suff(YXstar[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_sat_inv[mm], 1);	
+
+	      log_lik_rep_sat[jj] = multi_normal_suff(YXstar_rep[jj, 1:Nobs[mm]], zmat[1:Nobs[mm], 1:Nobs[mm]], Mu_rep_sat[grpidx, obsidx[1:Nobs[mm]]], Sigma_rep_sat_inv[mm], 1);
+	    
+	      if (Nx[mm] > 0 && !missing) {
+		log_lik_rep[jj] += -1.0 * multi_normal_suff(YXstar_rep[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu[grpidx, xidx[1:Nx[mm]]], Sigmainv_patt[1:(Nx[mm] + 1), 1:(Nx[mm] + 1)], 1);
+		
+		log_lik_sat[jj] += -1.0 * multi_normal_suff(YXstar[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu_sat[grpidx, xidx[1:Nx[mm]]], Sigmainv_sat_patt[1:(Nx[mm] + 1), 1:(Nx[mm] + 1)], 1);
+	      
+		log_lik_rep_sat[jj] += -1.0 * multi_normal_suff(YXstar_rep[jj, xdatidx[1:Nx[mm]]], zmat[1:Nx[mm], 1:Nx[mm]], Mu_rep_sat[grpidx, xidx[1:Nx[mm]]], Sigmainv_rep_sat_patt[1:(Nx[mm] + 1), 1:(Nx[mm] + 1)], 1);
+	      } else if (Nx[mm] > 0) {
+		log_lik_rep[jj] += -1.0 * multi_normal_lpdf(YXstar_rep[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	    
+		log_lik_sat[jj] += -1.0 * multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu_sat[grpidx, xidx[1:Nx[mm]]], Sigma_sat[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	      
+		log_lik_rep_sat[jj] += -1.0 * multi_normal_lpdf(YXstar_rep[jj, xdatidx[1:Nx[mm]]] | Mu_rep_sat[grpidx, xidx[1:Nx[mm]]], Sigma_rep_sat[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	      }
+	    }
+	  } else {
+	    Sigmainv_patt[1:Nobs[mm], 1:Nobs[mm]] = inverse_spd(Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+	    Sigmainv_sat_patt[1:Nobs[mm], 1:Nobs[mm]] = inverse_spd(Sigma_sat[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+	    Sigmainv_rep_sat_patt[1:Nobs[mm], 1:Nobs[mm]] = inverse_spd(Sigma_rep_sat[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+
+	    for (jj in r1:r2) {
+	      // log_lik_rep, _sat, _rep_sat
+	      log_lik_rep[jj] = multi_normal_prec_lpdf(YXstar_rep[jj, 1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigmainv_patt[1:Nobs[mm], 1:Nobs[mm]]);
+
+	      log_lik_sat[jj] = multi_normal_prec_lpdf(YXstar[jj, 1:Nobs[mm]] | Mu_sat[grpidx, obsidx[1:Nobs[mm]]], Sigmainv_sat_patt[1:Nobs[mm], 1:Nobs[mm]]);
+
+	      log_lik_rep_sat[jj] = multi_normal_prec_lpdf(YXstar_rep[jj, 1:Nobs[mm]] | Mu_rep_sat[grpidx, obsidx[1:Nobs[mm]]], Sigmainv_rep_sat_patt[1:Nobs[mm], 1:Nobs[mm]]);
+	    
+	      if (Nx[mm] > 0) {
+		log_lik_rep[jj] += -1.0 * multi_normal_lpdf(YXstar_rep[jj, xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	    
+		log_lik_sat[jj] += -1.0 * multi_normal_lpdf(YXstar[jj, xdatidx[1:Nx[mm]]] | Mu_sat[grpidx, xidx[1:Nx[mm]]], Sigma_sat[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	      
+		log_lik_rep_sat[jj] += -1.0 * multi_normal_lpdf(YXstar_rep[jj, xdatidx[1:Nx[mm]]] | Mu_rep_sat[grpidx, xidx[1:Nx[mm]]], Sigma_rep_sat[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);
+	      }
+	    }	    
 	  }
-	  
+	    
 	  // we subtract log_lik here so that _sat always varies and does not lead to
 	  // problems with rhat and neff computations
 	  log_lik_sat[r1:r2] -= log_lik[r1:r2];
