@@ -15,10 +15,13 @@ generics::glance
 #' This function repackages the output from \code{summary()} into a friendly \code{data.frame}.
 #'
 #' @param x A \code{blavaan} object.
-#' @param summary.type The posterior summary statistic to use as the point
-#'   estimate. One of \code{"mean"} (posterior mean, default), \code{"median"}
-#'   (posterior median), or \code{"mode"} (posterior mode). Fixed and
-#'   constrained parameters always use the posterior mean regardless.
+#' @param estimate.method The posterior summary statistic to compute the point
+#'   estimates. One of \code{"mean"} (posterior mean, default), \code{"median"}
+#'   (posterior median), or \code{"mode"} (posterior mode). Only free parameters
+#'   are summarized by the requested statistic; fixed parameters retain their
+#'   fixed values. Defined/constrained parameters (\code{:=}) keep the point
+#'   estimate from the standard \code{summary()} output regardless of
+#'   \code{estimate.method}.
 #' @param conf.int Logical indicating whether to include credible intervals.
 #'   Default is \code{TRUE}.
 #' @param standardized Logical indicating whether to include standardized
@@ -29,20 +32,23 @@ generics::glance
 #'   Default is \code{TRUE}.
 #' @param priors Logical indicating whether to include the prior distribution
 #'   specification. Default is \code{TRUE}.
-#' @param ... Additional arguments passed to \code{summary()}.
 #'
 #' @return A \code{data.frame} with columns:
 #'   \item{term}{Parameter name (lhs, op, rhs combined)}
 #'   \item{op}{Operator from the model syntax}
-#'   \item{estimate}{Posterior summary statistic determined by \code{summary.type}}
+#'   \item{level} The level of a parameter estimate
+#'   \item{group}{Group number (for multigroup models)}
+#'   \item{estimate}{Posterior summary statistic determined by \code{estimate.method}}
 #'   \item{std.error}{Posterior standard deviation}
 #'   \item{conf.low}{Lower bound of 95\% credible interval (if \code{conf.int = TRUE})}
 #'   \item{conf.high}{Upper bound of 95\% credible interval (if \code{conf.int = TRUE})}
-#'   \item{std.all}{Standardized estimate (if \code{standardized = TRUE})}
+#'   \item{std.lv}{Standardized estimates based on the variances of the
+#'     (continuous) latent variables only}
+#'   \item{std.all}{Standardized estimates based on both the variances
+#'     of both (continuous) observed and latent variables.}
 #'   \item{rhat}{Rhat convergence diagnostic (if \code{rhat = TRUE})}
 #'   \item{ess}{Effective sample size (if \code{ess = TRUE})}
 #'   \item{prior}{Prior distribution specification (if \code{priors = TRUE})}
-#'   \item{group}{Group number (for multigroup models)}
 #'
 #' @importFrom generics tidy
 #' @examples
@@ -53,26 +59,44 @@ generics::glance
 #' fit <- bcfa(HS.model, data = HolzingerSwineford1939, seed = 123,
 #'             n.chains = 1, sample = 300)
 #' tidy(fit)
-#' tidy(fit, summary.type = "median")
-#' tidy(fit, standardized = TRUE)
+#' tidy(fit, estimate.method = "median")
+#' 
+#' data(Demo.twolevel, package = "lavaan")
+#' model <- "
+#'     level: within
+#'         fw =~ y1 + y2 + y3
+#'         fw ~ x1 + x2 + x3
+#'     level: between
+#'         fb =~ y1 + y2 + y3
+#'         fb ~ w1 + w2
+#' "
+#' bfit <- bsem(
+#'   model = model,
+#'   data = Demo.twolevel,
+#'   cluster = "cluster",
+#'   seed = 123,
+#'   n.chains = 1,
+#'   sample = 300,
+#'   target = "stan"
+#' )
+#' tidy(fit)
 #' }
 #'
 #' @export
-tidy.blavaan <- function(x, summary.type = c('mean', 'median', 'mode'),
-                          conf.int = TRUE, standardized = FALSE,
-                         rhat = TRUE, ess = TRUE, priors = TRUE, ...) {
+tidy.blavaan <- function(x, estimate.method = c('mean', 'median', 'mode'),
+                          conf.int = TRUE, rhat = TRUE, ess = TRUE, priors = TRUE) {
 
-  summary.type <- match.arg(summary.type)
+  estimate.method <- match.arg(estimate.method)
 
   # Get parameter estimates
   PE <- summary(
     x,
     header = FALSE,
     print = FALSE,
-    standardized = standardized,
+    standardized = TRUE,
     neff = ess,
-    postmedian = summary.type == "median",
-    postmode = summary.type == "mode",
+    postmedian = estimate.method == "median",
+    postmode = estimate.method == "mode",
     ci = conf.int,
     priors = priors
   )
@@ -87,17 +111,27 @@ tidy.blavaan <- function(x, summary.type = c('mean', 'median', 'mode'),
   )
 
   # Add group information for multigroup models
-  if ("group" %in% names(parameterEstimates(x))) {
-    result$group <- PE$group
+  if (length(unique(PE$group)) > 1) {
+    result$group <- as.integer(PE$group)
     result <- result[, c('term', 'op', 'group', 'estimate', 'std.error')]
   }
 
-  # Substitute estimate based on summary.type
-  if (summary.type == "median") {
-    PE$Post.Med[is.na(PE$Post.Med)] <- PE$est[is.na(PE$Post.Med)]
+  # Add block and level information for multilevel models 
+  if ('level' %in% names(PE)) {
+    result$level <- PE$level
+    if ("group" %in% names(result)) {
+      result <- result[, c('term', 'op', 'level', 'group', 'estimate', 'std.error')]
+    } else 
+    {
+      result <- result[, c('term', 'op', 'level', 'estimate', 'std.error')]
+    }
+    
+  }
+
+  # Substitute estimate based on estimate.method
+  if (estimate.method == "median") {
     result$estimate <- PE$Post.Med
-  } else if (summary.type == "mode") {
-    PE$Post.Mode[is.na(PE$Post.Mode)] <- PE$est[is.na(PE$Post.Mode)]
+  } else if (estimate.method == "mode") {
     result$estimate <- PE$Post.Mode
   }
 
@@ -107,10 +141,9 @@ tidy.blavaan <- function(x, summary.type = c('mean', 'median', 'mode'),
     result$conf.high <- as.numeric(PE$pi.upper)
   }
 
-  # Add standardized estimates if requested
-  if (isTRUE(standardized)) {
-    result$std.all <- PE$std.all
-  }
+  # Add standardized estimates
+  result$std.lv <- PE$std.lv
+  result$std.all <- PE$std.all
 
   # Add rhat from PE, if rhat = TRUE
   if (isTRUE(rhat)) {
