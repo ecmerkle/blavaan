@@ -989,6 +989,7 @@ blavaan <- function(...,  # default lavaan arguments
     
     # 10. construct blavaan object
     blavaan <- new("blavaan",
+                   version      = as.character( packageVersion('blavaan') ),
                    call         = mc,                  # match.call
                    timing       = timing,              # list
                    Options      = lavoptions,          # list
