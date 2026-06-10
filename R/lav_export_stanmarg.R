@@ -813,9 +813,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       if (level == 2L) {
         names(ini[[i]]) <- paste0(names(ini[[i]]), "_c")
       } else {
-        ## if ordinal, tau needs a specific ordering, with augmented z's to match
-        tauvec <- which(names(ini[[i]]) == "Tau_free")
-        if(length(tauvec) > 0) {
+        if(dat$Noent > 0) {
           z_aug <- rep(.5, dat$Noent)
 
           ## for (j in 1:dat$Nord) {
