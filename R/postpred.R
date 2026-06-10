@@ -105,6 +105,10 @@ postpred <- function(samplls = NULL, lavobject = NULL, measure = "logl", thin = 
         fit <- lavaan(slotOptions = lavoptions1, slotModel = lavmodel1, # updated slots
                       slotSampleStats = lavsamplestats, slotData = ldorig,
                       slotParTable = lavpartable, slotCache = lavcache)
+        ## lavaan() with optim.method="none" leaves @implied empty, which breaks
+        ## discFUN()s that call fitMeasures()/lavResiduals() (e.g. srmr)
+        fit@implied <- lav_model_implied(lavmodel1,
+                                         delta = (lavmodel1@parameterization == "delta"))
 
         if (save_lvs) {
           eta <- fill_eta(lavmcmc[[j]][i,], lavmodel1, lavpartable, lavsamplestats, lavdata)
@@ -217,6 +221,10 @@ postpred <- function(samplls = NULL, lavobject = NULL, measure = "logl", thin = 
                         slotModel = lavmodel2, slotCache = lavcache,
                         data = DATA)
         }
+        ## lavaan() with optim.method="none" leaves @implied empty, which breaks
+        ## fitMeasures()/lavResiduals() (e.g. srmr) on the simulated-data fit
+        out@implied <- lav_model_implied(lavmodel2,
+                                         delta = (lavmodel2@parameterization == "delta"))
         # bootSampleStats <- out@SampleStats
         if (save_lvs) {
           out@external$eta <- eta
