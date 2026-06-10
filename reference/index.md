@@ -38,6 +38,8 @@
   Equation Models
 - [`dpriors()`](https://blavaan.org/reference/dpriors.md) : Specify
   Default Prior Distributions
+- [`glance(`*`<blavaan>`*`)`](https://blavaan.org/reference/glance.blavaan.md)
+  : Glance at a blavaan object
 - [`plot(`*`<blavaan>`*`)`](https://blavaan.org/reference/plot.blavaan.md)
   : blavaan Diagnostic Plots
 - [`ppmc()`](https://blavaan.org/reference/ppmc.md)
@@ -51,3 +53,5 @@
   data from the posterior (or prior) distribution.
 - [`standardizedPosterior()`](https://blavaan.org/reference/standardizedPosterior.md)
   : Standardized Posterior
+- [`tidy(`*`<blavaan>`*`)`](https://blavaan.org/reference/tidy.blavaan.md)
+  : Tidy a blavaan object
