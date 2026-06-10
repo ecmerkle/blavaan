@@ -12,3 +12,6 @@
 ^docs$
 ^pkgdown$
 ^vignettes$
+^\.claude$
+^dev$
+^\.git$

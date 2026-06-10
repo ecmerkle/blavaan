@@ -77,7 +77,8 @@ function(object, header       = TRUE,
                  postmode     = FALSE,
                  priors       = TRUE,
                  bf           = FALSE,
-                 nd = 3L) {
+                 nd = 3L,
+                 print = TRUE) {
 
     #TODO: remove (deprecated):  if(std.nox) standardized <- TRUE
 
@@ -196,7 +197,7 @@ function(object, header       = TRUE,
           if(jagtarget){
             PE$neff[peentry] <- object@external$mcmcout$summaries[newpt$jagpnum[pte2],'SSeff']
           } else {
-            PE$neff[peentry] <- parsumm$summary[newpt$stansumnum[pte2],'n_eff']
+            PE$neff[peentry] <- parsumm[newpt$stansumnum[pte2],'n_eff']
           }
         }
         if(priors){
@@ -209,7 +210,7 @@ function(object, header       = TRUE,
           if(jagtarget){
             PE$Post.Med[peentry] <- object@external$mcmcout$summaries[newpt$jagpnum[pte2],'Median']
           } else {
-            PE$Post.Med[peentry] <- parsumm$summary[newpt$stansumnum[pte2],'50%']
+            PE$Post.Med[peentry] <- parsumm[newpt$stansumnum[pte2],'50%']
           }
         }
         if(postmode){
@@ -254,7 +255,10 @@ function(object, header       = TRUE,
         names(PE)[penames == "ci.upper"] <- "pi.upper"
         names(PE)[penames == "psrf"] <- "Rhat"
 
-        print(PE, nd = nd)
+        if (isTRUE(print)) {
+          print(PE, nd = nd)
+        }
+        invisible(PE)
     } # parameter estimates
 }
 )
