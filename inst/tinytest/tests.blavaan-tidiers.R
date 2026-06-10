@@ -63,8 +63,8 @@ expect_true(is.data.frame(s))
 
 ## glance() returns the fit measures
 g <- glance(fit)
-expect_true(is.numeric(g))
-expect_true(length(g) > 1L)
+expect_true(inherits(g, "data.frame"))
+expect_true(nrow(g) > 1L)
 
 ## ---------------------------------------------------------------------------
 ## multigroup model -> tidy() gains a 'group' column

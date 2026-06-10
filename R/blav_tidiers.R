@@ -89,7 +89,7 @@ tidy.blavaan <- function(x, estimate.method = c('mean', 'median', 'mode'),
   estimate.method <- match.arg(estimate.method)
 
   # Get parameter estimates
-  PE <- summary(
+  PE <- methods::selectMethod("summary", "blavaan")(
     x,
     header = FALSE,
     print = FALSE,
