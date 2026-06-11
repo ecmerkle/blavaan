@@ -209,8 +209,8 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> 
 #> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 1).
 #> Chain 1: 
-#> Chain 1: Gradient evaluation took 0.000236 seconds
-#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.36 seconds.
+#> Chain 1: Gradient evaluation took 0.000269 seconds
+#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.69 seconds.
 #> Chain 1: Adjust your expectations accordingly!
 #> Chain 1: 
 #> Chain 1: 
@@ -235,15 +235,15 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> Chain 1: Iteration: 180 / 200 [ 90%]  (Sampling)
 #> Chain 1: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 1: 
-#> Chain 1:  Elapsed Time: 0.325 seconds (Warm-up)
-#> Chain 1:                0.338 seconds (Sampling)
-#> Chain 1:                0.663 seconds (Total)
+#> Chain 1:  Elapsed Time: 0.33 seconds (Warm-up)
+#> Chain 1:                0.343 seconds (Sampling)
+#> Chain 1:                0.673 seconds (Total)
 #> Chain 1: 
 #> 
 #> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 2).
 #> Chain 2: 
-#> Chain 2: Gradient evaluation took 0.000194 seconds
-#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 1.94 seconds.
+#> Chain 2: Gradient evaluation took 0.000233 seconds
+#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.33 seconds.
 #> Chain 2: Adjust your expectations accordingly!
 #> Chain 2: 
 #> Chain 2: 
@@ -269,8 +269,8 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> Chain 2: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 2: 
 #> Chain 2:  Elapsed Time: 0.568 seconds (Warm-up)
-#> Chain 2:                0.368 seconds (Sampling)
-#> Chain 2:                0.936 seconds (Total)
+#> Chain 2:                0.351 seconds (Sampling)
+#> Chain 2:                0.919 seconds (Total)
 #> Chain 2: 
 #> Warning: The largest R-hat is NA, indicating chains have not mixed.
 #> Running the chains for more iterations may help. See
