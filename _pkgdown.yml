@@ -59,6 +59,7 @@ navbar:
     - text: Functions
       href: reference/index.html
   right:
+   - search
    - icon: "fab fa-github fa-lg"
      href: https://github.com/ecmerkle/blavaan
    - icon: fa-users
