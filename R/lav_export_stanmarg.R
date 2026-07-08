@@ -1085,6 +1085,16 @@ lav2standata <- function(lavobject, dosam = FALSE) {
   dat$ord <- ord
   dat$multilev <- multilevel
   dat$N <- lavInspect(lavobject, 'nobs')
+  if (multilevel) {
+    ## for two-level models, dat$N must be the RAW per-group row count of
+    ## YX, not lavInspect(.,'nobs') (which excludes lavaan's "globally
+    ## empty" rows) -- those rows are still real level-1 units belonging to
+    ## a cluster and must stay in YX/grpnum/Ntot/etc. for row-count
+    ## bookkeeping to stay consistent; their Y-pattern likelihood
+    ## contribution is 0, handled by the pattern machinery itself, not by
+    ## dropping the row
+    dat$N <- sapply(YX, NROW)
+  }
 
   if (multilevel) {
     dat$ov_idx1 <- Lp[[1]]$ov.idx[[1]]
@@ -1421,7 +1431,9 @@ lav2standata <- function(lavobject, dosam = FALSE) {
       }
       dat$Zrow <- do.call("rbind", Zrow_list)
     } else {
-      dat$Zrow <- matrix(0, sum(dat$nclus[, 2]), 0)
+      ## padded to 1 column (unused) to match the Stan-side max(N_between,1)
+      ## sizing convention used for zpatt_obsidx/zpatt_nobs
+      dat$Zrow <- matrix(0, sum(dat$nclus[, 2]), 1)
     }
 
     ## clusterwise data summaries, for loo and waic and etc
@@ -1500,7 +1512,7 @@ lav2standata <- function(lavobject, dosam = FALSE) {
     dat$zpatt_nobs <- array(0L, 1)
     dat$zpatt_obsidx <- matrix(0L, 1, 1)
     dat$clus_zpatt <- array(1L, Ng)
-    dat$Zrow <- matrix(0, Ng, 0)
+    dat$Zrow <- matrix(0, Ng, 1) # padded to 1 column, matches Stan's max(N_between,1)
   } # multilevel
 
   if (ord) {

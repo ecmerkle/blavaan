@@ -208,7 +208,7 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
   }
 
   /*
-    Fills in the elements of a coefficient matrix containing some mix of 
+    Fills in the elements of a coefficient matrix containing some mix of
     totally free, free subject to a sign constraint, and fixed elements
     
     @param free_elements vector of unconstrained elements
@@ -438,6 +438,266 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     }
 
     return out;
+  }
+
+  // Two-level FIML/MAR marginal log-density, for real (non-listwise-deleted)
+  // missing data. Ports lavaan's lav_mvn_cl_mi_loglik_samp_2l() (see
+  // lav_mvnorm_cluster_missing.R) into Stan: per-Y-pattern and per-Z-pattern
+  // precision/logdet caching via the existing sig_inv_update() rank-update
+  // helper, a row loop accumulating each cluster's A_j/p_j/q_yy_a (using
+  // cluster_size to find cluster row boundaries, since rows are already
+  // cluster-contiguous), a per-cluster Z-pattern term, and a per-cluster
+  // Woodbury close. Returns one log-likelihood entry per cluster (not a
+  // single scalar), so both `target += sum(...)` and the log_lik generated
+  // quantity can share this one implementation -- there's no size-based
+  // pooling shortcut available here the way there is for the complete-data
+  // twolevel_logdens(), since missingness makes every cluster's likelihood
+  // contribution genuinely different.
+  vector twolevel_logdens_missing(array[] vector YX, array[] int cluster_size,
+                                   array[] int row_ypatt, int n_ypatt,
+                                   array[] int ypatt_nobs, array[,] int ypatt_obsidx,
+                                   array[] int clus_zpatt, int n_zpatt,
+                                   array[] int zpatt_nobs, array[,] int zpatt_obsidx,
+                                   array[] vector Zrow,
+                                   vector impl_Muw, matrix impl_Sigmaw,
+                                   vector impl_Mub, matrix impl_Sigmab,
+                                   array[] int ov_idx1, array[] int ov_idx2,
+                                   array[] int within_idx, array[] int between_idx,
+                                   array[] int both_idx, int p_tilde,
+                                   int N_within, int N_between, int N_both) {
+    int nclusters = size(cluster_size);
+    int N_wo_b = N_within + N_both;
+    matrix[p_tilde, p_tilde + 1] W_tilde;
+    matrix[p_tilde, p_tilde] W_tilde_cov;
+    matrix[p_tilde, p_tilde + 1] B_tilde;
+    matrix[p_tilde, p_tilde] B_tilde_cov;
+    vector[p_tilde] Mu_WB_tilde;
+    vector[N_between] Mu_z;
+    vector[N_wo_b] Mu_y;
+    matrix[N_between, N_between] Sigma_zz;
+    matrix[N_wo_b, N_between] Sigma_yz;
+    matrix[N_wo_b, N_wo_b] Sigma_b;
+    matrix[N_wo_b, N_wo_b] Sigma_w;
+    array[N_between] int bidx;
+    array[N_wo_b] int notbidx;
+    array[N_both] int both_local;
+
+    matrix[N_wo_b, N_wo_b] Sigma_w_inv;
+    real Sigma_w_ld;
+    matrix[N_between, N_between] Sigma_zz_inv;
+    real Sigma_zz_ld = 0;
+    matrix[N_both, N_both] Sigma_b_bb;
+
+    // per-pattern caches: [1:no,1:no] = observed-submatrix precision,
+    // [no+1,no+1] = its logdet (only the first no+1 rows/cols are ever read)
+    array[n_ypatt] matrix[N_wo_b + 1, N_wo_b + 1] Wp;
+    array[n_zpatt > 0 ? n_zpatt : 1] matrix[N_between + 1, N_between + 1] Zp;
+    array[n_zpatt > 0 ? n_zpatt : 1] matrix[N_both, N_both] Sbz_q;
+
+    vector[nclusters] q_yy_a = rep_vector(0, nclusters);
+    vector[nclusters] w_logdet = rep_vector(0, nclusters);
+    vector[nclusters] n_y_obs = rep_vector(0, nclusters);
+    array[nclusters] matrix[N_both, N_both] A_j;
+    array[nclusters] vector[N_both] p_j;
+
+    vector[nclusters] q_zz_a = rep_vector(0, nclusters);
+    vector[nclusters] zz_logdet = rep_vector(0, nclusters);
+    vector[nclusters] n_z_obs = rep_vector(0, nclusters);
+    array[nclusters] vector[N_both] g_j;
+
+    vector[nclusters] q_yy_b = rep_vector(0, nclusters);
+    vector[nclusters] q_zz_b = rep_vector(0, nclusters);
+    vector[nclusters] q_zy = rep_vector(0, nclusters);
+    vector[nclusters] ibza_logdet = rep_vector(0, nclusters);
+    vector[nclusters] loglik;
+
+    // 1. build Sigma_w/Sigma_zz/Sigma_yz/Sigma_b -- mirrors twolevel_logdens's
+    //    preamble verbatim (deliberately duplicated, not shared, to avoid
+    //    risking a change to the already-validated complete-data path)
+    W_tilde = calc_W_tilde(impl_Sigmaw, impl_Muw, ov_idx1, p_tilde);
+    W_tilde_cov = block(W_tilde, 1, 2, p_tilde, p_tilde);
+    B_tilde = calc_B_tilde(impl_Sigmab, impl_Mub, ov_idx2, p_tilde);
+    B_tilde_cov = block(B_tilde, 1, 2, p_tilde, p_tilde);
+    Mu_WB_tilde = rep_vector(0, p_tilde);
+
+    if (N_within > 0) {
+      for (i in 1:N_within) {
+        Mu_WB_tilde[within_idx[i]] = W_tilde[within_idx[i], 1];
+        B_tilde[within_idx[i], 1] = 0;
+      }
+    }
+    if (N_both > 0) {
+      for (i in 1:N_both) {
+        Mu_WB_tilde[both_idx[i]] = B_tilde[both_idx[i], 1] + W_tilde[both_idx[i], 1];
+      }
+    }
+    if (N_between > 0) {
+      bidx = between_idx[1:N_between];
+      notbidx = between_idx[(N_between + 1):p_tilde];
+      Mu_z = to_vector(B_tilde[bidx, 1]);
+      Mu_y = Mu_WB_tilde[notbidx];
+      Sigma_zz = B_tilde_cov[bidx, bidx];
+      Sigma_yz = B_tilde_cov[notbidx, bidx];
+      Sigma_b = B_tilde_cov[notbidx, notbidx];
+      Sigma_w = W_tilde_cov[notbidx, notbidx];
+    } else {
+      notbidx = between_idx[1:p_tilde];
+      Mu_y = Mu_WB_tilde;
+      Sigma_b = B_tilde_cov;
+      Sigma_w = W_tilde_cov;
+    }
+
+    for (i in 1:N_both) {
+      both_local[i] = 1;
+      for (k in 1:N_wo_b) {
+        if (notbidx[k] == both_idx[i]) both_local[i] = k;
+      }
+    }
+    Sigma_b_bb = Sigma_b[both_local, both_local];
+
+    Sigma_w_inv = inverse_spd(Sigma_w);
+    Sigma_w_ld = log_determinant(Sigma_w);
+    if (N_between > 0) {
+      Sigma_zz_inv = inverse_spd(Sigma_zz);
+      Sigma_zz_ld = log_determinant(Sigma_zz);
+    }
+
+    // 2. cache per-Y-pattern precision + logdet, via the existing
+    //    (already-validated) sig_inv_update rank-update helper
+    for (pp in 1:n_ypatt) {
+      int no = ypatt_nobs[pp];
+      if (no > 0) {
+        Wp[pp, 1:(no + 1), 1:(no + 1)] = sig_inv_update(Sigma_w_inv, ypatt_obsidx[pp], no, N_wo_b, Sigma_w_ld);
+      }
+    }
+
+    // 3. cache per-Z-pattern precision + logdet + pattern-specific Sigma_b_z
+    if (N_between > 0) {
+      for (qq in 1:n_zpatt) {
+        int noz = zpatt_nobs[qq];
+        if (noz > 0) {
+          Zp[qq, 1:(noz + 1), 1:(noz + 1)] = sig_inv_update(Sigma_zz_inv, zpatt_obsidx[qq], noz, N_between, Sigma_zz_ld);
+          {
+            matrix[N_both, noz] Syz_q = Sigma_yz[both_local, zpatt_obsidx[qq, 1:noz]];
+            Sbz_q[qq] = Sigma_b_bb - Syz_q * Zp[qq, 1:noz, 1:noz] * Syz_q';
+          }
+        } else {
+          Sbz_q[qq] = Sigma_b_bb;
+        }
+      }
+    }
+
+    // 4. Y-pattern row loop (rows are cluster-contiguous; cluster_size gives
+    //    each cluster's row-block boundaries)
+    {
+      int r1 = 1;
+      for (j in 1:nclusters) {
+        int nj = cluster_size[j];
+        matrix[N_both, N_both] Aj = rep_matrix(0, N_both, N_both);
+        vector[N_both] pjv = rep_vector(0, N_both);
+        real qa = 0;
+        real wl = 0;
+        real nyobs = 0;
+        for (ii in 1:nj) {
+          int i = r1 - 1 + ii;
+          int p = row_ypatt[i];
+          int no = ypatt_nobs[p];
+          if (no > 0) {
+            vector[no] resid;
+            for (kk in 1:no) {
+              resid[kk] = YX[i, notbidx[ypatt_obsidx[p, kk]]] - Mu_y[ypatt_obsidx[p, kk]];
+            }
+            qa += quad_form(Wp[p, 1:no, 1:no], resid);
+            wl += Wp[p, no + 1, no + 1];
+            nyobs += no;
+            if (N_both > 0) {
+              array[N_both] int bpos = rep_array(0, N_both);
+              for (bb in 1:N_both) {
+                for (kk in 1:no) {
+                  if (ypatt_obsidx[p, kk] == both_local[bb]) bpos[bb] = kk;
+                }
+              }
+              for (bb in 1:N_both) {
+                if (bpos[bb] > 0) {
+                  pjv[bb] += dot_product(Wp[p, bpos[bb], 1:no], resid);
+                  for (bb2 in 1:N_both) {
+                    if (bpos[bb2] > 0) {
+                      Aj[bb, bb2] += Wp[p, bpos[bb], bpos[bb2]];
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        q_yy_a[j] = qa;
+        w_logdet[j] = wl;
+        n_y_obs[j] = nyobs;
+        A_j[j] = Aj;
+        p_j[j] = pjv;
+        r1 += nj;
+      }
+    }
+
+    // 5. Z-pattern cluster loop (one entry per cluster)
+    for (j in 1:nclusters) {
+      vector[N_both] gjv = rep_vector(0, N_both);
+      real qz = 0;
+      real zl = 0;
+      real nzobs = 0;
+      if (N_between > 0) {
+        int q = clus_zpatt[j];
+        int noz = zpatt_nobs[q];
+        if (noz > 0) {
+          vector[noz] zresid;
+          for (kk in 1:noz) {
+            zresid[kk] = Zrow[j, zpatt_obsidx[q, kk]] - Mu_z[zpatt_obsidx[q, kk]];
+          }
+          qz = quad_form(Zp[q, 1:noz, 1:noz], zresid);
+          zl = Zp[q, noz + 1, noz + 1];
+          nzobs = noz;
+          gjv = Sigma_yz[both_local, zpatt_obsidx[q, 1:noz]] * (Zp[q, 1:noz, 1:noz] * zresid);
+        }
+      }
+      q_zz_a[j] = qz;
+      zz_logdet[j] = zl;
+      n_z_obs[j] = nzobs;
+      g_j[j] = gjv;
+    }
+
+    // 6. per-cluster Woodbury close
+    {
+      matrix[N_both, N_both] I_nb = diag_matrix(rep_vector(1, N_both));
+      for (j in 1:nclusters) {
+        matrix[N_both, N_both] Sbz;
+        matrix[N_both, N_both] ibza;
+        vector[N_both] sol;
+        if (N_between > 0) {
+          Sbz = Sbz_q[clus_zpatt[j]];
+        } else {
+          Sbz = Sigma_b_bb;
+        }
+        ibza = I_nb + Sbz * A_j[j];
+        ibza_logdet[j] = log_determinant(ibza);
+        sol = mdivide_left(ibza, Sbz * p_j[j]);
+        q_yy_b[j] = dot_product(p_j[j], sol);
+        if (N_between > 0) {
+          vector[N_both] sol_g = mdivide_left(ibza, g_j[j]);
+          q_zz_b[j] = dot_product(g_j[j], A_j[j] * sol_g);
+          q_zy[j] = -dot_product(p_j[j], sol_g);
+        }
+      }
+    }
+
+    // 7. assemble per-cluster loglik
+    for (j in 1:nclusters) {
+      real p_1 = n_y_obs[j] + n_z_obs[j];
+      real dist_1 = (q_yy_a[j] - q_yy_b[j]) + 2 * q_zy[j] + (q_zz_a[j] + q_zz_b[j]);
+      real logdet = w_logdet[j] + ibza_logdet[j] + zz_logdet[j];
+      loglik[j] = -0.5 * (p_1 * log(2 * pi()) + logdet + dist_1);
+    }
+
+    return loglik;
   }
   
   real multi_normal_suff(vector xbar, matrix S, vector Mu, matrix Supdate, int N) {
@@ -705,7 +965,21 @@ data {
   array[N_both] int both_idx;
   vector[multilev ? sum(ncluster_sizes) : Ng] log_lik_x; // ll of fixed x variables by unique cluster size
   vector[multilev ? sum(nclus[,2]) : Ng] log_lik_x_full; // ll of fixed x variables by cluster
-  
+
+  /* two-level FIML/MAR missing-data patterns (see twolevel_logdens_missing);
+     always populated (a degenerate single "all observed" pattern when
+     there's no real missingness), so the ragged-array plumbing stays
+     well-defined regardless of the `missing` dispatch flag */
+  array[Ng] int<lower=1> n_ypatt; // number of level-1 (Y) patterns per group
+  array[sum(n_ypatt)] int<lower=0, upper=N_within + N_both> ypatt_nobs; // observed count per Y-pattern
+  array[sum(n_ypatt), N_within + N_both] int<lower=0> ypatt_obsidx; // observed-then-missing y-space idx per Y-pattern
+  array[Ntot] int<lower=1> row_ypatt; // group-local Y-pattern id per row of YX (already cluster-reordered)
+  array[Ng] int<lower=0> n_zpatt; // number of between-level (Z) patterns per group (0 if N_between == 0)
+  array[max(sum(n_zpatt), 1)] int<lower=0, upper=N_between> zpatt_nobs; // observed count per Z-pattern
+  array[max(sum(n_zpatt), 1), max(N_between, 1)] int<lower=0> zpatt_obsidx; // observed-then-missing idx per Z-pattern
+  array[sum(nclus[,2])] int<lower=1> clus_zpatt; // group-local Z-pattern id per cluster
+  array[sum(nclus[,2])] vector[max(N_between, 1)] Zrow; // raw (zero-filled) between-var values per cluster
+
   /* sparse matrix representations of skeletons of coefficient matrices, 
      which is not that interesting but necessary because you cannot pass
      missing values into the data block of a Stan program from R */
@@ -1636,25 +1910,59 @@ model { // N.B.: things declared in the model block do not get saved in the outp
     int rr2 = 0;
     int r3 = 1; // index unique cluster sizes per group
     int r4 = 0;
-    
+    int yp1 = 1; // index flattened Y-patterns per group
+    int yp2 = 0;
+    int zp1 = 1; // index flattened Z-patterns per group
+    int zp2 = 0;
+
     for (mm in 1:Np) {
       grpidx = grpnum[mm];
       if (grpidx > 1) {
 	r1 += nclus[(grpidx - 1), 2];
 	rr1 += nclus[(grpidx - 1), 1];
 	r3 += ncluster_sizes[(grpidx - 1)];
+	yp1 += n_ypatt[(grpidx - 1)];
+	zp1 += n_zpatt[(grpidx - 1)];
       }
       r2 += nclus[grpidx, 2];
       rr2 += nclus[grpidx, 1];
       r4 += ncluster_sizes[grpidx];
-      
-      target += twolevel_logdens(mean_d[r3:r4], cov_d[r3:r4], S_PW[grpidx], YX[rr1:rr2],
-				 nclus[grpidx,], cluster_size[r1:r2], cluster_sizes[r3:r4],
-				 ncluster_sizes[grpidx], cluster_size_ns[r3:r4], Mu[grpidx],
-				 Sigma[grpidx], Mu_c[grpidx], Sigma_c[grpidx],
-				 ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
-				 p_tilde, N_within, N_between, N_both);
-      
+      yp2 += n_ypatt[grpidx];
+      zp2 += n_zpatt[grpidx];
+
+      if (missing) {
+        // real (non-listwise-deleted) missing data: dispatch to the
+        // pattern-based FIML/MAR likelihood instead. n_zpatt[grpidx] can be
+        // 0 (N_between == 0); zpatt_nobs_g/zpatt_obsidx_g are padded to size
+        // >= 1 in that case (never read inside the function, but need
+        // dimension-valid arguments)
+        int zp_n = max(n_zpatt[grpidx], 1);
+        array[zp_n] int zpatt_nobs_g;
+        array[zp_n, max(N_between, 1)] int zpatt_obsidx_g;
+        if (n_zpatt[grpidx] > 0) {
+          zpatt_nobs_g = zpatt_nobs[zp1:zp2];
+          zpatt_obsidx_g = zpatt_obsidx[zp1:zp2, ];
+        } else {
+          zpatt_nobs_g = rep_array(0, zp_n);
+          zpatt_obsidx_g = rep_array(0, zp_n, max(N_between, 1));
+        }
+        target += sum(twolevel_logdens_missing(YX[rr1:rr2], cluster_size[r1:r2],
+                                                row_ypatt[rr1:rr2], n_ypatt[grpidx],
+                                                ypatt_nobs[yp1:yp2], ypatt_obsidx[yp1:yp2, ],
+                                                clus_zpatt[r1:r2], zp_n, zpatt_nobs_g, zpatt_obsidx_g,
+                                                Zrow[r1:r2],
+                                                Mu[grpidx], Sigma[grpidx], Mu_c[grpidx], Sigma_c[grpidx],
+                                                ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
+                                                p_tilde, N_within, N_between, N_both));
+      } else {
+        target += twolevel_logdens(mean_d[r3:r4], cov_d[r3:r4], S_PW[grpidx], YX[rr1:rr2],
+				   nclus[grpidx,], cluster_size[r1:r2], cluster_sizes[r3:r4],
+				   ncluster_sizes[grpidx], cluster_size_ns[r3:r4], Mu[grpidx],
+				   Sigma[grpidx], Mu_c[grpidx], Sigma_c[grpidx],
+				   ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
+				   p_tilde, N_within, N_between, N_both);
+      }
+
       if (Nx[grpidx] + Nx_between[grpidx] > 0) target += -log_lik_x;
     }
   } else if (use_cov && !pri_only) {
@@ -2219,23 +2527,58 @@ generated quantities { // these matrices are saved in the output but do not figu
       r3 = 1;
       r2 = 0;
       r4 = 0;
-      for (mm in 1:Np) {
-	grpidx = grpnum[mm];
-	if (grpidx > 1) {
-	  r1 += nclus[(grpidx - 1), 2];
-	  r3 += nclus[(grpidx - 1), 1];
-	}
-	r2 += nclus[grpidx, 2];
-	r4 += nclus[grpidx, 1];
-	
-	log_lik[r1:r2] = twolevel_logdens(mean_d_full[r1:r2], cov_d_full[r1:r2], S_PW[grpidx], YX[r3:r4],
-					  nclus[grpidx,], cluster_size[r1:r2], cluster_size[r1:r2],
-					  nclus[grpidx,2], intone[1:nclus[grpidx,2]], Mu[grpidx],
-					  Sigma[grpidx], Mu_c[grpidx], Sigma_c[grpidx],
-					  ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
-					  p_tilde, N_within, N_between, N_both);
+      {
+        // n.b.: log_lik is monitored unconditionally for multilevel fits
+        // (see R/blavaan.R), so this dispatch on `missing` is mandatory,
+        // not optional -- otherwise log_lik/waic/looic would be silently
+        // wrong for every multilevel+missing fit
+        int yp1 = 1;
+        int yp2 = 0;
+        int zp1 = 1;
+        int zp2 = 0;
+        for (mm in 1:Np) {
+	  grpidx = grpnum[mm];
+	  if (grpidx > 1) {
+	    r1 += nclus[(grpidx - 1), 2];
+	    r3 += nclus[(grpidx - 1), 1];
+	    yp1 += n_ypatt[(grpidx - 1)];
+	    zp1 += n_zpatt[(grpidx - 1)];
+	  }
+	  r2 += nclus[grpidx, 2];
+	  r4 += nclus[grpidx, 1];
+	  yp2 += n_ypatt[grpidx];
+	  zp2 += n_zpatt[grpidx];
 
-	if (Nx[grpidx] + Nx_between[grpidx] > 0) log_lik[r1:r2] -= log_lik_x_full[r1:r2];
+          if (missing) {
+            int zp_n = max(n_zpatt[grpidx], 1);
+            array[zp_n] int zpatt_nobs_g;
+            array[zp_n, max(N_between, 1)] int zpatt_obsidx_g;
+            if (n_zpatt[grpidx] > 0) {
+              zpatt_nobs_g = zpatt_nobs[zp1:zp2];
+              zpatt_obsidx_g = zpatt_obsidx[zp1:zp2, ];
+            } else {
+              zpatt_nobs_g = rep_array(0, zp_n);
+              zpatt_obsidx_g = rep_array(0, zp_n, max(N_between, 1));
+            }
+            log_lik[r1:r2] = twolevel_logdens_missing(YX[r3:r4], cluster_size[r1:r2],
+                                                       row_ypatt[r3:r4], n_ypatt[grpidx],
+                                                       ypatt_nobs[yp1:yp2], ypatt_obsidx[yp1:yp2, ],
+                                                       clus_zpatt[r1:r2], zp_n, zpatt_nobs_g, zpatt_obsidx_g,
+                                                       Zrow[r1:r2],
+                                                       Mu[grpidx], Sigma[grpidx], Mu_c[grpidx], Sigma_c[grpidx],
+                                                       ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
+                                                       p_tilde, N_within, N_between, N_both);
+          } else {
+	    log_lik[r1:r2] = twolevel_logdens(mean_d_full[r1:r2], cov_d_full[r1:r2], S_PW[grpidx], YX[r3:r4],
+					      nclus[grpidx,], cluster_size[r1:r2], cluster_size[r1:r2],
+					      nclus[grpidx,2], intone[1:nclus[grpidx,2]], Mu[grpidx],
+					      Sigma[grpidx], Mu_c[grpidx], Sigma_c[grpidx],
+					      ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
+					      p_tilde, N_within, N_between, N_both);
+          }
+
+	  if (Nx[grpidx] + Nx_between[grpidx] > 0) log_lik[r1:r2] -= log_lik_x_full[r1:r2];
+        }
       }
     }
 

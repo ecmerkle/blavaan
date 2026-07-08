@@ -334,9 +334,20 @@ blavaan <- function(...,  # default lavaan arguments
             dotdotdot$missing <- "listwise"
         } else {
             if("cluster" %in% dotNames) {
-                ## set missing = "listwise" for two-level models
-                dotdotdot$missing <- "listwise"
-                cat("blavaan NOTE: listwise deletion is in use! (currently the only missingness option for two-level models)\n\n")
+                if(isTRUE(getOption("blavaan.multilevel.missing", FALSE))) {
+                    ## experimental: two-level FIML/MAR (see blavaan.multilevel.missing
+                    ## option); lavaan already builds the two-level-aware Mp/Zp pattern
+                    ## structures whenever missing != "listwise" and cluster is set, so
+                    ## no lavaan-side changes are needed here
+                    if(is.null(dotdotdot$missing)) dotdotdot$missing <- "ml"
+                    if(length(unlist(LAV@Data@Lp[[1]]$ov.x.idx)) > 0) {
+                        stop('blavaan ERROR: fixed.x variables are not currently supported for two-level models with missing data')
+                    }
+                } else {
+                    ## set missing = "listwise" for two-level models
+                    dotdotdot$missing <- "listwise"
+                    cat("blavaan NOTE: listwise deletion is in use! (currently the only missingness option for two-level models)\n\n")
+                }
             }
         }
     }
@@ -613,6 +624,17 @@ blavaan <- function(...,  # default lavaan arguments
 
                         jagtrans <- try(do.call("stanmarg_data", ldargs), silent = TRUE)
                         if(inherits(jagtrans, "try-error")) stop(jagtrans)
+
+                        ## PPMC/log_lik_sat/log_lik_rep/log_lik_rep_sat are not yet
+                        ## implemented for two-level models with missing data (they need
+                        ## a missing-data-aware EM estimate of the saturated model, which
+                        ## the existing estep() Stan function does not support for
+                        ## clustered data); fail clearly rather than silently produce
+                        ## wrong ppp/log_lik_sat/etc.
+                        if(isTRUE(lavoptions$.multilevel) && isTRUE(as.logical(l2s$dat$miss)) &&
+                           lavoptions$test != "none"){
+                          stop('blavaan ERROR: test != "none" (ppmc/ppp) is not currently supported for two-level models with missing data; use test = "none"')
+                        }
 
                         stanmon <- c("ly_sign", "bet_sign", "Theta_cov", "Theta_var",
                                      "Psi_cov", "Psi_var", "Nu_free", "al_sign", "Tau_free")
