@@ -1136,8 +1136,14 @@ lav2standata <- function(lavobject, dosam = FALSE) {
   ## lavobject@SampleStats@missing.flag is TRUE when missing='ml',
   ## regardless of whether data are missing
   misflag <- any(sapply(lavobject@Data@X, function(x) any(is.na(x))))
-  if (misflag) {
-    dat$miss <- 1L
+  dat$miss <- as.integer(misflag)
+  if (misflag && !multilevel) {
+    ## NB: this per-pattern Np/Obsvar/startrow/endrow machinery assumes a
+    ## pattern is a contiguous row block, which is not true of two-level
+    ## Y-patterns (rows are grouped by cluster, not by pattern); multilevel
+    ## models always use the placeholder "else" branch below instead, and
+    ## get their own separate pattern machinery further down (misflag-gated,
+    ## inside the `if (multilevel)` block)
     Mp <- lavobject@Data@Mp
     cases <- lapply(Mp, function(x) do.call("c", x$case.idx))
     misgrps <- lapply(Mp, function(x) x$freq)
@@ -1190,7 +1196,14 @@ lav2standata <- function(lavobject, dosam = FALSE) {
       ## YX[[g]] <- t(apply(YX[[g]], 1, function(x) c(x[!is.na(x)], rep(0, sum(is.na(x))))))
     }
   } else {
-    dat$miss <- 0L
+    if (multilevel && misflag) {
+      ## real missingness in a two-level model: the Np/Obsvar machinery
+      ## below stays a harmless "all observed" placeholder (see comment
+      ## above), but we still need to zero-fill NAs in the raw casewise
+      ## data because rstan/cmdstanr reject NA/NaN in data; the actual
+      ## missing-data pattern info is built separately below
+      for (g in 1:dat$Ng) YX[[g]][is.na(YX[[g]])] <- 0
+    }
     dat$grpnum <- rep(1:dat$Ng, dat$N)
     dat$startrow <- tapply(1:NROW(dat$grpnum), dat$grpnum, head, 1)
     dat$endrow <- tapply(1:NROW(dat$grpnum), dat$grpnum, tail, 1)
@@ -1271,6 +1284,146 @@ lav2standata <- function(lavobject, dosam = FALSE) {
     llx <- sapply(YLp, function(x) x[[2]]$loglik.x)
     dat$log_lik_x <- array(rep(llx / dat$ncluster_sizes, dat$ncluster_sizes), sum(dat$ncluster_sizes))
 
+    ## Y/Z missing-data pattern fields for the two-level FIML/MAR likelihood.
+    ## Built unconditionally (not just when misflag) so complete two-level
+    ## data gets a degenerate single "all observed" pattern per group/cluster
+    ## -- a useful sanity-check case for the pattern-based Stan likelihood to
+    ## reduce correctly against the existing complete-data twolevel_logdens.
+    N_yspace <- dat$N_within + dat$N_both
+    N_bw <- dat$N_between
+    if (misflag) {
+      Mp <- lavobject@Data@Mp
+
+      ## ---- Y-patterns (level-1, within+both variable space) ----
+      allvars_y <- 1:N_yspace
+      n_ypatt <- integer(Ng)
+      ypatt_nobs_list <- vector("list", Ng)
+      ypatt_obsidx_list <- vector("list", Ng)
+      row_ypatt <- vector("list", Ng)
+      for (g in 1:Ng) {
+        mpg <- Mp[[g]]
+        npg <- mpg$npatterns
+        has_empty <- length(mpg$empty.idx) > 0
+        n_ypatt[g] <- npg + as.integer(has_empty)
+
+        nobs_g <- rowSums(mpg$pat)
+        obsidx_g <- apply(mpg$pat, 1, which, simplify = FALSE)
+        if (has_empty) {
+          nobs_g <- c(nobs_g, 0L)
+          obsidx_g <- c(obsidx_g, list(integer(0)))
+        }
+        ypatt_nobs_list[[g]] <- nobs_g
+        ypatt_obsidx_list[[g]] <- obsidx_g
+
+        ## group-local pattern id per row, in ORIGINAL (pre-cluster-reorder)
+        ## row order, i.e. matching YX[[g]]'s row order at this point.
+        ## NB: use NROW(YX[[g]]), not dat$N[g] -- dat$N excludes rows lavaan
+        ## flags as globally empty, but Mp$case.idx/empty.idx and YX[[g]]
+        ## still index into the full raw row space
+        rp <- integer(NROW(YX[[g]]))
+        if (npg > 0) for (p in 1:npg) rp[mpg$case.idx[[p]]] <- p
+        if (has_empty) rp[mpg$empty.idx] <- npg + 1L
+        row_ypatt[[g]] <- rp
+      }
+      dat$n_ypatt <- array(n_ypatt, Ng)
+
+      Ptot <- sum(n_ypatt)
+      dat$ypatt_nobs <- array(unlist(ypatt_nobs_list), Ptot)
+      dat$ypatt_obsidx <- matrix(0L, Ptot, N_yspace)
+      obsidx_all <- do.call("c", ypatt_obsidx_list)
+      for (i in 1:Ptot) {
+        no <- dat$ypatt_nobs[i]
+        ov <- obsidx_all[[i]]
+        if (no > 0) dat$ypatt_obsidx[i, 1:no] <- ov
+        if (no < N_yspace) dat$ypatt_obsidx[i, (no + 1):N_yspace] <- allvars_y[!(allvars_y %in% ov)]
+      }
+      ## concatenated across groups, in group order -- matches dat$YX's
+      ## current (pre-cluster-reorder) row order exactly
+      row_ypatt <- do.call("c", row_ypatt)
+
+      ## ---- Z-patterns (between-only variable space, one row per cluster) ----
+      if (N_bw > 0) {
+        n_zpatt <- integer(Ng)
+        zpatt_nobs_list <- vector("list", Ng)
+        zpatt_obsidx_list <- vector("list", Ng)
+        clus_zpatt <- vector("list", Ng)
+        for (g in 1:Ng) {
+          zpg <- Mp[[g]]$Zp
+          nqg <- zpg$npatterns
+          has_empty <- length(zpg$empty.idx) > 0
+          n_zpatt[g] <- nqg + as.integer(has_empty)
+
+          nobs_g <- rowSums(zpg$pat)
+          obsidx_g <- apply(zpg$pat, 1, which, simplify = FALSE)
+          if (has_empty) {
+            nobs_g <- c(nobs_g, 0L)
+            obsidx_g <- c(obsidx_g, list(integer(0)))
+          }
+          zpatt_nobs_list[[g]] <- nobs_g
+          zpatt_obsidx_list[[g]] <- obsidx_g
+
+          nclus_g <- dat$nclus[g, 2]
+          cp <- integer(nclus_g)
+          if (nqg > 0) for (q in 1:nqg) cp[zpg$case.idx[[q]]] <- q
+          if (has_empty) cp[zpg$empty.idx] <- nqg + 1L
+          clus_zpatt[[g]] <- cp
+        }
+        dat$n_zpatt <- array(n_zpatt, Ng)
+        Qtot <- sum(n_zpatt)
+        dat$zpatt_nobs <- array(unlist(zpatt_nobs_list), Qtot)
+        dat$zpatt_obsidx <- matrix(0L, Qtot, N_bw)
+        obsidx_all_z <- do.call("c", zpatt_obsidx_list)
+        for (i in 1:Qtot) {
+          no <- dat$zpatt_nobs[i]
+          ov <- obsidx_all_z[[i]]
+          if (no > 0) dat$zpatt_obsidx[i, 1:no] <- ov
+          if (no < N_bw) dat$zpatt_obsidx[i, (no + 1):N_bw] <- (1:N_bw)[!((1:N_bw) %in% ov)]
+        }
+        dat$clus_zpatt <- array(unlist(clus_zpatt), sum(dat$nclus[, 2]))
+      } else {
+        dat$n_zpatt <- array(0L, Ng)
+        dat$zpatt_nobs <- array(0L, 1)
+        dat$zpatt_obsidx <- matrix(0L, 1, 1)
+        dat$clus_zpatt <- array(1L, sum(dat$nclus[, 2]))
+      }
+    } else {
+      ## complete two-level data: degenerate single "all observed" pattern
+      dat$n_ypatt <- array(1L, Ng)
+      dat$ypatt_nobs <- array(N_yspace, Ng)
+      dat$ypatt_obsidx <- matrix(1:N_yspace, Ng, N_yspace, byrow = TRUE)
+      row_ypatt <- rep(1L, sum(dat$N))
+
+      dat$n_zpatt <- array(as.integer(N_bw > 0), Ng)
+      if (N_bw > 0) {
+        dat$zpatt_nobs <- array(N_bw, Ng)
+        dat$zpatt_obsidx <- matrix(1:N_bw, Ng, N_bw, byrow = TRUE)
+      } else {
+        dat$zpatt_nobs <- array(0L, 1)
+        dat$zpatt_obsidx <- matrix(0L, 1, 1)
+      }
+      dat$clus_zpatt <- array(1L, sum(dat$nclus[, 2]))
+    }
+
+    ## ---- Zrow: raw (zero-filled) per-cluster between-var values ----
+    ## mean_d_full (below) is NaN-contaminated under missingness (rowsum
+    ## with na.rm=FALSE), so it cannot be used to recover between-var values
+    ## for the missing-data likelihood; take them from the first row of each
+    ## cluster in the raw data instead
+    if (N_bw > 0) {
+      bidx1 <- dat$between_idx[1:N_bw]
+      Zrow_list <- vector("list", Ng)
+      for (g in 1:Ng) {
+        cidx_g <- Lp[[g]]$cluster.idx[[2]]
+        z_idx <- which(!duplicated(cidx_g))
+        Zrow_g <- lavobject@Data@X[[g]][z_idx, bidx1, drop = FALSE]
+        Zrow_g[is.na(Zrow_g)] <- 0
+        Zrow_list[[g]] <- Zrow_g
+      }
+      dat$Zrow <- do.call("rbind", Zrow_list)
+    } else {
+      dat$Zrow <- matrix(0, sum(dat$nclus[, 2]), 0)
+    }
+
     ## clusterwise data summaries, for loo and waic and etc
     cidx <- lavInspect(lavobject, 'cluster.idx')
     if (inherits(cidx, "list")) {
@@ -1283,8 +1436,14 @@ lav2standata <- function(lavobject, dosam = FALSE) {
     }
     mean_d_full <- rowsum.default(as.matrix(dat$YX), cidx) / dat$cluster_size
 
-    tmpYX <- split.data.frame(dat$YX, cidx)
-    dat$YX <- do.call("rbind", tmpYX)
+    ## NB: row_ypatt is cbind'ed onto YX before this single split/rbind (not
+    ## split separately) so it can never desync from YX's row order
+    ncol_YX <- ncol(dat$YX)
+    combined <- cbind(dat$YX, row_ypatt)
+    tmpcomb <- split.data.frame(combined, cidx)
+    combined <- do.call("rbind", tmpcomb)
+    dat$YX <- combined[, 1:ncol_YX, drop = FALSE]
+    dat$row_ypatt <- array(as.integer(combined[, ncol_YX + 1]), nrow(combined))
     dat$orig_id <- unlist(split(1:nrow(dat$YX), cidx))
     dat$log_lik_x_full <- llx_2l(Lp[[1]], dat$YX, mean_d_full, cidx)
     dat$mean_d_full <- lapply(1:nrow(mean_d_full), function(i) mean_d_full[i, dat$between_idx])
@@ -1332,6 +1491,16 @@ lav2standata <- function(lavobject, dosam = FALSE) {
     dat$xbar_b <- array(0, c(Ng, 0))
     dat$cov_b <- array(0, c(Ng, 0, 0))
     dat$gs <- array(1, Ng)
+
+    dat$n_ypatt <- array(1L, Ng)
+    dat$ypatt_nobs <- array(0L, Ng)
+    dat$ypatt_obsidx <- matrix(0L, Ng, 0)
+    dat$row_ypatt <- array(1L, sum(dat$N))
+    dat$n_zpatt <- array(0L, Ng)
+    dat$zpatt_nobs <- array(0L, 1)
+    dat$zpatt_obsidx <- matrix(0L, 1, 1)
+    dat$clus_zpatt <- array(1L, Ng)
+    dat$Zrow <- matrix(0, Ng, 0)
   } # multilevel
 
   if (ord) {

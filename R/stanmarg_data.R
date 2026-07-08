@@ -260,6 +260,8 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
                           ncluster_sizes, mean_d_full, cov_d_full, log_lik_x_full, xbar_w, xbar_b,
                           cov_b, gs, cluster_sizes, cluster_size_ns, between_idx, N_between,
                           within_idx, N_within, both_idx, N_both, ov_idx1, ov_idx2, p_tilde, N_lev,
+                          n_ypatt, ypatt_nobs, ypatt_obsidx, row_ypatt, # level 2 missing data
+                          n_zpatt, zpatt_nobs, zpatt_obsidx, clus_zpatt, Zrow,
                           Lambda_y_skeleton_c = NULL, # level 2 matrices
                           B_skeleton_c = NULL, Theta_skeleton_c = NULL, Theta_r_skeleton_c = NULL,
                           Theta_r_skeleton_f_c = NULL,
@@ -408,6 +410,17 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$ov_idx2 <- array(ov_idx2, dim = length(ov_idx2))
   dat$p_tilde <- p_tilde
   dat$N_lev <- N_lev
+
+  ## level 2 missing data (two-level FIML/MAR patterns)
+  dat$n_ypatt <- array(n_ypatt, length(n_ypatt))
+  dat$ypatt_nobs <- array(ypatt_nobs, length(ypatt_nobs))
+  dat$ypatt_obsidx <- ypatt_obsidx
+  dat$row_ypatt <- array(row_ypatt, length(row_ypatt))
+  dat$n_zpatt <- array(n_zpatt, length(n_zpatt))
+  dat$zpatt_nobs <- array(zpatt_nobs, length(zpatt_nobs))
+  dat$zpatt_obsidx <- zpatt_obsidx
+  dat$clus_zpatt <- array(clus_zpatt, length(clus_zpatt))
+  dat$Zrow <- Zrow
 
   ## level 1 matrix info
   dat <- c(dat, stanmarg_matdata(dat, Lambda_y_skeleton, Lambda_x_skeleton,
