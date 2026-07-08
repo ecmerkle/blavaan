@@ -10,11 +10,17 @@
 ## real missingness -- see the expect_error() cases below. See also
 ## tinytest_stan_multilevel2.R for complete-data two-level model tests.
 ##
-## Multi-group two-level models are NOT tested here: plain lavaan::sem()
-## already errors on cluster + group together ("subscript out of bounds" in
-## lav_lavaan_step01_ovnames_namesl()), independently of missing data or any
-## of the changes in this file's scope -- a pre-existing limitation, not
-## something introduced by two-level FIML/MAR.
+## Multi-group two-level models are NOT tested here. Plain lavaan::sem()
+## does support cluster + group together (with the correct syntax: group:
+## blocks as the OUTER blocks, each with its own nested level: blocks --
+## group= alone, or level: blocks with a bare group= argument, mis-sizes
+## ov.names.l and throws "subscript out of bounds" in
+## lav_lavaan_step01_ovnames_namesl()). But bsem() itself hits a separate,
+## pre-existing bug even on complete multi-group two-level data
+## (R/lav_export_stanmarg.R:732, psiblkpri assignment fails with
+## "replacement has length zero" for multi-group correlation blocks),
+## unrelated to missing data or anything else in this file's scope --
+## tracked as a follow-up, not fixed here.
 
 library("tinytest")
 library("lavaan")
