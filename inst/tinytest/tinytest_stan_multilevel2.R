@@ -391,3 +391,65 @@ expect_true("waic"  %in% names(fitMeasures(bfit_wb)),
   info = "fitMeasures() should include 'waic'")
 })
 
+## =============================================================================
+## 10. Multi-group two-level CFA
+## =============================================================================
+## Multi-group + multilevel requires "group:" blocks as the OUTER blocks,
+## each with its own nested "level:" blocks (group= alone, or level: blocks
+## with a bare group= argument, throws "subscript out of bounds" in
+## lavaan's lav_lavaan_step01_ovnames_namesl()). This also exercises the
+## group*level correlation-block prior matching in lav2stanmarg() (psi/theta
+## "block" == group*level number, not lavpartable$group, which holds the
+## literal group label here rather than a 1:Ng index).
+
+try({
+set.seed(999)
+d_mg <- Demo.twolevel
+d_mg$grp <- ifelse(d_mg$cluster <= median(unique(d_mg$cluster)), "A", "B")
+
+model_mg <- '
+group: A
+level: 1
+    fw =~ y1 + y2 + y3
+level: 2
+    fb =~ y1 + y2 + y3
+    fb ~~ w1
+group: B
+level: 1
+    fw =~ y1 + y2 + y3
+level: 2
+    fb =~ y1 + y2 + y3
+    fb ~~ w1
+'
+
+fit_mg <- sem(model_mg, data = d_mg, cluster = "cluster", group = "grp")
+
+bfit_mg <- bsem(
+  model   = model_mg,
+  data    = d_mg,
+  cluster = "cluster",
+  group   = "grp",
+  burnin  = 100,
+  sample  = 100
+)
+
+expect_inherits(bfit_mg, "blavaan",
+  info = "multi-group two-level bsem() should return a blavaan object")
+
+expect_equal(
+  sort(names(coef(bfit_mg))),
+  sort(names(coef(fit_mg))),
+  info = "multi-group two-level: parameter names should match lavaan"
+)
+
+expect_true(
+  all(is.finite(coef(bfit_mg))),
+  info = "multi-group two-level: all coefficients should be finite"
+)
+
+expect_true(
+  coef_close(bfit_mg, fit_mg),
+  info = "multi-group two-level: estimates should be within 0.5 SD of lavaan MLEs"
+)
+})
+
