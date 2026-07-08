@@ -713,21 +713,38 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     stanprires <- set_stanpars("", lpt, prifree, dp, "")
     lavpartable$prior <- stanprires$partable$prior
 
+    ## blkgrp (in dat$psiblkse/dat$thetablkse) is a per-level-local group
+    ## ordinal (1:Ng), assigned by block_cov() from freemats/estmats that
+    ## were already sliced down to a single level (see freemats[2*(1:Ng) -
+    ## 2 + level] above). lavpartable$group, by contrast, is NOT reliably a
+    ## matching 1:Ng group index here: for single-group models it's the
+    ## constant 1 (so it happens to agree with blkgrp), but for multi-group
+    ## *multilevel* models lavaan requires explicit "group: <label>" blocks
+    ## in the model syntax and then keeps those literal (often
+    ## non-numeric) labels in the group column, rather than renumbering to
+    ## 1:Ng -- so `group == blkgrp` silently matches nothing there. The
+    ## lavpartable$block column (added by lavMatrixRepresentation() above)
+    ## is always a clean sequential group*level block number regardless of
+    ## group labeling, so recover the correct block for this (blkgrp,
+    ## level) pair from it instead.
+    nlevs_blk <- if (multilevel) 2L else 1L
+
     ## for correlations in blocks, replace beta with lkj and deal with lkj priors
     if (nrow(dat$psiblkse) > 0) {
       blkse <- dat$psiblkse
       dat$psiblkpri <- array(NA, dim = nrow(blkse))
       for (b in 1:nrow(blkse)) {
         blkgrp <- blkse[b, 'blkgrp']
+        blknum <- (blkgrp - 1L) * nlevs_blk + level
         vrows <- dat$psiorder[blkgrp, blkse[b,1]:blkse[b,2]]
-        lkjrows <- with(lavpartable, which(group == blkse[b, 'blkgrp'] & mat == "lvrho" &
+        lkjrows <- with(lavpartable, which(block == blknum & mat == "lvrho" &
                                            (row %in% vrows) & (col %in% vrows) & row != col))
         nolkj <- lkjrows[!grepl("lkj", lavpartable$prior[lkjrows])]
         if (length(nolkj) > 0) {
           lavpartable$prior[nolkj] <- gsub("(\\w+)\\(([^,]+),([^)]+)\\)", "lkj_corr(\\2)", lavpartable$prior[nolkj])
         }
         lptrow <- with(lavpartable, which(row == vrows[1] & col == vrows[2] &
-                                          group == blkgrp & mat == "lvrho"))
+                                          block == blknum & mat == "lvrho"))
         if (!dosam | length(lptrow) > 0) {
           dat$psiblkpri[b] <- as.numeric(gsub("(\\w+)\\(([^,]+)\\)", "\\2", lavpartable$prior[lptrow]))
         } else {
@@ -742,15 +759,16 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       dat$thetablkpri <- array(NA, dim = nrow(blkse))
       for (b in 1:nrow(blkse)) {
         blkgrp <- blkse[b, 'blkgrp']
+        blknum <- (blkgrp - 1L) * nlevs_blk + level
         vrows <- dat$thetaorder[blkgrp, blkse[b,1]:blkse[b,2]]
-        lkjrows <- with(lavpartable, which(group == blkse[b, 'blkgrp'] & mat == "rho" &
+        lkjrows <- with(lavpartable, which(block == blknum & mat == "rho" &
                                            (row %in% vrows) & (col %in% vrows) & row != col))
         nolkj <- lkjrows[!grepl("lkj", lavpartable$prior[lkjrows])]
         if (length(nolkj) > 0) {
           lavpartable$prior[nolkj] <- gsub("(\\w+)\\(([^,]+),([^)]+)\\)", "lkj_corr(\\2)", lavpartable$prior[nolkj])
         }
         lptrow <- with(lavpartable, which(row == vrows[1] & col == vrows[2] &
-                                          group == blkgrp & mat == "rho"))
+                                          block == blknum & mat == "rho"))
         if (!dosam | length(lptrow) > 0) {
           dat$thetablkpri[b] <- as.numeric(gsub("(\\w+)\\(([^,]+)\\)", "\\2", lavpartable$prior[lptrow]))
         } else {
@@ -758,7 +776,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
         }
         lavpartable$prior[lkjrows] <- lavpartable$prior[lptrow]
       }
-    }    
+    }
   }
 
   ## remove priors from equality-constrained parameters

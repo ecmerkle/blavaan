@@ -10,17 +10,23 @@
 ## real missingness -- see the expect_error() cases below. See also
 ## tinytest_stan_multilevel2.R for complete-data two-level model tests.
 ##
-## Multi-group two-level models are NOT tested here. Plain lavaan::sem()
-## does support cluster + group together (with the correct syntax: group:
-## blocks as the OUTER blocks, each with its own nested level: blocks --
-## group= alone, or level: blocks with a bare group= argument, mis-sizes
-## ov.names.l and throws "subscript out of bounds" in
-## lav_lavaan_step01_ovnames_namesl()). But bsem() itself hits a separate,
-## pre-existing bug even on complete multi-group two-level data
-## (R/lav_export_stanmarg.R:732, psiblkpri assignment fails with
-## "replacement has length zero" for multi-group correlation blocks),
-## unrelated to missing data or anything else in this file's scope --
-## tracked as a follow-up, not fixed here.
+## Multi-group two-level models are NOT tested here (out of scope for this
+## FIML/MAR-focused file), but note that they now work: plain lavaan::sem()
+## already supported cluster + group together (with the correct syntax:
+## group: blocks as the OUTER blocks, each with its own nested level:
+## blocks -- group= alone, or level: blocks with a bare group= argument,
+## mis-sizes ov.names.l and throws "subscript out of bounds" in
+## lav_lavaan_step01_ovnames_namesl()), and bsem() previously hit a
+## separate bug on top of that even for complete multi-group two-level
+## data: R/lav_export_stanmarg.R matched psi/theta correlation blocks to
+## parameter-table rows using lavpartable$group, which is a clean 1:Ng
+## group index for single-group models but the literal (often non-numeric)
+## "group: <label>" text for multi-group multilevel models, so the match
+## silently found nothing and "dat$psiblkpri[b] <- ..." failed with
+## "replacement has length zero". Fixed by matching on lavpartable$block
+## instead (always a well-defined group*level block number) -- see that
+## file's git history for the fix. See tinytest_stan_multilevel2.R for
+## complete-data two-level coverage.
 
 library("tinytest")
 library("lavaan")
