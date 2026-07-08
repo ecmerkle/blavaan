@@ -15,8 +15,12 @@ news:
 
 navbar:
   title: "blavaan"
-  left:
-    - text: Basics
+  structure:
+    left:  [basics, examples, news, resources, functions]
+    right: [search, github, googlegroups]
+  components:
+    basics:
+      text: Basics
       menu:
       - text: Getting Started
         href: articles/start.html
@@ -25,12 +29,13 @@ navbar:
       - text: Estimation
         href: articles/estimate.html
       - text: Convergence and Efficiency Evaluation
-        href: articles/convergence_efficiency.html        
+        href: articles/convergence_efficiency.html
       - text: Model Summaries
         href: articles/summaries.html
       - text: Plots
         href: articles/plotting.html
-    - text: Examples/Details
+    examples:
+      text: Examples/Details
       menu:
       - text: Estimation with Ordinal Data
         href: articles/ordinal.html
@@ -51,15 +56,21 @@ navbar:
       - text: Convergence Loop
         href: articles/convergence_loop.html
       - text: Probability of Direction
-        href: articles/probability_direction.html          
-    - text: News
+        href: articles/probability_direction.html
+    news:
+      text: News
       href: news/index.html
-    - text: Resources
+    resources:
+      text: Resources
       href: articles/resources.html
-    - text: Functions
+    functions:
+      text: Functions
       href: reference/index.html
-  right:
-   - icon: "fab fa-github fa-lg"
-     href: https://github.com/ecmerkle/blavaan
-   - icon: fa-users
-     href: https://groups.google.com/d/forum/blavaan
+    github:
+      icon: "fab fa-github fa-lg"
+      href: https://github.com/ecmerkle/blavaan
+      aria-label: GitHub
+    googlegroups:
+      icon: fa-users
+      href: https://groups.google.com/d/forum/blavaan
+      aria-label: Google Groups
