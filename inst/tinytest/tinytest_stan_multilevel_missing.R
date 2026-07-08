@@ -69,11 +69,13 @@ data(Demo.twolevel, package = "lavaan")
 ## y4 is deliberately within-only (no level-2 loading), y1-y3 are "both",
 ## w1/w2 are between-only -- exercises all three variable classes at once.
 ## Only two between-level covariances (not three): a 3x3 between-covariance
-## sub-block from a 2-way + w1~~w2 spec proved numerically fragile for
-## blavaan's delta-method SE computation with this few posterior draws
-## (occasional "model did not converge" from a near-singular Hessian) --
-## unrelated to the FIML/MAR likelihood itself (Phase C validated that to
-## 1e-12 in isolation), just a short-chain identifiability issue.
+## sub-block from a 2-way + w1~~w2 spec proved fragile at only burnin=100/
+## sample=100 -- some seeds left the chains short of convergence (R-hat up
+## to ~1.3 was observed), and the resulting unstable posterior mean/cov
+## occasionally tripped a Hessian-based check in blavaan's post-fit
+## processing ("model did not converge"). Unrelated to the FIML/MAR
+## likelihood itself (Phase C validated that to 1e-12 in isolation); just a
+## short-chain identifiability issue with this particular covariance spec.
 model_wb <- '
     level: 1
         fw =~ y1 + y2 + y3 + y4
