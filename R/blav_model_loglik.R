@@ -478,7 +478,15 @@ get_ll_2l <- function(postsamp       = NULL, # one posterior sample
                       lavobject      = NULL,
                       standata       = NULL){
 
-  lav2ll <- getFromNamespace("lav_mvnorm_cluster_loglik_samplestats_2l", "lavaan")
+  ## lav_mvnorm_cluster_loglik_samplestats_2l() was renamed to
+  ## lav_mvn_cl_loglik_samp_2l() (with underscore-style, lowercase argument
+  ## names replacing the old dot-style ones) in lavaan 0.7-1
+  newname <- packageDescription("lavaan")$Version >= "0.7-1"
+  if(newname){
+    lav2ll <- getFromNamespace("lav_mvn_cl_loglik_samp_2l", "lavaan")
+  } else {
+    lav2ll <- getFromNamespace("lav_mvnorm_cluster_loglik_samplestats_2l", "lavaan")
+  }
 
   lavmodel <- lavobject@Model
   lavpartable <- lavobject@ParTable
@@ -496,9 +504,15 @@ get_ll_2l <- function(postsamp       = NULL, # one posterior sample
 
   out <- rep(NA, Ng)
   for(g in 1:Ng){
-    ll.args <- list(YLp = lavsamplestats@YLp[[g]], Lp = lavdata@Lp[[g]], Mu.W = implied$mean[[(2 * g - 1)]],
-                    Sigma.W = implied$cov[[(2 * g - 1)]], Mu.B = implied$mean[[2 * g]], Sigma.B = implied$cov[[2 * g]],
-                    log2pi = TRUE, minus.two = FALSE)
+    if(newname){
+      ll.args <- list(ylp = lavsamplestats@YLp[[g]], lp = lavdata@Lp[[g]], mu_w = implied$mean[[(2 * g - 1)]],
+                      sigma_w = implied$cov[[(2 * g - 1)]], mu_b = implied$mean[[2 * g]], sigma_b = implied$cov[[2 * g]],
+                      log2pi = TRUE, minus_two = FALSE)
+    } else {
+      ll.args <- list(YLp = lavsamplestats@YLp[[g]], Lp = lavdata@Lp[[g]], Mu.W = implied$mean[[(2 * g - 1)]],
+                      Sigma.W = implied$cov[[(2 * g - 1)]], Mu.B = implied$mean[[2 * g]], Sigma.B = implied$cov[[2 * g]],
+                      log2pi = TRUE, minus.two = FALSE)
+    }
 
     out[g] <- do.call(lav2ll, ll.args)
   }
