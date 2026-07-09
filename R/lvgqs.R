@@ -267,8 +267,17 @@ samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable,
   stanorig <- standata
 
   lav_implied22l <- getFromNamespace("lav_mvnorm_cluster_implied22l", "lavaan")
-  lav_estep <- getFromNamespace("lav_mvnorm_cluster_em_estep_ranef", "lavaan")
-  
+  ## lav_mvnorm_cluster_em_estep_ranef() was renamed to
+  ## lav_mvn_cl_em_estep_ranef() (with underscore-style lowercase argument
+  ## names) in lavaan 0.7-1; lav_mvnorm_cluster_implied22l() itself still
+  ## works unchanged (compat shim in lavaan's zzz_OLD_NONEXPORTED.R)
+  newname <- packageDescription("lavaan")$Version >= "0.7-1"
+  if(newname){
+    lav_estep <- getFromNamespace("lav_mvn_cl_em_estep_ranef", "lavaan")
+  } else {
+    lav_estep <- getFromNamespace("lav_mvnorm_cluster_em_estep_ranef", "lavaan")
+  }
+
   loop.args <- list(X = 1:nsamps, FUN = function(i){
       tmpmat <- array(NA, dim=c(nchain, standata$Ntot, standata$w9use + standata$w9no))
       tmpmat2 <- array(NA, dim=c(nchain, sum(standata$nclus[,2]), standata$w9use_c + standata$w9no_c))
@@ -291,10 +300,17 @@ samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable,
           if(!("beta" %in% names(modmat2[[g]]))) modmat2[[g]]$beta <- matrix(0, standata$m_c, standata$m_c)
 
           out <- lav_implied22l(lavdata@Lp[[g]], lapply(modimp, function(x) x[(2*g - 1):(2*g)]))
-          clusmns[[g]] <- lav_estep(YLp = lavsamplestats@YLp[[g]], Lp = lavdata@Lp[[g]],
-                                    sigma.w = out$sigma.w, sigma.b = out$sigma.b,
-                                    sigma.zz = out$sigma.zz, sigma.yz = out$sigma.yz,
-                                    mu.z = out$mu.z, mu.w = out$mu.w, mu.b = out$mu.b, se = FALSE)
+          if(newname){
+            clusmns[[g]] <- lav_estep(ylp = lavsamplestats@YLp[[g]], lp = lavdata@Lp[[g]],
+                                      sigma_w = out$sigma.w, sigma_b = out$sigma.b,
+                                      sigma_zz = out$sigma.zz, sigma_yz = out$sigma.yz,
+                                      mu_z = out$mu.z, mu_w = out$mu.w, mu_b = out$mu.b, se = FALSE)
+          } else {
+            clusmns[[g]] <- lav_estep(YLp = lavsamplestats@YLp[[g]], Lp = lavdata@Lp[[g]],
+                                      sigma.w = out$sigma.w, sigma.b = out$sigma.b,
+                                      sigma.zz = out$sigma.zz, sigma.yz = out$sigma.yz,
+                                      mu.z = out$mu.z, mu.w = out$mu.w, mu.b = out$mu.b, se = FALSE)
+          }
         }
         clusmns <- do.call("rbind", clusmns)
         YX.B <- matrix(0, nrow = nrow(clusmns), ncol = ncol(stanorig$YX))

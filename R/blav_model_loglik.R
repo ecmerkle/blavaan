@@ -48,10 +48,19 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
 
   ## check for missing, to see if we can easily get baseline ll for chisq
   mis <- FALSE
+  ## lav_mvnorm_missing_h1_estimate_moments()/lav_mvnorm_missing_loglik_data()
+  ## were renamed to lav_mvn_mi_h1_est_moments()/lav_mvn_mi_loglik_data() (with
+  ## underscore-style lowercase argument names) in lavaan 0.7-1
+  newname <- packageDescription("lavaan")$Version >= "0.7-1"
   if(any(is.na(unlist(lavdata@X)))){
     mis <- TRUE
-    lavmvh1 <- getFromNamespace("lav_mvnorm_missing_h1_estimate_moments", "lavaan")
-    lavmvll <- getFromNamespace("lav_mvnorm_missing_loglik_data", "lavaan")
+    if(newname){
+      lavmvh1 <- getFromNamespace("lav_mvn_mi_h1_est_moments", "lavaan")
+      lavmvll <- getFromNamespace("lav_mvn_mi_loglik_data", "lavaan")
+    } else {
+      lavmvh1 <- getFromNamespace("lav_mvnorm_missing_h1_estimate_moments", "lavaan")
+      lavmvll <- getFromNamespace("lav_mvnorm_missing_loglik_data", "lavaan")
+    }
   }
 
   if(measure[1] %in% c("logl", "chisq") & !mis & length(measure) == 1){
@@ -177,11 +186,19 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
       tmpsat <- 0
       for(g in 1:length(implied$cov)){
         ## high tolerance speed boost
-        satmod <- lavmvh1(Y = lavdata@X[[g]], Mp = lavdata@Mp[[g]],
-                          #max.iter = 20,
-                          tol = 1e-2)
-        tmpsat <- tmpsat + lavmvll(Y = lavdata@X[[g]], Mu = satmod$Mu, Sigma = satmod$Sigma,
-                                   x.idx = lavsamplestats@x.idx[[g]])
+        if(newname){
+          satmod <- lavmvh1(y = lavdata@X[[g]], mp = lavdata@Mp[[g]],
+                            #max_iter = 20,
+                            tol = 1e-2)
+          tmpsat <- tmpsat + lavmvll(y = lavdata@X[[g]], mu = satmod$Mu, sigma_1 = satmod$Sigma,
+                                     x_idx = lavsamplestats@x.idx[[g]])
+        } else {
+          satmod <- lavmvh1(Y = lavdata@X[[g]], Mp = lavdata@Mp[[g]],
+                            #max.iter = 20,
+                            tol = 1e-2)
+          tmpsat <- tmpsat + lavmvll(Y = lavdata@X[[g]], Mu = satmod$Mu, Sigma = satmod$Sigma,
+                                     x.idx = lavsamplestats@x.idx[[g]])
+        }
       }
       ll.samp <- c(sum(tmpll), tmpsat)
     }
