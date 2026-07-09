@@ -269,5 +269,45 @@ expect_true(
 options(blavaan.multilevel.missing = TRUE)
 })
 
+## =============================================================================
+## 5. Model without within-only variables
+## =============================================================================
+
+try({
+model_bw <- '
+    level: 1
+        fw =~ y1 + y2 + y3
+    level: 2
+        fb =~ y1 + y2 + y3
+'
+d6 <- inject_mcar(Demo.twolevel, c("y1", "y2"), rate = 0.15, seed = 301)
+fit6 <- sem(model_bw, data = d6, cluster = "cluster", missing = "fiml")
+
+set.seed(402)
+bfit6 <- bsem(
+  model   = model_bw,
+  data    = d6,
+  cluster = "cluster",
+  burnin  = 100,
+  sample  = 100,
+  dp      = dp_stable
+)
+
+expect_inherits(bfit6, "blavaan",
+  info = "two-level models with missing data and no within-only variables should work")
+
+expect_equal(
+  sort(names(coef(fit6))),
+  sort(names(coef(bfit6))),
+  info = "complete-data equivalence: old- and new-path fits should have the same parameter names"
+)
+
+expect_true(
+  coef_close(bfit6, fit6),
+  info = "complete-data equivalence: new-path (degenerate pattern) estimates should be close to lavaan MLEs"
+)
+
+})
+
 ## restore the option to its pre-test-file value
 options(blavaan.multilevel.missing = old_opt)
