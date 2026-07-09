@@ -60,20 +60,20 @@ blavCompare <- function(object1, object2, ...) {
   diff_waic <- loo_compare(waic1, waic2)
 
   cat("\nWAIC estimates: \n",
-      paste("object1: ", round( waic1$estimates[3,1], 3) ), "\n",
-      paste("object2: ", round( waic2$estimates[3,1], 3) ), "\n" )
+      paste("object1: ", round( waic1$estimates['waic','Estimate'], 3) ), "\n",
+      paste("object2: ", round( waic2$estimates['waic','Estimate'], 3) ), "\n" )
   
   cat("\n ELPD difference & SE: \n", 
-      sprintf("%8.3f", diff_waic[2, 1]), 
-      sprintf("%8.3f", diff_waic[2, 2]), "\n")
+      sprintf("%8.3f", diff_waic[2, 'elpd_diff']), 
+      sprintf("%8.3f", diff_waic[2, 'se_diff']), "\n")
   
   cat("\nLOO estimates: \n",
-      paste("object1: ", round( loo1$estimates[3,1], 3) ), "\n",
-      paste("object2: ", round( loo2$estimates[3,1], 3) ), "\n" )
+      paste("object1: ", round( loo1$estimates['looic','Estimate'], 3) ), "\n",
+      paste("object2: ", round( loo2$estimates['looic','Estimate'], 3) ), "\n" )
   
   cat("\n ELPD difference & SE: \n", 
-      sprintf("%8.3f", diff_loo[2, 1]), 
-      sprintf("%8.3f", diff_loo[2, 2]), "\n\n")
+      sprintf("%8.3f", diff_loo[2, 'elpd_diff']), 
+      sprintf("%8.3f", diff_loo[2, 'se_diff']), "\n\n")
 
   cat("Laplace approximation to the log-Bayes factor\n(experimental; positive values favor object1):",
       sprintf("%8.3f", bf), "\n\n")
