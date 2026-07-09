@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-10.1426</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-10.1443</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -291,10 +291,14 @@ the lowest value</p>
 <span><span class="co">## </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $diff_loo</span></span>
-<span><span class="co">##        elpd_diff se_diff</span></span>
-<span><span class="co">## model1   0.0       0.0  </span></span>
-<span><span class="co">## model2 -40.8       7.9  </span></span>
-<span><span class="co">## </span></span>
+<span><span class="co">##   model elpd_diff se_diff p_worse diag_diff diag_elpd</span></span>
+<span><span class="co">##  model1       0.0     0.0      NA                    </span></span>
+<span><span class="co">##  model2     -40.8     7.9    1.00   N &lt; 100</span></span></code></pre>
+<pre><code><span><span class="co">## </span></span>
+<span><span class="co">## Diagnostic flags present.</span></span>
+<span><span class="co">## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)</span></span>
+<span><span class="co">## or https://mc-stan.org/loo/reference/loo-glossary.html.</span></span></code></pre>
+<pre><code><span><span class="co">## </span></span>
 <span><span class="co">## $waic</span></span>
 <span><span class="co">## $waic[[1]]</span></span>
 <span><span class="co">## </span></span>
@@ -320,23 +324,26 @@ the lowest value</p>
 <span><span class="co">## </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $diff_waic</span></span>
-<span><span class="co">##        elpd_diff se_diff</span></span>
-<span><span class="co">## model1   0.0       0.0  </span></span>
-<span><span class="co">## model2 -40.7       7.9</span></span></code></pre>
+<span><span class="co">##   model elpd_diff se_diff p_worse diag_diff diag_elpd</span></span>
+<span><span class="co">##  model1       0.0     0.0      NA                    </span></span>
+<span><span class="co">##  model2     -40.7     7.9    1.00   N &lt; 100</span></span></code></pre>
+<pre><code><span><span class="co">## </span></span>
+<span><span class="co">## Diagnostic flags present.</span></span>
+<span><span class="co">## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)</span></span>
+<span><span class="co">## or https://mc-stan.org/loo/reference/loo-glossary.html.</span></span></code></pre>
 <p>In this case we can see that model 1 has lower LOOIC, and the ratio
 shows that the LOO differences is
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>5</mn><annotation encoding="application/x-tex">5</annotation></semantics></math>
 SEs of magnitude. This indicates that the model with the estimated
 regressions is better</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">bc12</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span>,<span class="st">"elpd_diff"</span><span class="op">]</span> <span class="op">/</span> <span class="va">bc12</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span>,<span class="st">"se_diff"</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##   model1   model2 </span></span>
-<span><span class="co">##      NaN 5.156885</span></span></code></pre>
+<pre><code><span><span class="co">## [1]      NaN 5.156885</span></span></code></pre>
 <p>Now, lets look at an example with a smaller difference between
 models, where only the smallest regression (<code>dem65~ind60</code>) is
 fixed to
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>0</mn><annotation encoding="application/x-tex">0</annotation></semantics></math>.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="st">'</span></span>
 <span><span class="st">  # latent variable definitions</span></span>
 <span><span class="st">     ind60 =~ x1 + x2 + x3</span></span>
@@ -365,7 +372,7 @@ models is minimal, and the ratio is
 This indicates that the models are functionally equivalent. In a case
 like this, it is up to the researchers to decide which model is a
 <strong>better</strong> representation, and theoretically stronger.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bc13</span></span></code></pre></div>
 <pre><code><span><span class="co">## $bf</span></span>
 <span><span class="co">##   bf mll1 mll2 </span></span>
@@ -404,10 +411,14 @@ like this, it is up to the researchers to decide which model is a
 <span><span class="co">## </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $diff_loo</span></span>
-<span><span class="co">##        elpd_diff se_diff</span></span>
-<span><span class="co">## model2  0.0       0.0   </span></span>
-<span><span class="co">## model1 -0.1       1.0   </span></span>
-<span><span class="co">## </span></span>
+<span><span class="co">##   model elpd_diff se_diff p_worse diag_diff diag_elpd</span></span>
+<span><span class="co">##  model2       0.0     0.0      NA                    </span></span>
+<span><span class="co">##  model1      -0.1     1.0    0.52   N &lt; 100</span></span></code></pre>
+<pre><code><span><span class="co">## </span></span>
+<span><span class="co">## Diagnostic flags present.</span></span>
+<span><span class="co">## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)</span></span>
+<span><span class="co">## or https://mc-stan.org/loo/reference/loo-glossary.html.</span></span></code></pre>
+<pre><code><span><span class="co">## </span></span>
 <span><span class="co">## $waic</span></span>
 <span><span class="co">## $waic[[1]]</span></span>
 <span><span class="co">## </span></span>
@@ -433,17 +444,20 @@ like this, it is up to the researchers to decide which model is a
 <span><span class="co">## </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $diff_waic</span></span>
-<span><span class="co">##        elpd_diff se_diff</span></span>
-<span><span class="co">## model2  0.0       0.0   </span></span>
-<span><span class="co">## model1 -0.1       1.0</span></span></code></pre>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<span><span class="co">##   model elpd_diff se_diff p_worse diag_diff diag_elpd</span></span>
+<span><span class="co">##  model2       0.0     0.0      NA                    </span></span>
+<span><span class="co">##  model1      -0.1     1.0    0.52   N &lt; 100</span></span></code></pre>
+<pre><code><span><span class="co">## </span></span>
+<span><span class="co">## Diagnostic flags present.</span></span>
+<span><span class="co">## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)</span></span>
+<span><span class="co">## or https://mc-stan.org/loo/reference/loo-glossary.html.</span></span></code></pre>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">bc13</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span>,<span class="st">"elpd_diff"</span><span class="op">]</span> <span class="op">/</span> <span class="va">bc13</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span>,<span class="st">"se_diff"</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##     model2     model1 </span></span>
-<span><span class="co">##        NaN 0.05527664</span></span></code></pre>
+<pre><code><span><span class="co">## [1]        NaN 0.05527664</span></span></code></pre>
 <p>Lets do one last model, where only the largest regression
 (<code>dem65~dem60</code>) is fixed to
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>0</mn><annotation encoding="application/x-tex">0</annotation></semantics></math>.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="st">'</span></span>
 <span><span class="st">  # latent variable definitions</span></span>
 <span><span class="st">     ind60 =~ x1 + x2 + x3</span></span>
@@ -472,7 +486,7 @@ model is
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>5</mn><annotation encoding="application/x-tex">5</annotation></semantics></math>
 SEs in magnitude. Indicating that there is evidence of model predictive
 differences</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bc14</span></span></code></pre></div>
 <pre><code><span><span class="co">## $bf</span></span>
 <span><span class="co">##   bf mll1 mll2 </span></span>
@@ -511,10 +525,14 @@ differences</p>
 <span><span class="co">## </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $diff_loo</span></span>
-<span><span class="co">##        elpd_diff se_diff</span></span>
-<span><span class="co">## model1   0.0       0.0  </span></span>
-<span><span class="co">## model2 -23.5       4.0  </span></span>
-<span><span class="co">## </span></span>
+<span><span class="co">##   model elpd_diff se_diff p_worse diag_diff diag_elpd</span></span>
+<span><span class="co">##  model1       0.0     0.0      NA                    </span></span>
+<span><span class="co">##  model2     -23.5     4.0    1.00   N &lt; 100</span></span></code></pre>
+<pre><code><span><span class="co">## </span></span>
+<span><span class="co">## Diagnostic flags present.</span></span>
+<span><span class="co">## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)</span></span>
+<span><span class="co">## or https://mc-stan.org/loo/reference/loo-glossary.html.</span></span></code></pre>
+<pre><code><span><span class="co">## </span></span>
 <span><span class="co">## $waic</span></span>
 <span><span class="co">## $waic[[1]]</span></span>
 <span><span class="co">## </span></span>
@@ -540,13 +558,16 @@ differences</p>
 <span><span class="co">## </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $diff_waic</span></span>
-<span><span class="co">##        elpd_diff se_diff</span></span>
-<span><span class="co">## model1   0.0       0.0  </span></span>
-<span><span class="co">## model2 -23.6       4.0</span></span></code></pre>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<span><span class="co">##   model elpd_diff se_diff p_worse diag_diff diag_elpd</span></span>
+<span><span class="co">##  model1       0.0     0.0      NA                    </span></span>
+<span><span class="co">##  model2     -23.6     4.0    1.00   N &lt; 100</span></span></code></pre>
+<pre><code><span><span class="co">## </span></span>
+<span><span class="co">## Diagnostic flags present.</span></span>
+<span><span class="co">## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)</span></span>
+<span><span class="co">## or https://mc-stan.org/loo/reference/loo-glossary.html.</span></span></code></pre>
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">bc14</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span>,<span class="st">"elpd_diff"</span><span class="op">]</span> <span class="op">/</span> <span class="va">bc14</span><span class="op">$</span><span class="va">diff_loo</span><span class="op">[</span>,<span class="st">"se_diff"</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##   model1   model2 </span></span>
-<span><span class="co">##      NaN 5.943907</span></span></code></pre>
+<pre><code><span><span class="co">## [1]      NaN 5.943907</span></span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="bayes-factor">Bayes factor<a class="anchor" aria-label="anchor" href="#bayes-factor"></a>
@@ -634,7 +655,7 @@ Learning Theory.”</span> <em>Journal of Machine Learning Research</em>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

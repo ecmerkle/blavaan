@@ -34,7 +34,7 @@
   loo moment_match
 
 - **Michael S. Truong**. Contributor.  
-  options(blavaan.target)
+  R/blav_tidiers.R, options(blavaan.target)
 
 ## Citation
 

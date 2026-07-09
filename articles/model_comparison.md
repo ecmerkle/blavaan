@@ -210,9 +210,15 @@ bc12
     ## 
     ## 
     ## $diff_loo
-    ##        elpd_diff se_diff
-    ## model1   0.0       0.0  
-    ## model2 -40.8       7.9  
+    ##   model elpd_diff se_diff p_worse diag_diff diag_elpd
+    ##  model1       0.0     0.0      NA                    
+    ##  model2     -40.8     7.9    1.00   N < 100
+
+    ## 
+    ## Diagnostic flags present.
+    ## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
+    ## or https://mc-stan.org/loo/reference/loo-glossary.html.
+
     ## 
     ## $waic
     ## $waic[[1]]
@@ -239,9 +245,14 @@ bc12
     ## 
     ## 
     ## $diff_waic
-    ##        elpd_diff se_diff
-    ## model1   0.0       0.0  
-    ## model2 -40.7       7.9
+    ##   model elpd_diff se_diff p_worse diag_diff diag_elpd
+    ##  model1       0.0     0.0      NA                    
+    ##  model2     -40.7     7.9    1.00   N < 100
+
+    ## 
+    ## Diagnostic flags present.
+    ## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
+    ## or https://mc-stan.org/loo/reference/loo-glossary.html.
 
 In this case we can see that model 1 has lower LOOIC, and the ratio
 shows that the LOO differences is $`5`$ SEs of magnitude. This indicates
@@ -252,8 +263,7 @@ that the model with the estimated regressions is better
 abs(bc12$diff_loo[,"elpd_diff"] / bc12$diff_loo[,"se_diff"])
 ```
 
-    ##   model1   model2 
-    ##      NaN 5.156885
+    ## [1]      NaN 5.156885
 
 Now, lets look at an example with a smaller difference between models,
 where only the smallest regression (`dem65~ind60`) is fixed to $`0`$.
@@ -332,9 +342,15 @@ bc13
     ## 
     ## 
     ## $diff_loo
-    ##        elpd_diff se_diff
-    ## model2  0.0       0.0   
-    ## model1 -0.1       1.0   
+    ##   model elpd_diff se_diff p_worse diag_diff diag_elpd
+    ##  model2       0.0     0.0      NA                    
+    ##  model1      -0.1     1.0    0.52   N < 100
+
+    ## 
+    ## Diagnostic flags present.
+    ## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
+    ## or https://mc-stan.org/loo/reference/loo-glossary.html.
+
     ## 
     ## $waic
     ## $waic[[1]]
@@ -361,17 +377,21 @@ bc13
     ## 
     ## 
     ## $diff_waic
-    ##        elpd_diff se_diff
-    ## model2  0.0       0.0   
-    ## model1 -0.1       1.0
+    ##   model elpd_diff se_diff p_worse diag_diff diag_elpd
+    ##  model2       0.0     0.0      NA                    
+    ##  model1      -0.1     1.0    0.52   N < 100
+
+    ## 
+    ## Diagnostic flags present.
+    ## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
+    ## or https://mc-stan.org/loo/reference/loo-glossary.html.
 
 ``` r
 
 abs(bc13$diff_loo[,"elpd_diff"] / bc13$diff_loo[,"se_diff"])
 ```
 
-    ##     model2     model1 
-    ##        NaN 0.05527664
+    ## [1]        NaN 0.05527664
 
 Lets do one last model, where only the largest regression
 (`dem65~dem60`) is fixed to $`0`$.
@@ -449,9 +469,15 @@ bc14
     ## 
     ## 
     ## $diff_loo
-    ##        elpd_diff se_diff
-    ## model1   0.0       0.0  
-    ## model2 -23.5       4.0  
+    ##   model elpd_diff se_diff p_worse diag_diff diag_elpd
+    ##  model1       0.0     0.0      NA                    
+    ##  model2     -23.5     4.0    1.00   N < 100
+
+    ## 
+    ## Diagnostic flags present.
+    ## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
+    ## or https://mc-stan.org/loo/reference/loo-glossary.html.
+
     ## 
     ## $waic
     ## $waic[[1]]
@@ -478,17 +504,21 @@ bc14
     ## 
     ## 
     ## $diff_waic
-    ##        elpd_diff se_diff
-    ## model1   0.0       0.0  
-    ## model2 -23.6       4.0
+    ##   model elpd_diff se_diff p_worse diag_diff diag_elpd
+    ##  model1       0.0     0.0      NA                    
+    ##  model2     -23.6     4.0    1.00   N < 100
+
+    ## 
+    ## Diagnostic flags present.
+    ## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
+    ## or https://mc-stan.org/loo/reference/loo-glossary.html.
 
 ``` r
 
 abs(bc14$diff_loo[,"elpd_diff"] / bc14$diff_loo[,"se_diff"])
 ```
 
-    ##   model1   model2 
-    ##      NaN 5.943907
+    ## [1]      NaN 5.943907
 
 ### Bayes factor
 

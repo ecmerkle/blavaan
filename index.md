@@ -53,6 +53,6 @@ equation models via parameter
 expansion](https://doi.org/10.18637/jss.v085.i04). Journal of
 Statistical Software, 85(4), 1–30.
 
-blavaan is supported by the Institute of Education Sciences, U.S.
+blavaan has been supported by the Institute of Education Sciences, U.S.
 Department of Education, Grant R305D210044, as well as NSF grants
 SES-1061334 and 1460719.
