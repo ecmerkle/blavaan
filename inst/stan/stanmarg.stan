@@ -699,7 +699,364 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
 
     return loglik;
   }
-  
+
+  // Two-level saturated-model EM: one E-step + M-step, unified complete/missing
+  // data. Used to compute the log_lik_sat/log_lik_rep_sat reference needed
+  // for two-level ppp, replacing a closed-form MUML (Muthen 1990/1994)
+  // method-of-moments approximation that is not the true saturated MLE for
+  // unbalanced cluster sizes and is unstable with within-only variables.
+  //
+  // State is the "2l" (y-space) representation, same space
+  // twolevel_logdens_missing() reduces its "implied" per-level inputs to
+  // internally: mu_w/sigma_w cover the N_wo_b (within+both) within-level
+  // state; mu_b_bb/sigma_b_bb cover the N_both ("both" variables only)
+  // between-level state; mu_z/sigma_zz/sigma_yz cover the N_between
+  // between-only state (sigma_yz compact: N_both x N_between, i.e. only the
+  // "both" rows -- the within-only rows are structurally zero and omitted).
+  //
+  // Stan has no tuple return type at the StanHeaders version this package
+  // targets, so the updated (mu_w, sigma_w, mu_b_bb, sigma_b_bb, mu_z,
+  // sigma_zz, sigma_yz, logl) state is packed into one flat vector; see the
+  // unpack offsets at each call site.
+  vector twolevel_em_step(array[] vector YX, array[] int cluster_size,
+                           array[] int row_ypatt, int n_ypatt,
+                           array[] int ypatt_nobs, array[,] int ypatt_obsidx,
+                           array[] int clus_zpatt, int n_zpatt,
+                           array[] int zpatt_nobs, array[,] int zpatt_obsidx,
+                           array[] vector Zrow,
+                           array[] int notbidx, array[] int both_local,
+                           int N_wo_b, int N_both, int N_between,
+                           int nobs, int nclusters,
+                           vector mu_w, matrix sigma_w,
+                           vector mu_b_bb, matrix sigma_b_bb,
+                           vector mu_z, matrix sigma_zz, matrix sigma_yz,
+                           int compute_logl) {
+    int nw = N_both + N_between;
+    vector[N_wo_b] mu_y = mu_w;
+    matrix[N_wo_b, N_wo_b] sigma_w_inv = inverse_spd(sigma_w);
+    real sigma_w_ld = log_determinant(sigma_w);
+
+    matrix[nw, nw] K_full = rep_matrix(0, nw, nw);
+
+    array[n_ypatt] matrix[N_wo_b, N_wo_b] Wp_full;
+    array[n_ypatt] matrix[N_wo_b, N_wo_b] Breg_full;
+    array[n_ypatt] matrix[N_wo_b, N_wo_b] Ccond_full;
+    array[n_ypatt] real Wp_ld;
+
+    array[nclusters] matrix[N_both, N_both] A_j;
+    array[nclusters] vector[N_both] p_j;
+    array[nclusters] vector[N_both] ebeta_j;
+    array[nclusters] matrix[N_both, N_both] vb_j;
+
+    int n_zpatt_pad = max(n_zpatt, 1);
+    array[n_zpatt_pad] matrix[nw, nw] c0_full;
+    array[n_zpatt_pad] matrix[nw, max(N_between, 1)] m0coef_full;
+    array[n_zpatt_pad] matrix[N_between > 0 ? N_between : 1, N_between > 0 ? N_between : 1] Zprec_full;
+
+    real q_yy_a = 0;
+    real w_logdet = 0;
+    real q_zz_a = 0;
+    real zz_logdet = 0;
+    real ibza_logdet = 0;
+    real q_corr = 0;
+    real n_y_obs_tot = 0;
+    real n_z_obs_tot = 0;
+
+    for (b in 1:N_both) mu_y[both_local[b]] += mu_b_bb[b];
+
+    K_full[1:N_both, 1:N_both] = sigma_b_bb;
+    if (N_between > 0) {
+      K_full[1:N_both, (N_both + 1):nw] = sigma_yz;
+      K_full[(N_both + 1):nw, 1:N_both] = sigma_yz';
+      K_full[(N_both + 1):nw, (N_both + 1):nw] = sigma_zz;
+    }
+
+    // 1. per-Y-pattern precision/regression caches (embedded to full
+    //    N_wo_b x N_wo_b size for simple, index-free downstream use)
+    for (pp in 1:n_ypatt) {
+      int no = ypatt_nobs[pp];
+      Wp_full[pp] = rep_matrix(0, N_wo_b, N_wo_b);
+      Breg_full[pp] = rep_matrix(0, N_wo_b, N_wo_b);
+      Ccond_full[pp] = rep_matrix(0, N_wo_b, N_wo_b);
+      Wp_ld[pp] = 0;
+      if (no == N_wo_b) {
+        Wp_full[pp] = sigma_w_inv;
+        Wp_ld[pp] = sigma_w_ld;
+      } else if (no == 0) {
+        Ccond_full[pp] = sigma_w;
+      } else {
+        array[no] int oidx = ypatt_obsidx[pp, 1:no];
+        array[N_wo_b - no] int midx = ypatt_obsidx[pp, (no + 1):N_wo_b];
+        matrix[no, no] Soo_inv = inverse_spd(sigma_w[oidx, oidx]);
+        matrix[N_wo_b - no, no] Breg = sigma_w[midx, oidx] * Soo_inv;
+        Wp_full[pp, oidx, oidx] = Soo_inv;
+        Breg_full[pp, midx, oidx] = Breg;
+        Ccond_full[pp, midx, midx] = sigma_w[midx, midx] - Breg * sigma_w[oidx, midx];
+        Wp_ld[pp] = log_determinant(sigma_w[oidx, oidx]);
+      }
+    }
+
+    // 2. E-step: per-cluster A_j (precision-weighted "both"-block) / p_j
+    //    (precision-weighted residual), via the Y-pattern row loop
+    {
+      int r1 = 1;
+      for (j in 1:nclusters) {
+        int nj = cluster_size[j];
+        matrix[N_both, N_both] Aj = rep_matrix(0, N_both, N_both);
+        vector[N_both] pjv = rep_vector(0, N_both);
+        for (ii in 1:nj) {
+          int i = r1 - 1 + ii;
+          int p = row_ypatt[i];
+          int no = ypatt_nobs[p];
+          if (no > 0) {
+            vector[N_wo_b] resid = rep_vector(0, N_wo_b);
+            for (kk in 1:no) {
+              int oi = ypatt_obsidx[p, kk];
+              resid[oi] = YX[i][notbidx[oi]] - mu_y[oi];
+            }
+            {
+              vector[N_wo_b] pij = Wp_full[p] * resid;
+              pjv += pij[both_local];
+              Aj += Wp_full[p, both_local, both_local];
+              if (compute_logl) {
+                q_yy_a += dot_product(pij, resid);
+                w_logdet += Wp_ld[p];
+                n_y_obs_tot += no;
+              }
+            }
+          }
+        }
+        A_j[j] = Aj;
+        p_j[j] = pjv;
+        r1 += nj;
+      }
+    }
+
+    // 3. per-Z-pattern prior of (beta, z.mis) given z.obs -- padded to the
+    //    full (N_both + N_between) size throughout (rows/cols for
+    //    non-missing z positions come out ~0 automatically, since
+    //    Var(z_obs | z_obs) = 0)
+    if (N_between > 0) {
+      for (qq in 1:n_zpatt) {
+        int noz = zpatt_nobs[qq];
+        c0_full[qq] = K_full;
+        m0coef_full[qq] = rep_matrix(0, nw, N_between);
+        Zprec_full[qq] = rep_matrix(0, N_between, N_between);
+        if (noz > 0) {
+          array[noz] int zo = zpatt_obsidx[qq, 1:noz];
+          array[noz] int zo_full;
+          for (kk in 1:noz) zo_full[kk] = N_both + zo[kk];
+          {
+            matrix[noz, noz] Soo_inv = inverse_spd(sigma_zz[zo, zo]);
+            matrix[nw, noz] Lq = K_full[, zo_full];
+            matrix[nw, noz] M0 = Lq * Soo_inv;
+            c0_full[qq] -= M0 * Lq';
+            m0coef_full[qq][, zo] = M0;
+            Zprec_full[qq][zo, zo] = Soo_inv;
+          }
+        }
+      }
+    }
+
+    // 4. per-cluster posterior of (beta, z.mis); accumulate M-step
+    //    between-level sufficient statistics
+    vector[N_between] tz1 = rep_vector(0, N_between);
+    matrix[N_between, N_between] tz2 = rep_matrix(0, N_between, N_between);
+    matrix[N_between, N_both] tzv = rep_matrix(0, N_between, N_both);
+    vector[N_both] tb1 = rep_vector(0, N_both);
+    matrix[N_both, N_both] tb2 = rep_matrix(0, N_both, N_both);
+    {
+      matrix[nw, nw] I_nw = diag_matrix(rep_vector(1, nw));
+      for (j in 1:nclusters) {
+        matrix[nw, nw] c0;
+        vector[nw] m0 = rep_vector(0, nw);
+        int noz = 0;
+        int q = 1;
+
+        if (N_between > 0) {
+          q = clus_zpatt[j];
+          noz = zpatt_nobs[q];
+          c0 = c0_full[q];
+          if (noz > 0) {
+            vector[N_between] zc_full = rep_vector(0, N_between);
+            array[noz] int zo = zpatt_obsidx[q, 1:noz];
+            for (kk in 1:noz) zc_full[zo[kk]] = Zrow[j, zo[kk]] - mu_z[zo[kk]];
+            m0 = m0coef_full[q] * zc_full;
+            if (compute_logl) {
+              zz_logdet += log_determinant(sigma_zz[zo, zo]);
+              q_zz_a += quad_form(Zprec_full[q, zo, zo], zc_full[zo]);
+              n_z_obs_tot += noz;
+            }
+          }
+        } else {
+          c0 = sigma_b_bb;
+        }
+
+        {
+          matrix[nw, nw] M_j = rep_matrix(0, nw, nw);
+          matrix[nw, nw + 1] rhs;
+          matrix[nw, nw + 1] sol;
+          vector[N_both] ebeta;
+          matrix[nw, nw] c1;
+          vector[N_both] ev_b;
+
+          M_j[1:nw, 1:N_both] = c0[1:nw, 1:N_both] * A_j[j];
+          M_j += I_nw;
+          rhs[1:nw, 1] = m0 + c0[1:nw, 1:N_both] * p_j[j];
+          rhs[1:nw, 2:(nw + 1)] = c0;
+          sol = mdivide_left(M_j, rhs);
+
+          ebeta = sol[1:N_both, 1];
+          c1 = sol[1:nw, 2:(nw + 1)];
+          c1 = (c1 + c1') / 2;
+
+          ebeta_j[j] = ebeta;
+          vb_j[j] = c1[1:N_both, 1:N_both];
+
+          if (compute_logl) {
+            ibza_logdet += log_determinant(M_j);
+            {
+              vector[N_both] m0_b = m0[1:N_both];
+              q_corr += dot_product(p_j[j], m0_b + ebeta) - dot_product(m0_b, A_j[j] * ebeta);
+            }
+          }
+
+          ev_b = mu_b_bb + ebeta;
+          tb1 += ev_b;
+          tb2 += vb_j[j] + ev_b * ev_b';
+
+          if (N_between > 0) {
+            vector[N_between] ez = rep_vector(0, N_between);
+            matrix[N_between, N_between] ezz = rep_matrix(0, N_between, N_between);
+            matrix[N_between, N_both] ezv = rep_matrix(0, N_between, N_both);
+
+            if (noz > 0) {
+              array[noz] int zo = zpatt_obsidx[q, 1:noz];
+              ez[zo] = to_vector(Zrow[j, zo]);
+            }
+            if (noz < N_between) {
+              int nzm = N_between - noz;
+              array[nzm] int zm = zpatt_obsidx[q, (noz + 1):N_between];
+              array[nzm] int zm_full;
+              for (kk in 1:nzm) zm_full[kk] = N_both + zm[kk];
+              ez[zm] = mu_z[zm] + sol[zm_full, 1];
+              ezz[zm, zm] = c1[zm_full, zm_full];
+              ezv[zm, 1:N_both] = c1[zm_full, 1:N_both];
+            }
+            ezz += ez * ez';
+            ezv += ez * ev_b';
+
+            tz1 += ez;
+            tz2 += ezz;
+            tzv += ezv;
+          }
+        }
+      }
+    }
+
+    // 5. within-level M-step sufficient-statistic accumulation
+    vector[N_wo_b] tw1 = rep_vector(0, N_wo_b);
+    matrix[N_wo_b, N_wo_b] tw2 = rep_matrix(0, N_wo_b, N_wo_b);
+    {
+      int r1 = 1;
+      for (j in 1:nclusters) {
+        int nj = cluster_size[j];
+        vector[N_wo_b] eb_full_j = rep_vector(0, N_wo_b);
+        matrix[N_wo_b, N_wo_b] vb_full_j = rep_matrix(0, N_wo_b, N_wo_b);
+        // eb_full_j must hold the FULL posterior mean of the between
+        // contribution (mu_b_bb + ebeta), not just the centered ebeta --
+        // e_full = y - eb_full_j below relies on this
+        eb_full_j[both_local] = mu_b_bb + ebeta_j[j];
+        vb_full_j[both_local, both_local] = vb_j[j];
+
+        for (ii in 1:nj) {
+          int i = r1 - 1 + ii;
+          int p = row_ypatt[i];
+          int no = ypatt_nobs[p];
+          vector[N_wo_b] e_full;
+          matrix[N_wo_b, N_wo_b] m_cov = rep_matrix(0, N_wo_b, N_wo_b);
+
+          if (no == N_wo_b) {
+            e_full = YX[i][notbidx] - eb_full_j;
+            m_cov = vb_full_j;
+          } else if (no == 0) {
+            e_full = mu_w;
+            m_cov = sigma_w;
+          } else {
+            array[no] int oidx = ypatt_obsidx[p, 1:no];
+            array[N_wo_b - no] int midx = ypatt_obsidx[p, (no + 1):N_wo_b];
+            vector[no] f_o;
+            for (kk in 1:no) {
+              f_o[kk] = YX[i][notbidx[oidx[kk]]] - mu_w[oidx[kk]] - eb_full_j[oidx[kk]];
+            }
+
+            e_full = mu_w;
+            e_full[oidx] += f_o;
+            {
+              matrix[N_wo_b - no, no] Breg = Breg_full[p, midx, oidx];
+              vector[N_wo_b - no] mis_add = Breg * f_o;
+              matrix[no, no] v_oo = vb_full_j[oidx, oidx];
+              matrix[N_wo_b - no, no] bv = Breg * v_oo;
+
+              e_full[midx] += mis_add;
+
+              m_cov[oidx, oidx] = v_oo;
+              m_cov[midx, oidx] = bv;
+              m_cov[oidx, midx] = bv';
+              m_cov[midx, midx] = bv * Breg' + Ccond_full[p, midx, midx];
+            }
+          }
+          tw1 += e_full;
+          tw2 += m_cov + e_full * e_full';
+        }
+        r1 += nj;
+      }
+    }
+
+    // 6. M-step
+    {
+      vector[N_wo_b] mu_w_new = tw1 / nobs;
+      matrix[N_wo_b, N_wo_b] sigma_w_new = tw2 / nobs - mu_w_new * mu_w_new';
+      vector[N_both] mu_b_bb_new = tb1 / nclusters;
+      matrix[N_both, N_both] sigma_b_bb_new = tb2 / nclusters - mu_b_bb_new * mu_b_bb_new';
+      vector[N_between] mu_z_new = mu_z;
+      matrix[N_between, N_between] sigma_zz_new = sigma_zz;
+      matrix[N_both, N_between] sigma_yz_new = sigma_yz;
+      real logl = 0;
+
+      sigma_w_new = (sigma_w_new + sigma_w_new') / 2;
+      sigma_b_bb_new = (sigma_b_bb_new + sigma_b_bb_new') / 2;
+
+      if (N_between > 0) {
+        mu_z_new = tz1 / nclusters;
+        sigma_zz_new = tz2 / nclusters - mu_z_new * mu_z_new';
+        sigma_zz_new = (sigma_zz_new + sigma_zz_new') / 2;
+        sigma_yz_new = (tzv / nclusters - mu_z_new * mu_b_bb_new')';
+      }
+
+      if (compute_logl) {
+        real p_1 = n_y_obs_tot + n_z_obs_tot;
+        logl = -(p_1 * log(2 * pi()) + (w_logdet + ibza_logdet + zz_logdet)
+                  + (q_yy_a + q_zz_a - q_corr)) / 2;
+      }
+
+      {
+        int off = 0;
+        vector[N_wo_b + N_wo_b * N_wo_b + N_both + N_both * N_both
+                + N_between + N_between * N_between + N_both * N_between + 1] out;
+        out[(off + 1):(off + N_wo_b)] = mu_w_new; off += N_wo_b;
+        out[(off + 1):(off + N_wo_b * N_wo_b)] = to_vector(sigma_w_new); off += N_wo_b * N_wo_b;
+        out[(off + 1):(off + N_both)] = mu_b_bb_new; off += N_both;
+        out[(off + 1):(off + N_both * N_both)] = to_vector(sigma_b_bb_new); off += N_both * N_both;
+        out[(off + 1):(off + N_between)] = mu_z_new; off += N_between;
+        out[(off + 1):(off + N_between * N_between)] = to_vector(sigma_zz_new); off += N_between * N_between;
+        out[(off + 1):(off + N_both * N_between)] = to_vector(sigma_yz_new); off += N_both * N_between;
+        out[off + 1] = logl;
+        return out;
+      }
+    }
+  }
+
   real multi_normal_suff(vector xbar, matrix S, vector Mu, matrix Supdate, int N) {
     int Nobs = dims(S)[1];
     real out;
@@ -950,10 +1307,6 @@ data {
   array[Ng] matrix[p_tilde, p_tilde] cov_w; // observed "within" covariance matrix
   array[sum(nclus[,2])] vector[p_tilde] mean_d_full; // sample means/covs by cluster, for clusterwise log-densities
   array[sum(nclus[,2])] matrix[p_tilde, p_tilde] cov_d_full;
-  array[Ng] vector[p_tilde] xbar_w; // data estimates of within/between means/covs (for saturated logl)
-  array[Ng] vector[p_tilde] xbar_b;
-  array[Ng] matrix[p_tilde, p_tilde] cov_b;
-  array[Ng] real gs; // group size constant, for computation of saturated logl
   int N_within; // number of within variables
   int N_between; // number of between variables
   int N_both; // number of variables at both levels
@@ -1271,7 +1624,22 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
   array[Ng] matrix[m_c, m_c] Psi_r_skeleton_f_c;
   array[Ng] matrix[p_c, 1] Nu_skeleton_c;
   array[Ng] matrix[m_c, 1] Alpha_skeleton_c;
-  
+
+  // two-level saturated-model EM (ppp): index bookkeeping + the one-time
+  // (per chain) observed-data EM fit, in the "implied" per-level
+  // representation twolevel_logdens()/twolevel_logdens_missing() already
+  // consume -- see the twolevel_em_step() computation near the end of this
+  // block for how these are filled in
+  int N_wo_b = N_within + N_both;
+  array[multilev ? N_wo_b : 0] int notbidx;
+  array[multilev ? N_both : 0] int both_local;
+  array[multilev ? N_wo_b : 0] int w_impl_from_y;
+  array[multilev ? (N_both + N_between) : 0] int b_impl_from_b;
+  array[multilev ? Ng : 0] vector[N_lev[1]] impl_Muw_sat;
+  array[multilev ? Ng : 0] matrix[N_lev[1], N_lev[1]] impl_Sigmaw_sat;
+  array[multilev ? Ng : 0] vector[N_lev[2]] impl_Mub_sat;
+  array[multilev ? Ng : 0] matrix[N_lev[2], N_lev[2]] impl_Sigmab_sat;
+
   matrix[m, m] I = diag_matrix(rep_vector(1, m));
   matrix[m_c, m_c] I_c = diag_matrix(rep_vector(1, m_c));
   
@@ -1554,6 +1922,137 @@ transformed data { // (re)construct skeleton matrices in Stan (not that interest
 
       for (j in 1:Nobs[patt]) {
 	YXbarstar[patt,j] = YXbar[patt, Obsvar[patt,j]];
+      }
+    }
+  }
+
+  // two-level saturated-model EM (ppp), continued: index bookkeeping +
+  // the one-time (per chain) observed-data fit. Executes exactly once per
+  // chain since transformed data runs once -- the observed-data half of
+  // ppp does not depend on the current posterior draw, only on the (fixed)
+  // data, so it does not need to be recomputed every draw the way the
+  // per-draw replicated-data fit (generated quantities, reusing emiter)
+  // does. Gated on do_test: impl_Muw_sat/impl_Sigmaw_sat/impl_Mub_sat/
+  // impl_Sigmab_sat and the notbidx/both_local/w_impl_from_y/b_impl_from_b
+  // index arrays computed here are read only by the do_test-gated ppp
+  // block in generated quantities -- the mandatory log_lik (waic/looic)
+  // computation uses the structural model's Mu/Sigma/Mu_c/Sigma_c
+  // directly and never touches any of these, so skipping this entirely
+  // when test="none" is correct, not just an optimization.
+  if (multilev && do_test) {
+    if (N_between > 0) {
+      notbidx = between_idx[(N_between + 1):p_tilde];
+    } else {
+      notbidx = between_idx[1:p_tilde];
+    }
+    for (b in 1:N_both) {
+      both_local[b] = 1;
+      for (k in 1:N_wo_b) {
+        if (notbidx[k] == both_idx[b]) both_local[b] = k;
+      }
+    }
+    for (k in 1:N_wo_b) {
+      w_impl_from_y[k] = 1;
+      for (j in 1:N_lev[1]) {
+        if (ov_idx1[j] == notbidx[k]) w_impl_from_y[k] = j;
+      }
+    }
+    {
+      array[N_both + N_between] int b_cols;
+      b_cols[1:N_both] = both_idx;
+      if (N_between > 0) b_cols[(N_both + 1):(N_both + N_between)] = between_idx[1:N_between];
+      for (k in 1:(N_both + N_between)) {
+        b_impl_from_b[k] = 1;
+        for (j in 1:N_lev[2]) {
+          if (ov_idx2[j] == b_cols[k]) b_impl_from_b[k] = j;
+        }
+      }
+    }
+
+    {
+      int r1 = 1;
+      int r3 = 1;
+      int yp1 = 1;
+      int zp1 = 1;
+      for (g in 1:Ng) {
+        int r2 = r1 - 1 + nclus[g, 2];
+        int r4 = r3 - 1 + nclus[g, 1];
+        int yp2 = yp1 - 1 + n_ypatt[g];
+        int zp2 = zp1 - 1 + n_zpatt[g];
+        int zp_n = max(n_zpatt[g], 1);
+        array[zp_n] int zpatt_nobs_g;
+        array[zp_n, max(N_between, 1)] int zpatt_obsidx_g;
+
+        vector[N_wo_b] mu_w_cur = rep_vector(0, N_wo_b);
+        matrix[N_wo_b, N_wo_b] sigma_w_cur = diag_matrix(rep_vector(1, N_wo_b));
+        vector[N_both] mu_b_bb_cur = rep_vector(0, N_both);
+        matrix[N_both, N_both] sigma_b_bb_cur = diag_matrix(rep_vector(1, N_both));
+        vector[N_between] mu_z_cur = rep_vector(0, N_between);
+        matrix[N_between, N_between] sigma_zz_cur = diag_matrix(rep_vector(1, N_between));
+        matrix[N_both, N_between] sigma_yz_cur = rep_matrix(0, N_both, N_between);
+        real fx_old = negative_infinity();
+        int max_iter = 500;
+        real em_tol = 1e-6;
+
+        if (n_zpatt[g] > 0) {
+          zpatt_nobs_g = zpatt_nobs[zp1:zp2];
+          zpatt_obsidx_g = zpatt_obsidx[zp1:zp2, ];
+        } else {
+          zpatt_nobs_g = rep_array(0, zp_n);
+          zpatt_obsidx_g = rep_array(0, zp_n, max(N_between, 1));
+        }
+
+        for (it in 1:max_iter) {
+          vector[N_wo_b + N_wo_b * N_wo_b + N_both + N_both * N_both
+                  + N_between + N_between * N_between + N_both * N_between + 1] em_out;
+          int off = 0;
+          real fx;
+          em_out = twolevel_em_step(YX[r3:r4], cluster_size[r1:r2],
+                                     row_ypatt[r3:r4], n_ypatt[g],
+                                     ypatt_nobs[yp1:yp2], ypatt_obsidx[yp1:yp2, ],
+                                     clus_zpatt[r1:r2], zp_n, zpatt_nobs_g, zpatt_obsidx_g,
+                                     Zrow[r1:r2], notbidx, both_local,
+                                     N_wo_b, N_both, N_between, nclus[g, 1], nclus[g, 2],
+                                     mu_w_cur, sigma_w_cur, mu_b_bb_cur, sigma_b_bb_cur,
+                                     mu_z_cur, sigma_zz_cur, sigma_yz_cur, 1);
+
+          mu_w_cur = em_out[(off + 1):(off + N_wo_b)]; off += N_wo_b;
+          sigma_w_cur = to_matrix(em_out[(off + 1):(off + N_wo_b * N_wo_b)], N_wo_b, N_wo_b); off += N_wo_b * N_wo_b;
+          mu_b_bb_cur = em_out[(off + 1):(off + N_both)]; off += N_both;
+          sigma_b_bb_cur = to_matrix(em_out[(off + 1):(off + N_both * N_both)], N_both, N_both); off += N_both * N_both;
+          mu_z_cur = em_out[(off + 1):(off + N_between)]; off += N_between;
+          sigma_zz_cur = to_matrix(em_out[(off + 1):(off + N_between * N_between)], N_between, N_between); off += N_between * N_between;
+          sigma_yz_cur = to_matrix(em_out[(off + 1):(off + N_both * N_between)], N_both, N_between); off += N_both * N_between;
+          fx = em_out[off + 1];
+
+          if (it > 1 && (fx - fx_old) < em_tol) break;
+          fx_old = fx;
+        }
+
+        impl_Muw_sat[g] = rep_vector(0, N_lev[1]);
+        impl_Sigmaw_sat[g] = rep_matrix(0, N_lev[1], N_lev[1]);
+        impl_Muw_sat[g, w_impl_from_y] = mu_w_cur;
+        impl_Sigmaw_sat[g, w_impl_from_y, w_impl_from_y] = sigma_w_cur;
+
+        {
+          vector[N_both + N_between] mu_b2;
+          matrix[N_both + N_between, N_both + N_between] sigma_b2;
+          mu_b2[1:N_both] = mu_b_bb_cur;
+          sigma_b2[1:N_both, 1:N_both] = sigma_b_bb_cur;
+          if (N_between > 0) {
+            mu_b2[(N_both + 1):(N_both + N_between)] = mu_z_cur;
+            sigma_b2[1:N_both, (N_both + 1):(N_both + N_between)] = sigma_yz_cur;
+            sigma_b2[(N_both + 1):(N_both + N_between), 1:N_both] = sigma_yz_cur';
+            sigma_b2[(N_both + 1):(N_both + N_between), (N_both + 1):(N_both + N_between)] = sigma_zz_cur;
+          }
+          impl_Mub_sat[g] = rep_vector(0, N_lev[2]);
+          impl_Sigmab_sat[g] = rep_matrix(0, N_lev[2], N_lev[2]);
+          impl_Mub_sat[g, b_impl_from_b] = mu_b2;
+          impl_Sigmab_sat[g, b_impl_from_b, b_impl_from_b] = sigma_b2;
+        }
+
+        r1 += nclus[g, 2]; r3 += nclus[g, 1];
+        yp1 += n_ypatt[g]; zp1 += n_zpatt[g];
       }
     }
   }
@@ -2197,11 +2696,6 @@ generated quantities { // these matrices are saved in the output but do not figu
   vector[multilev ? sum(nclus[,2]) : Ng] log_lik_x_rep;
   array[Ng] matrix[N_both + N_within, N_both + N_within] S_PW_rep;
   array[Ng] matrix[p_tilde, p_tilde] S_PW_rep_full;
-  array[Ng] vector[p_tilde] ov_mean_rep;
-  array[Ng] vector[p_tilde] xbar_b_rep;
-  array[Ng] matrix[N_between, N_between] S2_rep;
-  array[Ng] matrix[p_tilde, p_tilde] S_B_rep;
-  array[Ng] matrix[p_tilde, p_tilde] cov_b_rep;
   real<lower=0, upper=1> ppp;
   
   // first deal with sign constraints:
@@ -2326,8 +2820,8 @@ generated quantities { // these matrices are saved in the output but do not figu
     } else if (do_test && has_data) {
       // generate level 2 data, then level 1
       if (multilev) {
-	array[p_tilde - N_between] int notbidx;
-	notbidx = between_idx[(N_between + 1):p_tilde];
+	// notbidx computed once in transformed data (same formula, reused
+	// here rather than redeclared)
 	r1 = 1;
 	rr1 = 1;
 	clusidx = 1;
@@ -2337,8 +2831,6 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  matrix[p + q, p + q] Sigma_chol = cholesky_decompose(Sigma[gg]);
 	  S_PW_rep[gg] = rep_matrix(0, N_both + N_within, N_both + N_within);
 	  S_PW_rep_full[gg] = rep_matrix(0, p_tilde, p_tilde);
-	  S_B_rep[gg] = rep_matrix(0, p_tilde, p_tilde);
-	  ov_mean_rep[gg] = rep_vector(0, p_tilde);
 
 	  for (cc in 1:nclus[gg, 2]) {
 	    vector[p_c] YXstar_rep_c;
@@ -2356,9 +2848,8 @@ generated quantities { // these matrices are saved in the output but do not figu
 	      for (ww in 1:(p_tilde - N_between)) {
 		YXstar_rep[ii, notbidx[ww]] += Ywb_rep[ww];
 	      }
-	      ov_mean_rep[gg] += YXstar_rep[ii];
 	    }
-	    
+
 	    for (jj in 1:p_tilde) {
 	      mean_d_rep[clusidx, jj] = mean(YXstar_rep[r1:(r1 + cluster_size[clusidx] - 1), jj]);
             }
@@ -2366,69 +2857,22 @@ generated quantities { // these matrices are saved in the output but do not figu
 	    r1 += cluster_size[clusidx];
 	    clusidx += 1;
 	  } // cc
-	  ov_mean_rep[gg] *= pow(nclus[gg, 1], -1);
-	  xbar_b_rep[gg] = ov_mean_rep[gg];
 
 	  r1 -= nclus[gg, 1]; // reset for S_PW
 	  clusidx -= nclus[gg, 2];
 
-	  if (N_between > 0) {
-	    S2_rep[gg] = rep_matrix(0, N_between, N_between);
-	    for (ii in 1:N_between) {
-	      xbar_b_rep[gg, between_idx[ii]] = mean(mean_d_rep[clusidx:(clusidx + nclus[gg, 2] - 1), between_idx[ii]]);
-	    }
-	  }
-	  
 	  for (cc in 1:nclus[gg, 2]) {
 	    for (ii in r1:(r1 + cluster_size[clusidx] - 1)) {
 	      S_PW_rep_full[gg] += tcrossprod(to_matrix(YXstar_rep[ii] - mean_d_rep[clusidx]));
 	    }
-	    
-	    S_B_rep[gg] += cluster_size[clusidx] * tcrossprod(to_matrix(mean_d_rep[clusidx] - ov_mean_rep[gg]));
-	    if (N_between > 0) {
-	      S2_rep[gg] += tcrossprod(to_matrix(mean_d_rep[clusidx, between_idx[1:N_between]] - xbar_b_rep[gg, between_idx[1:N_between]]));
-	    }
-	    
+
 	    r1 += cluster_size[clusidx];
 	    clusidx += 1;
 	  }
 	  S_PW_rep_full[gg] *= pow(nclus[gg, 1] - nclus[gg, 2], -1);
-	  S_B_rep[gg] *= pow(nclus[gg, 2] - 1, -1);
-	  S2_rep[gg] *= pow(nclus[gg, 2], -1);
-	  // mods to between-only variables:
-	  if (N_between > 0) {
-	    array[N_between] int betonly = between_idx[1:N_between];
-	    S_PW_rep_full[gg, betonly, betonly] = rep_matrix(0, N_between, N_between);
-
-	    // Y2: mean_d_rep; Y2c: mean_d_rep - ov_mean_rep
-	    for (ii in 1:N_between) {
-	      for (jj in 1:(N_both + N_within)) {
-		S_B_rep[gg, between_idx[ii], between_idx[(N_between + jj)]] *= (gs[gg] * nclus[gg, 2] * pow(nclus[gg, 1], -1));
-		S_B_rep[gg, between_idx[(N_between + jj)], between_idx[ii]] = S_B_rep[gg, between_idx[ii], between_idx[(N_between + jj)]];
-	      }
-	    }
-
-	    S_B_rep[gg, betonly, betonly] = rep_matrix(0, N_between, N_between);
-	    for (cc in 1:nclus[gg, 2]) {
-	      S_B_rep[gg, betonly, betonly] += tcrossprod(to_matrix(mean_d_rep[cc, betonly] - ov_mean_rep[gg, betonly]));
-	    }
-	    S_B_rep[gg, betonly, betonly] *= gs[gg] * pow(nclus[gg, 2], -1);
-	  }
-	  
-	  cov_b_rep[gg] = pow(gs[gg], -1) * (S_B_rep[gg] - S_PW_rep_full[gg]);
-	  if (N_between > 0) {
-	    cov_b_rep[gg, between_idx[1:N_between], between_idx[1:N_between]] = S2_rep[gg];
-	  }
 
 	  rr1 = r1 - nclus[gg, 1];
 	  r2 = clusidx - nclus[gg, 2];
-	  Mu_rep_sat[gg] = rep_vector(0, N_within + N_both);
-	  if (N_within > 0) {
-	    for (j in 1:N_within) {
-	      xbar_b_rep[gg, within_idx[j]] = 0;
-	      Mu_rep_sat[gg, within_idx[j]] = ov_mean_rep[gg, within_idx[j]];
-	    }
-	  }
 	  S_PW_rep[gg] = S_PW_rep_full[gg, notbidx, notbidx];
 
 	  if (Nx[gg] > 0 || Nx_between[gg] > 0) {
@@ -2657,34 +3101,162 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  // NB: cov_d is 0 when we go cluster by cluster.
 	  // otherwise it is covariance of cluster means by each unique cluster size
 	  // because we go cluster by cluster here, we can reuse cov_d_full everywhere
-	  log_lik_rep[rr1:rr2] = twolevel_logdens(mean_d_rep[rr1:rr2], cov_d_full[rr1:rr2],
-						  S_PW_rep[grpidx], YXstar_rep[r3:r4],
-						  nclus[grpidx,], cluster_size[rr1:rr2],
-						  cluster_size[rr1:rr2], nclus[grpidx,2],
-						  intone[1:nclus[grpidx,2]], Mu[grpidx],
-						  Sigma[grpidx], Mu_c[grpidx], Sigma_c[grpidx],
-						  ov_idx1, ov_idx2, within_idx, between_idx,
-						  both_idx, p_tilde, N_within, N_between, N_both);
 
-	  log_lik_sat[rr1:rr2] = twolevel_logdens(mean_d_full[rr1:rr2], cov_d_full[rr1:rr2],
-						  S_PW[grpidx], YX[r3:r4],
-						  nclus[grpidx,], cluster_size[rr1:rr2],
-						  cluster_size[rr1:rr2], nclus[grpidx,2],
-						  intone[1:nclus[grpidx,2]], xbar_w[grpidx, ov_idx1],
-						  S_PW[grpidx], xbar_b[grpidx, ov_idx2], cov_b[grpidx, ov_idx2, ov_idx2],
-						  ov_idx1, ov_idx2, within_idx, between_idx,
-						  both_idx, p_tilde, N_within, N_between, N_both);
+	  {
+	    // this group's Y/Z-pattern slice offsets (mirrors the equivalent
+	    // bookkeeping in the mandatory log_lik block above)
+	    int yp1g = 1;
+	    int yp2g;
+	    int zp1g = 1;
+	    int zp2g;
+	    int zp_n = max(n_zpatt[grpidx], 1);
+	    array[zp_n] int zpatt_nobs_g;
+	    array[zp_n, max(N_between, 1)] int zpatt_obsidx_g;
+	    array[nclus[grpidx, 2]] vector[max(N_between, 1)] Zrow_rep_g;
+	    vector[N_wo_b] mu_w_rep = rep_vector(0, N_wo_b);
+	    matrix[N_wo_b, N_wo_b] sigma_w_rep = diag_matrix(rep_vector(1, N_wo_b));
+	    vector[N_both] mu_b_bb_rep = rep_vector(0, N_both);
+	    matrix[N_both, N_both] sigma_b_bb_rep = diag_matrix(rep_vector(1, N_both));
+	    vector[N_between] mu_z_rep = rep_vector(0, N_between);
+	    matrix[N_between, N_between] sigma_zz_rep = diag_matrix(rep_vector(1, N_between));
+	    matrix[N_both, N_between] sigma_yz_rep = rep_matrix(0, N_both, N_between);
+	    vector[N_lev[1]] impl_Muw_rep;
+	    matrix[N_lev[1], N_lev[1]] impl_Sigmaw_rep;
+	    vector[N_lev[2]] impl_Mub_rep;
+	    matrix[N_lev[2], N_lev[2]] impl_Sigmab_rep;
 
-	  log_lik_rep_sat[rr1:rr2] = twolevel_logdens(mean_d_rep[rr1:rr2], cov_d_full[rr1:rr2],
+	    if (grpidx > 1) {
+	      yp1g += sum(n_ypatt[1:(grpidx - 1)]);
+	      zp1g += sum(n_zpatt[1:(grpidx - 1)]);
+	    }
+	    yp2g = yp1g - 1 + n_ypatt[grpidx];
+	    zp2g = zp1g - 1 + n_zpatt[grpidx];
+
+	    if (n_zpatt[grpidx] > 0) {
+	      zpatt_nobs_g = zpatt_nobs[zp1g:zp2g];
+	      zpatt_obsidx_g = zpatt_obsidx[zp1g:zp2g, ];
+	    } else {
+	      zpatt_nobs_g = rep_array(0, zp_n);
+	      zpatt_obsidx_g = rep_array(0, zp_n, max(N_between, 1));
+	    }
+	    if (N_between > 0) {
+	      for (cc in 1:nclus[grpidx, 2]) {
+		Zrow_rep_g[cc] = mean_d_rep[rr1 + cc - 1, between_idx[1:N_between]];
+	      }
+	    }
+
+	    // fresh EM on the replicated data, emiter fixed iterations (a
+	    // per-draw cost bounded the same way the existing single-level
+	    // missing-data ppp's estep()/emiter loop already is) -- reuses
+	    // the OBSERVED data's own Y/Z-pattern fields, so no explicit
+	    // masking of YXstar_rep to the observed missingness pattern is
+	    // needed: twolevel_logdens_missing()/twolevel_em_step() only
+	    // ever read the "observed"-flagged positions per pattern
+	    for (em_it in 1:emiter) {
+	      vector[N_wo_b + N_wo_b * N_wo_b + N_both + N_both * N_both
+		      + N_between + N_between * N_between + N_both * N_between + 1] em_out;
+	      int off = 0;
+	      em_out = twolevel_em_step(YXstar_rep[r3:r4], cluster_size[rr1:rr2],
+					 row_ypatt[r3:r4], n_ypatt[grpidx],
+					 ypatt_nobs[yp1g:yp2g], ypatt_obsidx[yp1g:yp2g, ],
+					 clus_zpatt[rr1:rr2], zp_n, zpatt_nobs_g, zpatt_obsidx_g,
+					 Zrow_rep_g, notbidx, both_local,
+					 N_wo_b, N_both, N_between, nclus[grpidx, 1], nclus[grpidx, 2],
+					 mu_w_rep, sigma_w_rep, mu_b_bb_rep, sigma_b_bb_rep,
+					 mu_z_rep, sigma_zz_rep, sigma_yz_rep, 0);
+
+	      mu_w_rep = em_out[(off + 1):(off + N_wo_b)]; off += N_wo_b;
+	      sigma_w_rep = to_matrix(em_out[(off + 1):(off + N_wo_b * N_wo_b)], N_wo_b, N_wo_b); off += N_wo_b * N_wo_b;
+	      mu_b_bb_rep = em_out[(off + 1):(off + N_both)]; off += N_both;
+	      sigma_b_bb_rep = to_matrix(em_out[(off + 1):(off + N_both * N_both)], N_both, N_both); off += N_both * N_both;
+	      mu_z_rep = em_out[(off + 1):(off + N_between)]; off += N_between;
+	      sigma_zz_rep = to_matrix(em_out[(off + 1):(off + N_between * N_between)], N_between, N_between); off += N_between * N_between;
+	      sigma_yz_rep = to_matrix(em_out[(off + 1):(off + N_both * N_between)], N_both, N_between); off += N_both * N_between;
+	    }
+
+	    // convert the replicated-data EM state to the "implied"
+	    // per-level representation twolevel_logdens[_missing] consume
+	    impl_Muw_rep = rep_vector(0, N_lev[1]);
+	    impl_Sigmaw_rep = rep_matrix(0, N_lev[1], N_lev[1]);
+	    impl_Muw_rep[w_impl_from_y] = mu_w_rep;
+	    impl_Sigmaw_rep[w_impl_from_y, w_impl_from_y] = sigma_w_rep;
+	    {
+	      vector[N_both + N_between] mu_b2;
+	      matrix[N_both + N_between, N_both + N_between] sigma_b2;
+	      mu_b2[1:N_both] = mu_b_bb_rep;
+	      sigma_b2[1:N_both, 1:N_both] = sigma_b_bb_rep;
+	      if (N_between > 0) {
+		mu_b2[(N_both + 1):(N_both + N_between)] = mu_z_rep;
+		sigma_b2[1:N_both, (N_both + 1):(N_both + N_between)] = sigma_yz_rep;
+		sigma_b2[(N_both + 1):(N_both + N_between), 1:N_both] = sigma_yz_rep';
+		sigma_b2[(N_both + 1):(N_both + N_between), (N_both + 1):(N_both + N_between)] = sigma_zz_rep;
+	      }
+	      impl_Mub_rep = rep_vector(0, N_lev[2]);
+	      impl_Sigmab_rep = rep_matrix(0, N_lev[2], N_lev[2]);
+	      impl_Mub_rep[b_impl_from_b] = mu_b2;
+	      impl_Sigmab_rep[b_impl_from_b, b_impl_from_b] = sigma_b2;
+	    }
+
+	    if (missing) {
+	      log_lik_rep[rr1:rr2] = twolevel_logdens_missing(YXstar_rep[r3:r4], cluster_size[rr1:rr2],
+							       row_ypatt[r3:r4], n_ypatt[grpidx],
+							       ypatt_nobs[yp1g:yp2g], ypatt_obsidx[yp1g:yp2g, ],
+							       clus_zpatt[rr1:rr2], zp_n, zpatt_nobs_g, zpatt_obsidx_g,
+							       Zrow_rep_g,
+							       Mu[grpidx], Sigma[grpidx], Mu_c[grpidx], Sigma_c[grpidx],
+							       ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
+							       p_tilde, N_within, N_between, N_both);
+
+	      log_lik_sat[rr1:rr2] = twolevel_logdens_missing(YX[r3:r4], cluster_size[rr1:rr2],
+							       row_ypatt[r3:r4], n_ypatt[grpidx],
+							       ypatt_nobs[yp1g:yp2g], ypatt_obsidx[yp1g:yp2g, ],
+							       clus_zpatt[rr1:rr2], zp_n, zpatt_nobs_g, zpatt_obsidx_g,
+							       Zrow[rr1:rr2],
+							       impl_Muw_sat[grpidx], impl_Sigmaw_sat[grpidx],
+							       impl_Mub_sat[grpidx], impl_Sigmab_sat[grpidx],
+							       ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
+							       p_tilde, N_within, N_between, N_both);
+
+	      log_lik_rep_sat[rr1:rr2] = twolevel_logdens_missing(YXstar_rep[r3:r4], cluster_size[rr1:rr2],
+								   row_ypatt[r3:r4], n_ypatt[grpidx],
+								   ypatt_nobs[yp1g:yp2g], ypatt_obsidx[yp1g:yp2g, ],
+								   clus_zpatt[rr1:rr2], zp_n, zpatt_nobs_g, zpatt_obsidx_g,
+								   Zrow_rep_g,
+								   impl_Muw_rep, impl_Sigmaw_rep,
+								   impl_Mub_rep, impl_Sigmab_rep,
+								   ov_idx1, ov_idx2, within_idx, between_idx, both_idx,
+								   p_tilde, N_within, N_between, N_both);
+	    } else {
+	      log_lik_rep[rr1:rr2] = twolevel_logdens(mean_d_rep[rr1:rr2], cov_d_full[rr1:rr2],
 						      S_PW_rep[grpidx], YXstar_rep[r3:r4],
 						      nclus[grpidx,], cluster_size[rr1:rr2],
 						      cluster_size[rr1:rr2], nclus[grpidx,2],
-						      intone[1:nclus[grpidx,2]], Mu_rep_sat[grpidx],
-						      S_PW_rep[grpidx], xbar_b_rep[grpidx, ov_idx2],
-						      cov_b_rep[grpidx, ov_idx2, ov_idx2],
-						      ov_idx1, ov_idx2,
-						      within_idx, between_idx, both_idx, p_tilde,
-						      N_within, N_between, N_both);
+						      intone[1:nclus[grpidx,2]], Mu[grpidx],
+						      Sigma[grpidx], Mu_c[grpidx], Sigma_c[grpidx],
+						      ov_idx1, ov_idx2, within_idx, between_idx,
+						      both_idx, p_tilde, N_within, N_between, N_both);
+
+	      log_lik_sat[rr1:rr2] = twolevel_logdens(mean_d_full[rr1:rr2], cov_d_full[rr1:rr2],
+						      S_PW[grpidx], YX[r3:r4],
+						      nclus[grpidx,], cluster_size[rr1:rr2],
+						      cluster_size[rr1:rr2], nclus[grpidx,2],
+						      intone[1:nclus[grpidx,2]],
+						      impl_Muw_sat[grpidx], impl_Sigmaw_sat[grpidx],
+						      impl_Mub_sat[grpidx], impl_Sigmab_sat[grpidx],
+						      ov_idx1, ov_idx2, within_idx, between_idx,
+						      both_idx, p_tilde, N_within, N_between, N_both);
+
+	      log_lik_rep_sat[rr1:rr2] = twolevel_logdens(mean_d_rep[rr1:rr2], cov_d_full[rr1:rr2],
+							  S_PW_rep[grpidx], YXstar_rep[r3:r4],
+							  nclus[grpidx,], cluster_size[rr1:rr2],
+							  cluster_size[rr1:rr2], nclus[grpidx,2],
+							  intone[1:nclus[grpidx,2]],
+							  impl_Muw_rep, impl_Sigmaw_rep,
+							  impl_Mub_rep, impl_Sigmab_rep,
+							  ov_idx1, ov_idx2, within_idx, between_idx,
+							  both_idx, p_tilde, N_within, N_between, N_both);
+	    }
+	  }
 
 	  if (Nx[grpidx] + Nx_between[grpidx] > 0) {
 	    log_lik_rep[rr1:rr2] -= log_lik_x_rep[rr1:rr2];

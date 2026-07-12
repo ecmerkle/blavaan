@@ -352,15 +352,6 @@ blavaan <- function(...,  # default lavaan arguments
         }
     }
 
-    # for initial values/some parameter setup:
-    if(lavInspect(LAV, 'nlevels') > 1){
-        # ppp for within-only ovs turned off because saturated lik doesn't work
-        if(length(LAV@Data@Lp[[1]]$within.idx[[1]]) > 0){
-            if(!("test" %in% dotNames)) origtest <- "none"
-            cat('blavaan NOTE: test="none" by default for models with within-only ovs, because the metrics appear to be unstable')
-        }
-    }
-
     if(jag.do.fit){
         LAV2 <- try(do.call("lavaan", dotdotdot), silent = TRUE)
         if(!inherits(LAV2, 'try-error')) LAV <- LAV2
@@ -624,17 +615,6 @@ blavaan <- function(...,  # default lavaan arguments
 
                         jagtrans <- try(do.call("stanmarg_data", ldargs), silent = TRUE)
                         if(inherits(jagtrans, "try-error")) stop(jagtrans)
-
-                        ## PPMC/log_lik_sat/log_lik_rep/log_lik_rep_sat are not yet
-                        ## implemented for two-level models with missing data (they need
-                        ## a missing-data-aware EM estimate of the saturated model, which
-                        ## the existing estep() Stan function does not support for
-                        ## clustered data); fail clearly rather than silently produce
-                        ## wrong ppp/log_lik_sat/etc.
-                        if(isTRUE(lavoptions$.multilevel) && isTRUE(as.logical(l2s$dat$miss)) &&
-                           lavoptions$test != "none"){
-                          stop('blavaan ERROR: test != "none" (ppmc/ppp) is not currently supported for two-level models with missing data; use test = "none"')
-                        }
 
                         stanmon <- c("ly_sign", "bet_sign", "Theta_cov", "Theta_var",
                                      "Psi_cov", "Psi_var", "Nu_free", "al_sign", "Tau_free")

@@ -5,10 +5,13 @@
 ## or as part of a package: tinytest::test_package("blavaan")
 ##
 ## NB: this path is gated behind options(blavaan.multilevel.missing = TRUE)
-## (default FALSE) and is still experimental: fixed.x variables and
-## test != "none" (ppmc/ppp) are not yet supported for two-level models with
-## real missingness -- see the expect_error() cases below. See also
-## tinytest_stan_multilevel2.R for complete-data two-level model tests.
+## (default FALSE) and is still experimental: fixed.x variables are not yet
+## supported for two-level models with real missingness -- see the
+## expect_error() case below. test != "none" (ppmc/ppp) IS supported (via an
+## EM-based saturated-model fit, unified across complete/missing data -- see
+## R/lav_export_stanmarg.R and inst/stan/stanmarg.stan's twolevel_em_step()).
+## See also tinytest_stan_multilevel2.R for complete-data two-level model
+## tests.
 ##
 ## Multi-group two-level models are NOT tested here (out of scope for this
 ## FIML/MAR-focused file), but note that they now work: plain lavaan::sem()
@@ -110,13 +113,20 @@ d1 <- inject_mcar_between(d1, "w1", rate = 0.15, seed = 102)
 fit1 <- sem(model_wb, data = d1, cluster = "cluster", missing = "fiml",
             fixed.x = FALSE)
 
+## missing="fiml" is not passed explicitly here: real NAs are present in
+## d1, and with options(blavaan.multilevel.missing = TRUE) blavaan already
+## defaults missing to "ml" (equivalent to "fiml") whenever a two-level fit
+## has actual missing data -- see R/blavaan.R (the `!any(is.na(...))`/
+## gate-option logic). Passing it explicitly is redundant and triggers a
+## spurious "blavaan WARNING: the following arguments have no effect:
+## missing" (that warning check does not know about the two-level-FIML-MAR
+## exception).
 bfit1 <- bsem(
   model   = model_wb,
   data    = d1,
   cluster = "cluster",
-  missing = "fiml",
   fixed.x = FALSE,
-  test    = "none",
+  test    = "ppp",
   burnin  = 100,
   sample  = 100,
   dp      = dp_stable
@@ -154,6 +164,20 @@ sampler_params <- rstan::get_sampler_params(bfit1@external$mcmcout, inc_warmup =
 ndiv <- sum(sapply(sampler_params, function(x) sum(x[, "divergent__"])))
 expect_equal(ndiv, 0L,
   info = "two-level FIML/MAR: no divergent transitions expected in a well-behaved short run")
+
+## ppp (EM-based saturated-model fit, see R/lav_export_stanmarg.R and
+## inst/stan/stanmarg.stan's twolevel_em_step()) should be well-defined
+## for this within+both+between missingness scenario
+ppp_val1 <- fm1["ppp"]
+expect_true(
+  is.finite(ppp_val1) && ppp_val1 >= 0 && ppp_val1 <= 1,
+  info = "two-level FIML/MAR ppp should be a finite value in [0,1]"
+)
+ll_sat1 <- rstan::extract(bfit1@external$mcmcout, "log_lik_sat")[[1]]
+expect_true(
+  all(is.finite(ll_sat1)),
+  info = "two-level FIML/MAR log_lik_sat should be finite for every draw/cluster"
+)
 })
 
 ## =============================================================================
@@ -165,6 +189,13 @@ expect_equal(ndiv, 0L,
 ## twolevel_logdens_missing). This should give essentially the same
 ## posterior as the ordinary complete-data path (dat$miss == 0, dispatch to
 ## the existing twolevel_logdens), since it's the same likelihood.
+##
+## Unlike the other bsem() calls in this file, missing="fiml" IS passed
+## explicitly here on purpose: R/blavaan.R only auto-defaults missing to
+## "ml" when the data actually contains NAs (`!any(is.na(...))` check); with
+## Demo.twolevel (no real missingness) that auto-default never kicks in, so
+## the explicit argument is the only way to force the "new" pattern-based
+## dispatch for this comparison.
 
 try({
 set.seed(201)
@@ -228,17 +259,32 @@ model_x <- '
 '
 dx <- inject_mcar(Demo.twolevel, c("y1", "y2"), rate = 0.15, seed = 301)
 expect_error(
-  bsem(model_x, data = dx, cluster = "cluster", missing = "fiml",
+  bsem(model_x, data = dx, cluster = "cluster",
        burnin = 100, sample = 100),
   info = "two-level FIML/MAR with fixed.x variables should error"
 )
 
-## test != "none" (ppmc/ppp) is not currently supported
+## test != "none" (ppmc/ppp) is now supported for two-level FIML/MAR data:
+## log_lik_sat/log_lik_rep/log_lik_rep_sat are computed via an EM-based
+## saturated-model fit (see R/lav_export_stanmarg.R, inst/stan/stanmarg.stan
+## twolevel_em_step()), unified across complete and missing data.
 dt <- inject_mcar(Demo.twolevel, c("y1", "y2"), rate = 0.15, seed = 302)
-expect_error(
-  bsem(model_wb, data = dt, cluster = "cluster", missing = "fiml",
-       fixed.x = FALSE, test = "ppp", burnin = 100, sample = 100),
-  info = "two-level FIML/MAR with test != 'none' should error"
+bfit_ppp <- bsem(model_wb, data = dt, cluster = "cluster",
+                  fixed.x = FALSE, test = "ppp", burnin = 100, sample = 100,
+                  dp = dp_stable)
+expect_inherits(bfit_ppp, "blavaan",
+  info = "two-level FIML/MAR with test='ppp' should fit successfully")
+
+ppp_val <- fitMeasures(bfit_ppp)["ppp"]
+expect_true(
+  is.finite(ppp_val) && ppp_val >= 0 && ppp_val <= 1,
+  info = "two-level FIML/MAR ppp should be a finite value in [0,1]"
+)
+
+ll_sat <- rstan::extract(bfit_ppp@external$mcmcout, "log_lik_sat")[[1]]
+expect_true(
+  all(is.finite(ll_sat)),
+  info = "two-level FIML/MAR log_lik_sat should be finite for every draw/cluster"
 )
 })
 
