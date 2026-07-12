@@ -334,19 +334,12 @@ blavaan <- function(...,  # default lavaan arguments
             dotdotdot$missing <- "listwise"
         } else {
             if("cluster" %in% dotNames) {
-                if(isTRUE(getOption("blavaan.multilevel.missing", FALSE))) {
-                    ## experimental: two-level FIML/MAR (see blavaan.multilevel.missing
-                    ## option); lavaan already builds the two-level-aware Mp/Zp pattern
-                    ## structures whenever missing != "listwise" and cluster is set, so
-                    ## no lavaan-side changes are needed here
-                    if(is.null(dotdotdot$missing)) dotdotdot$missing <- "ml"
-                    if(length(unlist(LAV@Data@Lp[[1]]$ov.x.idx)) > 0) {
-                        stop('blavaan ERROR: fixed.x variables are not currently supported for two-level models with missing data')
-                    }
-                } else {
-                    ## set missing = "listwise" for two-level models
-                    dotdotdot$missing <- "listwise"
-                    cat("blavaan NOTE: listwise deletion is in use! (currently the only missingness option for two-level models)\n\n")
+                ## two-level FIML/MAR; lavaan already builds the two-level-aware
+                ## Mp/Zp pattern structures whenever missing != "listwise" and
+                ## cluster is set, so no lavaan-side changes are needed here
+                if(is.null(dotdotdot$missing)) dotdotdot$missing <- "ml"
+                if(length(unlist(LAV@Data@Lp[[1]]$ov.x.idx)) > 0) {
+                    stop('blavaan ERROR: fixed.x variables are not currently supported for two-level models with missing data')
                 }
             }
         }

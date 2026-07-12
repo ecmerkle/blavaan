@@ -4,14 +4,19 @@
 ## Run with: tinytest::run_test_file("tinytest_stan_multilevel_missing.R")
 ## or as part of a package: tinytest::test_package("blavaan")
 ##
-## NB: this path is gated behind options(blavaan.multilevel.missing = TRUE)
-## (default FALSE) and is still experimental: fixed.x variables are not yet
-## supported for two-level models with real missingness -- see the
+## NB: two-level FIML/MAR is now the default (no option/gate needed) whenever
+## a two-level model has real missing data -- see R/blavaan.R (the
+## `!any(is.na(...))` check). missing="listwise" was never a user-facing
+## override for two-level models -- it was only ever blavaan's own internal
+## choice (set unconditionally, not read from what the user passed) to force
+## row-dropping before this FIML/MAR support existed; see the note in
+## section 4 below. Still experimental in one respect: fixed.x variables are
+## not yet supported for two-level models with real missingness -- see the
 ## expect_error() case below. test != "none" (ppmc/ppp) IS supported (via an
 ## EM-based saturated-model fit, unified across complete/missing data -- see
-## R/lav_export_stanmarg.R and inst/stan/stanmarg.stan's twolevel_em_step()).
-## See also tinytest_stan_multilevel2.R for complete-data two-level model
-## tests.
+## R/lav_export_stanmarg.R and inst/stan/stanmarg.stan's
+## twolevel_em_step()). See also
+## tinytest_stan_multilevel2.R for complete-data two-level model tests.
 ##
 ## Multi-group two-level models are NOT tested here (out of scope for this
 ## FIML/MAR-focused file), but note that they now work: plain lavaan::sem()
@@ -34,9 +39,6 @@
 library("tinytest")
 library("lavaan")
 library("blavaan")
-
-old_opt <- getOption("blavaan.multilevel.missing", FALSE)
-options(blavaan.multilevel.missing = TRUE)
 
 ## mildly informative prior on loadings: the default (vague) prior can leave
 ## short (burnin=100/sample=100) chains weakly identified enough that
@@ -114,13 +116,12 @@ fit1 <- sem(model_wb, data = d1, cluster = "cluster", missing = "fiml",
             fixed.x = FALSE)
 
 ## missing="fiml" is not passed explicitly here: real NAs are present in
-## d1, and with options(blavaan.multilevel.missing = TRUE) blavaan already
-## defaults missing to "ml" (equivalent to "fiml") whenever a two-level fit
-## has actual missing data -- see R/blavaan.R (the `!any(is.na(...))`/
-## gate-option logic). Passing it explicitly is redundant and triggers a
-## spurious "blavaan WARNING: the following arguments have no effect:
-## missing" (that warning check does not know about the two-level-FIML-MAR
-## exception).
+## d1, and blavaan already defaults missing to "ml" (equivalent to "fiml")
+## whenever a two-level fit has actual missing data -- see R/blavaan.R (the
+## `!any(is.na(...))` check). Passing it explicitly is redundant and
+## triggers a spurious "blavaan WARNING: the following arguments have no
+## effect: missing" (that warning check does not know about the
+## two-level-FIML-MAR default).
 bfit1 <- bsem(
   model   = model_wb,
   data    = d1,
@@ -289,11 +290,28 @@ expect_true(
 })
 
 ## =============================================================================
-## 4. Regression check: gate stays off by default
+## 4. Regression check: FIML/MAR is now the default, with no missing= argument
 ## =============================================================================
+## Previously (with the blavaan.multilevel.missing gate off, its default),
+## a two-level model with real missing data and no explicit missing=
+## argument silently fell back to listwise deletion. Now FIML/MAR is used
+## automatically instead: nobs should retain every row (no deletion), not
+## drop to the listwise-deleted count.
+##
+## NB: passing missing="listwise" explicitly does NOT opt back into listwise
+## deletion for two-level models. missing="listwise" was never a real,
+## user-facing feature here -- it was only ever blavaan's own internal
+## choice (set unconditionally to force row-dropping when this FIML/MAR
+## support didn't exist yet), not something read back from what the user
+## passed. Concretely: blavaan's internal exploratory pre-fit (used to get
+## info about equality constraints, for npar; see the
+## `dotdotdot$missing <- "direct"` line in R/blavaan.R) unconditionally
+## overwrites missing to "direct" (FIML-like) before the two-level
+## default-selection logic ever runs, so any explicit missing= value the
+## user supplies is lost regardless. Unrelated to removing the gate, and
+## out of scope here.
 
 try({
-options(blavaan.multilevel.missing = FALSE)
 d5 <- inject_mcar(Demo.twolevel, c("y1", "y2"), rate = 0.15, seed = 401)
 
 set.seed(402)
@@ -307,12 +325,11 @@ bfit5 <- bsem(
 )
 
 expect_inherits(bfit5, "blavaan",
-  info = "with the gate off (default), two-level models with missing data should still fit via listwise deletion")
-expect_true(
-  blavInspect(bfit5, "nobs") < nrow(d5),
-  info = "with the gate off (default), listwise deletion should have dropped some rows"
+  info = "two-level models with missing data and no explicit missing= argument should fit via FIML/MAR by default")
+expect_equal(
+  blavInspect(bfit5, "nobs"), nrow(d5),
+  info = "with no explicit missing= argument, FIML/MAR should retain every row (no listwise deletion)"
 )
-options(blavaan.multilevel.missing = TRUE)
 })
 
 ## =============================================================================
@@ -354,6 +371,3 @@ expect_true(
 )
 
 })
-
-## restore the option to its pre-test-file value
-options(blavaan.multilevel.missing = old_opt)
