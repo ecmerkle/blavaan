@@ -10,12 +10,23 @@
 ## override for two-level models -- it was only ever blavaan's own internal
 ## choice (set unconditionally, not read from what the user passed) to force
 ## row-dropping before this FIML/MAR support existed; see the note in
-## section 4 below. Still experimental in one respect: fixed.x variables are
-## not yet supported for two-level models with real missingness -- see the
-## expect_error() case below. test != "none" (ppmc/ppp) IS supported (via an
-## EM-based saturated-model fit, unified across complete/missing data -- see
-## R/lav_export_stanmarg.R and inst/stan/stanmarg.stan's
-## twolevel_em_step()). See also
+## section 4 below. fixed.x variables ARE supported for two-level models
+## with real missingness, but ONLY at the within level -- see section 3's
+## model_x_w below. Between-level fixed.x + missing data remains blocked (a
+## confirmed upstream lavaan bug crashes lavaan()/sem() itself whenever a
+## between-level fixed.x variable has missing values -- lav_samp_cl_patterns()
+## in lavaan's lav_samplestats.R uses plain cov(), not
+## cov(use="pairwise.complete.obs"), for the between-level block, so any NA
+## there propagates into an uninvertible covariance matrix downstream);
+## R/blavaan.R blocks this combination with a clear error instead of
+## surfacing that crash -- see the expect_error() case in section 3).
+## test != "none" (ppmc/ppp) IS supported (via an EM-based saturated-model
+## fit for the endogenous variables, unified across complete/missing data --
+## see
+## R/lav_export_stanmarg.R and inst/stan/stanmarg.stan's twolevel_em_step()
+## -- plus a pairwise-complete-obs correction for within-level fixed.x, see
+## calc_log_lik_x_missing() in inst/stan/stanmarg.stan and llx_2l() in
+## R/blav_model_loglik.R). See also
 ## tinytest_stan_multilevel2.R for complete-data two-level model tests.
 ##
 ## Multi-group two-level models are NOT tested here (out of scope for this
@@ -250,19 +261,78 @@ expect_true(
 ## =============================================================================
 
 try({
-## fixed.x variables are not currently supported
-model_x <- '
+## within-level fixed.x variables ARE supported for two-level FIML/MAR data
+## (w1/w2 stay endogenous via ~~, not ~, so this model has no between-level
+## fixed.x variable -- keeping it within the supported scope)
+model_x_w <- '
     level: 1
-        fw =~ y1 + y2 + y3
-        y1 ~ x1
+        fw =~ y1 + y2 + y3 + y4
+        fw ~ x1 + x2 + x3
     level: 2
         fb =~ y1 + y2 + y3
+        fb ~~ w1
+        fb ~~ w2
 '
-dx <- inject_mcar(Demo.twolevel, c("y1", "y2"), rate = 0.15, seed = 301)
+dw <- Demo.twolevel
+dw <- inject_mcar(dw, c("x1", "x2"), rate = 0.15, seed = 306)
+dw <- inject_mcar(dw, c("y1", "y2"), rate = 0.15, seed = 307)
+fit_x_w <- sem(model_x_w, data = dw, cluster = "cluster", missing = "ml.x", fixed.x = TRUE)
+
+set.seed(308)
+bfit_x_w <- bsem(model_x_w, data = dw, cluster = "cluster", fixed.x = TRUE,
+                  test = "ppp", burnin = 100, sample = 100, dp = dp_stable)
+
+expect_inherits(bfit_x_w, "blavaan",
+  info = "two-level FIML/MAR with within-level fixed.x should fit successfully")
+expect_equal(
+  sort(names(coef(bfit_x_w))), sort(names(coef(fit_x_w))),
+  info = "within-level fixed.x: parameter names should match lavaan"
+)
+expect_true(
+  coef_close(bfit_x_w, fit_x_w),
+  info = "within-level fixed.x: estimates should be within 0.5 SD of lavaan MLEs"
+)
+expect_true(
+  all(diag(vcov(bfit_x_w)) > 0),
+  info = "within-level fixed.x: vcov diagonal should be positive"
+)
+
+fm_x_w <- fitMeasures(bfit_x_w)
+expect_true(is.finite(fm_x_w["waic"]) && is.finite(fm_x_w["looic"]),
+  info = "within-level fixed.x: waic/looic should be finite (exercises log_lik_x_full)")
+
+ppp_x_w <- fm_x_w["ppp"]
+expect_true(
+  is.finite(ppp_x_w) && ppp_x_w >= 0 && ppp_x_w <= 1,
+  info = "within-level fixed.x: ppp should be a finite value in [0,1] (exercises calc_log_lik_x_missing())"
+)
+ll_sat_x_w <- rstan::extract(bfit_x_w@external$mcmcout, "log_lik_sat")[[1]]
+expect_true(
+  all(is.finite(ll_sat_x_w)),
+  info = "within-level fixed.x: log_lik_sat should be finite for every draw/cluster"
+)
+sampler_params_x_w <- rstan::get_sampler_params(bfit_x_w@external$mcmcout, inc_warmup = FALSE)
+expect_equal(
+  sum(sapply(sampler_params_x_w, function(x) sum(x[, "divergent__"]))), 0L,
+  info = "within-level fixed.x: no divergent transitions expected in a well-behaved short run"
+)
+
+## between-level fixed.x + missing data remains blocked (confirmed upstream
+## lavaan bug): lavaan()/sem() itself crashes on a between-level fixed.x
+## variable with missing values, so R/blavaan.R blocks the combination with
+## a clear error before that crash can surface
+model_x_b <- '
+    level: 1
+        fw =~ y1 + y2 + y3
+    level: 2
+        fb =~ y1 + y2 + y3
+        fb ~ w1
+'
+db <- inject_mcar(Demo.twolevel, c("y1", "y2"), rate = 0.15, seed = 309)
 expect_error(
-  bsem(model_x, data = dx, cluster = "cluster",
+  bsem(model_x_b, data = db, cluster = "cluster", fixed.x = TRUE,
        burnin = 100, sample = 100),
-  info = "two-level FIML/MAR with fixed.x variables should error"
+  info = "two-level FIML/MAR with a between-level fixed.x variable should still error"
 )
 
 ## test != "none" (ppmc/ppp) is now supported for two-level FIML/MAR data:

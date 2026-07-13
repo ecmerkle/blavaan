@@ -1147,6 +1147,167 @@ functions { // you can use these in R following `rstan::expose_stan_functions("f
     return out;
   }
 
+  // Per-cluster marginal log-density of within-level fixed.x variables
+  // under real missingness, via pairwise-complete-obs moments (matching
+  // R's cov(x, use="pairwise.complete.obs") exactly: each pair (a,b) is
+  // centered using the mean of EACH variable restricted to that pair's own
+  // jointly-observed row set, not an overall per-column mean -- verified
+  // against R's actual cov() output before writing this). Rescaled by
+  // (ntot-1)/ntot using the GROUP-TOTAL row count (not the pairwise
+  // n_ab), matching R/blav_model_loglik.R's llx_2l() convention.
+  //
+  // Mirrors the row/cluster-loop + per-pattern-precision-caching idiom
+  // already established by twolevel_logdens_missing() (reuses
+  // row_ypatt/ypatt_nobs/ypatt_obsidx as-is; YXstar is fully dense --
+  // patterns select what "counts" as observed, no explicit NA needed).
+  //
+  // Between-level block intentionally omitted: under blavaan's current
+  // scope, between-level fixed.x + missing data is blocked entirely
+  // upstream (see R/blavaan.R -- lavaan's lav_samp_cl_patterns() uses
+  // plain cov(), not cov(use="pairwise.complete.obs"), for the
+  // between-level block, so it crashes on missing values there), so
+  // Nx_between is always 0 wherever this is called.
+  vector calc_log_lik_x_missing(array[] vector YXstar, array[] int cluster_size,
+                                 array[] int row_ypatt, int n_ypatt,
+                                 array[] int ypatt_nobs, array[,] int ypatt_obsidx,
+                                 array[] int notbidx, array[] int Xvar, int Nx,
+                                 int ntot, int nclusters) {
+    vector[nclusters] out = rep_vector(0, nclusters);
+
+    if (Nx == 0) {
+      return out;
+    }
+
+    {
+      // 1. map each Xvar[k] (raw data-column index) to its y-space
+      //    position (position within notbidx), once
+      array[Nx] int x_ypos;
+      int N_wo_b = size(notbidx);
+      for (k in 1:Nx) {
+        x_ypos[k] = 0;
+        for (j in 1:N_wo_b) {
+          if (notbidx[j] == Xvar[k]) x_ypos[k] = j;
+        }
+      }
+
+      // 2. per-Y-pattern: which of the Nx x-variables are observed in that
+      //    pattern (fixed-size Nx-slot storage, first pat_nobs_x[pp]
+      //    entries valid, mirrors the ypatt_obsidx padding convention)
+      array[n_ypatt] int pat_nobs_x;
+      array[n_ypatt, Nx] int pat_obsidx_x;
+      for (pp in 1:n_ypatt) {
+        int no = ypatt_nobs[pp];
+        int cnt = 0;
+        for (k in 1:Nx) {
+          int is_obs = 0;
+          for (kk in 1:no) {
+            if (ypatt_obsidx[pp, kk] == x_ypos[k]) is_obs = 1;
+          }
+          if (is_obs) {
+            cnt += 1;
+            pat_obsidx_x[pp, cnt] = k;
+          }
+        }
+        pat_nobs_x[pp] = cnt;
+      }
+
+      // 3. accumulate PAIRWISE sums (not per-variable sums): for each pair
+      //    (a,b), SumA[a,b] = sum of x_a over rows where BOTH a and b are
+      //    observed (asymmetric in general; SumA[b,a] is the analogous sum
+      //    of x_b over the same row set); Sxy[a,b] = sum of x_a*x_b over
+      //    that same set; Nxy[a,b] = count. This exactly replicates R's
+      //    cov(use="pairwise.complete.obs") pairwise-restricted-mean
+      //    formula.
+      matrix[Nx, Nx] SumA = rep_matrix(0, Nx, Nx);
+      matrix[Nx, Nx] Sxy = rep_matrix(0, Nx, Nx);
+      matrix[Nx, Nx] Nxy = rep_matrix(0, Nx, Nx);
+      {
+        int r1 = 1;
+        for (j in 1:nclusters) {
+          int nj = cluster_size[j];
+          for (ii in 1:nj) {
+            int i = r1 - 1 + ii;
+            int p = row_ypatt[i];
+            int cnt = pat_nobs_x[p];
+            if (cnt > 0) {
+              vector[cnt] xr;
+              for (a in 1:cnt) xr[a] = YXstar[i][Xvar[pat_obsidx_x[p, a]]];
+              for (a in 1:cnt) {
+                int ka = pat_obsidx_x[p, a];
+                for (b in 1:cnt) {
+                  int kb = pat_obsidx_x[p, b];
+                  SumA[ka, kb] += xr[a];
+                  Sxy[ka, kb] += xr[a] * xr[b];
+                  Nxy[ka, kb] += 1;
+                }
+              }
+            }
+          }
+          r1 += nj;
+        }
+      }
+
+      // 4. finalize pairwise mean/covariance, rescaled by group-total n
+      matrix[Nx, Nx] Sigma_x = rep_matrix(0, Nx, Nx);
+      for (a in 1:Nx) {
+        for (b in 1:Nx) {
+          if (Nxy[a, b] > 1) {
+            real mean_a = SumA[a, b] / Nxy[a, b];
+            real mean_b = SumA[b, a] / Nxy[a, b];
+            real cov_raw = (Sxy[a, b] - Nxy[a, b] * mean_a * mean_b) / (Nxy[a, b] - 1);
+            Sigma_x[a, b] = cov_raw * (ntot - 1.0) / ntot;
+          }
+        }
+      }
+      vector[Nx] mu_x;
+      for (a in 1:Nx) mu_x[a] = SumA[a, a] / Nxy[a, a]; // = overall mean of a (Nxy[a,a] = count where a observed)
+
+      // 5. per-pattern precision cache (embedded to full Nx x Nx, zero
+      //    outside the observed submatrix -- same "full embed" convention
+      //    used by twolevel_em_step())
+      array[n_ypatt] matrix[Nx, Nx] Wp_full;
+      array[n_ypatt] real Wp_ld;
+      for (pp in 1:n_ypatt) {
+        int cnt = pat_nobs_x[pp];
+        Wp_full[pp] = rep_matrix(0, Nx, Nx);
+        Wp_ld[pp] = 0;
+        if (cnt > 0) {
+          array[cnt] int oidx = pat_obsidx_x[pp, 1:cnt];
+          matrix[cnt, cnt] Soo_inv = inverse_spd(Sigma_x[oidx, oidx]);
+          Wp_full[pp, oidx, oidx] = Soo_inv;
+          Wp_ld[pp] = log_determinant(Sigma_x[oidx, oidx]);
+        }
+      }
+
+      // 6. per-row density, accumulate per cluster
+      {
+        int r1 = 1;
+        for (j in 1:nclusters) {
+          int nj = cluster_size[j];
+          real ll = 0;
+          for (ii in 1:nj) {
+            int i = r1 - 1 + ii;
+            int p = row_ypatt[i];
+            int cnt = pat_nobs_x[p];
+            if (cnt > 0) {
+              array[cnt] int oidx = pat_obsidx_x[p, 1:cnt];
+              vector[cnt] resid;
+              for (a in 1:cnt) resid[a] = YXstar[i][Xvar[oidx[a]]] - mu_x[oidx[a]];
+              {
+                real q = quad_form(Wp_full[p, oidx, oidx], resid);
+                ll += -0.5 * (cnt * log(2 * pi()) + Wp_ld[p] + q);
+              }
+            }
+          }
+          out[j] = ll;
+          r1 += nj;
+        }
+      }
+    }
+
+    return out;
+  }
+
   // fill covariance matrix with blocks
   array[] matrix fill_cov(array[] matrix covmat, array[,] int blkse, array[] int nblk,
 			  array[] matrix mat_1, array[] matrix mat_2, array[] matrix mat_3,
@@ -2462,7 +2623,11 @@ model { // N.B.: things declared in the model block do not get saved in the outp
 				   p_tilde, N_within, N_between, N_both);
       }
 
-      if (Nx[grpidx] + Nx_between[grpidx] > 0) target += -log_lik_x;
+      // NB: log_lik_x spans ALL groups (dimension sum(ncluster_sizes) for
+      // multilevel), so subtracting the whole vector here would over-count
+      // by a factor of Ng for multi-group fixed.x models; slice to this
+      // group's own r3:r4 range (already computed above for other fields)
+      if (Nx[grpidx] + Nx_between[grpidx] > 0) target += -sum(log_lik_x[r3:r4]);
     }
   } else if (use_cov && !pri_only) {
     for (g in 1:Ng) {
@@ -2876,17 +3041,32 @@ generated quantities { // these matrices are saved in the output but do not figu
 	  S_PW_rep[gg] = S_PW_rep_full[gg, notbidx, notbidx];
 
 	  if (Nx[gg] > 0 || Nx_between[gg] > 0) {
-	    array[2] vector[p_tilde] mnvecs;
-	    array[3] matrix[p_tilde, p_tilde] covmats;
+	    if (missing) {
+	      // Nx_between[gg] is always 0 here: between-level fixed.x +
+	      // missing data is blocked upstream (R/blavaan.R), so only the
+	      // within-level correction is needed for the missing branch
+	      int yp1g = 1;
+	      int yp2g;
+	      if (gg > 1) yp1g += sum(n_ypatt[1:(gg - 1)]);
+	      yp2g = yp1g - 1 + n_ypatt[gg];
+	      log_lik_x_rep[r2:(clusidx - 1)] = calc_log_lik_x_missing(YXstar_rep[rr1:(r1 - 1)], cluster_size[r2:(clusidx - 1)],
+									row_ypatt[rr1:(r1 - 1)], n_ypatt[gg],
+									ypatt_nobs[yp1g:yp2g], ypatt_obsidx[yp1g:yp2g, ],
+									notbidx, Xvar[gg, 1:Nx[gg]], Nx[gg],
+									nclus[gg, 1], nclus[gg, 2]);
+	    } else {
+	      array[2] vector[p_tilde] mnvecs;
+	      array[3] matrix[p_tilde, p_tilde] covmats;
 
-	    mnvecs = calc_mean_vecs(YXstar_rep[rr1:(r1 - 1)], mean_d_rep[r2:(clusidx - 1)], nclus[gg], Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg], p_tilde);
-	    covmats = calc_cov_mats(YXstar_rep[rr1:(r1 - 1)], mean_d_rep[r2:(clusidx - 1)], mnvecs, nclus[gg], Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg], p_tilde);
+	      mnvecs = calc_mean_vecs(YXstar_rep[rr1:(r1 - 1)], mean_d_rep[r2:(clusidx - 1)], nclus[gg], Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg], p_tilde);
+	      covmats = calc_cov_mats(YXstar_rep[rr1:(r1 - 1)], mean_d_rep[r2:(clusidx - 1)], mnvecs, nclus[gg], Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg], p_tilde);
 
-	    log_lik_x_rep[r2:(clusidx - 1)] = calc_log_lik_x(mean_d_rep[r2:(clusidx - 1)],
-							     mnvecs[2], covmats[1],
-							     covmats[2], covmats[3],
-							     nclus[gg], cluster_size[r2:(clusidx - 1)],
-							     Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg]);
+	      log_lik_x_rep[r2:(clusidx - 1)] = calc_log_lik_x(mean_d_rep[r2:(clusidx - 1)],
+							       mnvecs[2], covmats[1],
+							       covmats[2], covmats[3],
+							       nclus[gg], cluster_size[r2:(clusidx - 1)],
+							       Xvar[gg], Xbetvar[gg], Nx[gg], Nx_between[gg]);
+	    }
 	  } // Nx[gg] > 0
 	} // gg
       } else {

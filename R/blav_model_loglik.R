@@ -615,14 +615,35 @@ case_lls <- function(lavjags        = NULL,
 }
 
 ## clusterwise loglik.x (for computing clusterwise log-likelihoods)
+##
+## YX must be NA-preserving for the within-x block (not zero-filled) when
+## within-level fixed.x variables have real missing values: the within-x
+## block uses pairwise-complete-obs moments (cov(..., use=
+## "pairwise.complete.obs")) and evaluates each row's density using only
+## that row's own observed subset of within-x columns -- an independent,
+## non-EM approximation (see the fixed.x+missing plan), not lavaan's own
+## (complete-data-only) loglik.x. The between-x block is unchanged/
+## complete-data-only: between-level fixed.x + missing data is blocked
+## upstream (R/blavaan.R, working around a lavaan bug -- its own
+## between-level loglik.x computation uses plain cov(), not
+## cov(use="pairwise.complete.obs"), so it crashes on missing values there),
+## so mean_d is only ever fed complete between-level data here.
 llx_2l <- function(Lp, YX, mean_d, cidx){
-  ## fixed within logl:
+  ## fixed within logl (missing-data-aware: pairwise-complete-obs moments,
+  ## casewise density restricted to each row's own observed x-subset)
   wx.idx <- Lp$ov.x.idx[[1]]
 
   if (length(wx.idx) > 0) {
-    nrows <- nrow(YX)
-    S <- cov(YX[, wx.idx, drop = FALSE]) * (nrows - 1) / nrows
-    loglik.x.w.all <- dmnorm(YX[, wx.idx, drop = FALSE], mean = colMeans(YX[, wx.idx, drop = FALSE]), varcov = S, log = TRUE)
+    Xw <- YX[, wx.idx, drop = FALSE]
+    nrows <- nrow(Xw)
+    S <- cov(Xw, use = "pairwise.complete.obs") * (nrows - 1) / nrows
+    mu <- colMeans(Xw, na.rm = TRUE)
+    loglik.x.w.all <- numeric(nrows)
+    for (i in seq_len(nrows)) {
+      obs <- which(!is.na(Xw[i, ]))
+      loglik.x.w.all[i] <- if (length(obs) == 0) 0 else
+        dmnorm(Xw[i, obs], mean = mu[obs], varcov = S[obs, obs, drop = FALSE], log = TRUE)
+    }
     loglik.x.w.clus <- tapply(loglik.x.w.all, cidx, sum)
   } else {
     loglik.x.w.clus <- rep(0, nrow(mean_d))

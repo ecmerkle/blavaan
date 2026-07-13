@@ -1308,9 +1308,18 @@ lav2standata <- function(lavobject, dosam = FALSE) {
                                                                      N_between + N_both + N_within))
     }
     dat$cov_d <- cov_d
-    ## this evenly distributes loglik.x across unique cluster sizes; sums to correct value
-    llx <- sapply(YLp, function(x) x[[2]]$loglik.x)
-    dat$log_lik_x <- array(rep(llx / dat$ncluster_sizes, dat$ncluster_sizes), sum(dat$ncluster_sizes))
+    ## dat$log_lik_x / dat$log_lik_x_full are built further below, from
+    ## llx_2l() directly (not lavaan's YLp[[g]][[2]]$loglik.x): lavaan's own
+    ## between-level loglik.x computation crashes under real between-level
+    ## fixed.x missingness (a confirmed upstream bug -- lav_samp_cl_patterns()
+    ## uses plain cov(), not cov(use="pairwise.complete.obs"), for the
+    ## between-level block), and even where it doesn't crash its aggregate
+    ## closed-form formula isn't a true casewise pairwise-complete-obs
+    ## likelihood under missingness. Sourcing both
+    ## quantities from the same llx_2l() call keeps them exactly mutually
+    ## consistent (log_lik_x == sum(log_lik_x_full) always) and is verified
+    ## numerically identical to the old lavaan-sourced value for complete
+    ## data.
 
     ## Y/Z missing-data pattern fields for the two-level FIML/MAR likelihood.
     ## Built unconditionally (not just when misflag) so complete two-level
@@ -1475,7 +1484,29 @@ lav2standata <- function(lavobject, dosam = FALSE) {
     dat$YX <- combined[, 1:ncol_YX, drop = FALSE]
     dat$row_ypatt <- array(as.integer(combined[, ncol_YX + 1]), nrow(combined))
     dat$orig_id <- unlist(split(1:nrow(dat$YX), cidx))
-    dat$log_lik_x_full <- llx_2l(Lp[[1]], dat$YX, mean_d_full, cidx)
+
+    ## llx_2l()'s within-x block needs NA-preserving level-1 data (dat$YX
+    ## has already been zero-filled, upstream of this point, for the
+    ## endogenous-variable pipeline -- load-bearing there, not touched here)
+    ## in the SAME row order dat$YX now has, i.e. reordered by cidx. NB: the
+    ## split/rbind above reorders rows into cidx-sorted-ascending blocks, so
+    ## the matching cluster-label sequence for the reordered rows is
+    ## sort(cidx), NOT the original (pre-reorder) cidx vector -- passing the
+    ## unreordered cidx here was a pre-existing bug (misattributes rows to
+    ## the wrong cluster whenever the raw data isn't already
+    ## cluster-contiguous; confirmed via a row-shuffled test dataset, masked
+    ## in existing usage since Demo.twolevel happens to already be
+    ## cluster-contiguous). multilevel models never apply the cases[[g]]
+    ## row-subsetting used for single-level FIML (see the misflag &&
+    ## !multilevel branch above), so lavobject@Data@X's rows correspond
+    ## 1:1, in original order, to dat$YX's pre-reorder rows.
+    YX_raw <- do.call("rbind", lavobject@Data@X)[order(cidx), , drop = FALSE]
+    llx_full <- llx_2l(Lp[[1]], YX_raw, mean_d_full, sort(cidx))
+    dat$log_lik_x_full <- llx_full
+    ## evenly distributes the total across unique cluster sizes; sums to
+    ## the correct value -- mirrors the previous lavaan-sourced llx
+    ## redistribution, now applied to blavaan's own sum(llx_full) instead
+    dat$log_lik_x <- array(rep(sum(llx_full) / dat$ncluster_sizes, dat$ncluster_sizes), sum(dat$ncluster_sizes))
     dat$mean_d_full <- lapply(1:nrow(mean_d_full), function(i) mean_d_full[i, dat$between_idx])
 
     ## cov_d is variability across clusters of same size, so irrelevant for clusterwise

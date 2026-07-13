@@ -334,13 +334,37 @@ blavaan <- function(...,  # default lavaan arguments
             dotdotdot$missing <- "listwise"
         } else {
             if("cluster" %in% dotNames) {
+                ## between-level fixed.x + missing data is blocked: lavaan's
+                ## own between-level loglik.x computation (lav_samp_cl_patterns,
+                ## used internally whenever missing="ml"/"ml.x") crashes on any
+                ## between-level fixed.x variable with missing values (a
+                ## confirmed upstream lavaan bug: lav_samp_cl_patterns() in
+                ## lav_samplestats.R uses plain cov(), not
+                ## cov(use="pairwise.complete.obs"), for the between-level
+                ## block, so any NA there propagates into an uninvertible
+                ## covariance matrix downstream). This check must happen
+                ## BEFORE dotdotdot$missing is set to "ml.x"
+                ## below, using the LAV object already safely constructed above
+                ## (built with the user's own original missing= choice or
+                ## lavaan's own default, neither of which trigger the crash) --
+                ## otherwise the crash-prone refit further down could either
+                ## abort uninformatively or (since that refit is wrapped in
+                ## try()) silently leave LAV as this listwise-deleted fit,
+                ## which would be worse than a clear error here. Within-level
+                ## fixed.x + missing data has no such issue and is supported.
+                if(length(LAV@Data@Lp[[1]]$ov.x.idx[[2]]) > 0) {
+                    stop('blavaan ERROR: between-level fixed.x variables are not currently supported for two-level models with missing data')
+                }
                 ## two-level FIML/MAR; lavaan already builds the two-level-aware
                 ## Mp/Zp pattern structures whenever missing != "listwise" and
-                ## cluster is set, so no lavaan-side changes are needed here
-                if(is.null(dotdotdot$missing)) dotdotdot$missing <- "ml"
-                if(length(unlist(LAV@Data@Lp[[1]]$ov.x.idx)) > 0) {
-                    stop('blavaan ERROR: fixed.x variables are not currently supported for two-level models with missing data')
-                }
+                ## cluster is set, so no lavaan-side changes are needed here.
+                ## missing="ml.x" (not "ml"): missing="ml" alone does not stop
+                ## lavaan from listwise-deleting rows with missing fixed.x
+                ## values; "ml.x" is required to retain them. Safe to use
+                ## unconditionally in place of "ml" -- with no x-missingness
+                ## (or no x at all) the two are equivalent (see lav_data.R's
+                ## `missing != "ml.x"` row-retention check).
+                if(is.null(dotdotdot$missing)) dotdotdot$missing <- "ml.x"
             }
         }
     }

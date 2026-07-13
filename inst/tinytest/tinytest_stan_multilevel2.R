@@ -453,3 +453,69 @@ expect_true(
 )
 })
 
+## =============================================================================
+## 11. Multi-group two-level fixed.x (regression test for a log_lik_x
+##     double-counting bug)
+## =============================================================================
+## stanmarg.stan's `target += -log_lik_x` subtracted the WHOLE cross-group
+## log_lik_x vector on every group's pass through the model-fitting loop
+## (log_lik_x spans all groups for multilevel), over-counting by a factor of
+## Ng for Ng>1 fixed.x models; fixed by slicing to each group's own r3:r4
+## range. Ng=1 fixed.x models (tested elsewhere in this file/
+## tinytest_stan_multilevel_missing.R) can't detect this bug, since the
+## over-count is a no-op when there's only one group.
+
+try({
+set.seed(998)
+d_mgx <- Demo.twolevel
+d_mgx$grp <- ifelse(d_mgx$cluster <= median(unique(d_mgx$cluster)), "A", "B")
+
+model_mgx <- '
+group: A
+level: 1
+    fw =~ y1 + y2 + y3
+    fw ~ x1 + x2
+level: 2
+    fb =~ y1 + y2 + y3
+    fb ~~ w1
+group: B
+level: 1
+    fw =~ y1 + y2 + y3
+    fw ~ x1 + x2
+level: 2
+    fb =~ y1 + y2 + y3
+    fb ~~ w1
+'
+
+fit_mgx <- sem(model_mgx, data = d_mgx, cluster = "cluster", group = "grp", fixed.x = TRUE)
+
+bfit_mgx <- bsem(
+  model   = model_mgx,
+  data    = d_mgx,
+  cluster = "cluster",
+  group   = "grp",
+  fixed.x = TRUE,
+  burnin  = 100,
+  sample  = 100
+)
+
+expect_inherits(bfit_mgx, "blavaan",
+  info = "multi-group two-level fixed.x bsem() should return a blavaan object")
+
+expect_equal(
+  sort(names(coef(bfit_mgx))),
+  sort(names(coef(fit_mgx))),
+  info = "multi-group two-level fixed.x: parameter names should match lavaan"
+)
+
+expect_true(
+  all(is.finite(coef(bfit_mgx))),
+  info = "multi-group two-level fixed.x: all coefficients should be finite"
+)
+
+expect_true(
+  coef_close(bfit_mgx, fit_mgx),
+  info = "multi-group two-level fixed.x: estimates should be within 0.5 SD of lavaan MLEs (would fail under the log_lik_x double-counting bug, which biases the fixed.x-adjusted likelihood surface)"
+)
+})
+
