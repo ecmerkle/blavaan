@@ -151,7 +151,8 @@ dist2r <- function(priors, target){
 
     if(target == "jags"){
         out <- jagsdist2r(priors)
-    } else if(target == "stan"){
+    } else if(target %in% c("stan", "cmdstan")){
+        ## cmdstan uses the identical Stan prior syntax as stan
         ## TODO need exported, or reverse rstan::lookup()
         #rosetta <- rstan:::rosetta
         ## alternate way to possibly get around export

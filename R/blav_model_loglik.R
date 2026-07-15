@@ -519,19 +519,47 @@ get_ll_2l <- function(postsamp       = NULL, # one posterior sample
   implied <- lav_model_implied(lavmodel, delta = (lavmodel@parameterization == "delta"))
   Ng <- lavInspect(lavobject, 'ngroups')
 
+  ## real missingness: dispatch to lavaan's missing-data EM loglik variant
+  ## (lav_mvn_cl_mi_loglik_samp_2l(), new in lavaan 0.7-1 with no pre-0.7-1
+  ## equivalent -- two-level MAR support didn't exist before it), matching
+  ## lavaan's own dispatch in lav_model_loglik() upstream. Complete-data
+  ## fits (including a two-level fit with missing="ml" but no actual NAs)
+  ## keep using the complete-data function below unchanged.
+  misflag2l <- lavsamplestats@missing.flag
+  if (misflag2l) {
+    lav2ll_mi <- tryCatch(getFromNamespace("lav_mvn_cl_mi_loglik_samp_2l", "lavaan"),
+                          error = function(e) NULL)
+    if (is.null(lav2ll_mi)) {
+      stop("blavaan ERROR: computing the two-level log-likelihood for a model with missing data requires a version of lavaan that provides lav_mvn_cl_mi_loglik_samp_2l() (lavaan >= 0.7-1, currently under development). Please update lavaan.")
+    }
+  }
+
   out <- rep(NA, Ng)
   for(g in 1:Ng){
-    if(newname){
+    if (misflag2l) {
+      ## loglik_x = 0: the complete-data branch below has no fixed.x
+      ## contribution either (lav_mvn_cl_loglik_samp_2l() has no such
+      ## parameter); lavaan's own aggregate loglik.x is confirmed
+      ## wrong/crash-prone under missingness (see outstanding_issues.md
+      ## item 1), which blavaan's Stan-side likelihood already works
+      ## around via its own llx_2l() -- reusing lavaan's value here would
+      ## reintroduce that bug
+      out[g] <- lav2ll_mi(y1 = lavdata@X[[g]], y2 = lavsamplestats@YLp[[g]][[2]]$Y2,
+                         lp = lavdata@Lp[[g]], mp = lavdata@Mp[[g]],
+                         mu_w = implied$mean[[(2 * g - 1)]], sigma_w = implied$cov[[(2 * g - 1)]],
+                         mu_b = implied$mean[[2 * g]], sigma_b = implied$cov[[2 * g]],
+                         loglik_x = 0, log2pi = TRUE, minus_two = FALSE)
+    } else if(newname){
       ll.args <- list(ylp = lavsamplestats@YLp[[g]], lp = lavdata@Lp[[g]], mu_w = implied$mean[[(2 * g - 1)]],
                       sigma_w = implied$cov[[(2 * g - 1)]], mu_b = implied$mean[[2 * g]], sigma_b = implied$cov[[2 * g]],
                       log2pi = TRUE, minus_two = FALSE)
+      out[g] <- do.call(lav2ll, ll.args)
     } else {
       ll.args <- list(YLp = lavsamplestats@YLp[[g]], Lp = lavdata@Lp[[g]], Mu.W = implied$mean[[(2 * g - 1)]],
                       Sigma.W = implied$cov[[(2 * g - 1)]], Mu.B = implied$mean[[2 * g]], Sigma.B = implied$cov[[2 * g]],
                       log2pi = TRUE, minus.two = FALSE)
+      out[g] <- do.call(lav2ll, ll.args)
     }
-
-    out[g] <- do.call(lav2ll, ll.args)
   }
 
   sum(out)
@@ -550,7 +578,7 @@ samp_lls <- function(lavjags        = NULL,
 
   nchain <- length(lavmcmc)
 
-  if(lavoptions$target != "stan" | conditional | lavInspect(lavobject, "categorical") | !lavInspect(lavobject, "meanstructure")) {
+  if(!(lavoptions$target %in% c("stan", "cmdstan")) | conditional | lavInspect(lavobject, "categorical") | !lavInspect(lavobject, "meanstructure")) {
     loop.args <- list(X = 1:nsamps, FUN = function(i){
       tmpmat <- matrix(NA, nchain, 2)
       for(j in 1:nchain){
@@ -563,10 +591,19 @@ samp_lls <- function(lavjags        = NULL,
     llmat <- array(unlist(llmat), c(nchain, 2, nsamps)) ## logl + baseline logl
     llmat <- aperm(llmat, c(3,1,2))
   } else {
-    ## the model log-likelihoods have already been computed in stan
+    ## the model log-likelihoods have already been computed in stan; for
+    ## cmdstan (same compiled Stan program), the generated quantities are
+    ## reached via a different API (CmdStanFit$draws(), not
+    ## loo::extract_log_lik()) but with the identical chain-major row
+    ## stacking, so the indexing below is unchanged either way
     llmat <- array(NA, c(nsamps, nchain, 2))
-    lls <- loo::extract_log_lik(lavjags)
-    llsat <- loo::extract_log_lik(lavjags, parameter_name = "log_lik_sat")
+    if(lavoptions$target == "stan"){
+      lls <- loo::extract_log_lik(lavjags)
+      llsat <- loo::extract_log_lik(lavjags, parameter_name = "log_lik_sat")
+    } else {
+      lls <- lavjags$draws("log_lik", format = "matrix")
+      llsat <- lavjags$draws("log_lik_sat", format = "matrix")
+    }
     for(j in 1:nchain){
       idx <- (j-1)*nsamps + itnums
       llmat[itnums,j,1] <- rowSums(lls[idx,])

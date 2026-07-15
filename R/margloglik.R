@@ -25,7 +25,9 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
 
   if(target == "jags"){
     summstats <- bayesout$summary$statistics
-  } else if(target == "stan"){
+  } else if(target %in% c("stan", "cmdstan")){
+    ## stansumm is already assembled uniformly for both targets (see
+    ## R/blavaan.R's rstan::monitor()/posterior::summarise_draws() dual path)
     summstats <- stansumm
   }
   cmatch <- match(lavpartable$pxnames[urows],

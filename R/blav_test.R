@@ -23,7 +23,7 @@ blav_model_test <- function(lavmodel       = NULL,
         warning("blavaan WARNING: Marginal log-likelihood cannot be approximated when there is additional JAGS syntax.", call. = FALSE)
         mll <- NA
     } else if(domll) {
-        mll <- try(margloglik(lavpartable, lavmodel, lavoptions, 
+        mll <- try(margloglik(lavpartable, lavmodel, lavoptions,
                               lavsamplestats, lavdata, lavcache,
                               lavjags, VCOV, x, stansumm),
                    silent=TRUE)
@@ -32,7 +32,10 @@ blav_model_test <- function(lavmodel       = NULL,
         mll <- NA # not tested, priors may cause problems
     }
 
-    if(lavoptions$target == "stan") {
+    if(lavoptions$target %in% c("stan", "cmdstan")) {
+        ## same compiled Stan program either way, so stansumm already has
+        ## the correctly-dispatched-on-missingness ppp value regardless of
+        ## which rstan/cmdstanr summary path built it
         ppp <- stansumm['ppp', 'mean']
     } else {
         ppp <- postpred(samplls, lavobject)$ppval

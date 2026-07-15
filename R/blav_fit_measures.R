@@ -153,8 +153,15 @@ blav_fit_measures <- function(object, fit.measures = "all",
         lavopt <- object@Options
         catmod <- lavInspect(object, "categorical")
         lavopt$estimator <- "ML"
-        if(lavopt$target == "stan" && !catmod && lavInspect(object, "meanstructure")){
-          casells <- loo::extract_log_lik(object@external$mcmcout)
+        if(lavopt$target %in% c("stan", "cmdstan") && !catmod && lavInspect(object, "meanstructure")){
+          if(lavopt$target == "stan"){
+            casells <- loo::extract_log_lik(object@external$mcmcout)
+          } else {
+            ## cmdstan: same compiled Stan program, generated quantities
+            ## reached via a different API (CmdStanFit$draws(), not
+            ## loo::extract_log_lik())
+            casells <- object@external$mcmcout$draws("log_lik", format = "matrix")
+          }
         } else {
           if(catmod & lavopt$test != "none"){
             if(catmod && compareVersion(packageDescription('lavaan')$Version, '0.6-10') < 0) stop("blavaan ERROR: lavaan 0.6-10 or higher is needed (you may need to install from github)")

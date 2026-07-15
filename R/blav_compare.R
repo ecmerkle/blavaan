@@ -3,8 +3,8 @@ blavCompare <- function(object1, object2, ...) {
   ## possible TODO: compare using conditional likelihoods, in addition to marginal
   lavopt1 <- blavInspect(object1, "Options")
   lavopt2 <- blavInspect(object2, "Options")
-  if((lavopt1$test == "none" & lavopt1$target != "stan") |
-     (lavopt2$test == "none" & lavopt2$target != "stan")){
+  if((lavopt1$test == "none" & !(lavopt1$target %in% c("stan", "cmdstan"))) |
+     (lavopt2$test == "none" & !(lavopt2$target %in% c("stan", "cmdstan")))){
     stop("blavaan ERROR: Models cannot be compared when test='none'")
   }
   targ1 <- lavopt1$target; targ2 <- lavopt2$target
@@ -14,8 +14,14 @@ blavCompare <- function(object1, object2, ...) {
   res <- c(bf, object1@test[[1]]$stat, object2@test[[1]]$stat)
   names(res) <- c("bf", "mll1", "mll2")
   
-  if(targ1 == "stan" && blavInspect(object1, "meanstructure")){
-    ll1 <- loo::extract_log_lik(object1@external$mcmcout)
+  if(targ1 %in% c("stan", "cmdstan") && blavInspect(object1, "meanstructure")){
+    if(targ1 == "stan"){
+      ll1 <- loo::extract_log_lik(object1@external$mcmcout)
+    } else {
+      ## cmdstan: same compiled Stan program, generated quantities reached
+      ## via a different API (CmdStanFit$draws(), not loo::extract_log_lik())
+      ll1 <- object1@external$mcmcout$draws("log_lik", format = "matrix")
+    }
   } else if(blavInspect(object1, "categorical") && lavopt1$test != "none"){
     if("llnsamp" %in% names(lavopt1)){
       cat("blavaan NOTE: These criteria involve likelihood approximations that may be imprecise.\n",
@@ -33,8 +39,14 @@ blavCompare <- function(object1, object2, ...) {
   cid1 <- rep(1:nchain1, each=niter1)
   ref1 <- relative_eff(exp(ll1), chain_id = cid1)
 
-  if(targ2 == "stan" && blavInspect(object2, "meanstructure")){
-    ll2 <- loo::extract_log_lik(object2@external$mcmcout)
+  if(targ2 %in% c("stan", "cmdstan") && blavInspect(object2, "meanstructure")){
+    if(targ2 == "stan"){
+      ll2 <- loo::extract_log_lik(object2@external$mcmcout)
+    } else {
+      ## cmdstan: same compiled Stan program, generated quantities reached
+      ## via a different API (CmdStanFit$draws(), not loo::extract_log_lik())
+      ll2 <- object2@external$mcmcout$draws("log_lik", format = "matrix")
+    }
   } else if(blavInspect(object2, "categorical") && lavopt2$test != "none"){
     if("llnsamp" %in% names(lavopt2)){
       cat("blavaan NOTE: These criteria involve likelihood approximations that may be imprecise.\n",
