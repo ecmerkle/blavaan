@@ -43,7 +43,7 @@ intercepts and variances.
 summary(fit_df)
 ```
 
-    ## blavaan 0.5.10.1449 ended normally after 1000 iterations
+    ## blavaan 0.5.10.1450 ended normally after 1000 iterations
     ## 
     ##   Estimator                                      BAYES
     ##   Optimization method                             MCMC
@@ -154,7 +154,7 @@ interval.
 summary(fit_cl)
 ```
 
-    ## blavaan 0.5.10.1449 ended normally after 1000 iterations
+    ## blavaan 0.5.10.1450 ended normally after 1000 iterations
     ## 
     ##   Estimator                                      BAYES
     ##   Optimization method                             MCMC
