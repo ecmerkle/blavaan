@@ -24,7 +24,7 @@ blav_fit_measures <- function(object, fit.measures = "all",
     # do we have a test statistic?
     bopts <- blavInspect(object, "options")
     if(bopts$test == "none") {
-        if(bopts$target != "stan") {
+        if(!(bopts$target %in% c("stan", "cmdstan"))) {
             stop("blavaan ERROR: fit measures cannot be obtained when test=\"none\"")
         } else {
             cat("blavaan NOTE: not all fit measures are available when test='none'\n")

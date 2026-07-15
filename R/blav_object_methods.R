@@ -90,7 +90,7 @@ function(object, header       = TRUE,
     # only if requested, the fit measures
     if(fit.measures) {
         bopts <- blavInspect(object, "options")
-        if(bopts$test == "none" & bopts$target != "stan") {
+        if(bopts$test == "none" & !(bopts$target %in% c("stan", "cmdstan"))) {
             warning("lavaan WARNING: fit measures not available if test = \"none\"", call. = FALSE)
         } else {
             #print.fit.measures( fitMeasures(object, fit.measures="default") )

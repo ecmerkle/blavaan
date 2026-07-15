@@ -536,7 +536,7 @@ blavaan <- function(...,  # default lavaan arguments
         if(dotdotdot$test == "none") lavoptions$test <- "none"
     } else {
         # if missing data, posterior predictives are way slow
-        if(any(is.na(unlist(LAV@Data@X))) & target != "stan") {
+        if(any(is.na(unlist(LAV@Data@X))) & !(target %in% c("stan", "cmdstan"))) {
             cat("blavaan NOTE: Posterior predictives with missing data are currently very slow.\n\tConsider setting test=\"none\".\n\n")
         }
     }
@@ -691,7 +691,7 @@ blavaan <- function(...,  # default lavaan arguments
             }
 
             sampparms <- jagtrans$monitors
-            if(save.lvs & target != "stan") sampparms <- c(sampparms, "eta")
+            if(save.lvs & !(target %in% c("stan", "cmdstan"))) sampparms <- c(sampparms, "eta")
 
             if(initsin == "jags"){
                 jagtrans$inits <- vector("list", n.chains)
@@ -1139,7 +1139,7 @@ blavaan <- function(...,  # default lavaan arguments
     }
 
     ## add monitors in mcmcextra as defined variables (except reserved monitors)
-    if(length(mcmcextra$monitor) > 0 & target != "stan"){
+    if(length(mcmcextra$monitor) > 0 & !(target %in% c("stan", "cmdstan"))){
         reservemons <- which(mcmcextra$monitor %in% c('deviance', 'pd', 'popt',
                                                      'dic', 'ped', 'full.pd', 'eta'))
 

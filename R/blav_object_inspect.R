@@ -191,16 +191,19 @@ blavInspect <- function(blavobject, what, ...) {
             }
             draws <- lapply(draws, function(x) mcmc(x[,drawcols]))
 
-            ## for target="stan" + missing, use @Data@Mp to reorder rows to correspond
-            ## to original data. Two-level models are excluded: samp_lvs_2lev()
-            ## rows are cluster-contiguous (not pattern-contiguous, unlike the
-            ## single-level samp_lvs() case this block is written for) and it
-            ## already restores original row order internally (via orig_id)
-            ## before returning, so this block would both misinterpret the
-            ## row layout and double-reorder already-correct data
+            ## for target="stan"/"cmdstan" + missing, use @Data@Mp to reorder
+            ## rows to correspond to original data (cmdstan runs the same
+            ## lav2standata() pattern-contiguous row reordering as stan for
+            ## single-level missing data, so needs the same fix-up). Two-level
+            ## models are excluded: samp_lvs_2lev()'s rows are cluster-
+            ## contiguous (not pattern-contiguous, unlike the single-level
+            ## samp_lvs() case this block is written for) and it already
+            ## restores original row order internally (via orig_id) before
+            ## returning, so this block would both misinterpret the row
+            ## layout and double-reorder already-correct data
             mis <- any(is.na(unlist(blavobject@Data@X)))
             Mp <- blavobject@Data@Mp
-            if(blavobject@Options$target == "stan" & mis &
+            if(blavobject@Options$target %in% c("stan", "cmdstan") & mis &
                !isTRUE(lavInspect(blavobject, "options")$.multilevel)){
                 rorig <- sapply(Mp, function(x) unlist(x$case.idx))
                 empties <- sapply(Mp, function(x) x$empty.idx)
@@ -246,7 +249,7 @@ blavInspect <- function(blavobject, what, ...) {
                                 length(mnrows)/nsamp, byrow=br)[,1:nlv,drop=FALSE]
                 colnames(draws) <- names(lvmn[[level]])
 
-                if(blavobject@Options$target == "stan" & mis){
+                if(blavobject@Options$target %in% c("stan", "cmdstan") & mis){
                     draws[rank(rorig),] <- draws
                 }
             }
