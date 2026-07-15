@@ -17,6 +17,11 @@ lvgqs <- function(modmats, standata, eeta = NULL, getlvs = TRUE) {
   nopsi <- standata$nopsi
   startrow <- standata$startrow
   endrow <- standata$endrow
+  patrows <- standata$patrows ## optional: list of row-index vectors per
+  ## pattern (length Np), for cases where a pattern's rows are not a
+  ## contiguous startrow[mm]:endrow[mm] block (e.g. two-level within-cluster
+  ## patterns, where rows are ordered by cluster, not by pattern). NULL
+  ## falls back to the contiguous startrow/endrow convention.
   w9no <- standata$w9no
   w9use <- standata$w9use
 
@@ -62,7 +67,7 @@ lvgqs <- function(modmats, standata, eeta = NULL, getlvs = TRUE) {
         obsidx <- Obsvar[mm, ]
         r1 <- startrow[mm]
         r2 <- endrow[mm]
-        YXimp[r1:r2, obsidx[1:Nobs[mm]]] <- YX[r1:r2, obsidx[1:Nobs[mm]]]
+        YXimp[r1:r2, obsidx[seq_len(Nobs[mm])]] <- YX[r1:r2, obsidx[seq_len(Nobs[mm])]]
       }
       misvals <- is.na(YXimp)
     }
@@ -84,48 +89,56 @@ lvgqs <- function(modmats, standata, eeta = NULL, getlvs = TRUE) {
 
       ## FIXME?? what if obsidx also extends to x variables?
       obsidx <- Obsvar[mm, ]
-      misidx <- (1:NROW(top_left))[-obsidx[1:Nobs[mm]]]
+      misidx <- (1:NROW(top_left))[-obsidx[seq_len(Nobs[mm])]]
       anymis <- Nobs[mm] < NROW(top_left)
       
-      precision[1:Nobs[mm],1:Nobs[mm]] <- solve(top_left[obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]], drop=FALSE])
+      if (Nobs[mm] > 0) {
+        ## solve() errors on a 0x0 matrix (Nobs[mm] == 0, e.g. a two-level
+        ## "empty" row with nothing observed); precision's 0x0 slice is
+        ## simply unused in that case, so there's nothing to assign
+        precision[seq_len(Nobs[mm]),seq_len(Nobs[mm])] <- solve(top_left[obsidx[seq_len(Nobs[mm])], obsidx[seq_len(Nobs[mm])], drop=FALSE])
+      }
 
       if (getlvs) {
         corner <- cov_eta %*% L_Yt
         bottom_right <- cov_eta
 
         ## NB SEM-specific expressions for this matrix also exist
-        L <- bottom_right[usepsi,usepsi,drop=FALSE] - (corner[,obsidx[1:Nobs[mm]],drop=FALSE] %*% precision[1:Nobs[mm],1:Nobs[mm]] %*% t(corner[,obsidx[1:Nobs[mm]],drop=FALSE]))[usepsi,usepsi,drop=FALSE]
+        L <- bottom_right[usepsi,usepsi,drop=FALSE] - (corner[,obsidx[seq_len(Nobs[mm])],drop=FALSE] %*% precision[seq_len(Nobs[mm]),seq_len(Nobs[mm])] %*% t(corner[,obsidx[seq_len(Nobs[mm])],drop=FALSE]))[usepsi,usepsi,drop=FALSE]
         L <- try(chol(L))
         if (inherits(L, 'try-error')) {
           ## occasionally negative variance
           L <- matrix(0, nrow=length(usepsi), ncol=length(usepsi))
         }
         if (anymis) {
-          corner <- corner[,obsidx[1:Nobs[mm]]]
+          corner <- corner[,obsidx[seq_len(Nobs[mm])]]
         }
       } else if (anymis) {
         ## impute missing observed values
-        corner <- top_left[misidx, obsidx[1:Nobs[mm]], drop=FALSE]
+        corner <- top_left[misidx, obsidx[seq_len(Nobs[mm])], drop=FALSE]
         bottom_right <- top_left[misidx, misidx, drop=FALSE]
-        L <- chol(bottom_right - (corner %*% precision[1:Nobs[mm],1:Nobs[mm],drop=FALSE] %*% t(corner)))
+        L <- chol(bottom_right - (corner %*% precision[seq_len(Nobs[mm]),seq_len(Nobs[mm]),drop=FALSE] %*% t(corner)))
       }
 
       if (getlvs | anymis) {
-        beta <- corner %*% precision[1:Nobs[mm], 1:Nobs[mm], drop=FALSE]
+        beta <- corner %*% precision[seq_len(Nobs[mm]), seq_len(Nobs[mm]), drop=FALSE]
       }
 
-      r1 <- startrow[mm]
-      r2 <- endrow[mm]
-      for (idx in r1:r2){
+      if (!is.null(patrows)) {
+        rowidx <- patrows[[mm]]
+      } else {
+        rowidx <- startrow[mm]:endrow[mm]
+      }
+      for (idx in rowidx){
         if (getlvs) {
-          lvmean <- modmats[[grpidx]]$alpha + beta[, 1:Nobs[mm], drop=FALSE] %*% (YX[idx, obsidx[1:Nobs[mm]]] - ovmean[[grpidx]][obsidx[1:Nobs[mm]]])
+          lvmean <- modmats[[grpidx]]$alpha + beta[, seq_len(Nobs[mm]), drop=FALSE] %*% (YX[idx, obsidx[seq_len(Nobs[mm])]] - ovmean[[grpidx]][obsidx[seq_len(Nobs[mm])]])
           eta[idx,usepsi] <- t(rmnorm(1, lvmean[usepsi], sqrt = L) + eeta[[grpidx]][usepsi])
           if (w9no > 0) {
             eta[idx,nopsi] <- eta[idx,usepsi,drop=FALSE] %*% t(A[nopsi,usepsi,drop=FALSE])
           }
         } else if (anymis) {
-          ovreg <- ovmean[[grpidx]][misidx] + beta[, 1:Nobs[mm], drop=FALSE] %*% (YX[idx, obsidx[1:Nobs[mm]]] - ovmean[[grpidx]][obsidx[1:Nobs[mm]]])
-          YXimp[idx, obsidx[1:Nobs[mm]]] <- YX[idx, obsidx[1:Nobs[mm]]]
+          ovreg <- ovmean[[grpidx]][misidx] + beta[, seq_len(Nobs[mm]), drop=FALSE] %*% (YX[idx, obsidx[seq_len(Nobs[mm])]] - ovmean[[grpidx]][obsidx[seq_len(Nobs[mm])]])
+          YXimp[idx, obsidx[seq_len(Nobs[mm])]] <- YX[idx, obsidx[seq_len(Nobs[mm])]]
           YXimp[idx, misidx] <- t(rmnorm(1, ovreg, sqrt = L))
         }
       }
@@ -278,10 +291,71 @@ samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable,
     lav_estep <- getFromNamespace("lav_mvnorm_cluster_em_estep_ranef", "lavaan")
   }
 
+  ## Real missingness: level-2 cluster means/imputation use lavaan's
+  ## missing-data-aware posterior (lav_mvn_cl_mi_estep_ranef(), new in
+  ## lavaan 0.7-1 with no old-name equivalent -- two-level MAR support
+  ## didn't exist before it), and level 1 uses genuine within-cluster FIML
+  ## patterns (built once below, since they don't depend on the posterior
+  ## draw) instead of the complete-data "fully observed" placeholder.
+  misflag2l <- as.logical(standata$missing)
+  if (misflag2l) {
+    lav_mi_estep <- tryCatch(getFromNamespace("lav_mvn_cl_mi_estep_ranef", "lavaan"),
+                              error = function(e) NULL)
+    if (is.null(lav_mi_estep)) {
+      stop("blavaan ERROR: sampling latent variables (save.lvs = TRUE) for two-level models with missing data requires a version of lavaan that provides lav_mvn_cl_mi_estep_ranef() (lavaan >= 0.7-1, currently under development). Please update lavaan, or refit with save.lvs = FALSE.")
+    }
+
+    ## ov_idx1 (sort(within-only union both variables), in full-nvar-space
+    ## column indices) matches the column selection already used to build
+    ## standata$YX for the level-1 lvgqs() call below
+    ov_idx1 <- with(stanorig, between_idx[(N_between + 1):p_tilde])
+    Mp1 <- lapply(lavdata@Mp, function(x) {
+      x$pat <- x$pat[, ov_idx1, drop = FALSE]
+      x
+    })
+    pat1 <- lav_mp_to_obsvar(Mp1, length(ov_idx1))
+
+    ## row indices (local to each group's own X matrix) per pattern,
+    ## concatenated group-major to match pat1's pattern ordering, then
+    ## mapped into standata$YX's cluster-contiguous global row order
+    case_idx1 <- do.call("c", lapply(lavdata@Mp, function(x) x$case.idx))
+    grpnum1 <- rep(seq_len(stanorig$Ng), sapply(lavdata@Mp, function(x) x$npatterns))
+    group_offset <- c(0, cumsum(stanorig$N))[seq_len(stanorig$Ng)]
+
+    inv_origid <- integer(stanorig$Ntot)
+    inv_origid[stanorig$orig_id] <- seq_len(stanorig$Ntot)
+
+    patrows1 <- lapply(seq_along(case_idx1), function(p) {
+      inv_origid[group_offset[grpnum1[p]] + case_idx1[[p]]]
+    })
+
+    ## "empty" cases (all level-1 variables missing for that row) are
+    ## excluded from Mp$pat/case.idx entirely (lavaan tracks them
+    ## separately via Mp$empty.idx) -- add one synthetic Nobs=0 pattern per
+    ## group with such rows, so every row still gets an eta draw (from its
+    ## unconditional model-implied distribution, since nothing is observed)
+    for (g in seq_len(stanorig$Ng)) {
+      empty_idx_g <- lavdata@Mp[[g]]$empty.idx
+      if (length(empty_idx_g) > 0L) {
+        pat1$Np <- pat1$Np + 1L
+        pat1$Nobs <- c(pat1$Nobs, 0L)
+        pat1$Obsvar <- rbind(pat1$Obsvar, rep(0L, ncol(pat1$Obsvar)))
+        grpnum1 <- c(grpnum1, g)
+        patrows1 <- c(patrows1, list(inv_origid[group_offset[g] + empty_idx_g]))
+      }
+    }
+  }
+
   loop.args <- list(X = 1:nsamps, FUN = function(i){
       tmpmat <- array(NA, dim=c(nchain, standata$Ntot, standata$w9use + standata$w9no))
       tmpmat2 <- array(NA, dim=c(nchain, sum(standata$nclus[,2]), standata$w9use_c + standata$w9no_c))
       for(j in 1:nchain){
+        ## standata is mutated below (level 2, then level 1 restores it
+        ## from stanorig); reset it explicitly at the top of every chain's
+        ## iteration too, so a previous chain's level-1 overrides (Np,
+        ## Obsvar, Nobs, grpnum, patrows, all only set when misflag2l) can
+        ## never leak into this chain's level-2 computation
+        standata <- stanorig
         lavmodel <- fill_params(lavmcmc[[j]][i,], lavmodel, lavpartable)
 
         ## get model-implied matrices from this lavmodel
@@ -294,22 +368,37 @@ samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable,
         }
         modmat2 <- modmats[2 * (1:standata$Ng)]
         clusmns <- vector("list", length(modmat2))
+        zimp <- vector("list", length(modmat2))
         modimp <- lav_model_implied(lavmodel) ## for all groups
 
         for(g in 1:length(modmat2)){
           if(!("beta" %in% names(modmat2[[g]]))) modmat2[[g]]$beta <- matrix(0, standata$m_c, standata$m_c)
 
-          out <- lav_implied22l(lavdata@Lp[[g]], lapply(modimp, function(x) x[(2*g - 1):(2*g)]))
-          if(newname){
-            clusmns[[g]] <- lav_estep(ylp = lavsamplestats@YLp[[g]], lp = lavdata@Lp[[g]],
-                                      sigma_w = out$sigma.w, sigma_b = out$sigma.b,
-                                      sigma_zz = out$sigma.zz, sigma_yz = out$sigma.yz,
-                                      mu_z = out$mu.z, mu_w = out$mu.w, mu_b = out$mu.b, se = FALSE)
+          implied_g <- lapply(modimp, function(x) x[(2*g - 1):(2*g)])
+
+          if (misflag2l) {
+            y2g <- rowsum.default(lavdata@X[[g]], group = lavdata@Lp[[g]]$cluster.idx[[2]],
+                                   reorder = FALSE, na.rm = FALSE) / lavdata@Lp[[g]]$cluster.size[[2]]
+            mb_j <- lav_mi_estep(y1 = lavdata@X[[g]], y2 = y2g,
+                                 lp = lavdata@Lp[[g]], mp = lavdata@Mp[[g]],
+                                 mu_w = implied_g$mean[[1]], sigma_w = implied_g$cov[[1]],
+                                 mu_b = implied_g$mean[[2]], sigma_b = implied_g$cov[[2]],
+                                 se = FALSE, impute = TRUE)
+            clusmns[[g]] <- mb_j
+            zimp[[g]] <- attr(mb_j, "z.imputed")
           } else {
-            clusmns[[g]] <- lav_estep(YLp = lavsamplestats@YLp[[g]], Lp = lavdata@Lp[[g]],
-                                      sigma.w = out$sigma.w, sigma.b = out$sigma.b,
-                                      sigma.zz = out$sigma.zz, sigma.yz = out$sigma.yz,
-                                      mu.z = out$mu.z, mu.w = out$mu.w, mu.b = out$mu.b, se = FALSE)
+            out <- lav_implied22l(lavdata@Lp[[g]], implied_g)
+            if(newname){
+              clusmns[[g]] <- lav_estep(ylp = lavsamplestats@YLp[[g]], lp = lavdata@Lp[[g]],
+                                        sigma_w = out$sigma.w, sigma_b = out$sigma.b,
+                                        sigma_zz = out$sigma.zz, sigma_yz = out$sigma.yz,
+                                        mu_z = out$mu.z, mu_w = out$mu.w, mu_b = out$mu.b, se = FALSE)
+            } else {
+              clusmns[[g]] <- lav_estep(YLp = lavsamplestats@YLp[[g]], Lp = lavdata@Lp[[g]],
+                                        sigma.w = out$sigma.w, sigma.b = out$sigma.b,
+                                        sigma.zz = out$sigma.zz, sigma.yz = out$sigma.yz,
+                                        mu.z = out$mu.z, mu.w = out$mu.w, mu.b = out$mu.b, se = FALSE)
+            }
           }
         }
         clusmns <- do.call("rbind", clusmns)
@@ -319,7 +408,11 @@ samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable,
         between.idx <- Lp$between.idx[[2]]
 
         if(length(between.idx) > 0L){
-          YX.B[, between.idx] <- stanorig$YX[order(standata$orig_id),][!duplicated(Lp$cluster.idx[[2]]), between.idx] #stanorig$YX[!duplicated(Lp$cluster.idx[[2]]), between.idx]
+          if (misflag2l) {
+            YX.B[, between.idx] <- do.call("rbind", zimp)
+          } else {
+            YX.B[, between.idx] <- stanorig$YX[order(standata$orig_id),][!duplicated(Lp$cluster.idx[[2]]), between.idx] #stanorig$YX[!duplicated(Lp$cluster.idx[[2]]), between.idx]
+          }
         }
 
         ## manipulations to reuse existing lvgqs code
@@ -345,6 +438,15 @@ samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable,
         ## the YX matrix has been ordered by cluster already:
         clusidx <- rep(1:length(standata$cluster_size), standata$cluster_size)
         standata$YX <- with(standata, YX[, between_idx[(N_between + 1):p_tilde]]) - clusmns[clusidx,]
+        if (misflag2l) {
+          ## real per-row within-cluster missing-data patterns, instead of
+          ## the complete-data "fully observed" placeholder
+          standata$Np <- pat1$Np
+          standata$Obsvar <- pat1$Obsvar
+          standata$Nobs <- pat1$Nobs
+          standata$patrows <- patrows1
+          standata$grpnum <- grpnum1
+        }
         modmat1 <- modmats[2 * (1:standata$Ng) - 2 + 1]
         for(g in 1:length(modmat1)){
           if(!("beta" %in% names(modmat1[[g]]))) modmat1[[g]]$beta <- matrix(0, standata$m, standata$m)

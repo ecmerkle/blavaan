@@ -1082,6 +1082,28 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
        stansumm = rssumm$summary)
 }
 
+## Convert a list of lavaan Mp objects (one per group), each with a logical
+## $pat observed/missing matrix (npatterns x nvar), into the flattened
+## Obsvar/Nobs representation blavaan's FIML machinery uses: for each
+## pattern (concatenated across groups), Nobs[p] observed variable column
+## indices first, followed by the missing indices, both in original column
+## order. Also used (per group) by samp_lvs_2lev() in lvgqs.R to build
+## genuine within-cluster missing-data patterns for two-level LV sampling.
+lav_mp_to_obsvar <- function(Mp, nvar) {
+  Nobs <- do.call("c", lapply(Mp, function(x) rowSums(x$pat)))
+  obsidx <- do.call("c", lapply(Mp, function(x) apply(x$pat, 1, which, simplify = FALSE)))
+  Np <- length(Nobs)
+  allvars <- seq_len(nvar)
+  Obsvar <- matrix(0L, Np, nvar)
+  for (i in seq_len(Np)) {
+    Obsvar[i, seq_len(Nobs[i])] <- obsidx[[i]]
+    if (Nobs[i] < nvar) {
+      Obsvar[i, (Nobs[i] + 1):nvar] <- allvars[!(allvars %in% obsidx[[i]])]
+    }
+  }
+  list(Np = Np, Nobs = Nobs, Obsvar = Obsvar, obsidx = obsidx)
+}
+
 ## organize information about the observed data for Stan (separately from model information)
 lav2standata <- function(lavobject, dosam = FALSE) {
   dat <- list()
@@ -1184,12 +1206,13 @@ lav2standata <- function(lavobject, dosam = FALSE) {
     dat$endrow <- tapply(1:NROW(misgrps), misgrps, tail, 1)
     dat$grpnum <- rep(1:dat$Ng, npatt)
 
-    dat$Nobs <- do.call("c", lapply(Mp, function(x) rowSums(x$pat)))
-    Obsvar <- do.call("c", lapply(Mp, function(x) apply(x$pat, 1, which, simplify = FALSE)))
-    
-    dat$Np <- length(unique(misgrps))
+    pat <- lav_mp_to_obsvar(Mp, nvar)
+    dat$Nobs <- pat$Nobs
+    Obsvar <- pat$obsidx
+
+    dat$Np <- pat$Np
     dat$Ntot <- sum(dat$N)
-    dat$Obsvar <- matrix(0, dat$Np, nvar)
+    dat$Obsvar <- pat$Obsvar
     dat$Nx <- rep(0, dat$Np)
     dat$Xvar <- dat$Xdatvar <- matrix(0, dat$Np, nvar)
 
@@ -1198,11 +1221,6 @@ lav2standata <- function(lavobject, dosam = FALSE) {
     dat$Xbetvar <- matrix(0, dat$Np, nvar)
 
     for (i in 1:dat$Np) {
-      dat$Obsvar[i, 1:dat$Nobs[i]] <- Obsvar[[i]]
-      if (dat$Nobs[i] < nvar) {
-        ## missing idx is at end of Obsvar
-        dat$Obsvar[i, (dat$Nobs[i] + 1):nvar] <- allvars[!(allvars %in% Obsvar[[i]])]
-      }
       xdatidx <- match(xidx, Obsvar[[i]])
       xpat <- xidx[xidx %in% Obsvar[[i]]]
       if (length(xpat) > 0) {

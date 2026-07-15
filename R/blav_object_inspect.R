@@ -151,7 +151,15 @@ blavInspect <- function(blavobject, what, ...) {
             }
             if(level == 1L){
               nlv <- length(lvmn[[1]])
-              nsamp <- sum(lavInspect(blavobject, "nobs"))
+              if (isTRUE(lavInspect(blavobject, "options")$.multilevel)) {
+                ## two-level models keep "globally empty" rows (all level-1
+                ## variables missing) in the level-1 lv sampling, unlike
+                ## lavInspect(.,'nobs') which excludes them (see the
+                ## comment on dat$N in lav2standata()) -- match that here
+                nsamp <- sum(sapply(blavobject@Data@X, NROW))
+              } else {
+                nsamp <- sum(lavInspect(blavobject, "nobs"))
+              }
             } else {
               nlv <- length(lvmn[[2]])
               nsamp <- unlist(lavInspect(blavobject, "nclusters"))
@@ -184,10 +192,16 @@ blavInspect <- function(blavobject, what, ...) {
             draws <- lapply(draws, function(x) mcmc(x[,drawcols]))
 
             ## for target="stan" + missing, use @Data@Mp to reorder rows to correspond
-            ## to original data
+            ## to original data. Two-level models are excluded: samp_lvs_2lev()
+            ## rows are cluster-contiguous (not pattern-contiguous, unlike the
+            ## single-level samp_lvs() case this block is written for) and it
+            ## already restores original row order internally (via orig_id)
+            ## before returning, so this block would both misinterpret the
+            ## row layout and double-reorder already-correct data
             mis <- any(is.na(unlist(blavobject@Data@X)))
             Mp <- blavobject@Data@Mp
-            if(blavobject@Options$target == "stan" & mis){
+            if(blavobject@Options$target == "stan" & mis &
+               !isTRUE(lavInspect(blavobject, "options")$.multilevel)){
                 rorig <- sapply(Mp, function(x) unlist(x$case.idx))
                 empties <- sapply(Mp, function(x) x$empty.idx)
                 if(inherits(rorig, "list")){
