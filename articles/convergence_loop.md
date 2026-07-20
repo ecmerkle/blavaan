@@ -55,7 +55,7 @@ converging.
 print(paste0("Rhat=",rhat))  
 ```
 
-    ## [1] "Rhat=1.00166099619934"
+    ## [1] "Rhat=1.00190023897107"
 
 Note that we are only increasing the number burnin iterations, and
 keeping the number of saved samples the same (1000 in this case). If you

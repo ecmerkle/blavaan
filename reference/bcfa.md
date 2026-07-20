@@ -209,8 +209,8 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> 
 #> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 1).
 #> Chain 1: 
-#> Chain 1: Gradient evaluation took 0.000242 seconds
-#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.42 seconds.
+#> Chain 1: Gradient evaluation took 0.000285 seconds
+#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.85 seconds.
 #> Chain 1: Adjust your expectations accordingly!
 #> Chain 1: 
 #> Chain 1: 
@@ -235,15 +235,15 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> Chain 1: Iteration: 180 / 200 [ 90%]  (Sampling)
 #> Chain 1: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 1: 
-#> Chain 1:  Elapsed Time: 0.328 seconds (Warm-up)
-#> Chain 1:                0.344 seconds (Sampling)
-#> Chain 1:                0.672 seconds (Total)
+#> Chain 1:  Elapsed Time: 0.457 seconds (Warm-up)
+#> Chain 1:                0.427 seconds (Sampling)
+#> Chain 1:                0.884 seconds (Total)
 #> Chain 1: 
 #> 
 #> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 2).
 #> Chain 2: 
-#> Chain 2: Gradient evaluation took 0.000223 seconds
-#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.23 seconds.
+#> Chain 2: Gradient evaluation took 0.000232 seconds
+#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.32 seconds.
 #> Chain 2: Adjust your expectations accordingly!
 #> Chain 2: 
 #> Chain 2: 
@@ -268,9 +268,9 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> Chain 2: Iteration: 180 / 200 [ 90%]  (Sampling)
 #> Chain 2: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 2: 
-#> Chain 2:  Elapsed Time: 0.563 seconds (Warm-up)
-#> Chain 2:                0.344 seconds (Sampling)
-#> Chain 2:                0.907 seconds (Total)
+#> Chain 2:  Elapsed Time: 0.479 seconds (Warm-up)
+#> Chain 2:                0.364 seconds (Sampling)
+#> Chain 2:                0.843 seconds (Total)
 #> Chain 2: 
 #> Warning: The largest R-hat is NA, indicating chains have not mixed.
 #> Running the chains for more iterations may help. See
@@ -283,16 +283,16 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> https://mc-stan.org/misc/warnings.html#tail-ess
 #> Computing post-estimation metrics (including lvs if requested)...
 summary(fit)
-#> blavaan 0.5.10.1450 ended normally after 100 iterations
+#> blavaan 0.5.10.1453 ended normally after 100 iterations
 #> 
 #>   Estimator                                      BAYES
 #>   Optimization method                             MCMC
-#>   Number of model parameters                        21
+#>   Number of model parameters                        30
 #> 
 #>   Number of observations                           301
 #> 
 #>   Statistic                                 MargLogLik         PPP
-#>   Value                                      -3806.802       0.000
+#>   Value                                      -3865.374       0.000
 #> 
 #> Parameter Estimates:
 #> 
@@ -301,38 +301,53 @@ summary(fit)
 #>                    Estimate  Post.SD pi.lower pi.upper     Rhat    Prior       
 #>   visual =~                                                                    
 #>     x1                1.000                                                    
-#>     x2                0.565    0.112    0.355    0.784    0.999    normal(0,10)
-#>     x3                0.735    0.120    0.507    0.987    1.002    normal(0,10)
+#>     x2                0.558    0.114    0.371    0.813    0.995    normal(0,10)
+#>     x3                0.735    0.118    0.527    0.979    0.995    normal(0,10)
 #>   textual =~                                                                   
 #>     x4                1.000                                                    
-#>     x5                1.114    0.062    1.013    1.244    1.005    normal(0,10)
-#>     x6                0.934    0.057    0.823    1.043    0.999    normal(0,10)
+#>     x5                1.126    0.067    1.009    1.257    0.993    normal(0,10)
+#>     x6                0.928    0.052    0.842    1.023    0.991    normal(0,10)
 #>   speed =~                                                                     
 #>     x7                1.000                                                    
-#>     x8                1.239    0.166    0.990    1.614    1.059    normal(0,10)
-#>     x9                1.204    0.255    0.773    1.797    1.017    normal(0,10)
+#>     x8                1.216    0.165    0.953    1.568    0.996    normal(0,10)
+#>     x9                1.195    0.206    0.835    1.603    1.050    normal(0,10)
 #> 
 #> Covariances:
 #>                    Estimate  Post.SD pi.lower pi.upper     Rhat    Prior       
 #>   visual ~~                                                                    
-#>     textual           0.392    0.075    0.243    0.525    0.994     lkj_corr(1)
-#>     speed             0.242    0.048    0.160    0.342    1.012     lkj_corr(1)
+#>     textual           0.400    0.077    0.212    0.532    0.991     lkj_corr(1)
+#>     speed             0.248    0.050    0.155    0.374    1.024     lkj_corr(1)
 #>   textual ~~                                                                   
-#>     speed             0.163    0.044    0.085    0.254    1.008     lkj_corr(1)
+#>     speed             0.164    0.046    0.080    0.256    1.012     lkj_corr(1)
+#> 
+#> Intercepts:
+#>                    Estimate  Post.SD pi.lower pi.upper     Rhat    Prior       
+#>    .x1                4.935    0.066    4.819    5.066    1.011    normal(0,32)
+#>    .x2                6.085    0.073    5.927    6.206    0.999    normal(0,32)
+#>    .x3                2.252    0.068    2.094    2.378    0.995    normal(0,32)
+#>    .x4                3.053    0.060    2.936    3.168    0.992    normal(0,32)
+#>    .x5                4.331    0.065    4.226    4.455    1.000    normal(0,32)
+#>    .x6                2.183    0.061    2.066    2.297    0.998    normal(0,32)
+#>    .x7                4.188    0.061    4.058    4.299    1.003    normal(0,32)
+#>    .x8                5.522    0.055    5.408    5.613    0.998    normal(0,32)
+#>    .x9                5.373    0.054    5.283    5.489    0.997    normal(0,32)
+#>     visual            0.000                                                    
+#>     textual           0.000                                                    
+#>     speed             0.000                                                    
 #> 
 #> Variances:
 #>                    Estimate  Post.SD pi.lower pi.upper     Rhat    Prior       
-#>    .x1                0.561    0.132    0.253    0.811    1.018 gamma(1,.5)[sd]
-#>    .x2                1.150    0.102    0.949    1.354    0.995 gamma(1,.5)[sd]
-#>    .x3                0.858    0.101    0.666    1.088    0.998 gamma(1,.5)[sd]
-#>    .x4                0.379    0.048    0.291    0.475    0.998 gamma(1,.5)[sd]
-#>    .x5                0.452    0.054    0.353    0.565    0.998 gamma(1,.5)[sd]
-#>    .x6                0.362    0.049    0.282    0.468    1.004 gamma(1,.5)[sd]
-#>    .x7                0.838    0.089    0.682    1.022    1.013 gamma(1,.5)[sd]
-#>    .x8                0.510    0.111    0.224    0.726    0.997 gamma(1,.5)[sd]
-#>    .x9                0.547    0.105    0.338    0.750    1.010 gamma(1,.5)[sd]
-#>     visual            0.804    0.151    0.550    1.116    1.007 gamma(1,.5)[sd]
-#>     textual           0.989    0.107    0.791    1.185    1.004 gamma(1,.5)[sd]
-#>     speed             0.346    0.093    0.201    0.534    1.059 gamma(1,.5)[sd]
+#>    .x1                0.555    0.123    0.261    0.780    0.994 gamma(1,.5)[sd]
+#>    .x2                1.152    0.109    0.949    1.397    0.997 gamma(1,.5)[sd]
+#>    .x3                0.857    0.089    0.704    1.023    0.995 gamma(1,.5)[sd]
+#>    .x4                0.382    0.049    0.305    0.484    0.992 gamma(1,.5)[sd]
+#>    .x5                0.451    0.052    0.350    0.545    0.993 gamma(1,.5)[sd]
+#>    .x6                0.365    0.043    0.290    0.446    0.995 gamma(1,.5)[sd]
+#>    .x7                0.839    0.091    0.668    1.036    1.018 gamma(1,.5)[sd]
+#>    .x8                0.528    0.098    0.345    0.717    1.018 gamma(1,.5)[sd]
+#>    .x9                0.540    0.095    0.340    0.723    1.029 gamma(1,.5)[sd]
+#>     visual            0.816    0.146    0.552    1.100    1.008 gamma(1,.5)[sd]
+#>     textual           0.980    0.106    0.790    1.180    0.998 gamma(1,.5)[sd]
+#>     speed             0.357    0.087    0.227    0.549    1.043 gamma(1,.5)[sd]
 #> 
 ```

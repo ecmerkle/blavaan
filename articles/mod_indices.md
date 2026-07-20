@@ -90,16 +90,16 @@ summary(out, prob=.9, discFUN = "mod.ind_mi", sort.by="EAP", decreasing=T)[1:5,]
     ## 
     ## 
     ##               EAP Median    MAP     SD  lower  upper PPP_sim_GreaterThan_obs
-    ## visual=~x9 35.215 35.295 36.207 11.263 16.921 53.858                   0.017
-    ## x7~~x8     33.485 35.939 39.163 14.513  6.690 52.589                   0.069
-    ## x8~~x9     26.685 12.448  2.617 40.677  0.000 70.149                   0.319
-    ## x4~~x6     20.637  7.156  2.110 34.437  0.000 54.681                   0.456
-    ## visual=~x7 18.742 16.911 11.939 10.682  3.880 32.609                   0.014
+    ## visual=~x9 35.042 35.026 35.775 10.815 17.976 53.079                   0.012
+    ## x7~~x8     33.204 35.462 40.307 14.081  7.722 54.138                   0.071
+    ## x8~~x9     27.097 12.622  2.792 40.934  0.000 69.737                   0.300
+    ## x4~~x6     21.598  6.976  2.497 40.440  0.000 57.579                   0.449
+    ## visual=~x7 18.375 16.671 12.465  9.844  3.505 32.370                   0.014
     ##            PPP_sim_LessThan_obs
-    ## visual=~x9                0.983
-    ## x7~~x8                    0.931
-    ## x8~~x9                    0.681
-    ## x4~~x6                    0.544
+    ## visual=~x9                0.988
+    ## x7~~x8                    0.929
+    ## x8~~x9                    0.700
+    ## x4~~x6                    0.551
     ## visual=~x7                0.986
 
 But according to the posterior median, the parameter that would have the
@@ -118,17 +118,17 @@ summary(out, prob=.9, discFUN = "mod.ind_mi", sort.by="Median", decreasing=T)[1:
     ## 
     ## 
     ##                EAP Median    MAP     SD  lower  upper PPP_sim_GreaterThan_obs
-    ## x7~~x8      33.485 35.939 39.163 14.513  6.690 52.589                   0.069
-    ## visual=~x9  35.215 35.295 36.207 11.263 16.921 53.858                   0.017
-    ## visual=~x7  18.742 16.911 11.939 10.682  3.880 32.609                   0.014
-    ## x8~~x9      26.685 12.448  2.617 40.677  0.000 70.149                   0.319
-    ## textual=~x1 10.991  9.971  9.913  8.125  0.000 22.101                   0.219
+    ## x7~~x8      33.204 35.462 40.307 14.081  7.722 54.138                   0.071
+    ## visual=~x9  35.042 35.026 35.775 10.815 17.976 53.079                   0.012
+    ## visual=~x7  18.375 16.671 12.465  9.844  3.505 32.370                   0.014
+    ## x8~~x9      27.097 12.622  2.792 40.934  0.000 69.737                   0.300
+    ## textual=~x1 11.256 10.215  6.573  8.260  0.000 22.667                   0.222
     ##             PPP_sim_LessThan_obs
-    ## x7~~x8                     0.931
-    ## visual=~x9                 0.983
+    ## x7~~x8                     0.929
+    ## visual=~x9                 0.988
     ## visual=~x7                 0.986
-    ## x8~~x9                     0.681
-    ## textual=~x1                0.781
+    ## x8~~x9                     0.700
+    ## textual=~x1                0.778
 
 The MI is still recommended as the best metric to indicate which
 parameter is best to include next, and we can use the SEPC to evaluate
@@ -145,21 +145,21 @@ summary(out, prob=.9, discFUN = "mod.ind_sepc.all", sort.by="EAP", decreasing=T)
     ##  along with posterior predictive p values to test hypotheses in either direction:
     ## 
     ## 
-    ##               EAP Median   MAP    SD lower upper PPP_sim_GreaterThan_obs
-    ## x7~~x8      0.807  0.786 0.746 0.369 0.481 1.226                   0.043
-    ## visual=~x9  0.521  0.498 0.483 0.133 0.335 0.703                   0.009
-    ## textual=~x1 0.271  0.297 0.323 0.165 0.044 0.508                   0.129
-    ## x1~~x9      0.247  0.246 0.246 0.040 0.198 0.299                   0.022
-    ## x2~~x3      0.222  0.222 0.218 0.040 0.174 0.280                   0.023
+    ##               EAP Median   MAP    SD  lower upper PPP_sim_GreaterThan_obs
+    ## x7~~x8      0.801  0.784 0.724 0.336  0.488 1.230                   0.036
+    ## visual=~x9  0.517  0.498 0.468 0.132  0.336 0.691                   0.008
+    ## textual=~x1 0.267  0.297 0.319 0.186 -0.006 0.505                   0.131
+    ## x1~~x9      0.246  0.245 0.240 0.035  0.199 0.299                   0.020
+    ## x2~~x3      0.220  0.221 0.217 0.037  0.163 0.274                   0.026
     ##             PPP_sim_LessThan_obs
-    ## x7~~x8                     0.957
-    ## visual=~x9                 0.991
-    ## textual=~x1                0.871
-    ## x1~~x9                     0.978
-    ## x2~~x3                     0.977
+    ## x7~~x8                     0.964
+    ## visual=~x9                 0.992
+    ## textual=~x1                0.869
+    ## x1~~x9                     0.980
+    ## x2~~x3                     0.974
 
 Here we see that for the 2 highest parameters, the likely SEPC is x7x8 =
-0.807250019181851 and visual=~x9 = 0.520720661163884. With this
+0.800788445388977 and visual=~x9 = 0.516773687948915. With this
 information we can decide to include one of these new parameters in the
 model (one at the time). For this example, because factor loadings have
 a larger impact on the model-implied covariance matrix, I would choose
