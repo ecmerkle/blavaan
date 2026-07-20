@@ -1,7 +1,7 @@
 ## tinytest file: two-level (multilevel) FIML/MAR missing-data models,
 ## Stan backend
 ##
-## Run with: tinytest::run_test_file("tinytest_stan_multilevel_missing.R")
+## Run with: tinytest::run_test_file("test_stan_multilevel_missing.R")
 ## or as part of a package: tinytest::test_package("blavaan")
 ##
 ## NB: two-level FIML/MAR is now the default (no option/gate needed) whenever
@@ -27,7 +27,7 @@
 ## -- plus a pairwise-complete-obs correction for within-level fixed.x, see
 ## calc_log_lik_x_missing() in inst/stan/stanmarg.stan and llx_2l() in
 ## R/blav_model_loglik.R). See also
-## tinytest_stan_multilevel2.R for complete-data two-level model tests.
+## test_stan_multilevel2.R for complete-data two-level model tests.
 ##
 ## Multi-group two-level models are NOT tested here (out of scope for this
 ## FIML/MAR-focused file), but note that they now work: plain lavaan::sem()
@@ -44,7 +44,7 @@
 ## silently found nothing and "dat$psiblkpri[b] <- ..." failed with
 ## "replacement has length zero". Fixed by matching on lavpartable$block
 ## instead (always a well-defined group*level block number) -- see that
-## file's git history for the fix. See tinytest_stan_multilevel2.R for
+## file's git history for the fix. See test_stan_multilevel2.R for
 ## complete-data two-level coverage.
 
 library("tinytest")
@@ -191,6 +191,12 @@ expect_true(
   info = "two-level FIML/MAR log_lik_sat should be finite for every draw/cluster"
 )
 })
+
+## NB: section 1 above is a quick smoke test that always runs (it's the most
+## comprehensive single scenario -- within/both/between missingness at once).
+## Sections 2-5 below are additional independent variations/edge cases and
+## are slower, so they only run with Sys.setenv(blavaan_slow_tests = "true").
+if (Sys.getenv("blavaan_slow_tests") == "true") {
 
 ## =============================================================================
 ## 2. Complete-data-through-the-new-path equivalence check
@@ -441,3 +447,5 @@ expect_true(
 )
 
 })
+
+} ## end slow-test gate (sections 2-5)

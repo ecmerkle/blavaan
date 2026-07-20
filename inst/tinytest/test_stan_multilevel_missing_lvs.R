@@ -1,12 +1,12 @@
 ## tinytest file: latent variable (factor score) sampling for two-level
 ## (multilevel) models with FIML/MAR missing data, Stan backend
 ##
-## Run with: tinytest::run_test_file("tinytest_stan_multilevel_missing_lvs.R")
+## Run with: tinytest::run_test_file("test_stan_multilevel_missing_lvs.R")
 ## or as part of a package: tinytest::test_package("blavaan")
 ##
-## Companion to tinytest_stan_multilevel_missing.R (which covers the FIML/MAR
+## Companion to test_stan_multilevel_missing.R (which covers the FIML/MAR
 ## *likelihood* only -- parameter estimation, waic/looic, ppp) and
-## tinytest_stan_multilevel2.R (which covers complete-data two-level LV
+## test_stan_multilevel2.R (which covers complete-data two-level LV
 ## sampling). This file exercises save.lvs = TRUE /
 ## blavPredict(type = "lv") / blavInspect(., "lvs") for two-level models
 ## with real missingness, i.e. samp_lvs_2lev()'s use of lavaan's
@@ -42,7 +42,7 @@ inject_mcar_between <- function(d, vars, cluster_col = "cluster", rate = 0.15, s
 data(Demo.twolevel, package = "lavaan")
 
 ## y4 is within-only, y1-y3 are "both", w1/w2 are between-only -- same
-## variable-class mix as tinytest_stan_multilevel_missing.R's model_wb
+## variable-class mix as test_stan_multilevel_missing.R's model_wb
 model_wb <- '
     level: 1
         fw =~ y1 + y2 + y3 + y4
@@ -98,6 +98,12 @@ raw_between <- fit0@Data@X[[1]][!duplicated(fit0@Data@Lp[[1]]$cluster.idx[[2]]),
 expect_true(max(abs(attr(mb_j, "z.imputed") - raw_between)) < 1e-8,
   info = "z.imputed should exactly reproduce the raw between-only data when nothing is actually missing")
 })
+
+## NB: section 1 above is a pure internal-function check (do.fit = FALSE, no
+## Stan sampling) and always runs. Sections 2-3 below each fit a real Stan
+## model and are slower, so they only run with
+## Sys.setenv(blavaan_slow_tests = "true").
+if (Sys.getenv("blavaan_slow_tests") == "true") {
 
 ## =============================================================================
 ## 2. save.lvs = TRUE with real missingness at all three variable classes
@@ -186,3 +192,5 @@ expect_equal(ncol(m1c), nrow(Demo.twolevel),
 expect_equal(ncol(m2c), length(unique(Demo.twolevel$cluster)),
   info = "complete-data level-2 lvs should have one column per cluster")
 })
+
+} ## end slow-test gate (sections 2-3)

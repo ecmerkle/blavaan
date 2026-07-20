@@ -1,11 +1,13 @@
 ## tinytest file: Testing blavaan ordinal (and mixed continuous/ordinal) models
 ##
-## Run with: tinytest::run_test_file("tinytest_ord2.R")
+## Run with: tinytest::run_test_file("test_ord2.R")
 ## or as part of a package: tinytest::test_package("blavaan")
 
-## NB these tests are slow! they will only be run with
-## Sys.setenv(blavaan_slow_tests = "true")
-if (Sys.getenv("blavaan_slow_tests") == "true") {
+## NB sections 1-2 below are a quick smoke test that always runs (section 2
+## reuses section 1's Data/model/tmp2_lv, so they must stay together and
+## ungated). Sections 3-14 are slower (many more ordinal model variations,
+## chained through shared Data/dcont objects) and only run with
+## Sys.setenv(blavaan_slow_tests = "true").
 
 library("tinytest")
 library("lavaan")
@@ -193,6 +195,10 @@ for (j in seq_len(ncol(tmp2_lv))) {
 }
 })
 
+
+## NB: sections 3-14 below are slower and only run with
+## Sys.setenv(blavaan_slow_tests = "true")
+if (Sys.getenv("blavaan_slow_tests") == "true") {
 
 ## =============================================================================
 ## 3. Ordinal CFA

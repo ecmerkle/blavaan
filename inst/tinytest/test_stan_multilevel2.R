@@ -1,6 +1,6 @@
 ## tinytest file: Testing blavaan two-level (multilevel) models with Stan backend
 ##
-## Run with: tinytest::run_test_file("tinytest_stan_multilevel2.R")
+## Run with: tinytest::run_test_file("test_stan_multilevel2.R")
 ## or as part of a package: tinytest::test_package("blavaan")
 
 library("tinytest")
@@ -96,6 +96,11 @@ expect_true(
 )
 })
 
+## NB: this section is a variation on section 1 (just numeric vs named level
+## labels) with its own extra Stan fit, so it's gated as slow; only runs with
+## Sys.setenv(blavaan_slow_tests = "true").
+if (Sys.getenv("blavaan_slow_tests") == "true") {
+
 ## =============================================================================
 ## 2. Basic two-level CFA  (numeric levels: 1 / 2)
 ## =============================================================================
@@ -138,6 +143,8 @@ expect_true("ppp" %in% names(fm_12),
 expect_true(fm_12["ppp"] >= 0 & fm_12["ppp"] <= 1,
   info = "Numeric-level model: PPP should be in [0, 1]")
 })
+
+} ## end slow-test gate (section 2)
 
 ## =============================================================================
 ## 3. do.fit = FALSE  — model should be set up but not sampled
@@ -236,6 +243,11 @@ expect_true(length(chain_params) > 0,
   info = "MCMC chains should have named columns for parameters"
 )
 })
+
+## NB: sections 7-9 add their own extra Stan fit (bfit_lvs, save.lvs=TRUE)
+## that sections 8-9 also depend on, so they're gated together as slow; only
+## run with Sys.setenv(blavaan_slow_tests = "true").
+if (Sys.getenv("blavaan_slow_tests") == "true") {
 
 ## =============================================================================
 ## 7. Posterior predictive checks (ppmc)
@@ -391,6 +403,13 @@ expect_true("waic"  %in% names(fitMeasures(bfit_wb)),
   info = "fitMeasures() should include 'waic'")
 })
 
+} ## end slow-test gate (sections 7-9)
+
+## NB: sections 10-11 each fit their own multi-group multilevel model
+## (independent extra Stan fits), so they're gated as slow; only run with
+## Sys.setenv(blavaan_slow_tests = "true").
+if (Sys.getenv("blavaan_slow_tests") == "true") {
+
 ## =============================================================================
 ## 10. Multi-group two-level CFA
 ## =============================================================================
@@ -462,7 +481,7 @@ expect_true(
 ## (log_lik_x spans all groups for multilevel), over-counting by a factor of
 ## Ng for Ng>1 fixed.x models; fixed by slicing to each group's own r3:r4
 ## range. Ng=1 fixed.x models (tested elsewhere in this file/
-## tinytest_stan_multilevel_missing.R) can't detect this bug, since the
+## test_stan_multilevel_missing.R) can't detect this bug, since the
 ## over-count is a no-op when there's only one group.
 
 try({
@@ -518,4 +537,6 @@ expect_true(
   info = "multi-group two-level fixed.x: estimates should be within 0.5 SD of lavaan MLEs (would fail under the log_lik_x double-counting bug, which biases the fixed.x-adjusted likelihood surface)"
 )
 })
+
+} ## end slow-test gate (sections 10-11)
 

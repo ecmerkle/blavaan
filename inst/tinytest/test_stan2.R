@@ -1,6 +1,6 @@
 ## tinytest file: Testing blavaan models with Stan backend
 ##
-## Run with: tinytest::run_test_file("tinytest_stan2.R")
+## Run with: tinytest::run_test_file("test_stan2.R")
 ## or as part of a package: tinytest::test_package("blavaan")
 
 library("tinytest")
@@ -33,11 +33,28 @@ compll <- function(blavobject) {
 
 
 ## ensure lavaan function names have not changed
-lavmvh1 <- getFromNamespace("lav_mvnorm_missing_h1_estimate_moments", "lavaan")
+## (lav_mvnorm_missing_h1_estimate_moments/lav_mvnorm_missing_loglik_data/
+## lav_mvnorm_cluster_loglik_samplestats_2l/lav_mvnorm_cluster_em_estep_ranef
+## were renamed in lavaan 0.7-1; mirror the version-conditional lookups in
+## R/blav_model_loglik.R and R/lvgqs.R)
+newname <- packageDescription("lavaan")$Version >= "0.7-1"
+if (newname) {
+  lavmvh1 <- getFromNamespace("lav_mvn_mi_h1_est_moments", "lavaan")
+} else {
+  lavmvh1 <- getFromNamespace("lav_mvnorm_missing_h1_estimate_moments", "lavaan")
+}
 expect_true(inherits(lavmvh1, "function"))
-lavmvll <- getFromNamespace("lav_mvnorm_missing_loglik_data", "lavaan")
+if (newname) {
+  lavmvll <- getFromNamespace("lav_mvn_mi_loglik_data", "lavaan")
+} else {
+  lavmvll <- getFromNamespace("lav_mvnorm_missing_loglik_data", "lavaan")
+}
 expect_true(inherits(lavmvll, "function"))
-lav2ll <- getFromNamespace("lav_mvnorm_cluster_loglik_samplestats_2l", "lavaan")
+if (newname) {
+  lav2ll <- getFromNamespace("lav_mvn_cl_loglik_samp_2l", "lavaan")
+} else {
+  lav2ll <- getFromNamespace("lav_mvnorm_cluster_loglik_samplestats_2l", "lavaan")
+}
 expect_true(inherits(lav2ll, "function"))
 lavd <- getFromNamespace("lav_lavdata", "lavaan")
 expect_true(inherits(lavd, "function"))
@@ -45,7 +62,11 @@ lav_eeta <- getFromNamespace("lav_model_eeta", "lavaan")
 expect_true(inherits(lav_eeta, "function"))
 lav_implied22l <- getFromNamespace("lav_mvnorm_cluster_implied22l", "lavaan")
 expect_true(inherits(lav_implied22l, "function"))
-lav_estep <- getFromNamespace("lav_mvnorm_cluster_em_estep_ranef", "lavaan")
+if (newname) {
+  lav_estep <- getFromNamespace("lav_mvn_cl_em_estep_ranef", "lavaan")
+} else {
+  lav_estep <- getFromNamespace("lav_mvnorm_cluster_em_estep_ranef", "lavaan")
+}
 expect_true(inherits(lav_estep, "function"))
 lav_mi_estep <- getFromNamespace("lav_mvn_cl_mi_estep_ranef", "lavaan")
 expect_true(inherits(lav_mi_estep, "function"))
@@ -329,6 +350,13 @@ expect_true(fitMeasures(fit2, 'p_dic') > 19 && fitMeasures(fit2, 'p_dic') < 23)
 
 
 }) ## end try
+
+## NB: sections 1-4 above are a quick smoke test that always runs (basic
+## bsem/bcfa correctness, missing data, predict, blavCompare, sample.cov --
+## section 3 reuses section 2's fit2). Sections 5-36 below cover many more
+## model variations/edge cases and are slower, so they only run with
+## Sys.setenv(blavaan_slow_tests = "true").
+if (Sys.getenv("blavaan_slow_tests") == "true") {
 
 ## =============================================================================
 ## 5. std.lv=TRUE, where need to change sign of lv covs
@@ -1629,3 +1657,5 @@ p <- do.call(bayesplot::mcmc_pairs, list(x = distPPMC, pars = c("BRMSEA","BMc","
 expect_true(inherits(p, "bayesplot_grid"))
 
 }) ## end try
+
+}
