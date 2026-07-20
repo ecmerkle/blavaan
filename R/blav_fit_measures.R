@@ -1,14 +1,20 @@
+## NB: lavaan's fitMeasures()/fitmeasures() generics renamed their formal
+## arguments from fit.measures/baseline.model to fit_measures/baseline_model
+## (dot-style -> snake_case) in lavaan 0.7-1. A method whose formal names
+## don't match the generic's silently fails to bind positional/snake_case
+## arguments (they're swallowed by the generic's own defaults instead of
+## reaching this method), so these must track the generic's current names.
 setMethod("fitMeasures", signature(object = "blavaan"),
-function(object, fit.measures = "all", baseline.model = NULL) {
-    blav_fit_measures(object = object, fit.measures = fit.measures,
-                     baseline.model = baseline.model)
+function(object, fit_measures = "all", baseline_model = NULL, ...) {
+    blav_fit_measures(object = object, fit.measures = fit_measures,
+                     baseline.model = baseline_model)
 })
 
 # lowercase 'm'
 setMethod("fitmeasures", signature(object = "blavaan"),
-function(object, fit.measures = "all", baseline.model = NULL) {
-    blav_fit_measures(object = object, fit.measures = fit.measures,
-                     baseline.model = baseline.model)
+function(object, fit_measures = "all", baseline_model = NULL, ...) {
+    blav_fit_measures(object = object, fit.measures = fit_measures,
+                     baseline.model = baseline_model)
 })
 
 
