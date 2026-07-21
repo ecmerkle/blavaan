@@ -133,7 +133,8 @@ blavPredict <- function(object, newdata = NULL, type = "lv", level = 1L) {
 ## fill blavaan object with newdata, then sample lvs given already-sampled parameters
 blav_fill_newdata <- function(object, newdat, lvs = TRUE) {
 
-  if (packageDescription("lavaan")$Version > "0.6-20") {
+  newname <- packageDescription("lavaan")$Version > "0.6-20"
+  if (newname) {
     lavd <- getFromNamespace("lav_lavdata", "lavaan")
   } else {
     lavd <- getFromNamespace("lavData", "lavaan")
@@ -145,13 +146,24 @@ blav_fill_newdata <- function(object, newdat, lvs = TRUE) {
   clus <- olddata@cluster
   if (length(clus) == 0L) clus <- NULL
 
-  object@Data <- lavd(data = newdat,
-                      group = grp,
-                      cluster = clus,
-                      ov.names = olddata@ov.names,
-                      ov.names.x = olddata@ov.names.x,
-                      ordered = OV$name[ OV$type == "ordered" ],
-                      lavoptions = object@Options, allow.single.case = TRUE)
+  ## lav_lavdata() (new in lavaan 0.7-1, replacing lavData()) renamed
+  ## ov.names/ov.names.x/allow.single.case to the underscore-style
+  ## ov_names/ov_names_x/allow_single_case
+  lavdargs <- list(data = newdat,
+                    group = grp,
+                    cluster = clus,
+                    ordered = OV$name[ OV$type == "ordered" ],
+                    lavoptions = object@Options)
+  if (newname) {
+    lavdargs$ov_names <- olddata@ov.names
+    lavdargs$ov_names_x <- olddata@ov.names.x
+    lavdargs$allow_single_case <- TRUE
+  } else {
+    lavdargs$ov.names <- olddata@ov.names
+    lavdargs$ov.names.x <- olddata@ov.names.x
+    lavdargs$allow.single.case <- TRUE
+  }
+  object@Data <- do.call(lavd, lavdargs)
 
   ## hacks for things that lavd missed
   if ("ov.idx" %in% names(olddata@Lp[[1]])) object@Data@Lp[[1]]$ov.idx <- olddata@Lp[[1]]$ov.idx
