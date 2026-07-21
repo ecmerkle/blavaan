@@ -332,6 +332,23 @@ blavaan <- function(...,  # default lavaan arguments
         ## if no missing, set missing = "listwise" to avoid meanstructure if possible
         if(!any(is.na(unlist(lavInspect(LAV, 'data'))))){
             dotdotdot$missing <- "listwise"
+            ## bcfa()/bsem() unconditionally default int.ov.free=TRUE (see their
+            ## defparms), and lavaan's own option-setting ties int.ov.free=TRUE to
+            ## meanstructure=TRUE regardless of the missing="listwise" choice just
+            ## above -- undoing the point of avoiding meanstructure here. Turn it
+            ## back off (unless the user explicitly asked for a mean structure,
+            ## directly via meanstructure= or implicitly by supplying
+            ## sample.mean=, which would otherwise be silently ignored) so
+            ## complete-data stan/cmdstan fits match plain lavaan's cfa()/sem()
+            ## default of no mean structure. Skip this for two-level (cluster)
+            ## models: their between-level intercepts are structurally required
+            ## (lavaan forces meanstructure=TRUE for cluster models regardless),
+            ## so forcing int.ov.free off here would silently fix those
+            ## between-level intercepts at 0 instead of estimating them.
+            if(!("meanstructure" %in% dotNames) && !("sample.mean" %in% dotNames) &&
+               !("cluster" %in% dotNames)) {
+                dotdotdot$int.ov.free <- FALSE
+            }
         } else {
             if("cluster" %in% dotNames) {
                 ## between-level fixed.x + missing data is blocked: lavaan's
@@ -367,6 +384,18 @@ blavaan <- function(...,  # default lavaan arguments
                 if(is.null(dotdotdot$missing)) dotdotdot$missing <- "ml.x"
             }
         }
+    } else if(LAV@Data@data.type == "moment" && target %in% c("stan", "cmdstan")){
+        ## sample.cov (moment) input has no sample mean vector, and
+        ## meanstructure is disallowed together with sample.cov (see the
+        ## stop() above) -- but bcfa()/bsem()'s hardcoded int.ov.free=TRUE
+        ## default still ties to meanstructure=TRUE via lavaan's own
+        ## option-setting regardless of data.type, which then crashes
+        ## downstream ("sample_mean= argument is missing, but model contains
+        ## mean/intercept parameters") since no sample mean was ever
+        ## supplied. Turn it off to match the no-meanstructure design already
+        ## enforced for sample.cov (cluster + sample.cov is also already
+        ## blocked above, so no cluster exclusion is needed here).
+        dotdotdot$int.ov.free <- FALSE
     }
 
     if(jag.do.fit){
