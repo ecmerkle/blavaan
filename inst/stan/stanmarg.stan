@@ -1,6 +1,12 @@
 /* This file is based on LERSIL.stan by Ben Goodrich.
    https://github.com/bgoodri/LERSIL */
 functions { // you can use these in R following `rstan::expose_stan_functions("foo.stan")`
+  // reduce_sum() partial sum for the single-level raw-data likelihood
+  real partial_sum_lpdf(array[] vector slice_YXstar, int start, int end,
+                        vector Mu_sub, matrix Sigma_sub) {
+    return multi_normal_lpdf(slice_YXstar | Mu_sub, Sigma_sub);
+  }
+
   // mimics lav_mvnorm_cluster_implied22l():
   matrix calc_W_tilde(matrix sigma_w, vector mu_w, array[] int var1_idx, int p_tilde) {
     matrix[p_tilde, p_tilde + 1] out = rep_matrix(0, p_tilde, p_tilde + 1); // first column is mean vector
@@ -1448,6 +1454,8 @@ data {
   int<lower=0, upper=1> pri_only;
   int<lower=0> emiter; // number of em iterations for saturated model in ppp (missing data only)
   int<lower=0, upper=1> use_suff; // should we compute likelihood via mvn sufficient stats?
+  int<lower=0, upper=1> use_wcp; // use reduce_sum() within-chain parallelization?
+  int<lower=1> grainsize; // reduce_sum() grainsize; 1 lets Stan auto-choose
   int<lower=0, upper=1> do_test; // should we do everything in generated quantities?
   array[Np] vector[multilev ? p_tilde : p + q - Nord] YXbar; // sample means of continuous manifest variables
   array[Np] matrix[multilev ? (p_tilde + 1) : (p + q - Nord + 1), multilev ? (p_tilde + 1) : (p + q - Nord + 1)] S;     // sample covariance matrix among all continuous manifest variables NB!! multiply by (N-1) to use wishart lpdf!!
@@ -2654,7 +2662,12 @@ model { // N.B.: things declared in the model block do not get saved in the outp
       r2 = endrow[mm];
 
       if (!use_suff) {
-	target += multi_normal_lpdf(YXstar[r1:r2,1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+	if (use_wcp) {
+	  target += reduce_sum(partial_sum_lpdf, YXstar[r1:r2, 1:Nobs[mm]], grainsize,
+			       Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+	} else {
+	  target += multi_normal_lpdf(YXstar[r1:r2,1:Nobs[mm]] | Mu[grpidx, obsidx[1:Nobs[mm]]], Sigma[grpidx, obsidx[1:Nobs[mm]], obsidx[1:Nobs[mm]]]);
+	}
 
 	if (Nx[mm] > 0) {
 	  target += -1.0 * multi_normal_lpdf(YXstar[r1:r2,xdatidx[1:Nx[mm]]] | Mu[grpidx, xidx[1:Nx[mm]]], Sigma[grpidx, xidx[1:Nx[mm]], xidx[1:Nx[mm]]]);

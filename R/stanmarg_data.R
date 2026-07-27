@@ -331,6 +331,9 @@ stanmarg_data <- function(YX = NULL, S = NULL, YXo = NULL, N, Ng, grpnum, # data
   dat$use_suff <- 1L
   if (ord | multilev) dat$use_suff <- 0L
 
+  dat$use_wcp <- 0L # reduce_sum() within-chain parallelization; off by default
+  dat$grainsize <- 1L
+
   dat$has_data <- 0L
   dat$use_cov <- 0L
   if (pri_only) {

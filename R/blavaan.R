@@ -813,9 +813,12 @@ blavaan <- function(...,  # default lavaan arguments
                     } else {
                       obj <- stanmodels$stanmarg
                     }
+                    cppopt <- list()
+                    if(isTRUE(as.logical(jagtrans$data$use_wcp))) cppopt <- list(stan_threads = TRUE)
                     blavmod <- cmdstanr::cmdstan_model(cmdstanr::write_stan_file(obj@model_code,
                                                                                  dir = fdir,
-                                                                                 basename = fname) )
+                                                                                 basename = fname),
+                                                        cpp_options = cppopt)
                     rjcall <- blavmod$sample
                 } else {
                     rjcall <- "sampling"

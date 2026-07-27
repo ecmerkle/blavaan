@@ -109,6 +109,11 @@ expect_true(inherits(bsem(model, data=PoliticalDemocracy, target=mytarg, do.fit=
 expect_true(inherits(bsem(model, data=PoliticalDemocracy, target=mytarg, do.fit=FALSE, jagfile=TRUE,
                           mcmcextra = list(data=list(emiter=30), monitor="log_lik_rep_sat")), "blavaan"))
 
+## reduce_sum() within-chain parallelization toggle: should fit without error
+fit_wcp <- bsem(model, data=PoliticalDemocracy, target=mytarg, burnin=20, sample=20,
+                mcmcextra = list(data=list(use_wcp=1L, grainsize=1L)))
+expect_true(inherits(fit_wcp, "blavaan"))
+
 fit <- bsem(model, data=PoliticalDemocracy, target=mytarg, burnin=20, sample=20, prisamp=TRUE, wiggle="a", wiggle.sd=.1)
 expect_true(inherits(fit, "blavaan"))
 
