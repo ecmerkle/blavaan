@@ -3,12 +3,19 @@ library("blavaan", quietly = TRUE)
 
 ## check that jags is installed
 hasjags <- !all(Sys.which(c("jags", "jags-terminal")) == "")
-  
+
+## stanclassic recompiles a fresh stan model per test, which is too slow/
+## heavyweight for routine CI (e.g. r-universe); only run it with
+## Sys.setenv(blavaan_slow_tests = "true")
+slow <- Sys.getenv("blavaan_slow_tests") == "true"
+
 ## short examples to test functionality
 set.seed(341)
 
-## seems to be needed for stanclassic:
-options(future.globals.maxSize = 1.0 * 1e9)
+if (slow) {
+  ## seems to be needed for stanclassic:
+  options(future.globals.maxSize = 1.0 * 1e9)
+}
 
 x1 <- rnorm(100)
 y1 <- 0.5 + 2*x1 + rnorm(100)
@@ -25,8 +32,12 @@ model <- ' y1 ~ prior("normal(0,1)")*x1 '
 fitstan <- bsem(model, data=Data, fixed.x=TRUE, burnin=20,
                 sample=20, target="stan", group="g", seed=1, meanstructure=TRUE)
 
-fitstanc <- bsem(model, data=Data, fixed.x=TRUE, burnin=20,
-                 sample=20, target="stanclassic", group="g", seed=1)
+if (slow) {
+  fitstanc <- bsem(model, data=Data, fixed.x=TRUE, burnin=20,
+                   sample=20, target="stanclassic", group="g", seed=1)
+} else {
+  fitstanc <- NULL
+}
 
 ## for checking factor score functionality
 HS.model <- ' visual  =~ x1 + x2 + x3
@@ -40,29 +51,30 @@ options(mc.cores = 1L)
 
 ## classes
 expect_equal(class(fitstan@external), "list")
-expect_equal(class(fitstanc@external), "list")
+if (slow) expect_equal(class(fitstanc@external), "list")
 
 ## parameter summaries
 expect_equal(dim(parTable(fitstan)), c(10,24))
-expect_equal(dim(parTable(fitstanc)), c(10,21))    
+if (slow) expect_equal(dim(parTable(fitstanc)), c(10,21))
 expect_equal(sum(fitstan@ParTable$free > 0, na.rm = TRUE),
              length(blavInspect(fitstan, 'psrf')))
-expect_equal(sum(fitstanc@ParTable$free > 0, na.rm = TRUE),
+if (slow) expect_equal(sum(fitstanc@ParTable$free > 0, na.rm = TRUE),
              length(blavInspect(fitstanc, 'psrf')))
-    
+
 ## fitMeasures
-expect_equal(length(fitMeasures(fitstan)),
+if (slow) expect_equal(length(fitMeasures(fitstan)),
              length(fitMeasures(fitstanc)))
 
 ## this is how summary() obtains its results, but have not figured out
 ## how to get S4 methods to directly work in testthat
 expect_equal(dim(parameterEstimates(fitstan)), c(10, 6))
-expect_equal(dim(parameterEstimates(fitstanc)), c(10, 6))
+if (slow) expect_equal(dim(parameterEstimates(fitstanc)), c(10, 6))
 
-expect_equal(dim(standardizedposterior(fitstanc)),
+if (slow) expect_equal(dim(standardizedposterior(fitstanc)),
              dim(standardizedposterior(fitstan)))
 
-## various blavInspect args
+## various blavInspect args (stanclassic comparisons only run under blavaan_slow_tests)
+if (slow) {
 expect_equal(length(blavInspect(fitstan, 'psrf')),
              length(blavInspect(fitstanc, 'psrf')))
 
@@ -80,6 +92,7 @@ expect_equal(dim(blavInspect(fitstan, 'hpd')),
 
 expect_equal(dim(standardizedposterior(fitstan)),
              dim(standardizedposterior(fitstanc)))
+}
 
 
 if (hasjags) {
@@ -88,13 +101,13 @@ if (hasjags) {
   expect_equal(sum(fitjags@ParTable$free > 0, na.rm = TRUE),
                length(blavInspect(fitjags, 'psrf')))
   expect_equal(fitjags@ParTable$free, fitstan@ParTable$free)
-  expect_equal(fitjags@ParTable$free, fitstanc@ParTable$free)
+  if (slow) expect_equal(fitjags@ParTable$free, fitstanc@ParTable$free)
   expect_equal(nrow(parTable(fitjags)), nrow(parTable(fitstan)))
-  expect_equal(nrow(parTable(fitjags)), nrow(parTable(fitstanc)))
+  if (slow) expect_equal(nrow(parTable(fitjags)), nrow(parTable(fitstanc)))
   expect_error(blavInspect(fitjags, 'blah'))
   expect_equal(length(fitMeasures(fitjags)),
                length(fitMeasures(fitstan)))
-  expect_equal(length(fitMeasures(fitjags)),
+  if (slow) expect_equal(length(fitMeasures(fitjags)),
                length(fitMeasures(fitstanc)))
   expect_equal(dim(parameterEstimates(fitjags)), c(10, 6))
 
@@ -139,11 +152,13 @@ expect_silent(p <- plot(fitstan, plot.type = "hist", showplot = FALSE))
 expect_silent(p <- plot(fitstan, 1:4, plot.type = "dens", showplot = FALSE))
 expect_silent(p <- plot(fitstan, c(2,4), plot.type = "scatter", showplot = FALSE))
 
+if (slow) {
 expect_silent(p <- plot(fitstanc, showplot = FALSE))
 expect_silent(p <- plot(fitstanc, 1:4, showplot = FALSE))
 expect_silent(p <- plot(fitstanc, plot.type = "hist", showplot = FALSE))
 expect_silent(p <- plot(fitstanc, 1:4, plot.type = "dens", showplot = FALSE))
 expect_silent(p <- plot(fitstanc, c(2,4), plot.type = "scatter", showplot = FALSE))
+}
 
 if (hasjags) {
   expect_silent(p <- plot(fitjags, showplot = FALSE))
@@ -196,7 +211,7 @@ expect_equal(class(summary(bf_mm_res))[1], "lavaan.data.frame")
 expect_true("p_loo" %in% names(bf_mm_res@details$pD))
 
 ## blavPredict
-expect_error(blavPredict(fitstanc))
+if (slow) expect_error(blavPredict(fitstanc))
 if (hasjags) expect_error(blavPredict(fitjags))
   
 expect_equal(dim(blavPredict(fitstanfs)[[1]]), c(301,2))

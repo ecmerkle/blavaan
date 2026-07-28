@@ -1613,9 +1613,13 @@ bcfa.model.expressions.stan <- '
 # For x=80, posterior is N(80.00, 3.33)
 # For x=96, posterior is N(91.08, 3.33)
 
+## stanclassic recompiles a fresh stan model per test, too slow/heavyweight
+## for routine CI (e.g. r-universe); only run with blavaan_slow_tests="true"
+if (Sys.getenv("blavaan_slow_tests") == "true") {
 fit <- bcfa(bcfa.model.expressions.stan, burnin=300, sample=3000, target="stanclassic",  save.lvs=TRUE, test="none", data=test.data)
 tmp <- blavInspect(fit, 'lvmeans')
 expect_true(max(abs(tmp - c(73.08, 80, 91.08))) < .25)
+}
 
 fit <- bcfa(bcfa.model.expressions.stan, burnin=300, sample=2000, save.lvs=TRUE, test="none", data=test.data, target=mytarg)
 tmp <- blavInspect(fit, 'lvmeans')
@@ -1636,9 +1640,13 @@ blavaan.model.expressions.stan <- '
 '
 
 ## analytic posterior of variance is inv-gamma(10,534.5) with post mean 59.39 and sd 21
+## stanclassic recompiles a fresh stan model per test, too slow/heavyweight
+## for routine CI (e.g. r-universe); only run with blavaan_slow_tests="true"
+if (Sys.getenv("blavaan_slow_tests") == "true") {
 fit <- blavaan(blavaan.model.expressions.stan, burnin=300, sample=4000, target="stanclassic",  test="none", data=test.data)
 expect_true(abs(59.39 - fit@external$stansumm['theta[1,1,1]', 'mean']) < 2*(21/sqrt(10000))) ## posterior sd is 21, so se is about 21/sqrt(nsamps), and we want to be within 2 ses
 expect_true(abs(21 - fit@external$stansumm['theta[1,1,1]', 'sd']) < 1)
+}
 
 fit <- blavaan(blavaan.model.expressions.stan, burnin=1000, sample=10000, test="none", data=test.data, target=mytarg)
 expect_true(abs(59.39 - fit@external$stansumm['Theta_var[1]', 'mean']) < 2*(21/sqrt(30000)))
