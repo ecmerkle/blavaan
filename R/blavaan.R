@@ -814,7 +814,22 @@ blavaan <- function(...,  # default lavaan arguments
                       obj <- stanmodels$stanmarg
                     }
                     cppopt <- list()
-                    if(isTRUE(as.logical(jagtrans$data$use_wcp))) cppopt <- list(stan_threads = TRUE)
+                    if(isTRUE(as.logical(jagtrans$data$use_wcp))) {
+                        cppopt <- list(stan_threads = TRUE)
+                        if(is.null(rjarg$threads_per_chain)) {
+                            ncores <- tryCatch(future::availableCores(omit = 1L),
+                                               error = function(e) NA)
+                            if(is.na(ncores) || ncores < 1) ncores <- 1
+                            deftpc <- max(1L, ncores %/% n.chains)
+                            warning("blavaan WARNING: use_wcp is set but bcontrol$threads_per_chain ",
+                                    "was not supplied, so reduce_sum() would run single-threaded ",
+                                    "with no speedup; defaulting to ", deftpc, " thread(s) per chain (",
+                                    "based on ", ncores, " available cores / ", n.chains,
+                                    " chains, leaving one core free). Set bcontrol = ",
+                                    "list(threads_per_chain = <n>) to override.", call. = FALSE)
+                            rjarg$threads_per_chain <- deftpc
+                        }
+                    }
                     blavmod <- cmdstanr::cmdstan_model(cmdstanr::write_stan_file(obj@model_code,
                                                                                  dir = fdir,
                                                                                  basename = fname),
