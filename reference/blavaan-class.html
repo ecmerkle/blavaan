@@ -15,7 +15,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-10.1460</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-10.1461</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -175,7 +175,7 @@ the independence model) (if available).</p></dd>
      fit.measures = FALSE, estimates = TRUE, ci = TRUE,
      standardized = FALSE, rsquare = FALSE, std.nox = FALSE,
      psrf = TRUE, neff = FALSE, postmedian = FALSE, postmode = FALSE,
-     priors = TRUE, bf = FALSE, nd = 3L)</code>:
+     priors = TRUE, bf = FALSE, level = .95, hpd = FALSE, nd = 3L)</code>:
       Print a nice summary of the model estimates.
       If <code>header = TRUE</code>, the header section (including fit measures) is
       printed.
@@ -184,6 +184,15 @@ the independence model) (if available).</p></dd>
       If <code>estimates = TRUE</code>, print the parameter estimates section.
       If <code>ci = TRUE</code>, add confidence intervals to the parameter estimates
       section.
+      <code>level</code> sets the credible-interval mass (default .95), and
+      <code>hpd = TRUE</code> switches from an equal-tailed quantile interval to a
+      highest-posterior-density interval. Both are computed directly from the
+      MCMC draws for free <em>and</em> defined (<code>:=</code>) parameters, for
+      <code>target = "stan"</code>/<code>"cmdstan"</code> fits (for other targets, the
+      interval is unaffected by <code>level</code>/<code>hpd</code>). <code>psrf</code>,
+      <code>neff</code>, <code>postmedian</code>, and <code>postmode</code> are likewise now
+      reported for defined parameters under <code>target = "stan"</code>/
+      <code>"cmdstan"</code>, rather than left blank.
       If <code>standardized = TRUE</code>,
       the standardized solution is also printed.  Note that <em>SE</em>s and
       tests are still based on unstandardized estimates. Use

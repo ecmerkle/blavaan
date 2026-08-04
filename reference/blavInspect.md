@@ -50,7 +50,9 @@ documentation.
 - `"rhat"`::
 
   Each parameter's potential scale reduction factor for convergence
-  assessment. Can also use "psrf" instead of "rhat"
+  assessment. Can also use "psrf" instead of "rhat". For
+  `target = "stan"`/`"cmdstan"`, this also includes each defined (`:=`)
+  parameter, appended after the free parameters.
 
 - `"ac.10"`::
 
@@ -59,7 +61,8 @@ documentation.
 - `"neff"`::
 
   Each parameters effective sample size, taking into account
-  autocorrelation.
+  autocorrelation. For `target = "stan"`/`"cmdstan"`, this also includes
+  each defined (`:=`) parameter, appended after the free parameters.
 
 - `"mcmc"`::
 
@@ -86,15 +89,21 @@ documentation.
 
 - `"postmode"`::
 
-  Estimated posterior mode of each free parameter.
+  Estimated posterior mode of each free parameter (and, for
+  `target = "stan"`/`"cmdstan"`, each defined (`:=`) parameter, appended
+  after the free parameters).
 
 - `"postmean"`::
 
-  Estimated posterior mean of each free parameter.
+  Estimated posterior mean of each free parameter (and, for
+  `target = "stan"`/`"cmdstan"`, each defined (`:=`) parameter, appended
+  after the free parameters).
 
 - `"postmedian"`::
 
-  Estimated posterior median of each free parameter.
+  Estimated posterior median of each free parameter (and, for
+  `target = "stan"`/`"cmdstan"`, each defined (`:=`) parameter, appended
+  after the free parameters).
 
 - `"lvs"`::
 
@@ -109,9 +118,19 @@ documentation.
 
 - `"hpd"`::
 
-  HPD interval of each free parameter. In this case, the `prob` argument
-  can be used to specify a number in (0,1) reflecting the desired
-  percentage of the interval.
+  HPD interval of each free parameter, plus each defined (`:=`)
+  parameter for `target = "stan"`/`"cmdstan"`. In this case, the `prob`
+  (or `level`) argument can be used to specify a number in (0,1)
+  reflecting the desired percentage of the interval.
+
+- `"ci"`::
+
+  Equal-tailed quantile credible interval of each free parameter, plus
+  each defined (`:=`) parameter for `target = "stan"`/`"cmdstan"`,
+  computed directly from the MCMC draws (as opposed to a Gaussian
+  approximation). The `prob` (or `level`) argument specifies a number in
+  (0,1) reflecting the desired percentage of the interval; default is
+  .95.
 
 ## See also
 
@@ -137,5 +156,6 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939,
 # extract information
 blavInspect(fit, "psrf")
 blavInspect(fit, "hpd", prob = .9)
+blavInspect(fit, "ci", level = .9)
 } # }
 ```

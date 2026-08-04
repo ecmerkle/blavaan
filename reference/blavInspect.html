@@ -11,7 +11,7 @@ fitted blavaan object. This is similar to lavaan's lavInspect() function."></hea
 
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-10.1460</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-10.1461</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -98,13 +98,18 @@ documentation.</p>
 
   <dt><code>"rhat"</code>:</dt>
 <dd><p>Each parameter's potential scale reduction
-    factor for convergence assessment. Can also use "psrf" instead of "rhat"</p></dd>
+    factor for convergence assessment. Can also use "psrf" instead of "rhat".
+    For <code>target = "stan"</code>/<code>"cmdstan"</code>, this also includes each
+    defined (<code>:=</code>) parameter, appended after the free parameters.</p></dd>
 
   <dt><code>"ac.10"</code>:</dt>
 <dd><p>Each parameter's estimated lag-10 autocorrelation.</p></dd>
 
   <dt><code>"neff"</code>:</dt>
-<dd><p>Each parameters effective sample size, taking into account autocorrelation.</p></dd>
+<dd><p>Each parameters effective sample size, taking into
+    account autocorrelation. For <code>target = "stan"</code>/<code>"cmdstan"</code>,
+    this also includes each defined (<code>:=</code>) parameter, appended after the
+    free parameters.</p></dd>
 
   <dt><code>"mcmc"</code>:</dt>
 <dd><p>An object of class <code>mcmc</code> containing the individual parameter draws from the MCMC run. Aliases: <code>"draws"</code>, <code>"samples"</code>.</p></dd>
@@ -124,13 +129,19 @@ documentation.</p>
 <dd><p>Default prior distributions used for each type of model parameter.</p></dd>
 
   <dt><code>"postmode"</code>:</dt>
-<dd><p>Estimated posterior mode of each free parameter.</p></dd>
+<dd><p>Estimated posterior mode of each free parameter
+    (and, for <code>target = "stan"</code>/<code>"cmdstan"</code>, each defined
+    (<code>:=</code>) parameter, appended after the free parameters).</p></dd>
 
   <dt><code>"postmean"</code>:</dt>
-<dd><p>Estimated posterior mean of each free parameter.</p></dd>
+<dd><p>Estimated posterior mean of each free parameter
+    (and, for <code>target = "stan"</code>/<code>"cmdstan"</code>, each defined
+    (<code>:=</code>) parameter, appended after the free parameters).</p></dd>
 
   <dt><code>"postmedian"</code>:</dt>
-<dd><p>Estimated posterior median of each free parameter.</p></dd>
+<dd><p>Estimated posterior median of each free
+    parameter (and, for <code>target = "stan"</code>/<code>"cmdstan"</code>, each defined
+    (<code>:=</code>) parameter, appended after the free parameters).</p></dd>
 
   <dt><code>"lvs"</code>:</dt>
 <dd><p>An object of class <code>mcmc</code> containing latent variable (factor score) draws. In two-level models, use <code>level = 1</code> or <code>level = 2</code> to specify which factor scores you want.</p></dd>
@@ -139,7 +150,18 @@ documentation.</p>
 <dd><p>A matrix of mean factor scores (rows are observations, columns are variables). Use the additional <code>level</code> argument in the same way.</p></dd>
 
   <dt><code>"hpd"</code>:</dt>
-<dd><p>HPD interval of each free parameter. In this case, the <code>prob</code> argument can be used to specify a number in (0,1) reflecting the desired percentage of the interval.</p></dd>
+<dd><p>HPD interval of each free parameter, plus each defined
+    (<code>:=</code>) parameter for <code>target = "stan"</code>/<code>"cmdstan"</code>. In this
+    case, the <code>prob</code> (or <code>level</code>) argument can be used to specify a
+    number in (0,1) reflecting the desired percentage of the interval.</p></dd>
+
+  <dt><code>"ci"</code>:</dt>
+<dd><p>Equal-tailed quantile credible interval of each free
+    parameter, plus each defined (<code>:=</code>) parameter for
+    <code>target = "stan"</code>/<code>"cmdstan"</code>, computed directly from the MCMC
+    draws (as opposed to a Gaussian approximation). The <code>prob</code> (or
+    <code>level</code>) argument specifies a number in (0,1) reflecting the desired
+    percentage of the interval; default is .95.</p></dd>
 
 
 </dl></div>
@@ -164,6 +186,7 @@ documentation.</p>
 <span class="r-in"><span><span class="co"># extract information</span></span></span>
 <span class="r-in"><span><span class="fu">blavInspect</span><span class="op">(</span><span class="va">fit</span>, <span class="st">"psrf"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">blavInspect</span><span class="op">(</span><span class="va">fit</span>, <span class="st">"hpd"</span>, prob <span class="op">=</span> <span class="fl">.9</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">blavInspect</span><span class="op">(</span><span class="va">fit</span>, <span class="st">"ci"</span>, level <span class="op">=</span> <span class="fl">.9</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-10.1460</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-10.1461</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,6 +56,23 @@
       <small>Source: <a href="https://github.com/ecmerkle/blavaan/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.6-1" id="version-06-1">Version 0.6-1<a class="anchor" aria-label="anchor" href="#version-06-1"></a></h2>
+<div class="section level3">
+<h3 id="new-features-0-6-1">New features<a class="anchor" aria-label="anchor" href="#new-features-0-6-1"></a></h3>
+<ul><li><p>Two-level (multilevel) models now support real missing data (FIML/MAR) by default, including fixed.x covariates at the within level and posterior predictive checks (ppp).</p></li>
+<li><p>The previous MUML method-of-moments approximation for two-level ppp is replaced by an EM-based saturated-model fit that also works under missingness.</p></li>
+<li><p>Optional within-chain parallelization for single-level models via Stan’s reduce_sum() (bcontrol argument use_wcp). Real speedups require target = “cmdstan”, which recompiles the model with threading support; threads_per_chain now defaults sensibly (and warns) from the number of available cores when use_wcp is set but threads_per_chain is not.</p></li>
+<li><p>New tidy() and glance() methods (via the generics package) for extracting parameter estimates and model-level summaries as data frames. (contributed by Michael Truong)</p></li>
+<li><p>blavInspect(fit, “ci”, level = ) provides equal-tailed MCMC-sample-based credible intervals of any width, alongside the existing “hpd” option; summary() and tidy() gain level/hpd arguments and now compute correct MCMC-based credible intervals, Rhat, effective sample size, and posterior median/mode for defined (:=) parameters under target = “stan”/“cmdstan”, instead of a Gaussian delta-method approximation for the interval and blank/NA for the rest (issues <a href="https://github.com/ecmerkle/blavaan/issues/2" class="external-link">#2</a>, <a href="https://github.com/ecmerkle/blavaan/issues/98" class="external-link">#98</a>).</p></li>
+<li><p>Compatibility updates for lavaan 0.7-1 and later, which renamed a number of internal functions/arguments that blavaan relies on (affecting, e.g., fitMeasures(), blavPredict(newdata = …), and summary()); the lavaan dependency has been bumped accordingly.</p></li>
+<li><p>Various other bug fixes, including: incorrect psi/theta correlation-block prior matching for multi-group two-level (multilevel) models; ppmc()/blavFitIndices(rescale = “mcmc”) failing with a “subscript out of bounds” error for models with more than one group; and blavCompare() output relying on row/column position (now named) rather than being robust to formatting changes in underlying packages.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="bugsglitches-0-6-1">Bugs/glitches:<a class="anchor" aria-label="anchor" href="#bugsglitches-0-6-1"></a></h3>
+<ul><li>plot() does not display certain level 2 parameters in two-level models.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5-10" id="version-05-10">Version 0.5-10<a class="anchor" aria-label="anchor" href="#version-05-10"></a></h2><p class="text-muted">CRAN release: 2026-01-20</p>
 <div class="section level3">

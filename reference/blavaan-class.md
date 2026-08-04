@@ -128,15 +128,22 @@ Objects can be created via the
 
 - summary:
 
-  `signature(object = "blavaan", header = TRUE, fit.measures = FALSE, estimates = TRUE, ci = TRUE, standardized = FALSE, rsquare = FALSE, std.nox = FALSE, psrf = TRUE, neff = FALSE, postmedian = FALSE, postmode = FALSE, priors = TRUE, bf = FALSE, nd = 3L)`:
+  `signature(object = "blavaan", header = TRUE, fit.measures = FALSE, estimates = TRUE, ci = TRUE, standardized = FALSE, rsquare = FALSE, std.nox = FALSE, psrf = TRUE, neff = FALSE, postmedian = FALSE, postmode = FALSE, priors = TRUE, bf = FALSE, level = .95, hpd = FALSE, nd = 3L)`:
   Print a nice summary of the model estimates. If `header = TRUE`, the
   header section (including fit measures) is printed. If
   `fit.measures = TRUE`, additional fit measures are added to the header
   section. If `estimates = TRUE`, print the parameter estimates section.
   If `ci = TRUE`, add confidence intervals to the parameter estimates
-  section. If `standardized = TRUE`, the standardized solution is also
-  printed. Note that *SE*s and tests are still based on unstandardized
-  estimates. Use
+  section. `level` sets the credible-interval mass (default .95), and
+  `hpd = TRUE` switches from an equal-tailed quantile interval to a
+  highest-posterior-density interval. Both are computed directly from
+  the MCMC draws for free *and* defined (`:=`) parameters, for
+  `target = "stan"`/`"cmdstan"` fits (for other targets, the interval is
+  unaffected by `level`/`hpd`). `psrf`, `neff`, `postmedian`, and
+  `postmode` are likewise now reported for defined parameters under
+  `target = "stan"`/ `"cmdstan"`, rather than left blank. If
+  `standardized = TRUE`, the standardized solution is also printed. Note
+  that *SE*s and tests are still based on unstandardized estimates. Use
   [`standardizedSolution`](https://rdrr.io/pkg/lavaan/man/standardizedSolution.html)
   to obtain *SE*s and test statistics for standardized estimates. If
   `rsquare=TRUE`, the R-Square values for the dependent variables in the

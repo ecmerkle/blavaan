@@ -12,6 +12,8 @@ tidy(
   x,
   estimate.method = c("mean", "median", "mode"),
   conf.int = TRUE,
+  level = 0.95,
+  hpd = FALSE,
   rhat = TRUE,
   ess = TRUE,
   priors = TRUE,
@@ -39,6 +41,20 @@ tidy(
 
   Logical indicating whether to include credible intervals. Default is
   `TRUE`.
+
+- level:
+
+  The credible-interval mass to use when `conf.int = TRUE`, e.g. `.90`
+  for a 90% interval. Default is `.95`. Computed from the MCMC draws
+  (via [`blavInspect`](https://blavaan.org/reference/blavInspect.md))
+  for both free and defined (`:=`) parameters; only applies for
+  `target = "stan"`/ `"cmdstan"` fits.
+
+- hpd:
+
+  Logical. If `TRUE`, the credible interval is a
+  highest-posterior-density interval instead of the default equal-tailed
+  quantile interval. Default is `FALSE`.
 
 - rhat:
 
@@ -89,11 +105,13 @@ A `data.frame` with columns:
 
 - conf.low:
 
-  Lower bound of 95% credible interval (if `conf.int = TRUE`)
+  Lower bound of the credible interval, width set by `level` (if
+  `conf.int = TRUE`)
 
 - conf.high:
 
-  Upper bound of 95% credible interval (if `conf.int = TRUE`)
+  Upper bound of the credible interval, width set by `level` (if
+  `conf.int = TRUE`)
 
 - std.lv:
 
