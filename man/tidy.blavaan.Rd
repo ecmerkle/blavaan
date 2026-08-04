@@ -8,6 +8,8 @@
   x,
   estimate.method = c("mean", "median", "mode"),
   conf.int = TRUE,
+  level = 0.95,
+  hpd = FALSE,
   rhat = TRUE,
   ess = TRUE,
   priors = TRUE,
@@ -28,6 +30,16 @@ estimate from the standard \code{summary()} output regardless of
 \item{conf.int}{Logical indicating whether to include credible intervals.
 Default is \code{TRUE}.}
 
+\item{level}{The credible-interval mass to use when \code{conf.int = TRUE},
+e.g. \code{.90} for a 90\% interval. Default is \code{.95}. Computed from
+the MCMC draws (via \code{\link{blavInspect}}) for both free and defined
+(\code{:=}) parameters; only applies for \code{target = "stan"}/
+\code{"cmdstan"} fits.}
+
+\item{hpd}{Logical. If \code{TRUE}, the credible interval is a
+highest-posterior-density interval instead of the default equal-tailed
+quantile interval. Default is \code{FALSE}.}
+
 \item{rhat}{Logical indicating whether to include the Rhat convergence
 diagnostic. Default is \code{TRUE}.}
 
@@ -47,8 +59,10 @@ A \code{data.frame} with columns:
   \item{group}{Group number (for multigroup models)}
   \item{estimate}{Posterior summary statistic determined by \code{estimate.method}}
   \item{std.error}{Posterior standard deviation}
-  \item{conf.low}{Lower bound of 95\% credible interval (if \code{conf.int = TRUE})}
-  \item{conf.high}{Upper bound of 95\% credible interval (if \code{conf.int = TRUE})}
+  \item{conf.low}{Lower bound of the credible interval, width set by
+    \code{level} (if \code{conf.int = TRUE})}
+  \item{conf.high}{Upper bound of the credible interval, width set by
+    \code{level} (if \code{conf.int = TRUE})}
   \item{std.lv}{Standardized estimates based on the variances of the
     (continuous) latent variables only}
   \item{std.all}{Standardized estimates based on both the variances

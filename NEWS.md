@@ -1,3 +1,22 @@
+# Version 0.6-1
+## New features
+* Two-level (multilevel) models now support real missing data (FIML/MAR) by default, including fixed.x covariates at the within level and posterior predictive checks (ppp). 
+
+* The previous MUML method-of-moments approximation for two-level ppp is replaced by an EM-based saturated-model fit that also works under missingness.
+
+* Optional within-chain parallelization for single-level models via Stan's reduce_sum() (bcontrol argument use_wcp). Real speedups require target = "cmdstan", which recompiles the model with threading support; threads_per_chain now defaults sensibly (and warns) from the number of available cores when use_wcp is set but threads_per_chain is not.
+
+* New tidy() and glance() methods (via the generics package) for extracting parameter estimates and model-level summaries as data frames. (contributed by Michael Truong)
+
+* blavInspect(fit, "ci", level = ) provides equal-tailed MCMC-sample-based credible intervals of any width, alongside the existing "hpd" option; summary() and tidy() gain level/hpd arguments and now compute correct MCMC-based credible intervals, Rhat, effective sample size, and posterior median/mode for defined (:=) parameters under target = "stan"/"cmdstan", instead of a Gaussian delta-method approximation for the interval and blank/NA for the rest (issues #2, #98).
+
+* Compatibility updates for lavaan 0.7-1 and later, which renamed a number of internal functions/arguments that blavaan relies on (affecting, e.g., fitMeasures(), blavPredict(newdata = ...), and summary()); the lavaan dependency has been bumped accordingly.
+
+* Various other bug fixes, including: incorrect psi/theta correlation-block prior matching for multi-group two-level (multilevel) models; ppmc()/blavFitIndices(rescale = "mcmc") failing with a "subscript out of bounds" error for models with more than one group; and blavCompare() output relying on row/column position (now named) rather than being robust to formatting changes in underlying packages.
+
+## Bugs/glitches:
+* plot() does not display certain level 2 parameters in two-level models.
+
 # Version 0.5-10
 ## New features
 * Ability to set options(blavaan.target = "") so that user does not need to use the target argument for each model estimation.

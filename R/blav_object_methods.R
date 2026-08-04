@@ -77,6 +77,8 @@ function(object, header       = TRUE,
                  postmode     = FALSE,
                  priors       = TRUE,
                  bf           = FALSE,
+                 level        = .95,
+                 hpd          = FALSE,
                  nd = 3L,
                  print = TRUE) {
 
@@ -174,6 +176,36 @@ function(object, header       = TRUE,
             }
         }
 
+        ## defined (:=) parameters never get a real MCMC-based ci.lower/ci.upper above (they are
+        ## excluded from pte2, and instead keep whatever lavaan's own delta-method
+        ## parameterEstimates() computed at the top of this block); and neither free nor defined
+        ## parameters can get a credible interval at anything other than the fixed 95% baked into
+        ## object@external$stansumm at fit time. Fix both by sourcing from
+        ## blavInspect(object, "ci"/"hpd", level = level), which computes an MCMC-sample-based
+        ## interval of any width for free *and* defined parameters alike (target = stan/cmdstan
+        ## only; jags keeps its existing fit-time HPD mechanism above untouched).
+        nfree <- defrows <- peentrydef <- NULL
+        if(!jagtarget){
+          nfree <- max(newpt$free, na.rm = TRUE)
+          defrows <- which(newpt$op == ":=")
+          if(length(defrows) > 0){
+            peentrydef <- match(with(newpt, paste(lhs[defrows], op[defrows], rhs[defrows], group[defrows], level[defrows], sep="")),
+                                paste(PE$lhs, PE$op, PE$rhs, PE$group, PE$level, sep=""))
+          }
+
+          if(length(defrows) > 0 || !(level == .95 && !hpd)){
+            civals <- blavInspect(object, if(hpd) "hpd" else "ci", level = level)
+            if(!(level == .95 && !hpd)){
+              PE$ci.lower[peentry] <- civals[newpt$free[pte2], "lower"]
+              PE$ci.upper[peentry] <- civals[newpt$free[pte2], "upper"]
+            }
+            if(length(defrows) > 0){
+              PE$ci.lower[peentrydef] <- civals[nfree + seq_along(defrows), "lower"]
+              PE$ci.upper[peentrydef] <- civals[nfree + seq_along(defrows), "upper"]
+            }
+          }
+        }
+
         ## NB This is done so that we can remove fixed parameter hpd intervals without
         ##    making changes to lavaan's print.lavaan.parameterEstimates(). But maybe
         ##    this should actually go in the lavaan function.
@@ -185,10 +217,17 @@ function(object, header       = TRUE,
         PE$ci.upper[PE$ci.upper == formatC(PE$est, digits = nd, format = "f")] <- ""
         PE$ci.upper <- sprintf(char.format, PE$ci.upper)
 
-        ## FIXME defined parameters never get psrf + others;
-        ## see line 200 of lav_print.R
+        ## Defined (:=) parameters get psrf/neff/postmedian/postmode below too (they used to be
+        ## silently skipped -- excluded from pte2 -- which is what the removed "FIXME defined
+        ## parameters never get psrf + others; see line 200 of lav_print.R" comment referred to).
+        ## Values come from the blavInspect() extensions added alongside this (stan/cmdstan only;
+        ## jags is untouched, same scope as the ci.lower/ci.upper fix above).
         if(psrf){
           PE$psrf[peentry] <- formatC(as.numeric(newpt$psrf[pte2]), digits = nd, format = "f")
+          if(!is.null(peentrydef)){
+            defrhat <- blavInspect(object, "rhat")[nfree + seq_along(defrows)]
+            PE$psrf[peentrydef] <- formatC(as.numeric(defrhat), digits = nd, format = "f")
+          }
           PE$psrf[is.na(PE$psrf)] <- ""
           PE$psrf <- sprintf(char.format, PE$psrf)
         }
@@ -198,6 +237,9 @@ function(object, header       = TRUE,
             PE$neff[peentry] <- object@external$mcmcout$summaries[newpt$jagpnum[pte2],'SSeff']
           } else {
             PE$neff[peentry] <- parsumm[newpt$stansumnum[pte2],'n_eff']
+            if(!is.null(peentrydef)){
+              PE$neff[peentrydef] <- blavInspect(object, "neff")[nfree + seq_along(defrows)]
+            }
           }
         }
         if(priors){
@@ -211,6 +253,9 @@ function(object, header       = TRUE,
             PE$Post.Med[peentry] <- object@external$mcmcout$summaries[newpt$jagpnum[pte2],'Median']
           } else {
             PE$Post.Med[peentry] <- parsumm[newpt$stansumnum[pte2],'50%']
+            if(!is.null(peentrydef)){
+              PE$Post.Med[peentrydef] <- blavInspect(object, "postmedian")[nfree + seq_along(defrows)]
+            }
           }
         }
         if(postmode){
@@ -219,7 +264,11 @@ function(object, header       = TRUE,
             PE$Post.Mode[peentry] <- object@external$mcmcout$summaries[newpt$jagpnum[pte2],'Mode']
             if(all(is.na(PE$Post.Mode))) warning("blavaan WARNING: Posterior modes require installation of the modeest package.", call. = FALSE)
           } else {
-            PE$Post.Mode[peentry] <- blavInspect(object, "postmode")
+            postmodevals <- blavInspect(object, "postmode")
+            PE$Post.Mode[peentry] <- postmodevals[newpt$free[pte2]]
+            if(!is.null(peentrydef)){
+              PE$Post.Mode[peentrydef] <- postmodevals[nfree + seq_along(defrows)]
+            }
           }
         }
         if(bf){

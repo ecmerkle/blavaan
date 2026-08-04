@@ -27,7 +27,7 @@ blavInspect <- function(blavobject, what, ...) {
     blavwhats <- c("start", "starting.values", "inits", "psrf",
                    "ac.10", "neff", "mcmc", "draws", "samples",
                    "n.chains", "cp", "dp", "postmode", "postmean",
-                   "postmedian", "hpd", "jagnames", "stannames",
+                   "postmedian", "hpd", "ci", "jagnames", "stannames",
                    "fscores", "lvs", "fsmeans", "lvmeans", "mcobj",
                    "rhat", "n_eff", "nchain", "nchains")
 
@@ -86,8 +86,29 @@ blavInspect <- function(blavobject, what, ...) {
                 }
             }
             if(add.labels) names(OUT) <- labs
+
+            ## Append defined (:=) parameter values, computed fresh from posterior draws --
+            ## they are not literal Stan/JAGS monitored variables, so mcmcsumm has no row for
+            ## them. Free-parameter values above are untouched.
+            if(!jagtarget && what %in% c("psrf", "rhat", "neff", "n_eff")){
+                pt <- blavobject@ParTable
+                defrows <- which(pt$op == ":=")
+                if(length(defrows) > 0){
+                    draws <- blavInspect(blavobject, "mcmc")
+                    nfree <- max(pt$free, na.rm = TRUE)
+                    defcols <- nfree + seq_along(defrows)
+                    defarr <- simplify2array(lapply(draws, function(x) x[, defcols, drop = FALSE]))
+                    defOUT <- if(what %in% c("psrf", "rhat")){
+                        apply(defarr, 2, posterior::rhat)
+                    } else {
+                        apply(defarr, 2, posterior::ess_bulk)
+                    }
+                    if(add.labels) names(defOUT) <- pt$lhs[defrows]
+                    OUT <- c(OUT, defOUT)
+                }
+            }
             OUT
-        } else if(what %in% c("mcmc", "draws", "samples", "hpd")){
+        } else if(what %in% c("mcmc", "draws", "samples", "hpd", "ci")){
             ## add defined parameters to labels or, for stan, compute defined parameters
             pt <- blavobject@ParTable
             if (!(blavobject@Options$target %in% c("stan", "cmdstan", "vb"))) {
@@ -132,6 +153,14 @@ blavInspect <- function(blavobject, what, ...) {
                 if("prob" %in% dotNames) pct <- dotdotdot$prob
                 draws <- mcmc(do.call("rbind", draws))
                 draws <- HPDinterval(draws, pct)
+            } else if(what == "ci"){
+                pct <- .95
+                if("level" %in% dotNames) pct <- dotdotdot$level
+                if("prob" %in% dotNames) pct <- dotdotdot$prob
+                alpha <- (1 - pct) / 2
+                combined <- do.call("rbind", draws)
+                draws <- t(apply(combined, 2, quantile, probs = c(alpha, 1 - alpha)))
+                colnames(draws) <- c("lower", "upper")
             }
             draws
         } else if(what == "mcobj"){
@@ -268,17 +297,37 @@ blavInspect <- function(blavobject, what, ...) {
                 mcmcsumm <- rstan::summary(blavobject@external$mcmcout)$summary
             }
 
+            ## defined (:=) parameters are not literal Stan/JAGS monitored variables, so
+            ## mcmcsumm has no row for them; compute their postmean/postmedian fresh from
+            ## posterior draws below (postmode already covers them for free, since modeapprox()
+            ## runs over every "mcmc" column -- defined ones included -- it just needed a label).
+            defrows <- integer(0)
+            if(!jagtarget){
+                pt <- blavobject@ParTable
+                defrows <- which(pt$op == ":=")
+            }
+
             if(what == "postmean"){
                 if(jagtarget){
                     OUT <- mcmcsumm[idx,'Mean']
                 } else {
                     OUT <- mcmcsumm[idx,'mean']
+                    if(length(defrows) > 0){
+                        pooled <- do.call("rbind", blavInspect(blavobject, "mcmc"))
+                        nfree <- max(pt$free, na.rm = TRUE)
+                        OUT <- c(OUT, colMeans(pooled[, nfree + seq_along(defrows), drop = FALSE]))
+                    }
                 }
             }else if(what == "postmedian"){
                 if(jagtarget){
                     OUT <- mcmcsumm[idx,'Median']
                 } else {
                     OUT <- mcmcsumm[idx,'50%']
+                    if(length(defrows) > 0){
+                        pooled <- do.call("rbind", blavInspect(blavobject, "mcmc"))
+                        nfree <- max(pt$free, na.rm = TRUE)
+                        OUT <- c(OUT, apply(pooled[, nfree + seq_along(defrows), drop = FALSE], 2, median))
+                    }
                 }
             } else {
                 if(jagtarget){
@@ -288,7 +337,9 @@ blavInspect <- function(blavobject, what, ...) {
                     OUT <- modeapprox(draws)
                 }
             }
-            if(add.labels) names(OUT) <- labs
+
+            outlabs <- if(length(defrows) > 0) c(labs, pt$lhs[defrows]) else labs
+            if(add.labels) names(OUT) <- outlabs
             OUT
         } else if(what == "jagnames"){
             if(!jagtarget) stop("blavaan ERROR: JAGS was not used for model estimation.")

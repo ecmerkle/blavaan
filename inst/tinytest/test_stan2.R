@@ -1525,6 +1525,60 @@ expect_true(inherits(blavInspect(fit, 'mcmc'), 'mcmc.list'))
 expect_true(inherits(blavInspect(fit, 'hpd', prob = .9), 'matrix'))
 expect_true(nrow(blavInspect(fit, 'hpd')) == 17) ## are we picking up the defined parameters
 
+## MCMC-sample-based credible intervals of arbitrary level, including defined (:=) parameters
+## (github issues #2, #98)
+civals90 <- blavInspect(fit, 'ci', level = .9)
+expect_true(inherits(civals90, 'matrix'))
+expect_identical(dim(civals90), dim(blavInspect(fit, 'hpd')))
+expect_identical(colnames(civals90), c('lower', 'upper'))
+expect_true(all(civals90[, 'lower'] < civals90[, 'upper']))
+expect_true(nrow(blavInspect(fit, 'ci')) == 17)
+
+## blavInspect() extensions to rhat/neff/postmean/postmedian now also cover defined parameters
+expect_true(length(blavInspect(fit, 'rhat')) == 17)
+expect_true(length(blavInspect(fit, 'neff')) == 17)
+expect_true(length(blavInspect(fit, 'postmean')) == 17)
+expect_true(length(blavInspect(fit, 'postmedian')) == 17)
+expect_true(all(blavInspect(fit, 'rhat') < 1.05)) ## already checked above pre-extension; re-check post-extension
+
+## summary()/tidy() at the default level: free-parameter intervals unchanged from the pre-existing
+## fit-time stansumm quantiles (no regression), while defined-parameter intervals are now
+## MCMC-based instead of lavaan's Gaussian delta-method approximation
+s95 <- summary(fit, print = FALSE, header = FALSE, neff = TRUE, postmedian = TRUE, postmode = TRUE)
+freerows <- which(s95$op != ':=' & trimws(s95$pi.lower) != '') ## exclude fixed/exogenous rows
+defrows <- which(s95$op == ':=')
+expect_true(length(defrows) == 3)
+parsumm <- fit@external$stansumm
+expect_true(all(abs(as.numeric(trimws(s95$pi.lower[freerows])) -
+                     parsumm[fit@ParTable$stansumnum[fit@ParTable$free > 0], '2.5%']) < 5e-3))
+expect_true(all(abs(as.numeric(trimws(s95$pi.upper[freerows])) -
+                     parsumm[fit@ParTable$stansumnum[fit@ParTable$free > 0], '97.5%']) < 5e-3))
+## defined-parameter stats (Rhat/neff/Post.Med/Post.Mode) are now populated instead of blank/NA
+expect_true(all(!is.na(as.numeric(trimws(s95$Rhat[defrows])))))
+expect_true(all(!is.na(s95$neff[defrows])))
+expect_true(all(!is.na(s95$Post.Med[defrows])))
+expect_true(all(!is.na(s95$Post.Mode[defrows])))
+## and differ noticeably from plain lavaan's delta-method CI for the same defined parameters
+fitb.pe <- parameterEstimates(fitb)
+fitb.def <- fitb.pe[fitb.pe$op == ':=', ]
+matchdef <- match(fitb.def$lhs, s95$lhs[defrows])
+expect_true(any(abs(as.numeric(trimws(s95$pi.lower[defrows][matchdef])) - fitb.def$ci.lower) > 1e-3))
+
+## summary(level = .9) matches blavInspect(fit, "ci", level = .9) for defined parameters
+s90 <- summary(fit, print = FALSE, header = FALSE, level = .9)
+d90 <- which(s90$op == ':=')
+matchrow <- match(s90$lhs[d90], rownames(civals90))
+expect_true(all(abs(as.numeric(trimws(s90$pi.lower[d90])) - civals90[matchrow, 'lower']) < 5e-3))
+expect_true(all(abs(as.numeric(trimws(s90$pi.upper[d90])) - civals90[matchrow, 'upper']) < 5e-3))
+
+## tidy() forwards level/hpd and reflects the same defined-parameter fix
+t90 <- tidy(fit, level = .9)
+td90 <- which(t90$op == ':=')
+matchrowt <- match(sub(":=.*$", "", t90$term[td90]), rownames(civals90))
+expect_true(all(!is.na(t90$conf.low[td90])))
+expect_true(all(!is.na(t90$conf.high[td90])))
+expect_true(all(abs(t90$conf.low[td90] - civals90[matchrowt, 'lower']) < 5e-3))
+
 ## now with missing data
 set.seed(1002)
 obs <- rbinom(prod(dim(Data)), 1, .8)

@@ -64,10 +64,10 @@ the independence model) (if available).}
 %    \item{plot}{\code{signature(object = "blavaan")}: S4 method for
 %      creating plots. Also see \code{?plot.blavaan}.}
     \item{summary}{\code{signature(object = "blavaan", header = TRUE,
-     fit.measures = FALSE, estimates = TRUE, ci = TRUE, 
+     fit.measures = FALSE, estimates = TRUE, ci = TRUE,
      standardized = FALSE, rsquare = FALSE, std.nox = FALSE,
      psrf = TRUE, neff = FALSE, postmedian = FALSE, postmode = FALSE,
-     priors = TRUE, bf = FALSE, nd = 3L)}:
+     priors = TRUE, bf = FALSE, level = .95, hpd = FALSE, nd = 3L)}:
       Print a nice summary of the model estimates.
       If \code{header = TRUE}, the header section (including fit measures) is
       printed.
@@ -76,6 +76,15 @@ the independence model) (if available).}
       If \code{estimates = TRUE}, print the parameter estimates section.
       If \code{ci = TRUE}, add confidence intervals to the parameter estimates
       section.
+      \code{level} sets the credible-interval mass (default .95), and
+      \code{hpd = TRUE} switches from an equal-tailed quantile interval to a
+      highest-posterior-density interval. Both are computed directly from the
+      MCMC draws for free \emph{and} defined (\code{:=}) parameters, for
+      \code{target = "stan"}/\code{"cmdstan"} fits (for other targets, the
+      interval is unaffected by \code{level}/\code{hpd}). \code{psrf},
+      \code{neff}, \code{postmedian}, and \code{postmode} are likewise now
+      reported for defined parameters under \code{target = "stan"}/
+      \code{"cmdstan"}, rather than left blank.
       If \code{standardized = TRUE},
       the standardized solution is also printed.  Note that \emph{SE}s and
       tests are still based on unstandardized estimates. Use
