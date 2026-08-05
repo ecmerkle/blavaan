@@ -332,69 +332,26 @@ blavaan <- function(...,  # default lavaan arguments
     ## if no missing, set missing = "listwise" to avoid meanstructure if possible
     if(!any(is.na(unlist(lavInspect(LAV, 'data'))))) {
       dotdotdot$missing <- "listwise"
-      ## bcfa()/bsem() unconditionally default int.ov.free=TRUE (see their
-      ## defparms), and lavaan's own option-setting ties int.ov.free=TRUE to
-      ## meanstructure=TRUE regardless of the missing="listwise" choice just
-      ## above -- undoing the point of avoiding meanstructure here. Turn it
-      ## back off (unless the user explicitly asked for a mean structure,
-      ## directly via meanstructure= or implicitly by supplying
-      ## sample.mean=, which would otherwise be silently ignored) so
-      ## complete-data stan/cmdstan fits match plain lavaan's cfa()/sem()
-      ## default of no mean structure. Skip this for two-level (cluster)
-      ## models: their between-level intercepts are structurally required
-      ## (lavaan forces meanstructure=TRUE for cluster models regardless),
-      ## so forcing int.ov.free off here would silently fix those
-      ## between-level intercepts at 0 instead of estimating them.
+      ## bcfa()/bsem() unconditionally default int.ov.free=TRUE, so ensure
+      ## it is off here
       if(!("meanstructure" %in% dotNames) && !("sample.mean" %in% dotNames) &&
          !("cluster" %in% dotNames)) {
         dotdotdot$int.ov.free <- FALSE
       }
     } else {
       if("cluster" %in% dotNames) {
-        ## between-level fixed.x + missing data is blocked: lavaan's
-        ## own between-level loglik.x computation (lav_samp_cl_patterns,
-        ## used internally whenever missing="ml"/"ml.x") crashes on any
-        ## between-level fixed.x variable with missing values (a
-        ## confirmed upstream lavaan bug: lav_samp_cl_patterns() in
-        ## lav_samplestats.R uses plain cov(), not
-        ## cov(use="pairwise.complete.obs"), for the between-level
-        ## block, so any NA there propagates into an uninvertible
-        ## covariance matrix downstream). This check must happen
-        ## BEFORE dotdotdot$missing is set to "ml.x"
-        ## below, using the LAV object already safely constructed above
-        ## (built with the user's own original missing= choice or
-        ## lavaan's own default, neither of which trigger the crash) --
-        ## otherwise the crash-prone refit further down could either
-        ## abort uninformatively or (since that refit is wrapped in
-        ## try()) silently leave LAV as this listwise-deleted fit,
-        ## which would be worse than a clear error here. Within-level
-        ## fixed.x + missing data has no such issue and is supported.
+        ## Between-level fixed.x + missing data is blocked bc crashes lavaan.
+        ## Within-level fixed.x + missing data has no such issue.
         if(length(LAV@Data@Lp[[1]]$ov.x.idx[[2]]) > 0) {
           stop('blavaan ERROR: between-level fixed.x variables are not currently supported for two-level models with missing data')
         }
-        ## two-level FIML/MAR; lavaan already builds the two-level-aware
-        ## Mp/Zp pattern structures whenever missing != "listwise" and
-        ## cluster is set, so no lavaan-side changes are needed here.
-        ## missing="ml.x" (not "ml"): missing="ml" alone does not stop
-        ## lavaan from listwise-deleting rows with missing fixed.x
-        ## values; "ml.x" is required to retain them. Safe to use
-        ## unconditionally in place of "ml" -- with no x-missingness
-        ## (or no x at all) the two are equivalent (see lav_data.R's
-        ## `missing != "ml.x"` row-retention check).
+        ## two-level FIML/MAR
         if(is.null(dotdotdot$missing)) dotdotdot$missing <- "ml.x"
       }
     }
   } else if(LAV@Data@data.type == "moment" && target %in% c("stan", "cmdstan")) {
     ## sample.cov (moment) input has no sample mean vector, and
-    ## meanstructure is disallowed together with sample.cov (see the
-    ## stop() above) -- but bcfa()/bsem()'s hardcoded int.ov.free=TRUE
-    ## default still ties to meanstructure=TRUE via lavaan's own
-    ## option-setting regardless of data.type, which then crashes
-    ## downstream ("sample_mean= argument is missing, but model contains
-    ## mean/intercept parameters") since no sample mean was ever
-    ## supplied. Turn it off to match the no-meanstructure design already
-    ## enforced for sample.cov (cluster + sample.cov is also already
-    ## blocked above, so no cluster exclusion is needed here).
+    ## meanstructure is disallowed together with sample.cov.
     dotdotdot$int.ov.free <- FALSE
   }
 
