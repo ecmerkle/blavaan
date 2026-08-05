@@ -1,4 +1,4 @@
-dpriors <- function(..., target="stan"){
+dpriors <- function(..., target="stan") {
   userspec <- list(...)
 
   if(length(userspec) > 0 && is.null(names(userspec))) stop("blavaan ERROR: dpriors() arguments require names (nu, lambda, etc)")
@@ -6,11 +6,11 @@ dpriors <- function(..., target="stan"){
   jagpres <- pkgcheck("runjags")
   stanpres <- pkgcheck("rstan")
 
-  if(jagpres & !stanpres){
+  if(jagpres & !stanpres) {
     dp <- do.call("jagpriors", userspec)
-  } else if(stanpres & !jagpres){
+  } else if(stanpres & !jagpres) {
     dp <- do.call("stanpriors", userspec)
-  } else if(length(userspec) > 0){
+  } else if(length(userspec) > 0) {
     ## check whether they are supplying jags or stan distributions
     jagdists <- transtables()$disttrans[,'jags']
     ## add other jags dists not in the translation table
@@ -22,16 +22,16 @@ dpriors <- function(..., target="stan"){
     userjags <- sapply(jagdists, function(x) grep(x, userspec))
 
     ## > 1 match can occur for things like ddexp:
-    if(length(unlist(userjags)) >= length(userspec)){
-      if(target == "jags"){
+    if(length(unlist(userjags)) >= length(userspec)) {
+      if(target == "jags") {
         dp <- do.call("jagpriors", userspec)
       } else {
         stop("blavaan ERROR: JAGS distributions sent to dpriors(), but target != 'jags'")
       }
-    } else if(length(unlist(userjags)) == 0){
+    } else if(length(unlist(userjags)) == 0) {
       if(target == "jags") stop("blavaan ERROR: target='jags', but no jags distributions were found")
       ## assume they wanted stan
-      if(target %in% c("stanclassic", "stancond")){
+      if(target %in% c("stanclassic", "stancond")) {
         dp <- do.call("stanclassicpriors", userspec)
       } else {
         dp <- do.call("stanpriors", userspec)
@@ -41,9 +41,9 @@ dpriors <- function(..., target="stan"){
     }
   } else {
     ## nothing is user specified, just use target
-    if(target == "jags"){
+    if(target == "jags") {
       dp <- do.call("jagpriors", userspec)
-    } else if(target %in% c("stanclassic", "stancond")){
+    } else if(target %in% c("stanclassic", "stancond")) {
       dp <- do.call("stanclassicpriors", userspec)
     } else {
       dp <- do.call("stanpriors", userspec)
@@ -57,7 +57,7 @@ jagpriors <- function(nu="dnorm(0,1e-3)", alpha="dnorm(0,1e-2)",
                     lambda="dnorm(0,1e-2)", beta="dnorm(0,1e-2)",
                     itheta="dgamma(1,.5)[prec]", ipsi="dgamma(1,.5)[prec]",
                     rho="dbeta(1,1)", ibpsi="dwish(iden,3)",
-                    tau="dnorm(0,.44)"){
+                    tau="dnorm(0,.44)") {
 
   dp <- c(nu=nu, alpha=alpha, lambda=lambda, beta=beta,
           itheta=itheta, ipsi=ipsi, rho=rho, ibpsi=ibpsi,
@@ -72,7 +72,7 @@ stanpriors <- function(nu="normal(0,32)",
                        beta="normal(0,10)", theta="gamma(1,.5)[sd]",
                        psi="gamma(1,.5)[sd]", rho="beta(1,1)",
                        ibpsi="wishart(3,iden)",
-                       tau="normal(0,1.5)"){
+                       tau="normal(0,1.5)") {
 
   dp <- c(nu=nu, alpha=alpha, lambda=lambda, beta=beta,
           theta=theta, psi=psi, rho=rho, ibpsi=ibpsi,
@@ -86,7 +86,7 @@ stanclassicpriors <- function(nu="normal(0,1000^.5)",
                               beta="normal(0,10)", itheta="gamma(1,.5)[prec]",
                               ipsi="gamma(1,.5)[prec]", rho="beta(1,1)",
                               ibpsi="wishart(3,iden)",
-                              tau="normal(0,1.5)"){
+                              tau="normal(0,1.5)") {
 
   dp <- c(nu=nu, alpha=alpha, lambda=lambda, beta=beta,
           itheta=itheta, ipsi=ipsi, rho=rho, ibpsi=ibpsi,

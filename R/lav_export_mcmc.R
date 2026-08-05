@@ -4,13 +4,13 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
   ## At the time of writing this message (2023), blavaan no longer uses this function to create Stan code.
   if(target == "stan") stop("blavaan ERROR: lav2mcmc() cannot produce a Stan model using the new (as of 2023) array syntax.")
 
-  if(inherits(model, "lavaan")){
+  if(inherits(model, "lavaan")) {
     partable <- parTable(model)
   } else {
     partable <- model
-    # we assume it is a data.frame further on!
+    ## we assume it is a data.frame further on!
     if(!is.data.frame(partable)) {
-        partable <- as.data.frame(partable, stringsAsFactors = FALSE)
+      partable <- as.data.frame(partable, stringsAsFactors = FALSE)
     }
   }
   
@@ -32,8 +32,8 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
   nlvx <- length(orig.lv.names.x)
   
   ## if lv.x.wish and default prior, change df parameter for this model
-  if(lv.x.wish & nlvx > 1 & dp[["ibpsi"]] == dpriors(target = target)[["ibpsi"]]){
-    if(target == "jags"){
+  if(lv.x.wish & nlvx > 1 & dp[["ibpsi"]] == dpriors(target = target)[["ibpsi"]]) {
+    if(target == "jags") {
       dp[["ibpsi"]] <- paste("dwish(iden,", length(orig.lv.names.x) + 1, ")", sep="")
     } else {
       dp[["ibpsi"]] <- paste("wishart(",
@@ -58,7 +58,7 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
   ov.names.nox <- vnames$ov.nox[[1]]; nov.nox <- length(ov.names.nox)
   ov.names.x <- vnames$ov.x[[1]]; nov.x <- length(ov.names.x)
   ov.ord <- vnames$ov.ord[[1]]
-  if(length(ov.ord) > 0){
+  if(length(ov.ord) > 0) {
     ## figure out how many categories are in the ordered variables
     ## TODO seems like this is already hidden somewhere in lavaan...
     ncats <- sapply(ov.ord, function(x) length(grep(x, vnames$th[[1]])) + 1)
@@ -71,12 +71,12 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
                 lv.names[!(lv.names %in% orig.lv.names.x)])
 
   ## check that variables are the same in all groups:
-  for(g in 1:ngroups){
-    if(!identical(orig.ov.names, old.vnames$ov[[g]])){
+  for(g in 1:ngroups) {
+    if(!identical(orig.ov.names, old.vnames$ov[[g]])) {
       stop("blavaan ERROR: observed variables are not the same in each group.")
     }
-    if(!identical(lv.names, vnames$lv[[g]])){
-      if(all(lv.names %in% vnames$lv[[g]]) & length(lv.names) == length(vnames$lv[[g]])){
+    if(!identical(lv.names, vnames$lv[[g]])) {
+      if(all(lv.names %in% vnames$lv[[g]]) & length(lv.names) == length(vnames$lv[[g]])) {
         next
       } else {
         stop("blavaan ERROR: latent variables are not the same in each group.")
@@ -89,7 +89,7 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
   lv.names <- c(lv.names, phnames[!(phnames %in% lv.names)])
 
   ## deal with wiggle
-  if(length(wiggle) > 0){
+  if(length(wiggle) > 0) {
     partable <- wiglabels(partable, wiggle, wiggle.sd, target=target)$lavpartable
   }
   
@@ -103,7 +103,7 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
   TXT <- paste("model {\n", sep="")
   TPS <- ""
 
-  if(blavmis == "da"){
+  if(blavmis == "da") {
     TXT <- paste(TXT, t1,
                  "for(i in 1:N) {\n", sep="")
   } else {
@@ -114,12 +114,12 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
   TXT2 <- ""
 
   ## Decide whether we need to model exogenous x's
-  if(length(ov.names.x) > 0){ # & !is.na(ov.names.x)){
+  if(length(ov.names.x) > 0) { # & !is.na(ov.names.x)){
     ## FIXME: this NA catch is related to filling in the exo column
     ##        in set_phantoms()
-    if(!any(is.na(ov.names.x))){
+    if(!any(is.na(ov.names.x))) {
       exotab <- partable[which(partable$lhs %in% old.vnames$ov.x[[1]]),]
-      if(all(exotab$free==0)){
+      if(all(exotab$free==0)) {
         nmvs <- nov.nox
         ov.names <- ov.names.nox
       } else {
@@ -134,7 +134,7 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
   } else {
     nmvs <- nov.nox
     ov.names <- orig.ov.names[orig.ov.names %in% ov.names.nox]
-    #ov.names <- ov.names.nox
+    ## ov.names <- ov.names.nox
   }
   eqlabs <- partable$rhs[partable$op %in% c("==", ":=")]
   eqplabs <- partable$lhs[partable$op %in% c("==", ":=")]
@@ -182,9 +182,9 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
 
   ## Define univariate distributions of each observed variable
   ## Loop if everything is continuous
-  if(length(ov.ord) == 0){
-    if(blavmis == "da"){
-      for(j in 1:nmvs){
+  if(length(ov.ord) == 0) {
+    if(blavmis == "da") {
+      for(j in 1:nmvs) {
         ## decide whether we need px on ovs/lvs by searching
         ## for covariances:
         mvvar <- which(partable$op == "~~" &
@@ -197,12 +197,12 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
                                partable$op == "=~" &
                                partable$rhs == ov.names[j]))
 
-        if(mvcovs > 0){
+        if(mvcovs > 0) {
           tvname <- paste(tvname, "star", sep="")
         }
           
         TXT <- paste(TXT, t2, ov.names[j], sep="")
-        if(target == "stan"){
+        if(target == "stan") {
           TXT <- paste(TXT, "[i] ~ normal(mu[i,", j, "], sqrt(",
                        sep="")
         } else {
@@ -211,7 +211,7 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
         }
         TXT <- paste(TXT, tvname, "[", partable$row[mvvar], ",",
                      partable$col[mvvar], ",g[i]])", sep="")
-        if(target == "stan"){
+        if(target == "stan") {
           TXT <- paste(TXT, ")", sep="")
         }
         TXT <- paste(TXT, eolop, "\n", sep="")
@@ -220,13 +220,13 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
       if(target == "stan") stop("blavaan ERROR: missing data in stan not yet available.")
       TXT <- paste(TXT, t2, "yvec[i] ~ dnorm(mu[sub[i], mv[i]], 1/",
                    tvname, "[mv[i], mv[i], g[i]])\n", sep="")
-      # now close this loop and start the usual one
+      ## now close this loop and start the usual one
       TXT <- paste(TXT, t1, "}\n\n", sep="")
       TXT <- paste(TXT, t1, "for(i in 1:N) {\n", sep="")
-      # now model regressions on rhs
-      if(length(ovreg) > 0){
+      ## now model regressions on rhs
+      if(length(ovreg) > 0) {
         colidx <- match(ovreg, ov.names)
-        for(j in 1:length(ovreg)){
+        for(j in 1:length(ovreg)) {
           TXT <- paste(TXT, t2, ovreg[j],
                        "[i] ~ dnorm(mu[i,", colidx[j], "], 1/", tvname,
                        "[", colidx[j], ",g[i]])", eolop, "\n", sep="")
@@ -235,10 +235,10 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     }
   } else {
     if(target == "stan") stop("blavaan ERROR: ordinal models cannot yet be exported to stan")
-    # TODO revisit "fi" approach to missing data
+    ## TODO revisit "fi" approach to missing data
     if(blavmis == "fi") stop("blavaan ERROR: missing='fi' not yet supported for ordinal data")
-    for(j in 1:nmvs){
-      if(ov.names[j] %in% ov.ord){
+    for(j in 1:nmvs) {
+      if(ov.names[j] %in% ov.ord) {
         tvvar <- which(partable$op == "~~" &
                        partable$lhs == ov.names[j] &
                        partable$lhs == partable$rhs &
@@ -256,8 +256,8 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
         TXT <- paste(TXT, t2, "probs[i,", ord.num, ",1] ", eqop,
                      " pnorm(tau[", partable$row[taus[1]],
                      ",", partable$col[taus[1]], ",g[i]], mu[i,", j, "], 1/", tvname, "[", j, ",", j, ",g[i]])\n", sep="")
-        if(ncats[ord.num] > 2){
-          for(k in 2:(ncats[ord.num] - 1)){
+        if(ncats[ord.num] > 2) {
+          for(k in 2:(ncats[ord.num] - 1)) {
             TXT <- paste(TXT, t2, "probs[i,", ord.num, ",", k, "] ",
                          eqop, " pnorm(tau[",
                          partable$row[taus[k]], ",", partable$col[taus[k]], ",g[i]], mu[i,", j, "], 1/", tvname, "[", j, ",",
@@ -297,17 +297,17 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
 
     ## Now deal with intercept constraints/priors:
     if(length(int.idx) == 0L) {
-        TPS <- paste(TPS, "nu[", ov.idx, ",1,g[i]]", sep="")
+      TPS <- paste(TPS, "nu[", ov.idx, ",1,g[i]]", sep="")
     } else {
-        TPS <- paste(TPS, partable$mat[int.idx], "[", partable$row[int.idx], ",",
-                     partable$col[int.idx], ",g[i]]", sep="")
+      TPS <- paste(TPS, partable$mat[int.idx], "[", partable$row[int.idx], ",",
+                   partable$col[int.idx], ",g[i]]", sep="")
     }
 
     ## 2. factor loading? 
     lam.idx <- which(loadings$op == "=~" &
                      loadings$rhs == ov.names[i] &
                      loadings$group == 1)
-    if(length(lam.idx) > 0){
+    if(length(lam.idx) > 0) {
       for(j in 1:length(lam.idx)) {
         TPS <- paste(TPS, " + ", loadings$mat[lam.idx[j]], "[",
                      loadings$row[lam.idx[j]], ",", loadings$col[lam.idx[j]],
@@ -337,7 +337,7 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     ## 4. residual variances now handled separately
 
     ## 5. TODO thresholds
-    if(length(ov.ord) > 0){
+    if(length(ov.ord) > 0) {
 
     }
   }
@@ -349,12 +349,12 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
                  commop, "lvs", sep="")
 
     lvstart <- 1
-    if(lv.x.wish & nlvx > 1){
+    if(lv.x.wish & nlvx > 1) {
       lvstart <- nlvx + 1
 
       TXT <- paste(TXT, "\n", t2,
                    "eta[i,1:", nlvx, "] ~ ", sep="")
-      if(target == "stan"){
+      if(target == "stan") {
         TXT <- paste(TXT, "multi_normal_prec(", sep="")
       } else {
         TXT <- paste(TXT, "dmnorm(", sep="")
@@ -367,7 +367,7 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
 
     eta.eq <- rep(NA, nlv)
 
-    if(nlv >= lvstart){
+    if(nlv >= lvstart) {
       for(j in lvstart:nlv) {
         psi.free.idx <- which(partable$group == 1 &
                               partable$op == "~~" &
@@ -383,7 +383,7 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
         lv.var <- which(partable$lhs == lv.names[j] &
                         partable$rhs == lv.names[j] &
                         partable$op == "~~")
-        if(any(partable$free[lv.var] == 0 & partable$ustart[lv.var] == 0)){
+        if(any(partable$free[lv.var] == 0 & partable$ustart[lv.var] == 0)) {
           TXT <- paste(TXT, "\n", t2, "eta[i,", j, "] ", eqop,
                        " mu_eta[i,", j, "]", eolop, sep="")
           ## now change ustart to 1000 so no divide by 0 in jags
@@ -398,7 +398,7 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
           TXT <- paste(TXT, "\n", t2,
                        ## TODO check for alternative distribution?
                        "eta[i,", j, "] ~ ", sep="")
-          if(target == "stan"){
+          if(target == "stan") {
             TXT <- paste(TXT, "normal(mu_eta[i,", j, "], sqrt(",
                          sep="")
           } else {
@@ -407,7 +407,7 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
           TXT <- paste(TXT, pvname, "[",
                        partable$row[psi.free.idx], ",", partable$col[psi.free.idx],
                        ",g[i]])", sep="")
-          if(target == "stan"){
+          if(target == "stan") {
             TXT <- paste(TXT, ")", eolop, sep="")
           }
         }
@@ -436,13 +436,13 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
         TPS <- paste(TPS, "0", sep="")
       }
 
-      if(lv.names[j] %in% lv.nox){
+      if(lv.names[j] %in% lv.nox) {
         ## 2. loadings?
         lam.idx <- which(loadings$op == "=~" &
                          loadings$rhs == lv.names[j] &
                          loadings$group == 1)
-        if(length(lam.idx) > 0){
-          for(k in lam.idx){
+        if(length(lam.idx) > 0) {
+          for(k in lam.idx) {
             TPS <- paste(TPS, " + ", loadings$mat[k], "[", loadings$row[k],
                          ",", loadings$col[k], ",g[i]]*eta[i,",
                          match(loadings$lhs[k], lv.names), "]", sep="")
@@ -454,14 +454,14 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
                          regressions$op == "~" &
                          regressions$group == 1)
         np <- length(rhs.idx)
-        if(np > 0){ # there could be none if we have higher-order factors
-          for(p in rhs.idx){
+        if(np > 0) { # there could be none if we have higher-order factors
+          for(p in rhs.idx) {
             TPS <- paste(TPS, " + ", regressions$mat[p], "[", regressions$row[p],
                          ",", regressions$col[p], ",g[i]]", sep="")
 
             ## Is the rhs an lv or ov?
             lvmatch <- match(regressions$rhs[p], lv.names)
-            if(is.na(lvmatch)){
+            if(is.na(lvmatch)) {
               TPS <- paste(TPS, "*", regressions$rhs[p], "[i]", sep="")
             } else {
               TPS <- paste(TPS, "*eta[i,", lvmatch, "]", sep="")
@@ -487,12 +487,12 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
   TXT2 <- TXT2$TXT2
 
   ## end of model
-  if(target == "jags"){
+  if(target == "jags") {
     TXT <- paste(TXT, "\n\n", TPS, "\n\n", t1, "# Assignments from parameter vector & equality constraints", TXT2, TXT3, sep="")
   }
 
   ## extra stuff from the user, formatted to look nice-ish
-  if("syntax" %in% names(mcmcextra)){
+  if("syntax" %in% names(mcmcextra)) {
     mcmcextra <- unlist(strsplit(mcmcextra$syntax, "\n"))
     mcmcextra <- gsub("^\\s+|\\s+$", "", mcmcextra)
     mcmcextra <- paste(t1, mcmcextra, sep="", collapse="\n")
@@ -507,15 +507,15 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
   out <- list(model = out, inits = NA)
     
   ## Initial values
-  if(inits != "jags"){
-      if(target == "stan") stop("blavaan ERROR: random inits not yet available for stan")
-      inits <- set_inits(partable, cp, cp, n.chains, inits)
-      out$inits <- inits
+  if(inits != "jags") {
+    if(target == "stan") stop("blavaan ERROR: random inits not yet available for stan")
+    inits <- set_inits(partable, cp, cp, n.chains, inits)
+    out$inits <- inits
   }
         
   ## Now add data for jags if we have it
   datablk <- paste0("data{\n", t1, "int N;\n", t1, "int g[N];\n")
-  if(!is.null(lavdata) | inherits(model, "lavaan")){
+  if(!is.null(lavdata) | inherits(model, "lavaan")) {
     if(inherits(model, "lavaan")) lavdata <- model@Data
     ntot <- sum(unlist(lavdata@norig))
     ## pick up exogenous x's
@@ -524,12 +524,12 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     y <- lapply(1:tmpnmvs, function(x) rep(NA,ntot))
     g <- rep(NA, ntot)
     nX <- ncol(lavdata@X[[1]])
-    for(k in 1:ngroups){
-      for(j in 1:nX){
+    for(k in 1:ngroups) {
+      for(j in 1:nX) {
         y[[j]][lavdata@case.idx[[k]]] <- lavdata@X[[k]][,j]
       }
-      if(tmpnmvs > nX){
-        for(j in 1:(tmpnmvs - nX)){
+      if(tmpnmvs > nX) {
+        for(j in 1:(tmpnmvs - nX)) {
           y[[j + nX]][lavdata@case.idx[[k]]] <- lavdata@eXo[[k]][,j]
         }
       }
@@ -538,7 +538,7 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     names(y) <- orig.ov.names
 
     ## stan data block
-    for(j in 1:tmpnmvs){
+    for(j in 1:tmpnmvs) {
       datablk <- paste0(datablk, t1, "vector[N] ",
                         orig.ov.names[j], ";\n")
     }
@@ -547,24 +547,24 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     ymat <- matrix(unlist(y), ntot, tmpnmvs)
     nas <- which(apply(is.na(ymat), 1, sum) == tmpnmvs)
 
-    if(length(nas) > 0){
+    if(length(nas) > 0) {
       y <- lapply(y, function(x) x[-nas])
       g <- g[-nas]
       ntot <- sum(unlist(lavdata@nobs))
       ymat <- ymat[-nas,]
     }
 
-    if(blavmis == "fi"){
+    if(blavmis == "fi") {
       ## variables on rhs of regression, in case missing
       y <- y[names(y) %in% ovreg]
     }
 
     jagsdata <- c(y, list(g=g, N=ntot))
-    if(any(partable$op == "|")){
+    if(any(partable$op == "|")) {
       jagsdata <- c(jagsdata, list(ones = matrix(1, ntot, tmpnmvs)))
     }
 
-    if(blavmis == "fi"){
+    if(blavmis == "fi") {
       ## keep only modeled y's not on rhs of regression
       matvars <- which(orig.ov.names %in% ov.names &
                        !(orig.ov.names %in% ovreg))
@@ -592,14 +592,14 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     ngrp <- max(partable$group, na.rm=TRUE)
 
     pmats <- vector("list", length(matrows))
-    for(i in 1:length(pmats)){
-        pmats[[i]] <- array(0, c(matrows[i], matcols[i], ngrp))
+    for(i in 1:length(pmats)) {
+      pmats[[i]] <- array(0, c(matrows[i], matcols[i], ngrp))
     }
     names(pmats) <- names(matrows)
 
     ## replace parameter entries with NA to please jags
-    if(target == "jags"){
-      for(i in 1:nrow(partable)){
+    if(target == "jags") {
+      for(i in 1:nrow(partable)) {
         if(partable$mat[i] == "") next
 
         wmat <- match(partable$mat[i], names(pmats))
@@ -613,33 +613,33 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
                            sep=""))
     
     ## inferential covariances under fa priors
-    if(cp == "fa" & length(facovs) > 0){
-        if(nrow(facovs) > 0){
-            for(i in 1:nrow(facovs)){
-                wmat <- match(facovs$mat[i], names(pmats))
+    if(cp == "fa" & length(facovs) > 0) {
+      if(nrow(facovs) > 0) {
+        for(i in 1:nrow(facovs)) {
+          wmat <- match(facovs$mat[i], names(pmats))
 
-                if(target == "jags"){
-                  pmats[[wmat]][facovs$row[i], facovs$col[i], facovs$group[i]] <- NA
-                }
+          if(target == "jags") {
+            pmats[[wmat]][facovs$row[i], facovs$col[i], facovs$group[i]] <- NA
+          }
 
-                monitors <- c(monitors, paste(facovs$mat[i], "[", facovs$row[i], ",",
-                                              facovs$col[i], ",",
-                                              facovs$group[i], "]", sep=""))
-            }
-            ## re-add fa covariances, for sending back to lavaan
-            partable <- partable[,match(names(partable), names(facovs), nomatch=0)]
-            partable <- rbind(partable, facovs)
+          monitors <- c(monitors, paste(facovs$mat[i], "[", facovs$row[i], ",",
+                                        facovs$col[i], ",",
+                                        facovs$group[i], "]", sep=""))
         }
+        ## re-add fa covariances, for sending back to lavaan
+        partable <- partable[,match(names(partable), names(facovs), nomatch=0)]
+        partable <- rbind(partable, facovs)
+      }
     }
 
     ## these are passed in as data in stan, so are the "frames"
-    if(target == "stan"){
+    if(target == "stan") {
       tpnames <- names(pmats)
       names(pmats) <- paste0(names(pmats), "frame")
 
       ## declare data variables and defined params
       datdecs <- tpdecs <- tpeqs <- ""
-      for(i in 1:length(tpnames)){
+      for(i in 1:length(tpnames)) {
         tmpdim <- dim(pmats[[i]])
         datdecs <- paste0(datdecs, t1, "real ",
                           names(pmats)[i], "[", tmpdim[1],
@@ -651,13 +651,13 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
                         names(pmats)[i], ";\n")
       }
       tpdecs <- paste0(tpdecs, t1, "real mu[N,", tmpnmvs, "];\n")
-      if(length(lv.names) > 0){
+      if(length(lv.names) > 0) {
         tpdecs <- paste0(tpdecs, t1, "real mu_eta[N,",
                          length(lv.names), "];\n")
       }
 
       ## define rho matrices as needed
-      if(any(grepl("thetastar", tpnames))){
+      if(any(grepl("thetastar", tpnames))) {
         thetloc <- which(names(pmats) == "thetastarframe")
         thetdim <- dim(pmats[[thetloc]])
         rhoframe <- array(0, thetdim)
@@ -671,7 +671,7 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
         tpeqs <- paste0(tpeqs, t1, "rho = rhoframe;\n")
       }
 
-      if(any(grepl("psistar", tpnames))){
+      if(any(grepl("psistar", tpnames))) {
         psiloc <- which(names(pmats) == "psistarframe")
         psidim <- dim(pmats[[psiloc]])
         lvrhoframe <- array(0, psidim)
@@ -696,7 +696,7 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     ## identity matrix for wishart prior
     ## TODO allow user to specify this matrix
     ## or could be specified via mcmcextra argument?
-    if(lv.x.wish & length(orig.lv.names.x) > 1){
+    if(lv.x.wish & length(orig.lv.names.x) > 1) {
       iden <- diag(length(orig.lv.names.x))
       jagsdata <- c(jagsdata, list(iden=iden))
     }
@@ -704,11 +704,11 @@ lav2mcmc <- function(model, lavdata = NULL, cp = "srs", lv.x.wish = FALSE, dp = 
     out <- c(out, list(data=jagsdata))
   }
   
-  if(target == "stan"){
+  if(target == "stan") {
     nparms <- max(partable$freeparnums, na.rm = TRUE)
     parmblk <- paste0("parameters{\n", t1, "vector[",
                       nparms, "] parvec;\n")
-    if(length(lv.names) > 0){
+    if(length(lv.names) > 0) {
       parmblk <- paste0(parmblk, t1,
                       "real eta[N,", length(lv.names),
                       "];\n")
@@ -735,9 +735,9 @@ coeffun <- function(lavpartable, pxpartable, rjob, fun = "mean") {
   pxpartable$pxnames <- pxnames
 
   ## posterior means:
-  if(fun == "mean"){
+  if(fun == "mean") {
     b.est <- rjob$summary$statistics[,"Mean"]
-  } else if(fun == "median"){
+  } else if(fun == "median") {
     b.est <- rjob$hpd[,"Median"]
   }
 
@@ -745,7 +745,7 @@ coeffun <- function(lavpartable, pxpartable, rjob, fun = "mean") {
   cmatch <- match(pxnames, names(b.est), nomatch=0)
   pxpartable$est <- b.est[cmatch]
   pxpartable$psrf <- rep(NA, length(pxpartable$free))
-  if(length(rjob$mcmc) > 1){
+  if(length(rjob$mcmc) > 1) {
     psrfmatch <- match(pxnames, rownames(rjob$psrf$psrf))
     pxpartable$psrf <- rjob$psrf$psrf[psrfmatch,1]
   }
@@ -754,12 +754,12 @@ coeffun <- function(lavpartable, pxpartable, rjob, fun = "mean") {
   ## from pxpartable to lavpartable
   ## first check for px parameters with "free" labels (fa priors)
   pxmats <- c("theta", "psi")
-  for (j in 1:length(pxmats)){
+  for (j in 1:length(pxmats)) {
     stars <- which(grepl(paste(pxmats[j], "star", sep=""),
                           pxpartable$mat) &
                     pxpartable$free > 0)
-    if(length(stars) > 0){
-      for(i in 1:length(stars)){
+    if(length(stars) > 0) {
+      for(i in 1:length(stars)) {
         infpar <- which(pxpartable$mat == pxmats[j] &
                         pxpartable$row == pxpartable$row[stars[i]] &
                         pxpartable$col == pxpartable$col[stars[i]] &
@@ -771,7 +771,7 @@ coeffun <- function(lavpartable, pxpartable, rjob, fun = "mean") {
   }
 
   ptmatch <- match(lavpartable$free[lavpartable$free > 0], pxpartable$free)
-  if("est" %in% names(pxpartable)){
+  if("est" %in% names(pxpartable)) {
     ## to handle do.fit = FALSE
     lavpartable$est[lavpartable$free > 0] <- pxpartable$est[ptmatch]
   }
@@ -783,9 +783,9 @@ coeffun <- function(lavpartable, pxpartable, rjob, fun = "mean") {
 
   ## defined variables
   defmatch <- which(pxpartable$op == ":=")
-  if(length(defmatch) > 0){
+  if(length(defmatch) > 0) {
     ## not necessarily if do.fit=FALSE
-    if("est" %in% names(pxpartable)){
+    if("est" %in% names(pxpartable)) {
       lavpartable$est[lavpartable$op == ":="] <- pxpartable$est[defmatch]
       lavpartable$psrf[lavpartable$op == ":="] <- pxpartable$psrf[defmatch]
     }

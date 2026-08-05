@@ -23,9 +23,9 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
 
   Jinv <- VCOV[rearr,rearr]
 
-  if(target == "jags"){
+  if(target == "jags") {
     summstats <- bayesout$summary$statistics
-  } else if(target %in% c("stan", "cmdstan")){
+  } else if(target %in% c("stan", "cmdstan")) {
     ## stansumm is already assembled uniformly for both targets (see
     ## R/blavaan.R's rstan::monitor()/posterior::summarise_draws() dual path)
     summstats <- stansumm
@@ -35,9 +35,9 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
                   nomatch=0)
 
   ## this is potentially under srs parameterization (unless stanmarg)
-  if(target == "jags"){
+  if(target == "jags") {
     thetstar <- summstats[cmatch,"Mean"]
-  } else if(target %in% c("stanclassic", "stancond")){
+  } else if(target %in% c("stanclassic", "stancond")) {
     thetstar <- summstats[cmatch,"mean"]
   } else {
     thetstar <- lavpartable$est[urows]
@@ -56,11 +56,11 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
 
   ## first deal with any wishart priors
   wps <- which(sapply(pricom, function(x) x[1] %in% c("dwish", "lkj_corr")))
-  if(length(wps) > 0){
-    if("group" %in% names(lavpartable)){
+  if(length(wps) > 0) {
+    if("group" %in% names(lavpartable)) {
       ngroups <- max(lavpartable$group)
     } else {
-      if("block" %in% names(lavpartable)){
+      if("block" %in% names(lavpartable)) {
         lavpartable$group <- lavpartable$block
         ngroups <- max(lavpartable$block)
       } else {
@@ -70,12 +70,12 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
     }
 
     targdist <- ifelse(grepl("stan", target), "lkj_corr", "dwish")
-    for(k in 1:ngroups){
+    for(k in 1:ngroups) {
       ## TODO? ensure that covpars are ordered the same as varpars?
       covpars <- which(grepl(targdist, lavpartable$prior) &
                        lavpartable$group == k &
                        lavpartable$lhs != lavpartable$rhs)
-      if(targdist == "dwish"){
+      if(targdist == "dwish") {
         varpars <- which(grepl(targdist, lavpartable$prior) &
                          lavpartable$group == k &
                          lavpartable$lhs == lavpartable$rhs)
@@ -89,8 +89,8 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
       dimen <- length(varpars)
       tmpmat <- diag(lavpartable$est[varpars])
 
-      if(length(covpars) > 0){
-        if(sum(lower.tri(tmpmat)) != length(covpars)){
+      if(length(covpars) > 0) {
+        if(sum(lower.tri(tmpmat)) != length(covpars)) {
           ## TODO need to evaluate blocks of the matrix at a time
           stop("blavaan ERROR: margloglik problem evaluating covariance matrix")
         } else {
@@ -101,7 +101,7 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
       diag(tmpmat) <- diag(tmpmat)/2
 
       ## NB wishart on precision matrix, so need to invert:
-      if(targdist == "dwish"){
+      if(targdist == "dwish") {
         priloglik <- priloglik + ldwish(solve(tmpmat), (dimen+1), diag(dimen))
       } else {
         etapar <- as.numeric(pricom[[wps[1]]][2])
@@ -126,7 +126,7 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
                    lavpartable$op[urows] == "~~" &
                    lavpartable$lhs[urows] != lavpartable$rhs[urows])
   
-  if(lavoptions$cp == "fa"){
+  if(lavoptions$cp == "fa") {
     ocpvars <- which(lavpartable$lhs[urows] %in% unlist(lavdata@ov.names) &
                      lavpartable$rhs[urows] %in% unlist(lavdata@ov.names) &
                      lavpartable$op[urows] == "~~" &
@@ -141,11 +141,11 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
     lcpvars <- ""
   }
 
-  for(i in 1:q){
+  for(i in 1:q) {
     if(i %in% wps) next # already got it above
 
-    if(i %in% c(ocpcovs, lcpcovs)){
-      if(lavoptions$cp == "srs"){
+    if(i %in% c(ocpcovs, lcpcovs)) {
+      if(lavoptions$cp == "srs") {
         ## for srs, convert to correlation and use eval_prior()
         var1 <- which(lavpartable$lhs == lavpartable$lhs[urows][i] &
                       lavpartable$lhs == lavpartable$rhs &
@@ -156,7 +156,7 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
                       lavpartable$op == "~~" &
                       lavpartable$group == lavpartable$group[urows][i])
         tstar <- thetstar[i]/sqrt(lavpartable$est[var1] * lavpartable$est[var2])
-        # convert to support on 0,1
+        ## convert to support on 0,1
         tstar <- (tstar + 1)/2
 
         tmpdens <- eval_prior(pricom[[i]], tstar, lavpartable$pxnames[urows][i])
@@ -168,12 +168,12 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
         tmpkd <- density(tmpdist)
         tmpdens <- log(approx(tmpkd$x, tmpkd$y, thetstar[i])$y)
       }
-    } else if(i %in% c(ocpvars, lcpvars)){
+    } else if(i %in% c(ocpvars, lcpvars)) {
       ## kernel density estimation of fa variance's prior
       partype <- ifelse(i %in% ocpvars, "itheta", "ipsi")
       varpri <- jagsdist2r(dpriors()[[partype]])
       tmpdist <- (rnorm(1e5,sd=sqrt(1/1e-4))*rnorm(1e5,sd=sqrt(1/1e-4)))/rgamma(1e5,1,.5) +
-                 1/rgamma(1e5, as.numeric(varpri[[1]][2]), as.numeric(varpri[[1]][3]))
+      1/rgamma(1e5, as.numeric(varpri[[1]][2]), as.numeric(varpri[[1]][3]))
       tmpkd <- density(tmpdist)
       tmpdens <- log(approx(tmpkd$x, tmpkd$y, thetstar[i])$y)
     } else {
@@ -208,10 +208,10 @@ margloglik <- function(lavpartable, lavmodel, lavoptions,
   ## } else {
   ##   loglik <- NA
   ## }
-  #print(c(priloglik, loglik, log(det(Jinv))))
+  ## print(c(priloglik, loglik, log(det(Jinv))))
   
   margloglik <- (q/2)*log(2*pi) + determinant(Jinv, logarithm=TRUE)$modulus/2 +
-                priloglik + loglik
+  priloglik + loglik
   names(margloglik) <- ""
   margloglik
 }

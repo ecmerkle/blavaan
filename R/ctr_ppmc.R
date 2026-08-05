@@ -293,8 +293,8 @@ plot.blavPPMC <- function(x, ..., discFUN, element, central.tendency = "",
   element <- as.vector(element)
   if (length(element) > 1L) {
     if (length(element) != length(dim(x@obsDist[[discFUN]][[1]])))
-      stop('element must have length 1 or the number of dimensions of the ',
-           'discFUN object.')
+    stop('element must have length 1 or the number of dimensions of the ',
+         'discFUN object.')
     element <- matrix(element, nrow = 1) # make sure it is a row matrix
   }
   OBS <- sapply(x@obsDist[[discFUN]], function(i) i[element])
@@ -373,7 +373,7 @@ plot.blavPPMC <- function(x, ..., discFUN, element, central.tendency = "",
   }
   ## plot HPD-CI limits
   if (hpd) {
-    #dots$h <- simSumm[c("lower","upper")]
+    ## dots$h <- simSumm[c("lower","upper")]
     dots$v <- simSumm[c("lower","upper")]
     dots$lty <- "dotted"
     do.call(graphics::abline, dots)
@@ -405,8 +405,8 @@ hist.blavPPMC <- function(x, ..., discFUN, element, hpd = TRUE, prob = .95,
   element <- as.vector(element)
   if (length(element) > 1L) {
     if (length(element) != length(dim(x@obsDist[[discFUN]][[1]])))
-      stop('element must have length 1 or the number of dimensions of the ',
-           'discFUN object.')
+    stop('element must have length 1 or the number of dimensions of the ',
+         'discFUN object.')
     element <- matrix(element, nrow = 1) # make sure it is a row matrix
   }
   OBS <- sapply(x@obsDist[[discFUN]], function(i) i[element])
@@ -513,11 +513,11 @@ pairs.blavPPMC <- function(x, discFUN, horInd = 1:DIM, verInd = 1:DIM,
   ## check that pairs() can be applied to a 2-dim matrix
   DIM <- dim(x@PPP[[discFUN]])
   if (!is.matrix(x@PPP[[discFUN]]))
-    stop('The pairs() method can only be applied when discFUN returns a',
-         '2-dimensional matrix/array. "', discFUN, '" ',
-         if (is.null(DIM)) 'is a vector.' else {
-           paste('has', length(DIM), 'dimensions.')
-         })
+  stop('The pairs() method can only be applied when discFUN returns a',
+       '2-dimensional matrix/array. "', discFUN, '" ',
+       if (is.null(DIM)) 'is a vector.' else {
+         paste('has', length(DIM), 'dimensions.')
+       })
 
   ## set up grid
   DIM # evaluate promise
@@ -559,7 +559,7 @@ pairs.blavPPMC <- function(x, discFUN, horInd = 1:DIM, verInd = 1:DIM,
 
 ## Public function, wrapper around hidden function postpred()
 ppmc <- function(object, thin = 1, fit.measures = c("srmr","chisq"),
-                 #baseline.model = NULL,
+                 ## baseline.model = NULL,
                  discFUN = NULL, conditional = FALSE) {
 
   if (blavInspect(object, "nlevels") > 1) stop('blavaan ERROR: ppmc is currently unavailable for multilevel models.')
@@ -572,7 +572,7 @@ ppmc <- function(object, thin = 1, fit.measures = c("srmr","chisq"),
       if (is.name(funcName)) names(discFUN) <- as.character(funcName)
     }
     if (!all(sapply(discFUN, is.function)))
-      stop('blavaan ERROR: The "discFUN" argument must be a (list of) function(s).')
+    stop('blavaan ERROR: The "discFUN" argument must be a (list of) function(s).')
   }
 
   ## differentiate between multiple possible chisq stats
@@ -589,7 +589,7 @@ ppmc <- function(object, thin = 1, fit.measures = c("srmr","chisq"),
 
   jagtarget <- lavInspect(object, "options")$target == "jags"
 
-  if(jagtarget){
+  if(jagtarget) {
     etas <- any(object@external$mcmcout$monitor == "eta")
   } else {
     etas <- any(grepl("^eta", rownames(object@external$stansumm)))
@@ -653,9 +653,3 @@ ppmc <- function(object, thin = 1, fit.measures = c("srmr","chisq"),
              simDist = SIM) # "list"  # posterior predictive distribution
   obj
 }
-
-
-
-
-
-

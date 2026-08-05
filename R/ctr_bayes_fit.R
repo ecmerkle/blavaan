@@ -11,9 +11,9 @@
 
 setClass("blavFitIndices",
          representation(details = "list",
-                        # chisq = "numeric", df = "numeric", # Bayesian analogs
-                        # pD = "character", rescale = "character", # store choices
-                        # list of vectors, each storing the posterior of 1 index
+                        ## chisq = "numeric", df = "numeric", # Bayesian analogs
+                        ## pD = "character", rescale = "character", # store choices
+                        ## list of vectors, each storing the posterior of 1 index
                         indices = "list"))
 
 summary.bfi <- function(object,
@@ -114,10 +114,10 @@ blavFitIndices <- function(object, thin = 1, pD = c("loo","waic","dic"),
   
   rescale <- tolower(as.character(rescale[1])) #FIXME: make sure references to "devM" check for "devm"
   if (rescale == "ppmc" && blavInspect(object, 'ntotal') < 1000)
-    warning("blavaan WARNING: ",
-            "Hoofs et al.'s proposed BRMSEA (and derivative indices based on",
-            " the posterior predictive distribution) was only proposed for",
-            " evaluating models fit to very large samples (N > 1000).", call. = FALSE)
+  warning("blavaan WARNING: ",
+          "Hoofs et al.'s proposed BRMSEA (and derivative indices based on",
+          " the posterior predictive distribution) was only proposed for",
+          " evaluating models fit to very large samples (N > 1000).", call. = FALSE)
 
   chisqs <- as.numeric(apply(object@external$samplls, 2,
                              function(x) 2*(x[,2] - x[,1])))
@@ -149,7 +149,7 @@ blavFitIndices <- function(object, thin = 1, pD = c("loo","waic","dic"),
     }
 
     return(out)
-    #FIXME: if (!is.null(baseline.model))
+    ## FIXME: if (!is.null(baseline.model))
     ##      - Pass baseline model (parTable?) as argument? (priors?!)
     ##      - Or update postpred() to apply independence model using
     ##        that iteration's model-implied variances?
@@ -245,8 +245,8 @@ BayesChiFit <- function(obs, reps = NULL, nvar, pD, N, Ngr = 1,
   }
 
   ## ensure number of variables is a vector with length == Ngr
-  #FIXME: This shouldn't be necessary.  
-  #       Is object@Model@nvar always a vector, even when equal across groups?
+  ## FIXME: This shouldn't be necessary.  
+  ##       Is object@Model@nvar always a vector, even when equal across groups?
   if (Ngr > 1L) {
     if (length(nvar) == 1L) nvar <- rep(nvar, Ngr)
   }
@@ -319,7 +319,3 @@ BayesChiFit <- function(obs, reps = NULL, nvar, pD, N, Ngr = 1,
 
   out
 }
-
-
-
-

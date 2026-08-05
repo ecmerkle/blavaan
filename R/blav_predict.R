@@ -16,14 +16,14 @@ blavPredict <- function(object, newdata = NULL, type = "lv", level = 1L) {
   
   type <- tolower(type)
   if(type %in% c("latent", "lv", "factor", "factor.score", "factorscore"))
-      type <- "lv"
+  type <- "lv"
   if(type %in% c("ov","yhat"))
-      type <- "yhat"
+  type <- "yhat"
   if(type %in% c("ypred", "ydist"))
-      type <- "ypred"
-  if(type %in% c("ymis", "ovmis")){
-      type <- "ymis"
-      if(all(!is.na(unlist(blavdata@X)))) stop("blavaan ERROR: No missing data are present.", call. = FALSE)
+  type <- "ypred"
+  if(type %in% c("ymis", "ovmis")) {
+    type <- "ymis"
+    if(all(!is.na(unlist(blavdata@X)))) stop("blavaan ERROR: No missing data are present.", call. = FALSE)
   }
 
   lavopt <- lavInspect(object, "options")
@@ -31,7 +31,7 @@ blavPredict <- function(object, newdata = NULL, type = "lv", level = 1L) {
 
   if(lavInspect(object, "categorical") & type == "ymis") stop("blavaan ERROR: ymis is not yet implemented for ordinal models.", call. = FALSE)
 
-  if(level == 2L){
+  if(level == 2L) {
     if(all(unlist(lavInspect(object, "nclusters")) == 1)) stop("blavaan ERROR: level 2 was requested but this does not appear to be a 2-level model.", call. = FALSE)
     if(type %in% c("yhat", "ypred", "ymis")) stop("blavaan ERROR: option", type, "is not yet implemented for two-level models.", call. = FALSE)
   }
@@ -57,10 +57,10 @@ blavPredict <- function(object, newdata = NULL, type = "lv", level = 1L) {
 
     ## N and latent variable names, to set dimensions
     lvmn <- lavInspect(object, "mean.lv")
-    if(!inherits(lvmn, "list")){
+    if(!inherits(lvmn, "list")) {
       lvmn <- list(lvmn)
     }
-    if(level == 1L){
+    if(level == 1L) {
       nlv <- length(lvmn[[1]])
       N <- sum(lavInspect(object, "ntotal"))
       etas <- names(lvmn[[1]])
@@ -89,7 +89,7 @@ blavPredict <- function(object, newdata = NULL, type = "lv", level = 1L) {
 
       tmpres <- vector("list", nchain)
       for(j in 1:nchain) {
-        loop.args <- list(X = 1:nsamps, FUN = function(i, j){
+        loop.args <- list(X = 1:nsamps, FUN = function(i, j) {
           cond_moments(lavmcmc[[j]][itnums[i],],
                        blavmodel,
                        blavpartable,
@@ -102,8 +102,8 @@ blavPredict <- function(object, newdata = NULL, type = "lv", level = 1L) {
 
       if(type == "ypred") {
         ## use mean and cov from each entry of tmpres to randomly sample
-        tmpres <- lapply(tmpres, function(x){
-          lapply(1:ng, function(g){
+        tmpres <- lapply(tmpres, function(x) {
+          lapply(1:ng, function(g) {
             sigchol <- chol(x$cov[[g]])
             t(apply(x$mean[[g]], 1, function(y) mnormt::rmnorm(n=1, mean=y, sqrt=sigchol)))
           })

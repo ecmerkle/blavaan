@@ -2,364 +2,364 @@
 ## some additions)
 blavTech <- function(blavobject, what, ...) {
 
-    blavInspect(blavobject, what, ...)
+  blavInspect(blavobject, what, ...)
 }
 
 ## use lavInspect everywhere we can:
 blavInspect <- function(blavobject, what, ...) {
 
-    stopifnot(inherits(blavobject, "blavaan"))
+  stopifnot(inherits(blavobject, "blavaan"))
 
-    what <- tolower(what)
+  what <- tolower(what)
   
-    dotdotdot <- list(...)
-    dotNames <- names(dotdotdot)
-    add.labels <- TRUE
-    if(any(dotNames == "add.labels")) add.labels <- dotdotdot$add.labels
-    level <- 1L
-    if(any(dotNames == "level")) level <- dotdotdot$level
+  dotdotdot <- list(...)
+  dotNames <- names(dotdotdot)
+  add.labels <- TRUE
+  if(any(dotNames == "add.labels")) add.labels <- dotdotdot$add.labels
+  level <- 1L
+  if(any(dotNames == "level")) level <- dotdotdot$level
 
-    thistarget <- lavInspect(blavobject, "options")$target
-    jagtarget <- thistarget == "jags"
-    cmdstarget <- thistarget == "cmdstan"
+  thistarget <- lavInspect(blavobject, "options")$target
+  jagtarget <- thistarget == "jags"
+  cmdstarget <- thistarget == "cmdstan"
   
-    ## whats unique to blavaan
-    blavwhats <- c("start", "starting.values", "inits", "psrf",
-                   "ac.10", "neff", "mcmc", "draws", "samples",
-                   "n.chains", "cp", "dp", "postmode", "postmean",
-                   "postmedian", "hpd", "ci", "jagnames", "stannames",
-                   "fscores", "lvs", "fsmeans", "lvmeans", "mcobj",
-                   "rhat", "n_eff", "nchain", "nchains")
+  ## whats unique to blavaan
+  blavwhats <- c("start", "starting.values", "inits", "psrf",
+                 "ac.10", "neff", "mcmc", "draws", "samples",
+                 "n.chains", "cp", "dp", "postmode", "postmean",
+                 "postmedian", "hpd", "ci", "jagnames", "stannames",
+                 "fscores", "lvs", "fsmeans", "lvmeans", "mcobj",
+                 "rhat", "n_eff", "nchain", "nchains")
 
-    ## blavwhats that don't require do.fit
-    blavnofit <- c("start", "starting.values", "inits", "n.chains", "cp", "dp",
-                   "jagnames", "stannames", "nchain", "nchains")
+  ## blavwhats that don't require do.fit
+  blavnofit <- c("start", "starting.values", "inits", "n.chains", "cp", "dp",
+                 "jagnames", "stannames", "nchain", "nchains")
   
-    ## whats that are not handled
-    nowhats <- c("mi", "modindices", "modification.indices",
-                 "wls.est", "wls.obs", "wls.v")
+  ## whats that are not handled
+  nowhats <- c("mi", "modindices", "modification.indices",
+               "wls.est", "wls.obs", "wls.v")
 
-    if(what %in% blavwhats){
-        if(!(what %in% blavnofit) & !blavobject@Options$do.fit){
-            stop(paste0("blavaan ERROR: ", what, " does not exist when do.fit = FALSE"))
-        }
-        if(jagtarget){
-            idx <- blavobject@ParTable$jagpnum
-            idx <- idx[!is.na(idx)]
-        } else {
-            idx <- blavobject@ParTable$stansumnum
-            if("pxnames" %in% names(blavobject@ParTable)){
-              drows <- grepl("^def", blavobject@ParTable$pxnames)
-            } else {
-              drows <- grepl("def", blavobject@ParTable$mat)
-            }
-            idx <- idx[blavobject@ParTable$free > 0 | drows]
-        }
-        labs <- lav_partable_labels(blavobject@ParTable, type = "free")
-        if(what %in% c("start", "starting.values", "inits")){
-            blavobject@external$inits
-        } else if(what %in% c("psrf", "ac.10", "neff", "rhat", "n_eff")){
-            if(jagtarget){
-                mcmcsumm <- blavobject@external$mcmcout$summaries
-            } else if (cmdstarget) {
-                mcmcsumm <- blavobject@external$stansumm
-            }   else {
-                mcmcsumm <- rstan::summary(blavobject@external$mcmcout)$summary
-            }
-            if(what %in% c("psrf", "rhat")){
-                if(jagtarget){
-                    OUT <- mcmcsumm[idx,'psrf']
-                } else {
-                    OUT <- mcmcsumm[idx,'Rhat']
-                }
-            }else if(what == "ac.10"){
-                if(jagtarget){
-                    OUT <- mcmcsumm[idx,'AC.10']
-                } else {
-                    stop("blavaan ERROR: autocorrelation stat currently unavailable for Stan.")
-                }
-            } else {
-                if(jagtarget){
-                    OUT <- mcmcsumm[idx,'SSeff']
-                } else {
-                    OUT <- mcmcsumm[idx,'n_eff']
-                }
-            }
-            if(add.labels) names(OUT) <- labs
-
-            ## Append defined (:=) parameter values, computed fresh from posterior draws --
-            ## they are not literal Stan/JAGS monitored variables, so mcmcsumm has no row for
-            ## them. Free-parameter values above are untouched.
-            if(!jagtarget && what %in% c("psrf", "rhat", "neff", "n_eff")){
-                pt <- blavobject@ParTable
-                defrows <- which(pt$op == ":=")
-                if(length(defrows) > 0){
-                    draws <- blavInspect(blavobject, "mcmc")
-                    nfree <- max(pt$free, na.rm = TRUE)
-                    defcols <- nfree + seq_along(defrows)
-                    defarr <- simplify2array(lapply(draws, function(x) x[, defcols, drop = FALSE]))
-                    defOUT <- if(what %in% c("psrf", "rhat")){
-                        apply(defarr, 2, posterior::rhat)
-                    } else {
-                        apply(defarr, 2, posterior::ess_bulk)
-                    }
-                    if(add.labels) names(defOUT) <- pt$lhs[defrows]
-                    OUT <- c(OUT, defOUT)
-                }
-            }
-            OUT
-        } else if(what %in% c("mcmc", "draws", "samples", "hpd", "ci")){
-            ## add defined parameters to labels or, for stan, compute defined parameters
-            pt <- blavobject@ParTable
-            if (!(blavobject@Options$target %in% c("stan", "cmdstan", "vb"))) {
-                pt$free[pt$op == ":="] <- max(pt$free, na.rm = TRUE) + 1:sum(pt$op == ":=")
-                labs <- lav_partable_labels(pt, type = "free")
-                draws <- make_mcmc(blavobject@external$mcmcout)
-                draws <- lapply(draws, function(x) mcmc(x[, idx, drop = FALSE]))
-                draws <- mcmc.list(draws)
-                if(add.labels) {
-                    for (i in 1:length(draws)) {
-                        colnames(draws[[i]]) <- labs
-                    }
-                }
-            } else {
-              labs <- lav_partable_labels(pt, type = "free")
-              draws <- make_mcmc(blavobject@external$mcmcout)
-              draws <- lapply(draws, function(x) mcmc(x[, idx, drop = FALSE]))
-              draws <- mcmc.list(draws)
-              labs <- lav_partable_labels(pt, type = "free")
-              if(add.labels) {
-                for (i in 1:length(draws)) {
-                  colnames(draws[[i]]) <- labs
-                }
-              }
-
-              ndef <- sum(pt$op == ":=")
-              if (ndef > 0) {
-                defpt <- which(pt$op == ":=")
-                for (j in 1:length(draws)) {
-                  for (i in defpt) {
-                    thisop <- pt$rhs[i]
-                    draws[[j]] <- cbind(draws[[j]], eval(parse(text = thisop), envir = as.data.frame(draws[[j]])))
-                    colnames(draws[[j]])[ncol(draws[[j]])] <- pt$lhs[i]
-                  }
-                }
-              }
-            }
-                  
-            if(what == "hpd"){
-                pct <- .95
-                if("level" %in% dotNames) pct <- dotdotdot$level
-                if("prob" %in% dotNames) pct <- dotdotdot$prob
-                draws <- mcmc(do.call("rbind", draws))
-                draws <- HPDinterval(draws, pct)
-            } else if(what == "ci"){
-                pct <- .95
-                if("level" %in% dotNames) pct <- dotdotdot$level
-                if("prob" %in% dotNames) pct <- dotdotdot$prob
-                alpha <- (1 - pct) / 2
-                combined <- do.call("rbind", draws)
-                draws <- t(apply(combined, 2, quantile, probs = c(alpha, 1 - alpha)))
-                colnames(draws) <- c("lower", "upper")
-            }
-            draws
-        } else if(what == "mcobj"){
-            blavobject@external$mcmcout
-        } else if(what %in% c("fscores","lvs","fsmeans","lvmeans")){
-            if(jagtarget){
-                etas <- any(blavobject@external$mcmcout$monitor == "eta")
-            } else {
-                etas <- any(grepl("^eta", rownames(blavobject@external$stansumm))) ||
-                  any(grepl("^eta", blavobject@external$stansumm[,1]))
-            }
-
-            ## how many lvs, excluding phantoms
-            lvmn <- lavInspect(blavobject, "mean.lv")
-            if(!inherits(lvmn, "list")){
-                lvmn <- list(lvmn)
-            }
-            if(level == 1L){
-              nlv <- length(lvmn[[1]])
-              if (isTRUE(lavInspect(blavobject, "options")$.multilevel)) {
-                ## two-level models keep "globally empty" rows (all level-1
-                ## variables missing) in the level-1 lv sampling, unlike
-                ## lavInspect(.,'nobs') which excludes them (see the
-                ## comment on dat$N in lav2standata()) -- match that here
-                nsamp <- sum(sapply(blavobject@Data@X, NROW))
-              } else {
-                nsamp <- sum(lavInspect(blavobject, "nobs"))
-              }
-            } else {
-              nlv <- length(lvmn[[2]])
-              nsamp <- unlist(lavInspect(blavobject, "nclusters"))
-            }
-
-            if(nlv == 0) stop("blavaan ERROR: no latent variables are at this level of the model")
-            if(!etas) stop("blavaan ERROR: factor scores not saved; set save.lvs=TRUE")            
-
-            if(level == 2L & all(nsamp == 1)) stop("blavaan ERROR: level 2 was requested but the model is not multilevel")
-
-            draws <- make_mcmc(blavobject@external$mcmcout, blavobject@external$stanlvs)
-
-            if(jagtarget){
-                drawcols <- grep("^eta\\[", colnames(draws[[1]]))
-                ## remove phantoms
-                drawcols <- drawcols[1:(nlv * nsamp)]
-            } else {
-              if(level == 1L){
-                drawcols <- grep("^eta\\[", colnames(draws[[1]]))
-              } else {
-                drawcols <- grep("^eta_b", colnames(draws[[1]]))
-                nsamp <- sum(nsamp)
-              }
-              nfound <- length(drawcols)/nsamp
-              
-              drawcols <- drawcols[as.numeric(matrix(1:length(drawcols),
-                                                     nsamp, nfound,
-                                                     byrow=TRUE)[,1:nlv])]
-            }
-            draws <- lapply(draws, function(x) mcmc(x[,drawcols]))
-
-            ## for target="stan"/"cmdstan" + missing, use @Data@Mp to reorder
-            ## rows to correspond to original data (cmdstan runs the same
-            ## lav2standata() pattern-contiguous row reordering as stan for
-            ## single-level missing data, so needs the same fix-up). Two-level
-            ## models are excluded: samp_lvs_2lev()'s rows are cluster-
-            ## contiguous (not pattern-contiguous, unlike the single-level
-            ## samp_lvs() case this block is written for) and it already
-            ## restores original row order internally (via orig_id) before
-            ## returning, so this block would both misinterpret the row
-            ## layout and double-reorder already-correct data
-            mis <- any(is.na(unlist(blavobject@Data@X)))
-            Mp <- blavobject@Data@Mp
-            if(blavobject@Options$target %in% c("stan", "cmdstan") & mis &
-               !isTRUE(lavInspect(blavobject, "options")$.multilevel)){
-                rorig <- sapply(Mp, function(x) unlist(x$case.idx))
-                empties <- sapply(Mp, function(x) x$empty.idx)
-                if(inherits(rorig, "list")){
-                    ## multiple groups
-                    for(ii in length(rorig)){
-                        rorig[[ii]] <- blavobject@Data@case.idx[[ii]][rorig[[ii]]]
-                    }
-                    rorig <- unlist(rorig)
-                }
-                cids <- Mp2dataidx(Mp, blavobject@Data@case.idx)
-
-                ## reordering for lvs:
-                nfit <- sum(lavInspect(blavobject, 'nobs'))
-                rsamps <- rep(NA, nlv*nfit)
-                for(j in 1:nlv){
-                    rsamps[((j-1)*nfit + 1):(j*nfit)] <- (j-1)*nfit + cids
-                }
-
-                for(j in 1:length(draws)){
-                    draws[[j]][,rsamps] <- draws[[j]]
-                }
-            }
-            draws <- mcmc.list(draws)
-
-            if((what %in% c("lvmeans", "fsmeans")) | ("means" %in% dotdotdot)){
-                br <- TRUE
-                if(jagtarget){
-                    summ <- blavobject@external$mcmcout$summaries
-                    summname <- "Mean"
-                    br <- FALSE
-                } else {
-                    summ <- blavobject@external$stansumm
-                    summname <- "mean"
-                }
-                if(level == 1L){
-                  mnrows <- grep("^eta\\[", rownames(summ))
-                } else {
-                  mnrows <- grep("^eta_b", rownames(summ))
-                }
-
-                draws <- matrix(summ[mnrows,summname], nsamp,
-                                length(mnrows)/nsamp, byrow=br)[,1:nlv,drop=FALSE]
-                colnames(draws) <- names(lvmn[[level]])
-
-                if(blavobject@Options$target %in% c("stan", "cmdstan") & mis){
-                    draws[rank(rorig),] <- draws
-                }
-            }
-            draws
-        } else if(what %in% c("n.chains", "nchain", "nchains")){
-            draws <- make_mcmc(blavobject@external$mcmcout)
-            length(draws)
-        } else if(what == "cp"){
-            blavobject@Options$cp
-        } else if(what == "dp"){
-            blavobject@Options$dp
-        } else if(what %in% c("postmode", "postmean", "postmedian")){
-            if(jagtarget){
-                mcmcsumm <- blavobject@external$mcmcout$summaries
-            } else {
-                mcmcsumm <- rstan::summary(blavobject@external$mcmcout)$summary
-            }
-
-            ## defined (:=) parameters are not literal Stan/JAGS monitored variables, so
-            ## mcmcsumm has no row for them; compute their postmean/postmedian fresh from
-            ## posterior draws below (postmode already covers them for free, since modeapprox()
-            ## runs over every "mcmc" column -- defined ones included -- it just needed a label).
-            defrows <- integer(0)
-            if(!jagtarget){
-                pt <- blavobject@ParTable
-                defrows <- which(pt$op == ":=")
-            }
-
-            if(what == "postmean"){
-                if(jagtarget){
-                    OUT <- mcmcsumm[idx,'Mean']
-                } else {
-                    OUT <- mcmcsumm[idx,'mean']
-                    if(length(defrows) > 0){
-                        pooled <- do.call("rbind", blavInspect(blavobject, "mcmc"))
-                        nfree <- max(pt$free, na.rm = TRUE)
-                        OUT <- c(OUT, colMeans(pooled[, nfree + seq_along(defrows), drop = FALSE]))
-                    }
-                }
-            }else if(what == "postmedian"){
-                if(jagtarget){
-                    OUT <- mcmcsumm[idx,'Median']
-                } else {
-                    OUT <- mcmcsumm[idx,'50%']
-                    if(length(defrows) > 0){
-                        pooled <- do.call("rbind", blavInspect(blavobject, "mcmc"))
-                        nfree <- max(pt$free, na.rm = TRUE)
-                        OUT <- c(OUT, apply(pooled[, nfree + seq_along(defrows), drop = FALSE], 2, median))
-                    }
-                }
-            } else {
-                if(jagtarget){
-                    OUT <- mcmcsumm[idx,'Mode']
-                } else {
-                    draws <- do.call("rbind", blavInspect(blavobject, "mcmc"))
-                    OUT <- modeapprox(draws)
-                }
-            }
-
-            outlabs <- if(length(defrows) > 0) c(labs, pt$lhs[defrows]) else labs
-            if(add.labels) names(OUT) <- outlabs
-            OUT
-        } else if(what == "jagnames"){
-            if(!jagtarget) stop("blavaan ERROR: JAGS was not used for model estimation.")
-            OUT <- blavobject@ParTable$pxnames[blavobject@ParTable$free > 0]
-            OUT <- OUT[order(blavobject@ParTable$free[blavobject@ParTable$free > 0])]
-            if(add.labels) names(OUT) <- labs
-            OUT
-        } else if(what == "stannames"){
-            if(jagtarget) stop("blavaan ERROR: Stan was not used for model estimation.")
-            mcmcsumm <- rstan::summary(blavobject@external$mcmcout)$summary
-            OUT <- rownames(mcmcsumm)[idx]
-            if(add.labels) names(OUT) <- labs
-            OUT
-        }
-    } else if(what %in% nowhats){
-        stop(paste("blavaan ERROR: argument", what,
-                   "not available for Bayesian models."))
-    } else {
-        ## we can use lavInspect
-        lavargs <- c(dotdotdot, list(object = blavobject, what = what))
-        do.call("lavInspect", lavargs)
+  if(what %in% blavwhats) {
+    if(!(what %in% blavnofit) & !blavobject@Options$do.fit) {
+      stop(paste0("blavaan ERROR: ", what, " does not exist when do.fit = FALSE"))
     }
+    if(jagtarget) {
+      idx <- blavobject@ParTable$jagpnum
+      idx <- idx[!is.na(idx)]
+    } else {
+      idx <- blavobject@ParTable$stansumnum
+      if("pxnames" %in% names(blavobject@ParTable)) {
+        drows <- grepl("^def", blavobject@ParTable$pxnames)
+      } else {
+        drows <- grepl("def", blavobject@ParTable$mat)
+      }
+      idx <- idx[blavobject@ParTable$free > 0 | drows]
+    }
+    labs <- lav_partable_labels(blavobject@ParTable, type = "free")
+    if(what %in% c("start", "starting.values", "inits")) {
+      blavobject@external$inits
+    } else if(what %in% c("psrf", "ac.10", "neff", "rhat", "n_eff")) {
+      if(jagtarget) {
+        mcmcsumm <- blavobject@external$mcmcout$summaries
+      } else if (cmdstarget) {
+        mcmcsumm <- blavobject@external$stansumm
+      }   else {
+        mcmcsumm <- rstan::summary(blavobject@external$mcmcout)$summary
+      }
+      if(what %in% c("psrf", "rhat")) {
+        if(jagtarget) {
+          OUT <- mcmcsumm[idx,'psrf']
+        } else {
+          OUT <- mcmcsumm[idx,'Rhat']
+        }
+      }else if(what == "ac.10") {
+        if(jagtarget) {
+          OUT <- mcmcsumm[idx,'AC.10']
+        } else {
+          stop("blavaan ERROR: autocorrelation stat currently unavailable for Stan.")
+        }
+      } else {
+        if(jagtarget) {
+          OUT <- mcmcsumm[idx,'SSeff']
+        } else {
+          OUT <- mcmcsumm[idx,'n_eff']
+        }
+      }
+      if(add.labels) names(OUT) <- labs
+
+      ## Append defined (:=) parameter values, computed fresh from posterior draws --
+      ## they are not literal Stan/JAGS monitored variables, so mcmcsumm has no row for
+      ## them. Free-parameter values above are untouched.
+      if(!jagtarget && what %in% c("psrf", "rhat", "neff", "n_eff")) {
+        pt <- blavobject@ParTable
+        defrows <- which(pt$op == ":=")
+        if(length(defrows) > 0) {
+          draws <- blavInspect(blavobject, "mcmc")
+          nfree <- max(pt$free, na.rm = TRUE)
+          defcols <- nfree + seq_along(defrows)
+          defarr <- simplify2array(lapply(draws, function(x) x[, defcols, drop = FALSE]))
+          defOUT <- if(what %in% c("psrf", "rhat")) {
+            apply(defarr, 2, posterior::rhat)
+          } else {
+            apply(defarr, 2, posterior::ess_bulk)
+          }
+          if(add.labels) names(defOUT) <- pt$lhs[defrows]
+          OUT <- c(OUT, defOUT)
+        }
+      }
+      OUT
+    } else if(what %in% c("mcmc", "draws", "samples", "hpd", "ci")) {
+      ## add defined parameters to labels or, for stan, compute defined parameters
+      pt <- blavobject@ParTable
+      if (!(blavobject@Options$target %in% c("stan", "cmdstan", "vb"))) {
+        pt$free[pt$op == ":="] <- max(pt$free, na.rm = TRUE) + 1:sum(pt$op == ":=")
+        labs <- lav_partable_labels(pt, type = "free")
+        draws <- make_mcmc(blavobject@external$mcmcout)
+        draws <- lapply(draws, function(x) mcmc(x[, idx, drop = FALSE]))
+        draws <- mcmc.list(draws)
+        if(add.labels) {
+          for (i in 1:length(draws)) {
+            colnames(draws[[i]]) <- labs
+          }
+        }
+      } else {
+        labs <- lav_partable_labels(pt, type = "free")
+        draws <- make_mcmc(blavobject@external$mcmcout)
+        draws <- lapply(draws, function(x) mcmc(x[, idx, drop = FALSE]))
+        draws <- mcmc.list(draws)
+        labs <- lav_partable_labels(pt, type = "free")
+        if(add.labels) {
+          for (i in 1:length(draws)) {
+            colnames(draws[[i]]) <- labs
+          }
+        }
+
+        ndef <- sum(pt$op == ":=")
+        if (ndef > 0) {
+          defpt <- which(pt$op == ":=")
+          for (j in 1:length(draws)) {
+            for (i in defpt) {
+              thisop <- pt$rhs[i]
+              draws[[j]] <- cbind(draws[[j]], eval(parse(text = thisop), envir = as.data.frame(draws[[j]])))
+              colnames(draws[[j]])[ncol(draws[[j]])] <- pt$lhs[i]
+            }
+          }
+        }
+      }
+                  
+      if(what == "hpd") {
+        pct <- .95
+        if("level" %in% dotNames) pct <- dotdotdot$level
+        if("prob" %in% dotNames) pct <- dotdotdot$prob
+        draws <- mcmc(do.call("rbind", draws))
+        draws <- HPDinterval(draws, pct)
+      } else if(what == "ci") {
+        pct <- .95
+        if("level" %in% dotNames) pct <- dotdotdot$level
+        if("prob" %in% dotNames) pct <- dotdotdot$prob
+        alpha <- (1 - pct) / 2
+        combined <- do.call("rbind", draws)
+        draws <- t(apply(combined, 2, quantile, probs = c(alpha, 1 - alpha)))
+        colnames(draws) <- c("lower", "upper")
+      }
+      draws
+    } else if(what == "mcobj") {
+      blavobject@external$mcmcout
+    } else if(what %in% c("fscores","lvs","fsmeans","lvmeans")) {
+      if(jagtarget) {
+        etas <- any(blavobject@external$mcmcout$monitor == "eta")
+      } else {
+        etas <- any(grepl("^eta", rownames(blavobject@external$stansumm))) ||
+        any(grepl("^eta", blavobject@external$stansumm[,1]))
+      }
+
+      ## how many lvs, excluding phantoms
+      lvmn <- lavInspect(blavobject, "mean.lv")
+      if(!inherits(lvmn, "list")) {
+        lvmn <- list(lvmn)
+      }
+      if(level == 1L) {
+        nlv <- length(lvmn[[1]])
+        if (isTRUE(lavInspect(blavobject, "options")$.multilevel)) {
+          ## two-level models keep "globally empty" rows (all level-1
+          ## variables missing) in the level-1 lv sampling, unlike
+          ## lavInspect(.,'nobs') which excludes them (see the
+          ## comment on dat$N in lav2standata()) -- match that here
+          nsamp <- sum(sapply(blavobject@Data@X, NROW))
+        } else {
+          nsamp <- sum(lavInspect(blavobject, "nobs"))
+        }
+      } else {
+        nlv <- length(lvmn[[2]])
+        nsamp <- unlist(lavInspect(blavobject, "nclusters"))
+      }
+
+      if(nlv == 0) stop("blavaan ERROR: no latent variables are at this level of the model")
+      if(!etas) stop("blavaan ERROR: factor scores not saved; set save.lvs=TRUE")            
+
+      if(level == 2L & all(nsamp == 1)) stop("blavaan ERROR: level 2 was requested but the model is not multilevel")
+
+      draws <- make_mcmc(blavobject@external$mcmcout, blavobject@external$stanlvs)
+
+      if(jagtarget) {
+        drawcols <- grep("^eta\\[", colnames(draws[[1]]))
+        ## remove phantoms
+        drawcols <- drawcols[1:(nlv * nsamp)]
+      } else {
+        if(level == 1L) {
+          drawcols <- grep("^eta\\[", colnames(draws[[1]]))
+        } else {
+          drawcols <- grep("^eta_b", colnames(draws[[1]]))
+          nsamp <- sum(nsamp)
+        }
+        nfound <- length(drawcols)/nsamp
+              
+        drawcols <- drawcols[as.numeric(matrix(1:length(drawcols),
+                                               nsamp, nfound,
+                                               byrow=TRUE)[,1:nlv])]
+      }
+      draws <- lapply(draws, function(x) mcmc(x[,drawcols]))
+
+      ## for target="stan"/"cmdstan" + missing, use @Data@Mp to reorder
+      ## rows to correspond to original data (cmdstan runs the same
+      ## lav2standata() pattern-contiguous row reordering as stan for
+      ## single-level missing data, so needs the same fix-up). Two-level
+      ## models are excluded: samp_lvs_2lev()'s rows are cluster-
+      ## contiguous (not pattern-contiguous, unlike the single-level
+      ## samp_lvs() case this block is written for) and it already
+      ## restores original row order internally (via orig_id) before
+      ## returning, so this block would both misinterpret the row
+      ## layout and double-reorder already-correct data
+      mis <- any(is.na(unlist(blavobject@Data@X)))
+      Mp <- blavobject@Data@Mp
+      if(blavobject@Options$target %in% c("stan", "cmdstan") & mis &
+         !isTRUE(lavInspect(blavobject, "options")$.multilevel)) {
+        rorig <- sapply(Mp, function(x) unlist(x$case.idx))
+        empties <- sapply(Mp, function(x) x$empty.idx)
+        if(inherits(rorig, "list")) {
+          ## multiple groups
+          for(ii in length(rorig)) {
+            rorig[[ii]] <- blavobject@Data@case.idx[[ii]][rorig[[ii]]]
+          }
+          rorig <- unlist(rorig)
+        }
+        cids <- Mp2dataidx(Mp, blavobject@Data@case.idx)
+
+        ## reordering for lvs:
+        nfit <- sum(lavInspect(blavobject, 'nobs'))
+        rsamps <- rep(NA, nlv*nfit)
+        for(j in 1:nlv) {
+          rsamps[((j-1)*nfit + 1):(j*nfit)] <- (j-1)*nfit + cids
+        }
+
+        for(j in 1:length(draws)) {
+          draws[[j]][,rsamps] <- draws[[j]]
+        }
+      }
+      draws <- mcmc.list(draws)
+
+      if((what %in% c("lvmeans", "fsmeans")) | ("means" %in% dotdotdot)) {
+        br <- TRUE
+        if(jagtarget) {
+          summ <- blavobject@external$mcmcout$summaries
+          summname <- "Mean"
+          br <- FALSE
+        } else {
+          summ <- blavobject@external$stansumm
+          summname <- "mean"
+        }
+        if(level == 1L) {
+          mnrows <- grep("^eta\\[", rownames(summ))
+        } else {
+          mnrows <- grep("^eta_b", rownames(summ))
+        }
+
+        draws <- matrix(summ[mnrows,summname], nsamp,
+                        length(mnrows)/nsamp, byrow=br)[,1:nlv,drop=FALSE]
+        colnames(draws) <- names(lvmn[[level]])
+
+        if(blavobject@Options$target %in% c("stan", "cmdstan") & mis) {
+          draws[rank(rorig),] <- draws
+        }
+      }
+      draws
+    } else if(what %in% c("n.chains", "nchain", "nchains")) {
+      draws <- make_mcmc(blavobject@external$mcmcout)
+      length(draws)
+    } else if(what == "cp") {
+      blavobject@Options$cp
+    } else if(what == "dp") {
+      blavobject@Options$dp
+    } else if(what %in% c("postmode", "postmean", "postmedian")) {
+      if(jagtarget) {
+        mcmcsumm <- blavobject@external$mcmcout$summaries
+      } else {
+        mcmcsumm <- rstan::summary(blavobject@external$mcmcout)$summary
+      }
+
+      ## defined (:=) parameters are not literal Stan/JAGS monitored variables, so
+      ## mcmcsumm has no row for them; compute their postmean/postmedian fresh from
+      ## posterior draws below (postmode already covers them for free, since modeapprox()
+      ## runs over every "mcmc" column -- defined ones included -- it just needed a label).
+      defrows <- integer(0)
+      if(!jagtarget) {
+        pt <- blavobject@ParTable
+        defrows <- which(pt$op == ":=")
+      }
+
+      if(what == "postmean") {
+        if(jagtarget) {
+          OUT <- mcmcsumm[idx,'Mean']
+        } else {
+          OUT <- mcmcsumm[idx,'mean']
+          if(length(defrows) > 0) {
+            pooled <- do.call("rbind", blavInspect(blavobject, "mcmc"))
+            nfree <- max(pt$free, na.rm = TRUE)
+            OUT <- c(OUT, colMeans(pooled[, nfree + seq_along(defrows), drop = FALSE]))
+          }
+        }
+      }else if(what == "postmedian") {
+        if(jagtarget) {
+          OUT <- mcmcsumm[idx,'Median']
+        } else {
+          OUT <- mcmcsumm[idx,'50%']
+          if(length(defrows) > 0) {
+            pooled <- do.call("rbind", blavInspect(blavobject, "mcmc"))
+            nfree <- max(pt$free, na.rm = TRUE)
+            OUT <- c(OUT, apply(pooled[, nfree + seq_along(defrows), drop = FALSE], 2, median))
+          }
+        }
+      } else {
+        if(jagtarget) {
+          OUT <- mcmcsumm[idx,'Mode']
+        } else {
+          draws <- do.call("rbind", blavInspect(blavobject, "mcmc"))
+          OUT <- modeapprox(draws)
+        }
+      }
+
+      outlabs <- if(length(defrows) > 0) c(labs, pt$lhs[defrows]) else labs
+      if(add.labels) names(OUT) <- outlabs
+      OUT
+    } else if(what == "jagnames") {
+      if(!jagtarget) stop("blavaan ERROR: JAGS was not used for model estimation.")
+      OUT <- blavobject@ParTable$pxnames[blavobject@ParTable$free > 0]
+      OUT <- OUT[order(blavobject@ParTable$free[blavobject@ParTable$free > 0])]
+      if(add.labels) names(OUT) <- labs
+      OUT
+    } else if(what == "stannames") {
+      if(jagtarget) stop("blavaan ERROR: Stan was not used for model estimation.")
+      mcmcsumm <- rstan::summary(blavobject@external$mcmcout)$summary
+      OUT <- rownames(mcmcsumm)[idx]
+      if(add.labels) names(OUT) <- labs
+      OUT
+    }
+  } else if(what %in% nowhats) {
+    stop(paste("blavaan ERROR: argument", what,
+               "not available for Bayesian models."))
+  } else {
+    ## we can use lavInspect
+    lavargs <- c(dotdotdot, list(object = blavobject, what = what))
+    do.call("lavInspect", lavargs)
+  }
 }

@@ -1,63 +1,63 @@
-#
-# much of this comes from lav_object_methods.R
+##
+## much of this comes from lav_object_methods.R
 
 bl.short.summary <- function(object) {
 
-    # catch FAKE run
-    FAKE <- FALSE
-    if(!is.null(object@Options$optim.method)) {
-        if(tolower(object@Options$optim.method) == "none") {
-            FAKE <- TRUE
-        }
+  ## catch FAKE run
+  FAKE <- FALSE
+  if(!is.null(object@Options$optim.method)) {
+    if(tolower(object@Options$optim.method) == "none") {
+      FAKE <- TRUE
     }
+  }
 
-    class(object) <- "lavaan"
-    garb <- capture.output( tmp <- show(object) )
-    tmp$test <- NULL
-    cat("b")
-    print(tmp)
-    cat("\n")
+  class(object) <- "lavaan"
+  garb <- capture.output( tmp <- show(object) )
+  tmp$test <- NULL
+  cat("b")
+  print(tmp)
+  cat("\n")
   
 
-    # Print margloglik + ppp
-    ppp <- TRUE
-    if(length(object@Fit@test) == 0) ppp <- FALSE
-    shifted <- FALSE
+  ## Print margloglik + ppp
+  ppp <- TRUE
+  if(length(object@Fit@test) == 0) ppp <- FALSE
+  shifted <- FALSE
 
-    # 0. heading
-    #h.txt <- sprintf("\nChi-square test user model (h0)",
-    #                 object@Options$estimator)
-    t0.txt <- sprintf("  %-40s", "Statistic")
-    t1.txt <- ifelse(ppp,
-                     sprintf("  %10s", "MargLogLik"), "") #object@Options$estimator)
-    t2.txt <- ifelse(ppp, 
-              sprintf("  %10s", "PPP"), "")
-    cat(t0.txt, t1.txt, t2.txt, "\n", sep="")
+  ## 0. heading
+  ## h.txt <- sprintf("\nChi-square test user model (h0)",
+  ##                 object@Options$estimator)
+  t0.txt <- sprintf("  %-40s", "Statistic")
+  t1.txt <- ifelse(ppp,
+                   sprintf("  %10s", "MargLogLik"), "") #object@Options$estimator)
+  t2.txt <- ifelse(ppp, 
+            sprintf("  %10s", "PPP"), "")
+  cat(t0.txt, t1.txt, t2.txt, "\n", sep="")
 
-    # default output; change if request other fit stats?
+  ## default output; change if request other fit stats?
 
-    # 1. test statistics
-    t0.txt <- sprintf("  %-40s", "Value")  
-    t1.txt <- ifelse(ppp,
-                     sprintf("  %10.3f", object@Fit@test[[1]]$stat), "")
-    t2.txt <- ifelse(ppp, 
-                     sprintf("  %10.3f", object@Fit@test[[2]]$stat), "")
-    cat(t0.txt, t1.txt, t2.txt, "\n", sep="")
+  ## 1. test statistics
+  t0.txt <- sprintf("  %-40s", "Value")  
+  t1.txt <- ifelse(ppp,
+                   sprintf("  %10.3f", object@Fit@test[[1]]$stat), "")
+  t2.txt <- ifelse(ppp, 
+                   sprintf("  %10.3f", object@Fit@test[[2]]$stat), "")
+  cat(t0.txt, t1.txt, t2.txt, "\n", sep="")
 
-    ## interesting way to add other stuff:
-    ## if(object@Options$estimator == "MML") {
-    ##     fm <- fitMeasures(object, c("logl", "npar", "aic", "bic", "bic2"))
-    ##     print.fit.measures(fm)
-    ## }
+  ## interesting way to add other stuff:
+  ## if(object@Options$estimator == "MML") {
+  ##     fm <- fitMeasures(object, c("logl", "npar", "aic", "bic", "bic2"))
+  ##     print.fit.measures(fm)
+  ## }
 
-    #cat("\n")
+  ## cat("\n")
 }
 
 
 setMethod("show", "blavaan",
 function(object) {
 
-    # show only basic information
+    ## show only basic information
     bl.short.summary(object)
 
 })
@@ -82,21 +82,21 @@ function(object, header       = TRUE,
                  nd = 3L,
                  print = TRUE) {
 
-    #TODO: remove (deprecated):  if(std.nox) standardized <- TRUE
+    ## TODO: remove (deprecated):  if(std.nox) standardized <- TRUE
 
-    # print the 'short' summary
+    ## print the 'short' summary
     if(header) {
         bl.short.summary(object)
     }
 
-    # only if requested, the fit measures
+    ## only if requested, the fit measures
     if(fit.measures) {
         bopts <- blavInspect(object, "options")
         if(bopts$test == "none" & !(bopts$target %in% c("stan", "cmdstan"))) {
             warning("lavaan WARNING: fit measures not available if test = \"none\"", call. = FALSE)
         } else {
-            #print.fit.measures( fitMeasures(object, fit.measures="default") )
-            # TODO: define proper print function for custom fit measures
+            ## print.fit.measures( fitMeasures(object, fit.measures="default") )
+            ## TODO: define proper print function for custom fit measures
         }
     }
 
@@ -110,9 +110,9 @@ function(object, header       = TRUE,
         if(!("level" %in% names(newpt))) newpt$level <- rep("within", length(newpt$lhs))
         newpt$group[newpt$group == 0] <- 1 # for defined parameters
 
-        if(!jagtarget){
+        if(!jagtarget) {
             rhorows <- which(newpt$mat == "rho" | newpt$mat == "lvrho")
-            if(length(rhorows) > 0){
+            if(length(rhorows) > 0) {
                 newpt <- lapply(newpt, function(x) x[-rhorows])
                 object@ParTable <- lapply(object@ParTable, function(x) x[-rhorows])
             }
@@ -128,14 +128,14 @@ function(object, header       = TRUE,
         if(!("group" %in% names(PE))) PE$group <- 1
         if(!("level" %in% names(PE))) PE$level <- "within"
         if(!("psrf" %in% names(PE))) PE$psrf <- NA
-        #TODO: remove deprecated argument in early 2025
-        # if(standardized && std.nox) {
-        #     PE$std.all <- PE$std.nox
-        # }
+        ## TODO: remove deprecated argument in early 2025
+        ## if(standardized && std.nox) {
+        ##     PE$std.all <- PE$std.nox
+        ## }
         PE$group[PE$group == 0] <- 1
 
-        if("target" %in% names(object@call)){
-            if(object@call$target == "vb"){
+        if("target" %in% names(object@call)) {
+            if(object@call$target == "vb") {
                 attributes(PE)$information <- "VB"
                 attributes(PE)$se <- "VB"
             }
@@ -147,7 +147,7 @@ function(object, header       = TRUE,
         ##                (like Std.Err column)
 
         ## match jags names to partable, then partable to PE
-        if(jagtarget){
+        if(jagtarget) {
             pte2 <- which(!is.na(newpt$jagpnum))
         } else {
             pte2 <- which(newpt$free > 0)
@@ -157,8 +157,8 @@ function(object, header       = TRUE,
         if(!("ci.lower" %in% names(PE))) {
           PE$ci.lower <- PE$ci.upper <- NA
         }
-        if(jagtarget){
-          if('Lower95' %in% colnames(object@external$mcmcout$HPD)){
+        if(jagtarget) {
+          if('Lower95' %in% colnames(object@external$mcmcout$HPD)) {
             PE$ci.lower[peentry] <- object@external$mcmcout$HPD[newpt$jagpnum[pte2],'Lower95']
             PE$ci.upper[peentry] <- object@external$mcmcout$HPD[newpt$jagpnum[pte2],'Upper95']
           } else {
@@ -167,7 +167,7 @@ function(object, header       = TRUE,
           }
         } else {
             parsumm <- object@external$stansumm
-            if('2.5%' %in% colnames(parsumm) & '97.5%' %in% colnames(parsumm)){
+            if('2.5%' %in% colnames(parsumm) & '97.5%' %in% colnames(parsumm)) {
                 PE$ci.lower[peentry] <- parsumm[newpt$stansumnum[pte2],'2.5%']
                 PE$ci.upper[peentry] <- parsumm[newpt$stansumnum[pte2],'97.5%']
             } else {
@@ -185,21 +185,21 @@ function(object, header       = TRUE,
         ## interval of any width for free *and* defined parameters alike (target = stan/cmdstan
         ## only; jags keeps its existing fit-time HPD mechanism above untouched).
         nfree <- defrows <- peentrydef <- NULL
-        if(!jagtarget){
+        if(!jagtarget) {
           nfree <- max(newpt$free, na.rm = TRUE)
           defrows <- which(newpt$op == ":=")
-          if(length(defrows) > 0){
+          if(length(defrows) > 0) {
             peentrydef <- match(with(newpt, paste(lhs[defrows], op[defrows], rhs[defrows], group[defrows], level[defrows], sep="")),
                                 paste(PE$lhs, PE$op, PE$rhs, PE$group, PE$level, sep=""))
           }
 
-          if(length(defrows) > 0 || !(level == .95 && !hpd)){
+          if(length(defrows) > 0 || !(level == .95 && !hpd)) {
             civals <- blavInspect(object, if(hpd) "hpd" else "ci", level = level)
-            if(!(level == .95 && !hpd)){
+            if(!(level == .95 && !hpd)) {
               PE$ci.lower[peentry] <- civals[newpt$free[pte2], "lower"]
               PE$ci.upper[peentry] <- civals[newpt$free[pte2], "upper"]
             }
-            if(length(defrows) > 0){
+            if(length(defrows) > 0) {
               PE$ci.lower[peentrydef] <- civals[nfree + seq_along(defrows), "lower"]
               PE$ci.upper[peentrydef] <- civals[nfree + seq_along(defrows), "upper"]
             }
@@ -222,59 +222,59 @@ function(object, header       = TRUE,
         ## parameters never get psrf + others; see line 200 of lav_print.R" comment referred to).
         ## Values come from the blavInspect() extensions added alongside this (stan/cmdstan only;
         ## jags is untouched, same scope as the ci.lower/ci.upper fix above).
-        if(psrf){
+        if(psrf) {
           PE$psrf[peentry] <- formatC(as.numeric(newpt$psrf[pte2]), digits = nd, format = "f")
-          if(!is.null(peentrydef)){
+          if(!is.null(peentrydef)) {
             defrhat <- blavInspect(object, "rhat")[nfree + seq_along(defrows)]
             PE$psrf[peentrydef] <- formatC(as.numeric(defrhat), digits = nd, format = "f")
           }
           PE$psrf[is.na(PE$psrf)] <- ""
           PE$psrf <- sprintf(char.format, PE$psrf)
         }
-        if(neff){
+        if(neff) {
           PE$neff <- rep(NA, nrow(PE))
-          if(jagtarget){
+          if(jagtarget) {
             PE$neff[peentry] <- object@external$mcmcout$summaries[newpt$jagpnum[pte2],'SSeff']
           } else {
             PE$neff[peentry] <- parsumm[newpt$stansumnum[pte2],'n_eff']
-            if(!is.null(peentrydef)){
+            if(!is.null(peentrydef)) {
               PE$neff[peentrydef] <- blavInspect(object, "neff")[nfree + seq_along(defrows)]
             }
           }
         }
-        if(priors){
+        if(priors) {
           PE$prior <- rep(NA, nrow(PE))
           PE$prior[peentry] <- newpt$prior[pte2]
           PE$prior[is.na(PE$prior)] <- ""
         }
-        if(postmedian){
+        if(postmedian) {
           PE$Post.Med <- rep(NA, nrow(PE))
-          if(jagtarget){
+          if(jagtarget) {
             PE$Post.Med[peentry] <- object@external$mcmcout$summaries[newpt$jagpnum[pte2],'Median']
           } else {
             PE$Post.Med[peentry] <- parsumm[newpt$stansumnum[pte2],'50%']
-            if(!is.null(peentrydef)){
+            if(!is.null(peentrydef)) {
               PE$Post.Med[peentrydef] <- blavInspect(object, "postmedian")[nfree + seq_along(defrows)]
             }
           }
         }
-        if(postmode){
+        if(postmode) {
           PE$Post.Mode <- rep(NA, nrow(PE))
-          if(jagtarget){
+          if(jagtarget) {
             PE$Post.Mode[peentry] <- object@external$mcmcout$summaries[newpt$jagpnum[pte2],'Mode']
             if(all(is.na(PE$Post.Mode))) warning("blavaan WARNING: Posterior modes require installation of the modeest package.", call. = FALSE)
           } else {
             postmodevals <- blavInspect(object, "postmode")
             PE$Post.Mode[peentry] <- postmodevals[newpt$free[pte2]]
-            if(!is.null(peentrydef)){
+            if(!is.null(peentrydef)) {
               PE$Post.Mode[peentrydef] <- postmodevals[nfree + seq_along(defrows)]
             }
           }
         }
-        if(bf){
+        if(bf) {
           ## we don't know whether priors=TRUE:
           PE2 <- PE
-          if(!("prior" %in% names(PE))){
+          if(!("prior" %in% names(PE))) {
             tmppri <- rep("", nrow(PE))
             tmppri[peentry] <- newpt$prior[pte2]
             PE2$prior <- tmppri
@@ -288,13 +288,13 @@ function(object, header       = TRUE,
         penames <- names(PE)
         ## This could be called "Post.Mean" except constraints
         ## require "est"
-        #names(PE)[penames == "est"] <- "Post.Mean"
-        #PE$est <- PE$Post.Mean
-        if(!('prisamp' %in% names(blavInspect(object, 'options')))){
+        ## names(PE)[penames == "est"] <- "Post.Mean"
+        ## PE$est <- PE$Post.Mean
+        if(!('prisamp' %in% names(blavInspect(object, 'options')))) {
           ## backwards compatibility before we had prisamp
           names(PE)[penames == "se"] <- "Post.SD"
         } else {
-          if(blavInspect(object, 'options')$prisamp){
+          if(blavInspect(object, 'options')$prisamp) {
             names(PE)[penames == "se"] <- "Pri.SD"
           } else {
             names(PE)[penames == "se"] <- "Post.SD"
@@ -312,8 +312,8 @@ function(object, header       = TRUE,
 }
 )
 
-# NB not absolutely necessary, except for
-# bug in lavaan 0.5-23.1097
+## NB not absolutely necessary, except for
+## bug in lavaan 0.5-23.1097
 setMethod("coef", "blavaan",
   function(object, type="free", labels=TRUE) {
     class(object) <- "lavaan"
@@ -321,39 +321,39 @@ setMethod("coef", "blavaan",
   })
 
 
-plot.blavaan <- function(x, pars=NULL, plot.type="trace", showplot=TRUE, ...){
-    # NB: arguments now go to bayesplot functions
-    if(length(pars) == 0L){
-        pars <- x@ParTable$free
-        pars <- pars[pars > 0 & !is.na(pars)]
-    }
+plot.blavaan <- function(x, pars=NULL, plot.type="trace", showplot=TRUE, ...) {
+  ## NB: arguments now go to bayesplot functions
+  if(length(pars) == 0L) {
+    pars <- x@ParTable$free
+    pars <- pars[pars > 0 & !is.na(pars)]
+  }
 
-    if(x@Options$target != "stan"){
-        samps <- as.array(blavInspect(x, 'mcmc', add.labels = FALSE), drop = FALSE)
-        parnames <- x@ParTable$pxnames[match(pars, x@ParTable$free)]
-        samps <- samps[, match(parnames, colnames(samps)), , drop = FALSE]
-        ## samps dims must be "iteration, chain, parameter"
-        samps <- aperm(samps, c(1, 3, 2))
-    } else {
-        samps <- as.array(x@external$mcmcout)
-        parnums <- x@ParTable$stanpnum[match(pars, x@ParTable$free)]
-        samps <- samps[, , parnums, drop = FALSE]
-    }
-    dimnames(samps)[[3]] <- with(x@ParTable, lav_partable_labels(x@ParTable, type = "user")[match(pars, free)])
+  if(x@Options$target != "stan") {
+    samps <- as.array(blavInspect(x, 'mcmc', add.labels = FALSE), drop = FALSE)
+    parnames <- x@ParTable$pxnames[match(pars, x@ParTable$free)]
+    samps <- samps[, match(parnames, colnames(samps)), , drop = FALSE]
+    ## samps dims must be "iteration, chain, parameter"
+    samps <- aperm(samps, c(1, 3, 2))
+  } else {
+    samps <- as.array(x@external$mcmcout)
+    parnums <- x@ParTable$stanpnum[match(pars, x@ParTable$free)]
+    samps <- samps[, , parnums, drop = FALSE]
+  }
+  dimnames(samps)[[3]] <- with(x@ParTable, lav_partable_labels(x@ParTable, type = "user")[match(pars, free)])
   
-    plfun <- get(paste0("mcmc_", plot.type), asNamespace("bayesplot"))
+  plfun <- get(paste0("mcmc_", plot.type), asNamespace("bayesplot"))
 
-    pl <- do.call(plfun, c(list(x = samps), list(...)))
+  pl <- do.call(plfun, c(list(x = samps), list(...)))
 
-    if(showplot) plot(pl)
+  if(showplot) plot(pl)
 
-    invisible(pl)
+  invisible(pl)
 }
 
-#setMethod("plot", "blavaan", plot.blavaan)
+## setMethod("plot", "blavaan", plot.blavaan)
 
 ## function/environment for y-axis label of runjags plots
-labelfun <- function(var){
+labelfun <- function(var) {
   unlist(axis_env$trans[axis_env$trans[,1] == var, 2]) #axis_env$trans[panel.number(),2]
 }
   
@@ -367,10 +367,10 @@ SDBF <- function(PE) {
 
   pricom <- jagsdist2r(PE$prior[tmprow])
   pridens <- rep(NA, length(tmprow))
-  for(i in 1:length(tmprow)){
-      tmpdens <- try(eval_prior(pricom[[i]], 0, ""), silent=TRUE)
+  for(i in 1:length(tmprow)) {
+    tmpdens <- try(eval_prior(pricom[[i]], 0, ""), silent=TRUE)
       
-      if(!inherits(tmpdens, "try-error")) pridens[i] <- tmpdens
+    if(!inherits(tmpdens, "try-error")) pridens[i] <- tmpdens
   }
 
   bf <- rep(NA, length(PE$op))
@@ -387,7 +387,7 @@ standardizedPosterior <- standardizedposterior <- function(object, ...) {
 
   allowargs <- c('type', 'cov.std', 'remove.eq', 'remove.ineq', 'remove.def')
   
-  if(!all(names(dots) %in% allowargs)){
+  if(!all(names(dots) %in% allowargs)) {
     stop(paste0("blavaan ERROR: arguments must be in ",
                 paste(allowargs, collapse=" ")))
   }
@@ -411,7 +411,7 @@ standardizedPosterior <- standardizedposterior <- function(object, ...) {
   if("group" %in% colnames(tmp2)) colnames(fullres) <- paste0(colnames(fullres), '.g', tmp2$group)
   fullres[1,] <- tmp2[, 'est.std']
 
-  for(i in 2:nrow(draws)){
+  for(i in 2:nrow(draws)) {
     tmp <- fill_params(draws[i,], object@Model, object@ParTable)
     tf@Model <- tmp
     tf@ParTable$est[tf@ParTable$free > 0] <- lav_model_get_parameters(tmp)

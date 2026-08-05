@@ -6,24 +6,24 @@ get_ll <- function(postsamp       = NULL, # one posterior sample
                    measure        = "logl",
                    casewise       = FALSE,
                    conditional    = FALSE,
-                   standata       = NULL){
+                   standata       = NULL) {
 
-    if(lavInspect(lavobject, "categorical")){
-      ll.samp <- get_ll_ord(postsamp, lavobject, measure, casewise, conditional, standata)
-    } else if(lavInspect(lavobject, "options")$.multilevel){
-      ll.samp <- get_ll_2l(postsamp, lavobject, standata)
-    } else {
-      ll.samp <- get_ll_cont(postsamp, lavobject, measure, casewise, conditional)
-    }
+  if(lavInspect(lavobject, "categorical")) {
+    ll.samp <- get_ll_ord(postsamp, lavobject, measure, casewise, conditional, standata)
+  } else if(lavInspect(lavobject, "options")$.multilevel) {
+    ll.samp <- get_ll_2l(postsamp, lavobject, standata)
+  } else {
+    ll.samp <- get_ll_cont(postsamp, lavobject, measure, casewise, conditional)
+  }
 
-    ll.samp
+  ll.samp
 }
 
 get_ll_cont <- function(postsamp       = NULL, # one posterior sample
                         lavobject      = NULL,
                         measure        = "logl",
                         casewise       = FALSE,
-                        conditional    = FALSE){
+                        conditional    = FALSE) {
 
   lavmodel <- lavobject@Model
   lavpartable <- lavobject@ParTable
@@ -35,11 +35,11 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
   nper <- lavInspect(lavobject, 'nobs')
   if(wishlik && casewise) stop("blavaan ERROR: casewise loglikelihoods are unavailable for Wishart likelihood.")
 
-  if(length(postsamp) > 0){
+  if(length(postsamp) > 0) {
     lavmodel <- fill_params(postsamp, lavmodel, lavpartable)
   }
 
-  if(conditional){
+  if(conditional) {
     implied <- cond_moments(postsamp, lavmodel, lavpartable, lavsamplestats,
                             lavdata, lavobject)
   } else {
@@ -52,9 +52,9 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
   ## were renamed to lav_mvn_mi_h1_est_moments()/lav_mvn_mi_loglik_data() (with
   ## underscore-style lowercase argument names) in lavaan 0.7-1
   newname <- packageDescription("lavaan")$Version >= "0.7-1"
-  if(any(is.na(unlist(lavdata@X)))){
+  if(any(is.na(unlist(lavdata@X)))) {
     mis <- TRUE
-    if(newname){
+    if(newname) {
       lavmvh1 <- getFromNamespace("lav_mvn_mi_h1_est_moments", "lavaan")
       lavmvll <- getFromNamespace("lav_mvn_mi_loglik_data", "lavaan")
     } else {
@@ -63,10 +63,10 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
     }
   }
 
-  if(measure[1] %in% c("logl", "chisq") & !mis & length(measure) == 1){
-    if(casewise){
+  if(measure[1] %in% c("logl", "chisq") & !mis & length(measure) == 1) {
+    if(casewise) {
       ll.samp <- rep(NA, sum(nper))
-    } else if(conditional){
+    } else if(conditional) {
       ll.samp <- 0
     } else {
       ## logl + baseline logl
@@ -74,10 +74,10 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
     }
     
     Ng <- lavInspect(lavobject, 'ngroups')
-    for(g in 1:Ng){
-      if(conditional){
+    for(g in 1:Ng) {
+      if(conditional) {
         mnvec <- implied$mean[[g]]
-      } else if(!lavoptions$meanstructure){
+      } else if(!lavoptions$meanstructure) {
         mnvec <- lavsamplestats@mean[[g]]
       } else {
         mnvec <- as.numeric(implied$mean[[g]])
@@ -85,7 +85,7 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
 
       ## ensure symmetric:
       cmat <- (implied$cov[[g]] + t(implied$cov[[g]]))/2
-      if(wishlik){
+      if(wishlik) {
         tmpll <- try(ldwish((nper[g] - 1) * lavsamplestats@cov[[g]], nper[g] - 1, cmat))
       } else {
         tmpll <- try(dmnorm(lavdata@X[[g]], mnvec, cmat, log=TRUE))
@@ -94,16 +94,16 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
 
       ## subtract logl.X
       x.idx <- lavsamplestats@x.idx[[g]]
-      if(!is.null(x.idx) && length(x.idx) > 0L){
+      if(!is.null(x.idx) && length(x.idx) > 0L) {
         Mu.X <- lavsamplestats@mean.x[[g]]
         Sigma.X <- lavsamplestats@cov.x[[g]]
-        if(is.null(Mu.X) && !wishlik){
+        if(is.null(Mu.X) && !wishlik) {
           Mu.X <- mnvec[x.idx]
         }
-        if(is.null(Sigma.X)){
+        if(is.null(Sigma.X)) {
           Sigma.X <- cmat[x.idx, x.idx, drop=FALSE]
         }
-        if(wishlik){
+        if(wishlik) {
           tmpll.x <- try(ldwish((nper[g] - 1) * lavsamplestats@cov[[g]][x.idx, x.idx], nper[g] - 1, Sigma.X))
         } else {
           tmpll.x <- try(dmnorm(lavdata@X[[g]][,x.idx], Mu.X, Sigma.X, log=TRUE))
@@ -112,30 +112,30 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
         tmpll <- tmpll - tmpll.x
       }
 
-      if(!conditional){       
+      if(!conditional) {       
         sampmn <- lavsamplestats@mean[[g]]
         sampcov <- lavsamplestats@cov[[g]]
 
-        if(wishlik){
+        if(wishlik) {
           basell <- try(ldwish((nper[g] - 1) * sampcov, nper[g] - 1, sampcov))
         } else {
           basell <- try(dmnorm(lavdata@X[[g]], sampmn, sampcov, log=TRUE))
         }
-        if(inherits(basell, "try-error")){
+        if(inherits(basell, "try-error")) {
           basell <- NA
           warning("blavaan WARNING: sample covariance matrix is not positive definite.", call. = FALSE)
         }
 
-        if(!is.null(x.idx) && length(x.idx) > 0L){
+        if(!is.null(x.idx) && length(x.idx) > 0L) {
           Mu.X <- lavsamplestats@mean.x[[g]]
           Sigma.X <- lavsamplestats@cov.x[[g]]
-          if(is.null(Mu.X) && !wishlik){
+          if(is.null(Mu.X) && !wishlik) {
             Mu.X <- sampmn[x.idx]
           }
-          if(is.null(Sigma.X)){
+          if(is.null(Sigma.X)) {
             Sigma.X <- sampcov[x.idx, x.idx, drop=FALSE]
           }
-          if(wishlik){
+          if(wishlik) {
             tmpll.x <- try(ldwish((nper[g] - 1) * Sigma.X, nper[g] - 1, Sigma.X))
           } else {
             tmpll.x <- try(dmnorm(lavdata@X[[g]][,x.idx], Mu.X, Sigma.X, log=TRUE))
@@ -145,13 +145,13 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
         }
       }
 
-      if(casewise){
+      if(casewise) {
         ll.samp[lavdata@case.idx[[g]]] <- tmpll
-      } else if(conditional){
+      } else if(conditional) {
         ll.samp <- ll.samp + sum(tmpll)
       } else {
         tmpll <- c(sum(tmpll), sum(basell))
-        #tmpll <- -2*(sum(tmpll) - sum(basell))
+        ## tmpll <- -2*(sum(tmpll) - sum(basell))
         ll.samp <- ll.samp + tmpll
       }
 
@@ -171,7 +171,7 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
 
     }
   } else if(measure[1] %in% c("logl", "chisq") & length(measure) == 1) {
-    if(lavoptions$target == "stan"){
+    if(lavoptions$target == "stan") {
       tmpll <- NA # we'll get it from stan
     } else {
       tmpobj <- lavobject
@@ -184,17 +184,17 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
       ll.samp <- tmpll
     } else {
       tmpsat <- 0
-      for(g in 1:length(implied$cov)){
+      for(g in 1:length(implied$cov)) {
         ## high tolerance speed boost
-        if(newname){
+        if(newname) {
           satmod <- lavmvh1(y = lavdata@X[[g]], mp = lavdata@Mp[[g]],
-                            #max_iter = 20,
+                            ## max_iter = 20,
                             tol = 1e-2)
           tmpsat <- tmpsat + lavmvll(y = lavdata@X[[g]], mu = satmod$Mu, sigma_1 = satmod$Sigma,
                                      x_idx = lavsamplestats@x.idx[[g]])
         } else {
           satmod <- lavmvh1(Y = lavdata@X[[g]], Mp = lavdata@Mp[[g]],
-                            #max.iter = 20,
+                            ## max.iter = 20,
                             tol = 1e-2)
           tmpsat <- tmpsat + lavmvll(Y = lavdata@X[[g]], Mu = satmod$Mu, Sigma = satmod$Sigma,
                                      x.idx = lavsamplestats@x.idx[[g]])
@@ -211,7 +211,7 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
     ## control() is part of lavmodel (for now)
     lavoptions$optim.method <- "none"
     lavoptions$check.gradient <- FALSE
-    if("control" %in% slotNames(lavmodel)){
+    if("control" %in% slotNames(lavmodel)) {
       lavmodel@control <- list(optim.method="none")
     }
     ## FIXME: not sure when 'free' becomes numeric,
@@ -224,7 +224,7 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
                            slotSampleStats = lavsamplestats,
                            slotData = lavdata,
                            slotCache = lavcache), silent=TRUE)
-    if(!inherits(fit.samp, "try-error")){
+    if(!inherits(fit.samp, "try-error")) {
       fit.samp@Options$se <- "standard" # for nonnest2
       fit.samp@test[[1]]$test <- "standard" # for do.fit=FALSE
       ## populate the model-implied moments; lavaan() with optim.method="none"
@@ -232,9 +232,9 @@ get_ll_cont <- function(postsamp       = NULL, # one posterior sample
       fit.samp@implied <- lav_model_implied(lavmodel,
                                             delta = (lavmodel@parameterization == "delta"))
 
-      if(casewise){
+      if(casewise) {
         ll.samp <- llcont(fit.samp)
-      } else if(measure[1] == "logl"){
+      } else if(measure[1] == "logl") {
         ll.samp <- fitMeasures(fit.samp,
                                c("logl", "unrestricted.logl"))
       } else {
@@ -257,7 +257,7 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
                        measure        = "logl",
                        casewise       = FALSE,
                        conditional    = FALSE,
-                       standata       = NULL){
+                       standata       = NULL) {
 
   lavmodel <- lavobject@Model
   lavpartable <- lavobject@ParTable
@@ -266,11 +266,11 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
   lavcache <- lavobject@Cache
   lavdata <- lavobject@Data
   
-  if(length(postsamp) > 0){
+  if(length(postsamp) > 0) {
     lavmodel <- fill_params(postsamp, lavmodel, lavpartable)
   }
   
-  if(conditional){
+  if(conditional) {
     lavmodel@GLIST$delta <- NULL # or else predictions will be rescaled
     implied <- cond_moments(postsamp, lavmodel, lavpartable, lavsamplestats,
                             lavdata, lavobject)
@@ -278,8 +278,8 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
     implied <- lav_model_implied(lavmodel, delta = (lavmodel@parameterization == "delta"))
   }
 
-  if(is.null(standata)){
-    if("mcmcdata" %in% names(lavobject@external)){
+  if(is.null(standata)) {
+    if("mcmcdata" %in% names(lavobject@external)) {
       standata <- lavobject@external$mcmcdata
     } else {
       stop("blavaan ERROR: Problem approximating ordinal log-likelihood.")
@@ -290,7 +290,7 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
   num.idx <- lavmodel@num.idx
   th.idx <- lavmodel@th.idx
 
-  if("llnsamp" %in% names(lavoptions)){
+  if("llnsamp" %in% names(lavoptions)) {
     llnsamp <- lavoptions$llnsamp
   } else {
     ## we need to use tmvnsim for more than 20 dimensions
@@ -299,8 +299,8 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
     }
   }
 
-  if(measure[1] %in% c("logl", "chisq") & length(measure) == 1){
-    if(casewise){
+  if(measure[1] %in% c("logl", "chisq") & length(measure) == 1) {
+    if(casewise) {
       ll.samp <- rep(NA, sum(unlist(lavdata@nobs)))
     } else {
       ## logl + baseline logl
@@ -334,7 +334,7 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
       cmat <- (implied$cov[[g]] + t(implied$cov[[g]]))/2
 
       obsnum <- num.idx[[g]][num.idx[[g]] %in% obsidx[1:Nobs[mm]]]
-      if(length(obsnum) > 0){
+      if(length(obsnum) > 0) {
         tmpll <- try(dmnorm(YX[r1:r2, obsnum, drop=FALSE],
                             mnvec[obsnum],
                             cmat[obsnum, obsnum], log=TRUE))
@@ -343,13 +343,13 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
         ## subtract logl.X; assume always observed
         ## TODO: handle ordinal x.idx?
         x.idx <- lavsamplestats@x.idx[[g]]
-        if(!is.null(x.idx) && length(x.idx) > 0L){
+        if(!is.null(x.idx) && length(x.idx) > 0L) {
           Mu.X <- lavsamplestats@mean.x[[g]]
           Sigma.X <- lavsamplestats@cov.x[[g]]
-          if(is.null(Mu.X)){
+          if(is.null(Mu.X)) {
             Mu.X <- mnvec[x.idx]
           }
-          if(is.null(Sigma.X)){
+          if(is.null(Sigma.X)) {
             Sigma.X <- cmat[x.idx, x.idx, drop=FALSE]
           }
           tmpll.x <- try(dmnorm(YX[r1:r2, x.idx, drop=FALSE], Mu.X, Sigma.X, log=TRUE))
@@ -367,8 +367,8 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
       nord <- length(ord.idx)
 
       ## only proceed if this missingness pattern has ordinal variables!
-      if(nord > 0){
-        if(length(obsnum) > 0){
+      if(nord > 0) {
+        if(length(obsnum) > 0) {
           s12s22i <- cmat[ord.idx, obsnum] %*% chol2inv(chol(cmat[obsnum, obsnum]))
           cov.ord <- cmat[ord.idx, ord.idx] - s12s22i %*% cmat[obsnum, ord.idx]
         } else {
@@ -383,26 +383,26 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
 
         ## thresholds for all cases
         lowtau <- hitau <- matrix(NA, NROW(YX[r1:r2,]), length(ord.idx))
-        for(j in seq_len(nord)){
+        for(j in seq_len(nord)) {
           tmptau <- c(-Inf, tau[TH.idx == ord.idx[j]], Inf)
           lowtau[,j] <- tmptau[YX[r1:r2,ord.idx[j]]]
           hitau[,j] <- tmptau[YX[r1:r2,ord.idx[j]] + 1]
         }
 
-        for(i in r1:r2){
+        for(i in r1:r2) {
           llidx <- i - r1 + 1
 
-          if(conditional){
+          if(conditional) {
             catprob <- pnorm(hitau[llidx,], mean = mnvec[i,ord.idx], sd = sqrt(diag(cmat)[ord.idx])) -
-              pnorm(lowtau[llidx,], mean = mnvec[i,ord.idx], sd = sqrt(diag(cmat)[ord.idx]))
+            pnorm(lowtau[llidx,], mean = mnvec[i,ord.idx], sd = sqrt(diag(cmat)[ord.idx]))
             lsigi <- sum( dbinom(1, size = 1, prob = catprob, log = TRUE) )
             tmpll[llidx] <- tmpll[llidx] + lsigi
           } else {
-            if(length(obsnum) > 0){
+            if(length(obsnum) > 0) {
               mu.ord <- mnvec[ord.idx] + s12s22i %*% (YX[i,obsnum] - mnvec[obsnum])
             }
 
-            if("llnsamp" %in% names(lavoptions)){
+            if("llnsamp" %in% names(lavoptions)) {
               ## run tmvnsim to approximate marginal logl
               lsigi <- try(tmvnsim::tmvnsim(llnsamp, nord,
                                             lower = lowtau[llidx,], upper = hitau[llidx,],
@@ -412,7 +412,7 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
               lsigi <- try(mnormt::sadmvn(lowtau[llidx,], hitau[llidx,], mean = mu.ord, varcov = cov.ord, abseps = 1e-2))
             }
 
-            if(inherits(lsigi, 'try-error')){
+            if(inherits(lsigi, 'try-error')) {
               tmpll[llidx] <- NA
             } else {
               tmpll[llidx] <- tmpll[llidx] + log(lsigi)
@@ -421,21 +421,21 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
         }
       }
 
-      if(casewise){
+      if(casewise) {
         ll.samp[r1:r2] <- tmpll
       } else {
         tmpll <- c(sum(tmpll), sum(basell))
-        #tmpll <- -2*(sum(tmpll) - sum(basell))
+        ## tmpll <- -2*(sum(tmpll) - sum(basell))
         ll.samp <- ll.samp + tmpll
       }
     }
 
     ## reorder to match original data
-    if(casewise){
+    if(casewise) {
       rorig <- sapply(lavdata@Mp, function(x) unlist(x$case.idx))
-      if(inherits(rorig, "list")){
+      if(inherits(rorig, "list")) {
         ## multiple groups
-        for(ii in length(rorig)){
+        for(ii in length(rorig)) {
           rorig[[ii]] <- lavdata@case.idx[[ii]][rorig[[ii]]]
         }
         rorig <- unlist(rorig)
@@ -450,7 +450,7 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
     ## control() is part of lavmodel (for now)
     lavoptions$optim.method <- "none"
     lavoptions$check.gradient <- FALSE
-    if("control" %in% slotNames(lavmodel)){
+    if("control" %in% slotNames(lavmodel)) {
       lavmodel@control <- list(optim.method="none")
     }
     ## FIXME: not sure when 'free' becomes numeric,
@@ -463,7 +463,7 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
                            slotSampleStats = lavsamplestats,
                            slotData = lavdata,
                            slotCache = lavcache), silent=TRUE)
-    if(!inherits(fit.samp, "try-error")){
+    if(!inherits(fit.samp, "try-error")) {
       fit.samp@Options$se <- "standard" # for nonnest2
       fit.samp@test[[1]]$test <- "standard" # for do.fit=FALSE
       ## populate the model-implied moments; lavaan() with optim.method="none"
@@ -471,9 +471,9 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
       fit.samp@implied <- lav_model_implied(lavmodel,
                                             delta = (lavmodel@parameterization == "delta"))
 
-      if(casewise){
+      if(casewise) {
         ll.samp <- llcont(fit.samp)
-      } else if(measure[1] == "logl"){
+      } else if(measure[1] == "logl") {
         ll.samp <- fitMeasures(fit.samp,
                                c("logl", "unrestricted.logl"))
       } else {
@@ -493,13 +493,13 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
 
 get_ll_2l <- function(postsamp       = NULL, # one posterior sample
                       lavobject      = NULL,
-                      standata       = NULL){
+                      standata       = NULL) {
 
   ## lav_mvnorm_cluster_loglik_samplestats_2l() was renamed to
   ## lav_mvn_cl_loglik_samp_2l() (with underscore-style, lowercase argument
   ## names replacing the old dot-style ones) in lavaan 0.7-1
   newname <- packageDescription("lavaan")$Version >= "0.7-1"
-  if(newname){
+  if(newname) {
     lav2ll <- getFromNamespace("lav_mvn_cl_loglik_samp_2l", "lavaan")
   } else {
     lav2ll <- getFromNamespace("lav_mvnorm_cluster_loglik_samplestats_2l", "lavaan")
@@ -512,7 +512,7 @@ get_ll_2l <- function(postsamp       = NULL, # one posterior sample
   lavcache <- lavobject@Cache
   lavdata <- lavobject@Data
 
-  if(length(postsamp) > 0){
+  if(length(postsamp) > 0) {
     lavmodel <- fill_params(postsamp, lavmodel, lavpartable)
   }
 
@@ -535,7 +535,7 @@ get_ll_2l <- function(postsamp       = NULL, # one posterior sample
   }
 
   out <- rep(NA, Ng)
-  for(g in 1:Ng){
+  for(g in 1:Ng) {
     if (misflag2l) {
       ## loglik_x = 0: the complete-data branch below has no fixed.x
       ## contribution either (lav_mvn_cl_loglik_samp_2l() has no such
@@ -549,7 +549,7 @@ get_ll_2l <- function(postsamp       = NULL, # one posterior sample
                          mu_w = implied$mean[[(2 * g - 1)]], sigma_w = implied$cov[[(2 * g - 1)]],
                          mu_b = implied$mean[[2 * g]], sigma_b = implied$cov[[2 * g]],
                          loglik_x = 0, log2pi = TRUE, minus_two = FALSE)
-    } else if(newname){
+    } else if(newname) {
       ll.args <- list(ylp = lavsamplestats@YLp[[g]], lp = lavdata@Lp[[g]], mu_w = implied$mean[[(2 * g - 1)]],
                       sigma_w = implied$cov[[(2 * g - 1)]], mu_b = implied$mean[[2 * g]], sigma_b = implied$cov[[2 * g]],
                       log2pi = TRUE, minus_two = FALSE)
@@ -571,7 +571,7 @@ samp_lls <- function(lavjags        = NULL,
                      lavobject      = NULL,
                      thin           = 1,
                      conditional    = FALSE,
-                     standata       = NULL){
+                     standata       = NULL) {
   lavoptions <- lavobject@Options
   itnums <- sampnums(lavjags, thin = thin)
   nsamps <- length(itnums)
@@ -579,9 +579,9 @@ samp_lls <- function(lavjags        = NULL,
   nchain <- length(lavmcmc)
 
   if(!(lavoptions$target %in% c("stan", "cmdstan")) | conditional | lavInspect(lavobject, "categorical") | !lavInspect(lavobject, "meanstructure")) {
-    loop.args <- list(X = 1:nsamps, FUN = function(i){
+    loop.args <- list(X = 1:nsamps, FUN = function(i) {
       tmpmat <- matrix(NA, nchain, 2)
-      for(j in 1:nchain){
+      for(j in 1:nchain) {
         tmpmat[j,1:2] <- get_ll(lavmcmc[[j]][itnums[i],],
                                 lavobject, conditional = conditional, standata = standata)
       }
@@ -597,14 +597,14 @@ samp_lls <- function(lavjags        = NULL,
     ## loo::extract_log_lik()) but with the identical chain-major row
     ## stacking, so the indexing below is unchanged either way
     llmat <- array(NA, c(nsamps, nchain, 2))
-    if(lavoptions$target == "stan"){
+    if(lavoptions$target == "stan") {
       lls <- loo::extract_log_lik(lavjags)
       llsat <- loo::extract_log_lik(lavjags, parameter_name = "log_lik_sat")
     } else {
       lls <- lavjags$draws("log_lik", format = "matrix")
       llsat <- lavjags$draws("log_lik_sat", format = "matrix")
     }
-    for(j in 1:nchain){
+    for(j in 1:nchain) {
       idx <- (j-1)*nsamps + itnums
       llmat[itnums,j,1] <- rowSums(lls[idx,])
       llmat[itnums,j,2] <- rowSums(llsat[idx,]) + llmat[itnums,j,1]
@@ -619,7 +619,7 @@ case_lls <- function(lavjags        = NULL,
                      lavobject      = NULL,
                      conditional    = FALSE,
                      thin           = 1,
-                     debug          = FALSE){
+                     debug          = FALSE) {
 
   lavdata <- lavobject@Data
   
@@ -632,8 +632,8 @@ case_lls <- function(lavjags        = NULL,
   llmat <- matrix(NA, nchain*nsamps, sum(unlist(lavdata@nobs)))
 
   tmpres <- vector("list", nchain)
-  for(j in 1:nchain){
-    loop.args <- list(X = 1:nsamps, FUN = function(i, j){
+  for(j in 1:nchain) {
+    loop.args <- list(X = 1:nsamps, FUN = function(i, j) {
       get_ll(lavmcmc[[j]][itnums[i],], lavobject,
              casewise = TRUE, conditional = conditional)},
       j = j, future.seed = TRUE)
@@ -665,7 +665,7 @@ case_lls <- function(lavjags        = NULL,
 ## between-level loglik.x computation uses plain cov(), not
 ## cov(use="pairwise.complete.obs"), so it crashes on missing values there),
 ## so mean_d is only ever fed complete between-level data here.
-llx_2l <- function(Lp, YX, mean_d, cidx){
+llx_2l <- function(Lp, YX, mean_d, cidx) {
   ## fixed within logl (missing-data-aware: pairwise-complete-obs moments,
   ## casewise density restricted to each row's own observed x-subset)
   wx.idx <- Lp$ov.x.idx[[1]]
@@ -679,7 +679,7 @@ llx_2l <- function(Lp, YX, mean_d, cidx){
     for (i in seq_len(nrows)) {
       obs <- which(!is.na(Xw[i, ]))
       loglik.x.w.all[i] <- if (length(obs) == 0) 0 else
-        dmnorm(Xw[i, obs], mean = mu[obs], varcov = S[obs, obs, drop = FALSE], log = TRUE)
+      dmnorm(Xw[i, obs], mean = mu[obs], varcov = S[obs, obs, drop = FALSE], log = TRUE)
     }
     loglik.x.w.clus <- tapply(loglik.x.w.all, cidx, sum)
   } else {

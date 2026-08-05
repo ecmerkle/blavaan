@@ -8,7 +8,7 @@ set_stancovs <- function(partable, std.lv) {
   partable <- lavMatrixRepresentation(partable, add.attributes = TRUE)
   ## for defined parameters
   defpar <- which(partable$op == ":=")
-  if(length(defpar) > 0){
+  if(length(defpar) > 0) {
     partable$mat[defpar] <- "def"
     partable$row[defpar] <- 1:length(defpar)
     partable$col[defpar] <- 1
@@ -16,7 +16,7 @@ set_stancovs <- function(partable, std.lv) {
   }
 
   ## must be psiUNC if std.lv
-  if(std.lv){
+  if(std.lv) {
     partable$mat[partable$mat == "psi"] <- "psiUNC"
   }
   
@@ -28,15 +28,15 @@ set_stancovs <- function(partable, std.lv) {
   blkrow <- rep(NA, ncol(partable)) #length(partable$id))
   
   ## Only do this if covpars exist
-  if(length(covpars) > 0){
+  if(length(covpars) > 0) {
     mvcov <- 0
     lvcov <- 0
 
-    for(i in 1:length(covpars)){      
+    for(i in 1:length(covpars)) {      
       ## Is this constrained equal to a previous parameter?
       eq.const <- FALSE
       eq.idx <- which(partable$op == "==" & partable$rhs == partable$plabel[covpars[i]])
-      if(length(eq.idx) > 0){
+      if(length(eq.idx) > 0) {
         eq.const <- TRUE
         ## TODO? assumes it is equal to another covariance; do any models
         ## restrict covariances to be equal to other types of parameters?
@@ -49,20 +49,20 @@ set_stancovs <- function(partable, std.lv) {
 
       ## TODO? should 'block' ever differ from 'group'?
       partable$group[tmprows] <- partable$block[tmprows] <-
-        partable$group[covpars[i]]
+      partable$group[covpars[i]]
 
       partable$lhs[tmprows] <- partable$lhs[covpars[i]]
       partable$rhs[tmprows] <- partable$rhs[covpars[i]]
 
       ## Decide on =~ (ov) vs ~ (lv)
-      if(partable$mat[covpars[i]] == "theta"){
-        if(!eq.const){
+      if(partable$mat[covpars[i]] == "theta") {
+        if(!eq.const) {
           mvcov <- mvcov + 1
           covidx <- mvcov
         }
         partable$mat[tmprows] <- "rho"
       } else {
-        if(!eq.const){
+        if(!eq.const) {
           lvcov <- lvcov + 1
           covidx <- lvcov
         }
@@ -86,13 +86,13 @@ set_stancovs <- function(partable, std.lv) {
                      partable$op == "~~")
       tmpv2 <- paste(partable$mat[v2var], "[", partable$row[v2var], ",", partable$col[v2var], ",", partable$group[v2var], "]", sep="")
 
-      if(partable$prior[covpars[i]] != ""){
+      if(partable$prior[covpars[i]] != "") {
         partable$prior[tmprows] <- partable$prior[covpars[i]]
       } else {
         partable$prior[tmprows] <- ""
       }
 
-      if(eq.const){
+      if(eq.const) {
         partable$ustart[covpars[i]] <- paste0(partable$mat[full.idx],
                                               "[",
                                               partable$row[full.idx],

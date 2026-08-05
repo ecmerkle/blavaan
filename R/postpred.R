@@ -39,7 +39,7 @@ postpred <- function(samplls = NULL, lavobject = NULL, measure = "logl", thin = 
   if (!is.null(discFUN)) {
     if (!is.list(discFUN)) discFUN <- list(discFUN)
     if (!all(sapply(discFUN, is.function)))
-      stop('blavaan ERROR: The "discFUN" argument must be a (list of) function(s).')
+    stop('blavaan ERROR: The "discFUN" argument must be a (list of) function(s).')
   }
 
   ## verify that probs is a numeric vector
@@ -69,7 +69,7 @@ postpred <- function(samplls = NULL, lavobject = NULL, measure = "logl", thin = 
   mis <- FALSE
   if (any(is.na(unlist(lavdata@X)))) mis <- TRUE
 
-  loop.args <- list(X = 1:psamp, FUN = function(i){
+  loop.args <- list(X = 1:psamp, FUN = function(i) {
     ## lists to store output (reduced after concatenated across chains)
     if (length(discFUN)) {
       ## Nested lists (iterations within discrepancy functions)
@@ -83,7 +83,7 @@ postpred <- function(samplls = NULL, lavobject = NULL, measure = "logl", thin = 
       ind <- csdist <- csboots <- vector("list", n.chains)
     }
 
-    for(j in 1:n.chains){
+    for(j in 1:n.chains) {
       ## compute (i) X2 of generated data and model-implied moments,
       ## along with (ii) X2 of real data and model-implied moments.
       fit <- lavobject
@@ -172,17 +172,17 @@ postpred <- function(samplls = NULL, lavobject = NULL, measure = "logl", thin = 
       } else {
         ## any other measure/discFUN
 
-        # YR: ugly hack to avoid lav_samplestats_from_data:
-        # reconstruct data + call lavaan()
-        # TDJ: this also enables us to apply custom "discFUN" argument to
-        #     fitted lavaan object -- also use this hack when !is.null(discFUN)?
+        ## YR: ugly hack to avoid lav_samplestats_from_data:
+        ## reconstruct data + call lavaan()
+        ## TDJ: this also enables us to apply custom "discFUN" argument to
+        ##     fitted lavaan object -- also use this hack when !is.null(discFUN)?
         DATA.X <- do.call("rbind", dataX)
         colnames(DATA.X) <- lavdata@ov.names[[1L]]
         DATA.eXo <- do.call("rbind", dataeXo)
         empties <- any(sapply(lavdata@Mp, function(x) length(x$empty.idx)) > 0)
-        if(empties){
+        if(empties) {
           empties <- as.numeric(unlist(sapply(lavdata@Mp, function(x) x$empty.idx)))
-          if(!any(is.na(empties))){
+          if(!any(is.na(empties))) {
             DATA.eXo <- DATA.eXo[-empties, , drop = FALSE]
           }
         }
@@ -203,7 +203,7 @@ postpred <- function(samplls = NULL, lavobject = NULL, measure = "logl", thin = 
         lavoptions2$test <- "standard"
         lavoptions2$optim.method <- "none"
         lavmodel2 <- lavmodel
-        if("control" %in% slotNames(lavmodel2)){
+        if("control" %in% slotNames(lavmodel2)) {
           lavmodel2@control <- list(optim.method="none")
         }
         if(lavsamplestats@ngroups > 1L) {
@@ -225,22 +225,22 @@ postpred <- function(samplls = NULL, lavobject = NULL, measure = "logl", thin = 
         ## fitMeasures()/lavResiduals() (e.g. srmr) on the simulated-data fit
         out@implied <- lav_model_implied(lavmodel2,
                                          delta = (lavmodel2@parameterization == "delta"))
-        # bootSampleStats <- out@SampleStats
+        ## bootSampleStats <- out@SampleStats
         if (save_lvs) {
           out@external$eta <- eta
           out@external$implied <- implied
         }
-        # end of ugly hack
+        ## end of ugly hack
 
         ## prioritize custom discrepancy function, so "logl" can remain default
         if (length(discFUN)) {
-          #TODO TDJ: Apply custom "discFUN" to simulated data
+          ## TODO TDJ: Apply custom "discFUN" to simulated data
           chisq.boot <- vector("list", length(discFUN))
           for (d in seq_along(discFUN)) {
             chisq.boot[[d]] <- discFUN[[d]](out)
-            # if (mode(chisq.boot[[d]]) != "numeric") # already checked for chisq.obs
-            #   stop('Each function in discFUN must return an object with numeric ',
-            #        'mode (e.g., vector, matrix, or array)')
+            ## if (mode(chisq.boot[[d]]) != "numeric") # already checked for chisq.obs
+            ##   stop('Each function in discFUN must return an object with numeric ',
+            ##        'mode (e.g., vector, matrix, or array)')
           }
 
         } else if (measure[1] %in% c("logl", "chisq") & length(measure) == 1) {
@@ -333,7 +333,7 @@ postpred <- function(samplls = NULL, lavobject = NULL, measure = "logl", thin = 
 
 
 ## exported function for sampling data from prior or posterior
-sampleData <- sampledata <- function(object, nrep = NULL, conditional = FALSE, type = "response", simplify = FALSE, ...){
+sampleData <- sampledata <- function(object, nrep = NULL, conditional = FALSE, type = "response", simplify = FALSE, ...) {
   blavoptions <- blavInspect(object, 'options')
   nsamps <- length(sampnums(object@external$mcmcout, thin = 1))
   maxreps <- blavoptions$n.chains * nsamps
@@ -351,16 +351,16 @@ sampleData <- sampledata <- function(object, nrep = NULL, conditional = FALSE, t
 
 
 ## generate data from posterior predictive dist
-postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, type = "response", ...){
+postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, type = "response", ...) {
 
   ## parallel=TRUE can be sent here, but it slows everything down if
   ## used within postpred() because it leads to nested parallelization.
   ddd <- list(...)
 
   ## users can supply object; postpred() will supply the slots:
-  if(length(object) == 0L){
+  if(length(object) == 0L) {
     if(!all(c('lavmodel', 'lavdata', 'lavjags', 'lavpartable',
-              'lavsamplestats') %in% names(ddd))){
+              'lavsamplestats') %in% names(ddd))) {
       stop("blavaan ERROR: either object or lav-model/data/jags/partable/samplestats must be supplied.")
     }
     lavmodel <- ddd$lavmodel
@@ -378,8 +378,8 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, type = "res
     lavobject <- object
   }
 
-  if(conditional){
-    if(!(("stanlvs" %in% names(lavobject@external)) | ("eta" %in% names(lavobject@external) & "implied" %in% names(lavobject@external)))){
+  if(conditional) {
+    if(!(("stanlvs" %in% names(lavobject@external)) | ("eta" %in% names(lavobject@external) & "implied" %in% names(lavobject@external)))) {
       stop("blavaan ERROR: could not find lvs.")
     }
     lavmcmc <- make_mcmc(lavjags, lavobject@external$stanlvs)
@@ -389,7 +389,7 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, type = "res
   n.chains <- length(lavmcmc)
   chnums <- 1:n.chains
 
-  if(all(c("samp.indices", "chain.num") %in% names(ddd))){
+  if(all(c("samp.indices", "chain.num") %in% names(ddd))) {
     ## 1 sample, for postpred
     samp.indices <- ddd$samp.indices
     chnums <- ddd$chain.num
@@ -408,7 +408,7 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, type = "res
 
   ## check for ordinal, which requires to chop the data
   ordresp <- FALSE
-  if(length(lavdata@ordered) > 0 && type == "response"){
+  if(length(lavdata@ordered) > 0 && type == "response") {
     ordresp <- TRUE
     ordidx <- which(lavdata@ov$type == "ordered")
     thidx <- lavmodel@th.idx
@@ -417,9 +417,9 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, type = "res
   postdat <- vector("list", psamp)
   lavmod <- vector("list", psamp)
 
-  loop.args <- list(X = chnums, FUN = function(j){
+  loop.args <- list(X = chnums, FUN = function(j) {
     ind <- csdist <- csboots <- rep(NA, psamp)
-    for(i in 1:psamp){
+    for(i in 1:psamp) {
       ## translate each posterior sample to a model-implied mean vector +
       ## cov matrix.
       lavmodel <- fill_params(lavmcmc[[j]][samp.indices[i],],
@@ -427,16 +427,16 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, type = "res
       lavmod[[i]] <- lavmodel
 
       ## generate data (some code from lav_bootstrap.R)
-      if(conditional){
-        if ("implied" %in% names(lavobject@external)){
+      if(conditional) {
+        if ("implied" %in% names(lavobject@external)) {
           implied <- imp2 <- lavobject@external$implied
         } else {
           implied <- lav_model_implied(lavmodel, delta = (lavmodel@parameterization == "delta"))
           imp2 <- cond_moments(lavmcmc[[j]][i,], lavmodel, lavpartable, lavsamplestats,
                                lavdata, fit)
           implied$mean <- imp2$mean
-          #implied$cov <- imp2$cov
-          #fit@external$eta <- eta
+          ## implied$cov <- imp2$cov
+          ## fit@external$eta <- eta
           fit@external$implied <- implied
         }
       } else {
@@ -451,14 +451,14 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, type = "res
       for(g in 1:lavsamplestats@ngroups) {
         x.idx <- lavsamplestats@x.idx[[g]]
         nox <- (1:nrow(Mu.hat[[g]]))[-x.idx]
-        if(!is.null(x.idx) && length(x.idx) > 0L){
+        if(!is.null(x.idx) && length(x.idx) > 0L) {
           if(conditional) stop("blavaan ERROR: conditional=TRUE does not work for models with fixed.x")
           
           ## for fixed.x, generate the other ovs
           ## conditional on the x values.
           ## can use approach similar to
           ## lav_mvnorm_missing_impute_pattern (lav_mvnorm_missing.R)
-          if(!mis){
+          if(!mis) {
             tm1 <- Sigma.hat[[g]][nox,x.idx] %*% solve(Sigma.hat[[g]][x.idx,x.idx])
             csig <- Sigma.hat[[g]][nox,nox] - tm1 %*% Sigma.hat[[g]][x.idx,nox]
             sigchol <- chol(csig)
@@ -476,7 +476,7 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, type = "res
             ## which for awhile was missing = "ml" in lavaan.
             M <- lavsamplestats@missing[[g]]
             Mp <- lavdata@Mp[[g]]
-            for(p in 1:length(M)){
+            for(p in 1:length(M)) {
               var.idx <- M[[p]][["var.idx"]]
               obsx <- x.idx[var.idx[x.idx]]
 
@@ -490,7 +490,7 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, type = "res
               ##  obsx <- x.idx
               ##}
 
-              if(length(obsx) > 0){
+              if(length(obsx) > 0) {
                 xp.idx <- obsx
                 tm1 <- Sigma.hat[[g]][nox,xp.idx] %*% solve(Sigma.hat[[g]][xp.idx,xp.idx])
                 cmu <- Mu.hat[[g]][nox,] +
@@ -538,7 +538,7 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, type = "res
               dataX[[g]][, oj] <- cut(dataX[[g]][, oj], breaks = tmpth, labels = FALSE)
             }
           } else {
-            for(oj in ordidx){
+            for(oj in ordidx) {
               tmpth <- implied$mean[[g]][oj] + implied$th[[g]][thidx[[g]] == oj] * sqrt(implied$cov[[g]][oj, oj])
               tmpth <- c(-Inf, tmpth, Inf)
               dataX[[g]][, oj] <- cut(dataX[[g]][, oj], breaks = tmpth, labels = FALSE)
@@ -548,7 +548,7 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, type = "res
         dataX[[g]][is.na(origlavdata@X[[g]])] <- NA
 
         ## get rid of completely missing
-        if(length(origlavdata@Mp[[g]]$empty.idx) > 0){
+        if(length(origlavdata@Mp[[g]]$empty.idx) > 0) {
           dataX[[g]] <- dataX[[g]][-origlavdata@Mp[[g]]$empty.idx,,drop=FALSE]
         }
       } # g
@@ -558,8 +558,8 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, type = "res
     list(postdat = postdat, lavmod = lavmod)})
 
   lapcomm <- "lapply"
-  if("parallel" %in% names(ddd)){
-    if(ddd$parallel){
+  if("parallel" %in% names(ddd)) {
+    if(ddd$parallel) {
       lapcomm <- "future_lapply"
       loop.args <- c(loop.args, future.seed = TRUE)
     }
@@ -573,12 +573,12 @@ postdata <- function(object = NULL, nrep = 50L, conditional = FALSE, type = "res
   res <- do.call("c", res)
 
   ## remove extras when nrep/nchains is non-integer
-  if(length(object) > 0L & nrep < length(res)){
+  if(length(object) > 0L & nrep < length(res)) {
     res <- res[1:nrep]
   }
 
   ## return lavmodel when called by postpred
-  if(length(object) == 0L){
+  if(length(object) == 0L) {
     res <- c(res, list(lavmod = lavmod))
   }
 

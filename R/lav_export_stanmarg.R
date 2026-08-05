@@ -249,7 +249,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
     lavpartable <- lavpartable[order(lavpartable$col, lavpartable$row),]
   }
 
-  if (length(wiggle) > 0){
+  if (length(wiggle) > 0) {
     wigls <- wiglabels(lavpartable, wiggle, wiggle.sd)
     wig <- unlist(wigls$outlist)
     wigpris <- wigls$lavpartable$prior
@@ -358,13 +358,13 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
 
   ## 5. diag(Theta)
   if ("theta" %in% names(freemats[[1]])) {
-    fr <- lapply(freemats, function(x){
+    fr <- lapply(freemats, function(x) {
       dmat <- x$theta
       dmat[lower.tri(dmat)] <- dmat[upper.tri(dmat)] <- 0
       dmat}
       )
     
-    es <- lapply(estmats, function(x){
+    es <- lapply(estmats, function(x) {
       dmat <- x$theta
       dmat[lower.tri(dmat)] <- dmat[upper.tri(dmat)] <- 0
       dmat}
@@ -395,13 +395,13 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
 
   ## 7. Theta_r
   if ("theta" %in% names(freemats[[1]])) {
-    fr <- lapply(freemats, function(x){
+    fr <- lapply(freemats, function(x) {
       dmat <- x$theta
       diag(dmat) <- 0L
       dmat}
       )
 
-    es <- lapply(estmats, function(x){
+    es <- lapply(estmats, function(x) {
       dmat <- x$theta
       diag(dmat) <- 1L
       dmat[upper.tri(dmat)] <- 0L
@@ -456,13 +456,13 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
 
   ## 9. diag(Psi)
   if ("psi" %in% names(freemats[[1]])) {
-    fr <- lapply(freemats, function(x){
+    fr <- lapply(freemats, function(x) {
       dmat <- x$psi
       dmat[lower.tri(dmat)] <- dmat[upper.tri(dmat)] <- 0
       dmat}
       )
     
-    es <- lapply(estmats, function(x){
+    es <- lapply(estmats, function(x) {
       dmat <- x$psi
       dmat[lower.tri(dmat)] <- dmat[upper.tri(dmat)] <- 0
       dmat}
@@ -494,13 +494,13 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
 
   ## 10. Psi_r
   if ("psi" %in% names(freemats[[1]])) {
-    fr <- lapply(freemats, function(x){
+    fr <- lapply(freemats, function(x) {
       dmat <- x$psi
       diag(dmat) <- 0L
       dmat}
       )
 
-    es <- lapply(estmats, function(x){
+    es <- lapply(estmats, function(x) {
       dmat <- x$psi
       diag(dmat) <- 1L
       dmat[upper.tri(dmat)] <- 0L
@@ -881,7 +881,7 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
   
   stanfit <- !is.null(rsob)
   cmdstanfit <- inherits(rsob, "CmdStanFit")
-  if (cmdstanfit){
+  if (cmdstanfit) {
     rssumm <- rsob$summary(variables = dmnames,
                            posterior::default_summary_measures(),
                            posterior::default_convergence_measures(),
@@ -892,19 +892,19 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
     names(rssumm)[match(oldnames, rsnames)] <- c("2.5%", "50%", "97.5%", "n_eff", "Rhat")
     rownames(rssumm) <- rssumm$variable
     rssumm <- list(summary = rssumm)
-  } else if(stanfit){
+  } else if(stanfit) {
     rssumm <- rstan::summary(rsob)
   }
 
-  if(stanfit){
+  if(stanfit) {
     ## posterior means:
-    if(fun == "mean"){
+    if(fun == "mean") {
       b.est <- rssumm$summary[,"mean"]
-      if(is.null(names(b.est))){
+      if(is.null(names(b.est))) {
         ## must be cmdstan
         names(b.est) <- rssumm$summary$variable
       }
-    } else if(fun == "median"){
+    } else if(fun == "median") {
       b.est <- rssumm$summary[,"50%"]
     } else {
       stop(paste0("blavaan ERROR: ", fun, " not implemented in coeffun()."), call. = FALSE)
@@ -950,11 +950,11 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
   ## check names in lavfree
   deltloc <- which(names(lavfree) == "delta")
   if(length(deltloc) > 0) lavfree <- lavfree[-deltloc]
-  if(!all(names(lavfree) %in% mapping) || is.null(names(lavfree))){
+  if(!all(names(lavfree) %in% mapping) || is.null(names(lavfree))) {
     ## multiple groups? FIXME handle delta
     deltloc <- which(names(lavfree[[1]]) == "delta")
     if(length(deltloc) > 0) lavfree <- lapply(lavfree, function(x) x[-deltloc])
-    if(!all(names(lavfree[[1]]) %in% mapping)){
+    if(!all(names(lavfree[[1]]) %in% mapping)) {
       stop("blavaan ERROR: unrecognized lavaan model matrix.")
     }
     ngrp <- length(lavfree)
@@ -968,12 +968,12 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
   freenums <- lapply(free2, function(x) lapply(x, function(y) y[y > 0]))
   tmpfree <- unlist(lavfree)
   nfree <- length(unique(tmpfree[tmpfree > 0]))
-  if(any(lavpartable$free > 0)){
+  if(any(lavpartable$free > 0)) {
     freevec <- lavpartable$free[lavpartable$free > 0]
   }
 
   vcorr <- NULL
-  if(stanfit){
+  if(stanfit) {
     rowidx <- rowidx2 <- rep(NA, nfree) # row index of stan est and summary containing the parameters (for vcorr)
 
     ## 1. get free par vector
@@ -981,7 +981,7 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
     ## 3. fill "x" in using lavaan free
     ## 4. record freeidx, double-counting free parameters
     est <- sdvec <- rep(NA, nfree)
-    for(m in 1:length(freeidx[[1]])){
+    for(m in 1:length(freeidx[[1]])) {
       stanvec <- names(mapping)[mapping == names(freeidx[[1]])[m]]
       wskel <- names(mapping2)[mapping == names(freeidx[[1]])[m]]
       wvec <- paste0("w", wskel, matmod)
@@ -991,7 +991,7 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
       ## 2 for cov/var vectors, 1 otherwise
       if(length(stanvec) > 2) stop("blavaan ERROR: problem with mapping from stan to lavaan")
 
-      for(j in 1:length(stanvec)){
+      for(j in 1:length(stanvec)) {
         freename <- names(mapping3)[mapping3 == stanvec[j]]
         parnums <- do.call("c", freenums[[freename]])
         parnums <- match(parnums, freevec)
@@ -999,18 +999,18 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
 
         if(is.na(parnums[1])) next
 
-        if(any(!is.finite(lersdat[[wvec[j]]]))){
+        if(any(!is.finite(lersdat[[wvec[j]]]))) {
           tmpw <- tmpw[1:(sum(!is.finite(lersdat[[wvec[j]]]))), , drop=FALSE]
         } else {
           tmpw <- NULL
         }
 
-        if(NROW(tmpw) > 0){
+        if(NROW(tmpw) > 0) {
           ## need rowvec & rowvec2 because stan summary rows
           ## ordered differently from stan draws rows
           samppar <- (tmpw[,1] == 0) | (tmpw[,3] == 1) # free or constrained prior
           parvec <- tmpsd <- rowvec <- rowvec2 <- rep(NA, NROW(tmpw))
-          if(level == 1L){
+          if(level == 1L) {
             rowvec[samppar] <- which(grepl(stanvec[j], names(b.est)) & !(grepl("_c\\[", names(b.est))))
             rowvec2[samppar] <- which(grepl(stanvec[j], dmnames) & !(grepl("_c\\[", dmnames)))
           } else {
@@ -1046,12 +1046,12 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
 
     ## est + psrf
     lavpartable$est[lavpartable$free > 0] <- est
-    if(cmdstanfit){
+    if(cmdstanfit) {
       varmeth <- rsob$metadata()$method == "variational"
     } else {
       varmeth <- rsob@stan_args[[1]]$method == "variational"
     }
-    if(varmeth){
+    if(varmeth) {
       lavpartable$psrf[lavpartable$free > 0] <- rssumm$summary[rowidx2,"khat"]
     } else {
       lavpartable$psrf[lavpartable$free > 0] <- rssumm$summary[rowidx2,"Rhat"]
@@ -1063,10 +1063,10 @@ coeffun_stanmarg <- function(lavpartable, lavfree, free2, lersdat, rsob, dmnames
   }
   
   ## matrices and names
-  if("level" %in% names(lavpartable)){
+  if("level" %in% names(lavpartable)) {
     olpt <- lavMatrixRepresentation(olpt, add.attributes = TRUE, as.data.frame. = FALSE)
 
-    if(level == 2L){
+    if(level == 2L) {
       olpt <- lapply(olpt, function(x) x[olpt$level == levlabs[2]])
     } else {
       olpt <- lapply(olpt, function(x) x[olpt$level == levlabs[1] | olpt$op %in% c("==", ":=")])
@@ -1630,7 +1630,7 @@ block_cov <- function(freemats, fr, mat, skel, Ng, dosam = FALSE) {
   cons <- attributes(freemats)$header
   freemats <- lapply(freemats, function(x) {
     outmat <- x[[mat]]
-    #outmat[outmat %in% cons$rhs] <- 0
+    ## outmat[outmat %in% cons$rhs] <- 0
     outmat
   })
   fr <- lapply(fr, function(x) {
@@ -1660,11 +1660,11 @@ block_cov <- function(freemats, fr, mat, skel, Ng, dosam = FALSE) {
   ## a separate parameter specification in Stan
   if (length(ublksizes) > 5 | length(ublksizes) == 0) {
     if (length(ublksizes) > 5) blkmats <- FALSE
-      out[[paste0(mat, "nblk")]] <- array(0, dim = 5)
-      out[[paste0(mat, "dims")]] <- array(3, dim = 5)
-      out[[paste0(mat, "blkse")]] <- matrix(nrow = 0, ncol = 6)
-      out[[paste0(mat, "order")]] <- out[[paste0(mat, "revord")]] <- matrix(1, nrow = Ng, ncol = dim(skel)[3])
-      out[[paste0(mat, "blkpri")]] <- array(0, dim = 0)
+    out[[paste0(mat, "nblk")]] <- array(0, dim = 5)
+    out[[paste0(mat, "dims")]] <- array(3, dim = 5)
+    out[[paste0(mat, "blkse")]] <- matrix(nrow = 0, ncol = 6)
+    out[[paste0(mat, "order")]] <- out[[paste0(mat, "revord")]] <- matrix(1, nrow = Ng, ncol = dim(skel)[3])
+    out[[paste0(mat, "blkpri")]] <- array(0, dim = 0)
   } else {
     if (dosam) {
       blkgrp <- rep(1:length(blkinfo), times = sapply(blkinfo, function(x) sum(x$blkse[,3] == 1)))

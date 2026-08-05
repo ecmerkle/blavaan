@@ -1,7 +1,7 @@
-# Tidy and glance methods for blavaan objects
-# Following broom ecosystem conventions for Bayesian models
+## Tidy and glance methods for blavaan objects
+## Following broom ecosystem conventions for Bayesian models
 
-# Import generics from the generics package to ensure compatibility with broom
+## Import generics from the generics package to ensure compatibility with broom
 #' @importFrom generics tidy
 #' @export
 generics::tidy
@@ -99,7 +99,7 @@ tidy.blavaan <- function(x, estimate.method = c('mean', 'median', 'mode'),
 
   estimate.method <- match.arg(estimate.method)
 
-  # Get parameter estimates
+  ## Get parameter estimates
   PE <- methods::selectMethod("summary", "blavaan")(
     x,
     header = FALSE,
@@ -114,7 +114,7 @@ tidy.blavaan <- function(x, estimate.method = c('mean', 'median', 'mode'),
     priors = priors
   )
 
-  # Build the base data frame
+  ## Build the base data frame
   result <- data.frame(
     term = paste0(PE$lhs, PE$op, PE$rhs),
     op = PE$op,
@@ -123,13 +123,13 @@ tidy.blavaan <- function(x, estimate.method = c('mean', 'median', 'mode'),
     stringsAsFactors = FALSE
   )
 
-  # Add group information for multigroup models
+  ## Add group information for multigroup models
   if (length(unique(PE$group)) > 1) {
     result$group <- as.integer(PE$group)
     result <- result[, c('term', 'op', 'group', 'estimate', 'std.error')]
   }
 
-  # Add block and level information for multilevel models 
+  ## Add block and level information for multilevel models 
   if (length(unique(PE$level)) > 1) {
     result$level <- PE$level
     if ("group" %in% names(result)) {
@@ -141,10 +141,10 @@ tidy.blavaan <- function(x, estimate.method = c('mean', 'median', 'mode'),
     
   }
 
-  # Substitute estimate based on estimate.method. Only free parameters are
-  # summarized by the requested statistic (Post.Med/Post.Mode are NA for fixed
-  # and defined (:=) parameters), so fixed parameters retain their fixed values
-  # and defined parameters keep the standard summary() point estimate.
+  ## Substitute estimate based on estimate.method. Only free parameters are
+  ## summarized by the requested statistic (Post.Med/Post.Mode are NA for fixed
+  ## and defined (:=) parameters), so fixed parameters retain their fixed values
+  ## and defined parameters keep the standard summary() point estimate.
   if (estimate.method == "median") {
     has_stat <- !is.na(PE$Post.Med)
     result$estimate[has_stat] <- PE$Post.Med[has_stat]
@@ -153,27 +153,27 @@ tidy.blavaan <- function(x, estimate.method = c('mean', 'median', 'mode'),
     result$estimate[has_stat] <- PE$Post.Mode[has_stat]
   }
 
-  # If conf.int = TRUE, add confidence interval
+  ## If conf.int = TRUE, add confidence interval
   if (isTRUE(conf.int)) {
     result$conf.low <- as.numeric(PE$pi.lower)
     result$conf.high <- as.numeric(PE$pi.upper)
   }
 
-  # Add standardized estimates
+  ## Add standardized estimates
   result$std.lv <- PE$std.lv
   result$std.all <- PE$std.all
 
-  # Add rhat from PE, if rhat = TRUE
+  ## Add rhat from PE, if rhat = TRUE
   if (isTRUE(rhat)) {
     result$rhat <- as.numeric(PE$Rhat)
   }
 
-  # Add effective sample size if requested
+  ## Add effective sample size if requested
   if (isTRUE(ess)) {
     result$ess <- PE$neff
   }
 
-  # Add prior information
+  ## Add prior information
   if (isTRUE(priors)) {
     result$prior <- PE$prior
   }
@@ -217,7 +217,7 @@ tidy.blavaan <- function(x, estimate.method = c('mean', 'median', 'mode'),
 glance.blavaan <- function(x, fit.indices = FALSE, ...) {
   if (isTRUE(fit.indices)) {
     bayesFit <- blavFitIndices(x, fit.measures = "all") |>
-      summary()
+    summary()
     bayesFitVec <- bayesFit$EAP
     names(bayesFitVec) <- rownames(bayesFit)
 

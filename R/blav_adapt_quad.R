@@ -29,7 +29,7 @@ adapted_ghq <- function(fit, ngq, samprow = NULL) {
   nqpt <- NROW(x.star.list[[1]])
   out <- matrix(NA, length(etamncov[[1]]), nqpt)
 
-  for(i in 1:nqpt){
+  for(i in 1:nqpt) {
     samps[samprow,grep("^eta", colnames(samps))] <- as.numeric( sapply(1:length(etamncov[[1]]), function(k) x.star.list[[k]][i,]) )
 
     out[,i] <- get_ll(postsamp = samps[samprow,], fit,
@@ -107,9 +107,9 @@ fixed_ghq <- function(fit, ngq, samprow = NULL) {
 
         for(k in 1:max(standata$YXo[,tmpidx])) {
           tmpprob <- pnorm(utau[k], mean = mnvec[tmpidx,], sd = sqrt(mms$theta[tmpidx, tmpidx])) -
-            pnorm(ltau[k], mean = mnvec[tmpidx,], sd = sqrt(mms$theta[tmpidx, tmpidx]))
+          pnorm(ltau[k], mean = mnvec[tmpidx,], sd = sqrt(mms$theta[tmpidx, tmpidx]))
 
-          #tmpprob[tmpprob == 0] <- 1e-300
+          ## tmpprob[tmpprob == 0] <- 1e-300
 
           likevals[, k, j, g] <- log(tmpprob)
         }
@@ -168,8 +168,8 @@ adapted_weights <- function(samps, ngq, alphas, psis, grpidx, etamns, etacovs, N
 
     x.star.list[[i]] <- t(as.matrix(C %*% t(XW$x)) + tmpmn)
     w.star.list[[i]] <- XW2pi * eXWxcp * prod(diag(C)) * ## = det(C) for triangular matrix
-      lavdmvnorm(x.star.list[[i]], Mu = alphas[[grpidx[i]]],
-                 Sigma = psis[[grpidx[i]]], log = FALSE)
+    lavdmvnorm(x.star.list[[i]], Mu = alphas[[grpidx[i]]],
+               Sigma = psis[[grpidx[i]]], log = FALSE)
   }
   
   list(x.star.list, w.star.list)
