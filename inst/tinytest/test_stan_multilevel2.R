@@ -49,7 +49,8 @@ res <- robust_fit(bsem,
   cluster = "cluster",
   burnin  = 100,
   sample  = 100,
-  dp      = dpriors(lambda = "normal(1,.5)")
+  dp      = dpriors(lambda = "normal(1,.5)"),
+  save.lvs = TRUE
 )
 bfit_wb <- res$fit
 
@@ -101,6 +102,33 @@ expect_true(
   fm_wb["ppp"] >= 0 & fm_wb["ppp"] <= 1,
   info = "PPP should be in [0, 1]"
 )
+
+## blavPredict
+newd <- Demo.twolevel[1:15,]
+
+expect_inherits(blavPredict(bfit_wb), "list")
+expect_inherits(blavPredict(bfit_wb, level = 2), "list")
+tmp <- blavPredict(bfit_wb, newdata = newd)
+expect_inherits(tmp, "list")
+expect_equal(nrow(tmp[[1]]), 15)
+tmp <- blavPredict(bfit_wb, newdata = newd, level = 2)
+expect_inherits(tmp, "list")
+expect_equal(nrow(tmp[[1]]), 2)
+
+## new cluster levels are allowed: samp_lvs_2lev()'s per-cluster estep only
+## needs that cluster's own rows plus the current posterior draw's implied
+## moments, not anything from the original fit
+newd$cluster[1:5] <- "abc"
+tmp <- blavPredict(bfit_wb, newdata = newd)
+expect_inherits(tmp, "list")
+expect_equal(nrow(tmp[[1]]), 15)
+tmp <- blavPredict(bfit_wb, newdata = newd, level = 2)
+expect_inherits(tmp, "list")
+expect_equal(nrow(tmp[[1]]), 2)
+
+## but lavaan itself still requires >= 2 clusters per group
+newd1 <- newd[newd$cluster == "abc", ]
+expect_error(blavPredict(bfit_wb, newdata = newd1))
 })
 
 ## NB: this section is a variation on section 1 (just numeric vs named level
