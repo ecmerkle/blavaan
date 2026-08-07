@@ -18,7 +18,9 @@ bsem(..., cp = "srs",
 - ...:
 
   Default lavaan arguments. See
-  [`lavaan`](https://rdrr.io/pkg/lavaan/man/lavaan.html).
+  [`lavaan`](https://rdrr.io/pkg/lavaan/man/lavaan.html). This also
+  accepts sampler-specific arguments that would otherwise need to be
+  supplied via `bcontrol` – see `bcontrol` below.
 
 - cp:
 
@@ -149,8 +151,24 @@ bsem(..., cp = "srs",
 - bcontrol:
 
   A list containing additional parameters passed to `run.jags` (or
-  `autorun.jags`) or `stan`. See the manpage of those functions for an
-  overview of the additional parameters that can be set.
+  `autorun.jags`), `stan`, `vb`, or (for `target="cmdstan"`) a
+  `cmdstanr` model's `$sample()` method. See the manpage of those
+  functions for an overview of the additional parameters that can be
+  set. Recognized arguments (e.g. `adapt_delta`, `max_treedepth`,
+  `cores`, `thin`, `method`, `threads_per_chain`, and other
+  target-specific sampler arguments) can instead be supplied directly to
+  [`blavaan()`](https://blavaan.org/reference/blavaan.md)/
+  [`bcfa()`](https://blavaan.org/reference/bcfa.md)/`bsem()`/[`bgrowth()`](https://blavaan.org/reference/bgrowth.md)
+  without wrapping them in `bcontrol`; for
+  `target %in% c("stan","stanclassic", "stancond")`, arguments belonging
+  to Stan's nested `control=` list (like `adapt_delta`) are detected
+  automatically and nested for you. Supplying the same argument both
+  directly and inside `bcontrol` is an error. A few names remain
+  reserved and must still be supplied via `bcontrol` because they
+  collide with another
+  [`blavaan()`](https://blavaan.org/reference/blavaan.md)/[`lavaan()`](https://rdrr.io/pkg/lavaan/man/lavaan.html)
+  argument: `verbose`, `control` (lavaan's own optimizer control), and
+  `cl` (lavaan's bootstrap cluster option).
 
 ## Details
 
@@ -227,8 +245,8 @@ fit <- bsem(model, data = PoliticalDemocracy, burnin = 100, sample = 100,
 #> 
 #> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 1).
 #> Chain 1: 
-#> Chain 1: Gradient evaluation took 0.00024 seconds
-#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.4 seconds.
+#> Chain 1: Gradient evaluation took 0.000269 seconds
+#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.69 seconds.
 #> Chain 1: Adjust your expectations accordingly!
 #> Chain 1: 
 #> Chain 1: 
@@ -253,15 +271,15 @@ fit <- bsem(model, data = PoliticalDemocracy, burnin = 100, sample = 100,
 #> Chain 1: Iteration: 180 / 200 [ 90%]  (Sampling)
 #> Chain 1: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 1: 
-#> Chain 1:  Elapsed Time: 0.644 seconds (Warm-up)
-#> Chain 1:                0.381 seconds (Sampling)
-#> Chain 1:                1.025 seconds (Total)
+#> Chain 1:  Elapsed Time: 0.717 seconds (Warm-up)
+#> Chain 1:                0.418 seconds (Sampling)
+#> Chain 1:                1.135 seconds (Total)
 #> Chain 1: 
 #> 
 #> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 2).
 #> Chain 2: 
-#> Chain 2: Gradient evaluation took 0.00021 seconds
-#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.1 seconds.
+#> Chain 2: Gradient evaluation took 0.000213 seconds
+#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.13 seconds.
 #> Chain 2: Adjust your expectations accordingly!
 #> Chain 2: 
 #> Chain 2: 
@@ -286,9 +304,9 @@ fit <- bsem(model, data = PoliticalDemocracy, burnin = 100, sample = 100,
 #> Chain 2: Iteration: 180 / 200 [ 90%]  (Sampling)
 #> Chain 2: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 2: 
-#> Chain 2:  Elapsed Time: 0.442 seconds (Warm-up)
-#> Chain 2:                0.409 seconds (Sampling)
-#> Chain 2:                0.851 seconds (Total)
+#> Chain 2:  Elapsed Time: 0.486 seconds (Warm-up)
+#> Chain 2:                0.447 seconds (Sampling)
+#> Chain 2:                0.933 seconds (Total)
 #> Chain 2: 
 #> Warning: The largest R-hat is 1.09, indicating chains have not mixed.
 #> Running the chains for more iterations may help. See
@@ -303,7 +321,7 @@ fit <- bsem(model, data = PoliticalDemocracy, burnin = 100, sample = 100,
 #> Warning: blavaan WARNING: As specified, the theta covariance matrix is neither diagonal nor unrestricted, so the actual prior might differ from the stated prior. See
 #>  https://arxiv.org/abs/2301.08667
 summary(fit)
-#> blavaan 0.5.10.1464 ended normally after 100 iterations
+#> blavaan 0.5.10.1465 ended normally after 100 iterations
 #> 
 #>   Estimator                                      BAYES
 #>   Optimization method                             MCMC

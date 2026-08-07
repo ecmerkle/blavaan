@@ -17,7 +17,9 @@ jags.ic = FALSE, seed = NULL, bcontrol = list())
 - ...:
 
   Default lavaan arguments. See
-  [`lavaan`](https://rdrr.io/pkg/lavaan/man/lavaan.html).
+  [`lavaan`](https://rdrr.io/pkg/lavaan/man/lavaan.html). This also
+  accepts sampler-specific arguments that would otherwise need to be
+  supplied via `bcontrol` – see `bcontrol` below.
 
 - cp:
 
@@ -148,8 +150,24 @@ jags.ic = FALSE, seed = NULL, bcontrol = list())
 - bcontrol:
 
   A list containing additional parameters passed to `run.jags` (or
-  `autorun.jags`) or `stan`. See the manpage of those functions for an
-  overview of the additional parameters that can be set.
+  `autorun.jags`), `stan`, `vb`, or (for `target="cmdstan"`) a
+  `cmdstanr` model's `$sample()` method. See the manpage of those
+  functions for an overview of the additional parameters that can be
+  set. Recognized arguments (e.g. `adapt_delta`, `max_treedepth`,
+  `cores`, `thin`, `method`, `threads_per_chain`, and other
+  target-specific sampler arguments) can instead be supplied directly to
+  [`blavaan()`](https://blavaan.org/reference/blavaan.md)/
+  [`bcfa()`](https://blavaan.org/reference/bcfa.md)/[`bsem()`](https://blavaan.org/reference/bsem.md)/`bgrowth()`
+  without wrapping them in `bcontrol`; for
+  `target %in% c("stan","stanclassic", "stancond")`, arguments belonging
+  to Stan's nested `control=` list (like `adapt_delta`) are detected
+  automatically and nested for you. Supplying the same argument both
+  directly and inside `bcontrol` is an error. A few names remain
+  reserved and must still be supplied via `bcontrol` because they
+  collide with another
+  [`blavaan()`](https://blavaan.org/reference/blavaan.md)/[`lavaan()`](https://rdrr.io/pkg/lavaan/man/lavaan.html)
+  argument: `verbose`, `control` (lavaan's own optimizer control), and
+  `cl` (lavaan's bootstrap cluster option).
 
 ## Details
 

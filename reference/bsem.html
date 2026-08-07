@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-10.1464</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-10.1465</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,7 +76,9 @@
 
 
 <dl><dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Default lavaan arguments.  See <code><a href="https://rdrr.io/pkg/lavaan/man/lavaan.html" class="external-link">lavaan</a></code>.</p></dd>
+<dd><p>Default lavaan arguments.  See <code><a href="https://rdrr.io/pkg/lavaan/man/lavaan.html" class="external-link">lavaan</a></code>. This
+  also accepts sampler-specific arguments that would otherwise need to be
+  supplied via <code>bcontrol</code> – see <code>bcontrol</code> below.</p></dd>
 
 <dt id="arg-cp">cp<a class="anchor" aria-label="anchor" href="#arg-cp"></a></dt>
 <dd><p>Handling of prior distributions on covariance parameters:
@@ -188,8 +190,23 @@ to 10000 for target="jags" and 1000 for Stan targets.</p></dd>
 
 <dt id="arg-bcontrol">bcontrol<a class="anchor" aria-label="anchor" href="#arg-bcontrol"></a></dt>
 <dd><p>A list containing additional parameters passed to
-    <code>run.jags</code> (or <code>autorun.jags</code>) or <code>stan</code>.  See the manpage of those functions for an
-    overview of the additional parameters that can be set.</p></dd>
+    <code>run.jags</code> (or <code>autorun.jags</code>), <code>stan</code>, <code>vb</code>, or (for
+    <code>target="cmdstan"</code>) a <code>cmdstanr</code> model's <code>$sample()</code>
+    method. See the manpage of those functions for an overview of the
+    additional parameters that can be set. Recognized arguments (e.g.
+    <code>adapt_delta</code>, <code>max_treedepth</code>, <code>cores</code>, <code>thin</code>,
+    <code>method</code>, <code>threads_per_chain</code>, and other target-specific
+    sampler arguments) can instead be supplied directly to <code><a href="blavaan.html">blavaan()</a></code>/
+    <code><a href="bcfa.html">bcfa()</a></code>/<code>bsem()</code>/<code><a href="bgrowth.html">bgrowth()</a></code> without wrapping them in
+    <code>bcontrol</code>; for <code>target %in% c("stan","stanclassic",
+    "stancond")</code>, arguments belonging to Stan's nested <code>control=</code> list
+    (like <code>adapt_delta</code>) are detected automatically and nested for you.
+    Supplying the same argument both directly and inside <code>bcontrol</code> is
+    an error. A few names remain reserved and must still be supplied via
+    <code>bcontrol</code> because they collide with another
+    <code><a href="blavaan.html">blavaan()</a></code>/<code><a href="https://rdrr.io/pkg/lavaan/man/lavaan.html" class="external-link">lavaan()</a></code> argument: <code>verbose</code>, <code>control</code>
+    (lavaan's own optimizer control), and <code>cl</code> (lavaan's bootstrap
+    cluster option).</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -263,8 +280,8 @@ http://www.jstatsoft.org/v48/i02/.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 1).</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Gradient evaluation took 0.00024 seconds</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.4 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Gradient evaluation took 0.000269 seconds</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.69 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Adjust your expectations accordingly!</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: </span>
@@ -289,15 +306,15 @@ http://www.jstatsoft.org/v48/i02/.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Iteration: 180 / 200 [ 90%]  (Sampling)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Iteration: 200 / 200 [100%]  (Sampling)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:  Elapsed Time: 0.644 seconds (Warm-up)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:                0.381 seconds (Sampling)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:                1.025 seconds (Total)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:  Elapsed Time: 0.717 seconds (Warm-up)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:                0.418 seconds (Sampling)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:                1.135 seconds (Total)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 2).</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: Gradient evaluation took 0.00021 seconds</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.1 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: Gradient evaluation took 0.000213 seconds</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.13 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: Adjust your expectations accordingly!</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: </span>
@@ -322,9 +339,9 @@ http://www.jstatsoft.org/v48/i02/.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: Iteration: 180 / 200 [ 90%]  (Sampling)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: Iteration: 200 / 200 [100%]  (Sampling)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2:  Elapsed Time: 0.442 seconds (Warm-up)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2:                0.409 seconds (Sampling)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2:                0.851 seconds (Total)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2:  Elapsed Time: 0.486 seconds (Warm-up)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2:                0.447 seconds (Sampling)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2:                0.933 seconds (Total)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: </span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>The largest R-hat is 1.09, indicating chains have not mixed.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> Running the chains for more iterations may help. See</span>
@@ -339,7 +356,7 @@ http://www.jstatsoft.org/v48/i02/.</p>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>blavaan WARNING: As specified, the theta covariance matrix is neither diagonal nor unrestricted, so the actual prior might differ from the stated prior. See</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span>  https://arxiv.org/abs/2301.08667</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> blavaan 0.5.10.1464 ended normally after 100 iterations</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> blavaan 0.5.10.1465 ended normally after 100 iterations</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Estimator                                      BAYES</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Optimization method                             MCMC</span>

@@ -60,7 +60,7 @@ estimates, and $`R^2`$
 summary(fit, standardize=T, rsquare=T)
 ```
 
-    ## blavaan 0.5.10.1464 ended normally after 1000 iterations
+    ## blavaan 0.5.10.1465 ended normally after 1000 iterations
     ## 
     ##   Estimator                                      BAYES
     ##   Optimization method                             MCMC

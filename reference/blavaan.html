@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-10.1464</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-10.1465</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,7 +76,9 @@
 
 
 <dl><dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Default lavaan arguments.  See <code><a href="https://rdrr.io/pkg/lavaan/man/lavaan.html" class="external-link">lavaan</a></code>.</p></dd>
+<dd><p>Default lavaan arguments.  See <code><a href="https://rdrr.io/pkg/lavaan/man/lavaan.html" class="external-link">lavaan</a></code>. This
+  also accepts sampler-specific arguments that would otherwise need to be
+  supplied via <code>bcontrol</code> – see <code>bcontrol</code> below.</p></dd>
 
 <dt id="arg-cp">cp<a class="anchor" aria-label="anchor" href="#arg-cp"></a></dt>
 <dd><p>Handling of prior distributions on covariance parameters:
@@ -190,8 +192,23 @@ to 10000 for target="jags" and 1000 for Stan targets.</p></dd>
 
 <dt id="arg-bcontrol">bcontrol<a class="anchor" aria-label="anchor" href="#arg-bcontrol"></a></dt>
 <dd><p>A list containing additional parameters passed to
-    <code>run.jags</code> (or <code>autorun.jags</code>) or <code>stan</code>.  See the manpage of those functions for an
-    overview of the additional parameters that can be set.</p></dd>
+    <code>run.jags</code> (or <code>autorun.jags</code>), <code>stan</code>, <code>vb</code>, or (for
+    <code>target="cmdstan"</code>) a <code>cmdstanr</code> model's <code>$sample()</code>
+    method. See the manpage of those functions for an overview of the
+    additional parameters that can be set. Recognized arguments (e.g.
+    <code>adapt_delta</code>, <code>max_treedepth</code>, <code>cores</code>, <code>thin</code>,
+    <code>method</code>, <code>threads_per_chain</code>, and other target-specific
+    sampler arguments) can instead be supplied directly to <code>blavaan()</code>/
+    <code><a href="bcfa.html">bcfa()</a></code>/<code><a href="bsem.html">bsem()</a></code>/<code><a href="bgrowth.html">bgrowth()</a></code> without wrapping them in
+    <code>bcontrol</code>; for <code>target %in% c("stan","stanclassic",
+    "stancond")</code>, arguments belonging to Stan's nested <code>control=</code> list
+    (like <code>adapt_delta</code>) are detected automatically and nested for you.
+    Supplying the same argument both directly and inside <code>bcontrol</code> is
+    an error. A few names remain reserved and must still be supplied via
+    <code>bcontrol</code> because they collide with another
+    <code>blavaan()</code>/<code><a href="https://rdrr.io/pkg/lavaan/man/lavaan.html" class="external-link">lavaan()</a></code> argument: <code>verbose</code>, <code>control</code>
+    (lavaan's own optimizer control), and <code>cl</code> (lavaan's bootstrap
+    cluster option).</p></dd>
 
 </dl></div>
     <div class="section level2">

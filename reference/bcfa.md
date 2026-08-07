@@ -18,7 +18,9 @@ bcfa(..., cp = "srs",
 - ...:
 
   Default lavaan arguments. See
-  [`lavaan`](https://rdrr.io/pkg/lavaan/man/lavaan.html).
+  [`lavaan`](https://rdrr.io/pkg/lavaan/man/lavaan.html). This also
+  accepts sampler-specific arguments that would otherwise need to be
+  supplied via `bcontrol` – see `bcontrol` below.
 
 - cp:
 
@@ -149,8 +151,24 @@ bcfa(..., cp = "srs",
 - bcontrol:
 
   A list containing additional parameters passed to `run.jags` (or
-  `autorun.jags`) or `stan`. See the manpage of those functions for an
-  overview of the additional parameters that can be set.
+  `autorun.jags`), `stan`, `vb`, or (for `target="cmdstan"`) a
+  `cmdstanr` model's `$sample()` method. See the manpage of those
+  functions for an overview of the additional parameters that can be
+  set. Recognized arguments (e.g. `adapt_delta`, `max_treedepth`,
+  `cores`, `thin`, `method`, `threads_per_chain`, and other
+  target-specific sampler arguments) can instead be supplied directly to
+  [`blavaan()`](https://blavaan.org/reference/blavaan.md)/
+  `bcfa()`/[`bsem()`](https://blavaan.org/reference/bsem.md)/[`bgrowth()`](https://blavaan.org/reference/bgrowth.md)
+  without wrapping them in `bcontrol`; for
+  `target %in% c("stan","stanclassic", "stancond")`, arguments belonging
+  to Stan's nested `control=` list (like `adapt_delta`) are detected
+  automatically and nested for you. Supplying the same argument both
+  directly and inside `bcontrol` is an error. A few names remain
+  reserved and must still be supplied via `bcontrol` because they
+  collide with another
+  [`blavaan()`](https://blavaan.org/reference/blavaan.md)/[`lavaan()`](https://rdrr.io/pkg/lavaan/man/lavaan.html)
+  argument: `verbose`, `control` (lavaan's own optimizer control), and
+  `cl` (lavaan's bootstrap cluster option).
 
 ## Details
 
@@ -209,8 +227,8 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> 
 #> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 1).
 #> Chain 1: 
-#> Chain 1: Gradient evaluation took 0.00027 seconds
-#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.7 seconds.
+#> Chain 1: Gradient evaluation took 0.000364 seconds
+#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 3.64 seconds.
 #> Chain 1: Adjust your expectations accordingly!
 #> Chain 1: 
 #> Chain 1: 
@@ -235,15 +253,15 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> Chain 1: Iteration: 180 / 200 [ 90%]  (Sampling)
 #> Chain 1: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 1: 
-#> Chain 1:  Elapsed Time: 0.373 seconds (Warm-up)
-#> Chain 1:                0.388 seconds (Sampling)
-#> Chain 1:                0.761 seconds (Total)
+#> Chain 1:  Elapsed Time: 0.344 seconds (Warm-up)
+#> Chain 1:                0.353 seconds (Sampling)
+#> Chain 1:                0.697 seconds (Total)
 #> Chain 1: 
 #> 
 #> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 2).
 #> Chain 2: 
-#> Chain 2: Gradient evaluation took 0.000259 seconds
-#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.59 seconds.
+#> Chain 2: Gradient evaluation took 0.000271 seconds
+#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.71 seconds.
 #> Chain 2: Adjust your expectations accordingly!
 #> Chain 2: 
 #> Chain 2: 
@@ -268,9 +286,9 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> Chain 2: Iteration: 180 / 200 [ 90%]  (Sampling)
 #> Chain 2: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 2: 
-#> Chain 2:  Elapsed Time: 0.65 seconds (Warm-up)
-#> Chain 2:                0.412 seconds (Sampling)
-#> Chain 2:                1.062 seconds (Total)
+#> Chain 2:  Elapsed Time: 0.579 seconds (Warm-up)
+#> Chain 2:                0.365 seconds (Sampling)
+#> Chain 2:                0.944 seconds (Total)
 #> Chain 2: 
 #> Warning: The largest R-hat is NA, indicating chains have not mixed.
 #> Running the chains for more iterations may help. See
@@ -283,7 +301,7 @@ fit <- bcfa(HS.model, data = HolzingerSwineford1939, burnin = 100, sample = 100,
 #> https://mc-stan.org/misc/warnings.html#tail-ess
 #> Computing post-estimation metrics (including lvs if requested)...
 summary(fit)
-#> blavaan 0.5.10.1464 ended normally after 100 iterations
+#> blavaan 0.5.10.1465 ended normally after 100 iterations
 #> 
 #>   Estimator                                      BAYES
 #>   Optimization method                             MCMC
