@@ -12,7 +12,9 @@ blavaan(..., cp = "srs",
     seed = NULL, bcontrol = list())
 }
 \arguments{
-\item{...}{Default lavaan arguments.  See \code{\link[lavaan]{lavaan}}.}
+\item{...}{Default lavaan arguments.  See \code{\link[lavaan]{lavaan}}. This
+  also accepts sampler-specific arguments that would otherwise need to be
+  supplied via \code{bcontrol} -- see \code{bcontrol} below.}
 \item{cp}{Handling of prior distributions on covariance parameters:
   possible values are \code{"srs"} (default) or \code{"fa"}.  Option
   \code{"fa"} is only available for \code{target="jags"}.}
@@ -90,8 +92,23 @@ to 10000 for target="jags" and 1000 for Stan targets.}
   \code{"jags"}) or an integer (for target \code{"stan"}) containing random
   seeds for the MCMC run. If \code{NULL}, seeds will be chosen randomly.}
 \item{bcontrol}{A list containing additional parameters passed to
-    \code{run.jags} (or \code{autorun.jags}) or \code{stan}.  See the manpage of those functions for an
-    overview of the additional parameters that can be set.}
+    \code{run.jags} (or \code{autorun.jags}), \code{stan}, \code{vb}, or (for
+    \code{target="cmdstan"}) a \code{cmdstanr} model's \code{$sample()}
+    method. See the manpage of those functions for an overview of the
+    additional parameters that can be set. Recognized arguments (e.g.
+    \code{adapt_delta}, \code{max_treedepth}, \code{cores}, \code{thin},
+    \code{method}, \code{threads_per_chain}, and other target-specific
+    sampler arguments) can instead be supplied directly to \code{blavaan()}/
+    \code{bcfa()}/\code{bsem()}/\code{bgrowth()} without wrapping them in
+    \code{bcontrol}; for \code{target \%in\% c("stan","stanclassic",
+    "stancond")}, arguments belonging to Stan's nested \code{control=} list
+    (like \code{adapt_delta}) are detected automatically and nested for you.
+    Supplying the same argument both directly and inside \code{bcontrol} is
+    an error. A few names remain reserved and must still be supplied via
+    \code{bcontrol} because they collide with another
+    \code{blavaan()}/\code{lavaan()} argument: \code{verbose}, \code{control}
+    (lavaan's own optimizer control), and \code{cl} (lavaan's bootstrap
+    cluster option).}
 }
 \value{
   An object that inherits from class \link[lavaan:lavaan-class]{lavaan}, for which several methods

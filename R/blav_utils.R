@@ -595,3 +595,128 @@ makeord <- function(Data, vars = NULL, ncat = 2) {
 
   Data[-nrow(Data),]
 }
+
+## Recognized sampler-argument names that blavaan() will pull directly out of
+## its ... instead of requiring them to be nested inside bcontrol=list(...)
+## (issue #57). Deliberately excluded from all of these: names blavaan already
+## computes internally (data, object/model/model_code, pars/monitor,
+## chains/n.chains, iter/warmup/iter_warmup/iter_sampling, seed, init/inits),
+## and names that collide with a lavaan()/blavaan() argument (verbose,
+## control, cl -- see extract_bcontrol_dots()/nest_stan_control()).
+
+## rstan::sampling()/stan() top-level arguments (target %in% c("stan",
+## "stanclassic","stancond"), non-vb)
+.bcontrol_stan_top <- c("algorithm", "include", "cores", "open_progress",
+                        "show_messages", "check_data", "sample_file",
+                        "diagnostic_file", "thin", "chain_id", "init_r",
+                        "test_grad", "append_samples", "refresh",
+                        "enable_random_init", "save_warmup")
+
+## rstan control=list(...) sub-fields; nested under bcontrol$control by
+## nest_stan_control() rather than passed flat
+.bcontrol_stan_control <- c("adapt_engaged", "adapt_gamma", "adapt_delta",
+                            "adapt_kappa", "adapt_t0", "adapt_init_buffer",
+                            "adapt_term_buffer", "adapt_window", "stepsize",
+                            "stepsize_jitter", "metric", "max_treedepth",
+                            "int_time", "epsilon", "error")
+
+## rstan::vb() arguments (target = "stan" with usevb = TRUE); vb has no
+## nested control= argument, so these always stay flat
+.bcontrol_stan_vb <- c("include", "check_data", "sample_file", "algorithm",
+                       "importance_resampling", "keep_every", "iter",
+                       "grad_samples", "elbo_samples", "eta", "adapt_engaged",
+                       "tol_rel_obj", "eval_elbo", "adapt_iter")
+
+## cmdstanr's $sample() arguments (target = "cmdstan"); these are already
+## flat in cmdstanr, so no nesting step is needed. deprecated cmdstanr
+## backward-compat aliases (num_cores, num_chains, num_warmup, num_samples,
+## max_depth, stepsize) are deliberately omitted to avoid a second spelling
+## of already-canonical names.
+.bcontrol_cmdstan <- c("refresh", "save_latent_dynamics", "output_dir",
+                       "output_basename", "sig_figs", "parallel_chains",
+                       "chain_ids", "threads_per_chain", "opencl_ids",
+                       "save_warmup", "thin", "max_treedepth",
+                       "adapt_engaged", "adapt_delta", "step_size", "metric",
+                       "metric_file", "inv_metric", "init_buffer",
+                       "term_buffer", "window", "fixed_param",
+                       "show_messages", "show_exceptions", "diagnostics",
+                       "save_metric", "save_cmdstan_config", "cores")
+
+## run.jags()/autorun.jags() arguments (target = "jags"); these are already
+## flat. "cl" is deliberately omitted: it is both a documented lavaan()
+## option (bootstrap parallel cluster) and a run.jags "..." extra
+## (rjparallel/snow cluster), so including it would silently hijack a
+## lavaan-intended argument.
+.bcontrol_jags <- c("noread.monitor", "jags", "silent.jags", "modules",
+                    "factories", "summarise", "mutate", "thin",
+                    "keep.jags.files", "tempdir", "jags.refresh",
+                    "batch.jags", "method", "method.options", "thin.sample",
+                    "raftery.options", "crash.retry", "interactive",
+                    "max.time")
+
+## which recognized sampler-argument names apply for this target. for the
+## rstan-family, non-vb case this includes both the top-level sampling()/
+## stan() names and the control=list(...) sub-field names -- the latter get
+## folded into bcontrol here, then nested under bcontrol$control later by
+## nest_stan_control().
+bcontrol_argnames <- function(target, usevb) {
+  if(target == "jags") {
+    .bcontrol_jags
+  } else if(target == "cmdstan") {
+    .bcontrol_cmdstan
+  } else if(usevb) {
+    .bcontrol_stan_vb
+  } else {
+    c(.bcontrol_stan_top, .bcontrol_stan_control)
+  }
+}
+
+## pull recognized sampler arguments out of blavaan()'s ... so they can be
+## supplied directly instead of nested inside bcontrol=list(...) (issue #57).
+## errors if a name is supplied both directly and inside bcontrol.
+extract_bcontrol_dots <- function(dotdotdot, dotNames, bcontrol, target, usevb) {
+  argnames <- bcontrol_argnames(target, usevb)
+  dotlocs <- match(argnames, dotNames, nomatch = 0)
+
+  if(any(dotlocs > 0)) {
+    matched <- argnames[dotlocs > 0]
+
+    dupes <- matched[matched %in% names(bcontrol)]
+    if(length(dupes) > 0) {
+      stop("blavaan ERROR: the following argument(s) were supplied both directly ",
+           "and inside bcontrol; supply each argument only one way:\n  ",
+           paste(dupes, collapse = " "))
+    }
+
+    bcontrol <- c(bcontrol, dotdotdot[dotlocs])
+    dotdotdot <- dotdotdot[-dotlocs]; dotNames <- dotNames[-dotlocs]
+  }
+
+  list(dotdotdot = dotdotdot, dotNames = dotNames, bcontrol = bcontrol)
+}
+
+## for target %in% c("stan","stanclassic","stancond") (rstan::sampling()/
+## stan()), nest recognized control=list(...) sub-fields (e.g. adapt_delta,
+## max_treedepth) that were supplied at the top level of bcontrol under
+## bcontrol$control, merging with any control list the user already supplied
+## directly (old nested style). errors if the same name appears both flat
+## and inside an existing bcontrol$control.
+nest_stan_control <- function(bcontrol) {
+  flatnames <- intersect(names(bcontrol), .bcontrol_stan_control)
+  if(length(flatnames) == 0) return(bcontrol)
+
+  existing <- bcontrol$control
+  if(is.null(existing)) existing <- list()
+
+  dupes <- intersect(flatnames, names(existing))
+  if(length(dupes) > 0) {
+    stop("blavaan ERROR: the following control argument(s) were supplied both ",
+         "flat and inside bcontrol$control; supply each argument only one way:\n  ",
+         paste(dupes, collapse = " "))
+  }
+
+  bcontrol$control <- modifyList(existing, bcontrol[flatnames])
+  bcontrol[flatnames] <- NULL
+
+  bcontrol
+}

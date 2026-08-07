@@ -183,7 +183,13 @@ blavaan <- function(...,  # default lavaan arguments
     }
     dotdotdot <- dotdotdot[-blocs]; dotNames <- dotNames[-blocs]
   }
-  
+
+  ## direct sampler-argument passthrough (issue #57): pull recognized names
+  ## for the active target out of ... instead of requiring bcontrol=list(...)
+  extracted <- extract_bcontrol_dots(dotdotdot, dotNames, bcontrol, target, usevb)
+  dotdotdot <- extracted$dotdotdot; dotNames <- extracted$dotNames
+  bcontrol <- extracted$bcontrol
+
   ## which arguments do we override?
   lavArgsOverride <- c("missing", "estimator", "conditional.x", "parser", "cat.wls.w")
   if(!(target %in% c("stan", "cmdstan"))) lavArgsOverride <- c(lavArgsOverride, "meanstructure")
@@ -742,6 +748,14 @@ blavaan <- function(...,  # default lavaan arguments
                                      data = data,
                                      pars = sampparms,
                                      init = inits))
+      }
+
+      ## auto-nest flat control=list(...) sub-fields (e.g. adapt_delta,
+      ## max_treedepth) supplied directly in bcontrol, for targets whose
+      ## sampler expects them nested (issue #57); cmdstan/jags/vb already
+      ## take these flat, so no nesting is needed for them.
+      if(target %in% c("stan", "stanclassic", "stancond") && !usevb) {
+        bcontrol <- nest_stan_control(bcontrol)
       }
 
       ## user-supplied jags params

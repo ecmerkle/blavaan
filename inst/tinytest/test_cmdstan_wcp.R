@@ -32,4 +32,15 @@ fit_wcp2 <- bcfa(model, data = HolzingerSwineford1939, target = "cmdstan",
                  bcontrol = list(threads_per_chain = 1L))
 expect_true(inherits(fit_wcp2, "blavaan"))
 
+## direct (non-bcontrol) threads_per_chain (issue #57) should also silence
+## the warning; cmdstanr's $sample() takes it flat, so no control= nesting
+## is expected here
+fit_wcp3 <- bcfa(model, data = HolzingerSwineford1939, target = "cmdstan",
+                 n.chains = 1, burnin = 20, sample = 20,
+                 mcmcextra = list(data = list(use_wcp = 1L, grainsize = 1L)),
+                 threads_per_chain = 1L)
+expect_true(inherits(fit_wcp3, "blavaan"))
+expect_equal(fit_wcp3@optim$control$threads_per_chain, 1L)
+expect_true(is.null(fit_wcp3@optim$control$control))
+
 }
