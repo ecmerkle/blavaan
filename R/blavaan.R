@@ -85,16 +85,24 @@ blavaan <- function(...,  # default lavaan arguments
 
   ## mcmcextra args
   if(length(mcmcextra) > 0) {
-    goodnm <- names(mcmcextra) %in% c('data', 'monitor', 'syntax', 'llnsamp', 'moment_match_k_threshold', 'dosam')
+    goodnm <- names(mcmcextra) %in% c('data', 'monitor', 'syntax', 'llnsamp', 'moment_match_k_threshold', 'dosam', 'doblocks')
     if(!all(goodnm)) {
       stop(paste0("blavaan ERROR: invalid list names in mcmcextra:\n  ", paste(names(mcmcextra)[!goodnm], collapse=" ")))
     }
 
     if(!("dosam" %in% names(mcmcextra))) mcmcextra$dosam <- FALSE
+    if(!("doblocks" %in% names(mcmcextra))) mcmcextra$doblocks <- TRUE
   } else {
     mcmcextra$dosam <- FALSE
+    mcmcextra$doblocks <- TRUE
   }
-  
+
+  ## doblocks = FALSE (search for unrestricted covariance sub-blocks, for lkj priors) is
+  ## incompatible with dosam = TRUE (SAM fitting), which relies on the finer-grained search
+  if(!mcmcextra$doblocks && mcmcextra$dosam) {
+    stop("blavaan ERROR: mcmcextra$doblocks = FALSE is not supported together with mcmcextra$dosam = TRUE")
+  }
+
   ## ensure rstan/runjags are here. if target is not installed but
   ## the other is, then use the other instead.
   if(grepl("stan", target)) {

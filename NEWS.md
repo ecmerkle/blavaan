@@ -12,6 +12,8 @@
 
 * Compatibility updates for lavaan 0.7-1 and later, which renamed a number of internal functions/arguments that blavaan relies on (affecting, e.g., fitMeasures(), blavPredict(newdata = ...), and summary()); the lavaan dependency has been bumped accordingly.
 
+* New (undocumented) mcmcextra$doblocks argument for target = "stan"/"cmdstan": set to FALSE to restore the pre-0.5 behavior of only using an lkj prior when an entire psi/theta correlation matrix is unrestricted, instead of searching for and using lkj priors on unrestricted sub-blocks (issue #97). Not available together with mcmcextra$dosam = TRUE.
+
 * Various other bug fixes, including: incorrect psi/theta correlation-block prior matching for multi-group two-level (multilevel) models; ppmc()/blavFitIndices(rescale = "mcmc") failing with a "subscript out of bounds" error for models with more than one group; and blavCompare() output relying on row/column position (now named) rather than being robust to formatting changes in underlying packages.
 
 ## Bugs/glitches:

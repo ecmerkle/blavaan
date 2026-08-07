@@ -467,12 +467,18 @@ checkcovs <- function(lavobject) {
 ## check whether model cov matrix is block diagonal
 ## uses matrices from lavInspect(, "free")
 ## eqcon is attributes(lavInspect(, "free"))$header
-blkdiag <- function(mat, eqcon = NULL, dosam = FALSE) {
+blkdiag <- function(mat, eqcon = NULL, dosam = FALSE, doblocks = TRUE) {
   isblk <- TRUE
 
-  g <- graph_from_adjacency_matrix( (mat != 0) * 1, mode = "undirected")
-  blks <- components(g)
-  blklabs <- blks$membership
+  if (doblocks) {
+    g <- graph_from_adjacency_matrix( (mat != 0) * 1, mode = "undirected")
+    blks <- components(g)
+    blklabs <- blks$membership
+  } else {
+    ## old behavior: don't search for unrestricted sub-blocks, just treat the
+    ## whole matrix as a single candidate block
+    blklabs <- rep(1L, nrow(mat))
+  }
   ublks <- unique(blklabs)
   nblks <- length(ublks)
 

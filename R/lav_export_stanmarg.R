@@ -188,7 +188,12 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
   ## is this SAM?
   dosam <- FALSE
   if ("dosam" %in% names(mcmcextra)) dosam <- mcmcextra$dosam
-  
+
+  ## search covariance matrices for unrestricted sub-blocks (for lkj priors)?
+  ## if FALSE, only a fully-unrestricted whole matrix gets an lkj prior (old behavior)
+  doblocks <- TRUE
+  if ("doblocks" %in% names(mcmcextra)) doblocks <- mcmcextra$doblocks
+
   ## data characteristics
   if (length(indat) == 0) {
     dat <- lav2standata(lavobject, dosam = dosam)
@@ -409,7 +414,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       )
 
     tmpatt <- matattr(fr, es, constrain, mat = "Theta_r", Ng, opts$std.lv, tmpwig, dest = dest)
-    blkres <- block_cov(freemats, fr, mat = "theta", skel = tmpatt$matskel, Ng = Ng, dosam = FALSE)
+    blkres <- block_cov(freemats, fr, mat = "theta", skel = tmpatt$matskel, Ng = Ng, dosam = FALSE, doblocks = doblocks)
     dat <- c(dat, blkres$out)
     frnoblock <- blkres$frnoblock
     blktheta <- blkres$blkmats
@@ -508,7 +513,7 @@ lav2stanmarg <- function(lavobject, dp, n.chains, inits, wiggle=NULL, wiggle.sd=
       )
 
     tmpatt <- matattr(fr, es, constrain, mat = "Psi_r", Ng, opts$std.lv, tmpwig, dest = dest)
-    blkres <- block_cov(freemats, fr, mat = "psi", skel = tmpatt$matskel, Ng = Ng, dosam = dosam)
+    blkres <- block_cov(freemats, fr, mat = "psi", skel = tmpatt$matskel, Ng = Ng, dosam = dosam, doblocks = doblocks)
     dat <- c(dat, blkres$out)
     frnoblock <- blkres$frnoblock
     blkpsi <- blkres$blkmats
@@ -1624,7 +1629,7 @@ lav2standata <- function(lavobject, dosam = FALSE) {
 }
 
 ## get data about covariance matrix blocks
-block_cov <- function(freemats, fr, mat, skel, Ng, dosam = FALSE) {
+block_cov <- function(freemats, fr, mat, skel, Ng, dosam = FALSE, doblocks = TRUE) {
   out <- list()
 
   cons <- attributes(freemats)$header
@@ -1638,7 +1643,7 @@ block_cov <- function(freemats, fr, mat, skel, Ng, dosam = FALSE) {
     x
   })
   
-  blkinfo <- lapply(freemats, function(x) blkdiag(x, cons, dosam))
+  blkinfo <- lapply(freemats, function(x) blkdiag(x, cons, dosam, doblocks))
   blkmats <- all(sapply(blkinfo, function(x) x$isblk))
   blkse <- do.call("rbind", lapply(blkinfo, function(x) x$blkse))
   matorder <- do.call("rbind", lapply(blkinfo, function(x) x$neworder))
