@@ -16,6 +16,8 @@
 
 * Various other bug fixes, including: incorrect psi/theta correlation-block prior matching for multi-group two-level (multilevel) models; ppmc()/blavFitIndices(rescale = "mcmc") failing with a "subscript out of bounds" error for models with more than one group; and blavCompare() output relying on row/column position (now named) rather than being robust to formatting changes in underlying packages.
 
+* blavaan now raises a clear, explicit error as soon as a model uses lavaan's `<~` operator (composite/formative latent variables), instead of an opaque internal crash. This operator was previously reported (version 0.5-8, below) as failing only under target = "jags"; it in fact fails under every target, since none of blavaan's translation backends handle lavaan's associated "wmat" parameter matrix. `<~` is not currently implemented in blavaan (issue #90); this change only makes that limitation explicit rather than adding support.
+
 ## Bugs/glitches:
 * plot() does not display certain level 2 parameters in two-level models.
 

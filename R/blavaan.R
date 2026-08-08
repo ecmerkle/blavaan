@@ -341,6 +341,9 @@ blavaan <- function(...,  # default lavaan arguments
   }
   ## for warnings related to setting up model/data:
   LAV <- do.call("lavaan", dotdotdot)
+  if(any(LAV@ParTable$op == "<~")) {
+    stop('blavaan ERROR: blavaan does not currently support composite/formative latent variables (the "<~" operator).')
+  }
   dotdotdot$do.fit <- TRUE; dotdotdot$warn <- FALSE
   if(LAV@Data@data.type != "moment" && target %in% c("stan", "cmdstan")) {
     ## if no missing, set missing = "listwise" to avoid meanstructure if possible

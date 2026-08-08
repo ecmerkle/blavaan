@@ -22,6 +22,12 @@ expect_error(bsem(model, data=Data, ov.cp="blah", fixed.x=TRUE))
 ## cp/std.lv clash
 expect_error(bsem(model, data=Data, fixed.x=TRUE, std.lv=TRUE, cp="fa"))
 
+## composite/formative latent variables (<~) are not supported by any target (issue #90)
+compmodel <- ' f <~ x1 + x2
+               y1 ~ f '
+expect_error(bsem(compmodel, data=Data, target="jags"))
+expect_error(bsem(compmodel, data=Data, target="stan"))
+
 model2 <- ' y1 ~ b1*x1 + b2*x2
             b1 + b2 == 0 '
 
