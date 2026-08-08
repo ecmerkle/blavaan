@@ -53,6 +53,16 @@
   named) rather than being robust to formatting changes in underlying
   packages.
 
+- blavaan now raises a clear, explicit error as soon as a model uses
+  lavaan’s `<~` operator (composite/formative latent variables), instead
+  of an opaque internal crash. This operator was previously reported
+  (version 0.5-8, below) as failing only under target = “jags”; it in
+  fact fails under every target, since none of blavaan’s translation
+  backends handle lavaan’s associated “wmat” parameter matrix. `<~` is
+  not currently implemented in blavaan (issue
+  [\#90](https://github.com/ecmerkle/blavaan/issues/90)); this change
+  only makes that limitation explicit rather than adding support.
+
 ### Bugs/glitches:
 
 - plot() does not display certain level 2 parameters in two-level

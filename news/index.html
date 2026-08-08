@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-10.1466</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-10.1467</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,6 +68,7 @@
 <li><p>Compatibility updates for lavaan 0.7-1 and later, which renamed a number of internal functions/arguments that blavaan relies on (affecting, e.g., fitMeasures(), blavPredict(newdata = …), and summary()); the lavaan dependency has been bumped accordingly.</p></li>
 <li><p>New (undocumented) mcmcextra<span class="math inline">$doblocks argument for target = "stan"/"cmdstan": set to FALSE to restore the pre-0.5 behavior of only using an lkj prior when an entire psi/theta correlation matrix is unrestricted, instead of searching for and using lkj priors on unrestricted sub-blocks (issue <a href="https://github.com/ecmerkle/blavaan/issues/97" class="external-link">#97</a>). Not available together with mcmcextra$</span>dosam = TRUE.</p></li>
 <li><p>Various other bug fixes, including: incorrect psi/theta correlation-block prior matching for multi-group two-level (multilevel) models; ppmc()/blavFitIndices(rescale = “mcmc”) failing with a “subscript out of bounds” error for models with more than one group; and blavCompare() output relying on row/column position (now named) rather than being robust to formatting changes in underlying packages.</p></li>
+<li><p>blavaan now raises a clear, explicit error as soon as a model uses lavaan’s <code>&lt;~</code> operator (composite/formative latent variables), instead of an opaque internal crash. This operator was previously reported (version 0.5-8, below) as failing only under target = “jags”; it in fact fails under every target, since none of blavaan’s translation backends handle lavaan’s associated “wmat” parameter matrix. <code>&lt;~</code> is not currently implemented in blavaan (issue <a href="https://github.com/ecmerkle/blavaan/issues/90" class="external-link">#90</a>); this change only makes that limitation explicit rather than adding support.</p></li>
 </ul></div>
 <div class="section level3">
 <h3 id="bugsglitches-0-6-1">Bugs/glitches:<a class="anchor" aria-label="anchor" href="#bugsglitches-0-6-1"></a></h3>
