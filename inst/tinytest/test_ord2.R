@@ -231,7 +231,7 @@ fit2 <- cfa(HS.model, data = Data, meanstructure = TRUE,
             ordered = c("x3", "x6", "x9"), parameterization = "theta")
 
 bfit2 <- bcfa(HS.model, data = Data, sample = 100, burnin = 100,
-              ordered = c("x3", "x6", "x9"),
+              ordered = c("x3", "x6", "x9"), test = "standard",
               dp = dpriors(lambda = "normal(1,1)", tau = "normal(0,1)"))
 
 expect_inherits(bfit2, "blavaan",
@@ -269,7 +269,7 @@ try({
 Data  <- makeord(dcont, ncat = 5)
 
 fit2_stdlv <- bcfa(HS.model, data = Data, sample = 100, burnin = 100,
-                   std.lv = TRUE,
+                   std.lv = TRUE, test = "standard",
                    dp = dpriors(psi = "gamma(1,1)", lambda = "normal(1,.5)"),
                    ordered = TRUE)
 
@@ -352,6 +352,7 @@ fit_th <- cfa(hs1, data = Data, meanstructure = TRUE,
               ordered = TRUE, parameterization = "theta", parser = "old")
 
 bfit_th <- bcfa(hs1, data = Data, sample = 100, burnin = 100, ordered = TRUE,
+                test = "standard",
                 dp = dpriors(lambda = "normal(1,1)", tau = "normal(0,1)"))
 
 expect_inherits(bfit_th, "blavaan",
@@ -394,7 +395,7 @@ try({
 fit_mg <- bcfa(HS.model, data = hs39o, sample = 100, burnin = 100,
                group = "school", group.equal = c("thresholds", "loadings"),
                wiggle = "thresholds", wiggle.sd = .1,
-               ordered = TRUE,
+               ordered = TRUE, test = "standard",
                dp = dpriors(lambda = "normal(1,.5)", tau = "normal(0,.5)"))
 
 fit_mg_lav <- cfa(HS.model, data = hs39o, group = "school",
@@ -483,7 +484,8 @@ model_xo <- ' f =~ y1 + y2 + y3 + y4 + y5
 
 try({
 fit_xo <- bsem(model_xo, data = Data_xo, fixed.x = TRUE,
-               burnin = 100, sample = 200, ordered = TRUE, save.lvs = TRUE)
+               burnin = 100, sample = 200, ordered = TRUE, save.lvs = TRUE,
+               test = "standard")
 
 fit_xob <- sem(model_xo, data = Data_xo, fixed.x = TRUE,
                meanstructure = TRUE, ordered = TRUE, estimator = "pml",
@@ -516,7 +518,8 @@ expect_true(fm_xo["ppp"] >= 0 & fm_xo["ppp"] <= 1,
 
 try({
 fit_xo_fx <- bsem(model_xo, data = Data_xo, fixed.x = FALSE,
-                  sample = 100, burnin = 100, target = mytarg, ordered = TRUE)
+                  sample = 100, burnin = 100, target = mytarg, ordered = TRUE,
+                  test = "standard")
 
 fit_xob_fx <- sem(model_xo, data = Data_xo, fixed.x = FALSE,
                   conditional.x = FALSE, meanstructure = TRUE, estimator = "pml",
@@ -533,6 +536,7 @@ expect_true(
   info = "One-factor + exo, fixed.x=FALSE: vcov diagonal should be positive"
 )
 
+fm_xo_fx <- fitMeasures(fit_xo_fx)
 expect_true(fm_xo_fx["ppp"] >= 0 & fm_xo_fx["ppp"] <= 1,
   info = "One-factor + exo + missing: PPP should be in [0, 1]")
 })
@@ -549,7 +553,7 @@ model_1v <- 'y1 ~ 1; y1 ~~ y1'
 
 try({
 fit_1v <- blavaan(model_1v, data = Data_1v, burnin = 100, sample = 100,
-                  ordered = TRUE)
+                  ordered = TRUE, test = "standard")
 
 fit_1vb <- lavaan(model_1v, data = Data_1v, ordered = TRUE,
                   parameterization = "theta")
@@ -591,7 +595,7 @@ model_reg <- ' y1 ~ x1 '
 
 try({
 fit_reg <- bsem(model_reg, data = Data_reg, fixed.x = TRUE,
-                sample = 100, burnin = 100, ordered = TRUE)
+                sample = 100, burnin = 100, ordered = TRUE, test = "standard")
 
 fit_regb <- sem(model_reg, data = Data_reg, fixed.x = TRUE,
                 ordered = TRUE, parameterization = "theta",
@@ -632,7 +636,7 @@ model_pa <- ' y2 ~ y1; y1 ~ x1 '
 
 try({
 fit_pa <- bsem(model_pa, data = Data_pa, fixed.x = TRUE,
-               sample = 100, burnin = 100, ordered = TRUE)
+               sample = 100, burnin = 100, ordered = TRUE, test = "standard")
 
 fit_pab <- sem(model_pa, data = Data_pa, fixed.x = TRUE,
                ordered = TRUE, parameterization = "theta",
@@ -668,7 +672,7 @@ expect_true("ppp" %in% names(fm_pa),
 
 try({
 fit_pa_fx <- bsem(model_pa, data = Data_pa, fixed.x = FALSE,
-                  sample = 100, burnin = 100, ordered = TRUE)
+                  sample = 100, burnin = 100, ordered = TRUE, test = "standard")
 
 fit_pab_fx <- sem(model_pa, data = Data_pa, fixed.x = FALSE,
                   ordered = TRUE, parameterization = "theta",

@@ -33,10 +33,22 @@ blav_model_test <- function(lavmodel       = NULL,
   }
 
   if(lavoptions$target %in% c("stan", "cmdstan")) {
-    ## same compiled Stan program either way, so stansumm already has
-    ## the correctly-dispatched-on-missingness ppp value regardless of
-    ## which rstan/cmdstanr summary path built it
-    ppp <- stansumm['ppp', 'mean']
+    has_ordinal <- length(lavdata@ordered) > 0
+    if (isTRUE(lavoptions$.multilevel) || !has_ordinal) {
+      ## two-level (future step) and continuous-only (existing mechanism
+      ## already appropriate) models keep the Stan-computed value; same
+      ## compiled Stan program either way, so stansumm already has the
+      ## correctly-dispatched-on-missingness ppp value regardless of
+      ## which rstan/cmdstanr summary path built it
+      ppp <- stansumm['ppp', 'mean']
+    } else {
+      ## single-level ordinal/mixed: limited-information pairwise ppp,
+      ## computed in R from saved posterior draws (see R/blav_limited_info.R).
+      ## Reached only when the user explicitly overrides test="standard"
+      ## on an ordinal model, since test defaults to "none" there
+      ## (R/blavaan.R) -- see R/ppp.R for the on-demand second-step path.
+      ppp <- pp_limited_info(lavobject)$ppval
+    }
   } else {
     ppp <- postpred(samplls, lavobject)$ppval
   }

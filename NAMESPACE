@@ -4,7 +4,8 @@ importFrom("methods",
 importFrom("utils",
            # "sessionInfo",
            "packageDescription", "str", "write.table", "packageVersion",
-           "capture.output", "head", "tail", "getFromNamespace", "compareVersion")
+           "capture.output", "head", "tail", "getFromNamespace", "compareVersion",
+           "combn")
 
 importFrom("stats",
            "approx", "density", "median",
@@ -16,7 +17,7 @@ importFrom("stats",
            "predict",
            "update",
            "anova",
-           "vcov", "nobs", "cov2cor")
+           "vcov", "nobs", "cov2cor", "complete.cases")
 
 importFrom("graphics",
            "plot", "hist", "pairs", "legend", "par", "plot.new",
@@ -37,7 +38,7 @@ importFrom("lavaan",
            "lav_partable_attributes",
            "modificationIndices", "parTable", "parameterEstimates",
            "lavPredict", "standardizedSolution", "lav_data_update",
-           "lav_samplestats_from_data")
+           "lav_samplestats_from_data", "lavTables")
 
 importFrom("coda",
            "mcmc.list",
@@ -98,7 +99,7 @@ import(rstantools)
 
 export("blavaan", "bcfa", "bsem", "bgrowth", "dpriors", "BF", "blavCompare",
        "blavTech", "blavInspect", "blavFitIndices", "labelfun", "standardizedposterior",
-       "standardizedPosterior", "ppmc", "blavPredict", "sampleData")
+       "standardizedPosterior", "ppmc", "blavPredict", "sampleData", "ppp")
 
 exportClasses("blavaan", "blavPPMC", "blavFitIndices")
 

@@ -535,11 +535,20 @@ blavaan <- function(...,  # default lavaan arguments
   lavoptions$estimator <- "Bayes"
   lavoptions$se        <- "standard"
   lavoptions$test <- "standard"
-  if("test" %in% names(dotdotdot)) {
+  if("test" %in% dotNames) {
     if(dotdotdot$test == "none") lavoptions$test <- "none"
   } else {
-    ## if missing data, posterior predictives are way slow
-    if(any(is.na(unlist(LAV@Data@X))) & !(target %in% c("stan", "cmdstan"))) {
+    has_ordinal <- length(LAV@Data@ordered) > 0
+    if (!isTRUE(lavoptions$.multilevel) && has_ordinal && target %in% c("stan", "cmdstan")) {
+      ## the limited-information ppp for ordinal/mixed models
+      ## (R/blav_limited_info.R) is real post-hoc R computation, not free
+      ## like the old Stan-side value, so don't pay for it unless asked
+      lavoptions$test <- "none"
+      cat("blavaan NOTE: For models with ordinal variables, ppp is no longer computed by",
+          "default because the new computation method takes some time.",
+          "Use ppp(fit) to compute it.\n\n")
+    } else if(any(is.na(unlist(LAV@Data@X))) & !(target %in% c("stan", "cmdstan"))) {
+      ## if missing data, posterior predictives are way slow
       cat("blavaan NOTE: Posterior predictives with missing data are currently very slow.\n\tConsider setting test=\"none\".\n\n")
     }
   }
