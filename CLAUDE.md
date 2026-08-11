@@ -45,8 +45,6 @@ There is no test runner script beyond standard R package tooling.
   (`git rev-list --count HEAD` computed before committing, plus 1, since `HEAD` doesn't yet include the commit
   being made) and include the `DESCRIPTION` change in that same commit. The next commit after that bumps it
   again by one, and so on.
-- **Commit messages**: keep the `Co-Authored-By: Claude ...` trailer, but drop the `<noreply@anthropic.com>`
-  email address — it's useless here.
 - **When preparing a new release for CRAN**: check that the whitelisted `bcontrol` passthrough argument
   names (constants in `R/blav_utils.R`) still match the current `rstan::sampling()`/`stan()`/`vb()`,
   `cmdstanr`'s `$sample()`, and `run.jags()`/`autorun.jags()` signatures. These names are hardcoded rather
