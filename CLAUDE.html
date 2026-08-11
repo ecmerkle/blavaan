@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-10.1468</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-10.1470</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,7 +93,6 @@
 <li><p>CI (<code>.github/workflows/R-CMD-check.yaml</code>) runs <code>rcmdcheck</code> on macOS/Ubuntu with <code>rjags</code>/<code>runjags</code> installed as extra packages.</p></li>
 <li><p>Stray <code>*~</code> backup files and <code>.Rhistory</code> files scattered through the tree are editor artifacts, not part of the package — ignore them, don’t try to reconcile them with the real source.</p></li>
 <li><p><strong>Versioning convention</strong>: the last segment of <code>Version:</code> in <code>DESCRIPTION</code> tracks the commit count (e.g. the <code>1443</code> in <code>0.5-10.1443</code>). When making a commit, update that segment to the number the new commit will become (<code>git rev-list --count HEAD</code> computed before committing, plus 1, since <code>HEAD</code> doesn’t yet include the commit being made) and include the <code>DESCRIPTION</code> change in that same commit. The next commit after that bumps it again by one, and so on.</p></li>
-<li><p><strong>Commit messages</strong>: keep the <code>Co-Authored-By: Claude ...</code> trailer, but drop the <code>&lt;noreply@anthropic.com&gt;</code> email address — it’s useless here.</p></li>
 <li><p><strong>When preparing a new release for CRAN</strong>: check that the whitelisted <code>bcontrol</code> passthrough argument names (constants in <code>R/blav_utils.R</code>) still match the current <code><a href="https://mc-stan.org/rstan/reference/stanmodel-method-sampling.html" class="external-link">rstan::sampling()</a></code>/<code>stan()</code>/<code>vb()</code>, <code>cmdstanr</code>’s <code>$sample()</code>, and <code>run.jags()</code>/<code>autorun.jags()</code> signatures. These names are hardcoded rather than introspected at runtime, so they can silently drift out of date as those packages add, rename, or deprecate arguments.</p></li>
 </ul></div>
 <div class="section level2">

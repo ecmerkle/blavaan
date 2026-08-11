@@ -49,6 +49,8 @@
   [`hist(`*`<blavPPMC>`*`)`](https://blavaan.org/reference/ppmc.md)
   [`pairs(`*`<blavPPMC>`*`)`](https://blavaan.org/reference/ppmc.md) :
   Posterior Predictive Model Checks
+- [`ppp()`](https://blavaan.org/reference/ppp.md) : Posterior Predictive
+  P-value
 - [`sampleData()`](https://blavaan.org/reference/sampleData.md) : Sample
   data from the posterior (or prior) distribution.
 - [`standardizedPosterior()`](https://blavaan.org/reference/standardizedPosterior.md)

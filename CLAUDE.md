@@ -71,10 +71,6 @@ There is no test runner script beyond standard R package tooling.
   same commit. The next commit after that bumps it again by one, and so
   on.
 
-- **Commit messages**: keep the `Co-Authored-By: Claude ...` trailer,
-  but drop the `<noreply@anthropic.com>` email address — it’s useless
-  here.
-
 - **When preparing a new release for CRAN**: check that the whitelisted
   `bcontrol` passthrough argument names (constants in `R/blav_utils.R`)
   still match the current
