@@ -11,7 +11,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-10.1471</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5-10.1473</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,28 +81,46 @@
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Other arguments passed to the underlying computation for
-  single-level models with ordinal variables (currently only <code>thin</code> and
-  <code>parallel</code> have an effect; see Details).</p></dd>
+  single-level models with ordinal variables, or for two-level (multilevel)
+  models (currently only <code>thin</code> and <code>parallel</code> have an effect for
+  either case, plus <code>em_control</code> for two-level models; see Details).</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>For most models, <code>fitMeasures(object, "ppp")</code> already returns the ppp
 computed during estimation, and <code>ppp(object)</code> simply returns that same
-value. The exception is single-level models (with a single group or
-multiple groups) that include ordinal variables and were fit with
-<code>target = "stan"</code> or <code>"cmdstan"</code>: for these models, <code>test</code>
-defaults to <code>"none"</code> and ppp is <em>not</em> computed automatically,
-because the computation (a limited-information, pairwise comparison of
-observed vs model-implied associations, which better reflects fit for
-ordinal data than the previous default) takes noticeably longer than for
+value. The exceptions are single-level models (with a single group or
+multiple groups) that include ordinal variables, and two-level (multilevel)
+models, both fit with <code>target = "stan"</code> or <code>"cmdstan"</code>: for these
+models, <code>test</code> defaults to <code>"none"</code> and ppp is <em>not</em> computed
+automatically, because the computation takes noticeably longer than for
 other models. Calling <code>ppp(object)</code> on such a fit computes it as a
 separate step. To have ppp computed automatically during estimation instead,
-pass <code>test = "standard"</code> to <code><a href="bcfa.html">bcfa()</a></code>/<code><a href="bsem.html">bsem()</a></code>/<code><a href="bgrowth.html">bgrowth()</a></code>/
+pass <code>test = "standard"</code> (or, for two-level models, any value other than
+<code>"none"</code>) to <code><a href="bcfa.html">bcfa()</a></code>/<code><a href="bsem.html">bsem()</a></code>/<code><a href="bgrowth.html">bgrowth()</a></code>/
 <code><a href="blavaan.html">blavaan()</a></code>.</p>
-<p>Posterior predictive checking for two-level (multilevel) models is not
-currently supported on demand; for these models, use
-<code>test = "standard"</code> (the default) during estimation to obtain ppp.</p>
+<p>For single-level ordinal/mixed models, the on-demand computation is a
+limited-information, pairwise comparison of observed vs model-implied
+associations, which better reflects fit for ordinal data than the previous
+Stan-computed default.</p>
+<p>For two-level (multilevel) models, the on-demand computation is a
+saturated-model likelihood-ratio comparison (the same statistic previously
+computed inside the compiled Stan program), now computed in R by calling
+<span class="pkg">lavaan</span>'s own saturated-model EM algorithm once per retained posterior
+draw. Because this per-draw computation is comparatively slow, increasing
+<code>thin</code> and/or setting <code>parallel = TRUE</code> (together with
+<code>future::plan("multicore")</code> or <code>future::plan("multisession")</code>) is
+recommended for larger two-level fits; an <code>em_control</code> argument (a list
+with <code>tol</code>, <code>max_iter</code>, and <code>acceleration</code> elements) is also
+available to tune the per-draw EM refit's convergence settings. <code>fixed.x</code>
+variables are supported at the within level, the between level, or both (in
+different variables): they are held fixed at their observed values in every
+simulated replicate rather than being resimulated, matching how fixed.x is
+already handled for single-level on-demand computations. A variable that is
+<code>fixed.x</code> at <em>both</em> levels simultaneously is not supported (a
+pre-existing <span class="pkg">lavaan</span> limitation, not specific to this computation) and
+will raise an error.</p>
     </div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>

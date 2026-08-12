@@ -21,29 +21,48 @@ ppp(object, ...)
 - ...:
 
   Other arguments passed to the underlying computation for single-level
-  models with ordinal variables (currently only `thin` and `parallel`
-  have an effect; see Details).
+  models with ordinal variables, or for two-level (multilevel) models
+  (currently only `thin` and `parallel` have an effect for either case,
+  plus `em_control` for two-level models; see Details).
 
 ## Details
 
 For most models, `fitMeasures(object, "ppp")` already returns the ppp
 computed during estimation, and `ppp(object)` simply returns that same
-value. The exception is single-level models (with a single group or
-multiple groups) that include ordinal variables and were fit with
-`target = "stan"` or `"cmdstan"`: for these models, `test` defaults to
-`"none"` and ppp is *not* computed automatically, because the
-computation (a limited-information, pairwise comparison of observed vs
-model-implied associations, which better reflects fit for ordinal data
-than the previous default) takes noticeably longer than for other
-models. Calling `ppp(object)` on such a fit computes it as a separate
-step. To have ppp computed automatically during estimation instead, pass
-`test = "standard"` to
+value. The exceptions are single-level models (with a single group or
+multiple groups) that include ordinal variables, and two-level
+(multilevel) models, both fit with `target = "stan"` or `"cmdstan"`: for
+these models, `test` defaults to `"none"` and ppp is *not* computed
+automatically, because the computation takes noticeably longer than for
+other models. Calling `ppp(object)` on such a fit computes it as a
+separate step. To have ppp computed automatically during estimation
+instead, pass `test = "standard"` (or, for two-level models, any value
+other than `"none"`) to
 [`bcfa()`](https://blavaan.org/reference/bcfa.md)/[`bsem()`](https://blavaan.org/reference/bsem.md)/[`bgrowth()`](https://blavaan.org/reference/bgrowth.md)/
 [`blavaan()`](https://blavaan.org/reference/blavaan.md).
 
-Posterior predictive checking for two-level (multilevel) models is not
-currently supported on demand; for these models, use `test = "standard"`
-(the default) during estimation to obtain ppp.
+For single-level ordinal/mixed models, the on-demand computation is a
+limited-information, pairwise comparison of observed vs model-implied
+associations, which better reflects fit for ordinal data than the
+previous Stan-computed default.
+
+For two-level (multilevel) models, the on-demand computation is a
+saturated-model likelihood-ratio comparison (the same statistic
+previously computed inside the compiled Stan program), now computed in R
+by calling lavaan's own saturated-model EM algorithm once per retained
+posterior draw. Because this per-draw computation is comparatively slow,
+increasing `thin` and/or setting `parallel = TRUE` (together with
+`future::plan("multicore")` or `future::plan("multisession")`) is
+recommended for larger two-level fits; an `em_control` argument (a list
+with `tol`, `max_iter`, and `acceleration` elements) is also available
+to tune the per-draw EM refit's convergence settings. `fixed.x`
+variables are supported at the within level, the between level, or both
+(in different variables): they are held fixed at their observed values
+in every simulated replicate rather than being resimulated, matching how
+fixed.x is already handled for single-level on-demand computations. A
+variable that is `fixed.x` at *both* levels simultaneously is not
+supported (a pre-existing lavaan limitation, not specific to this
+computation) and will raise an error.
 
 ## Value
 
