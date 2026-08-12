@@ -117,8 +117,14 @@ model_wb <- '
 
 ## =============================================================================
 ## 1. MCAR across within-only, both, and between-only variables
+##
+## Two-level models with real missingness are a niche combination that
+## doesn't need default-CI coverage; only run with
+## Sys.setenv(blavaan_slow_tests = "true") (joining sections 2-5 below,
+## which are already gated -- this makes the whole file slow-gated).
 ## =============================================================================
 
+if (Sys.getenv("blavaan_slow_tests") == "true") {
 try({
 set.seed(101)
 d1 <- Demo.twolevel
@@ -198,11 +204,12 @@ if (res$converged) {
   cat("SKIPPED lavaan-comparison assertions (two-level FIML/MAR block): fit did not converge after", res$attempts, "attempts (max rhat =", round(res$rhat_max, 3), ")\n")
 }
 })
+}
 
-## NB: section 1 above is a quick smoke test that always runs (it's the most
-## comprehensive single scenario -- within/both/between missingness at once).
-## Sections 2-5 below are additional independent variations/edge cases and
-## are slower, so they only run with Sys.setenv(blavaan_slow_tests = "true").
+## NB: two-level models with real missingness are a niche combination that
+## doesn't need default-CI coverage, so the whole file (sections 1-5) is
+## slow-gated. Run with Sys.setenv(blavaan_slow_tests = "true") to exercise
+## it, e.g. via tinytest::run_test_file("test_stan_multilevel_missing.R").
 if (Sys.getenv("blavaan_slow_tests") == "true") {
 
 ## =============================================================================

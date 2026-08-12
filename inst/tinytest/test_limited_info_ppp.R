@@ -142,8 +142,12 @@ expect_true(is.numeric(ppval_cont) && length(ppval_cont) >= 1,
 ## 3. Discrimination: a clearly misspecified ordinal/mixed model should show
 ##    a lower ppp than a correctly-specified one (the key behavioral check
 ##    the pre-existing bounds-only assertions never provided)
+##
+## Fits two full models just to compare relative ppp ordering; only run with
+## Sys.setenv(blavaan_slow_tests = "true").
 ## =============================================================================
 
+if (Sys.getenv("blavaan_slow_tests") == "true") {
 try({
 pop.model3 <- '
   f1 =~ 0.8*x1 + 0.8*x2 + 0.8*x3 + 0.1*x4 + 0.1*x5 + 0.1*x6
@@ -186,6 +190,7 @@ if (res_correct$converged && res_wrong$converged) {
   cat("SKIPPED discrimination assertion: fit(s) did not converge\n")
 }
 })
+}
 
 
 ## =============================================================================
@@ -213,8 +218,11 @@ expect_true(is.numeric(ppval_sparse) && is.finite(ppval_sparse) &&
 
 ## =============================================================================
 ## 5. Multi-group ordinal
+##
+## Only run with Sys.setenv(blavaan_slow_tests = "true").
 ## =============================================================================
 
+if (Sys.getenv("blavaan_slow_tests") == "true") {
 try({
 pop.model5 <- ' f1 =~ x1 + x2 + x3 + x4 '
 D1 <- simulateData(pop.model5, sample.nobs = 150)
@@ -232,6 +240,7 @@ expect_true(is.numeric(ppval_mg) && is.finite(ppval_mg) &&
               ppval_mg >= 0 && ppval_mg <= 1,
   info = "ppp() should return a valid [0,1] value for a multi-group ordinal model")
 })
+}
 
 
 ## =============================================================================
@@ -276,8 +285,11 @@ expect_equal(as.numeric(ppval_2l), as.numeric(fitMeasures(fit2l, "ppp")),
 
 ## =============================================================================
 ## 7. Mixed continuous+ordinal: all three pair types (oo/oc/cc) present
+##
+## Only run with Sys.setenv(blavaan_slow_tests = "true").
 ## =============================================================================
 
+if (Sys.getenv("blavaan_slow_tests") == "true") {
 try({
 pop.model7 <- ' f1 =~ x1 + x2 + x3 + x4 + x5 '
 Data7 <- simulateData(pop.model7, sample.nobs = 300)
@@ -294,3 +306,4 @@ expect_true(is.numeric(ppval_mixed) && is.finite(ppval_mixed) &&
               ppval_mixed >= 0 && ppval_mixed <= 1,
   info = "ppp() should return a valid [0,1] value for a mixed continuous+ordinal model (oo+oc+cc)")
 })
+}

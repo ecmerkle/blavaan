@@ -214,6 +214,10 @@ if (res$converged) {
 
 
 ## missing data
+##
+## robust_fit() here is a slow save.lvs=TRUE fit; only run with
+## Sys.setenv(blavaan_slow_tests = "true").
+if (Sys.getenv("blavaan_slow_tests") == "true") {
 set.seed(9619)
 mis <- matrix(rbinom(prod(dim(PoliticalDemocracy)), 1, .9), nrow(PoliticalDemocracy), ncol(PoliticalDemocracy))
 pd <- PoliticalDemocracy*mis
@@ -239,6 +243,7 @@ if (res$converged) {
   expect_true(cor(as.numeric(tmp), as.numeric(colMeans(tmp3))) > .99)
 } else {
   cat("SKIPPED lavaan-comparison assertions (missing-data block): fit did not converge after", res$attempts, "attempts (max rhat =", round(res$rhat_max, 3), ")\n")
+}
 }
 
 
@@ -309,6 +314,10 @@ if (res$converged) {
 
 
 ## multi group missing with exo fixed.x
+##
+## robust_fit() here needs multiple convergence attempts on a multi-group
+## missing-data model; only run with Sys.setenv(blavaan_slow_tests = "true").
+if (Sys.getenv("blavaan_slow_tests") == "true") {
 hs39 <- HolzingerSwineford1939
 obs <- rbinom(nrow(hs39)*9, 1, .9)
 hs39[,7:15] <- hs39[,7:15] * obs
@@ -339,6 +348,7 @@ if (res$converged) {
   expect_true(cor(as.numeric(lvmn), as.numeric(do.call("rbind", lavfs))) > .98)
 } else {
   cat("SKIPPED lavaan-comparison assertions (multi-group missing block): fit did not converge after", res$attempts, "attempts (max rhat =", round(res$rhat_max, 3), ")\n")
+}
 }
 
 

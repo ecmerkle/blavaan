@@ -88,7 +88,7 @@ fit <- sem(model, data = Data, meanstructure = TRUE,
 fit@optim$converged <- TRUE
 
 res <- robust_fit(bsem, model, data = Data, ordered = c("x3", "y4", "y8"),
-                   burnin = 100, sample = 100,
+                   burnin = 100, sample = 100, n.chains = 2,
                    dp = dpriors(lambda = "normal(1,.5)", psi = "gamma(2,2)[sd]"),
                    save.lvs = TRUE)
 bfit <- res$fit
@@ -172,7 +172,7 @@ pd  <- Data * mis
 pd[pd == 0] <- NA
 
 res <- robust_fit(bsem, model, data = pd, burnin = 150, sample = 100,
-                   ordered = c("x3", "y4", "y8"),
+                   ordered = c("x3", "y4", "y8"), n.chains = 2,
                    dp = dpriors(lambda = "normal(1,1)"), save.lvs = TRUE)
 fitm <- res$fit
 

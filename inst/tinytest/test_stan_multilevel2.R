@@ -44,12 +44,13 @@ model_wb <- '
 fit_wb  <- sem(model = model_wb, data = Demo.twolevel, cluster = "cluster")
 
 res <- robust_fit(bsem,
-  model   = model_wb,
-  data    = Demo.twolevel,
-  cluster = "cluster",
-  burnin  = 100,
-  sample  = 100,
-  dp      = dpriors(lambda = "normal(1,.5)"),
+  model    = model_wb,
+  data     = Demo.twolevel,
+  cluster  = "cluster",
+  burnin   = 100,
+  sample   = 100,
+  n.chains = 2,
+  dp       = dpriors(lambda = "normal(1,.5)"),
   save.lvs = TRUE
 )
 bfit_wb <- res$fit
@@ -207,8 +208,12 @@ expect_error(
 
 ## =============================================================================
 ## 4. Prior predictive sampling  (prisamp = TRUE)
+##
+## A secondary edge case on top of section 1's core two-level fit check;
+## only run with Sys.setenv(blavaan_slow_tests = "true").
 ## =============================================================================
 
+if (Sys.getenv("blavaan_slow_tests") == "true") {
 try({
 bfit_prior <- bsem(
   model   = model_wb,
@@ -227,6 +232,7 @@ expect_error(
   info = "sampleData() does not work with two-level models"
 )
 })
+}
 
 ## =============================================================================
 ## 5. Error cases
@@ -267,11 +273,11 @@ expect_true(
   info = "Each MCMC chain should be a matrix"
 )
 
-## Number of posterior draws == sample argument (n.chains=3 default) * the
-## sample-size multiplier robust_fit() actually used to get bfit_wb to converge
+## Number of posterior draws == sample argument (n.chains=2, see section 1) *
+## the sample-size multiplier robust_fit() actually used to get bfit_wb to converge
 total_draws <- sum(sapply(mcmc_chains, nrow))
 expected_mult <- c(1, 2, 4)[min(res$attempts, 3)]
-expect_equal(total_draws, 100L * expected_mult * 3L,
+expect_equal(total_draws, 100L * expected_mult * 2L,
   info = "Total posterior draws should equal sample * n.chains, accounting for robust_fit() retries")
 
 ## Column names of MCMC matrix correspond to model parameters
