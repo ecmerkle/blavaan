@@ -4,7 +4,7 @@
 
 * The previous MUML method-of-moments approximation for two-level ppp is replaced by an EM-based saturated-model fit that also works under missingness.
 
-* Two-level (multilevel) models: ppp is no longer computed inside the compiled Stan program. `test` now defaults to `"none"` for two-level models (as it already did for ordinal/mixed single-level models), and `ppp(fit)` computes the same saturated-model likelihood-ratio statistic on demand in R, calling lavaan's own saturated-model EM algorithm once per retained posterior draw. Two-level models with `fixed.x` variables are not yet supported by the on-demand computation.
+* Two-level (multilevel) models: ppp is no longer computed inside the compiled Stan program. `test` now defaults to `"none"` for two-level models (as it already did for ordinal/mixed single-level models), and `ppp(fit)` computes the same saturated-model likelihood-ratio statistic on demand in R, calling lavaan's own saturated-model EM algorithm once per retained posterior draw. `fixed.x` variables are supported at the within level, the between level, or both (in different variables); a single variable that is `fixed.x` at both levels simultaneously is not supported.
 
 * Optional within-chain parallelization for single-level models via Stan's reduce_sum() (bcontrol argument use_wcp). Real speedups require target = "cmdstan", which recompiles the model with threading support; threads_per_chain now defaults sensibly (and warns) from the number of available cores when use_wcp is set but threads_per_chain is not.
 

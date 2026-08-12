@@ -44,9 +44,14 @@ draw. Because this per-draw computation is comparatively slow, increasing
 \code{future::plan("multicore")} or \code{future::plan("multisession")}) is
 recommended for larger two-level fits; an \code{em_control} argument (a list
 with \code{tol}, \code{max_iter}, and \code{acceleration} elements) is also
-available to tune the per-draw EM refit's convergence settings. Two-level
-models with any \code{fixed.x} variable are not yet supported by the
-on-demand computation and will raise an error.
+available to tune the per-draw EM refit's convergence settings. \code{fixed.x}
+variables are supported at the within level, the between level, or both (in
+different variables): they are held fixed at their observed values in every
+simulated replicate rather than being resimulated, matching how fixed.x is
+already handled for single-level on-demand computations. A variable that is
+\code{fixed.x} at \emph{both} levels simultaneously is not supported (a
+pre-existing \pkg{lavaan} limitation, not specific to this computation) and
+will raise an error.
 }
 \value{
 A numeric ppp value (or vector, for multiple imputations/groups, matching

@@ -27,13 +27,17 @@
 ## machinery this comment used to describe has been removed from
 ## inst/stan/stanmarg.stan (do_test is now forced FALSE for all multilevel
 ## fits; see R/blavaan.R). Two-level models therefore now default to
-## test="none" too, same as ordinal models. fixed.x is NOT yet supported by
-## the R-side replicate generator: requesting test!="none"/ppp(fit) on a
-## two-level model with any fixed.x variable now errors clearly (see
-## section 3's model_x_w case below) rather than fitting the Stan-side
-## value as it used to. See also test_stan_multilevel2.R for complete-data
-## two-level model tests, and test_twolevel_ppp.R for the dedicated
-## test="none" default / on-demand ppp() coverage.
+## test="none" too, same as ordinal models. fixed.x (within-level, as
+## exercised in section 3's model_x_w below, and between-level) IS
+## supported by the R-side replicate generator (R/blav_twolevel_ppp.R's
+## tl_cond_sim(): fixed.x columns are held at their observed values, never
+## resimulated, and endogenous columns are drawn conditional on them,
+## mirroring R/postpred.R's single-level fixed.x approach); only a variable
+## that is fixed.x at BOTH levels simultaneously is not supported (a
+## pre-existing lavaan limitation, not something introduced here). See also
+## test_stan_multilevel2.R for complete-data two-level model tests, and
+## test_twolevel_ppp.R for the dedicated test="none" default / on-demand
+## ppp() coverage (including within- and between-level fixed.x).
 ##
 ## Multi-group two-level models are NOT tested here (out of scope for this
 ## FIML/MAR-focused file), but note that they now work: plain lavaan::sem()
@@ -299,13 +303,12 @@ dw <- inject_mcar(dw, c("x1", "x2"), rate = 0.15, seed = 306)
 dw <- inject_mcar(dw, c("y1", "y2"), rate = 0.15, seed = 307)
 fit_x_w <- sem(model_x_w, data = dw, cluster = "cluster", missing = "ml.x", fixed.x = TRUE)
 
-## fixed.x is not yet supported by pp_twolevel()'s R-side replicate
-## generator (R/blav_twolevel_ppp.R), so test= is left at its new default
-## (test="none") here -- parameter estimation itself is unaffected by
-## fixed.x scope, only the ppp computation is
+## fixed.x IS supported by pp_twolevel()'s R-side replicate generator
+## (R/blav_twolevel_ppp.R's tl_cond_sim()); test="ppp" exercises the
+## fit-time R dispatch path (R/blav_test.R)
 set.seed(308)
 bfit_x_w <- bsem(model_x_w, data = dw, cluster = "cluster", fixed.x = TRUE,
-                  burnin = 100, sample = 100, dp = dp_stable)
+                  test = "ppp", burnin = 100, sample = 100, dp = dp_stable)
 
 expect_inherits(bfit_x_w, "blavaan",
   info = "two-level FIML/MAR with within-level fixed.x should fit successfully")
@@ -332,22 +335,18 @@ expect_equal(
   info = "within-level fixed.x: no divergent transitions expected in a well-behaved short run"
 )
 
-## on-demand ppp() should now error clearly for a two-level model with
-## fixed.x variables, rather than attempting (and mis-simulating) a
-## replicate -- see R/blav_twolevel_ppp.R's pp_twolevel()
-expect_error(
-  ppp(bfit_x_w),
-  info = "ppp() on a two-level model with fixed.x variables should error clearly (not yet supported)"
+## ppp should be well-defined for this within-level fixed.x + missingness
+## scenario, computed via the saturated-model comparison in R (see
+## R/blav_twolevel_ppp.R)
+ppp_x_w <- fm_x_w["ppp"]
+expect_true(
+  is.finite(ppp_x_w) && ppp_x_w >= 0 && ppp_x_w <= 1,
+  info = "within-level fixed.x: ppp should be a finite value in [0,1]"
 )
 
-## requesting test="ppp" at fit time on a fixed.x two-level model should
-## likewise error clearly, since R/blav_test.R's dispatch reaches the same
-## pp_twolevel() check during model fitting
-expect_error(
-  bsem(model_x_w, data = dw, cluster = "cluster", fixed.x = TRUE,
-       test = "ppp", burnin = 30, sample = 30, dp = dp_stable),
-  info = "test=\"ppp\" at fit time on a fixed.x two-level model should error clearly (not yet supported)"
-)
+## ppp(fit) on an already-computed fit should just return the stored value
+expect_equal(as.numeric(ppp(bfit_x_w)), as.numeric(ppp_x_w),
+  info = "ppp(fit) should match fitMeasures(fit,'ppp') when already computed at fit time")
 
 ## between-level fixed.x + missing data remains blocked (confirmed upstream
 ## lavaan bug): lavaan()/sem() itself crashes on a between-level fixed.x

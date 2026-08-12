@@ -151,12 +151,17 @@ expect_equal(as.numeric(ppval_miss2), as.numeric(ppval_miss),
 
 
 ## =============================================================================
-## 5. fixed.x is not yet supported: both the fit-time and on-demand paths
-##    should error clearly rather than mis-simulate a replicate
+## 5. fixed.x support: within-level and between-level fixed.x variables both
+##    work (x is held at its observed value in each replicate, not
+##    resimulated -- see R/blav_twolevel_ppp.R's tl_cond_sim()); a variable
+##    that is fixed.x at BOTH levels simultaneously is not supported (a
+##    pre-existing lavaan limitation -- see outstanding_issues.md item 3 at
+##    the time this was written -- not something introduced here) and
+##    should still error clearly.
 ## =============================================================================
 
 try({
-model_x <- '
+model_x_within <- '
     level: within
         fw =~ y1 + y2 + y3
         fw ~ x1
@@ -164,21 +169,41 @@ model_x <- '
         fb =~ y1 + y2 + y3
 '
 
-fit_x_default <- bsem(model_x, data = Demo.twolevel, cluster = "cluster",
-                       fixed.x = TRUE, burnin = 30, sample = 30, n.chains = 2)
+fit_x_default <- bsem(model_x_within, data = Demo.twolevel, cluster = "cluster",
+                       fixed.x = TRUE, burnin = 60, sample = 60, n.chains = 2)
 expect_true(lavInspect(fit_x_default, "options")$test == "none",
-  info = "A fixed.x two-level model should still default to test=\"none\" (fitting itself is unaffected)")
+  info = "A fixed.x two-level model should still default to test=\"none\"")
 
-expect_error(
-  ppp(fit_x_default),
-  info = "ppp() on a two-level model with fixed.x variables should error clearly (not yet supported)"
-)
+ppval_x_within <- ppp(fit_x_default, thin = 5)
+expect_true(is.numeric(ppval_x_within) && is.finite(ppval_x_within) &&
+              ppval_x_within >= 0 && ppval_x_within <= 1,
+  info = "ppp() on a two-level model with within-level fixed.x should return a valid [0,1] value")
 
-expect_error(
-  bsem(model_x, data = Demo.twolevel, cluster = "cluster", fixed.x = TRUE,
-       test = "ppp", burnin = 30, sample = 30, n.chains = 2),
-  info = "test=\"ppp\" at fit time on a fixed.x two-level model should error clearly (not yet supported)"
-)
+## fixed.x columns must never be resimulated: every replicate's x1 column
+## should reproduce the observed x1 values exactly
+implied_check <- lav_model_implied(fit_x_default@Model)
+dataX_rep <- blavaan:::tl_replicate_data(fit_x_default@Data, fit_x_default@SampleStats, implied_check)
+x1_col <- match("x1", fit_x_default@Data@ov.names[[1]])
+expect_equal(dataX_rep[[1]][, x1_col], fit_x_default@Data@X[[1]][, x1_col],
+  info = "tl_replicate_data() must copy fixed.x columns unchanged, never resimulate them")
+})
+
+
+try({
+model_x_between <- '
+    level: within
+        fw =~ y1 + y2 + y3
+    level: between
+        fb =~ y1 + y2 + y3
+        fb ~ w1
+'
+
+fit_x_between <- bsem(model_x_between, data = Demo.twolevel, cluster = "cluster",
+                       fixed.x = TRUE, burnin = 60, sample = 60, n.chains = 2)
+ppval_x_between <- ppp(fit_x_between, thin = 5)
+expect_true(is.numeric(ppval_x_between) && is.finite(ppval_x_between) &&
+              ppval_x_between >= 0 && ppval_x_between <= 1,
+  info = "ppp() on a two-level model with between-level fixed.x should return a valid [0,1] value")
 })
 
 
