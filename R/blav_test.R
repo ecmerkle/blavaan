@@ -34,12 +34,22 @@ blav_model_test <- function(lavmodel       = NULL,
 
   if(lavoptions$target %in% c("stan", "cmdstan")) {
     has_ordinal <- length(lavdata@ordered) > 0
-    if (isTRUE(lavoptions$.multilevel) || !has_ordinal) {
-      ## two-level (future step) and continuous-only (existing mechanism
-      ## already appropriate) models keep the Stan-computed value; same
-      ## compiled Stan program either way, so stansumm already has the
-      ## correctly-dispatched-on-missingness ppp value regardless of
-      ## which rstan/cmdstanr summary path built it
+    if (isTRUE(lavoptions$.multilevel)) {
+      ## two-level: always computed in R now (R/blav_twolevel_ppp.R) -- the
+      ## Stan-side EM/saturated-model machinery for this was removed (see
+      ## inst/stan/stanmarg.stan and R/blavaan.R's do_test computation), so
+      ## stansumm's 'ppp'/'log_lik_sat' values are no longer meaningful for
+      ## multilevel fits. Reached only when the user explicitly overrides
+      ## test="standard"/"ppp" on a two-level fit, since test defaults to
+      ## "none" there (R/blavaan.R) -- see R/ppp.R for the on-demand
+      ## second-step path.
+      ppp <- pp_twolevel(lavobject)$ppval
+    } else if (!has_ordinal) {
+      ## continuous-only (existing mechanism already appropriate) models
+      ## keep the Stan-computed value; same compiled Stan program either
+      ## way, so stansumm already has the correctly-dispatched-on-
+      ## missingness ppp value regardless of which rstan/cmdstanr summary
+      ## path built it
       ppp <- stansumm['ppp', 'mean']
     } else {
       ## single-level ordinal/mixed: limited-information pairwise ppp,

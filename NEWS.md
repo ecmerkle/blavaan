@@ -4,6 +4,8 @@
 
 * The previous MUML method-of-moments approximation for two-level ppp is replaced by an EM-based saturated-model fit that also works under missingness.
 
+* Two-level (multilevel) models: ppp is no longer computed inside the compiled Stan program. `test` now defaults to `"none"` for two-level models (as it already did for ordinal/mixed single-level models), and `ppp(fit)` computes the same saturated-model likelihood-ratio statistic on demand in R, calling lavaan's own saturated-model EM algorithm once per retained posterior draw. Two-level models with `fixed.x` variables are not yet supported by the on-demand computation.
+
 * Optional within-chain parallelization for single-level models via Stan's reduce_sum() (bcontrol argument use_wcp). Real speedups require target = "cmdstan", which recompiles the model with threading support; threads_per_chain now defaults sensibly (and warns) from the number of available cores when use_wcp is set but threads_per_chain is not.
 
 * New tidy() and glance() methods (via the generics package) for extracting parameter estimates and model-level summaries as data frames. (contributed by Michael Truong)
@@ -19,7 +21,7 @@
 * blavaan now raises a clear, explicit error as soon as a model uses lavaan's `<~` operator (composite/formative latent variables), instead of an opaque internal crash. This operator was previously reported (version 0.5-8, below) as failing only under target = "jags"; it in fact fails under every target, since none of blavaan's translation backends handle lavaan's associated "wmat" parameter matrix. `<~` is not currently implemented in blavaan (issue #90); this change only makes that limitation explicit rather than adding support.
 
 ## Bugs/glitches:
-* plot() does not display certain level 2 parameters in two-level models.
+* (just released)
 
 # Version 0.5-10
 ## New features

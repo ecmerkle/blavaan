@@ -1,8 +1,9 @@
 ### exported entry point for posterior predictive p-value (ppp).
 ###
-### For single-level ordinal/mixed target="stan"/"cmdstan" models, ppp is
-### no longer computed by default (see R/blavaan.R) because the
-### replacement statistic (R/blav_limited_info.R) is real post-hoc R
+### For single-level ordinal/mixed and two-level (multilevel)
+### target="stan"/"cmdstan" models, ppp is no longer computed by default
+### (see R/blavaan.R) because the replacement statistics
+### (R/blav_limited_info.R, R/blav_twolevel_ppp.R) are real post-hoc R
 ### computation, not free like the old Stan-side value. This is the
 ### "second step" the fit-time NOTE points users to: it returns the
 ### already-computed ppp when one exists, and computes it on demand
@@ -13,11 +14,12 @@ ppp <- function(object, ...) {
 
   if (lavopt$target %in% c("stan", "cmdstan")) {
     if (blavInspect(object, "nlevels") > 1) {
-      if (lavopt$test == "none") {
-        stop("blavaan ERROR: on-demand ppp computation for two-level models is ",
-             "not yet supported; refit with test != \"none\" if you need ppp.")
+      if (lavopt$test != "none") {
+        ## already computed at fit time via R/blav_test.R's pp_twolevel()
+        ## dispatch
+        return(fitMeasures(object, "ppp"))
       }
-      return(fitMeasures(object, "ppp"))
+      return(pp_twolevel(object, ...)$ppval)
     }
 
     if (lavopt$test != "none") {

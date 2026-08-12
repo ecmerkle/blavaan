@@ -20,14 +20,20 @@
 ## there propagates into an uninvertible covariance matrix downstream);
 ## R/blavaan.R blocks this combination with a clear error instead of
 ## surfacing that crash -- see the expect_error() case in section 3).
-## test != "none" (ppmc/ppp) IS supported (via an EM-based saturated-model
-## fit for the endogenous variables, unified across complete/missing data --
-## see
-## R/lav_export_stanmarg.R and inst/stan/stanmarg.stan's twolevel_em_step()
-## -- plus a pairwise-complete-obs correction for within-level fixed.x, see
-## calc_log_lik_x_missing() in inst/stan/stanmarg.stan and llx_2l() in
-## R/blav_model_loglik.R). See also
-## test_stan_multilevel2.R for complete-data two-level model tests.
+## ppp is now computed entirely in R on demand (R/blav_twolevel_ppp.R's
+## pp_twolevel(), calling lavaan's own lav_mvn_cl_em_sat()/
+## lav_mvn_cl_mi_em_sat() saturated-model EM via getFromNamespace()), not in
+## Stan -- the old twolevel_em_step()/calc_log_lik_x_missing() Stan-side
+## machinery this comment used to describe has been removed from
+## inst/stan/stanmarg.stan (do_test is now forced FALSE for all multilevel
+## fits; see R/blavaan.R). Two-level models therefore now default to
+## test="none" too, same as ordinal models. fixed.x is NOT yet supported by
+## the R-side replicate generator: requesting test!="none"/ppp(fit) on a
+## two-level model with any fixed.x variable now errors clearly (see
+## section 3's model_x_w case below) rather than fitting the Stan-side
+## value as it used to. See also test_stan_multilevel2.R for complete-data
+## two-level model tests, and test_twolevel_ppp.R for the dedicated
+## test="none" default / on-demand ppp() coverage.
 ##
 ## Multi-group two-level models are NOT tested here (out of scope for this
 ## FIML/MAR-focused file), but note that they now work: plain lavaan::sem()
@@ -175,18 +181,13 @@ ndiv <- sum(sapply(sampler_params, function(x) sum(x[, "divergent__"])))
 expect_equal(ndiv, 0L,
   info = "two-level FIML/MAR: no divergent transitions expected in a well-behaved short run")
 
-## ppp (EM-based saturated-model fit, see R/lav_export_stanmarg.R and
-## inst/stan/stanmarg.stan's twolevel_em_step()) should be well-defined
-## for this within+both+between missingness scenario
+## ppp (R-side saturated-model comparison, R/blav_twolevel_ppp.R's
+## pp_twolevel(), reached via R/blav_test.R since test="ppp" was requested)
+## should be well-defined for this within+both+between missingness scenario
 ppp_val1 <- fm1["ppp"]
 expect_true(
   is.finite(ppp_val1) && ppp_val1 >= 0 && ppp_val1 <= 1,
   info = "two-level FIML/MAR ppp should be a finite value in [0,1]"
-)
-ll_sat1 <- rstan::extract(bfit1@external$mcmcout, "log_lik_sat")[[1]]
-expect_true(
-  all(is.finite(ll_sat1)),
-  info = "two-level FIML/MAR log_lik_sat should be finite for every draw/cluster"
 )
 
 if (res$converged) {
@@ -298,9 +299,13 @@ dw <- inject_mcar(dw, c("x1", "x2"), rate = 0.15, seed = 306)
 dw <- inject_mcar(dw, c("y1", "y2"), rate = 0.15, seed = 307)
 fit_x_w <- sem(model_x_w, data = dw, cluster = "cluster", missing = "ml.x", fixed.x = TRUE)
 
+## fixed.x is not yet supported by pp_twolevel()'s R-side replicate
+## generator (R/blav_twolevel_ppp.R), so test= is left at its new default
+## (test="none") here -- parameter estimation itself is unaffected by
+## fixed.x scope, only the ppp computation is
 set.seed(308)
 bfit_x_w <- bsem(model_x_w, data = dw, cluster = "cluster", fixed.x = TRUE,
-                  test = "ppp", burnin = 100, sample = 100, dp = dp_stable)
+                  burnin = 100, sample = 100, dp = dp_stable)
 
 expect_inherits(bfit_x_w, "blavaan",
   info = "two-level FIML/MAR with within-level fixed.x should fit successfully")
@@ -321,20 +326,27 @@ fm_x_w <- fitMeasures(bfit_x_w)
 expect_true(is.finite(fm_x_w["waic"]) && is.finite(fm_x_w["looic"]),
   info = "within-level fixed.x: waic/looic should be finite (exercises log_lik_x_full)")
 
-ppp_x_w <- fm_x_w["ppp"]
-expect_true(
-  is.finite(ppp_x_w) && ppp_x_w >= 0 && ppp_x_w <= 1,
-  info = "within-level fixed.x: ppp should be a finite value in [0,1] (exercises calc_log_lik_x_missing())"
-)
-ll_sat_x_w <- rstan::extract(bfit_x_w@external$mcmcout, "log_lik_sat")[[1]]
-expect_true(
-  all(is.finite(ll_sat_x_w)),
-  info = "within-level fixed.x: log_lik_sat should be finite for every draw/cluster"
-)
 sampler_params_x_w <- rstan::get_sampler_params(bfit_x_w@external$mcmcout, inc_warmup = FALSE)
 expect_equal(
   sum(sapply(sampler_params_x_w, function(x) sum(x[, "divergent__"]))), 0L,
   info = "within-level fixed.x: no divergent transitions expected in a well-behaved short run"
+)
+
+## on-demand ppp() should now error clearly for a two-level model with
+## fixed.x variables, rather than attempting (and mis-simulating) a
+## replicate -- see R/blav_twolevel_ppp.R's pp_twolevel()
+expect_error(
+  ppp(bfit_x_w),
+  info = "ppp() on a two-level model with fixed.x variables should error clearly (not yet supported)"
+)
+
+## requesting test="ppp" at fit time on a fixed.x two-level model should
+## likewise error clearly, since R/blav_test.R's dispatch reaches the same
+## pp_twolevel() check during model fitting
+expect_error(
+  bsem(model_x_w, data = dw, cluster = "cluster", fixed.x = TRUE,
+       test = "ppp", burnin = 30, sample = 30, dp = dp_stable),
+  info = "test=\"ppp\" at fit time on a fixed.x two-level model should error clearly (not yet supported)"
 )
 
 ## between-level fixed.x + missing data remains blocked (confirmed upstream
@@ -355,10 +367,12 @@ expect_error(
   info = "two-level FIML/MAR with a between-level fixed.x variable should still error"
 )
 
-## test != "none" (ppmc/ppp) is now supported for two-level FIML/MAR data:
-## log_lik_sat/log_lik_rep/log_lik_rep_sat are computed via an EM-based
-## saturated-model fit (see R/lav_export_stanmarg.R, inst/stan/stanmarg.stan
-## twolevel_em_step()), unified across complete and missing data.
+## test != "none" (ppmc/ppp) is still supported for two-level FIML/MAR data
+## without fixed.x: ppp is now a saturated-model likelihood-ratio
+## comparison computed entirely in R (R/blav_twolevel_ppp.R's
+## pp_twolevel(), calling lavaan's own lav_mvn_cl_mi_em_sat() for the
+## missing-data saturated fit), reached via R/blav_test.R's dispatch since
+## test="ppp" was requested explicitly here.
 dt <- inject_mcar(Demo.twolevel, c("y1", "y2"), rate = 0.15, seed = 302)
 bfit_ppp <- bsem(model_wb, data = dt, cluster = "cluster",
                   fixed.x = FALSE, test = "ppp", burnin = 100, sample = 100,
@@ -372,11 +386,10 @@ expect_true(
   info = "two-level FIML/MAR ppp should be a finite value in [0,1]"
 )
 
-ll_sat <- rstan::extract(bfit_ppp@external$mcmcout, "log_lik_sat")[[1]]
-expect_true(
-  all(is.finite(ll_sat)),
-  info = "two-level FIML/MAR log_lik_sat should be finite for every draw/cluster"
-)
+## ppp(fit) on an already-computed fit should just return the stored value
+ppp_val_ondemand <- ppp(bfit_ppp)
+expect_equal(as.numeric(ppp_val_ondemand), as.numeric(ppp_val),
+  info = "ppp(fit) should match fitMeasures(fit,'ppp') when already computed at fit time")
 })
 
 ## =============================================================================

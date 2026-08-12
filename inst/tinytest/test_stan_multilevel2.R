@@ -87,21 +87,30 @@ expect_true(
   info = "posterior SEs should all be finite"
 )
 
-## fitMeasures returns a named numeric vector with key indices
+## fitMeasures returns a named numeric vector with key indices. ppp is no
+## longer among them by default: two-level models now default to
+## test="none" (R/blavaan.R), since ppp is real post-hoc R computation
+## (R/blav_twolevel_ppp.R) rather than a free Stan-side value -- see
+## test_twolevel_ppp.R for full coverage of that new default/on-demand
+## behavior; here we just check waic/looic remain available and that
+## ppp(fit) still works on demand.
 fm_wb <- fitMeasures(bfit_wb)
 expect_true(is.numeric(fm_wb),
   info = "fitMeasures() should return a numeric vector")
 expect_true(length(fm_wb) > 0,
   info = "fitMeasures() should return at least one measure")
-for (idx in c("ppp", "waic", "looic")) {
+for (idx in c("waic", "looic")) {
   expect_true(idx %in% names(fm_wb),
     info = paste("fitMeasures() should contain", idx))
 }
+expect_true(lavInspect(bfit_wb, "options")$test == "none",
+  info = "two-level bsem() with no test= argument should default to test=\"none\"")
 
-## PPP should be between 0 and 1
+## on-demand ppp() should still return a valid [0,1] value
+ppval_wb <- ppp(bfit_wb, thin = 5)
 expect_true(
-  fm_wb["ppp"] >= 0 & fm_wb["ppp"] <= 1,
-  info = "PPP should be in [0, 1]"
+  is.numeric(ppval_wb) && is.finite(ppval_wb) && ppval_wb >= 0 && ppval_wb <= 1,
+  info = "ppp(fit) should return a valid [0,1] value for a two-level model"
 )
 
 ## blavPredict
@@ -151,10 +160,14 @@ model_12 <- '
 try({
 fit_12 <- sem(model = model_12, data = Demo.twolevel, cluster = "cluster")
 
+## explicit test="ppp" here exercises the fit-time R dispatch path
+## (R/blav_test.R -> pp_twolevel()), complementing section 1's coverage of
+## the new default (test="none") + on-demand ppp(fit) path
 bfit_12 <- bsem(
   model   = model_12,
   data    = Demo.twolevel,
   cluster = "cluster",
+  test    = "ppp",
   burnin  = 100,
   sample  = 100
 )

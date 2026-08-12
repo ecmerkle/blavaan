@@ -491,9 +491,49 @@ get_ll_ord <- function(postsamp       = NULL, # one posterior sample
   ll.samp
 }
 
+## given a group's raw data (either the fit's own observed data, when
+## dataX = NULL, or a posterior-predictive replicate, one per-group matrix
+## per element of dataX), build the ylp (complete-data) or y1/y2
+## (missing-data) inputs that lav_mvn_cl_loglik_samp_2l()/lav_mvn_cl_em_sat()
+## and their missing-data counterparts expect. When dataX = NULL, this
+## reuses the fit's own already-computed lavsamplestats@YLp[[g]] rather than
+## recomputing it via lav_samp_cl_patterns().
+tl_group_ylp <- function(g, dataX, lavdata, lavsamplestats, misflag2l, newname) {
+  if (is.null(dataX)) {
+    return(list(y1 = lavdata@X[[g]], y2 = lavsamplestats@YLp[[g]][[2]]$Y2,
+                ylp = lavsamplestats@YLp[[g]]))
+  }
+
+  y1 <- dataX[[g]]
+  if (misflag2l) {
+    ## same rowsum-based Y2 construction already used for two-level
+    ## missing-data LV sampling (R/lvgqs.R samp_lvs_2lev())
+    y2 <- rowsum.default(y1, group = lavdata@Lp[[g]]$cluster.idx[[2]],
+                         reorder = FALSE, na.rm = FALSE) / lavdata@Lp[[g]]$cluster.size[[2]]
+    return(list(y1 = y1, y2 = y2, ylp = NULL))
+  }
+
+  ## lav_samplestats_cluster_patterns() was renamed to lav_samp_cl_patterns()
+  ## in lavaan 0.7-1 (same rename commit as lav_mvn_cl_loglik_samp_2l() etc.);
+  ## argument names (y, lp, conditional_x) are unchanged across the rename.
+  ## blavaan always fits with conditional.x = FALSE (R/blavaan.R), hence the
+  ## hardcoded conditional_x = FALSE here.
+  if (newname) {
+    lavclpat <- getFromNamespace("lav_samp_cl_patterns", "lavaan")
+  } else {
+    lavclpat <- getFromNamespace("lav_samplestats_cluster_patterns", "lavaan")
+  }
+  ylp <- lavclpat(y = y1, lp = lavdata@Lp[[g]], conditional_x = FALSE)
+
+  list(y1 = y1, y2 = NULL, ylp = ylp)
+}
+
 get_ll_2l <- function(postsamp       = NULL, # one posterior sample
                       lavobject      = NULL,
-                      standata       = NULL) {
+                      standata       = NULL,
+                      dataX          = NULL) { # NULL: observed data; else a
+                                                # replicate (list of per-group
+                                                # matrices, like lavdata@X)
 
   ## lav_mvnorm_cluster_loglik_samplestats_2l() was renamed to
   ## lav_mvn_cl_loglik_samp_2l() (with underscore-style, lowercase argument
@@ -536,6 +576,7 @@ get_ll_2l <- function(postsamp       = NULL, # one posterior sample
 
   out <- rep(NA, Ng)
   for(g in 1:Ng) {
+    gdat <- tl_group_ylp(g, dataX, lavdata, lavsamplestats, misflag2l, newname)
     if (misflag2l) {
       ## loglik_x = 0: the complete-data branch below has no fixed.x
       ## contribution either (lav_mvn_cl_loglik_samp_2l() has no such
@@ -544,21 +585,84 @@ get_ll_2l <- function(postsamp       = NULL, # one posterior sample
       ## item 1), which blavaan's Stan-side likelihood already works
       ## around via its own llx_2l() -- reusing lavaan's value here would
       ## reintroduce that bug
-      out[g] <- lav2ll_mi(y1 = lavdata@X[[g]], y2 = lavsamplestats@YLp[[g]][[2]]$Y2,
+      out[g] <- lav2ll_mi(y1 = gdat$y1, y2 = gdat$y2,
                          lp = lavdata@Lp[[g]], mp = lavdata@Mp[[g]],
                          mu_w = implied$mean[[(2 * g - 1)]], sigma_w = implied$cov[[(2 * g - 1)]],
                          mu_b = implied$mean[[2 * g]], sigma_b = implied$cov[[2 * g]],
                          loglik_x = 0, log2pi = TRUE, minus_two = FALSE)
     } else if(newname) {
-      ll.args <- list(ylp = lavsamplestats@YLp[[g]], lp = lavdata@Lp[[g]], mu_w = implied$mean[[(2 * g - 1)]],
+      ll.args <- list(ylp = gdat$ylp, lp = lavdata@Lp[[g]], mu_w = implied$mean[[(2 * g - 1)]],
                       sigma_w = implied$cov[[(2 * g - 1)]], mu_b = implied$mean[[2 * g]], sigma_b = implied$cov[[2 * g]],
                       log2pi = TRUE, minus_two = FALSE)
       out[g] <- do.call(lav2ll, ll.args)
     } else {
-      ll.args <- list(YLp = lavsamplestats@YLp[[g]], Lp = lavdata@Lp[[g]], Mu.W = implied$mean[[(2 * g - 1)]],
+      ll.args <- list(YLp = gdat$ylp, Lp = lavdata@Lp[[g]], Mu.W = implied$mean[[(2 * g - 1)]],
                       Sigma.W = implied$cov[[(2 * g - 1)]], Mu.B = implied$mean[[2 * g]], Sigma.B = implied$cov[[2 * g]],
                       log2pi = TRUE, minus.two = FALSE)
       out[g] <- do.call(lav2ll, ll.args)
+    }
+  }
+
+  sum(out)
+}
+
+## saturated (h1) two-level model log-likelihood, via lavaan's own EM
+## algorithm for the saturated model (lav_mvn_cl_em_sat()/
+## lav_mvn_cl_mi_em_sat()). Unlike get_ll_2l(), this does NOT depend on the
+## fitted model's parameters -- only on the data -- so for the observed data
+## it only needs to be called once per ppp() call, not once per posterior
+## draw (see pp_twolevel() in R/blav_twolevel_ppp.R).
+get_ll_2l_sat <- function(dataX      = NULL, # NULL: observed data; else a replicate
+                          lavobject  = NULL,
+                          tol        = 1e-04,
+                          max_iter   = 5000L,
+                          min_variance = 1e-05,
+                          acceleration = "none") {
+
+  lavsamplestats <- lavobject@SampleStats
+  lavdata <- lavobject@Data
+  Ng <- lavInspect(lavobject, 'ngroups')
+
+  ## lav_mvnorm_cluster_em_sat()/lav_mvnorm_cluster_mi_em_sat() were renamed
+  ## to lav_mvn_cl_em_sat()/lav_mvn_cl_mi_em_sat() at the same lavaan 0.7-1
+  ## rename commit as lav_mvn_cl_loglik_samp_2l() (argument names unchanged
+  ## across the rename); lav_mvn_cl_mi_em_sat() itself is new in lavaan
+  ## 0.7-1, with no pre-0.7-1 equivalent (two-level MAR EM support didn't
+  ## exist before it), mirroring lav_mvn_cl_mi_loglik_samp_2l() above and
+  ## lav_mvn_cl_mi_estep_ranef() in R/lvgqs.R.
+  newname <- packageDescription("lavaan")$Version >= "0.7-1"
+  if (newname) {
+    lavemsat <- getFromNamespace("lav_mvn_cl_em_sat", "lavaan")
+  } else {
+    lavemsat <- getFromNamespace("lav_mvnorm_cluster_em_sat", "lavaan")
+  }
+
+  misflag2l <- lavsamplestats@missing.flag
+  if (misflag2l) {
+    lavemsat_mi <- tryCatch(getFromNamespace("lav_mvn_cl_mi_em_sat", "lavaan"),
+                            error = function(e) NULL)
+    if (is.null(lavemsat_mi)) {
+      stop("blavaan ERROR: computing the two-level saturated-model log-likelihood for a model with missing data requires a version of lavaan that provides lav_mvn_cl_mi_em_sat() (lavaan >= 0.7-1, currently under development). Please update lavaan.")
+    }
+  }
+
+  out <- rep(NA, Ng)
+  for (g in 1:Ng) {
+    gdat <- tl_group_ylp(g, dataX, lavdata, lavsamplestats, misflag2l, newname)
+    if (misflag2l) {
+      ## loglik_x = 0: see the matching comment in get_ll_2l() above -- the
+      ## fixed.x contribution is inert here anyway since fixed.x two-level
+      ## models are not yet supported by pp_twolevel()'s replicate generator
+      out[g] <- lavemsat_mi(y1 = gdat$y1, y2 = gdat$y2,
+                            lp = lavdata@Lp[[g]], mp = lavdata@Mp[[g]],
+                            loglik_x = 0, tol = tol, max_iter = max_iter,
+                            min_variance = min_variance,
+                            acceleration = acceleration)$logl
+    } else {
+      out[g] <- lavemsat(ylp = gdat$ylp, lp = lavdata@Lp[[g]],
+                         tol = tol, max_iter = max_iter,
+                         min_variance = min_variance,
+                         acceleration = acceleration)$logl
     }
   }
 

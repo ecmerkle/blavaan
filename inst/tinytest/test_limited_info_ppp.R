@@ -244,20 +244,24 @@ expect_true(is.numeric(ppval_mg) && is.finite(ppval_mg) &&
 
 
 ## =============================================================================
-## 6. Two-level models are unaffected by the new default/dispatch
+## 6. Two-level models: pp_limited_info() is NOT the dispatch target
+##
+## Two-level models now get their own analogous treatment (default
+## test="none", on-demand ppp() via R/blav_twolevel_ppp.R's pp_twolevel()),
+## but with a DIFFERENT statistic (saturated-model likelihood-ratio, not
+## pairwise limited-information) -- see test_twolevel_ppp.R for full
+## coverage of that. This section only checks that the .multilevel branch
+## in R/ppp.R/R/blav_test.R correctly routes to pp_twolevel(), not
+## pp_limited_info() (which was never scoped to handle two-level data).
 ## =============================================================================
 
 try({
 data(Demo.twolevel, package = "lavaan")
-## subset to the first 30 clusters for speed. This is deliberately a
-## continuous-only two-level model, not ordinal: the dispatch condition
-## being tested (isTRUE(lavoptions$.multilevel) || !has_ordinal) routes to
-## the old Stan-computed value based on .multilevel alone, so a plain
-## two-level fit already exercises the relevant branch. (An ordinal
-## two-level fit would also work here in principle, but hits an unrelated,
-## pre-existing blavaan constraint -- missing="pairwise" is rejected for
-## two-level models, and is not overridable via bcfa()'s missing= argument
-## for cluster-based fits -- not something introduced by this change.)
+## subset to the first 30 clusters for speed. Deliberately continuous-only
+## (an ordinal two-level fit hits an unrelated, pre-existing blavaan
+## constraint -- missing="pairwise" is rejected for two-level models, and
+## is not overridable via bcfa()'s missing= argument for cluster-based fits
+## -- not something introduced by this change).
 Data6 <- Demo.twolevel[Demo.twolevel$cluster <= 30, ]
 
 model6 <- '
@@ -269,17 +273,13 @@ model6 <- '
 fit2l <- bcfa(model6, data = Data6, cluster = "cluster",
               burnin = 100, sample = 100, target = mytarg)
 
-expect_true(lavInspect(fit2l, "options")$test == "standard",
-  info = "Two-level ordinal model should keep test=\"standard\" as its default (unaffected)")
-expect_true("ppp" %in% names(fitMeasures(fit2l)),
-  info = "Two-level ordinal model should have ppp computed automatically, as before")
-expect_equal(as.numeric(fitMeasures(fit2l, "ppp")),
-             as.numeric(fit2l@external$stansumm["ppp", "mean"]),
-  info = "Two-level ordinal model's ppp should come from the untouched Stan-computed path")
+expect_true(lavInspect(fit2l, "options")$test == "none",
+  info = "Two-level model should default to test=\"none\", same as ordinal (R/blavaan.R)")
 
-ppval_2l <- tryCatch(ppp(fit2l), error = function(e) e)
-expect_equal(as.numeric(ppval_2l), as.numeric(fitMeasures(fit2l, "ppp")),
-  info = "ppp(fit) on a two-level model should just return the stored value, no error")
+ppval_2l <- tryCatch(ppp(fit2l, thin = 5), error = function(e) e)
+expect_true(is.numeric(ppval_2l) && is.finite(ppval_2l) &&
+              ppval_2l >= 0 && ppval_2l <= 1,
+  info = "ppp(fit) on a two-level model should compute via pp_twolevel(), not pp_limited_info()")
 })
 
 

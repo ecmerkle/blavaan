@@ -72,6 +72,30 @@ if (newname) {
 expect_true(inherits(lav_estep, "function"))
 lav_mi_estep <- getFromNamespace("lav_mvn_cl_mi_estep_ranef", "lavaan")
 expect_true(inherits(lav_mi_estep, "function"))
+
+## canary checks for the lavaan internals used by R/blav_twolevel_ppp.R and
+## R/blav_model_loglik.R's get_ll_2l_sat()/tl_group_ylp() (two-level
+## saturated-model ppp, computed in R now that Stan no longer computes it --
+## see inst/stan/stanmarg.stan). lav_mvnorm_cluster_em_sat/
+## lav_samplestats_cluster_patterns were renamed to lav_mvn_cl_em_sat/
+## lav_samp_cl_patterns at the same lavaan 0.7-1 rename commit as the
+## functions above; lav_mvn_cl_mi_em_sat is new in lavaan 0.7-1 with no
+## pre-0.7-1 equivalent (two-level missing-data saturated-model EM support
+## didn't exist before it), mirroring lav_mvn_cl_mi_estep_ranef above.
+if (newname) {
+  lav_em_sat <- getFromNamespace("lav_mvn_cl_em_sat", "lavaan")
+} else {
+  lav_em_sat <- getFromNamespace("lav_mvnorm_cluster_em_sat", "lavaan")
+}
+expect_true(inherits(lav_em_sat, "function"))
+lav_mi_em_sat <- getFromNamespace("lav_mvn_cl_mi_em_sat", "lavaan")
+expect_true(inherits(lav_mi_em_sat, "function"))
+if (newname) {
+  lav_cl_patterns <- getFromNamespace("lav_samp_cl_patterns", "lavaan")
+} else {
+  lav_cl_patterns <- getFromNamespace("lav_samplestats_cluster_patterns", "lavaan")
+}
+expect_true(inherits(lav_cl_patterns, "function"))
 lavigh <- getFromNamespace("lav_integration_gauss_hermite", "lavaan")
 expect_true(inherits(lavigh, "function"))
 lavdmvnorm <- getFromNamespace("lav_mvnorm_dmvnorm", "lavaan")

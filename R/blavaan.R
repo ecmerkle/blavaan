@@ -539,7 +539,15 @@ blavaan <- function(...,  # default lavaan arguments
     if(dotdotdot$test == "none") lavoptions$test <- "none"
   } else {
     has_ordinal <- length(LAV@Data@ordered) > 0
-    if (!isTRUE(lavoptions$.multilevel) && has_ordinal && target %in% c("stan", "cmdstan")) {
+    if (isTRUE(lavoptions$.multilevel) && target %in% c("stan", "cmdstan")) {
+      ## two-level ppp (R/blav_twolevel_ppp.R) is now real post-hoc R
+      ## computation (calling lavaan's own saturated-model EM), not free
+      ## like the old Stan-side value, so don't pay for it unless asked
+      lavoptions$test <- "none"
+      cat("blavaan NOTE: For two-level (multilevel) models, ppp is no longer computed by",
+          "default because the computation takes some time.",
+          "Use ppp(fit) to compute it.\n\n")
+    } else if (!isTRUE(lavoptions$.multilevel) && has_ordinal && target %in% c("stan", "cmdstan")) {
       ## the limited-information ppp for ordinal/mixed models
       ## (R/blav_limited_info.R) is real post-hoc R computation, not free
       ## like the old Stan-side value, so don't pay for it unless asked
@@ -634,7 +642,12 @@ blavaan <- function(...,  # default lavaan arguments
             lavpartable$prior[as.numeric(rownames(l2s$lavpartable))] <- l2s$lavpartable$prior
             ldargs <- c(l2s$dat, list(lavpartable = l2s$lavpartable, dumlv = l2s$dumlv,
                                       dumlv_c = l2slev2$dumlv,
-                                      save_lvs = save.lvs, do_test = !(lavoptions$test == "none") ))
+                                      save_lvs = save.lvs,
+                                      ## do_test always FALSE for multilevel: no two-level ppp
+                                      ## computation happens in Stan any more, regardless of
+                                      ## test=, even if a user explicitly overrides it (see
+                                      ## R/blav_twolevel_ppp.R for the R-side replacement)
+                                      do_test = !(lavoptions$test == "none") && !isTRUE(lavoptions$.multilevel) ))
 
             ## add priors to lavpartable, including wiggle
             if(length(wiggle) > 0) {

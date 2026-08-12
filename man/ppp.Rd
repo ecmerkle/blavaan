@@ -12,27 +12,41 @@ ppp(object, ...)
 \arguments{
 \item{object}{An object of class \code{\linkS4class{blavaan}}.}
 \item{...}{Other arguments passed to the underlying computation for
-  single-level models with ordinal variables (currently only \code{thin} and
-  \code{parallel} have an effect; see Details).}
+  single-level models with ordinal variables, or for two-level (multilevel)
+  models (currently only \code{thin} and \code{parallel} have an effect for
+  either case, plus \code{em_control} for two-level models; see Details).}
 }
 \details{
 For most models, \code{fitMeasures(object, "ppp")} already returns the ppp
 computed during estimation, and \code{ppp(object)} simply returns that same
-value. The exception is single-level models (with a single group or
-multiple groups) that include ordinal variables and were fit with
-\code{target = "stan"} or \code{"cmdstan"}: for these models, \code{test}
-defaults to \code{"none"} and ppp is \emph{not} computed automatically,
-because the computation (a limited-information, pairwise comparison of
-observed vs model-implied associations, which better reflects fit for
-ordinal data than the previous default) takes noticeably longer than for
+value. The exceptions are single-level models (with a single group or
+multiple groups) that include ordinal variables, and two-level (multilevel)
+models, both fit with \code{target = "stan"} or \code{"cmdstan"}: for these
+models, \code{test} defaults to \code{"none"} and ppp is \emph{not} computed
+automatically, because the computation takes noticeably longer than for
 other models. Calling \code{ppp(object)} on such a fit computes it as a
 separate step. To have ppp computed automatically during estimation instead,
-pass \code{test = "standard"} to \code{bcfa()}/\code{bsem()}/\code{bgrowth()}/
+pass \code{test = "standard"} (or, for two-level models, any value other than
+\code{"none"}) to \code{bcfa()}/\code{bsem()}/\code{bgrowth()}/
 \code{blavaan()}.
 
-Posterior predictive checking for two-level (multilevel) models is not
-currently supported on demand; for these models, use
-\code{test = "standard"} (the default) during estimation to obtain ppp.
+For single-level ordinal/mixed models, the on-demand computation is a
+limited-information, pairwise comparison of observed vs model-implied
+associations, which better reflects fit for ordinal data than the previous
+Stan-computed default.
+
+For two-level (multilevel) models, the on-demand computation is a
+saturated-model likelihood-ratio comparison (the same statistic previously
+computed inside the compiled Stan program), now computed in R by calling
+\pkg{lavaan}'s own saturated-model EM algorithm once per retained posterior
+draw. Because this per-draw computation is comparatively slow, increasing
+\code{thin} and/or setting \code{parallel = TRUE} (together with
+\code{future::plan("multicore")} or \code{future::plan("multisession")}) is
+recommended for larger two-level fits; an \code{em_control} argument (a list
+with \code{tol}, \code{max_iter}, and \code{acceleration} elements) is also
+available to tune the per-draw EM refit's convergence settings. Two-level
+models with any \code{fixed.x} variable are not yet supported by the
+on-demand computation and will raise an error.
 }
 \value{
 A numeric ppp value (or vector, for multiple imputations/groups, matching
