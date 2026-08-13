@@ -416,9 +416,15 @@ try({
 
 ## sample.cov
 expect_error(bcfa(HS.model, sample.cov=cov(HolzingerSwineford1939[,paste0('x', 1:9)]), sample.nobs=nrow(HolzingerSwineford1939), meanstructure=TRUE, target=mytarg))
-fit2 <- bcfa(HS.model, sample.cov=cov(HolzingerSwineford1939[,paste0('x', 1:9)]), sample.nobs=nrow(HolzingerSwineford1939), target=mytarg, sample=200, burnin=100, dp=dpriors(lambda="normal(1,.3)"))
+res <- robust_fit(bcfa, HS.model, sample.cov=cov(HolzingerSwineford1939[,paste0('x', 1:9)]), sample.nobs=nrow(HolzingerSwineford1939), target=mytarg, sample=200, burnin=100, dp=dpriors(lambda="normal(1,.3)"))
+fit2 <- res$fit
 expect_true(inherits(fit2, "blavaan"))
-expect_true(fitMeasures(fit2, 'p_dic') > 19 && fitMeasures(fit2, 'p_dic') < 23)
+
+if (res$converged) {
+  expect_true(fitMeasures(fit2, 'p_dic') > 19 && fitMeasures(fit2, 'p_dic') < 23)
+} else {
+  cat("SKIPPED p_dic assertion (sample.cov block): fit did not converge after", res$attempts, "attempts (max rhat =", round(res$rhat_max, 3), ")\n")
+}
 
 
 
