@@ -232,21 +232,29 @@ pp_twolevel <- function(lavobject, thin = 1, parallel = FALSE,
   ## for the observed data, vs. a cheaper per-draw refit for each replicate
   ll_sat_obs <- get_ll_2l_sat(dataX = NULL, lavobject = lavobject)
 
+  ## a posterior draw can imply a within/between covariance that is only
+  ## borderline positive-definite (floating-point-dependent, e.g. differs by
+  ## BLAS/LAPACK backend); mnormt::rmnorm()'s internal chol() has no
+  ## fallback for that and throws a hard error. Treat such a draw as missing
+  ## (NA) rather than letting one bad draw abort the whole ppp() call -- the
+  ## final aggregation below already tolerates NA via na.rm=TRUE.
   tl_draw_stat <- function(postsamp) {
-    lavmodel_i <- fill_params(postsamp, lavmodel, lavpartable)
-    implied <- lav_model_implied(lavmodel_i,
-                                 delta = (lavmodel_i@parameterization == "delta"))
+    tryCatch({
+      lavmodel_i <- fill_params(postsamp, lavmodel, lavpartable)
+      implied <- lav_model_implied(lavmodel_i,
+                                   delta = (lavmodel_i@parameterization == "delta"))
 
-    ll_fit_obs <- get_ll_2l(postsamp, lavobject, standata = NULL)
+      ll_fit_obs <- get_ll_2l(postsamp, lavobject, standata = NULL)
 
-    dataX_rep <- tl_replicate_data(lavdata, lavsamplestats, implied)
+      dataX_rep <- tl_replicate_data(lavdata, lavsamplestats, implied)
 
-    ll_fit_rep <- get_ll_2l(postsamp, lavobject, standata = NULL, dataX = dataX_rep)
-    ll_sat_rep <- do.call(get_ll_2l_sat,
-                          c(list(dataX = dataX_rep, lavobject = lavobject), em_control))
+      ll_fit_rep <- get_ll_2l(postsamp, lavobject, standata = NULL, dataX = dataX_rep)
+      ll_sat_rep <- do.call(get_ll_2l_sat,
+                            c(list(dataX = dataX_rep, lavobject = lavobject), em_control))
 
-    c(T_obs = -2 * (ll_fit_obs - ll_sat_obs),
-      T_rep = -2 * (ll_fit_rep - ll_sat_rep))
+      c(T_obs = -2 * (ll_fit_obs - ll_sat_obs),
+        T_rep = -2 * (ll_fit_rep - ll_sat_rep))
+    }, error = function(e) c(T_obs = NA_real_, T_rep = NA_real_))
   }
 
   loop.args <- list(X = 1:n.chains, FUN = function(j) {
@@ -264,6 +272,15 @@ pp_twolevel <- function(lavobject, thin = 1, parallel = FALSE,
 
   T_obs <- unlist(lapply(res, function(x) x["T_obs", ]))
   T_rep <- unlist(lapply(res, function(x) x["T_rep", ]))
+
+  n_bad <- sum(is.na(T_obs) | is.na(T_rep))
+  if (n_bad > 0L) {
+    warning("blavaan WARNING: ", n_bad, " of ", length(T_obs),
+            " posterior draws produced a numerically degenerate ",
+            "two-level ppp statistic (e.g. a non-positive-definite ",
+            "model-implied covariance) and were excluded from the ppp ",
+            "calculation.")
+  }
 
   list(ppval = mean(T_rep > T_obs, na.rm = TRUE),
        ppdist = list(obs = T_obs, reps = T_rep))
