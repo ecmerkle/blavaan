@@ -545,7 +545,7 @@ blavaan <- function(...,  # default lavaan arguments
       ## like the old Stan-side value, so don't pay for it unless asked
       lavoptions$test <- "none"
       cat("blavaan NOTE: For two-level (multilevel) models, ppp is no longer computed by",
-          "default because the computation takes some time.",
+          "default because the computations can take longer than estimation.",
           "Use ppp(fit) to compute it.\n\n")
     } else if (!isTRUE(lavoptions$.multilevel) && has_ordinal && target %in% c("stan", "cmdstan")) {
       ## the limited-information ppp for ordinal/mixed models
@@ -553,7 +553,7 @@ blavaan <- function(...,  # default lavaan arguments
       ## like the old Stan-side value, so don't pay for it unless asked
       lavoptions$test <- "none"
       cat("blavaan NOTE: For models with ordinal variables, ppp is no longer computed by",
-          "default because the new computation method takes some time.",
+          "default because the computations can take longer than estimation.",
           "Use ppp(fit) to compute it.\n\n")
     } else if(any(is.na(unlist(LAV@Data@X))) & !(target %in% c("stan", "cmdstan"))) {
       ## if missing data, posterior predictives are way slow

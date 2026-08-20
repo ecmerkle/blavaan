@@ -196,13 +196,18 @@ tl_replicate_data <- function(lavdata, lavsamplestats, implied) {
 ## target="stan"/"cmdstan" fits. Mirrors postpred()'s/pp_limited_info()'s
 ## scaffolding and return shape.
 pp_twolevel <- function(lavobject, thin = 1, parallel = FALSE,
-                        em_control = list(tol = 1e-3, max_iter = 50L,
-                                          acceleration = "squarem")) {
+                        em_control = NULL) {
   lavpartable <- lavobject@ParTable
   lavmodel <- lavobject@Model
   lavsamplestats <- lavobject@SampleStats
   lavdata <- lavobject@Data
   lavjags <- lavobject@external$mcmcout
+
+  emdefs <- list(tol = 1e-3, max_iter = 50L, acceleration = "squarem")
+  if (length(em_control) > 0L) {
+    not_supplied <- which(!(names(emdefs) %in% names(em_control)))
+    em_control <- c(em_control, emdefs[not_supplied])
+  }
 
   ## a variable that is fixed.x at BOTH levels simultaneously is not
   ## supported by tl_replicate_data() (lavaan itself has an open FIXME for
