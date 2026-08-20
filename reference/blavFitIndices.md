@@ -140,8 +140,7 @@ Psychological Measurement*. doi:10.1177/0013164417709314
 Garnier-Villarreal, M., & Jorgensen, T. D. (2020). Adapting Fit Indices
 for Bayesian Structural Equation Modeling: Comparison to Maximum
 Likelihood. *Psychological Methods*, 25(1), 46–70.
-https://doi.org/dx.doi.org/10.1037/met0000224 (See also
-<https://osf.io/afkcw/>)
+https://dx.doi.org/10.1037/met0000224 (See also <https://osf.io/afkcw/>)
 
 Other references:
 
