@@ -350,9 +350,12 @@ blavaan <- function(...,  # default lavaan arguments
     if(!any(is.na(unlist(lavInspect(LAV, 'data'))))) {
       dotdotdot$missing <- "listwise"
       ## bcfa()/bsem() unconditionally default int.ov.free=TRUE, so ensure
-      ## it is off here
+      ## it is off here -- but only for single-group models, since plain
+      ## lavaan itself defaults meanstructure=TRUE for multi-group (checking
+      ## LAV@Options$meanstructure won't work: it's already TRUE regardless
+      ## of group count, from bcfa()/bsem()'s own forced int.ov.free=TRUE).
       if(!("meanstructure" %in% dotNames) && !("sample.mean" %in% dotNames) &&
-         !("cluster" %in% dotNames)) {
+         !("cluster" %in% dotNames) && lavInspect(LAV, "ngroups") == 1L) {
         dotdotdot$int.ov.free <- FALSE
       }
     } else {
