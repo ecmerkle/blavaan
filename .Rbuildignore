@@ -16,3 +16,4 @@
 ^dev$
 ^\.git$
 ^CLAUDE\.md$
+^outstanding_issues\.md$
