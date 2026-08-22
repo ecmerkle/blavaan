@@ -1512,7 +1512,7 @@ expect_true(all(sqrt(diag(vcov(fit))) - sqrt(diag(vcov(fitb))) < 1))
 expect_identical(class(fitMeasures(fit))[1], "lavaan.vector")
 expect_true(all(blavInspect(fit, 'rhat') < 1.05))
 expect_true(inherits(summary(fit), 'data.frame'))
-expect_true(fitMeasures(fit,'ppp') > .2 & fitMeasures(fit,'ppp') < .8)
+expect_true(fitMeasures(fit,'ppp') > .1 & fitMeasures(fit,'ppp') < .7)
 expect_true(compll(fit))
 
 tmp <- blavInspect(fit, 'lvmeans')
