@@ -260,7 +260,7 @@ li_draw_stat <- function(postsamp, lavobject, lavmodel_orig, lavdata,
 ## top-level entry point: limited-information posterior predictive p-value
 ## for single-level (single- or multi-group) ordinal/mixed stan/cmdstan
 ## fits. Mirrors postpred()'s scaffolding and return shape.
-pp_limited_info <- function(lavobject, thin = 1, parallel = FALSE) {
+pp_limited_info <- function(lavobject, thin = 1, parallel = TRUE) {
   lavpartable <- lavobject@ParTable
   lavmodel <- lavobject@Model
   lavoptions <- lavobject@Options

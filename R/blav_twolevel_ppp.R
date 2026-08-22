@@ -195,7 +195,7 @@ tl_replicate_data <- function(lavdata, lavsamplestats, implied) {
 ## top-level entry point: two-level saturated-model-comparison ppp for
 ## target="stan"/"cmdstan" fits. Mirrors postpred()'s/pp_limited_info()'s
 ## scaffolding and return shape.
-pp_twolevel <- function(lavobject, thin = 1, parallel = FALSE,
+pp_twolevel <- function(lavobject, thin = 1, parallel = TRUE,
                         em_control = NULL) {
   lavpartable <- lavobject@ParTable
   lavmodel <- lavobject@Model
