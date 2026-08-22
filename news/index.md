@@ -12,21 +12,54 @@
   replaced by an EM-based saturated-model fit that also works under
   missingness.
 
-- Two-level (multilevel) models: ppp is no longer computed inside the
-  compiled Stan program. `test` now defaults to `"none"` for two-level
-  models (as it already did for ordinal/mixed single-level models), and
-  `ppp(fit)` computes the same saturated-model likelihood-ratio
-  statistic on demand in R, calling lavaan’s own saturated-model EM
-  algorithm once per retained posterior draw. `fixed.x` variables are
-  supported at the within level, the between level, or both (in
-  different variables); a single variable that is `fixed.x` at both
-  levels simultaneously is not supported.
+- For single-level models with ordinal variables, the default posterior
+  predictive p-value is no longer computed inside Stan by comparing the
+  fitted model to a saturated model on the continuous data-augmented y\*
+  used for ordinal likelihoods; that comparison tended to overstate
+  ordinal fit. A limited-information (pairwise) alternative is computed
+  instead, entirely in R from saved posterior draws: ordinal-ordinal
+  pairs reuse lavaan’s own lavTables() machinery, while
+  ordinal-continuous and continuous-continuous pairs use dedicated
+  deviance/correlation-based statistics. Since this is real, non-trivial
+  post-hoc computation rather than free, `test` now defaults to `"none"`
+  for single-level ordinal/mixed stan/cmdstan models (unless the user
+  explicitly requested a test= value), with the new exported `ppp(fit)`
+  as the on-demand second step. Continuous-only single-level models are
+  unaffected and keep the original Stan-computed value by default.
+
+- Two-level (multilevel) models: ppp is no longer computed inside Stan
+  either, mirroring the single-level ordinal/mixed change above. `test`
+  now defaults to `"none"` for two-level models, and `ppp(fit)` computes
+  the same saturated-model likelihood-ratio statistic on demand in R,
+  calling lavaan’s own saturated-model EM algorithm once per retained
+  posterior draw. `fixed.x` variables are supported at the within level,
+  the between level, or both (in different variables); a single variable
+  that is `fixed.x` at both levels simultaneously is not supported. The
+  EM algorithm’s tol/max_iter/acceleration settings can be overridden
+  via `ppp(fit, em_control = list(...))`, with unspecified entries
+  falling back to the defaults.
 
 - Optional within-chain parallelization for single-level models via
   Stan’s reduce_sum() (bcontrol argument use_wcp). Real speedups require
   target = “cmdstan”, which recompiles the model with threading support;
   threads_per_chain now defaults sensibly (and warns) from the number of
   available cores when use_wcp is set but threads_per_chain is not.
+
+- Common sampler arguments (e.g. adapt_delta, max_treedepth, cores,
+  method, threads_per_chain) can now be passed directly to
+  blavaan()/bcfa()/bsem()/bgrowth() instead of nested inside
+  bcontrol=list(…); for stan/stanclassic/stancond targets, arguments
+  belonging to rstan’s nested control=list(…) are detected and nested
+  automatically. The old fully-nested bcontrol=list(…) interface keeps
+  working unchanged (issue
+  [\#57](https://github.com/ecmerkle/blavaan/issues/57)).
+
+- target = “cmdstan” has received a round of bug fixes restoring parity
+  with target = “stan”, including save.lvs = TRUE, meanstructure =
+  FALSE, and blavInspect(fit, “neff”).
+
+- Efficiency improvements to the underlying Stan program, including
+  better respecting the use_suff argument.
 
 - New tidy() and glance() methods (via the generics package) for
   extracting parameter estimates and model-level summaries as data
@@ -55,13 +88,26 @@
   [\#97](https://github.com/ecmerkle/blavaan/issues/97)). Not available
   together with mcmcextra\$dosam = TRUE.
 
+- bcfa()/bsem() with target = “stan”/“cmdstan” no longer force a mean
+  structure onto complete-data models by default; a mean structure is
+  now only added when the user explicitly requests one (via
+  meanstructure= or sample.mean=) or the model is two-level (which
+  structurally requires free between-level intercepts). This matches
+  plain lavaan’s cfa()/sem() default and also fixes sample.cov-only
+  (moment) input erroring with “problem with translation from lavaan to
+  MCMC syntax”.
+
 - Various other bug fixes, including: incorrect psi/theta
   correlation-block prior matching for multi-group two-level
   (multilevel) models; ppmc()/blavFitIndices(rescale = “mcmc”) failing
   with a “subscript out of bounds” error for models with more than one
-  group; and blavCompare() output relying on row/column position (now
-  named) rather than being robust to formatting changes in underlying
-  packages.
+  group; blavCompare() output relying on row/column position (now named)
+  rather than being robust to formatting changes in underlying packages;
+  blavPredict() erroring on level-2 predictions with newdata (and
+  newdata clusters absent from the original fitted data now score
+  correctly); and missing initial values for the augmented normal
+  variates underlying ordinal data when a model has no free threshold
+  parameters.
 
 - blavaan now raises a clear, explicit error as soon as a model uses
   lavaan’s `<~` operator (composite/formative latent variables), instead
