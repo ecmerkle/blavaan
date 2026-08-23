@@ -2,6 +2,8 @@
 
 ## Version 0.6-1
 
+CRAN release: 2026-08-22
+
 ### New features
 
 - Two-level (multilevel) models now support real missing data (FIML/MAR)
