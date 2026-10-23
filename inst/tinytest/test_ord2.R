@@ -96,6 +96,16 @@ bfit <- res$fit
 expect_inherits(bfit, "blavaan",
   info = "Mixed cont/ord SEM: bsem() should return a blavaan object")
 
+## blavCompare() should use the ordinal likelihood, not Stan's y*-based log_lik (issue #109)
+invisible(capture.output(cmp <- blavCompare(bfit, bfit)))
+cmp_looic <- cmp$loo[[1]]$estimates["looic", "Estimate"]
+ystar_looic <- suppressWarnings(
+  loo::loo(loo::extract_log_lik(bfit@external$mcmcout))$estimates["looic", "Estimate"])
+expect_equal(cmp_looic, unname(fitMeasures(bfit, "looic")), tolerance = 0.01,
+  info = "Ordinal blavCompare() looic should match fitMeasures()")
+expect_true(abs(cmp_looic - ystar_looic) > 1,
+  info = "Ordinal blavCompare() looic should not use the y*-based log_lik")
+
 expect_true(
   all(diag(vcov(bfit)) > 0),
   info = "Mixed cont/ord SEM: vcov diagonal should be positive"

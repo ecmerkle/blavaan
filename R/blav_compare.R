@@ -14,7 +14,9 @@ blavCompare <- function(object1, object2, ...) {
   res <- c(bf, object1@test[[1]]$stat, object2@test[[1]]$stat)
   names(res) <- c("bf", "mll1", "mll2")
   
-  if(targ1 %in% c("stan", "cmdstan") && blavInspect(object1, "meanstructure")) {
+  if(targ1 %in% c("stan", "cmdstan") && !blavInspect(object1, "categorical") &&
+     blavInspect(object1, "meanstructure")) {
+    ## Stan log_lik uses y* for ordinal data, so ordinal models go below (issue #109)
     if(targ1 == "stan") {
       ll1 <- loo::extract_log_lik(object1@external$mcmcout)
     } else {
@@ -39,7 +41,9 @@ blavCompare <- function(object1, object2, ...) {
   cid1 <- rep(1:nchain1, each=niter1)
   ref1 <- relative_eff(exp(ll1), chain_id = cid1)
 
-  if(targ2 %in% c("stan", "cmdstan") && blavInspect(object2, "meanstructure")) {
+  if(targ2 %in% c("stan", "cmdstan") && !blavInspect(object2, "categorical") &&
+     blavInspect(object2, "meanstructure")) {
+    ## Stan log_lik uses y* for ordinal data, so ordinal models go below (issue #109)
     if(targ2 == "stan") {
       ll2 <- loo::extract_log_lik(object2@external$mcmcout)
     } else {
@@ -59,7 +63,7 @@ blavCompare <- function(object1, object2, ...) {
     ll2 <- case_lls(object2@external$mcmcout, make_mcmc(object2@external$mcmcout),
                     object2)
   }  
-  nchain2 <- blavInspect(object1, "n.chains")
+  nchain2 <- blavInspect(object2, "n.chains")
   niter2 <- nrow(ll2)/nchain2
   cid2 <- rep(1:nchain2, each=niter2)
   ref2 <- relative_eff(exp(ll2), chain_id = cid2)
