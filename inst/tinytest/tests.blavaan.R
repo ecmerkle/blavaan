@@ -48,6 +48,18 @@ fit <- bsem(model, data=Data, fixed.x=TRUE, adapt=2,
             burnin=2, sample=2, do.fit=FALSE)
 expect_equal(class(fit)[1], "blavaan")
 
+## wrappers work without library(blavaan) and via do.call (issue #110)
+noattach <- new.env(parent = baseenv())
+noattach$model <- model; noattach$Data <- Data
+for(wrap in c("bcfa", "bsem", "bgrowth")) {
+  fit <- eval(str2lang(paste0("blavaan::", wrap, "(model, data = Data, do.fit = FALSE)")), noattach)
+  expect_equal(class(fit)[1], "blavaan")
+  expect_equal(fit@Options$model.type, sub("^b", "", wrap))
+}
+fit <- do.call(blavaan::bcfa, list(model = model, data = Data, do.fit = FALSE))
+expect_equal(class(fit)[1], "blavaan")
+expect_equal(fit@Options$model.type, "cfa")
+
 ## mcmcextra
 fit <- bsem(model, data=Data, save.lvs=TRUE, do.fit=FALSE,
             mcmcextra=list(data=list(emiter=101, llnsamp=78)))

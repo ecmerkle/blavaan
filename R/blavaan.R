@@ -1277,27 +1277,16 @@ blavaan <- function(...,  # default lavaan arguments
   blavaan
 }
 
-## cfa + sem
-bcfa <- bsem <- function(..., cp = "srs", dp = NULL,
-    n.chains = 3, burnin, sample, adapt,
-    mcmcfile = FALSE, mcmcextra = list(), inits = "simple",
-    convergence = "manual", target = getOption("blavaan.target", "stan"), save.lvs = FALSE, wiggle = NULL,
-    wiggle.sd = 0.1, prisamp = FALSE, jags.ic = FALSE, seed = NULL,
-    bcontrol = list()) {
-
-  dotdotdot <- list(...)
-  std.lv <- ifelse(any(names(dotdotdot) == "std.lv"), dotdotdot$std.lv, FALSE)
-
-  mc <- match.call()
-  mc$model.type      = as.character( mc[[1L]] )
-  if(length(mc$model.type) == 3L) mc$model.type <- mc$model.type[3L]
-  mc$model.type <- gsub("^b", "", mc$model.type)
+## shared body of bcfa/bsem/bgrowth: fill in defaults, then call blavaan()
+blav_wrapper <- function(mc, model.type, std.lv, target, n.chains, env) {
+  mc$model.type <- model.type
   mc$n.chains <- n.chains
-  defparms <- c(int.ov.free = TRUE, int.lv.free = FALSE, auto.fix.first = !std.lv,
+  growth <- model.type == "growth"
+  defparms <- c(int.ov.free = !growth, int.lv.free = growth, auto.fix.first = !std.lv,
                 auto.fix.single = TRUE, auto.var = TRUE, auto.cov.lv.x = TRUE,
                 auto.cov.y = TRUE, auto.th = TRUE, auto.delta = TRUE)
-  mc[names(defparms)[!(names(defparms) %in% names(mc))]] <- defparms[!(names(defparms) %in% names(mc))]
-  mc[[1L]] <- quote(blavaan)
+  newparms <- !(names(defparms) %in% names(mc))
+  mc[names(defparms)[newparms]] <- defparms[newparms]
 
   ## change defaults depending on jags vs stan
   sampargs <- c("burnin", "sample", "adapt")
@@ -1307,15 +1296,37 @@ bcfa <- bsem <- function(..., cp = "srs", dp = NULL,
     defiters <- c(500L, 1000L, 1000L)
   }
   suppargs <- which(!(sampargs %in% names(mc)))
+  for(i in suppargs) mc[[sampargs[i]]] <- defiters[i]
 
-  if(length(suppargs) > 0) {
-    for(i in 1:length(suppargs)) {
-      mc[[(length(mc)+1)]] <- defiters[suppargs[i]]
-      names(mc)[length(mc)] <- sampargs[suppargs[i]]
-    }
-  }
+  ## namespaced, so this works without library(blavaan) (issue #110)
+  mc[[1L]] <- quote(blavaan::blavaan)
+  eval(mc, env)
+}
 
-  eval(mc, parent.frame())
+## cfa
+bcfa <- function(..., cp = "srs", dp = NULL,
+    n.chains = 3, burnin, sample, adapt,
+    mcmcfile = FALSE, mcmcextra = list(), inits = "simple",
+    convergence = "manual", target = getOption("blavaan.target", "stan"), save.lvs = FALSE, wiggle = NULL,
+    wiggle.sd = 0.1, prisamp = FALSE, jags.ic = FALSE, seed = NULL,
+    bcontrol = list()) {
+
+  mc <- match.call()
+  blav_wrapper(mc, model.type = "cfa", std.lv = isTRUE(list(...)$std.lv),
+               target = target, n.chains = n.chains, env = parent.frame())
+}
+
+## sem
+bsem <- function(..., cp = "srs", dp = NULL,
+    n.chains = 3, burnin, sample, adapt,
+    mcmcfile = FALSE, mcmcextra = list(), inits = "simple",
+    convergence = "manual", target = getOption("blavaan.target", "stan"), save.lvs = FALSE, wiggle = NULL,
+    wiggle.sd = 0.1, prisamp = FALSE, jags.ic = FALSE, seed = NULL,
+    bcontrol = list()) {
+
+  mc <- match.call()
+  blav_wrapper(mc, model.type = "sem", std.lv = isTRUE(list(...)$std.lv),
+               target = target, n.chains = n.chains, env = parent.frame())
 }
 
 ## simple growth models
@@ -1326,33 +1337,7 @@ bgrowth <- function(..., cp = "srs", dp = NULL,
     wiggle.sd = 0.1, prisamp = FALSE, jags.ic = FALSE, seed = NULL,
     bcontrol = list()) {
 
-  dotdotdot <- list(...)
-  std.lv <- ifelse(any(names(dotdotdot) == "std.lv"), dotdotdot$std.lv, FALSE)
-
   mc <- match.call()
-  mc$model.type      = "growth"
-  mc$n.chains <- n.chains
-  defparms <- c(int.ov.free = FALSE, int.lv.free = TRUE, auto.fix.first  = !std.lv,
-                auto.fix.single = TRUE, auto.var = TRUE, auto.cov.lv.x   = TRUE,
-                auto.cov.y = TRUE, auto.th = TRUE, auto.delta = TRUE)
-  mc[names(defparms)[!(names(defparms) %in% names(mc))]] <- defparms[!(names(defparms) %in% names(mc))]
-  mc[[1L]] <- quote(blavaan)
-
-  ## change defaults depending on jags vs stan
-  sampargs <- c("burnin", "sample", "adapt")
-  if(target == "jags") {
-    defiters <- c(4000L, 10000L, 1000L)
-  } else {
-    defiters <- c(500L, 1000L, 1000L)
-  }
-  suppargs <- which(!(sampargs %in% names(mc)))
-
-  if(length(suppargs) > 0) {
-    for(i in 1:length(suppargs)) {
-      mc[[(length(mc)+1)]] <- defiters[suppargs[i]]
-      names(mc)[length(mc)] <- sampargs[suppargs[i]]
-    }
-  }
-    
-  eval(mc, parent.frame())
+  blav_wrapper(mc, model.type = "growth", std.lv = isTRUE(list(...)$std.lv),
+               target = target, n.chains = n.chains, env = parent.frame())
 }

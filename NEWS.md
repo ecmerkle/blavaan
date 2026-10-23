@@ -1,3 +1,4 @@
+
 # Version 0.6-1
 ## New features
 * Two-level (multilevel) models now support real missing data (FIML/MAR) by default, including fixed.x covariates at the within level and posterior predictive checks (ppp). 
@@ -31,7 +32,8 @@
 * blavaan now raises a clear, explicit error as soon as a model uses lavaan's `<~` operator (composite/formative latent variables), instead of an opaque internal crash. This operator was previously reported (version 0.5-8, below) as failing only under target = "jags"; it in fact fails under every target, since none of blavaan's translation backends handle lavaan's associated "wmat" parameter matrix. `<~` is not currently implemented in blavaan (issue #90); this change only makes that limitation explicit rather than adding support.
 
 ## Bugs/glitches:
-* (just released)
+* bcfa(), bsem() and bgrowth() do not work when called as blavaan::bcfa() etc. without library(blavaan), and when called via do.call() (reported by Florian Kohrt).
+
 
 # Version 0.5-10
 ## New features
