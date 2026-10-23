@@ -245,8 +245,8 @@ fit <- bsem(model, data = PoliticalDemocracy, burnin = 100, sample = 100,
 #> 
 #> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 1).
 #> Chain 1: 
-#> Chain 1: Gradient evaluation took 0.000245 seconds
-#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.45 seconds.
+#> Chain 1: Gradient evaluation took 0.000235 seconds
+#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.35 seconds.
 #> Chain 1: Adjust your expectations accordingly!
 #> Chain 1: 
 #> Chain 1: 
@@ -271,15 +271,15 @@ fit <- bsem(model, data = PoliticalDemocracy, burnin = 100, sample = 100,
 #> Chain 1: Iteration: 180 / 200 [ 90%]  (Sampling)
 #> Chain 1: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 1: 
-#> Chain 1:  Elapsed Time: 0.739 seconds (Warm-up)
-#> Chain 1:                0.425 seconds (Sampling)
-#> Chain 1:                1.164 seconds (Total)
+#> Chain 1:  Elapsed Time: 0.735 seconds (Warm-up)
+#> Chain 1:                0.428 seconds (Sampling)
+#> Chain 1:                1.163 seconds (Total)
 #> Chain 1: 
 #> 
 #> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 2).
 #> Chain 2: 
-#> Chain 2: Gradient evaluation took 0.000228 seconds
-#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.28 seconds.
+#> Chain 2: Gradient evaluation took 0.000227 seconds
+#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.27 seconds.
 #> Chain 2: Adjust your expectations accordingly!
 #> Chain 2: 
 #> Chain 2: 
@@ -305,8 +305,8 @@ fit <- bsem(model, data = PoliticalDemocracy, burnin = 100, sample = 100,
 #> Chain 2: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 2: 
 #> Chain 2:  Elapsed Time: 0.523 seconds (Warm-up)
-#> Chain 2:                0.415 seconds (Sampling)
-#> Chain 2:                0.938 seconds (Total)
+#> Chain 2:                0.413 seconds (Sampling)
+#> Chain 2:                0.936 seconds (Total)
 #> Chain 2: 
 #> Warning: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.
 #> Running the chains for more iterations may help. See
