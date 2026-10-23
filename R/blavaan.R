@@ -241,7 +241,9 @@ blavaan <- function(...,  # default lavaan arguments
   if(!(target %in% c("stan", "cmdstan"))) dotdotdot$meanstructure <- TRUE
   dotdotdot$missing <- "direct"   # direct/ml creates error? (bug in lavaan?)
   ordmod <- FALSE
-  if("ordered" %in% dotNames) ordmod <- TRUE
+  if("ordered" %in% dotNames) {
+    if(dotdotdot$ordered != "FALSE") ordmod <- TRUE
+  }
   if("data" %in% dotNames) {
     if(any(apply(dotdotdot$data, 2, function(x) inherits(x, "ordered")))) ordmod <- TRUE
   }
