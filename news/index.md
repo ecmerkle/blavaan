@@ -123,7 +123,9 @@ CRAN release: 2026-08-22
 
 ### Bugs/glitches:
 
-- (just released)
+- bcfa(), bsem() and bgrowth() do not work when called as
+  blavaan::bcfa() etc. without library(blavaan), and when called via
+  do.call() (reported by Florian Kohrt).
 
 ## Version 0.5-10
 

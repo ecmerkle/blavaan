@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6-1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6-1.1482</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,7 +83,7 @@
 Garnier-Villarreal</h4>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/ecmerkle/blavaan/blob/v0.6-1/vignettes/probability_direction.Rmd" class="external-link"><code>vignettes/probability_direction.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/ecmerkle/blavaan/blob/master/vignettes/probability_direction.Rmd" class="external-link"><code>vignettes/probability_direction.Rmd</code></a></small>
       <div class="d-none name"><code>probability_direction.Rmd</code></div>
     </div>
 
@@ -143,7 +143,7 @@ standardized estimates, and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math></p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span>, standardize<span class="op">=</span><span class="cn">T</span>, rsquare<span class="op">=</span><span class="cn">T</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## blavaan 0.6.1 ended normally after 1000 iterations</span></span>
+<pre><code><span><span class="co">## blavaan 0.6.1.1482 ended normally after 1000 iterations</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   Estimator                                      BAYES</span></span>
 <span><span class="co">##   Optimization method                             MCMC</span></span>
@@ -153,7 +153,7 @@ standardized estimates, and
 <span><span class="co">##   Number of observations                            75</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   Statistic                                 MargLogLik         PPP</span></span>
-<span><span class="co">##   Value                                             NA       0.021</span></span>
+<span><span class="co">##   Value                                             NA       0.025</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Parameter Estimates:</span></span>
 <span><span class="co">## </span></span>
@@ -161,154 +161,154 @@ standardized estimates, and
 <span><span class="co">## Latent Variables:</span></span>
 <span><span class="co">##                    Estimate  Post.SD pi.lower pi.upper   Std.lv  Std.all</span></span>
 <span><span class="co">##   ind60 =~                                                              </span></span>
-<span><span class="co">##     x1                0.706    0.072    0.576    0.855    0.706    0.923</span></span>
-<span><span class="co">##     x2                1.534    0.141    1.280    1.824    1.534    0.972</span></span>
-<span><span class="co">##     x3                1.275    0.142    1.014    1.572    1.275    0.872</span></span>
+<span><span class="co">##     x1                0.707    0.073    0.576    0.860    0.707    0.922</span></span>
+<span><span class="co">##     x2                1.540    0.147    1.265    1.850    1.540    0.973</span></span>
+<span><span class="co">##     x3                1.281    0.144    1.021    1.589    1.281    0.872</span></span>
 <span><span class="co">##   dem60 =~                                                              </span></span>
-<span><span class="co">##     y1         (a)    1.461    0.173    1.141    1.820    1.789    0.762</span></span>
-<span><span class="co">##     y2         (b)    1.737    0.231    1.299    2.211    2.126    0.585</span></span>
-<span><span class="co">##     y3         (c)    1.818    0.208    1.431    2.248    2.226    0.702</span></span>
-<span><span class="co">##     y4         (d)    1.948    0.202    1.571    2.372    2.385    0.790</span></span>
+<span><span class="co">##     y1         (a)    1.459    0.174    1.128    1.806    1.788    0.761</span></span>
+<span><span class="co">##     y2         (b)    1.740    0.222    1.325    2.177    2.133    0.588</span></span>
+<span><span class="co">##     y3         (c)    1.815    0.203    1.423    2.224    2.225    0.700</span></span>
+<span><span class="co">##     y4         (d)    1.950    0.194    1.587    2.347    2.391    0.792</span></span>
 <span><span class="co">##   dem65 =~                                                              </span></span>
-<span><span class="co">##     y5         (a)    1.461    0.173    1.141    1.820    2.310    0.813</span></span>
-<span><span class="co">##     y6         (b)    1.737    0.231    1.299    2.211    2.745    0.771</span></span>
-<span><span class="co">##     y7         (c)    1.818    0.208    1.431    2.248    2.875    0.837</span></span>
-<span><span class="co">##     y8         (d)    1.948    0.202    1.571    2.372    3.079    0.870</span></span>
+<span><span class="co">##     y5         (a)    1.459    0.174    1.128    1.806    2.303    0.812</span></span>
+<span><span class="co">##     y6         (b)    1.740    0.222    1.325    2.177    2.747    0.772</span></span>
+<span><span class="co">##     y7         (c)    1.815    0.203    1.423    2.224    2.866    0.836</span></span>
+<span><span class="co">##     y8         (d)    1.950    0.194    1.587    2.347    3.080    0.871</span></span>
 <span><span class="co">##      Rhat    Prior       </span></span>
 <span><span class="co">##                          </span></span>
-<span><span class="co">##     1.001    normal(0,10)</span></span>
-<span><span class="co">##     1.001    normal(0,10)</span></span>
-<span><span class="co">##     1.001    normal(0,10)</span></span>
-<span><span class="co">##                          </span></span>
-<span><span class="co">##     1.001    normal(0,10)</span></span>
-<span><span class="co">##     1.001    normal(0,10)</span></span>
+<span><span class="co">##     1.000    normal(0,10)</span></span>
 <span><span class="co">##     1.000    normal(0,10)</span></span>
 <span><span class="co">##     1.000    normal(0,10)</span></span>
 <span><span class="co">##                          </span></span>
-<span><span class="co">##     1.001                </span></span>
-<span><span class="co">##     1.001                </span></span>
+<span><span class="co">##     0.999    normal(0,10)</span></span>
+<span><span class="co">##     1.000    normal(0,10)</span></span>
+<span><span class="co">##     1.000    normal(0,10)</span></span>
+<span><span class="co">##     1.001    normal(0,10)</span></span>
+<span><span class="co">##                          </span></span>
+<span><span class="co">##     0.999                </span></span>
 <span><span class="co">##     1.000                </span></span>
 <span><span class="co">##     1.000                </span></span>
+<span><span class="co">##     1.001                </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Regressions:</span></span>
 <span><span class="co">##                    Estimate  Post.SD pi.lower pi.upper   Std.lv  Std.all</span></span>
 <span><span class="co">##   dem60 ~                                                               </span></span>
-<span><span class="co">##     ind60             0.706    0.175    0.384    1.060    0.577    0.577</span></span>
+<span><span class="co">##     ind60             0.709    0.172    0.396    1.069    0.578    0.578</span></span>
 <span><span class="co">##   dem65 ~                                                               </span></span>
-<span><span class="co">##     ind60             0.253    0.179   -0.098    0.604    0.160    0.160</span></span>
-<span><span class="co">##     dem60             0.867    0.130    0.614    1.138    0.671    0.671</span></span>
+<span><span class="co">##     ind60             0.246    0.181   -0.115    0.608    0.156    0.156</span></span>
+<span><span class="co">##     dem60             0.867    0.131    0.614    1.127    0.673    0.673</span></span>
 <span><span class="co">##      Rhat    Prior       </span></span>
 <span><span class="co">##                          </span></span>
-<span><span class="co">##     1.000    normal(0,10)</span></span>
-<span><span class="co">##                          </span></span>
 <span><span class="co">##     1.001    normal(0,10)</span></span>
+<span><span class="co">##                          </span></span>
+<span><span class="co">##     1.000    normal(0,10)</span></span>
 <span><span class="co">##     1.000    normal(0,10)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Covariances:</span></span>
 <span><span class="co">##                    Estimate  Post.SD pi.lower pi.upper   Std.lv  Std.all</span></span>
 <span><span class="co">##  .y1 ~~                                                                 </span></span>
-<span><span class="co">##    .y5                0.733    0.439   -0.041    1.710    0.733    0.291</span></span>
+<span><span class="co">##    .y5                0.748    0.444   -0.040    1.694    0.748    0.296</span></span>
 <span><span class="co">##  .y2 ~~                                                                 </span></span>
-<span><span class="co">##    .y4                1.754    0.810    0.284    3.491    1.754    0.322</span></span>
-<span><span class="co">##    .y6                2.217    0.801    0.798    3.993    2.217    0.332</span></span>
+<span><span class="co">##    .y4                1.733    0.837    0.265    3.494    1.733    0.320</span></span>
+<span><span class="co">##    .y6                2.202    0.805    0.717    3.967    2.202    0.332</span></span>
 <span><span class="co">##  .y3 ~~                                                                 </span></span>
-<span><span class="co">##    .y7                1.309    0.679    0.095    2.784    1.309    0.309</span></span>
+<span><span class="co">##    .y7                1.332    0.689    0.137    2.878    1.332    0.312</span></span>
 <span><span class="co">##  .y4 ~~                                                                 </span></span>
-<span><span class="co">##    .y8                0.401    0.489   -0.506    1.383    0.401    0.124</span></span>
+<span><span class="co">##    .y8                0.388    0.489   -0.566    1.391    0.388    0.121</span></span>
 <span><span class="co">##  .y6 ~~                                                                 </span></span>
-<span><span class="co">##    .y8                1.112    0.722   -0.199    2.655    1.112    0.281</span></span>
+<span><span class="co">##    .y8                1.074    0.737   -0.259    2.672    1.074    0.273</span></span>
 <span><span class="co">##      Rhat    Prior       </span></span>
-<span><span class="co">##                          </span></span>
-<span><span class="co">##     1.002     lkj_corr(1)</span></span>
-<span><span class="co">##                          </span></span>
-<span><span class="co">##     1.000       beta(1,1)</span></span>
-<span><span class="co">##     1.000       beta(1,1)</span></span>
 <span><span class="co">##                          </span></span>
 <span><span class="co">##     1.000     lkj_corr(1)</span></span>
 <span><span class="co">##                          </span></span>
 <span><span class="co">##     1.000       beta(1,1)</span></span>
+<span><span class="co">##     1.000       beta(1,1)</span></span>
 <span><span class="co">##                          </span></span>
-<span><span class="co">##     1.002       beta(1,1)</span></span>
+<span><span class="co">##     1.001     lkj_corr(1)</span></span>
+<span><span class="co">##                          </span></span>
+<span><span class="co">##     1.000       beta(1,1)</span></span>
+<span><span class="co">##                          </span></span>
+<span><span class="co">##     1.000       beta(1,1)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Intercepts:</span></span>
 <span><span class="co">##                    Estimate  Post.SD pi.lower pi.upper   Std.lv  Std.all</span></span>
-<span><span class="co">##    .x1                5.049    0.091    4.874    5.232    5.049    6.599</span></span>
-<span><span class="co">##    .x2                4.780    0.189    4.410    5.154    4.780    3.029</span></span>
-<span><span class="co">##    .x3                3.548    0.174    3.213    3.893    3.548    2.426</span></span>
-<span><span class="co">##    .y1                5.456    0.272    4.918    5.983    5.456    2.324</span></span>
-<span><span class="co">##    .y2                4.238    0.415    3.432    5.036    4.238    1.167</span></span>
-<span><span class="co">##    .y3                6.557    0.363    5.851    7.276    6.557    2.068</span></span>
-<span><span class="co">##    .y4                4.441    0.350    3.740    5.108    4.441    1.472</span></span>
-<span><span class="co">##    .y5                5.124    0.329    4.482    5.780    5.124    1.804</span></span>
-<span><span class="co">##    .y6                2.963    0.407    2.152    3.777    2.963    0.832</span></span>
-<span><span class="co">##    .y7                6.188    0.400    5.413    6.975    6.188    1.802</span></span>
-<span><span class="co">##    .y8                4.031    0.413    3.232    4.861    4.031    1.139</span></span>
+<span><span class="co">##    .x1                5.054    0.090    4.881    5.234    5.054    6.597</span></span>
+<span><span class="co">##    .x2                4.791    0.186    4.421    5.159    4.791    3.025</span></span>
+<span><span class="co">##    .x3                3.555    0.171    3.229    3.900    3.555    2.421</span></span>
+<span><span class="co">##    .y1                5.452    0.273    4.921    5.993    5.452    2.321</span></span>
+<span><span class="co">##    .y2                4.241    0.424    3.410    5.053    4.241    1.170</span></span>
+<span><span class="co">##    .y3                6.552    0.376    5.813    7.291    6.552    2.061</span></span>
+<span><span class="co">##    .y4                4.443    0.359    3.738    5.158    4.443    1.472</span></span>
+<span><span class="co">##    .y5                5.128    0.337    4.478    5.803    5.128    1.807</span></span>
+<span><span class="co">##    .y6                2.960    0.422    2.187    3.794    2.960    0.832</span></span>
+<span><span class="co">##    .y7                6.182    0.404    5.373    6.976    6.182    1.803</span></span>
+<span><span class="co">##    .y8                4.032    0.419    3.207    4.864    4.032    1.141</span></span>
 <span><span class="co">##     ind60             0.000                               0.000    0.000</span></span>
 <span><span class="co">##    .dem60             0.000                               0.000    0.000</span></span>
 <span><span class="co">##    .dem65             0.000                               0.000    0.000</span></span>
 <span><span class="co">##      Rhat    Prior       </span></span>
+<span><span class="co">##     1.002    normal(0,32)</span></span>
+<span><span class="co">##     1.002    normal(0,32)</span></span>
+<span><span class="co">##     1.002    normal(0,32)</span></span>
+<span><span class="co">##     1.001    normal(0,32)</span></span>
 <span><span class="co">##     1.000    normal(0,32)</span></span>
 <span><span class="co">##     1.001    normal(0,32)</span></span>
-<span><span class="co">##     1.002    normal(0,32)</span></span>
 <span><span class="co">##     1.003    normal(0,32)</span></span>
+<span><span class="co">##     1.001    normal(0,32)</span></span>
+<span><span class="co">##     1.000    normal(0,32)</span></span>
 <span><span class="co">##     1.002    normal(0,32)</span></span>
 <span><span class="co">##     1.002    normal(0,32)</span></span>
-<span><span class="co">##     1.004    normal(0,32)</span></span>
-<span><span class="co">##     1.002    normal(0,32)</span></span>
-<span><span class="co">##     1.002    normal(0,32)</span></span>
-<span><span class="co">##     1.003    normal(0,32)</span></span>
-<span><span class="co">##     1.003    normal(0,32)</span></span>
 <span><span class="co">##                          </span></span>
 <span><span class="co">##                          </span></span>
 <span><span class="co">##                          </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Variances:</span></span>
 <span><span class="co">##                    Estimate  Post.SD pi.lower pi.upper   Std.lv  Std.all</span></span>
-<span><span class="co">##    .x1                0.087    0.023    0.046    0.138    0.087    0.148</span></span>
-<span><span class="co">##    .x2                0.136    0.081    0.001    0.312    0.136    0.054</span></span>
-<span><span class="co">##    .x3                0.512    0.101    0.342    0.738    0.512    0.239</span></span>
-<span><span class="co">##    .y1                2.313    0.609    1.290    3.691    2.313    0.420</span></span>
-<span><span class="co">##    .y2                8.668    1.608    5.978   12.209    8.668    0.657</span></span>
-<span><span class="co">##    .y3                5.101    1.036    3.374    7.517    5.101    0.507</span></span>
-<span><span class="co">##    .y4                3.419    0.876    1.853    5.321    3.419    0.375</span></span>
-<span><span class="co">##    .y5                2.736    0.629    1.655    4.107    2.736    0.339</span></span>
-<span><span class="co">##    .y6                5.152    1.102    3.228    7.602    5.152    0.406</span></span>
-<span><span class="co">##    .y7                3.526    0.904    2.041    5.557    3.526    0.299</span></span>
-<span><span class="co">##    .y8                3.049    0.860    1.441    4.842    3.049    0.243</span></span>
+<span><span class="co">##    .x1                0.088    0.023    0.046    0.138    0.088    0.149</span></span>
+<span><span class="co">##    .x2                0.135    0.082    0.003    0.312    0.135    0.054</span></span>
+<span><span class="co">##    .x3                0.516    0.106    0.343    0.751    0.516    0.239</span></span>
+<span><span class="co">##    .y1                2.320    0.590    1.260    3.611    2.320    0.420</span></span>
+<span><span class="co">##    .y2                8.598    1.556    5.997   12.014    8.598    0.654</span></span>
+<span><span class="co">##    .y3                5.153    1.058    3.389    7.558    5.153    0.510</span></span>
+<span><span class="co">##    .y4                3.401    0.902    1.833    5.402    3.401    0.373</span></span>
+<span><span class="co">##    .y5                2.746    0.638    1.673    4.190    2.746    0.341</span></span>
+<span><span class="co">##    .y6                5.112    1.127    3.189    7.767    5.112    0.404</span></span>
+<span><span class="co">##    .y7                3.538    0.891    2.080    5.521    3.538    0.301</span></span>
+<span><span class="co">##    .y8                3.015    0.927    1.220    4.990    3.015    0.241</span></span>
 <span><span class="co">##     ind60             1.000                               1.000    1.000</span></span>
-<span><span class="co">##    .dem60             1.000                               0.667    0.667</span></span>
-<span><span class="co">##    .dem65             1.000                               0.400    0.400</span></span>
+<span><span class="co">##    .dem60             1.000                               0.665    0.665</span></span>
+<span><span class="co">##    .dem65             1.000                               0.401    0.401</span></span>
 <span><span class="co">##      Rhat    Prior       </span></span>
-<span><span class="co">##     1.001 gamma(1,.5)[sd]</span></span>
 <span><span class="co">##     1.002 gamma(1,.5)[sd]</span></span>
-<span><span class="co">##     1.000 gamma(1,.5)[sd]</span></span>
-<span><span class="co">##     1.002 gamma(1,.5)[sd]</span></span>
-<span><span class="co">##     0.999 gamma(1,.5)[sd]</span></span>
-<span><span class="co">##     0.999 gamma(1,.5)[sd]</span></span>
-<span><span class="co">##     0.999 gamma(1,.5)[sd]</span></span>
 <span><span class="co">##     1.000 gamma(1,.5)[sd]</span></span>
 <span><span class="co">##     1.000 gamma(1,.5)[sd]</span></span>
 <span><span class="co">##     1.000 gamma(1,.5)[sd]</span></span>
 <span><span class="co">##     1.001 gamma(1,.5)[sd]</span></span>
+<span><span class="co">##     1.001 gamma(1,.5)[sd]</span></span>
+<span><span class="co">##     1.000 gamma(1,.5)[sd]</span></span>
+<span><span class="co">##     1.000 gamma(1,.5)[sd]</span></span>
+<span><span class="co">##     1.000 gamma(1,.5)[sd]</span></span>
+<span><span class="co">##     1.001 gamma(1,.5)[sd]</span></span>
+<span><span class="co">##     0.999 gamma(1,.5)[sd]</span></span>
 <span><span class="co">##                          </span></span>
 <span><span class="co">##                          </span></span>
 <span><span class="co">##                          </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## R-Square:</span></span>
 <span><span class="co">##                    Estimate</span></span>
-<span><span class="co">##     x1                0.852</span></span>
+<span><span class="co">##     x1                0.851</span></span>
 <span><span class="co">##     x2                0.946</span></span>
 <span><span class="co">##     x3                0.761</span></span>
 <span><span class="co">##     y1                0.580</span></span>
-<span><span class="co">##     y2                0.343</span></span>
-<span><span class="co">##     y3                0.493</span></span>
-<span><span class="co">##     y4                0.625</span></span>
-<span><span class="co">##     y5                0.661</span></span>
-<span><span class="co">##     y6                0.594</span></span>
-<span><span class="co">##     y7                0.701</span></span>
-<span><span class="co">##     y8                0.757</span></span>
-<span><span class="co">##     dem60             0.333</span></span>
-<span><span class="co">##     dem65             0.600</span></span></code></pre>
+<span><span class="co">##     y2                0.346</span></span>
+<span><span class="co">##     y3                0.490</span></span>
+<span><span class="co">##     y4                0.627</span></span>
+<span><span class="co">##     y5                0.659</span></span>
+<span><span class="co">##     y6                0.596</span></span>
+<span><span class="co">##     y7                0.699</span></span>
+<span><span class="co">##     y8                0.759</span></span>
+<span><span class="co">##     dem60             0.335</span></span>
+<span><span class="co">##     dem65             0.599</span></span></code></pre>
 <p>To calculate the probability of direction we will use a function from
 the package <code>brms</code> <span class="citation">(Bürkner
 2017)</span></p>
@@ -423,7 +423,7 @@ intervals</p>
 <span><span class="co">## <span style="color: #00BBBB;">•</span> `ly_sign[7]` -&gt; `ly_sign[7]...11`</span></span></code></pre>
 <pre><code><span><span class="co">## Hypothesis Tests for class :</span></span>
 <span><span class="co">##          Hypothesis Estimate Est.Error CI.Lower CI.Upper Evid.Ratio Post.Prob</span></span>
-<span><span class="co">## 1 (bet_sign[2]) &gt; 0     0.25      0.18    -0.04     0.55      12.51      0.93</span></span>
+<span><span class="co">## 1 (bet_sign[2]) &gt; 0     0.25      0.18    -0.04     0.55      10.49      0.91</span></span>
 <span><span class="co">##   Star</span></span>
 <span><span class="co">## 1     </span></span>
 <span><span class="co">## ---</span></span>
@@ -461,7 +461,7 @@ distribution fulfills the hypothesis.</p>
 <span><span class="co">## <span style="color: #00BBBB;">•</span> `ly_sign[7]` -&gt; `ly_sign[7]...11`</span></span></code></pre>
 <pre><code><span><span class="co">## Hypothesis Tests for class :</span></span>
 <span><span class="co">##          Hypothesis Estimate Est.Error CI.Lower CI.Upper Evid.Ratio Post.Prob</span></span>
-<span><span class="co">## 1 (bet_sign[1]) &gt; 0     0.71      0.18     0.44        1        Inf         1</span></span>
+<span><span class="co">## 1 (bet_sign[1]) &gt; 0     0.71      0.17     0.44     1.01        Inf         1</span></span>
 <span><span class="co">##   Star</span></span>
 <span><span class="co">## 1    *</span></span>
 <span><span class="co">## ---</span></span>
@@ -489,7 +489,7 @@ higher than <code>dem65~ind60</code>, and the mean of the difference
 <span><span class="co">## <span style="color: #00BBBB;">•</span> `ly_sign[7]` -&gt; `ly_sign[7]...11`</span></span></code></pre>
 <pre><code><span><span class="co">## Hypothesis Tests for class :</span></span>
 <span><span class="co">##                 Hypothesis Estimate Est.Error CI.Lower CI.Upper Evid.Ratio</span></span>
-<span><span class="co">## 1 (bet_sign[1]-bet_... &gt; 0     0.45      0.26     0.04      0.9      27.85</span></span>
+<span><span class="co">## 1 (bet_sign[1]-bet_... &gt; 0     0.46      0.26     0.04     0.91         29</span></span>
 <span><span class="co">##   Post.Prob Star</span></span>
 <span><span class="co">## 1      0.97    *</span></span>
 <span><span class="co">## ---</span></span>
@@ -536,9 +536,9 @@ value for standardized regressions, in this case we find that
 <span><span class="co">## <span style="color: #00BBBB;">•</span> `ly_sign[7]` -&gt; `ly_sign[7]...11`</span></span></code></pre>
 <pre><code><span><span class="co">## Hypothesis Tests for class :</span></span>
 <span><span class="co">##               Hypothesis Estimate Est.Error CI.Lower CI.Upper Evid.Ratio</span></span>
-<span><span class="co">## 1 (bet_sign[2])-(.1) &gt; 0     0.15      0.18    -0.14     0.45       4.07</span></span>
+<span><span class="co">## 1 (bet_sign[2])-(.1) &gt; 0     0.15      0.18    -0.14     0.45       3.82</span></span>
 <span><span class="co">##   Post.Prob Star</span></span>
-<span><span class="co">## 1       0.8     </span></span>
+<span><span class="co">## 1      0.79     </span></span>
 <span><span class="co">## ---</span></span>
 <span><span class="co">## 'CI': 90%-CI for one-sided and 95%-CI for two-sided hypotheses.</span></span>
 <span><span class="co">## '*': For one-sided hypotheses, the posterior probability exceeds 95%;</span></span>

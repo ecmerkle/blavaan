@@ -183,9 +183,9 @@ bc12
     ## Computed from 3000 by 75 log-likelihood matrix.
     ## 
     ##          Estimate   SE
-    ## elpd_loo  -1606.0 19.5
-    ## p_loo        37.4  2.9
-    ## looic      3211.9 39.0
+    ## elpd_loo  -1606.4 19.5
+    ## p_loo        37.8  2.9
+    ## looic      3212.7 39.0
     ## ------
     ## MCSE of elpd_loo is 0.2.
     ## MCSE and ESS estimates assume MCMC draws (r_eff in [0.7, 1.3]).
@@ -198,9 +198,9 @@ bc12
     ## Computed from 3000 by 75 log-likelihood matrix.
     ## 
     ##          Estimate   SE
-    ## elpd_loo  -1646.7 18.9
-    ## p_loo        34.4  2.7
-    ## looic      3293.4 37.8
+    ## elpd_loo  -1647.2 18.9
+    ## p_loo        34.9  2.8
+    ## looic      3294.4 37.8
     ## ------
     ## MCSE of elpd_loo is 0.2.
     ## MCSE and ESS estimates assume MCMC draws (r_eff in [0.6, 1.2]).
@@ -212,7 +212,7 @@ bc12
     ## $diff_loo
     ##   model elpd_diff se_diff p_worse diag_diff diag_elpd
     ##  model1       0.0     0.0      NA                    
-    ##  model2     -40.8     7.9    1.00   N < 100
+    ##  model2     -40.8     8.0    1.00   N < 100
 
     ## 
     ## Diagnostic flags present.
@@ -226,28 +226,28 @@ bc12
     ## Computed from 3000 by 75 log-likelihood matrix.
     ## 
     ##           Estimate   SE
-    ## elpd_waic  -1605.7 19.5
-    ## p_waic        37.1  2.8
-    ## waic        3211.3 39.0
+    ## elpd_waic  -1606.1 19.5
+    ## p_waic        37.6  2.9
+    ## waic        3212.3 39.0
     ## 
-    ## 38 (50.7%) p_waic estimates greater than 0.4. We recommend trying loo instead. 
+    ## 37 (49.3%) p_waic estimates greater than 0.4. We recommend trying loo instead. 
     ## 
     ## $waic[[2]]
     ## 
     ## Computed from 3000 by 75 log-likelihood matrix.
     ## 
     ##           Estimate   SE
-    ## elpd_waic  -1646.4 18.8
-    ## p_waic        34.1  2.7
-    ## waic        3292.8 37.7
+    ## elpd_waic  -1646.9 18.8
+    ## p_waic        34.6  2.7
+    ## waic        3293.7 37.7
     ## 
-    ## 32 (42.7%) p_waic estimates greater than 0.4. We recommend trying loo instead. 
+    ## 34 (45.3%) p_waic estimates greater than 0.4. We recommend trying loo instead. 
     ## 
     ## 
     ## $diff_waic
     ##   model elpd_diff se_diff p_worse diag_diff diag_elpd
     ##  model1       0.0     0.0      NA                    
-    ##  model2     -40.7     7.9    1.00   N < 100
+    ##  model2     -40.7     8.0    1.00   N < 100
 
     ## 
     ## Diagnostic flags present.
@@ -263,7 +263,7 @@ that the model with the estimated regressions is better
 abs(bc12$diff_loo[,"elpd_diff"] / bc12$diff_loo[,"se_diff"])
 ```
 
-    ## [1]      NaN 5.156885
+    ## [1]      NaN 5.117643
 
 Now, lets look at an example with a smaller difference between models,
 where only the smallest regression (`dem65~ind60`) is fixed to $`0`$.
@@ -315,9 +315,9 @@ bc13
     ## Computed from 3000 by 75 log-likelihood matrix.
     ## 
     ##          Estimate   SE
-    ## elpd_loo  -1606.0 19.5
-    ## p_loo        37.4  2.9
-    ## looic      3211.9 39.0
+    ## elpd_loo  -1606.4 19.5
+    ## p_loo        37.8  2.9
+    ## looic      3212.7 39.0
     ## ------
     ## MCSE of elpd_loo is 0.2.
     ## MCSE and ESS estimates assume MCMC draws (r_eff in [0.7, 1.3]).
@@ -330,12 +330,12 @@ bc13
     ## Computed from 3000 by 75 log-likelihood matrix.
     ## 
     ##          Estimate   SE
-    ## elpd_loo  -1605.9 19.4
-    ## p_loo        36.6  2.8
-    ## looic      3211.8 38.8
+    ## elpd_loo  -1606.6 19.4
+    ## p_loo        37.5  2.9
+    ## looic      3213.3 38.9
     ## ------
     ## MCSE of elpd_loo is 0.2.
-    ## MCSE and ESS estimates assume MCMC draws (r_eff in [0.5, 1.2]).
+    ## MCSE and ESS estimates assume MCMC draws (r_eff in [0.6, 1.3]).
     ## 
     ## All Pareto k estimates are good (k < 0.7).
     ## See help('pareto-k-diagnostic') for details.
@@ -343,8 +343,8 @@ bc13
     ## 
     ## $diff_loo
     ##   model elpd_diff se_diff p_worse diag_diff diag_elpd
-    ##  model2       0.0     0.0      NA                    
-    ##  model1      -0.1     1.0    0.52   N < 100
+    ##  model1       0.0     0.0      NA                    
+    ##  model2      -0.3     0.9    0.62   N < 100
 
     ## 
     ## Diagnostic flags present.
@@ -358,28 +358,28 @@ bc13
     ## Computed from 3000 by 75 log-likelihood matrix.
     ## 
     ##           Estimate   SE
-    ## elpd_waic  -1605.7 19.5
-    ## p_waic        37.1  2.8
-    ## waic        3211.3 39.0
+    ## elpd_waic  -1606.1 19.5
+    ## p_waic        37.6  2.9
+    ## waic        3212.3 39.0
     ## 
-    ## 38 (50.7%) p_waic estimates greater than 0.4. We recommend trying loo instead. 
+    ## 37 (49.3%) p_waic estimates greater than 0.4. We recommend trying loo instead. 
     ## 
     ## $waic[[2]]
     ## 
     ## Computed from 3000 by 75 log-likelihood matrix.
     ## 
     ##           Estimate   SE
-    ## elpd_waic  -1605.6 19.3
-    ## p_waic        36.3  2.8
-    ## waic        3211.2 38.7
+    ## elpd_waic  -1606.3 19.4
+    ## p_waic        37.2  2.9
+    ## waic        3212.7 38.8
     ## 
-    ## 36 (48.0%) p_waic estimates greater than 0.4. We recommend trying loo instead. 
+    ## 39 (52.0%) p_waic estimates greater than 0.4. We recommend trying loo instead. 
     ## 
     ## 
     ## $diff_waic
     ##   model elpd_diff se_diff p_worse diag_diff diag_elpd
-    ##  model2       0.0     0.0      NA                    
-    ##  model1      -0.1     1.0    0.52   N < 100
+    ##  model1       0.0     0.0      NA                    
+    ##  model2      -0.2     0.9    0.59   N < 100
 
     ## 
     ## Diagnostic flags present.
@@ -391,7 +391,7 @@ bc13
 abs(bc13$diff_loo[,"elpd_diff"] / bc13$diff_loo[,"se_diff"])
 ```
 
-    ## [1]        NaN 0.05527664
+    ## [1]       NaN 0.3083415
 
 Lets do one last model, where only the largest regression
 (`dem65~dem60`) is fixed to $`0`$.
@@ -442,9 +442,9 @@ bc14
     ## Computed from 3000 by 75 log-likelihood matrix.
     ## 
     ##          Estimate   SE
-    ## elpd_loo  -1606.0 19.5
-    ## p_loo        37.4  2.9
-    ## looic      3211.9 39.0
+    ## elpd_loo  -1606.4 19.5
+    ## p_loo        37.8  2.9
+    ## looic      3212.7 39.0
     ## ------
     ## MCSE of elpd_loo is 0.2.
     ## MCSE and ESS estimates assume MCMC draws (r_eff in [0.7, 1.3]).
@@ -457,9 +457,9 @@ bc14
     ## Computed from 3000 by 75 log-likelihood matrix.
     ## 
     ##          Estimate   SE
-    ## elpd_loo  -1629.5 19.9
-    ## p_loo        37.9  3.0
-    ## looic      3259.0 39.7
+    ## elpd_loo  -1629.8 19.9
+    ## p_loo        38.2  3.0
+    ## looic      3259.6 39.8
     ## ------
     ## MCSE of elpd_loo is 0.2.
     ## MCSE and ESS estimates assume MCMC draws (r_eff in [0.6, 1.2]).
@@ -471,7 +471,7 @@ bc14
     ## $diff_loo
     ##   model elpd_diff se_diff p_worse diag_diff diag_elpd
     ##  model1       0.0     0.0      NA                    
-    ##  model2     -23.5     4.0    1.00   N < 100
+    ##  model2     -23.4     4.1    1.00   N < 100
 
     ## 
     ## Diagnostic flags present.
@@ -485,20 +485,20 @@ bc14
     ## Computed from 3000 by 75 log-likelihood matrix.
     ## 
     ##           Estimate   SE
-    ## elpd_waic  -1605.7 19.5
-    ## p_waic        37.1  2.8
-    ## waic        3211.3 39.0
+    ## elpd_waic  -1606.1 19.5
+    ## p_waic        37.6  2.9
+    ## waic        3212.3 39.0
     ## 
-    ## 38 (50.7%) p_waic estimates greater than 0.4. We recommend trying loo instead. 
+    ## 37 (49.3%) p_waic estimates greater than 0.4. We recommend trying loo instead. 
     ## 
     ## $waic[[2]]
     ## 
     ## Computed from 3000 by 75 log-likelihood matrix.
     ## 
     ##           Estimate   SE
-    ## elpd_waic  -1629.3 19.8
-    ## p_waic        37.6  3.0
-    ## waic        3258.6 39.7
+    ## elpd_waic  -1629.5 19.8
+    ## p_waic        37.9  2.9
+    ## waic        3258.9 39.7
     ## 
     ## 37 (49.3%) p_waic estimates greater than 0.4. We recommend trying loo instead. 
     ## 
@@ -506,7 +506,7 @@ bc14
     ## $diff_waic
     ##   model elpd_diff se_diff p_worse diag_diff diag_elpd
     ##  model1       0.0     0.0      NA                    
-    ##  model2     -23.6     4.0    1.00   N < 100
+    ##  model2     -23.3     4.1    1.00   N < 100
 
     ## 
     ## Diagnostic flags present.
@@ -518,7 +518,7 @@ bc14
 abs(bc14$diff_loo[,"elpd_diff"] / bc14$diff_loo[,"se_diff"])
 ```
 
-    ## [1]      NaN 5.943907
+    ## [1]     NaN 5.68211
 
 ### Bayes factor
 
