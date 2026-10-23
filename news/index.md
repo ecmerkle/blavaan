@@ -127,6 +127,10 @@ CRAN release: 2026-08-22
   blavaan::bcfa() etc. without library(blavaan), and when called via
   do.call() (reported by Florian Kohrt).
 
+- blavCompare() uses the likelihood of the data-augmented continuous
+  variables, instead of the ordinal likelihood, when computing WAIC/LOO
+  for models with ordinal variables (reported by Florian Kohrt).
+
 ## Version 0.5-10
 
 CRAN release: 2026-01-20

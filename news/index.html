@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6-1.1482</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6-1.1484</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,7 +78,8 @@
 </ul></div>
 <div class="section level3">
 <h3 id="bugsglitches-0-6-1">Bugs/glitches:<a class="anchor" aria-label="anchor" href="#bugsglitches-0-6-1"></a></h3>
-<ul><li>bcfa(), bsem() and bgrowth() do not work when called as blavaan::bcfa() etc. without library(blavaan), and when called via do.call() (reported by Florian Kohrt).</li>
+<ul><li><p>bcfa(), bsem() and bgrowth() do not work when called as blavaan::bcfa() etc. without library(blavaan), and when called via do.call() (reported by Florian Kohrt).</p></li>
+<li><p>blavCompare() uses the likelihood of the data-augmented continuous variables, instead of the ordinal likelihood, when computing WAIC/LOO for models with ordinal variables (reported by Florian Kohrt).</p></li>
 </ul></div>
 </div>
     <div class="section level2">

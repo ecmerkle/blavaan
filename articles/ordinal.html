@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">blavaan</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6-1.1482</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6-1.1484</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -258,9 +258,15 @@ We currently rely on the <code>sadmvn()</code> function from the
 <em>mnormt</em> package <span class="citation">(Azzalini and Genz
 2020)</span>, which uses a subregion adaptive integration method by
 <span class="citation">Genz (1992)</span> that is fast and accurate
-(when there are about 15 or fewer ordinal variables in the model). A
-second possibility involves Monte Carlo simulation, which is implemented
-in the <em>tmvnsim</em> package <span class="citation">(Bhattacjarjee
+(when there are about 15 or fewer ordinal variables in the model; with
+more than 20, <em>blavaan</em> automatically switches to the Monte Carlo
+method described next). Because this likelihood is expensive, it is not
+computed during model estimation by default (ordinal models default to
+<code>test = "none"</code>). It is instead computed on demand by
+<code><a href="https://rdrr.io/pkg/lavaan/man/fitMeasures.html" class="external-link">fitMeasures()</a></code> and <code><a href="../reference/blavCompare.html">blavCompare()</a></code>, so those
+functions may take a while for ordinal models. A second possibility
+involves Monte Carlo simulation, which is implemented in the
+<em>tmvnsim</em> package <span class="citation">(Bhattacjarjee
 2016)</span>. For each case, we generate many random samples from the
 appropriate truncated multivariate normal and average over the resulting
 importance sampling weights. The procedure is computationally intensive
@@ -321,22 +327,27 @@ far from the posterior means reported by <em>blavaan</em>. The
 <div class="section level3">
 <h3 id="posterior-predictive-p-values">Posterior Predictive p-values<a class="anchor" aria-label="anchor" href="#posterior-predictive-p-values"></a>
 </h3>
-<p>Posterior predictive p-value (ppp) computations receive a speed boost
-in the 0.4 series. These computations now occur in Stan, whereas they
-previously occurred in R after model estimation. As discussed by <span class="citation">Asparouhov and Muthén (2021)</span>, the ppp
-computations needed for models with missing data can be excessively
-slow, requiring us to run an EM algorithm for each posterior sample in
-order to find the “H1” (“saturated”) model covariance matrix. The
-solution by <span class="citation">Asparouhov and Muthén (2021)</span>
-involves the realization that we do not need to use a fully-optimized H1
-covariance matrix in order to compute the ppp. In <em>blavaan</em>, we
-consequently run an EM algorithm for a fixed number of iterations in
-order to compute an H1 covariance matrix that is “good enough” for the
-ppp. The default number of iterations it set to 20, and users can change
-the default by supplying an <code>emiter</code> value via the
-<code>mcmcextra</code> argument. For example,</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">mcmcextra</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>emiter <span class="op">=</span> <span class="fl">50</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>For models with ordinal variables, posterior predictive p-values
+(ppp) are not computed during model estimation by default, because
+<code>test</code> defaults to <code>"none"</code> for these models. You
+can obtain the ppp after estimation via <code>ppp(fit)</code>. Earlier
+versions of <em>blavaan</em> computed the ppp in Stan, comparing the
+fitted model to a saturated model on the continuous
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>y</mi><mo>*</mo></msup><annotation encoding="application/x-tex">y^*</annotation></semantics></math>
+variables. That comparison tended to overstate the fit of ordinal
+models, so it was replaced in <em>blavaan</em> 0.6-1.</p>
+<p>The current ppp is based on a limited-information statistic that
+involves pairs of observed variables, computed in R from the saved
+posterior draws. Pairs of ordinal variables are handled via
+<em>lavaan</em>’s <code><a href="https://rdrr.io/pkg/lavaan/man/lavTables.html" class="external-link">lavTables()</a></code> machinery, while
+ordinal-continuous and continuous-continuous pairs use dedicated
+deviance- and correlation-based statistics. Models with only continuous
+variables are unaffected: their ppp is still computed in Stan by
+default. With missing data, this involves running an EM algorithm for a
+fixed number of iterations to obtain a “good enough” saturated
+covariance matrix <span class="citation">(Asparouhov and Muthén
+2021)</span>. The default is 20 iterations, which can be changed via
+<code>mcmcextra = list(data = list(emiter = 50))</code>.</p>
 </div>
 <div class="section level3">
 <h3 id="jacobians">Jacobians<a class="anchor" aria-label="anchor" href="#jacobians"></a>
@@ -391,7 +402,7 @@ which is
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><msup><mi>σ</mi><mrow><mi>−</mi><mn>3</mn></mrow></msup></mrow><annotation encoding="application/x-tex">2 \sigma^{-3}</annotation></semantics></math>.
 In the Stan file, we would then add the log of this Jacobian to
 <code>target</code>:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>target <span class="op">+=</span> log<span class="op">(</span><span class="dv">2</span><span class="op">)</span> <span class="op">-</span> <span class="dv">3</span><span class="op">*</span>log<span class="op">(</span>sigma<span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>target <span class="op">+=</span> log<span class="op">(</span><span class="dv">2</span><span class="op">)</span> <span class="op">-</span> <span class="dv">3</span><span class="op">*</span>log<span class="op">(</span>sigma<span class="op">)</span></span></code></pre></div>
 <p>Further examples and discussion can be found in:</p>
 <p><a href="https://mc-stan.org/users/documentation/case-studies/mle-params.html" class="external-link uri">https://mc-stan.org/users/documentation/case-studies/mle-params.html</a></p>
 </div>

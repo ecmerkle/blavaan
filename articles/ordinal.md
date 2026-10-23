@@ -161,16 +161,23 @@ approximating this CDF. We currently rely on the `sadmvn()` function
 from the *mnormt* package (Azzalini and Genz 2020), which uses a
 subregion adaptive integration method by Genz (1992) that is fast and
 accurate (when there are about 15 or fewer ordinal variables in the
-model). A second possibility involves Monte Carlo simulation, which is
-implemented in the *tmvnsim* package (Bhattacjarjee 2016). For each
-case, we generate many random samples from the appropriate truncated
-multivariate normal and average over the resulting importance sampling
-weights. The procedure is computationally intensive and also time
-intensive, so we have to balance the number of random samples drawn with
-the amount of time that it takes. If users wish to use `tmvnsim()`, they
-must declare the number of importance samples to draw. This is
-accomplished by setting `llnsamp` within the `mcmcextra$data` argument.
-For example, to draw 100 samples for the approximation, a call to
+model; with more than 20, *blavaan* automatically switches to the Monte
+Carlo method described next). Because this likelihood is expensive, it
+is not computed during model estimation by default (ordinal models
+default to `test = "none"`). It is instead computed on demand by
+[`fitMeasures()`](https://rdrr.io/pkg/lavaan/man/fitMeasures.html) and
+[`blavCompare()`](https://blavaan.org/reference/blavCompare.md), so
+those functions may take a while for ordinal models. A second
+possibility involves Monte Carlo simulation, which is implemented in the
+*tmvnsim* package (Bhattacjarjee 2016). For each case, we generate many
+random samples from the appropriate truncated multivariate normal and
+average over the resulting importance sampling weights. The procedure is
+computationally intensive and also time intensive, so we have to balance
+the number of random samples drawn with the amount of time that it
+takes. If users wish to use `tmvnsim()`, they must declare the number of
+importance samples to draw. This is accomplished by setting `llnsamp`
+within the `mcmcextra$data` argument. For example, to draw 100 samples
+for the approximation, a call to
 [`bsem()`](https://blavaan.org/reference/bsem.md) or similar functions
 would include the argument
 
@@ -219,25 +226,26 @@ estimates are usually closer to `estimator="PML"` in *lavaan*.
 
 ### Posterior Predictive p-values
 
-Posterior predictive p-value (ppp) computations receive a speed boost in
-the 0.4 series. These computations now occur in Stan, whereas they
-previously occurred in R after model estimation. As discussed by
-Asparouhov and Muthén (2021), the ppp computations needed for models
-with missing data can be excessively slow, requiring us to run an EM
-algorithm for each posterior sample in order to find the “H1”
-(“saturated”) model covariance matrix. The solution by Asparouhov and
-Muthén (2021) involves the realization that we do not need to use a
-fully-optimized H1 covariance matrix in order to compute the ppp. In
-*blavaan*, we consequently run an EM algorithm for a fixed number of
-iterations in order to compute an H1 covariance matrix that is “good
-enough” for the ppp. The default number of iterations it set to 20, and
-users can change the default by supplying an `emiter` value via the
-`mcmcextra` argument. For example,
+For models with ordinal variables, posterior predictive p-values (ppp)
+are not computed during model estimation by default, because `test`
+defaults to `"none"` for these models. You can obtain the ppp after
+estimation via `ppp(fit)`. Earlier versions of *blavaan* computed the
+ppp in Stan, comparing the fitted model to a saturated model on the
+continuous $`y^*`$ variables. That comparison tended to overstate the
+fit of ordinal models, so it was replaced in *blavaan* 0.6-1.
 
-``` r
-
-mcmcextra = list(data = list(emiter = 50))
-```
+The current ppp is based on a limited-information statistic that
+involves pairs of observed variables, computed in R from the saved
+posterior draws. Pairs of ordinal variables are handled via *lavaan*’s
+[`lavTables()`](https://rdrr.io/pkg/lavaan/man/lavTables.html)
+machinery, while ordinal-continuous and continuous-continuous pairs use
+dedicated deviance- and correlation-based statistics. Models with only
+continuous variables are unaffected: their ppp is still computed in Stan
+by default. With missing data, this involves running an EM algorithm for
+a fixed number of iterations to obtain a “good enough” saturated
+covariance matrix (Asparouhov and Muthén 2021). The default is 20
+iterations, which can be changed via
+`mcmcextra = list(data = list(emiter = 50))`.
 
 ### Jacobians
 
