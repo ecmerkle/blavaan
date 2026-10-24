@@ -131,6 +131,9 @@ CRAN release: 2026-08-22
   variables, instead of the ordinal likelihood, when computing WAIC/LOO
   for models with ordinal variables (reported by Florian Kohrt).
 
+- When used with lavaan 0.7-3, two-level models with save.lvs = TRUE
+  fail after estimation.
+
 ## Version 0.5-10
 
 CRAN release: 2026-01-20
