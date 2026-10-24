@@ -279,12 +279,14 @@ samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable,
   nblocks <- lavmodel@nblocks
   stanorig <- standata
 
-  lav_implied22l <- getFromNamespace("lav_mvnorm_cluster_implied22l", "lavaan")
-  ## lav_mvnorm_cluster_em_estep_ranef() was renamed to
-  ## lav_mvn_cl_em_estep_ranef() (with underscore-style lowercase argument
-  ## names) in lavaan 0.7-1; lav_mvnorm_cluster_implied22l() itself still
-  ## works unchanged (compat shim in lavaan's zzz_OLD_NONEXPORTED.R)
-  newname <- packageDescription("lavaan")$Version >= "0.7-1"
+  ## lavaan 0.7-x renamed these helpers, and implied22l's output now uses
+  ## underscore names (sigma_w), so names are normalized below
+  if (exists("lav_mvn_cl_implied22l", envir = asNamespace("lavaan"), inherits = FALSE)) {
+    lav_implied22l <- getFromNamespace("lav_mvn_cl_implied22l", "lavaan")
+  } else {
+    lav_implied22l <- getFromNamespace("lav_mvnorm_cluster_implied22l", "lavaan")
+  }
+  newname <- packageVersion("lavaan") >= "0.7.1"
   if(newname) {
     lav_estep <- getFromNamespace("lav_mvn_cl_em_estep_ranef", "lavaan")
   } else {
@@ -388,16 +390,17 @@ samp_lvs_2lev <- function(mcobj, lavmodel, lavsamplestats, lavdata, lavpartable,
             zimp[[g]] <- attr(mb_j, "z.imputed")
           } else {
             out <- lav_implied22l(lavdata@Lp[[g]], implied_g)
+            names(out) <- gsub(".", "_", names(out), fixed = TRUE)
             if(newname) {
               clusmns[[g]] <- lav_estep(ylp = lavsamplestats@YLp[[g]], lp = lavdata@Lp[[g]],
-                                        sigma_w = out$sigma.w, sigma_b = out$sigma.b,
-                                        sigma_zz = out$sigma.zz, sigma_yz = out$sigma.yz,
-                                        mu_z = out$mu.z, mu_w = out$mu.w, mu_b = out$mu.b, se = FALSE)
+                                        sigma_w = out$sigma_w, sigma_b = out$sigma_b,
+                                        sigma_zz = out$sigma_zz, sigma_yz = out$sigma_yz,
+                                        mu_z = out$mu_z, mu_w = out$mu_w, mu_b = out$mu_b, se = FALSE)
             } else {
               clusmns[[g]] <- lav_estep(YLp = lavsamplestats@YLp[[g]], Lp = lavdata@Lp[[g]],
-                                        sigma.w = out$sigma.w, sigma.b = out$sigma.b,
-                                        sigma.zz = out$sigma.zz, sigma.yz = out$sigma.yz,
-                                        mu.z = out$mu.z, mu.w = out$mu.w, mu.b = out$mu.b, se = FALSE)
+                                        sigma.w = out$sigma_w, sigma.b = out$sigma_b,
+                                        sigma.zz = out$sigma_zz, sigma.yz = out$sigma_yz,
+                                        mu.z = out$mu_z, mu.w = out$mu_w, mu.b = out$mu_b, se = FALSE)
             }
           }
         }
