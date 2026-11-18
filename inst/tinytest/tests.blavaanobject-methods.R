@@ -70,6 +70,17 @@ if (slow) expect_equal(length(fitMeasures(fitstan)),
 expect_equal(dim(parameterEstimates(fitstan)), c(10, 6))
 if (slow) expect_equal(dim(parameterEstimates(fitstanc)), c(10, 6))
 
+## Savage-Dickey log-BF with Stan priors (issue #113)
+pe <- data.frame(op = c("~", "~~"), est = c(.5, 1), se = c(.1, .1),
+                 prior = c("normal(0,1)", "gamma(1,.5)[sd]"))
+expect_equal(blavaan:::SDBF(pe, target = "stan"),
+             c(dnorm(0, 0, 1, log = TRUE) - dnorm(0, .5, .1, log = TRUE), NA))
+pe$prior[1] <- "dnorm(0,1)"
+expect_equal(blavaan:::SDBF(pe, target = "jags")[1],
+             dnorm(0, 0, 1, log = TRUE) - dnorm(0, .5, .1, log = TRUE))
+bfsumm <- summary(fitstan, header = FALSE, bf = TRUE, print = FALSE)
+expect_true(all(trimws(bfsumm$logBF[bfsumm$op == "~"]) != ""))
+
 if (slow) expect_equal(dim(standardizedposterior(fitstanc)),
              dim(standardizedposterior(fitstan)))
 

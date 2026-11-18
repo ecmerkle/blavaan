@@ -38,6 +38,8 @@
 
 * When used with lavaan 0.7-3, two-level models with save.lvs = TRUE fail after estimation.
 
+* summary(fit, bf = TRUE) fails with a "Bad prior specification" error for models estimated via Stan (reported by Kyle Hickerson).
+
 
 # Version 0.5-10
 ## New features

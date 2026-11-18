@@ -1191,7 +1191,7 @@ blavaan <- function(...,  # default lavaan arguments
   ## TODO fix this for stan
   lavpartable$logBF <- rep(NA, length(lavpartable$se))
   if(target == "jags") {
-    lavpartable$logBF <- SDBF(lavpartable)
+    lavpartable$logBF <- SDBF(lavpartable, target = "jags")
   }
 
   ## add monitors in mcmcextra as defined variables (except reserved monitors)

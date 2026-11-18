@@ -279,8 +279,9 @@ function(object, header       = TRUE,
             tmppri[peentry] <- newpt$prior[pte2]
             PE2$prior <- tmppri
           }
-          PE$logBF <- formatC(SDBF(PE2), digits = nd, format = "f")
-          PE$logBF[is.na(PE$logBF)] <- ""
+          bfval <- SDBF(PE2, target = blavInspect(object, "options")$target)
+          PE$logBF <- formatC(bfval, digits = nd, format = "f")
+          PE$logBF[is.na(bfval)] <- ""
           PE$logBF <- sprintf(char.format, PE$logBF)
         }
         
@@ -360,14 +361,17 @@ labelfun <- function(var) {
 axis_env <- new.env(parent = emptyenv())
 
 
-SDBF <- function(PE) {
+SDBF <- function(PE, target = "jags") {
   tmprow <- which(PE$op %in% c("~", "=~"))
 
   postdens <- dnorm(0, mean=PE$est[tmprow], sd=PE$se[tmprow], log=TRUE)
 
-  pricom <- jagsdist2r(PE$prior[tmprow])
+  ## all non-jags targets use Stan prior syntax
+  pricom <- try(dist2r(PE$prior[tmprow], target = ifelse(target == "jags", "jags", "stan")),
+                silent = TRUE)
   pridens <- rep(NA, length(tmprow))
-  for(i in 1:length(tmprow)) {
+  if(inherits(pricom, "try-error")) pricom <- vector("list", length(tmprow))
+  for(i in seq_along(tmprow)) {
     tmpdens <- try(eval_prior(pricom[[i]], 0, ""), silent=TRUE)
       
     if(!inherits(tmpdens, "try-error")) pridens[i] <- tmpdens
