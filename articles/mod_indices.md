@@ -90,17 +90,17 @@ summary(out, prob=.9, discFUN = "mod.ind_mi", sort.by="EAP", decreasing=T)[1:5,]
     ## 
     ## 
     ##               EAP Median    MAP     SD  lower  upper PPP_sim_GreaterThan_obs
-    ## visual=~x9 35.215 35.295 36.207 11.263 16.921 53.858                   0.017
-    ## x7~~x8     33.485 35.939 39.163 14.513  6.690 52.589                   0.069
-    ## x8~~x9     26.685 12.448  2.617 40.677  0.000 70.149                   0.319
-    ## x4~~x6     20.637  7.156  2.110 34.437  0.000 54.681                   0.456
-    ## visual=~x7 18.742 16.911 11.939 10.682  3.880 32.609                   0.014
+    ## visual=~x9 35.272 35.148 36.826 11.128 16.578 51.728                   0.010
+    ## x7~~x8     33.481 35.586 40.444 14.259  7.681 53.584                   0.072
+    ## x8~~x9     27.074 12.992  2.632 42.308  0.000 68.474                   0.312
+    ## x4~~x6     20.949  7.275  1.039 43.834  0.000 52.032                   0.459
+    ## visual=~x7 18.527 16.671 15.470 10.050  3.895 32.875                   0.009
     ##            PPP_sim_LessThan_obs
-    ## visual=~x9                0.983
-    ## x7~~x8                    0.931
-    ## x8~~x9                    0.681
-    ## x4~~x6                    0.544
-    ## visual=~x7                0.986
+    ## visual=~x9                0.990
+    ## x7~~x8                    0.928
+    ## x8~~x9                    0.688
+    ## x4~~x6                    0.541
+    ## visual=~x7                0.991
 
 But according to the posterior median, the parameter that would have the
 highest impact would be the residual correlation between indicators
@@ -118,16 +118,16 @@ summary(out, prob=.9, discFUN = "mod.ind_mi", sort.by="Median", decreasing=T)[1:
     ## 
     ## 
     ##                EAP Median    MAP     SD  lower  upper PPP_sim_GreaterThan_obs
-    ## x7~~x8      33.485 35.939 39.163 14.513  6.690 52.589                   0.069
-    ## visual=~x9  35.215 35.295 36.207 11.263 16.921 53.858                   0.017
-    ## visual=~x7  18.742 16.911 11.939 10.682  3.880 32.609                   0.014
-    ## x8~~x9      26.685 12.448  2.617 40.677  0.000 70.149                   0.319
-    ## textual=~x1 10.991  9.971  9.913  8.125  0.000 22.101                   0.219
+    ## x7~~x8      33.481 35.586 40.444 14.259  7.681 53.584                   0.072
+    ## visual=~x9  35.272 35.148 36.826 11.128 16.578 51.728                   0.010
+    ## visual=~x7  18.527 16.671 15.470 10.050  3.895 32.875                   0.009
+    ## x8~~x9      27.074 12.992  2.632 42.308  0.000 68.474                   0.312
+    ## textual=~x1 11.144 10.188 10.411  8.147  0.000 22.293                   0.219
     ##             PPP_sim_LessThan_obs
-    ## x7~~x8                     0.931
-    ## visual=~x9                 0.983
-    ## visual=~x7                 0.986
-    ## x8~~x9                     0.681
+    ## x7~~x8                     0.928
+    ## visual=~x9                 0.990
+    ## visual=~x7                 0.991
+    ## x8~~x9                     0.688
     ## textual=~x1                0.781
 
 The MI is still recommended as the best metric to indicate which
@@ -146,20 +146,20 @@ summary(out, prob=.9, discFUN = "mod.ind_sepc.all", sort.by="EAP", decreasing=T)
     ## 
     ## 
     ##               EAP Median   MAP    SD lower upper PPP_sim_GreaterThan_obs
-    ## x7~~x8      0.807  0.786 0.746 0.369 0.481 1.226                   0.043
-    ## visual=~x9  0.521  0.498 0.483 0.133 0.335 0.703                   0.009
-    ## textual=~x1 0.271  0.297 0.323 0.165 0.044 0.508                   0.129
-    ## x1~~x9      0.247  0.246 0.246 0.040 0.198 0.299                   0.022
-    ## x2~~x3      0.222  0.222 0.218 0.040 0.174 0.280                   0.023
+    ## x7~~x8      0.806  0.795 0.732 0.413 0.484 1.243                   0.042
+    ## visual=~x9  0.520  0.498 0.461 0.128 0.338 0.700                   0.005
+    ## textual=~x1 0.276  0.302 0.335 0.169 0.065 0.530                   0.124
+    ## x1~~x9      0.247  0.246 0.242 0.039 0.197 0.296                   0.019
+    ## x2~~x3      0.221  0.222 0.218 0.041 0.170 0.276                   0.024
     ##             PPP_sim_LessThan_obs
-    ## x7~~x8                     0.957
-    ## visual=~x9                 0.991
-    ## textual=~x1                0.871
-    ## x1~~x9                     0.978
-    ## x2~~x3                     0.977
+    ## x7~~x8                     0.958
+    ## visual=~x9                 0.995
+    ## textual=~x1                0.876
+    ## x1~~x9                     0.981
+    ## x2~~x3                     0.976
 
 Here we see that for the 2 highest parameters, the likely SEPC is x7x8 =
-0.807250019181851 and visual=~x9 = 0.520720661163884. With this
+0.805823931146606 and visual=~x9 = 0.520151689338022. With this
 information we can decide to include one of these new parameters in the
 model (one at the time). For this example, because factor loadings have
 a larger impact on the model-implied covariance matrix, I would choose

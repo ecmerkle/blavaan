@@ -43,7 +43,7 @@ intercepts and variances.
 summary(fit_df)
 ```
 
-    ## blavaan 0.6.1.1486 ended normally after 1000 iterations
+    ## blavaan 0.6.1.1487 ended normally after 1000 iterations
     ## 
     ##   Estimator                                      BAYES
     ##   Optimization method                             MCMC
@@ -52,7 +52,7 @@ summary(fit_df)
     ##   Number of observations                           301
     ## 
     ##   Statistic                                 MargLogLik         PPP
-    ##   Value                                      -3871.000       0.000
+    ##   Value                                      -3870.955       0.000
     ## 
     ## Parameter Estimates:
     ## 
@@ -60,52 +60,52 @@ summary(fit_df)
     ## Latent Variables:
     ##                    Estimate  Post.SD pi.lower pi.upper     Rhat    Prior       
     ##   visual =~                                                                    
-    ##     x1                0.910    0.087    0.746    1.083    1.000    normal(0,10)
-    ##     x2                0.500    0.082    0.343    0.661    0.999    normal(0,10)
-    ##     x3                0.662    0.079    0.508    0.819    1.000    normal(0,10)
+    ##     x1                0.911    0.090    0.738    1.096    1.000    normal(0,10)
+    ##     x2                0.500    0.083    0.337    0.667    1.000    normal(0,10)
+    ##     x3                0.660    0.079    0.507    0.817    0.999    normal(0,10)
     ##   textual =~                                                                   
-    ##     x4                1.001    0.058    0.891    1.118    1.000    normal(0,10)
-    ##     x5                1.114    0.063    0.993    1.241    1.000    normal(0,10)
-    ##     x6                0.927    0.054    0.822    1.035    1.001    normal(0,10)
+    ##     x4                1.003    0.059    0.891    1.120    0.999    normal(0,10)
+    ##     x5                1.115    0.063    0.999    1.240    1.000    normal(0,10)
+    ##     x6                0.928    0.055    0.819    1.038    0.999    normal(0,10)
     ##   speed =~                                                                     
-    ##     x7                0.616    0.077    0.460    0.761    1.001    normal(0,10)
-    ##     x8                0.733    0.079    0.579    0.889    1.001    normal(0,10)
-    ##     x9                0.680    0.081    0.524    0.843    1.001    normal(0,10)
+    ##     x7                0.619    0.078    0.462    0.766    1.000    normal(0,10)
+    ##     x8                0.737    0.079    0.581    0.884    1.001    normal(0,10)
+    ##     x9                0.680    0.079    0.535    0.843    1.003    normal(0,10)
     ## 
     ## Covariances:
     ##                    Estimate  Post.SD pi.lower pi.upper     Rhat    Prior       
     ##   visual ~~                                                                    
-    ##     textual           0.450    0.065    0.315    0.572    1.000     lkj_corr(1)
-    ##     speed             0.463    0.087    0.290    0.627    1.000     lkj_corr(1)
+    ##     textual           0.449    0.066    0.314    0.574    1.000     lkj_corr(1)
+    ##     speed             0.459    0.084    0.291    0.620    1.003     lkj_corr(1)
     ##   textual ~~                                                                   
-    ##     speed             0.279    0.072    0.132    0.416    1.000     lkj_corr(1)
+    ##     speed             0.278    0.070    0.140    0.412    1.001     lkj_corr(1)
     ## 
     ## Intercepts:
     ##                    Estimate  Post.SD pi.lower pi.upper     Rhat    Prior       
-    ##    .x1                4.936    0.067    4.802    5.064    1.000    normal(0,32)
-    ##    .x2                6.088    0.067    5.958    6.221    0.999    normal(0,32)
-    ##    .x3                2.250    0.065    2.125    2.377    0.999    normal(0,32)
-    ##    .x4                3.059    0.067    2.931    3.183    1.001    normal(0,32)
-    ##    .x5                4.341    0.074    4.195    4.488    1.000    normal(0,32)
-    ##    .x6                2.185    0.063    2.062    2.307    0.999    normal(0,32)
-    ##    .x7                4.185    0.062    4.063    4.303    1.000    normal(0,32)
-    ##    .x8                5.526    0.059    5.412    5.641    1.000    normal(0,32)
-    ##    .x9                5.374    0.058    5.260    5.490    1.000    normal(0,32)
+    ##    .x1                4.936    0.069    4.800    5.070    0.999    normal(0,32)
+    ##    .x2                6.088    0.068    5.954    6.220    0.999    normal(0,32)
+    ##    .x3                2.251    0.065    2.124    2.377    1.000    normal(0,32)
+    ##    .x4                3.059    0.069    2.927    3.198    1.000    normal(0,32)
+    ##    .x5                4.339    0.076    4.185    4.490    0.999    normal(0,32)
+    ##    .x6                2.184    0.065    2.061    2.314    1.001    normal(0,32)
+    ##    .x7                4.186    0.064    4.067    4.312    1.000    normal(0,32)
+    ##    .x8                5.526    0.060    5.409    5.643    1.000    normal(0,32)
+    ##    .x9                5.373    0.060    5.255    5.492    1.001    normal(0,32)
     ##     visual            0.000                                                    
     ##     textual           0.000                                                    
     ##     speed             0.000                                                    
     ## 
     ## Variances:
     ##                    Estimate  Post.SD pi.lower pi.upper     Rhat    Prior       
-    ##    .x1                0.555    0.127    0.292    0.792    1.000 gamma(1,.5)[sd]
-    ##    .x2                1.149    0.105    0.956    1.361    1.000 gamma(1,.5)[sd]
-    ##    .x3                0.859    0.100    0.673    1.058    1.000 gamma(1,.5)[sd]
-    ##    .x4                0.379    0.049    0.287    0.479    1.000 gamma(1,.5)[sd]
-    ##    .x5                0.455    0.060    0.347    0.580    1.000 gamma(1,.5)[sd]
-    ##    .x6                0.363    0.046    0.281    0.458    1.000 gamma(1,.5)[sd]
-    ##    .x7                0.821    0.092    0.654    1.010    1.000 gamma(1,.5)[sd]
-    ##    .x8                0.502    0.096    0.313    0.694    1.001 gamma(1,.5)[sd]
-    ##    .x9                0.567    0.096    0.369    0.743    1.001 gamma(1,.5)[sd]
+    ##    .x1                0.551    0.132    0.275    0.794    1.000 gamma(1,.5)[sd]
+    ##    .x2                1.153    0.108    0.956    1.376    1.000 gamma(1,.5)[sd]
+    ##    .x3                0.859    0.098    0.674    1.053    0.999 gamma(1,.5)[sd]
+    ##    .x4                0.379    0.050    0.284    0.480    1.000 gamma(1,.5)[sd]
+    ##    .x5                0.456    0.059    0.344    0.575    1.000 gamma(1,.5)[sd]
+    ##    .x6                0.364    0.046    0.278    0.458    1.000 gamma(1,.5)[sd]
+    ##    .x7                0.818    0.091    0.649    1.011    1.001 gamma(1,.5)[sd]
+    ##    .x8                0.501    0.095    0.327    0.695    1.003 gamma(1,.5)[sd]
+    ##    .x9                0.569    0.096    0.375    0.749    1.005 gamma(1,.5)[sd]
     ##     visual            1.000                                                    
     ##     textual           1.000                                                    
     ##     speed             1.000
@@ -154,7 +154,7 @@ interval.
 summary(fit_cl)
 ```
 
-    ## blavaan 0.6.1.1486 ended normally after 1000 iterations
+    ## blavaan 0.6.1.1487 ended normally after 1000 iterations
     ## 
     ##   Estimator                                      BAYES
     ##   Optimization method                             MCMC
@@ -163,7 +163,7 @@ summary(fit_cl)
     ##   Number of observations                           301
     ## 
     ##   Statistic                                 MargLogLik         PPP
-    ##   Value                                      -3858.976       0.124
+    ##   Value                                      -3858.848       0.122
     ## 
     ## Parameter Estimates:
     ## 
@@ -171,73 +171,73 @@ summary(fit_cl)
     ## Latent Variables:
     ##                    Estimate  Post.SD pi.lower pi.upper     Rhat    Prior       
     ##   visual =~                                                                    
-    ##     x1                0.766    0.098    0.581    0.967    1.001    normal(0,10)
-    ##     x2                0.565    0.093    0.387    0.749    1.000    normal(0,10)
-    ##     x3                0.768    0.096    0.585    0.961    1.000    normal(0,10)
+    ##     x1                0.763    0.100    0.577    0.969    1.000    normal(0,10)
+    ##     x2                0.566    0.089    0.394    0.740    1.000    normal(0,10)
+    ##     x3                0.770    0.095    0.589    0.964    1.000    normal(0,10)
     ##   textual =~                                                                   
-    ##     x4                0.985    0.064    0.862    1.112    1.000    normal(0,10)
-    ##     x5                1.156    0.071    1.021    1.300    1.000    normal(0,10)
-    ##     x6                0.893    0.060    0.778    1.013    1.001    normal(0,10)
+    ##     x4                0.985    0.062    0.868    1.108    1.000    normal(0,10)
+    ##     x5                1.155    0.073    1.017    1.303    1.000    normal(0,10)
+    ##     x6                0.894    0.060    0.782    1.015    1.000    normal(0,10)
     ##   speed =~                                                                     
-    ##     x7                0.724    0.085    0.561    0.894    1.000    normal(0,10)
-    ##     x8                0.795    0.083    0.635    0.963    1.003    normal(0,10)
-    ##     x9                0.542    0.072    0.404    0.690    1.000    normal(0,10)
+    ##     x7                0.728    0.087    0.563    0.903    1.000    normal(0,10)
+    ##     x8                0.793    0.086    0.632    0.967    1.000    normal(0,10)
+    ##     x9                0.543    0.073    0.399    0.685    1.001    normal(0,10)
     ##   visual =~                                                                    
-    ##     x4                0.030    0.059   -0.083    0.145    1.000   normal(0,.08)
-    ##     x5               -0.073    0.062   -0.196    0.044    1.000   normal(0,.08)
-    ##     x6                0.061    0.055   -0.047    0.171    1.000   normal(0,.08)
-    ##     x7               -0.128    0.064   -0.256   -0.000    1.000   normal(0,.08)
-    ##     x8               -0.007    0.067   -0.139    0.122    1.000   normal(0,.08)
-    ##     x9                0.192    0.059    0.075    0.309    0.999   normal(0,.08)
+    ##     x4                0.031    0.058   -0.082    0.142    0.999   normal(0,.08)
+    ##     x5               -0.073    0.064   -0.197    0.052    1.000   normal(0,.08)
+    ##     x6                0.062    0.056   -0.050    0.168    1.000   normal(0,.08)
+    ##     x7               -0.131    0.067   -0.262    0.000    1.000   normal(0,.08)
+    ##     x8               -0.007    0.066   -0.141    0.119    0.999   normal(0,.08)
+    ##     x9                0.191    0.060    0.075    0.309    1.000   normal(0,.08)
     ##   textual =~                                                                   
-    ##     x1                0.107    0.067   -0.028    0.235    1.000   normal(0,.08)
-    ##     x2                0.005    0.060   -0.118    0.123    1.000   normal(0,.08)
-    ##     x3               -0.088    0.062   -0.211    0.028    1.000   normal(0,.08)
-    ##     x7                0.017    0.062   -0.105    0.138    1.001   normal(0,.08)
-    ##     x8               -0.038    0.061   -0.158    0.084    1.001   normal(0,.08)
-    ##     x9                0.033    0.054   -0.072    0.137    1.000   normal(0,.08)
+    ##     x1                0.109    0.066   -0.021    0.239    1.000   normal(0,.08)
+    ##     x2                0.005    0.060   -0.115    0.122    1.000   normal(0,.08)
+    ##     x3               -0.087    0.063   -0.212    0.037    0.999   normal(0,.08)
+    ##     x7                0.016    0.062   -0.109    0.137    1.001   normal(0,.08)
+    ##     x8               -0.039    0.063   -0.168    0.081    1.000   normal(0,.08)
+    ##     x9                0.033    0.054   -0.073    0.141    1.000   normal(0,.08)
     ##   speed =~                                                                     
-    ##     x1                0.041    0.065   -0.084    0.163    0.999   normal(0,.08)
-    ##     x2               -0.048    0.064   -0.172    0.076    0.999   normal(0,.08)
-    ##     x3                0.027    0.065   -0.102    0.154    0.999   normal(0,.08)
-    ##     x4               -0.008    0.055   -0.117    0.102    1.000   normal(0,.08)
-    ##     x5                0.006    0.060   -0.115    0.120    1.000   normal(0,.08)
-    ##     x6               -0.002    0.052   -0.106    0.099    1.001   normal(0,.08)
+    ##     x1                0.041    0.065   -0.085    0.167    1.000   normal(0,.08)
+    ##     x2               -0.049    0.063   -0.176    0.070    0.999   normal(0,.08)
+    ##     x3                0.027    0.064   -0.098    0.151    1.001   normal(0,.08)
+    ##     x4               -0.006    0.056   -0.116    0.102    1.000   normal(0,.08)
+    ##     x5                0.006    0.060   -0.110    0.126    1.001   normal(0,.08)
+    ##     x6               -0.003    0.054   -0.107    0.102    1.000   normal(0,.08)
     ## 
     ## Covariances:
     ##                    Estimate  Post.SD pi.lower pi.upper     Rhat    Prior       
     ##   visual ~~                                                                    
-    ##     textual           0.380    0.093    0.186    0.553    1.001     lkj_corr(1)
-    ##     speed             0.354    0.109    0.132    0.555    1.000     lkj_corr(1)
+    ##     textual           0.381    0.091    0.196    0.553    1.000     lkj_corr(1)
+    ##     speed             0.358    0.111    0.132    0.553    1.000     lkj_corr(1)
     ##   textual ~~                                                                   
-    ##     speed             0.256    0.106    0.039    0.455    1.001     lkj_corr(1)
+    ##     speed             0.259    0.105    0.041    0.463    1.001     lkj_corr(1)
     ## 
     ## Intercepts:
     ##                    Estimate  Post.SD pi.lower pi.upper     Rhat    Prior       
-    ##    .x1                4.936    0.068    4.808    5.071    0.999    normal(0,32)
-    ##    .x2                6.088    0.068    5.952    6.224    0.999    normal(0,32)
-    ##    .x3                2.250    0.066    2.122    2.379    1.000    normal(0,32)
-    ##    .x4                3.062    0.067    2.925    3.192    1.000    normal(0,32)
-    ##    .x5                4.341    0.075    4.191    4.485    1.000    normal(0,32)
-    ##    .x6                2.186    0.063    2.062    2.313    0.999    normal(0,32)
-    ##    .x7                4.184    0.065    4.060    4.310    1.000    normal(0,32)
-    ##    .x8                5.527    0.060    5.411    5.637    1.000    normal(0,32)
-    ##    .x9                5.374    0.059    5.260    5.491    0.999    normal(0,32)
+    ##    .x1                4.936    0.068    4.801    5.066    0.999    normal(0,32)
+    ##    .x2                6.089    0.068    5.957    6.222    0.999    normal(0,32)
+    ##    .x3                2.250    0.068    2.115    2.381    0.999    normal(0,32)
+    ##    .x4                3.063    0.066    2.935    3.192    1.000    normal(0,32)
+    ##    .x5                4.342    0.074    4.199    4.490    0.999    normal(0,32)
+    ##    .x6                2.186    0.062    2.064    2.312    1.000    normal(0,32)
+    ##    .x7                4.187    0.065    4.059    4.313    1.000    normal(0,32)
+    ##    .x8                5.529    0.060    5.409    5.645    0.999    normal(0,32)
+    ##    .x9                5.374    0.059    5.258    5.490    1.000    normal(0,32)
     ##     visual            0.000                                                    
     ##     textual           0.000                                                    
     ##     speed             0.000                                                    
     ## 
     ## Variances:
     ##                    Estimate  Post.SD pi.lower pi.upper     Rhat    Prior       
-    ##    .x1                0.673    0.106    0.458    0.879    1.000 gamma(1,.5)[sd]
-    ##    .x2                1.090    0.107    0.895    1.313    1.000 gamma(1,.5)[sd]
-    ##    .x3                0.719    0.111    0.498    0.935    1.001 gamma(1,.5)[sd]
-    ##    .x4                0.387    0.050    0.292    0.492    0.999 gamma(1,.5)[sd]
-    ##    .x5                0.411    0.062    0.293    0.538    0.999 gamma(1,.5)[sd]
-    ##    .x6                0.373    0.044    0.290    0.463    0.999 gamma(1,.5)[sd]
-    ##    .x7                0.715    0.095    0.533    0.899    1.001 gamma(1,.5)[sd]
-    ##    .x8                0.432    0.094    0.239    0.608    1.002 gamma(1,.5)[sd]
-    ##    .x9                0.589    0.068    0.466    0.735    1.000 gamma(1,.5)[sd]
+    ##    .x1                0.675    0.107    0.455    0.881    1.000 gamma(1,.5)[sd]
+    ##    .x2                1.092    0.107    0.897    1.313    1.000 gamma(1,.5)[sd]
+    ##    .x3                0.720    0.112    0.497    0.938    0.999 gamma(1,.5)[sd]
+    ##    .x4                0.386    0.051    0.290    0.492    0.999 gamma(1,.5)[sd]
+    ##    .x5                0.413    0.063    0.292    0.539    0.999 gamma(1,.5)[sd]
+    ##    .x6                0.374    0.044    0.293    0.464    1.000 gamma(1,.5)[sd]
+    ##    .x7                0.714    0.097    0.520    0.903    1.000 gamma(1,.5)[sd]
+    ##    .x8                0.436    0.097    0.238    0.604    1.001 gamma(1,.5)[sd]
+    ##    .x9                0.588    0.066    0.466    0.728    1.000 gamma(1,.5)[sd]
     ##     visual            1.000                                                    
     ##     textual           1.000                                                    
     ##     speed             1.000
@@ -254,7 +254,7 @@ final analysis model, but should be used as a step to make decisions
 about model changes. This for two main reasons, (1) this model is
 overfitted and would present *good* overall fit just due to the
 inclusion of a lot of nuisance parameters. In this example the posterior
-predictive p-value goes from ppp = 0 to ppp = 0.124, and is not that the
+predictive p-value goes from ppp = 0 to ppp = 0.122, and is not that the
 model is better theoretically but that we are inflating the model fit.
 And (2), the addition of small-variance priors can prevent detection of
 important misspecifications in Bayesian confirmatory factor analysis, as

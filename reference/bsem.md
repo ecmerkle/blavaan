@@ -245,8 +245,8 @@ fit <- bsem(model, data = PoliticalDemocracy, burnin = 100, sample = 100,
 #> 
 #> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 1).
 #> Chain 1: 
-#> Chain 1: Gradient evaluation took 0.000208 seconds
-#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.08 seconds.
+#> Chain 1: Gradient evaluation took 0.000228 seconds
+#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.28 seconds.
 #> Chain 1: Adjust your expectations accordingly!
 #> Chain 1: 
 #> Chain 1: 
@@ -271,15 +271,15 @@ fit <- bsem(model, data = PoliticalDemocracy, burnin = 100, sample = 100,
 #> Chain 1: Iteration: 180 / 200 [ 90%]  (Sampling)
 #> Chain 1: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 1: 
-#> Chain 1:  Elapsed Time: 0.499 seconds (Warm-up)
-#> Chain 1:                0.288 seconds (Sampling)
-#> Chain 1:                0.787 seconds (Total)
+#> Chain 1:  Elapsed Time: 0.513 seconds (Warm-up)
+#> Chain 1:                0.366 seconds (Sampling)
+#> Chain 1:                0.879 seconds (Total)
 #> Chain 1: 
 #> 
 #> SAMPLING FOR MODEL 'stanmarg' NOW (CHAIN 2).
 #> Chain 2: 
-#> Chain 2: Gradient evaluation took 0.000158 seconds
-#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 1.58 seconds.
+#> Chain 2: Gradient evaluation took 0.000199 seconds
+#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 1.99 seconds.
 #> Chain 2: Adjust your expectations accordingly!
 #> Chain 2: 
 #> Chain 2: 
@@ -304,9 +304,9 @@ fit <- bsem(model, data = PoliticalDemocracy, burnin = 100, sample = 100,
 #> Chain 2: Iteration: 180 / 200 [ 90%]  (Sampling)
 #> Chain 2: Iteration: 200 / 200 [100%]  (Sampling)
 #> Chain 2: 
-#> Chain 2:  Elapsed Time: 0.354 seconds (Warm-up)
-#> Chain 2:                0.281 seconds (Sampling)
-#> Chain 2:                0.635 seconds (Total)
+#> Chain 2:  Elapsed Time: 0.349 seconds (Warm-up)
+#> Chain 2:                0.315 seconds (Sampling)
+#> Chain 2:                0.664 seconds (Total)
 #> Chain 2: 
 #> Warning: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.
 #> Running the chains for more iterations may help. See
@@ -318,7 +318,7 @@ fit <- bsem(model, data = PoliticalDemocracy, burnin = 100, sample = 100,
 #> Warning: blavaan WARNING: As specified, the theta covariance matrix is neither diagonal nor unrestricted, so the actual prior might differ from the stated prior. See
 #>  https://arxiv.org/abs/2301.08667
 summary(fit)
-#> blavaan 0.6.1.1486 ended normally after 100 iterations
+#> blavaan 0.6.1.1487 ended normally after 100 iterations
 #> 
 #>   Estimator                                      BAYES
 #>   Optimization method                             MCMC
@@ -328,7 +328,7 @@ summary(fit)
 #>   Number of observations                            75
 #> 
 #>   Statistic                                 MargLogLik         PPP
-#>   Value                                             NA       0.485
+#>   Value                                             NA       0.655
 #> 
 #> Parameter Estimates:
 #> 
@@ -337,56 +337,56 @@ summary(fit)
 #>                    Estimate  Post.SD pi.lower pi.upper     Rhat    Prior       
 #>   ind60 =~                                                                     
 #>     x1                1.000                                                    
-#>     x2                2.101    0.122    1.891    2.338    1.020    normal(1,.5)
-#>     x3                1.738    0.143    1.487    2.063    0.991    normal(1,.5)
+#>     x2                2.110    0.127    1.877    2.367    0.997    normal(1,.5)
+#>     x3                1.721    0.132    1.469    1.962    0.991    normal(1,.5)
 #>   dem60 =~                                                                     
 #>     y1                1.000                                                    
-#>     y2         (a)    1.162    0.134    0.923    1.434    1.005    normal(1,.5)
-#>     y3         (b)    1.153    0.122    0.925    1.382    1.011    normal(1,.5)
-#>     y4         (c)    1.239    0.126    1.011    1.485    0.998    normal(1,.5)
+#>     y2         (a)    1.177    0.136    0.948    1.475    0.994    normal(1,.5)
+#>     y3         (b)    1.167    0.108    0.979    1.375    1.001    normal(1,.5)
+#>     y4         (c)    1.257    0.127    1.022    1.502    1.002    normal(1,.5)
 #>   dem65 =~                                                                     
 #>     y5                1.000                                                    
-#>     y6         (a)    1.162    0.134    0.923    1.434    1.005                
-#>     y7         (b)    1.153    0.122    0.925    1.382    1.011                
-#>     y8         (c)    1.239    0.126    1.011    1.485    0.998                
+#>     y6         (a)    1.177    0.136    0.948    1.475    0.994                
+#>     y7         (b)    1.167    0.108    0.979    1.375    1.001                
+#>     y8         (c)    1.257    0.127    1.022    1.502    1.002                
 #> 
 #> Regressions:
 #>                    Estimate  Post.SD pi.lower pi.upper     Rhat    Prior       
 #>   dem60 ~                                                                      
-#>     ind60             1.506    0.458    0.601    2.460    0.999    normal(0,10)
+#>     ind60             1.362    0.334    0.783    2.035    1.004    normal(0,10)
 #>   dem65 ~                                                                      
-#>     ind60             0.570    0.265    0.134    1.107    1.000    normal(0,10)
-#>     dem60             0.856    0.077    0.695    0.995    0.992    normal(0,10)
+#>     ind60             0.576    0.238    0.142    1.028    1.020    normal(0,10)
+#>     dem60             0.877    0.076    0.738    1.022    0.994    normal(0,10)
 #> 
 #> Covariances:
 #>                    Estimate  Post.SD pi.lower pi.upper     Rhat    Prior       
 #>  .y1 ~~                                                                        
-#>    .y5                0.609    0.424   -0.120    1.482    0.994     lkj_corr(1)
+#>    .y5                0.622    0.366    0.014    1.446    0.990     lkj_corr(1)
 #>  .y2 ~~                                                                        
-#>    .y4                1.397    0.777    0.188    2.910    0.991       beta(1,1)
-#>    .y6                2.206    0.788    0.925    3.800    0.991       beta(1,1)
+#>    .y4                1.539    0.721    0.320    2.972    1.002       beta(1,1)
+#>    .y6                2.222    0.723    1.096    3.898    1.000       beta(1,1)
 #>  .y3 ~~                                                                        
-#>    .y7                0.805    0.682   -0.544    1.908    0.992     lkj_corr(1)
+#>    .y7                0.722    0.658   -0.401    1.961    0.999     lkj_corr(1)
 #>  .y4 ~~                                                                        
-#>    .y8                0.491    0.452   -0.249    1.423    1.001       beta(1,1)
+#>    .y8                0.346    0.448   -0.427    1.133    1.024       beta(1,1)
 #>  .y6 ~~                                                                        
-#>    .y8                1.376    0.607    0.186    2.524    1.002       beta(1,1)
+#>    .y8                1.373    0.614    0.292    2.535    0.996       beta(1,1)
 #> 
 #> Variances:
 #>                    Estimate  Post.SD pi.lower pi.upper     Rhat    Prior       
-#>    .x1                0.083    0.022    0.042    0.126    1.013 gamma(1,.5)[sd]
-#>    .x2                0.145    0.070    0.008    0.287    1.026 gamma(1,.5)[sd]
-#>    .x3                0.514    0.098    0.323    0.716    0.996 gamma(1,.5)[sd]
-#>    .y1                1.976    0.568    1.055    3.314    0.990 gamma(1,.5)[sd]
-#>    .y2                7.972    1.490    5.367   10.919    1.004 gamma(1,.5)[sd]
-#>    .y3                5.223    1.165    3.433    7.768    0.999 gamma(1,.5)[sd]
-#>    .y4                3.423    0.799    2.078    5.047    0.990 gamma(1,.5)[sd]
-#>    .y5                2.449    0.569    1.543    3.729    0.991 gamma(1,.5)[sd]
-#>    .y6                5.202    0.925    3.701    7.194    1.013 gamma(1,.5)[sd]
-#>    .y7                3.751    0.870    2.545    5.731    0.998 gamma(1,.5)[sd]
-#>    .y8                3.522    0.746    2.386    5.060    0.992 gamma(1,.5)[sd]
-#>     ind60             0.490    0.094    0.340    0.683    0.994 gamma(1,.5)[sd]
-#>    .dem60             4.019    0.942    2.324    5.931    0.992 gamma(1,.5)[sd]
-#>    .dem65             0.270    0.224    0.001    0.745    1.009 gamma(1,.5)[sd]
+#>    .x1                0.081    0.019    0.046    0.117    1.000 gamma(1,.5)[sd]
+#>    .x2                0.144    0.078    0.025    0.302    1.004 gamma(1,.5)[sd]
+#>    .x3                0.500    0.099    0.337    0.710    0.995 gamma(1,.5)[sd]
+#>    .y1                2.009    0.511    1.235    2.976    0.996 gamma(1,.5)[sd]
+#>    .y2                7.832    1.390    5.468   10.591    0.999 gamma(1,.5)[sd]
+#>    .y3                5.160    1.016    3.383    7.594    0.995 gamma(1,.5)[sd]
+#>    .y4                3.476    0.771    2.097    5.254    0.992 gamma(1,.5)[sd]
+#>    .y5                2.444    0.539    1.555    3.771    0.995 gamma(1,.5)[sd]
+#>    .y6                5.250    1.005    3.789    7.639    1.009 gamma(1,.5)[sd]
+#>    .y7                3.776    0.795    2.448    5.212    0.994 gamma(1,.5)[sd]
+#>    .y8                3.536    0.779    2.350    5.443    1.000 gamma(1,.5)[sd]
+#>     ind60             0.491    0.087    0.364    0.656    1.000 gamma(1,.5)[sd]
+#>    .dem60             3.903    0.830    2.557    5.440    1.017 gamma(1,.5)[sd]
+#>    .dem65             0.165    0.196    0.000    0.763    1.011 gamma(1,.5)[sd]
 #> 
 ```
